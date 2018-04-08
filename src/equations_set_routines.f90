@@ -1705,7 +1705,7 @@ CONTAINS
                             IF(ASSOCIATED(sourceVector)) THEN
                               SOURCE_DISTRIBUTED_VECTOR=>sourceVector%vector
                               IF(ASSOCIATED(SOURCE_DISTRIBUTED_VECTOR)) THEN
-                                CALL DISTRIBUTED_VECTOR_DATA_GET(SOURCE_DISTRIBUTED_VECTOR,sourceVectorData,err,error,*999)
+                                CALL DistributedVector_DataGet(SOURCE_DISTRIBUTED_VECTOR,sourceVectorData,err,error,*999)
                               ELSE
                                 CALL FlagError("Source distributed vector is not associated.",err,error,*999)
                               ENDIF
@@ -1736,9 +1736,9 @@ CONTAINS
                                       IF(ASSOCIATED(COLUMN_DOMAIN_MAPPING)) THEN
                                         EQUATIONS_DISTRIBUTED_MATRIX=>equationsMatrix%MATRIX
                                         IF(ASSOCIATED(EQUATIONS_DISTRIBUTED_MATRIX)) THEN
-                                          CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(EQUATIONS_DISTRIBUTED_MATRIX, &
+                                          CALL DistributedMatrix_StorageTypeGet(EQUATIONS_DISTRIBUTED_MATRIX, &
                                             & EQUATIONS_STORAGE_TYPE,err,error,*999)
-                                          CALL DISTRIBUTED_MATRIX_DATA_GET(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
+                                          CALL DistributedMatrix_DataGet(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
                                             & err,error,*999)
                                           SELECT CASE(EQUATIONS_STORAGE_TYPE)
                                           CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -1789,7 +1789,7 @@ CONTAINS
                                           CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                                            CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(EQUATIONS_DISTRIBUTED_MATRIX, &
+                                            CALL DistributedMatrix_StorageLocationsGet(EQUATIONS_DISTRIBUTED_MATRIX, &
                                               & ROW_INDICES,COLUMN_INDICES,err,error,*999)
                                             !Loop over the non-ghosted rows in the equations set
                                             DO equations_row_number=1,vectorMapping%numberOfRows
@@ -1837,7 +1837,7 @@ CONTAINS
                                               & TRIM(NumberToVString(EQUATIONS_STORAGE_TYPE,"*",err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                           END SELECT
-                                          CALL DISTRIBUTED_MATRIX_DATA_RESTORE(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
+                                          CALL DistributedMatrix_DataRestore(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
                                             & err,error,*999)
                                         ELSE
                                           CALL FlagError("Equations matrix distributed matrix is not associated.",err,error,*999)
@@ -1871,7 +1871,7 @@ CONTAINS
                             CALL FlagError("RHS variable is not associated.",err,error,*999)
                           ENDIF
                           IF(ASSOCIATED(sourceMapping)) THEN
-                            CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOURCE_DISTRIBUTED_VECTOR,sourceVectorData,err,error,*999)
+                            CALL DistributedVector_DataRestore(SOURCE_DISTRIBUTED_VECTOR,sourceVectorData,err,error,*999)
                           ENDIF
                         ELSE
                           CALL FlagError("Boundary conditions are not associated.",err,error,*999)

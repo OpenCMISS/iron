@@ -2748,7 +2748,7 @@ CONTAINS
                   FIELD_PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(FIELD_PARAMETER_SET)) THEN
                     !Get the parameters values
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
                     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
                     !and not worry about updating the field parameter set.
                     SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%INTERPOLATION_TYPE)
@@ -2872,7 +2872,7 @@ CONTAINS
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                     !Restore the  parameter set 
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created on variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -2970,7 +2970,7 @@ CONTAINS
                   FIELD_PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(FIELD_PARAMETER_SET)) THEN
                     !Get the parameters values
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
                     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
                     !and not worry about updating the field parameter set.
                     SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%INTERPOLATION_TYPE)
@@ -3092,7 +3092,7 @@ CONTAINS
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                     !Restore the  parameter set 
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created on variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -3191,7 +3191,7 @@ CONTAINS
                   FIELD_PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(FIELD_PARAMETER_SET)) THEN
                     !Get the parameters values
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
                     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
                     !and not worry about updating the field parameter set.
                     SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%INTERPOLATION_TYPE)
@@ -3344,7 +3344,7 @@ CONTAINS
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                     !Restore the  parameter set 
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created on variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -3441,7 +3441,7 @@ CONTAINS
                   FIELD_PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(FIELD_PARAMETER_SET)) THEN
                     !Get the parameters values
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
                     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
                     !and not worry about updating the field parameter set.
                     SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%INTERPOLATION_TYPE)
@@ -3541,7 +3541,7 @@ CONTAINS
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     END SELECT
                     !Restore the  parameter set 
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(FIELD_PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created on variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -4488,73 +4488,73 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"",FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Field number : ",FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Global number = ",FIELD%GLOBAL_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  User number = ",FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Label = ",FIELD%LABEL,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Dependent type = ",FIELD%DEPENDENT_TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field type = ",FIELD%TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of variables = ",FIELD%NUMBER_OF_VARIABLES,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"",FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Field number : ",FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Global number = ",FIELD%GLOBAL_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  User number = ",FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Label = ",FIELD%LABEL,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Dependent type = ",FIELD%DEPENDENT_TYPE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field type = ",FIELD%TYPE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of variables = ",FIELD%NUMBER_OF_VARIABLES,ERR,ERROR,*999)
       IF(DIAGNOSTICS2) THEN
         DO variableIdx=1,FIELD%NUMBER_OF_VARIABLES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Variable : ",variableIdx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Variable Type = ",variableIdx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Variable Label = ",FIELD%VARIABLES(variableIdx)%VARIABLE_LABEL, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable : ",variableIdx,ERR,ERROR,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable Type = ",variableIdx,ERR,ERROR,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable Label = ",FIELD%VARIABLES(variableIdx)%VARIABLE_LABEL, &
             & ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Dimension = ",FIELD%VARIABLES(variableIdx)%DIMENSION, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Dimension = ",FIELD%VARIABLES(variableIdx)%DIMENSION, &
             & ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Data type = ",FIELD%VARIABLES(variableIdx)%DATA_TYPE, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Data type = ",FIELD%VARIABLES(variableIdx)%DATA_TYPE, &
             & ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      DOF order type = ",FIELD%VARIABLES(variableIdx)%DOF_ORDER_TYPE, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      DOF order type = ",FIELD%VARIABLES(variableIdx)%DOF_ORDER_TYPE, &
             & ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Max num element interpolation parameters = ",FIELD% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Max num element interpolation parameters = ",FIELD% &
             & VARIABLES(variableIdx)%maxNumberElementInterpolationParameters,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Max num node interpolation parameters = ",FIELD% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Max num node interpolation parameters = ",FIELD% &
             & VARIABLES(variableIdx)%maxNumberNodeInterpolationParameters,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of DOFs = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of DOFs = ",FIELD%VARIABLES(variableIdx)% &
             & NUMBER_OF_DOFS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",FIELD%VARIABLES(variableIdx)% &
             & TOTAL_NUMBER_OF_DOFS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of global DOFs = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of global DOFs = ",FIELD%VARIABLES(variableIdx)% &
             & NUMBER_OF_GLOBAL_DOFS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of components = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of components = ",FIELD%VARIABLES(variableIdx)% &
             & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
           IF(DIAGNOSTICS3) THEN
             DO componentIdx=1,FIELD%VARIABLES(variableIdx)%NUMBER_OF_COMPONENTS
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Component : ",componentIdx,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Component label = ",FIELD%VARIABLES(variableIdx)% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Component : ",componentIdx,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Component label = ",FIELD%VARIABLES(variableIdx)% &
                 COMPONENTS(componentIdx)%COMPONENT_LABEL,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Interpolation type = ",FIELD%VARIABLES(variableIdx)% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Interpolation type = ",FIELD%VARIABLES(variableIdx)% &
                 COMPONENTS(componentIdx)%INTERPOLATION_TYPE,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Mesh component number = ",FIELD%VARIABLES(variableIdx)% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Mesh component number = ",FIELD%VARIABLES(variableIdx)% &
                 COMPONENTS(componentIdx)%MESH_COMPONENT_NUMBER,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Scaling index = ",FIELD%VARIABLES(variableIdx)% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Scaling index = ",FIELD%VARIABLES(variableIdx)% &
                 COMPONENTS(componentIdx)%SCALING_INDEX,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Max num element interpolation parameters = ",FIELD% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Max num element interpolation parameters = ",FIELD% &
                 & VARIABLES(variableIdx)%COMPONENTS(componentIdx)%maxNumberElementInterpolationParameters,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Max num node interpolation parameters = ",FIELD% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Max num node interpolation parameters = ",FIELD% &
                 & VARIABLES(variableIdx)%COMPONENTS(componentIdx)%maxNumberNodeInterpolationParameters,ERR,ERROR,*999)         
             ENDDO !componentIdx
           ENDIF
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameter sets = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameter sets = ",FIELD%VARIABLES(variableIdx)% &
             & PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS,ERR,ERROR,*999)
           IF(DIAGNOSTICS3) THEN
             DO parameterSetIdx=1,FIELD%VARIABLES(variableIdx)%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Parameter set index : ",parameterSetIdx,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Set type : ",FIELD%VARIABLES(variableIdx)% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Parameter set index : ",parameterSetIdx,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Set type : ",FIELD%VARIABLES(variableIdx)% &
                 & PARAMETER_SETS%PARAMETER_SETS(parameterSetIdx)%PTR%SET_TYPE,ERR,ERROR,*999)
             ENDDO !parameterSetIdx
           ENDIF
         ENDDO !variableIdx
       ENDIF
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Scaling type = ",FIELD%SCALINGS%SCALING_TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of scaling indices = ",FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES, &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Scaling type = ",FIELD%SCALINGS%SCALING_TYPE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of scaling indices = ",FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES, &
         & ERR,ERROR,*999)
       IF(DIAGNOSTICS2) THEN
         DO scalingIdx=1,FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Scaling index : ",scalingIdx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Mesh component number : ",FIELD%SCALINGS%SCALINGS(scalingIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Scaling index : ",scalingIdx,ERR,ERROR,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Mesh component number : ",FIELD%SCALINGS%SCALINGS(scalingIdx)% &
             & MESH_COMPONENT_NUMBER,ERR,ERROR,*999)
         ENDDO !scalingIdx
       ENDIF
@@ -7490,11 +7490,11 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Field normal at a node:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field number      = ",FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Variable type     = ",VARIABLE_TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Component number  = ",COMPONENT_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Local node number = ",LOCAL_NODE_NUMBER,ERR,ERROR,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Field normal at a node:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number      = ",FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Variable type     = ",VARIABLE_TYPE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Component number  = ",COMPONENT_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Local node number = ",LOCAL_NODE_NUMBER,ERR,ERROR,*999)
       CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DIMS,3,3,POSITION, &
         & '("  Position          :",3(X,E13.6))','(21X,3(X,E13.6))',ERR,ERROR,*999)      
       CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DIMS,3,3,NORMAL, &
@@ -8069,7 +8069,7 @@ CONTAINS
         PARAMETER_SET=>INTERPOLATION_PARAMETERS%FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(PARAMETER_SET_TYPE)%PTR
         IF(ASSOCIATED(PARAMETER_SET)) THEN
           NULLIFY(FIELD_PARAMETER_SET_DATA)
-          CALL DISTRIBUTED_VECTOR_DATA_GET(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
+          CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
           FIELD=>INTERPOLATION_PARAMETERS%FIELD
           IF(ASSOCIATED(FIELD)) THEN
             NULLIFY(COORDINATE_SYSTEM)
@@ -8154,7 +8154,7 @@ CONTAINS
                   CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
                     scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
                     NULLIFY(SCALE_FACTORS)
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+                    CALL DistributedVector_DataGet(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                       & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
                     DO element_node_idx=1,BASIS%NUMBER_OF_NODES
                       node_idx=ELEMENTS_TOPOLOGY%ELEMENTS(ELEMENT_NUMBER)%ELEMENT_NODES(element_node_idx)
@@ -8178,7 +8178,7 @@ CONTAINS
                           & node_scaling_dof_idx)
                       ENDDO !local_derivative_idx
                     ENDDO !element_node_idx
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+                    CALL DistributedVector_DataRestore(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                       & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
                   CASE(FIELD_ARC_LENGTH_SCALING)
                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
@@ -8218,7 +8218,7 @@ CONTAINS
           ELSE
             CALL FlagError("The interpolation parameters field is not associated.",ERR,ERROR,*999)
           ENDIF
-          CALL DISTRIBUTED_VECTOR_DATA_RESTORE(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
+          CALL DistributedVector_DataRestore(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
         ELSE
           LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(PARAMETER_SET_TYPE,"*",ERR,ERROR))// &
             & " has not been created for field number "// &
@@ -8236,17 +8236,17 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & VARIABLE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",ELEMENT_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",ELEMENT_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
       DO component_idx=startComponentIdx,endComponentIdx
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
           & NUMBER_OF_PARAMETERS(component_idx),ERR,ERROR,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),'("      Parameters :",4(X,E13.6))','(18X,4(X,E13.6))', &
@@ -8378,7 +8378,7 @@ CONTAINS
         PARAMETER_SET=>INTERPOLATION_PARAMETERS%FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(PARAMETER_SET_TYPE)%PTR
         IF(ASSOCIATED(PARAMETER_SET)) THEN
           NULLIFY(FIELD_PARAMETER_SET_DATA)
-          CALL DISTRIBUTED_VECTOR_DATA_GET(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
+          CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
           FIELD=>INTERPOLATION_PARAMETERS%FIELD
           IF(ASSOCIATED(FIELD)) THEN
             NULLIFY(COORDINATE_SYSTEM)
@@ -8454,7 +8454,7 @@ CONTAINS
                   CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
                     scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
                     NULLIFY(SCALE_FACTORS)
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+                    CALL DistributedVector_DataGet(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                       & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
                     DO basis_node_idx=1,BASIS%NUMBER_OF_NODES
                       node_idx=LINES_TOPOLOGY%LINES(LINE_NUMBER)%NODES_IN_LINE(basis_node_idx)
@@ -8509,7 +8509,7 @@ CONTAINS
           ELSE
             CALL FlagError("The interpolation parameters field is not associated.",ERR,ERROR,*999)
           ENDIF
-          CALL DISTRIBUTED_VECTOR_DATA_RESTORE(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
+          CALL DistributedVector_DataRestore(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
         ELSE
           LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(PARAMETER_SET_TYPE,"*",ERR,ERROR))// &
             & " has not been created for field number "// &
@@ -8527,19 +8527,19 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & VARIABLE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Line number = ",LINE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of components = ", &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Line number = ",LINE_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of components = ", &
         & INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Interpolation number of components = ", &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Interpolation number of components = ", &
         & endComponentIdx-startComponentIdx+1,ERR,ERROR,*999)
       DO component_idx=startComponentIdx,endComponentIdx
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
           & NUMBER_OF_PARAMETERS(component_idx),ERR,ERROR,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),'("      Parameters :",4(X,E13.6))','(18X,4(X,E13.6))', &
@@ -8586,7 +8586,7 @@ CONTAINS
         PARAMETER_SET=>INTERPOLATION_PARAMETERS%FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(PARAMETER_SET_TYPE)%PTR
         IF(ASSOCIATED(PARAMETER_SET)) THEN
           NULLIFY(FIELD_PARAMETER_SET_DATA)
-          CALL DISTRIBUTED_VECTOR_DATA_GET(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
+          CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
           FIELD=>INTERPOLATION_PARAMETERS%FIELD
           IF(ASSOCIATED(FIELD)) THEN
             NULLIFY(COORDINATE_SYSTEM)
@@ -8662,7 +8662,7 @@ CONTAINS
                   CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
                     scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
                     NULLIFY(SCALE_FACTORS)
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+                    CALL DistributedVector_DataGet(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                       & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
                     DO basis_node_idx=1,BASIS%NUMBER_OF_NODES
                       node_idx=FACES_TOPOLOGY%FACES(FACE_NUMBER)%NODES_IN_FACE(basis_node_idx)
@@ -8716,7 +8716,7 @@ CONTAINS
           ELSE
             CALL FlagError("The interpolation parameters field is not associated.",ERR,ERROR,*999)
           ENDIF
-          CALL DISTRIBUTED_VECTOR_DATA_RESTORE(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
+          CALL DistributedVector_DataRestore(PARAMETER_SET%PARAMETERS,FIELD_PARAMETER_SET_DATA,ERR,ERROR,*999)
         ELSE
           LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(PARAMETER_SET_TYPE,"*",ERR,ERROR))// &
             & " has not been created for field number "// &
@@ -8734,19 +8734,19 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & VARIABLE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Face number = ",FACE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of components = ", &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Face number = ",FACE_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of components = ", &
         & INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Interpolation number of components = ", &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Interpolation number of components = ", &
         & endComponentIdx-startComponentIdx+1,ERR,ERROR,*999)
       DO component_idx=startComponentIdx,endComponentIdx
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
           & NUMBER_OF_PARAMETERS(component_idx),ERR,ERROR,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),'("      Parameters :",4(X,E13.6))','(18X,4(X,E13.6))', &
@@ -8804,7 +8804,7 @@ CONTAINS
               INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%NUMBER_OF_ELEMENT_PARAMETERS
               scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
               NULLIFY(SCALE_FACTORS)
-              CALL DISTRIBUTED_VECTOR_DATA_GET(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+              CALL DistributedVector_DataGet(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                 & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
               DO nn=1,BASIS%NUMBER_OF_NODES
                 np=ELEMENTS_TOPOLOGY%ELEMENTS(ELEMENT_NUMBER)%ELEMENT_NODES(nn)
@@ -8816,7 +8816,7 @@ CONTAINS
                   INTERPOLATION_PARAMETERS%SCALE_FACTORS(ns,component_idx)=SCALE_FACTORS(ny)
                 ENDDO !mk
               ENDDO !nn
-              CALL DISTRIBUTED_VECTOR_DATA_RESTORE(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+              CALL DistributedVector_DataRestore(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                 & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
             CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
               INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
@@ -8856,16 +8856,16 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & VARIABLE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",ELEMENT_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",ELEMENT_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
       DO component_idx=1,INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
           & NUMBER_OF_PARAMETERS(component_idx),ERR,ERROR,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
@@ -8942,14 +8942,14 @@ CONTAINS
                             ! The number of scaling indices are set based on the number of mesh components (not field components).
                             scalingIdx=fieldVariable%COMPONENTS(componentNumber)%SCALING_INDEX
                             NULLIFY(fieldScaleFactors)
-                            CALL DISTRIBUTED_VECTOR_DATA_GET(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
+                            CALL DistributedVector_DataGet(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
                               & fieldScaleFactors,err,error,*999)
                             dofIdx=domainNodes%NODES(nodeUserNumber)%DERIVATIVES(derivativeNumber)%DOF_INDEX(versionNumber)
                             !dofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                             !  & NODE_PARAM2DOF_MAP%NODES(domainLocalNodeNumber)%DERIVATIVES(derivativeNumber)% &
                             !  & VERSIONS(versionNumber)
                             scaleFactor=fieldScaleFactors(dofIdx)
-                            CALL DISTRIBUTED_VECTOR_DATA_RESTORE(field%SCALINGS%SCALINGS(scalingIdx)% &
+                            CALL DistributedVector_DataRestore(field%SCALINGS%SCALINGS(scalingIdx)% &
                               & SCALE_FACTORS,fieldScaleFactors,ERR,ERROR,*999)
                           ELSE
                             localError="Version number "//TRIM(NumberToVString(versionNumber,"*",err,error))// &
@@ -9070,10 +9070,10 @@ CONTAINS
               IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%NUMBER_OF_SCALING_INDICES) THEN
                 scalingIdx=meshComponentNumber
                 NULLIFY(fieldScaleFactors)
-                CALL DISTRIBUTED_VECTOR_DATA_GET(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
+                CALL DistributedVector_DataGet(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
                   & fieldScaleFactors,err,error,*999)
                 scaleFactors=fieldScaleFactors
-                CALL DISTRIBUTED_VECTOR_DATA_RESTORE(field%SCALINGS%SCALINGS(scalingIdx)% &
+                CALL DistributedVector_DataRestore(field%SCALINGS%SCALINGS(scalingIdx)% &
                   & SCALE_FACTORS,fieldScaleFactors,ERR,ERROR,*999)
               ELSE
                 localError="Mesh component number "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
@@ -9151,10 +9151,10 @@ CONTAINS
               IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%NUMBER_OF_SCALING_INDICES) THEN
                 scalingIdx=meshComponentNumber
                 NULLIFY(fieldScaleFactors)
-                CALL DISTRIBUTED_VECTOR_DATA_GET(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
+                CALL DistributedVector_DataGet(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
                   & fieldScaleFactors,err,error,*999)
                 numberOfScaleFactorsDofs=SIZE(fieldScaleFactors,1)
-                CALL DISTRIBUTED_VECTOR_DATA_RESTORE(field%SCALINGS%SCALINGS(scalingIdx)% &
+                CALL DistributedVector_DataRestore(field%SCALINGS%SCALINGS(scalingIdx)% &
                   & SCALE_FACTORS,fieldScaleFactors,ERR,ERROR,*999)
               ELSE
                 localError="Mesh component number "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
@@ -9260,14 +9260,14 @@ CONTAINS
                             ! The number of scaling indices are set based on the number of mesh components (not field components).
                             scalingIdx=fieldVariable%COMPONENTS(componentNumber)%SCALING_INDEX
                             NULLIFY(fieldScaleFactors)
-                            CALL DISTRIBUTED_VECTOR_DATA_GET(field%SCALINGS%SCALINGS(scalingIdx)% &
+                            CALL DistributedVector_DataGet(field%SCALINGS%SCALINGS(scalingIdx)% &
                               & SCALE_FACTORS,fieldScaleFactors,err,error,*999)
                             dofIdx=domainNodes%NODES(nodeUserNumber)%DERIVATIVES(derivativeNumber)%DOF_INDEX(versionNumber)
                             !dofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                             !  & NODE_PARAM2DOF_MAP%NODES(domainLocalNodeNumber)%DERIVATIVES(derivativeNumber)% &
                             !  & VERSIONS(versionNumber)
                             fieldScaleFactors(dofIdx)=scaleFactor
-                            CALL DISTRIBUTED_VECTOR_DATA_RESTORE(field%SCALINGS%SCALINGS(scalingIdx)% &
+                            CALL DistributedVector_DataRestore(field%SCALINGS%SCALINGS(scalingIdx)% &
                               & SCALE_FACTORS,fieldScaleFactors,err,error,*999)
 
                           ELSE
@@ -9388,7 +9388,7 @@ CONTAINS
               IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%NUMBER_OF_SCALING_INDICES) THEN
                 scalingIdx=meshComponentNumber
                 NULLIFY(fieldScaleFactors)
-                CALL DISTRIBUTED_VECTOR_DATA_GET(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
+                CALL DistributedVector_DataGet(field%SCALINGS%SCALINGS(scalingIdx)%SCALE_FACTORS, &
                   & fieldScaleFactors,err,error,*999)
                 IF(SIZE(fieldScaleFactors,1)==SIZE(scaleFactors,1)) THEN
                   fieldScaleFactors = scaleFactors
@@ -9398,7 +9398,7 @@ CONTAINS
                     & TRIM(NumberToVString(SIZE(fieldScaleFactors),"*",err,error))
                   CALL FlagError(localError,err,error,*999)
                 ENDIF
-                CALL DISTRIBUTED_VECTOR_DATA_RESTORE(field%SCALINGS%SCALINGS(scalingIdx)% &
+                CALL DistributedVector_DataRestore(field%SCALINGS%SCALINGS(scalingIdx)% &
                   & SCALE_FACTORS,fieldScaleFactors,ERR,ERROR,*999)
               ELSE
                 localError="Mesh component number "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
@@ -9490,7 +9490,7 @@ CONTAINS
               INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%NUMBER_OF_ELEMENT_PARAMETERS
               scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
               NULLIFY(SCALE_FACTORS)
-              CALL DISTRIBUTED_VECTOR_DATA_GET(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+              CALL DistributedVector_DataGet(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                 & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
               DO nn=1,BASIS%NUMBER_OF_NODES
                 np=LINES_TOPOLOGY%LINES(LINE_NUMBER)%NODES_IN_LINE(nn)
@@ -9502,7 +9502,7 @@ CONTAINS
                   INTERPOLATION_PARAMETERS%SCALE_FACTORS(ns,component_idx)=SCALE_FACTORS(ny)
                 ENDDO !mk
               ENDDO !nn
-              CALL DISTRIBUTED_VECTOR_DATA_RESTORE(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+              CALL DistributedVector_DataRestore(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                 & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
             CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
               INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
@@ -9542,16 +9542,16 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & VARIABLE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Line number = ",LINE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Line number = ",LINE_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
       DO component_idx=1,INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
           & NUMBER_OF_PARAMETERS(component_idx),ERR,ERROR,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
@@ -9617,7 +9617,7 @@ CONTAINS
               INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%NUMBER_OF_ELEMENT_PARAMETERS
               scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
               NULLIFY(SCALE_FACTORS)
-              CALL DISTRIBUTED_VECTOR_DATA_GET(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+              CALL DistributedVector_DataGet(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                 & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
               DO nn=1,BASIS%NUMBER_OF_NODES
                 np=FACES_TOPOLOGY%FACES(FACE_NUMBER)%NODES_IN_FACE(nn)
@@ -9629,7 +9629,7 @@ CONTAINS
                   INTERPOLATION_PARAMETERS%SCALE_FACTORS(ns,component_idx)=SCALE_FACTORS(ny)
                 ENDDO !mk
               ENDDO !nn
-              CALL DISTRIBUTED_VECTOR_DATA_RESTORE(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
+              CALL DistributedVector_DataRestore(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
                 & SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
             CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
               INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
@@ -9669,16 +9669,16 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%USER_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & VARIABLE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Face number = ",FACE_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Face number = ",FACE_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
         & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
       DO component_idx=1,INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
           & NUMBER_OF_PARAMETERS(component_idx),ERR,ERROR,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
@@ -10968,119 +10968,119 @@ CONTAINS
       IF(ALLOCATED(VARIABLE_GHOST_DOFS_OFFSETS)) DEALLOCATE(VARIABLE_GHOST_DOFS_OFFSETS)
  
       IF(DIAGNOSTICS1) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Field DOF mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Field user number = ",FIELD%USER_NUMBER,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of variables = ",FIELD%NUMBER_OF_VARIABLES,ERR,ERROR,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Field DOF mappings:",ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field user number = ",FIELD%USER_NUMBER,ERR,ERROR,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of variables = ",FIELD%NUMBER_OF_VARIABLES,ERR,ERROR,*999)
         DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Variable : ",variable_idx,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Variable type = ",FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Variable : ",variable_idx,ERR,ERROR,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable type = ",FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE, &
             & ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & NUMBER_OF_DOFS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of local DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of local DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & TOTAL_NUMBER_OF_DOFS,ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of global DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of global DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & NUMBER_OF_GLOBAL_DOFS,ERR,ERROR,*999)
-          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    DOF to parameter map:",ERR,ERROR,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    DOF to parameter map:",ERR,ERROR,*999)
           DO variable_local_ny=1,FIELD%VARIABLES(variable_idx)%TOTAL_NUMBER_OF_DOFS
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      DOF : ",variable_local_ny,ERR,ERROR,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      DOF : ",variable_local_ny,ERR,ERROR,*999)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
               & DOF_TYPE(:,variable_local_ny),'("        DOF type :",2(X,I8))','(18X,2(X,I8))',ERR,ERROR,*999)
           ENDDO !variable_local_ny
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of constant DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of constant DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS,ERR,ERROR,*999)
           IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS>0) THEN
-            CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      Constant DOFs:",ERR,ERROR,*999)
+            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Constant DOFs:",ERR,ERROR,*999)
             DO constant_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Constant DOF : ",constant_nyy,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Constant DOF : ",constant_nyy,ERR,ERROR,*999)
               CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          DOF 2 Parameters : ", &
                 & FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%CONSTANT_DOF2PARAM_MAP(constant_nyy),'(I8)',ERR,ERROR,*999)
             ENDDO !constant_nyy
           ENDIF
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of element DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of element DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS,ERR,ERROR,*999)
           IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS>0) THEN            
-            CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      Element DOFs:",ERR,ERROR,*999)
+            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Element DOFs:",ERR,ERROR,*999)
             DO element_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element DOF : ",element_nyy,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Element DOF : ",element_nyy,ERR,ERROR,*999)
               CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
                 & ELEMENT_DOF2PARAM_MAP(:,element_nyy),'("          DOF 2 Parameters :",2(X,I8))','(28X,2(X,I8))',ERR,ERROR,*999)
             ENDDO !element_nyy
           ENDIF
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodal DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodal DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS,ERR,ERROR,*999)
           IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS>0) THEN
-            CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      Nodal DOFs:",ERR,ERROR,*999)
+            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Nodal DOFs:",ERR,ERROR,*999)
             DO node_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Node DOF : ",node_nyy,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Node DOF : ",node_nyy,ERR,ERROR,*999)
               CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,4,4,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
                 & NODE_DOF2PARAM_MAP(:,node_nyy),'("          DOF 2 Parameters :",4(X,I8))','(28X,4(X,I8))',ERR,ERROR,*999)
             ENDDO !node_nyy
           ENDIF
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of grid point DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of grid point DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS,ERR,ERROR,*999)
           IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS>0) THEN
-            CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      Grid point DOFs:",ERR,ERROR,*999)
+            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Grid point DOFs:",ERR,ERROR,*999)
             DO grid_point_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Grid point DOF : ",grid_point_nyy,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Grid point DOF : ",grid_point_nyy,ERR,ERROR,*999)
               CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
                 & GRID_POINT_DOF2PARAM_MAP(:,grid_point_nyy),'("          DOF 2 Parameters :",2(X,I8))','(28X,2(X,I8))', &
                 & ERR,ERROR,*999)
             ENDDO !node_nyy
           ENDIF
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of Gauss point DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of Gauss point DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS,ERR,ERROR,*999)
           IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS>0) THEN
-            CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point DOFs:",ERR,ERROR,*999)
+            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point DOFs:",ERR,ERROR,*999)
             DO Gauss_point_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss point DOF : ",Gauss_point_nyy,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss point DOF : ",Gauss_point_nyy,ERR,ERROR,*999)
               CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
                 & GAUSS_POINT_DOF2PARAM_MAP(:,Gauss_point_nyy),'("          DOF 2 Parameters :",3(X,I8))','(28X,3(X,I8))', &
                 & ERR,ERROR,*999)
             ENDDO !node_nyy
           ENDIF
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of data point DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of data point DOFs = ",FIELD%VARIABLES(variable_idx)% &
             & DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS,ERR,ERROR,*999)
           IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS>0) THEN
-            CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"      data point DOFs:",ERR,ERROR,*999)
+            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      data point DOFs:",ERR,ERROR,*999)
             DO data_point_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        data point DOF : ",data_point_nyy,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        data point DOF : ",data_point_nyy,ERR,ERROR,*999)
               CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
                 & DATA_POINT_DOF2PARAM_MAP(:,data_point_nyy),'("          DOF 2 Parameters :",3(X,I8))','(28X,3(X,I8))', &
                 & ERR,ERROR,*999)
             ENDDO !node_nyy
           ENDIF
-          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"    Parameter to DOF map:",ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of components = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Parameter to DOF map:",ERR,ERROR,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of components = ",FIELD%VARIABLES(variable_idx)% &
             & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
           DO component_idx=1,FIELD%VARIABLES(variable_idx)%NUMBER_OF_COMPONENTS
             FIELD_COMPONENT => FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Component : ",component_idx,ERR,ERROR,*999)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of constant parameters = ", &
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Component : ",component_idx,ERR,ERROR,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of constant parameters = ", &
               & FIELD_COMPONENT%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS,ERR,ERROR,*999)
             IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Constant DOF = ", &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Constant DOF = ", &
                 & FIELD_COMPONENT%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP,ERR,ERROR,*999)
             ENDIF
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of element parameters = ", &
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of element parameters = ", &
               & FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS,ERR,ERROR,*999)
             IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS>0) THEN
               DO element_idx=1,FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Element : ",element_idx,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"            Element DOF = ", &
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Element : ",element_idx,ERR,ERROR,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"            Element DOF = ", &
                   & FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx), &
                   & ERR,ERROR,*999)
               ENDDO !element_idx
             ENDIF
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of node parameters = ", &
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of node parameters = ", &
               & FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS,ERR,ERROR,*999)
             IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS>0) THEN
               DO node_idx=1,FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Node : ",node_idx,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Number of Derivatives = ", &
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Node : ",node_idx,ERR,ERROR,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Number of Derivatives = ", &
                   & FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%NUMBER_OF_DERIVATIVES,ERR,ERROR,*999)
                 DO derivative_idx=1,FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%NUMBER_OF_DERIVATIVES
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          Derivative : ",derivative_idx,ERR,ERROR,*999)
+                  CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Derivative : ",derivative_idx,ERR,ERROR,*999)
                   CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,FIELD_COMPONENT%PARAM_TO_DOF_MAP% &
                     & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%NUMBER_OF_VERSIONS,8,8,FIELD_COMPONENT% &
                     & PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(:), &
@@ -11088,15 +11088,15 @@ CONTAINS
                 ENDDO !derivative_idx
               ENDDO !node_idx
             ENDIF
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of grid point parameters = ", &
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of grid point parameters = ", &
               & FIELD_COMPONENT%PARAM_TO_DOF_MAP%GRID_POINT_PARAM2DOF_MAP%NUMBER_OF_GRID_POINT_PARAMETERS,ERR,ERROR,*999)
             IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%GRID_POINT_PARAM2DOF_MAP%NUMBER_OF_GRID_POINT_PARAMETERS>0) THEN
             ENDIF
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of Gauss point parameters = ", &
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of Gauss point parameters = ", &
               & FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS,ERR,ERROR,*999)
             IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS>0) THEN
             ENDIF
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Number of data point parameters = ", &
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of data point parameters = ", &
               & FIELD_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%NUMBER_OF_DATA_POINT_PARAMETERS,ERR,ERROR,*999)
             IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%NUMBER_OF_DATA_POINT_PARAMETERS>0) THEN
             ENDIF
@@ -11870,13 +11870,13 @@ CONTAINS
               ENDIF
               ITERATION_NUMBER=ITERATION_NUMBER+1
               IF(DIAGNOSTICS2) THEN
-                CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Line iteration report:",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of iterations = ",ITERATION_NUMBER,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum length difference = ",MAXIMUM_LENGTH_DIFFERENCE, &
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Line iteration report:",ERR,ERROR,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of iterations = ",ITERATION_NUMBER,ERR,ERROR,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum length difference = ",MAXIMUM_LENGTH_DIFFERENCE, &
                   & ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Difference tolerance = ",LINE_INCREMENT_TOLERANCE, &
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Difference tolerance = ",LINE_INCREMENT_TOLERANCE, &
                   ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum difference line = ",MAXIMUM_DIFFERENCE_LINE, &
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum difference line = ",MAXIMUM_DIFFERENCE_LINE, &
                   ERR,ERROR,*999)
               ENDIF
               IF(.NOT.ITERATE.OR.ITERATION_NUMBER==LINES_MAXIMUM_NUMBER_OF_ITERATIONS) THEN
@@ -11906,12 +11906,12 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Line lengths:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of iterations = ",ITERATION_NUMBER,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum length difference = ",MAXIMUM_LENGTH_DIFFERENCE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Difference tolerance = ",LINE_INCREMENT_TOLERANCE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum difference line = ",MAXIMUM_DIFFERENCE_LINE,ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of lines = ",FIELD%DECOMPOSITION%TOPOLOGY%LINES%NUMBER_OF_LINES, &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Line lengths:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of iterations = ",ITERATION_NUMBER,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum length difference = ",MAXIMUM_LENGTH_DIFFERENCE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Difference tolerance = ",LINE_INCREMENT_TOLERANCE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Maximum difference line = ",MAXIMUM_DIFFERENCE_LINE,ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of lines = ",FIELD%DECOMPOSITION%TOPOLOGY%LINES%NUMBER_OF_LINES, &
         & ERR,ERROR,*999)
       DO nl=1,FIELD%DECOMPOSITION%TOPOLOGY%LINES%NUMBER_OF_LINES
         CALL WRITE_STRING_FMT_TWO_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Line ",nl,"(I8)"," length = ",FIELD% &
@@ -12015,8 +12015,8 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Face areas:",ERR,ERROR,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of faces = ",FIELD%DECOMPOSITION%TOPOLOGY%FACES%NUMBER_OF_FACES, &
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Face areas:",ERR,ERROR,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of faces = ",FIELD%DECOMPOSITION%TOPOLOGY%FACES%NUMBER_OF_FACES, &
         & ERR,ERROR,*999)
       DO nf=1,FIELD%DECOMPOSITION%TOPOLOGY%FACES%NUMBER_OF_FACES
         CALL WRITE_STRING_FMT_TWO_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Face ",nf,"(I8)"," area = ",FIELD% &
@@ -13241,7 +13241,7 @@ CONTAINS
                       IF(ASSOCIATED(FIELD_TO_PARAMETER_SET)) THEN
                         FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%PTR=>FIELD_FROM_PARAMETER_SET
                         NULLIFY(FIELD_FROM_PARAMETERS(parameter_set_idx)%PTR)
-                        CALL DISTRIBUTED_VECTOR_DATA_GET(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%PTR%PARAMETERS, &
+                        CALL DistributedVector_DataGet(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%PTR%PARAMETERS, &
                           & FIELD_FROM_PARAMETERS(parameter_set_idx)%PTR,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="The field from set type of "// &
@@ -13267,11 +13267,11 @@ CONTAINS
                     DO parameter_set_idx=1,SIZE(FIELD_FROM_SET_TYPE,1)
                       VALUE=VALUE+ALPHA(parameter_set_idx)*FIELD_FROM_PARAMETERS(parameter_set_idx)%PTR(dof_idx)
                     ENDDO !parameter_set_idx
-                    CALL DISTRIBUTED_VECTOR_VALUES_ADD(FIELD_TO_PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesAdd(FIELD_TO_PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                   ENDDO !dof_idx
                   !Restore the from parameter set transfer
                   DO parameter_set_idx=1,SIZE(FIELD_FROM_SET_TYPE,1)
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%PTR%PARAMETERS, &
+                    CALL DistributedVector_DataRestore(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%PTR%PARAMETERS, &
                       & FIELD_FROM_PARAMETERS(parameter_set_idx)%PTR,ERR,ERROR,*999)
                   ENDDO !parameter_set_idx
                 ELSE
@@ -13708,7 +13708,7 @@ CONTAINS
                                             local_ny=TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
                                               &COMPONENTS(TO_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                               & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
-                                            CALL DISTRIBUTED_VECTOR_VALUES_SET(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
+                                            CALL DistributedVector_ValuesSet(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
                                             & PARAMETER_SETS%SET_TYPE(TO_PARAMETER_SET_TYPE)%PTR%PARAMETERS,local_ny,VALUE_INTG,&
                                             & ERR,ERROR,*999)
                                           ENDDO !gausspoint_idx
@@ -13727,7 +13727,7 @@ CONTAINS
                                             local_ny=TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
                                               &COMPONENTS(TO_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                               & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
-                                            CALL DISTRIBUTED_VECTOR_VALUES_SET(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
+                                            CALL DistributedVector_ValuesSet(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
                                             & PARAMETER_SETS%SET_TYPE(TO_PARAMETER_SET_TYPE)%PTR%PARAMETERS,local_ny,VALUE_SP,&
                                             & ERR,ERROR,*999)
                                           ENDDO !gausspoint_idx
@@ -13746,7 +13746,7 @@ CONTAINS
                                             local_ny=TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
                                             &COMPONENTS(TO_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                               & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
-                                            CALL DISTRIBUTED_VECTOR_VALUES_SET(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
+                                            CALL DistributedVector_ValuesSet(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
                                             & PARAMETER_SETS%SET_TYPE(TO_PARAMETER_SET_TYPE)%PTR%PARAMETERS,local_ny,VALUE_DP,&
                                             & ERR,ERROR,*999)
                                           ENDDO !gausspoint_idx
@@ -13765,7 +13765,7 @@ CONTAINS
                                             local_ny=TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
                                               &COMPONENTS(TO_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                               & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
-                                            CALL DISTRIBUTED_VECTOR_VALUES_SET(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
+                                            CALL DistributedVector_ValuesSet(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
                                             & PARAMETER_SETS%SET_TYPE(TO_PARAMETER_SET_TYPE)%PTR%PARAMETERS,local_ny,VALUE_L,&
                                             & ERR,ERROR,*999)
                                           ENDDO !gausspoint_idx
@@ -13913,7 +13913,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -14046,7 +14046,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -14179,7 +14179,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -14312,7 +14312,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -14447,7 +14447,7 @@ CONTAINS
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
                     GLOBAL_DOF_NUMBER=FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(DOF_NUMBER)
                     IF(FIELD_VARIABLE%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_DOF_NUMBER)%LOCAL_TYPE(1)/=DOMAIN_LOCAL_GHOST) THEN
-                      CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                      CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                     ELSE
                       LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                         & " is invalid as it is a ghost dof for this domain."
@@ -14541,7 +14541,7 @@ CONTAINS
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
                     GLOBAL_DOF_NUMBER=FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(DOF_NUMBER)
                     IF(FIELD_VARIABLE%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_DOF_NUMBER)%LOCAL_TYPE(1)/=DOMAIN_LOCAL_GHOST) THEN
-                      CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                      CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                     ELSE
                       LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                         & " is invalid as it is a ghost dof for this domain."
@@ -14635,7 +14635,7 @@ CONTAINS
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
                     GLOBAL_DOF_NUMBER=FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(DOF_NUMBER)
                     IF(FIELD_VARIABLE%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_DOF_NUMBER)%LOCAL_TYPE(1)/=DOMAIN_LOCAL_GHOST) THEN
-                      CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                      CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                     ELSE
                       LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                         & " is invalid as it is a ghost dof for this domain."
@@ -14729,7 +14729,7 @@ CONTAINS
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
                     GLOBAL_DOF_NUMBER=FIELD_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(DOF_NUMBER)
                     IF(FIELD_VARIABLE%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_DOF_NUMBER)%LOCAL_TYPE(1)/=DOMAIN_LOCAL_GHOST) THEN
-                      CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                      CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                     ELSE
                       LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                         & " is invalid as it is a ghost dof for this domain."
@@ -14843,7 +14843,7 @@ CONTAINS
                           ELSE
                             dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                               & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ENDIF
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
@@ -14998,7 +14998,7 @@ CONTAINS
                           ELSE
                             dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                               & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ENDIF
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
@@ -15154,7 +15154,7 @@ CONTAINS
                           ELSE
                             dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                               & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ENDIF
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
@@ -15309,7 +15309,7 @@ CONTAINS
                           ELSE
                             dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                               & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ENDIF
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
@@ -16108,7 +16108,7 @@ CONTAINS
                         & PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS( &
                           & LOCAL_ELEMENT_NUMBER)                      
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Local element number "//TRIM(NumberToVString(LOCAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                           & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
@@ -16247,7 +16247,7 @@ CONTAINS
                         & PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS( &
                           & LOCAL_ELEMENT_NUMBER)                      
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Local element number "//TRIM(NumberToVString(LOCAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                           & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
@@ -16386,7 +16386,7 @@ CONTAINS
                         & PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS( &
                           & LOCAL_ELEMENT_NUMBER)                      
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Local element number "//TRIM(NumberToVString(LOCAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                           & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
@@ -16525,7 +16525,7 @@ CONTAINS
                         & PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS( &
                           & LOCAL_ELEMENT_NUMBER)                      
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Local element number "//TRIM(NumberToVString(LOCAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                           & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
@@ -16694,7 +16694,7 @@ CONTAINS
                                   dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                     & VERSIONS(VERSION_NUMBER)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                  CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                                 ELSE
                                   LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                     & " is invalid for derivative number "// &
@@ -16888,7 +16888,7 @@ CONTAINS
                                   dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                     & VERSIONS(VERSION_NUMBER)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                  CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                                 ELSE
                                   LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                     & " is invalid for derivative number "// &
@@ -17082,7 +17082,7 @@ CONTAINS
                                   dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                     & VERSIONS(VERSION_NUMBER)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                  CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                                 ELSE
                                   LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                     & " is invalid for derivative number "// &
@@ -17276,7 +17276,7 @@ CONTAINS
                                   dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                     & VERSIONS(VERSION_NUMBER)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                  CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                                 ELSE
                                   LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                     & " is invalid for derivative number "// &
@@ -17453,7 +17453,7 @@ CONTAINS
                             & FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)%NUMBER_OF_VERSIONS) THEN
                             dof_idx=FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                               & VERSIONS(VERSION_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ELSE
                             LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                               & " is invalid for derivative number "// &
@@ -17624,7 +17624,7 @@ CONTAINS
                             & FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)%NUMBER_OF_VERSIONS) THEN
                             dof_idx=FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                               & VERSIONS(VERSION_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ELSE
                             LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                               & " is invalid for derivative number "// &
@@ -17795,7 +17795,7 @@ CONTAINS
                             & FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)%NUMBER_OF_VERSIONS) THEN
                             dof_idx=FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                               & VERSIONS(VERSION_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ELSE
                             LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                               & " is invalid for derivative number "// &
@@ -17966,7 +17966,7 @@ CONTAINS
                             & FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)%NUMBER_OF_VERSIONS) THEN
                             dof_idx=FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                               & VERSIONS(VERSION_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesAdd(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ELSE
                             LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                               & " is invalid for derivative number "// &
@@ -18125,19 +18125,19 @@ CONTAINS
             NEW_PARAMETER_SET%SET_INDEX=FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS+1
             NEW_PARAMETER_SET%SET_TYPE=FIELD_SET_TYPE
             NULLIFY(NEW_PARAMETER_SET%PARAMETERS)
-            CALL DISTRIBUTED_VECTOR_CREATE_START(FIELD_VARIABLE%DOMAIN_MAPPING,NEW_PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
+            CALL DistributedVector_CreateStart(FIELD_VARIABLE%DOMAIN_MAPPING,NEW_PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
             SELECT CASE(FIELD_VARIABLE%DATA_TYPE)
             CASE(FIELD_INTG_TYPE)
-              CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE, &
+              CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE, &
                 & ERR,ERROR,*999)
             CASE(FIELD_SP_TYPE)
-              CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_SP_TYPE, &
+              CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_SP_TYPE, &
                 & ERR,ERROR,*999)
             CASE(FIELD_DP_TYPE)
-              CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE, &
+              CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE, &
                 & ERR,ERROR,*999)
             CASE(FIELD_L_TYPE)
-              CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_L_TYPE, &
+              CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_L_TYPE, &
                 & ERR,ERROR,*999)
             CASE DEFAULT
               LOCAL_ERROR="The field data type of "//TRIM(NumberToVString(FIELD_VARIABLE%DATA_TYPE,"*",ERR,ERROR))// &
@@ -18145,16 +18145,16 @@ CONTAINS
                 & " of field number "//TRIM(NumberToVString(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
-            CALL DISTRIBUTED_VECTOR_CREATE_FINISH(NEW_PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
+            CALL DistributedVector_CreateFinish(NEW_PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
             SELECT CASE(FIELD_VARIABLE%DATA_TYPE)
             CASE(FIELD_INTG_TYPE)
-              CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(NEW_PARAMETER_SET%PARAMETERS,0_INTG,ERR,ERROR,*999)
+              CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,0_INTG,ERR,ERROR,*999)
             CASE(FIELD_SP_TYPE)
-              CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(NEW_PARAMETER_SET%PARAMETERS,0.0_SP,ERR,ERROR,*999)
+              CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,0.0_SP,ERR,ERROR,*999)
             CASE(FIELD_DP_TYPE)
-              CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(NEW_PARAMETER_SET%PARAMETERS,0.0_DP,ERR,ERROR,*999)
+              CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,0.0_DP,ERR,ERROR,*999)
             CASE(FIELD_L_TYPE)
-              CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(NEW_PARAMETER_SET%PARAMETERS,.FALSE.,ERR,ERROR,*999)
+              CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,.FALSE.,ERR,ERROR,*999)
             END SELECT
             !Add the new parameter set to the list of parameter sets
             ALLOCATE(NEW_PARAMETER_SETS(FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS+1),STAT=ERR)
@@ -18392,7 +18392,7 @@ CONTAINS
     ENTERS("FIELD_PARAMETER_SET_FINALISE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(FIELD_PARAMETER_SET)) THEN
-      IF(ASSOCIATED(FIELD_PARAMETER_SET%PARAMETERS)) CALL DISTRIBUTED_VECTOR_DESTROY(FIELD_PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
+      IF(ASSOCIATED(FIELD_PARAMETER_SET%PARAMETERS)) CALL DistributedVector_Destroy(FIELD_PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
       DEALLOCATE(FIELD_PARAMETER_SET)
     ENDIF
 
@@ -18436,7 +18436,7 @@ CONTAINS
                 IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
                   PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -18515,7 +18515,7 @@ CONTAINS
                 IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
                   PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -18594,7 +18594,7 @@ CONTAINS
                 IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
                   PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -18673,7 +18673,7 @@ CONTAINS
                 IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
                   PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -18749,7 +18749,7 @@ CONTAINS
                 IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
                   PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created on variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -18827,7 +18827,7 @@ CONTAINS
                 IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
                   PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created on variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -18905,7 +18905,7 @@ CONTAINS
                 IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
                   PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created on variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -18983,7 +18983,7 @@ CONTAINS
                 IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
                   PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                   IF(ASSOCIATED(PARAMETER_SET)) THEN
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(PARAMETER_SET%PARAMETERS,PARAMETERS,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                       & " has not been created on variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -19100,7 +19100,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -19234,7 +19234,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -19368,7 +19368,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -19501,7 +19501,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -19677,7 +19677,7 @@ CONTAINS
                           IF(userDataPointExists) THEN
                             DofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                               & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionLocalDataPointNumber)       
-                            CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesGet(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified user data point number of "// &
                               & TRIM(NumberToVString(userDataPointNumber,"*",ERR,ERROR))// &
@@ -19828,7 +19828,7 @@ CONTAINS
                           IF(userDataPointExists) THEN
                             DofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                               & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionLocalDataPointNumber)       
-                            CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesGet(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified user data point number of "// &
                               & TRIM(NumberToVString(userDataPointNumber,"*",ERR,ERROR))// &
@@ -19979,7 +19979,7 @@ CONTAINS
                           IF(userDataPointExists) THEN
                             DofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                               & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionLocalDataPointNumber)       
-                            CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesGet(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified user data point number of "// &
                               & TRIM(NumberToVString(userDataPointNumber,"*",ERR,ERROR))// &
@@ -20130,7 +20130,7 @@ CONTAINS
                           IF(userDataPointExists) THEN
                             DofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                               & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionLocalDataPointNumber)       
-                            CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesGet(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified user data point number of "// &
                               & TRIM(NumberToVString(userDataPointNumber,"*",ERR,ERROR))// &
@@ -20257,7 +20257,7 @@ CONTAINS
                         IF(USER_ELEMENT_EXISTS) THEN
                           dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                             & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                          CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                          CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
                             & TRIM(NumberToVString(USER_ELEMENT_NUMBER,"*",ERR,ERROR))// &
@@ -20407,7 +20407,7 @@ CONTAINS
                         IF(USER_ELEMENT_EXISTS) THEN
                           dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                             & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                          CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                          CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
                             & TRIM(NumberToVString(USER_ELEMENT_NUMBER,"*",ERR,ERROR))// &
@@ -20555,7 +20555,7 @@ CONTAINS
                         IF(USER_ELEMENT_EXISTS) THEN
                           dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                             & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                          CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                          CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
                             & TRIM(NumberToVString(USER_ELEMENT_NUMBER,"*",ERR,ERROR))// &
@@ -20703,7 +20703,7 @@ CONTAINS
                         IF(USER_ELEMENT_EXISTS) THEN
                           dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                             & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                          CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                          CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
                             & TRIM(NumberToVString(USER_ELEMENT_NUMBER,"*",ERR,ERROR))// &
@@ -20830,7 +20830,7 @@ CONTAINS
                 PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                 IF(ASSOCIATED(PARAMETER_SET)) THEN
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
-                    CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                       & " is invalid. It must be >0 and <="// &
@@ -20913,7 +20913,7 @@ CONTAINS
                 PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                 IF(ASSOCIATED(PARAMETER_SET)) THEN
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
-                    CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                       & " is invalid. It must be >0 and <="// &
@@ -20996,7 +20996,7 @@ CONTAINS
                 PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                 IF(ASSOCIATED(PARAMETER_SET)) THEN
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
-                    CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                       & " is invalid. It must be >0 and <="// &
@@ -21079,7 +21079,7 @@ CONTAINS
                 PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
                 IF(ASSOCIATED(PARAMETER_SET)) THEN
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
-                    CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                       & " is invalid. It must be >0 and <="// &
@@ -21201,7 +21201,7 @@ CONTAINS
                                 dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                   & VERSIONS(VERSION_NUMBER)
-                                CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                               ELSE
                                 LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                   & " is invalid for derivative number "// &
@@ -21389,7 +21389,7 @@ CONTAINS
                                 dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                   & VERSIONS(VERSION_NUMBER)
-                                CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                               ELSE
                                 LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                   & " is invalid for derivative number "// &
@@ -21577,7 +21577,7 @@ CONTAINS
                                 dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                   & VERSIONS(VERSION_NUMBER)
-                                CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                               ELSE
                                 LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                   & " is invalid for derivative number "// &
@@ -21765,7 +21765,7 @@ CONTAINS
                                 dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                   & VERSIONS(VERSION_NUMBER)
-                                CALL DISTRIBUTED_VECTOR_VALUES_GET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                CALL DistributedVector_ValuesGet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                               ELSE
                                 LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                   & " is invalid for derivative number "// &
@@ -21952,7 +21952,7 @@ CONTAINS
                                   dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(localNodeNumber)%derivatives(derivativeNumber)% &
                                     & versions(versionNumber)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                                  CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                                 ELSE
                                   localError="Version number "//TRIM(NumberToVString(versionNumber,"*",err,error))// &
                                     & " is invalid for derivative number "// &
@@ -22142,7 +22142,7 @@ CONTAINS
                                   dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(localNodeNumber)%derivatives(derivativeNumber)% &
                                     & versions(versionNumber)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                                  CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                                 ELSE
                                   localError="Version number "//TRIM(NumberToVString(versionNumber,"*",err,error))// &
                                     & " is invalid for derivative number "// &
@@ -22332,7 +22332,7 @@ CONTAINS
                                   dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(localNodeNumber)%derivatives(derivativeNumber)% &
                                     & versions(versionNumber)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                                  CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                                 ELSE
                                   localError="Version number "//TRIM(NumberToVString(versionNumber,"*",err,error))// &
                                     & " is invalid for derivative number "// &
@@ -22522,7 +22522,7 @@ CONTAINS
                                   dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(localNodeNumber)%derivatives(derivativeNumber)% &
                                     & versions(versionNumber)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                                  CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                                 ELSE
                                   localError="Version number "//TRIM(NumberToVString(versionNumber,"*",err,error))// &
                                     & " is invalid for derivative number "// &
@@ -22700,7 +22700,7 @@ CONTAINS
                             IF(localElementNumber>0.AND.localElementNumber<=domainElements%TOTAL_NUMBER_OF_ELEMENTS) THEN
                               dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                 & ELEMENT_PARAM2DOF_MAP%ELEMENTS(localElementNumber)
-                              CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                              CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                             ELSE
                               localError="The specified local element number of "// &
                                 & TRIM(NumberToVString(localElementNumber,"*",ERR,ERROR))// &
@@ -22858,7 +22858,7 @@ CONTAINS
                             IF(localElementNumber>0.AND.localElementNumber<=domainElements%TOTAL_NUMBER_OF_ELEMENTS) THEN
                               dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                 & ELEMENT_PARAM2DOF_MAP%ELEMENTS(localElementNumber)
-                              CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                              CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                             ELSE
                               localError="The specified local element number of "// &
                                 & TRIM(NumberToVString(localElementNumber,"*",ERR,ERROR))// &
@@ -23016,7 +23016,7 @@ CONTAINS
                             IF(localElementNumber>0.AND.localElementNumber<=domainElements%TOTAL_NUMBER_OF_ELEMENTS) THEN
                               dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                 & ELEMENT_PARAM2DOF_MAP%ELEMENTS(localElementNumber)
-                              CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                              CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                             ELSE
                               localError="The specified local element number of "// &
                                 & TRIM(NumberToVString(localElementNumber,"*",ERR,ERROR))// &
@@ -23174,7 +23174,7 @@ CONTAINS
                             IF(localElementNumber>0.AND.localElementNumber<=domainElements%TOTAL_NUMBER_OF_ELEMENTS) THEN
                               dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                 & ELEMENT_PARAM2DOF_MAP%ELEMENTS(localElementNumber)
-                              CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                              CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                             ELSE
                               localError="The specified local element number of "// &
                                 & TRIM(NumberToVString(localElementNumber,"*",ERR,ERROR))// &
@@ -23351,7 +23351,7 @@ CONTAINS
                             & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
                             dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                               & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,decompositionLocalElementNumber)
-                            CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified gauss point number "// &
                               & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
@@ -23510,7 +23510,7 @@ CONTAINS
                                 & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
                                 dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                   & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
-                                CALL DISTRIBUTED_VECTOR_VALUES_GET(parameterSet%parameters,dofIdx,VALUE,err,error,*999)
+                                CALL DistributedVector_ValuesGet(parameterSet%parameters,dofIdx,VALUE,err,error,*999)
                               ELSE
                                 localError="The specified gauss point number "// &
                                   & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
@@ -23690,7 +23690,7 @@ CONTAINS
                                   & NUMBER_OF_DATA_POINT_PARAMETERS) THEN
                                   dofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                                     & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(dataPointLocalNumber)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%PARAMETERS,dofIdx,value,err,error,*999)
+                                  CALL DistributedVector_ValuesSet(parameterSet%PARAMETERS,dofIdx,value,err,error,*999)
                                 ELSE
                                   localError="The specified data point index "// &
                                     & TRIM(NumberToVString(dataPointLocalNumber,"*",err,error))// &
@@ -23830,7 +23830,7 @@ CONTAINS
             IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
               PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
               IF(ASSOCIATED(PARAMETER_SET)) THEN
-                CALL DISTRIBUTED_VECTOR_OUTPUT(ID,PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
+                CALL DistributedVector_Output(ID,PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
               ELSE
                 LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                   & " has not been created on field number "//TRIM(NumberToVString(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
@@ -23905,7 +23905,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -24038,7 +24038,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -24172,7 +24172,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -24305,7 +24305,7 @@ CONTAINS
                     CASE(FIELD_CONSTANT_INTERPOLATION)
                       IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
                           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",ERR,ERROR))// &
@@ -24480,7 +24480,7 @@ CONTAINS
                           IF(userDataPointExists) THEN
                             DofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                               & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionLocalDataPointNumber)       
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesSet(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified user data point number of "// &
                               & TRIM(NumberToVString(userDataPointNumber,"*",ERR,ERROR))// &
@@ -24632,7 +24632,7 @@ CONTAINS
                           IF(userDataPointExists) THEN
                             DofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                               & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionLocalDataPointNumber)       
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesSet(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified user data point number of "// &
                               & TRIM(NumberToVString(userDataPointNumber,"*",ERR,ERROR))// &
@@ -24784,7 +24784,7 @@ CONTAINS
                           IF(userDataPointExists) THEN
                             DofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                               & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionLocalDataPointNumber)       
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesSet(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified user data point number of "// &
                               & TRIM(NumberToVString(userDataPointNumber,"*",ERR,ERROR))// &
@@ -24936,7 +24936,7 @@ CONTAINS
                           IF(userDataPointExists) THEN
                             DofIdx=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP% &
                               & DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionLocalDataPointNumber)       
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
+                            CALL DistributedVector_ValuesSet(parameterSet%PARAMETERS,DofIdx,value,err,error,*999)
                           ELSE
                             localError="The specified user data point number of "// &
                               & TRIM(NumberToVString(userDataPointNumber,"*",ERR,ERROR))// &
@@ -25443,7 +25443,7 @@ CONTAINS
                 IF(ASSOCIATED(PARAMETER_SET)) THEN
 !!TODO: Allow to specify a global number and then have it all update accordingly???
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_LOCAL) THEN
-                    CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                       & " is invalid. It must be >0 and <="// &
@@ -25527,7 +25527,7 @@ CONTAINS
                 IF(ASSOCIATED(PARAMETER_SET)) THEN
 !!TODO: Allow to specify a global number and then have it all update accordingly???
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_LOCAL) THEN
-                    CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                       & " is invalid. It must be >0 and <="// &
@@ -25611,7 +25611,7 @@ CONTAINS
                 IF(ASSOCIATED(PARAMETER_SET)) THEN
 !!TODO: Allow to specify a global number and then have it all update accordingly???
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_LOCAL) THEN
-                    CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                       & " is invalid. It must be >0 and <="// &
@@ -25695,7 +25695,7 @@ CONTAINS
                 IF(ASSOCIATED(PARAMETER_SET)) THEN
 !!TODO: Allow to specify a global number and then have it all update accordingly???
                   IF(DOF_NUMBER>0.AND.DOF_NUMBER<=FIELD_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_LOCAL) THEN
-                    CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
+                    CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,DOF_NUMBER,VALUE,ERR,ERROR,*999)
                   ELSE
                     LOCAL_ERROR="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",ERR,ERROR))// &
                       & " is invalid. It must be >0 and <="// &
@@ -25780,7 +25780,7 @@ CONTAINS
                   IF(SIZE(VALUES)==FIELD_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_LOCAL) THEN
                     !\todo: set the vector values directly without looping
                     DO dof=1,FIELD_VARIABLE%DOMAIN_MAPPING%NUMBER_OF_LOCAL
-                      CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof,VALUES(dof),ERR,ERROR,*999)
+                      CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof,VALUES(dof),ERR,ERROR,*999)
                     ENDDO
                   ELSE
                     LOCAL_ERROR="The size of the parameter vector ("//TRIM(NumberToVString(SIZE(VALUES),"*",ERR,ERROR))// &
@@ -25890,7 +25890,7 @@ CONTAINS
                           ELSE
                             dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                               & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ENDIF
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
@@ -26045,7 +26045,7 @@ CONTAINS
                           ELSE
                             dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                               & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ENDIF
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
@@ -26199,7 +26199,7 @@ CONTAINS
                           ELSE
                             dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                               & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ENDIF
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
@@ -26353,7 +26353,7 @@ CONTAINS
                           ELSE
                             dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                               & ELEMENT_PARAM2DOF_MAP%ELEMENTS(DECOMPOSITION_LOCAL_ELEMENT_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ENDIF
                         ELSE
                           LOCAL_ERROR="The specified user element number of "// &
@@ -26495,7 +26495,7 @@ CONTAINS
                         & PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS( &
                           & LOCAL_ELEMENT_NUMBER)
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Local element number "//TRIM(NumberToVString(LOCAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                           & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
@@ -26635,7 +26635,7 @@ CONTAINS
                         & PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS( &
                           & LOCAL_ELEMENT_NUMBER)
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Local element number "//TRIM(NumberToVString(LOCAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                           & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
@@ -26773,7 +26773,7 @@ CONTAINS
                         & PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS( &
                           & LOCAL_ELEMENT_NUMBER)
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Local element number "//TRIM(NumberToVString(LOCAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                           & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
@@ -26911,7 +26911,7 @@ CONTAINS
                         & PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%NUMBER_OF_ELEMENT_PARAMETERS) THEN
                         ny=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS( &
                           & LOCAL_ELEMENT_NUMBER)
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,ny,VALUE,ERR,ERROR,*999)
                       ELSE
                         LOCAL_ERROR="Local element number "//TRIM(NumberToVString(LOCAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                           & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",ERR,ERROR))// &
@@ -27030,7 +27030,7 @@ CONTAINS
             IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
               PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
               IF(ASSOCIATED(PARAMETER_SET)) THEN
-                CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
+                CALL DistributedVector_UpdateFinish(PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
                 IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE.AND.FIELD_SET_TYPE==FIELD_VALUES_SET_TYPE) THEN
                   !Geometric field values have changed so update the geometric parameters (e.g., lines etc.)
                   CALL FIELD_GEOMETRIC_PARAMETERS_CALCULATE(FIELD,ERR,ERROR,*999)
@@ -27149,7 +27149,7 @@ CONTAINS
                                   dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                     & VERSIONS(VERSION_NUMBER)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                  CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                                 ELSE
                                   LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                     & " is invalid for derivative number "// &
@@ -27343,7 +27343,7 @@ CONTAINS
                                   dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                     & VERSIONS(VERSION_NUMBER)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                  CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                                 ELSE
                                   LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                     & " is invalid for derivative number "// &
@@ -27537,7 +27537,7 @@ CONTAINS
                                   dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                     & VERSIONS(VERSION_NUMBER)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                  CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                                 ELSE
                                   LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                     & " is invalid for derivative number "// &
@@ -27731,7 +27731,7 @@ CONTAINS
                                   dof_idx=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(DOMAIN_LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                                     & VERSIONS(VERSION_NUMBER)
-                                  CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                                  CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                                 ELSE
                                   LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                                     & " is invalid for derivative number "// &
@@ -27908,7 +27908,7 @@ CONTAINS
                             & FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)%NUMBER_OF_VERSIONS) THEN
                             dof_idx=FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                               & VERSIONS(VERSION_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ELSE
                             LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                               & " is invalid for derivative number "// &
@@ -28079,7 +28079,7 @@ CONTAINS
                             & FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)%NUMBER_OF_VERSIONS) THEN
                             dof_idx=FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                               & VERSIONS(VERSION_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ELSE
                             LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                               & " is invalid for derivative number "// &
@@ -28250,7 +28250,7 @@ CONTAINS
                             & FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)%NUMBER_OF_VERSIONS) THEN
                             dof_idx=FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                               & VERSIONS(VERSION_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ELSE
                             LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                               & " is invalid for derivative number "// &
@@ -28421,7 +28421,7 @@ CONTAINS
                             & FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)%NUMBER_OF_VERSIONS) THEN
                             dof_idx=FIELD_NODES%NODES(LOCAL_NODE_NUMBER)%DERIVATIVES(DERIVATIVE_NUMBER)% &
                               & VERSIONS(VERSION_NUMBER)
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
+                            CALL DistributedVector_ValuesSet(PARAMETER_SET%PARAMETERS,dof_idx,VALUE,ERR,ERROR,*999)
                           ELSE
                             LOCAL_ERROR="Version number "//TRIM(NumberToVString(VERSION_NUMBER,"*",ERR,ERROR))// &
                               & " is invalid for derivative number "// &
@@ -28615,7 +28615,7 @@ CONTAINS
                               & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
                               dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                 & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
-                              CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                              CALL DistributedVector_ValuesSet(parameterSet%parameters,dofIdx,value,err,error,*999)
                             ELSE
                               localError="The specified Gauss point number "// &
                                 & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
@@ -28781,7 +28781,7 @@ CONTAINS
                               & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
                               dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                 & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
-                              CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                              CALL DistributedVector_ValuesSet(parameterSet%parameters,dofIdx,value,err,error,*999)
                             ELSE
                               localError="The specified Gauss point number "// &
                                 & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
@@ -28947,7 +28947,7 @@ CONTAINS
                               & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
                               dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                 & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
-                              CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                              CALL DistributedVector_ValuesSet(parameterSet%parameters,dofIdx,value,err,error,*999)
                             ELSE
                               localError="The specified Gauss point number "// &
                                 & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
@@ -29113,7 +29113,7 @@ CONTAINS
                               & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
                               dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                 & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
-                              CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                              CALL DistributedVector_ValuesSet(parameterSet%parameters,dofIdx,value,err,error,*999)
                             ELSE
                               localError="The specified Gauss point number "// &
                                 & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
@@ -29272,7 +29272,7 @@ CONTAINS
                                 & components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
                                 dofIdx=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
                                   & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussPointNumber,localElementNumber)
-                                CALL DISTRIBUTED_VECTOR_VALUES_SET(parameterSet%parameters,dofIdx,value,err,error,*999)
+                                CALL DistributedVector_ValuesSet(parameterSet%parameters,dofIdx,value,err,error,*999)
                               ELSE
                                 localError="The specified gauss point number "// &
                                   & TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
@@ -29912,7 +29912,7 @@ CONTAINS
           IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<=FIELD_NUMBER_OF_SET_TYPES) THEN
             PARAMETER_SET=>FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR
             IF(ASSOCIATED(PARAMETER_SET)) THEN
-              CALL DISTRIBUTED_VECTOR_UPDATE_START(PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
+              CALL DistributedVector_UpdateStart(PARAMETER_SET%PARAMETERS,ERR,ERROR,*999)
             ELSE
               LOCAL_ERROR="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",ERR,ERROR))// &
                 & " has not been created on field number "//TRIM(NumberToVString(FIELD%USER_NUMBER,"*",ERR,ERROR))//"."
@@ -30116,7 +30116,7 @@ CONTAINS
         !IF(ALLOCATED(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS))  &
         !  & DEALLOCATE(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS)
         IF(ASSOCIATED(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS)) &
-          & CALL DISTRIBUTED_VECTOR_DESTROY(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,ERR,ERROR,*999)
+          & CALL DistributedVector_Destroy(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,ERR,ERROR,*999)
       ELSE
         LOCAL_ERROR="The scaling index of "//TRIM(NumberToVString(SCALING_INDEX,"*",ERR,ERROR))// &
           & " is invalid for field number "//TRIM(NumberToVString(FIELD%USER_NUMBER,"*",ERR,ERROR))// &
@@ -30170,14 +30170,14 @@ CONTAINS
             !  & NODES%TOTAL_NUMBER_OF_NODES),STAT=ERR)
             !IF(ERR/=0) CALL FlagError("Could not allocate scale factors",ERR,ERROR,*999)
             !FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS=1.0_DP
-            CALL DISTRIBUTED_VECTOR_CREATE_START(FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR%MAPPINGS%DOFS, &
+            CALL DistributedVector_CreateStart(FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR%MAPPINGS%DOFS, &
               & FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,ERR,ERROR,*999)
-            CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS, &
+            CALL DistributedVector_DataTypeSet(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS, &
               & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-            CALL DISTRIBUTED_VECTOR_CREATE_FINISH(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,ERR,ERROR,*999)
+            CALL DistributedVector_CreateFinish(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,ERR,ERROR,*999)
             IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
               !Initialise the scalings to 1.0 for a geometric field. Other field types will be setup in FIELD_SCALINGS_CALCULATE
-              CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,1.0_DP,ERR,ERROR,*999)
+              CALL DistributedVector_AllValuesSet(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,1.0_DP,ERR,ERROR,*999)
             ENDIF
           CASE(FIELD_ARC_LENGTH_SCALING)
             CALL FlagError("Not implemented.",ERR,ERROR,*999)
@@ -30252,9 +30252,9 @@ CONTAINS
               FIELD_SCALING=>FIELD_SCALINGS%SCALINGS(scaling_idx)
               MESH_COMPONENT_NUMBER=FIELD_SCALING%MESH_COMPONENT_NUMBER
               DOMAIN=>FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%PTR
-              CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(FIELD_SCALING%SCALE_FACTORS,1.0_DP,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_UPDATE_START(FIELD_SCALING%SCALE_FACTORS,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(FIELD_SCALING%SCALE_FACTORS,ERR,ERROR,*999)
+              CALL DistributedVector_AllValuesSet(FIELD_SCALING%SCALE_FACTORS,1.0_DP,ERR,ERROR,*999)
+              CALL DistributedVector_UpdateStart(FIELD_SCALING%SCALE_FACTORS,ERR,ERROR,*999)
+              CALL DistributedVector_UpdateFinish(FIELD_SCALING%SCALE_FACTORS,ERR,ERROR,*999)
             ENDDO !scaling_idx
           CASE(FIELD_ARC_LENGTH_SCALING)
             CALL FlagError("Not implemented.",ERR,ERROR,*999)
@@ -30270,7 +30270,7 @@ CONTAINS
                 DECOMPOSITION_LINES=>FIELD%DECOMPOSITION%TOPOLOGY%LINES
               ENDIF
               NULLIFY(SCALE_FACTORS)
-              CALL DISTRIBUTED_VECTOR_DATA_GET(FIELD_SCALING%SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
+              CALL DistributedVector_DataGet(FIELD_SCALING%SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
               DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
                 DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
                   partial_derivative_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%PARTIAL_DERIVATIVE_INDEX
@@ -30278,7 +30278,7 @@ CONTAINS
                   CASE(NO_PART_DERIV)
                     DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
                       dof_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%DOF_INDEX(version_idx)
-                      CALL DISTRIBUTED_VECTOR_VALUES_SET(FIELD_SCALING%SCALE_FACTORS,dof_idx,1.0_DP,ERR,ERROR,*999)
+                      CALL DistributedVector_ValuesSet(FIELD_SCALING%SCALE_FACTORS,dof_idx,1.0_DP,ERR,ERROR,*999)
                     ENDDO
                   CASE(PART_DERIV_S1,PART_DERIV_S2,PART_DERIV_S3)
                     IF(FIELD%DECOMPOSITION%CALCULATE_LINES) THEN
@@ -30348,7 +30348,7 @@ CONTAINS
                       ENDIF
                       DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
                         dof_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%DOF_INDEX(version_idx)
-                        CALL DISTRIBUTED_VECTOR_VALUES_SET(FIELD_SCALING%SCALE_FACTORS,dof_idx,MEAN_LENGTH,ERR,ERROR,*999)
+                        CALL DistributedVector_ValuesSet(FIELD_SCALING%SCALE_FACTORS,dof_idx,MEAN_LENGTH,ERR,ERROR,*999)
                       ENDDO !version_idx
                     ENDIF
                   CASE(PART_DERIV_S1_S2,PART_DERIV_S1_S3,PART_DERIV_S2_S3,PART_DERIV_S1_S2_S3)
@@ -30407,7 +30407,7 @@ CONTAINS
                               ENDIF
                             ENDDO !nk2
                             IF(FOUND) THEN
-                              CALL DISTRIBUTED_VECTOR_VALUES_SET(FIELD_SCALING%SCALE_FACTORS,dof_idx, &
+                              CALL DistributedVector_ValuesSet(FIELD_SCALING%SCALE_FACTORS,dof_idx, &
                                 SCALE_FACTORS(ny1)*SCALE_FACTORS(ny2)*SCALE_FACTORS(ny3),ERR,ERROR,*999)
                             ELSE
                               LOCAL_ERROR="Could not find the first partial derivative in the s3 direction index for "//&
@@ -30415,7 +30415,7 @@ CONTAINS
                               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                             ENDIF
                           ELSE
-                            CALL DISTRIBUTED_VECTOR_VALUES_SET(FIELD_SCALING%SCALE_FACTORS,dof_idx,SCALE_FACTORS(ny1)* &
+                            CALL DistributedVector_ValuesSet(FIELD_SCALING%SCALE_FACTORS,dof_idx,SCALE_FACTORS(ny1)* &
                               & SCALE_FACTORS(ny2),ERR,ERROR,*999)
                           ENDIF
                         ELSE
@@ -30438,8 +30438,8 @@ CONTAINS
                   END SELECT
                 ENDDO !derivative_idx
               ENDDO !node_idx
-              CALL DISTRIBUTED_VECTOR_UPDATE_START(FIELD_SCALING%SCALE_FACTORS,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(FIELD_SCALING%SCALE_FACTORS,ERR,ERROR,*999)
+              CALL DistributedVector_UpdateStart(FIELD_SCALING%SCALE_FACTORS,ERR,ERROR,*999)
+              CALL DistributedVector_UpdateFinish(FIELD_SCALING%SCALE_FACTORS,ERR,ERROR,*999)
             ENDDO !scaling_idx
           CASE DEFAULT
             LOCAL_ERROR="The scaling type of "//TRIM(NumberToVString(FIELD_SCALINGS%SCALING_TYPE,"*",ERR,ERROR))// &
@@ -30460,20 +30460,20 @@ CONTAINS
       IF(FIELD_SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING) THEN
         IF(ASSOCIATED(DOMAIN))THEN
           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
-          CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Scale Factors for nodes in the domain:",ERR,ERROR,*999)
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Scale Factors for nodes in the domain:",ERR,ERROR,*999)
           DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Node : ",node_idx,ERR,ERROR,*999)
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Derivatives = ", &
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Node : ",node_idx,ERR,ERROR,*999)
+            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Derivatives = ", &
               & DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES,ERR,ERROR,*999)
             DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative : ",derivative_idx,ERR,ERROR,*999)
-              CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of Versions = ", &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative : ",derivative_idx,ERR,ERROR,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of Versions = ", &
                 & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions,ERR,ERROR,*999)
               DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Version : ",version_idx,ERR,ERROR,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Version : ",version_idx,ERR,ERROR,*999)
                 dof_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%DOF_INDEX(version_idx)
-                CALL DISTRIBUTED_VECTOR_VALUES_GET(FIELD_SCALING%SCALE_FACTORS,dof_idx,VALUE,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Scale Factor : ",VALUE,ERR,ERROR,*999)
+                CALL DistributedVector_ValuesGet(FIELD_SCALING%SCALE_FACTORS,dof_idx,VALUE,ERR,ERROR,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Scale Factor : ",VALUE,ERR,ERROR,*999)
               ENDDO !version_idx
             ENDDO !derivative_idx
           ENDDO !node_idx

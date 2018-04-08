@@ -5564,11 +5564,11 @@ CONTAINS
                               dynamicMatrices=>vectorMatrices%dynamicMatrices
                               IF(ASSOCIATED(dynamicMatrices)) THEN
                                 IF(.NOT.ASSOCIATED(dynamicMatrices%tempVector)) THEN
-                                  CALL DISTRIBUTED_VECTOR_CREATE_START(DYNAMIC_VARIABLE%DOMAIN_MAPPING, &
+                                  CALL DistributedVector_CreateStart(DYNAMIC_VARIABLE%DOMAIN_MAPPING, &
                                     & dynamicMatrices%tempVector,ERR,ERROR,*999)
-                                  CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(dynamicMatrices%tempVector, &
+                                  CALL DistributedVector_DataTypeSet(dynamicMatrices%tempVector, &
                                     & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                  CALL DISTRIBUTED_VECTOR_CREATE_FINISH(dynamicMatrices%tempVector,ERR,ERROR,*999)
+                                  CALL DistributedVector_CreateFinish(dynamicMatrices%tempVector,ERR,ERROR,*999)
                                 ENDIF
                                 !Check to see if we have an explicit solve
                                 IF(ABS(DYNAMIC_SOLVER%THETA(DYNAMIC_SOLVER%DEGREE))<ZERO_TOLERANCE) THEN
@@ -5651,11 +5651,11 @@ CONTAINS
                                   IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                     LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                     IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                      CALL DISTRIBUTED_VECTOR_CREATE_START(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                      CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
                                         & equationsMatrix%tempVector,ERR,ERROR,*999)
-                                      CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(equationsMatrix%tempVector, &
+                                      CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                         & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                      CALL DISTRIBUTED_VECTOR_CREATE_FINISH(equationsMatrix%tempVector,ERR,ERROR,*999)
+                                      CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,ERR,ERROR,*999)
                                     ELSE
                                       CALL FlagError("Linear mapping linear variable is not associated.",ERR,ERROR,*999)
                                     ENDIF
@@ -7025,7 +7025,7 @@ CONTAINS
                 DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
                   CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx, &
                     & ERR,ERROR,*999)
-                  CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr% &
+                  CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr% &
                     & SOLVER_VECTOR,ERR,ERROR,*999)
                 ENDDO !solver_matrix_idx
               ELSE
@@ -10449,26 +10449,26 @@ CONTAINS
                   IF(ASSOCIATED(rhsVector)) THEN
                     SOLVER_VECTOR=>SOLVER_MATRICES%matrices(1)%ptr%SOLVER_VECTOR
                     IF(ASSOCIATED(SOLVER_VECTOR)) THEN
-                      CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(SOLVER_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
+                      CALL DistributedMatrix_StorageTypeGet(SOLVER_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
                       IF(STORAGE_TYPE==DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
                         SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
                         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                           ROW_DOFS_MAPPING=>SOLVER_MAPPING%ROW_DOFS_MAPPING
                           IF(ASSOCIATED(ROW_DOFS_MAPPING)) THEN
-                            CALL DISTRIBUTED_VECTOR_DATA_GET(rhsVector,RHS_DATA,ERR,ERROR,*999)
+                            CALL DistributedVector_DataGet(rhsVector,RHS_DATA,ERR,ERROR,*999)
                             DO local_row=1,SOLVER_MAPPING%NUMBER_OF_ROWS
                               global_row=ROW_DOFS_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
-                              CALL DISTRIBUTED_MATRIX_VALUES_GET(SOLVER_MATRIX%MATRIX,local_row,global_row,VALUE,ERR,ERROR,*999)
+                              CALL DistributedMatrix_ValuesGet(SOLVER_MATRIX%MATRIX,local_row,global_row,VALUE,ERR,ERROR,*999)
                               IF(ABS(VALUE)>ZERO_TOLERANCE) THEN
                                 SOLVER_VALUE=RHS_DATA(local_row)/VALUE
-                                CALL DISTRIBUTED_VECTOR_VALUES_SET(SOLVER_VECTOR,local_row,SOLVER_VALUE,ERR,ERROR,*999)
+                                CALL DistributedVector_ValuesSet(SOLVER_VECTOR,local_row,SOLVER_VALUE,ERR,ERROR,*999)
                               ELSE
                                 LOCAL_ERROR="The linear solver matrix has a zero pivot on row "// &
                                   & TRIM(NumberToVString(local_row,"*",ERR,ERROR))//"."
                                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               ENDIF
                             ENDDO !matrix_idx
-                            CALL DISTRIBUTED_VECTOR_DATA_RESTORE(rhsVector,RHS_DATA,ERR,ERROR,*999)
+                            CALL DistributedVector_DataRestore(rhsVector,RHS_DATA,ERR,ERROR,*999)
                           ELSE
                             CALL FlagError("Solver mapping row dofs mapping is not associated.",ERR,ERROR,*999)
                           ENDIF
@@ -11808,26 +11808,26 @@ CONTAINS
                   IF(ASSOCIATED(rhsVector)) THEN
                     SOLVER_VECTOR=>SOLVER_MATRICES%matrices(1)%ptr%SOLVER_VECTOR
                     IF(ASSOCIATED(SOLVER_VECTOR)) THEN
-                      CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(SOLVER_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
+                      CALL DistributedMatrix_StorageTypeGet(SOLVER_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
                       IF(STORAGE_TYPE==DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
                         SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
                         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                           ROW_DOFS_MAPPING=>SOLVER_MAPPING%ROW_DOFS_MAPPING
                           IF(ASSOCIATED(ROW_DOFS_MAPPING)) THEN
-                            CALL DISTRIBUTED_VECTOR_DATA_GET(rhsVector,RHS_DATA,ERR,ERROR,*999)
+                            CALL DistributedVector_DataGet(rhsVector,RHS_DATA,ERR,ERROR,*999)
                             DO local_row=1,SOLVER_MAPPING%NUMBER_OF_ROWS
                               global_row=ROW_DOFS_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
-                              CALL DISTRIBUTED_MATRIX_VALUES_GET(SOLVER_MATRIX%MATRIX,local_row,global_row,VALUE,ERR,ERROR,*999)
+                              CALL DistributedMatrix_ValuesGet(SOLVER_MATRIX%MATRIX,local_row,global_row,VALUE,ERR,ERROR,*999)
                               IF(ABS(VALUE)>ZERO_TOLERANCE) THEN
                                 SOLVER_VALUE=RHS_DATA(local_row)/VALUE
-                                CALL DISTRIBUTED_VECTOR_VALUES_SET(SOLVER_VECTOR,local_row,SOLVER_VALUE,ERR,ERROR,*999)
+                                CALL DistributedVector_ValuesSet(SOLVER_VECTOR,local_row,SOLVER_VALUE,ERR,ERROR,*999)
                               ELSE
                                 LOCAL_ERROR="The linear solver matrix has a zero pivot on row "// &
                                   & TRIM(NumberToVString(local_row,"*",ERR,ERROR))//"."
                                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               ENDIF
                             ENDDO !matrix_idx
-                            CALL DISTRIBUTED_VECTOR_DATA_RESTORE(rhsVector,RHS_DATA,ERR,ERROR,*999)
+                            CALL DistributedVector_DataRestore(rhsVector,RHS_DATA,ERR,ERROR,*999)
                           ELSE
                             CALL FlagError("Solver mapping row dofs mapping is not associated.",ERR,ERROR,*999)
                           ENDIF
@@ -11844,7 +11844,7 @@ CONTAINS
                               SELECT CASE(LINEAR_ITERATIVE_SOLVER%SOLUTION_INITIALISE_TYPE)
                               CASE(SOLVER_SOLUTION_INITIALISE_ZERO)
                                 !Zero the solution vector
-                                CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(SOLVER_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                CALL DistributedVector_AllValuesSet(SOLVER_VECTOR,0.0_DP,ERR,ERROR,*999)
                                 !Tell PETSc that the solution vector is zero
                                 CALL Petsc_KSPSetInitialGuessNonZero(LINEAR_ITERATIVE_SOLVER%KSP,.FALSE.,ERR,ERROR,*999)
                               CASE(SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD)
@@ -12232,7 +12232,7 @@ CONTAINS
                 & ERR,ERROR,*999)
               DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
                 CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx,ERR,ERROR,*999)
-                CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr% &
+                CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr% &
                   & SOLVER_VECTOR,ERR,ERROR,*999)
               ENDDO !solver_matrix_idx
             ELSE
@@ -12581,7 +12581,7 @@ CONTAINS
                         SOLVER_DISTRIBUTED_MATRIX=>SOLVER_MATRIX%MATRIX
                         IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
                           !Initialise matrix to zero
-                          CALL DISTRIBUTED_MATRIX_ALL_VALUES_SET(SOLVER_DISTRIBUTED_MATRIX,0.0_DP,ERR,ERROR,*999)
+                          CALL DistributedMatrix_AllValuesSet(SOLVER_DISTRIBUTED_MATRIX,0.0_DP,ERR,ERROR,*999)
                           !Loop over the equations sets
                           DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                             EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
@@ -12754,10 +12754,10 @@ CONTAINS
                             ENDDO !interface_matrix_idx
                           ENDDO !interface_condition_idx
                           !Update the solver matrix values
-                          CALL DISTRIBUTED_MATRIX_UPDATE_START(SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
+                          CALL DistributedMatrix_UpdateStart(SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
 
                           IF(ASSOCIATED(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX)) THEN
-                            CALL DISTRIBUTED_MATRIX_UPDATE_FINISH(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
+                            CALL DistributedMatrix_UpdateFinish(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
                           ENDIF
                           PREVIOUS_SOLVER_DISTRIBUTED_MATRIX=>SOLVER_DISTRIBUTED_MATRIX
                         ELSE
@@ -12780,7 +12780,7 @@ CONTAINS
                     CALL FlagError("Invalid number of solver matrices.",ERR,ERROR,*999)
                   ENDIF
                   IF(ASSOCIATED(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX)) THEN
-                    CALL DISTRIBUTED_MATRIX_UPDATE_FINISH(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
+                    CALL DistributedMatrix_UpdateFinish(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
                   ENDIF
                   IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                     CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
@@ -12814,10 +12814,10 @@ CONTAINS
                     SOLVER_RHS_VECTOR=>SOLVER_MATRICES%RHS_VECTOR
                     IF(ASSOCIATED(SOLVER_RHS_VECTOR)) THEN
                       !Initialise the RHS to zero
-                      CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(SOLVER_RHS_VECTOR,0.0_DP,ERR,ERROR,*999)          
+                      CALL DistributedVector_AllValuesSet(SOLVER_RHS_VECTOR,0.0_DP,ERR,ERROR,*999)          
                       !Get the solver variables data                  
                       NULLIFY(CHECK_DATA)
-                      CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)             
+                      CALL DistributedVector_DataGet(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)             
                       !Loop over the equations sets
                       DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                         EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
@@ -12844,7 +12844,7 @@ CONTAINS
                                       IF(ASSOCIATED(dynamicMatrices)) THEN
                                         DYNAMIC_TEMP_VECTOR=>dynamicMatrices%tempVector
                                         !Initialise the dynamic temporary vector to zero
-                                        CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(DYNAMIC_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                        CALL DistributedVector_AllValuesSet(DYNAMIC_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                         IF(dynamicMapping%stiffnessMatrixNumber/=0) THEN
                                           STIFFNESS_MATRIX=>dynamicMatrices%matrices(dynamicMapping%stiffnessMatrixNumber)%ptr
                                           IF(ASSOCIATED(STIFFNESS_MATRIX)) THEN
@@ -12852,7 +12852,7 @@ CONTAINS
                                             CALL FIELD_PARAMETER_SET_VECTOR_GET(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                               & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,PREDICTED_MEAN_DISPLACEMENT_VECTOR, &
                                               & ERR,ERROR,*999)
-                                            CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                                            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                                               & -1.0_DP,STIFFNESS_MATRIX%MATRIX, &
 !                                              & -DYNAMIC_SOLVER%THETA(1),STIFFNESS_MATRIX%MATRIX, &
                                               & PREDICTED_MEAN_DISPLACEMENT_VECTOR,DYNAMIC_TEMP_VECTOR,ERR,ERROR,*999)
@@ -12868,8 +12868,8 @@ CONTAINS
                                             CALL FIELD_PARAMETER_SET_VECTOR_GET(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                               & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,PREDICTED_MEAN_VELOCITY_VECTOR, &
                                               & ERR,ERROR,*999)
-                                            CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,-1.0_DP,&
-                                              & DAMPING_MATRIX%MATRIX,PREDICTED_MEAN_VELOCITY_VECTOR,DYNAMIC_TEMP_VECTOR, &
+                                            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                                              & -1.0_DP,DAMPING_MATRIX%MATRIX,PREDICTED_MEAN_VELOCITY_VECTOR,DYNAMIC_TEMP_VECTOR, &
                                               & ERR,ERROR,*999)
                                           ELSE
                                             CALL FlagError("Dynamic damping matrix is not associated.",ERR,ERROR,*999)
@@ -12919,12 +12919,12 @@ CONTAINS
                                           IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
                                             LINEAR_TEMP_VECTOR=>LINEAR_MATRIX%tempVector
                                             !Initialise the linear temporary vector to zero
-                                            CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(LINEAR_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                            CALL DistributedVector_AllValuesSet(LINEAR_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                             NULLIFY(DEPENDENT_VECTOR)
                                             CALL FIELD_PARAMETER_SET_VECTOR_GET(DEPENDENT_FIELD,LINEAR_VARIABLE_TYPE, &
                                               & FIELD_VALUES_SET_TYPE,DEPENDENT_VECTOR,ERR,ERROR,*999)
-                                            CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-                                              & LINEAR_MATRIX%MATRIX,DEPENDENT_VECTOR,LINEAR_TEMP_VECTOR,ERR,ERROR,*999)
+                                            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                                              & 1.0_DP,LINEAR_MATRIX%MATRIX,DEPENDENT_VECTOR,LINEAR_TEMP_VECTOR,ERR,ERROR,*999)
                                           ELSE
                                             CALL FlagError("Linear variable is not associated.",ERR,ERROR,*999)
                                           ENDIF
@@ -12975,7 +12975,7 @@ CONTAINS
                                             !Get the dynamic contribution to the RHS values
                                           !
                                             IF(ASSOCIATED(DYNAMIC_TEMP_VECTOR)) THEN
-                                              CALL DISTRIBUTED_VECTOR_VALUES_GET(DYNAMIC_TEMP_VECTOR,equations_row_number, &
+                                              CALL DistributedVector_ValuesGet(DYNAMIC_TEMP_VECTOR,equations_row_number, &
                                                 & DYNAMIC_VALUE,ERR,ERROR,*999)
                                             ELSE
                                               DYNAMIC_VALUE=0.0_DP
@@ -12987,7 +12987,7 @@ CONTAINS
                                               DO equations_matrix_idx=1,linearMatrices%numberOfLinearMatrices
                                                 LINEAR_MATRIX=>linearMatrices%matrices(equations_matrix_idx)%ptr
                                                 LINEAR_TEMP_VECTOR=>LINEAR_MATRIX%tempVector
-                                                CALL DISTRIBUTED_VECTOR_VALUES_GET(LINEAR_TEMP_VECTOR,equations_row_number, &
+                                                CALL DistributedVector_ValuesGet(LINEAR_TEMP_VECTOR,equations_row_number, &
                                                   & LINEAR_VALUE,ERR,ERROR,*999)
                                                 LINEAR_VALUE_SUM=LINEAR_VALUE_SUM+LINEAR_VALUE
                                               ENDDO !equations_matrix_idx
@@ -12996,7 +12996,7 @@ CONTAINS
                                             !Get the source vector contribute to the RHS values if there are any
                                             IF(ASSOCIATED(sourceMapping)) THEN
                                               !Add in equations source values
-                                              CALL DISTRIBUTED_VECTOR_VALUES_GET(DISTRIBUTED_SOURCE_VECTOR,equations_row_number, &
+                                              CALL DistributedVector_ValuesGet(DISTRIBUTED_SOURCE_VECTOR,equations_row_number, &
                                                 & SOURCE_VALUE,ERR,ERROR,*999)
                                               DYNAMIC_VALUE=DYNAMIC_VALUE+SOURCE_VALUE
                                             ENDIF
@@ -13028,7 +13028,7 @@ CONTAINS
                                                 & equations_set_idx)%EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(equations_row_number)% &
                                                 & COUPLING_COEFFICIENTS(solver_row_idx)
                                                VALUE=DYNAMIC_VALUE*row_coupling_coefficient
-                                               CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
+                                               CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
                                                 & ERR,ERROR,*999)
                                             ENDDO !solver_row_idx
                                           ENDDO !equations_row_number
@@ -13080,7 +13080,7 @@ CONTAINS
                                             SELECT CASE(rhs_boundary_condition)
                                             CASE(BOUNDARY_CONDITION_DOF_FREE)
                                               !Get the equations RHS values
-                                              CALL DISTRIBUTED_VECTOR_VALUES_GET(EQUATIONS_RHS_VECTOR,equations_row_number, &
+                                              CALL DistributedVector_ValuesGet(EQUATIONS_RHS_VECTOR,equations_row_number, &
                                                 & RHS_VALUE,ERR,ERROR,*999)
                                               IF(HAS_INTEGRATED_VALUES) THEN
                                                 !Add any Neumann integrated values, b = f + N q
@@ -13099,7 +13099,7 @@ CONTAINS
                                                   & equations_set_idx)%EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(equations_row_number)% &
                                                   & COUPLING_COEFFICIENTS(solver_row_idx)
                                                 VALUE=RHS_VALUE*row_coupling_coefficient
-                                                CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
+                                                CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
                                                   & ERR,ERROR,*999)
                                               ENDDO !solver_row_idx
                                               !Note: the Dirichlet boundary conditions are implicitly included by doing a matrix
@@ -13194,7 +13194,7 @@ CONTAINS
                                                               SELECT CASE(equationsMatrix%storageType)
                                                               CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                                                                 DO dirichlet_row=1,vectorMatrices%totalNumberOfRows
-                                                                  CALL DISTRIBUTED_MATRIX_VALUES_GET(equationsMatrix% &
+                                                                  CALL DistributedMatrix_ValuesGet(equationsMatrix% &
                                                                     & MATRIX,dirichlet_row,equations_column_number, &
                                                                     & MATRIX_VALUE,ERR,ERROR,*999)
                                                                   IF(ABS(MATRIX_VALUE)>=ZERO_TOLERANCE) THEN
@@ -13215,7 +13215,7 @@ CONTAINS
                                                                         & solver_row_idx)
                                                                       VALUE=-1.0_DP*MATRIX_VALUE*ALPHA_VALUE* &
                                                                         & row_coupling_coefficient
-                                                                      CALL DISTRIBUTED_VECTOR_VALUES_ADD( &
+                                                                      CALL DistributedVector_ValuesAdd( &
                                                                         & SOLVER_RHS_VECTOR, &
                                                                         & solver_row_number,VALUE,ERR,ERROR,*999)
                                                                     ENDDO !solver_row_idx
@@ -13223,7 +13223,7 @@ CONTAINS
                                                                 ENDDO !dirichlet_row
                                                               CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
                                                                 dirichlet_row=equations_column_number
-                                                                CALL DISTRIBUTED_MATRIX_VALUES_GET(equationsMatrix% &
+                                                                CALL DistributedMatrix_ValuesGet(equationsMatrix% &
                                                                   & MATRIX,dirichlet_row,equations_column_number, &
                                                                   & MATRIX_VALUE,ERR,ERROR,*999)
                                                                 IF(ABS(MATRIX_VALUE)>=ZERO_TOLERANCE) THEN
@@ -13244,7 +13244,7 @@ CONTAINS
                                                                       & solver_row_idx)
                                                                     VALUE=-1.0_DP*MATRIX_VALUE*ALPHA_VALUE* &
                                                                       & row_coupling_coefficient
-                                                                    CALL DISTRIBUTED_VECTOR_VALUES_ADD( &
+                                                                    CALL DistributedVector_ValuesAdd( &
                                                                       & SOLVER_RHS_VECTOR, &
                                                                       & solver_row_number,VALUE,ERR,ERROR,*999)
                                                                   ENDDO !solver_row_idx
@@ -13265,7 +13265,7 @@ CONTAINS
                                                                     & dirichlet_idx+1)-1
                                                                     dirichlet_row=SPARSITY_INDICES%SPARSE_ROW_INDICES( &
                                                                       & equations_row_number2)
-                                                                    CALL DISTRIBUTED_MATRIX_VALUES_GET(equationsMatrix% &
+                                                                    CALL DistributedMatrix_ValuesGet(equationsMatrix% &
                                                                       & MATRIX,dirichlet_row,equations_column_number, &
                                                                       & MATRIX_VALUE,ERR,ERROR,*999)
                                                                     IF(ABS(MATRIX_VALUE)>=ZERO_TOLERANCE) THEN
@@ -13286,7 +13286,7 @@ CONTAINS
                                                                           & solver_row_idx)
                                                                         VALUE=-1.0_DP*MATRIX_VALUE*ALPHA_VALUE* &
                                                                           & row_coupling_coefficient
-                                                                        CALL DISTRIBUTED_VECTOR_VALUES_ADD( &
+                                                                        CALL DistributedVector_ValuesAdd( &
                                                                           & SOLVER_RHS_VECTOR, &
                                                                           & solver_row_number,VALUE,ERR,ERROR,*999)
                                                                       ENDDO !solver_row_idx
@@ -13337,7 +13337,7 @@ CONTAINS
                                                     & ERR,ERROR,*999)
                                                   VALUE=VALUE+RHS_INTEGRATED_VALUE*row_coupling_coefficient
                                                 END IF
-                                                CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
+                                                CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
                                                   & ERR,ERROR,*999)
                                               ENDDO !solver_row_idx
                                             CASE(BOUNDARY_CONDITION_DOF_MIXED)
@@ -13404,7 +13404,7 @@ CONTAINS
                                         IF(ASSOCIATED(INTERFACE_RHS_VECTOR)) THEN
                                           !Worry about BCs on the Lagrange variables later.
                                           DO interface_column_number=1,INTERFACE_MAPPING%TOTAL_NUMBER_OF_COLUMNS
-                                            CALL DISTRIBUTED_VECTOR_VALUES_GET(INTERFACE_RHS_VECTOR%RHS_VECTOR, &
+                                            CALL DistributedVector_ValuesGet(INTERFACE_RHS_VECTOR%RHS_VECTOR, &
                                               & interface_column_number,RHS_VALUE,ERR,ERROR,*999)
                                             !Loop over the solver rows this interface column is mapped to
                                             DO solver_row_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP( &
@@ -13417,7 +13417,7 @@ CONTAINS
                                                 & interface_condition_idx)%INTERFACE_COLUMN_TO_SOLVER_ROWS_MAPS( &
                                                 & interface_column_number)%COUPLING_COEFFICIENT
                                               VALUE=RHS_VALUE*row_coupling_coefficient
-                                              CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
+                                              CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
                                                 & ERR,ERROR,*999)
                                             ENDDO !solver_row_idx
                                           ENDDO !interface_column_idx
@@ -13458,10 +13458,10 @@ CONTAINS
                       ENDDO !interface_condition_idx
               !        
                       !Start the update the solver RHS vector values
-                      CALL DISTRIBUTED_VECTOR_UPDATE_START(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
+                      CALL DistributedVector_UpdateStart(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
 
                       NULLIFY(CHECK_DATA)
-                      CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)
+                      CALL DistributedVector_DataGet(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)
 
                     ELSE
                       CALL FlagError("The solver RHS vector is not associated.",ERR,ERROR,*999)
@@ -13478,7 +13478,7 @@ CONTAINS
                   ENDIF
                 ENDIF
                 IF(ASSOCIATED(SOLVER_RHS_VECTOR)) THEN
-                  CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
+                  CALL DistributedVector_UpdateFinish(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
                 ENDIF
               END IF
 
@@ -13500,10 +13500,10 @@ CONTAINS
                     SOLVER_RESIDUAL_VECTOR=>SOLVER_MATRICES%RESIDUAL
                     IF(ASSOCIATED(SOLVER_RESIDUAL_VECTOR)) THEN
                       !Initialise the residual to zero
-                      CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(SOLVER_RESIDUAL_VECTOR,0.0_DP,ERR,ERROR,*999)
+                      CALL DistributedVector_AllValuesSet(SOLVER_RESIDUAL_VECTOR,0.0_DP,ERR,ERROR,*999)
                       !Get the solver variables data
                       NULLIFY(CHECK_DATA)
-                      CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RESIDUAL_VECTOR,CHECK_DATA,ERR,ERROR,*999)
+                      CALL DistributedVector_DataGet(SOLVER_RESIDUAL_VECTOR,CHECK_DATA,ERR,ERROR,*999)
                       !Loop over the equations sets
                       DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                         EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
@@ -13528,7 +13528,7 @@ CONTAINS
                                       IF(ASSOCIATED(dynamicMatrices)) THEN
                                         DYNAMIC_TEMP_VECTOR=>dynamicMatrices%tempVector
                                         !Initialise the dynamic temporary vector to zero
-                                        CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(DYNAMIC_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                        CALL DistributedVector_AllValuesSet(DYNAMIC_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                         NULLIFY(INCREMENTAL_VECTOR)
                                         !Define the pointer to the INCREMENTAL_VECTOR
                                         CALL FIELD_PARAMETER_SET_VECTOR_GET(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
@@ -13536,7 +13536,7 @@ CONTAINS
                                         IF(dynamicMapping%stiffnessMatrixNumber/=0) THEN
                                           STIFFNESS_MATRIX=>dynamicMatrices%matrices(dynamicMapping%stiffnessMatrixNumber)%ptr
                                           IF(ASSOCIATED(STIFFNESS_MATRIX)) THEN
-                                            CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, & 
+                                            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, & 
                                               & STIFFNESS_MATRIX_COEFFICIENT,STIFFNESS_MATRIX%MATRIX,INCREMENTAL_VECTOR, & 
                                               & DYNAMIC_TEMP_VECTOR,ERR,ERROR,*999)
                                           ELSE
@@ -13547,7 +13547,7 @@ CONTAINS
                                           & DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_FIRST_DEGREE) THEN
                                           DAMPING_MATRIX=>dynamicMatrices%matrices(dynamicMapping%dampingMatrixNumber)%ptr
                                           IF(ASSOCIATED(DAMPING_MATRIX)) THEN
-                                            CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                                            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                                               & DAMPING_MATRIX_COEFFICIENT,DAMPING_MATRIX%MATRIX,INCREMENTAL_VECTOR, & 
                                               & DYNAMIC_TEMP_VECTOR,ERR,ERROR,*999)
                                           ELSE
@@ -13558,7 +13558,7 @@ CONTAINS
                                           & DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                                           MASS_MATRIX=>dynamicMatrices%matrices(dynamicMapping%massMatrixNumber)%ptr
                                           IF(ASSOCIATED(MASS_MATRIX)) THEN
-                                            CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                                            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                                               & MASS_MATRIX_COEFFICIENT,MASS_MATRIX%MATRIX,INCREMENTAL_VECTOR, & 
                                               & DYNAMIC_TEMP_VECTOR,ERR,ERROR,*999)
                                           ELSE
@@ -13587,11 +13587,11 @@ CONTAINS
                                           IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
                                             LINEAR_TEMP_VECTOR=>LINEAR_MATRIX%tempVector
                                             !Initialise the linear temporary vector to zero
-                                            CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(LINEAR_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                            CALL DistributedVector_AllValuesSet(LINEAR_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                             NULLIFY(DEPENDENT_VECTOR)
                                             CALL FIELD_PARAMETER_SET_VECTOR_GET(DEPENDENT_FIELD,LINEAR_VARIABLE_TYPE, &
                                               & FIELD_VALUES_SET_TYPE,DEPENDENT_VECTOR,ERR,ERROR,*999)
-                                            CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                                            CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                                               & 1.0_DP,LINEAR_MATRIX%MATRIX,DEPENDENT_VECTOR,LINEAR_TEMP_VECTOR,ERR,ERROR,*999)
                                           ELSE
                                             CALL FlagError("Linear variable is not associated.",ERR,ERROR,*999)
@@ -13618,7 +13618,7 @@ CONTAINS
                                           & EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(equations_row_number)% &
                                           & NUMBER_OF_SOLVER_ROWS>0) THEN
                                           !Get the equations residual contribution
-                                          CALL DISTRIBUTED_VECTOR_VALUES_GET(RESIDUAL_VECTOR,equations_row_number, &
+                                          CALL DistributedVector_ValuesGet(RESIDUAL_VECTOR,equations_row_number, &
                                             & RESIDUAL_VALUE,ERR,ERROR,*999)
                                           IF(STABILITY_TEST) THEN
                                             RESIDUAL_VALUE=RESIDUAL_VALUE
@@ -13631,7 +13631,7 @@ CONTAINS
                                             DO equations_matrix_idx2=1,linearMatrices%numberOfLinearMatrices
                                               LINEAR_MATRIX=>linearMatrices%matrices(equations_matrix_idx2)%ptr
                                               LINEAR_TEMP_VECTOR=>LINEAR_MATRIX%tempVector
-                                              CALL DISTRIBUTED_VECTOR_VALUES_GET(LINEAR_TEMP_VECTOR,equations_row_number, &
+                                              CALL DistributedVector_ValuesGet(LINEAR_TEMP_VECTOR,equations_row_number, &
                                                 & LINEAR_VALUE,ERR,ERROR,*999)
                                               LINEAR_VALUE_SUM=LINEAR_VALUE_SUM+LINEAR_VALUE
                                             ENDDO !equations_matrix_idx2
@@ -13639,7 +13639,7 @@ CONTAINS
                                           ENDIF
                                           IF(ASSOCIATED(dynamicMapping)) THEN
                                             !Get the dynamic contribution to the residual values
-                                            CALL DISTRIBUTED_VECTOR_VALUES_GET(DYNAMIC_TEMP_VECTOR,equations_row_number, &
+                                            CALL DistributedVector_ValuesGet(DYNAMIC_TEMP_VECTOR,equations_row_number, &
                                               & DYNAMIC_VALUE,ERR,ERROR,*999)
                                                RESIDUAL_VALUE=RESIDUAL_VALUE+DYNAMIC_VALUE
                                           ENDIF
@@ -13654,7 +13654,7 @@ CONTAINS
                                               & COUPLING_COEFFICIENTS(solver_row_idx)
                                             VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                             !Add in nonlinear residual values
-                                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                            CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                               & ERR,ERROR,*999)
                                           ENDDO !solver_row_idx
                                         ENDIF
@@ -13710,7 +13710,7 @@ CONTAINS
                                       IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                         INTERFACE_TEMP_VECTOR=>INTERFACE_MATRIX%TEMP_VECTOR
                                         !Initialise the linear temporary vector to zero
-                                        CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                        CALL DistributedVector_AllValuesSet(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                         NULLIFY(LAGRANGE_VECTOR)
                                         CALL FIELD_PARAMETER_SET_VECTOR_GET(LAGRANGE_FIELD,interface_variable_type, &
                                           & FIELD_VALUES_SET_TYPE,LAGRANGE_VECTOR,ERR,ERROR,*999)
@@ -13740,9 +13740,9 @@ CONTAINS
                                     !
                                         
                                         
-                                       ! CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+                                       ! CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                                        !   & INTERFACE_MATRIX%MATRIX,LAGRANGE_VECTOR,INTERFACE_TEMP_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                                        CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                                           & MatrixCoefficients(1),INTERFACE_MATRIX%MATRIX,LAGRANGE_VECTOR,INTERFACE_TEMP_VECTOR, &
                                           & ERR,ERROR,*999)
                                         
@@ -13761,11 +13761,11 @@ CONTAINS
                                               & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                                               & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(interface_matrix_idx)% &
                                               & INTERFACE_ROW_TO_SOLVER_ROWS_MAP(interface_row_number)%COUPLING_COEFFICIENT
-                                            CALL DISTRIBUTED_VECTOR_VALUES_GET(INTERFACE_TEMP_VECTOR,interface_row_number, &
+                                            CALL DistributedVector_ValuesGet(INTERFACE_TEMP_VECTOR,interface_row_number, &
                                               & RESIDUAL_VALUE,ERR,ERROR,*999)
                                             VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                             !Add in nonlinear residual values
-                                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                            CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                               & ERR,ERROR,*999)
                                           ENDIF
                                         ENDDO !interface_row_number
@@ -13780,7 +13780,7 @@ CONTAINS
                                       IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
                                         INTERFACE_TEMP_VECTOR=>INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR
                                         !Initialise the linear temporary vector to zero
-                                        CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                        CALL DistributedVector_AllValuesSet(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                         NULLIFY(DEPENDENT_VECTOR)
                                         DEPENDENT_FIELD=>DEPENDENT_VARIABLE%FIELD
                                         !hard-coded for now TODO under the assumption that the first equations set is the solid
@@ -13793,9 +13793,9 @@ CONTAINS
                                           CALL FIELD_PARAMETER_SET_VECTOR_GET(DEPENDENT_FIELD,dependent_variable_type, &
                                             & FIELD_VALUES_SET_TYPE,DEPENDENT_VECTOR,ERR,ERROR,*999)
                                         ENDIF
-                                       ! CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+                                       ! CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                                        !   & INTERFACE_MATRIX%MATRIX_TRANSPOSE,DEPENDENT_VECTOR,INTERFACE_TEMP_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
+                                        CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
                                           & MatrixCoefficients(2),INTERFACE_MATRIX%MATRIX_TRANSPOSE,DEPENDENT_VECTOR, &
                                           & INTERFACE_TEMP_VECTOR,ERR,ERROR,*999)
                                         
@@ -13813,7 +13813,7 @@ CONTAINS
                                             row_coupling_coefficient=SOLVER_MAPPING% & 
                                               & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                                               & INTERFACE_COLUMN_TO_SOLVER_ROWS_MAPS(interface_row_number)%COUPLING_COEFFICIENT
-                                            CALL DISTRIBUTED_VECTOR_VALUES_GET(INTERFACE_TEMP_VECTOR,interface_row_number, &
+                                            CALL DistributedVector_ValuesGet(INTERFACE_TEMP_VECTOR,interface_row_number, &
                                               & RESIDUAL_VALUE,ERR,ERROR,*999)
                                          !   IF(interface_matrix_idx==1) THEN
                                          !     VALUE=RESIDUAL_VALUE*row_coupling_coefficient/DELTA_T
@@ -13821,7 +13821,7 @@ CONTAINS
                                               VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                          !   ENDIF
                                             !Add in nonlinear residual values
-                                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                            CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                               & ERR,ERROR,*999)
                                           ENDIF
                                         ENDDO !interface_row_number
@@ -13845,11 +13845,11 @@ CONTAINS
                                       IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                         INTERFACE_TEMP_VECTOR=>INTERFACE_MATRIX%TEMP_VECTOR
                                         !Initialise the linear temporary vector to zero
-                                        CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                        CALL DistributedVector_AllValuesSet(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                         NULLIFY(LAGRANGE_VECTOR)
                                         CALL FIELD_PARAMETER_SET_VECTOR_GET(LAGRANGE_FIELD,interface_variable_type, &
                                           & FIELD_VALUES_SET_TYPE,LAGRANGE_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+                                        CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                                           & INTERFACE_MATRIX%MATRIX,LAGRANGE_VECTOR,INTERFACE_TEMP_VECTOR,ERR,ERROR,*999)
                                         !Add interface matrix residual contribution to the solver residual
                                         DO interface_row_number=1,INTERFACE_MATRIX%NUMBER_OF_ROWS
@@ -13866,11 +13866,11 @@ CONTAINS
                                               & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                                               & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(interface_matrix_idx)% &
                                               & INTERFACE_ROW_TO_SOLVER_ROWS_MAP(interface_row_number)%COUPLING_COEFFICIENT
-                                            CALL DISTRIBUTED_VECTOR_VALUES_GET(INTERFACE_TEMP_VECTOR,interface_row_number, &
+                                            CALL DistributedVector_ValuesGet(INTERFACE_TEMP_VECTOR,interface_row_number, &
                                               & RESIDUAL_VALUE,ERR,ERROR,*999)
                                             VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                             !Add in nonlinear residual values
-                                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                            CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                               & ERR,ERROR,*999)
                                           ENDIF
                                         ENDDO !interface_row_number
@@ -13901,17 +13901,17 @@ CONTAINS
                       ENDDO !interface_condition_idx
                   !
                       !Start the update the solver residual vector values
-                      CALL DISTRIBUTED_VECTOR_UPDATE_START(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
+                      CALL DistributedVector_UpdateStart(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
 
                       NULLIFY(CHECK_DATA2)
-                      CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RESIDUAL_VECTOR,CHECK_DATA2,ERR,ERROR,*999)
+                      CALL DistributedVector_DataGet(SOLVER_RESIDUAL_VECTOR,CHECK_DATA2,ERR,ERROR,*999)
 
                     ELSE
                       CALL FlagError("The solver residual vector is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ENDIF
                   IF(ASSOCIATED(SOLVER_RESIDUAL_VECTOR)) THEN
-                    CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
+                    CALL DistributedVector_UpdateFinish(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
                   ENDIF
                   IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                     CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
@@ -14109,7 +14109,7 @@ CONTAINS
                     SOLVER_DISTRIBUTED_MATRIX=>SOLVER_MATRIX%MATRIX
                     IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
                       !Initialise matrix to zero
-                      CALL DISTRIBUTED_MATRIX_ALL_VALUES_SET(SOLVER_DISTRIBUTED_MATRIX,0.0_DP,ERR,ERROR,*999)
+                      CALL DistributedMatrix_AllValuesSet(SOLVER_DISTRIBUTED_MATRIX,0.0_DP,ERR,ERROR,*999)
                       !Loop over the equations sets
                       DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                         !First Loop over the linear equations matrices
@@ -14177,9 +14177,9 @@ CONTAINS
                         ENDDO !interface_matrix_idx
                       ENDDO !interface_condition_idx
                       !Update the solver matrix values
-                      CALL DISTRIBUTED_MATRIX_UPDATE_START(SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
+                      CALL DistributedMatrix_UpdateStart(SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
                       IF(ASSOCIATED(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX)) THEN
-                        CALL DISTRIBUTED_MATRIX_UPDATE_FINISH(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
+                        CALL DistributedMatrix_UpdateFinish(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
                       ENDIF
                       PREVIOUS_SOLVER_DISTRIBUTED_MATRIX=>SOLVER_DISTRIBUTED_MATRIX
                     ELSE
@@ -14191,7 +14191,7 @@ CONTAINS
                 ENDIF
               ENDDO !solver_matrix_idx
               IF(ASSOCIATED(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX)) THEN
-                CALL DISTRIBUTED_MATRIX_UPDATE_FINISH(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
+                CALL DistributedMatrix_UpdateFinish(PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,ERR,ERROR,*999)
               ENDIF
               IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                 CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
@@ -14221,7 +14221,7 @@ CONTAINS
                 SOLVER_RESIDUAL_VECTOR=>SOLVER_MATRICES%RESIDUAL
                 IF(ASSOCIATED(SOLVER_RESIDUAL_VECTOR)) THEN
                   !Initialise the residual to zero
-                  CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(SOLVER_RESIDUAL_VECTOR,0.0_DP,ERR,ERROR,*999)
+                  CALL DistributedVector_AllValuesSet(SOLVER_RESIDUAL_VECTOR,0.0_DP,ERR,ERROR,*999)
                   !Loop over the equations sets
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
@@ -14251,11 +14251,11 @@ CONTAINS
                                       IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
                                         LINEAR_TEMP_VECTOR=>LINEAR_MATRIX%tempVector
                                         !Initialise the linear temporary vector to zero
-                                        CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(LINEAR_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                        CALL DistributedVector_AllValuesSet(LINEAR_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                         NULLIFY(DEPENDENT_VECTOR)
                                         CALL FIELD_PARAMETER_SET_VECTOR_GET(DEPENDENT_FIELD,LINEAR_VARIABLE_TYPE, &
                                           & FIELD_VALUES_SET_TYPE,DEPENDENT_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+                                        CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                                           & LINEAR_MATRIX%MATRIX,DEPENDENT_VECTOR,LINEAR_TEMP_VECTOR,ERR,ERROR,*999)
                                       ELSE
                                         CALL FlagError("Linear variable is not associated.",ERR,ERROR,*999)
@@ -14282,7 +14282,7 @@ CONTAINS
                                       & EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(equations_row_number)% &
                                       & NUMBER_OF_SOLVER_ROWS>0) THEN
                                       !Get the equations residual contribution
-                                      CALL DISTRIBUTED_VECTOR_VALUES_GET(RESIDUAL_VECTOR,equations_row_number, &
+                                      CALL DistributedVector_ValuesGet(RESIDUAL_VECTOR,equations_row_number, &
                                         & RESIDUAL_VALUE,ERR,ERROR,*999)
                                       !Get the linear matrices contribution to the RHS values if there are any
                                       IF(ASSOCIATED(linearMapping)) THEN
@@ -14290,7 +14290,7 @@ CONTAINS
                                         DO equations_matrix_idx2=1,linearMatrices%numberOfLinearMatrices
                                           LINEAR_MATRIX=>linearMatrices%matrices(equations_matrix_idx2)%ptr
                                           LINEAR_TEMP_VECTOR=>LINEAR_MATRIX%tempVector
-                                          CALL DISTRIBUTED_VECTOR_VALUES_GET(LINEAR_TEMP_VECTOR,equations_row_number, &
+                                          CALL DistributedVector_ValuesGet(LINEAR_TEMP_VECTOR,equations_row_number, &
                                             & LINEAR_VALUE,ERR,ERROR,*999)
                                           LINEAR_VALUE_SUM=LINEAR_VALUE_SUM+LINEAR_VALUE
                                         ENDDO !equations_matrix_idx2
@@ -14307,7 +14307,7 @@ CONTAINS
                                           & COUPLING_COEFFICIENTS(solver_row_idx)
                                         VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                         !Add in nonlinear residual values
-                                        CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                        CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                           & ERR,ERROR,*999)
                                       ENDDO !solver_row_idx
                                     ENDIF
@@ -14324,7 +14324,7 @@ CONTAINS
                                     DO equations_matrix_idx=1,linearMatrices%numberOfLinearMatrices
                                       LINEAR_MATRIX=>linearMatrices%matrices(equations_matrix_idx)%ptr
                                       LINEAR_TEMP_VECTOR=>LINEAR_MATRIX%tempVector
-                                      CALL DISTRIBUTED_VECTOR_VALUES_GET(LINEAR_TEMP_VECTOR,equations_row_number, &
+                                      CALL DistributedVector_ValuesGet(LINEAR_TEMP_VECTOR,equations_row_number, &
                                         & LINEAR_VALUE,ERR,ERROR,*999)
                                       LINEAR_VALUE_SUM=LINEAR_VALUE_SUM+LINEAR_VALUE
                                     ENDDO !equations_matrix_idx
@@ -14340,7 +14340,7 @@ CONTAINS
                                         & COUPLING_COEFFICIENTS(solver_row_idx)
                                       VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                       !Add in nonlinear residual values
-                                      CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                      CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                         & ERR,ERROR,*999)
                                     ENDDO !solver_row_idx
                                   ENDIF
@@ -14390,11 +14390,11 @@ CONTAINS
                                   IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                     INTERFACE_TEMP_VECTOR=>INTERFACE_MATRIX%TEMP_VECTOR
                                     !Initialise the linear temporary vector to zero
-                                    CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                    CALL DistributedVector_AllValuesSet(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                     NULLIFY(LAGRANGE_VECTOR)
                                     CALL FIELD_PARAMETER_SET_VECTOR_GET(LAGRANGE_FIELD,interface_variable_type, &
                                       & FIELD_VALUES_SET_TYPE,LAGRANGE_VECTOR,ERR,ERROR,*999)
-                                    CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+                                    CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                                       & INTERFACE_MATRIX%MATRIX,LAGRANGE_VECTOR,INTERFACE_TEMP_VECTOR,ERR,ERROR,*999)
                                     !Add interface matrix residual contribution to the solver residual
                                     DO interface_row_number=1,INTERFACE_MATRIX%NUMBER_OF_ROWS
@@ -14411,11 +14411,11 @@ CONTAINS
                                           & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                                           & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(interface_matrix_idx)% &
                                           & INTERFACE_ROW_TO_SOLVER_ROWS_MAP(interface_row_number)%COUPLING_COEFFICIENT
-                                        CALL DISTRIBUTED_VECTOR_VALUES_GET(INTERFACE_TEMP_VECTOR,interface_row_number, &
+                                        CALL DistributedVector_ValuesGet(INTERFACE_TEMP_VECTOR,interface_row_number, &
                                           & RESIDUAL_VALUE,ERR,ERROR,*999)
                                         VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                         !Add in nonlinear residual values
-                                        CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                        CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                           & ERR,ERROR,*999)
                                       ENDIF
                                     ENDDO !interface_row_number
@@ -14430,12 +14430,12 @@ CONTAINS
                                   IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
                                     INTERFACE_TEMP_VECTOR=>INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR
                                     !Initialise the linear temporary vector to zero
-                                    CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                    CALL DistributedVector_AllValuesSet(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                     NULLIFY(DEPENDENT_VECTOR)
                                     DEPENDENT_FIELD=>DEPENDENT_VARIABLE%FIELD
                                     CALL FIELD_PARAMETER_SET_VECTOR_GET(DEPENDENT_FIELD,dependent_variable_type, &
                                       & FIELD_VALUES_SET_TYPE,DEPENDENT_VECTOR,ERR,ERROR,*999)
-                                    CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+                                    CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                                       & INTERFACE_MATRIX%MATRIX_TRANSPOSE,DEPENDENT_VECTOR,INTERFACE_TEMP_VECTOR,ERR,ERROR,*999)
                                     !Add interface matrix residual contribution to the solver residual.
                                     !The number of columns in the interface matrix is equivalent to the number of rows of the transposed interface matrices
@@ -14450,11 +14450,11 @@ CONTAINS
                                         row_coupling_coefficient=SOLVER_MAPPING% & 
                                           & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                                           & INTERFACE_COLUMN_TO_SOLVER_ROWS_MAPS(interface_row_number)%COUPLING_COEFFICIENT
-                                        CALL DISTRIBUTED_VECTOR_VALUES_GET(INTERFACE_TEMP_VECTOR,interface_row_number, &
+                                        CALL DistributedVector_ValuesGet(INTERFACE_TEMP_VECTOR,interface_row_number, &
                                           & RESIDUAL_VALUE,ERR,ERROR,*999)
                                         VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                         !Add in nonlinear residual values
-                                        CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                        CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                           & ERR,ERROR,*999)
                                       ENDIF
                                     ENDDO !interface_row_number
@@ -14478,11 +14478,11 @@ CONTAINS
                                   IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                     INTERFACE_TEMP_VECTOR=>INTERFACE_MATRIX%TEMP_VECTOR
                                     !Initialise the linear temporary vector to zero
-                                    CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
+                                    CALL DistributedVector_AllValuesSet(INTERFACE_TEMP_VECTOR,0.0_DP,ERR,ERROR,*999)
                                     NULLIFY(LAGRANGE_VECTOR)
                                     CALL FIELD_PARAMETER_SET_VECTOR_GET(LAGRANGE_FIELD,interface_variable_type, &
                                       & FIELD_VALUES_SET_TYPE,LAGRANGE_VECTOR,ERR,ERROR,*999)
-                                    CALL DISTRIBUTED_MATRIX_BY_VECTOR_ADD(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
+                                    CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
                                       & INTERFACE_MATRIX%MATRIX,LAGRANGE_VECTOR,INTERFACE_TEMP_VECTOR,ERR,ERROR,*999)
                                     !Add interface matrix residual contribution to the solver residual
                                     DO interface_row_number=1,INTERFACE_MATRIX%NUMBER_OF_ROWS
@@ -14499,11 +14499,11 @@ CONTAINS
                                           & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                                           & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(interface_matrix_idx)% &
                                           & INTERFACE_ROW_TO_SOLVER_ROWS_MAP(interface_row_number)%COUPLING_COEFFICIENT
-                                        CALL DISTRIBUTED_VECTOR_VALUES_GET(INTERFACE_TEMP_VECTOR,interface_row_number, &
+                                        CALL DistributedVector_ValuesGet(INTERFACE_TEMP_VECTOR,interface_row_number, &
                                           & RESIDUAL_VALUE,ERR,ERROR,*999)
                                         VALUE=RESIDUAL_VALUE*row_coupling_coefficient
                                         !Add in nonlinear residual values
-                                        CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
+                                        CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR,solver_row_number,VALUE, &
                                           & ERR,ERROR,*999)
                                       ENDIF
                                     ENDDO !interface_row_number
@@ -14533,13 +14533,13 @@ CONTAINS
                     ENDIF
                   ENDDO !interface_condition_idx
                   !Start the update the solver residual vector values
-                  CALL DISTRIBUTED_VECTOR_UPDATE_START(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
+                  CALL DistributedVector_UpdateStart(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
                 ELSE
                   CALL FlagError("The solver residual vector is not associated.",ERR,ERROR,*999)
                 ENDIF
               ENDIF
               IF(ASSOCIATED(SOLVER_RESIDUAL_VECTOR)) THEN
-                CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
+                CALL DistributedVector_UpdateFinish(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
               ENDIF
               IF(SOLVER%outputType>=SOLVER_TIMING_OUTPUT) THEN
                 CALL CPUTimer(USER_CPU,USER_TIME2,ERR,ERROR,*999)
@@ -14566,9 +14566,9 @@ CONTAINS
                 SOLVER_RHS_VECTOR=>SOLVER_MATRICES%RHS_VECTOR
                 IF(ASSOCIATED(SOLVER_RHS_VECTOR)) THEN
                   !Initialise the RHS to zero
-                  CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(SOLVER_RHS_VECTOR,0.0_DP,ERR,ERROR,*999)
+                  CALL DistributedVector_AllValuesSet(SOLVER_RHS_VECTOR,0.0_DP,ERR,ERROR,*999)
                   NULLIFY(CHECK_DATA)
-                  CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)
+                  CALL DistributedVector_DataGet(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)
                   SUBTRACT_FIXED_BCS_FROM_RESIDUAL=.FALSE.
                   IF(SELECTION_TYPE==SOLVER_MATRICES_ALL.OR. &
                       & SELECTION_TYPE==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
@@ -14611,7 +14611,7 @@ CONTAINS
                                 CALL FIELD_PARAMETER_SET_DATA_GET(DEPENDENT_FIELD,RHS_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & RHS_PARAMETERS,ERR,ERROR,*999)
                                 NULLIFY(CHECK_DATA)
-                                CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)    
+                                CALL DistributedVector_DataGet(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)    
                                 rhsVector=>vectorMatrices%rhsVector
                                 IF(ASSOCIATED(rhsVector)) THEN
                                   linearMapping=>vectorMapping%linearMapping
@@ -14652,7 +14652,7 @@ CONTAINS
                                         !Get the source vector contribute to the RHS values if there are any
                                         IF(ASSOCIATED(sourceMapping)) THEN
                                           !Add in equations source values
-                                          CALL DISTRIBUTED_VECTOR_VALUES_GET(DISTRIBUTED_SOURCE_VECTOR,equations_row_number, &
+                                          CALL DistributedVector_ValuesGet(DISTRIBUTED_SOURCE_VECTOR,equations_row_number, &
                                             & SOURCE_VALUE,ERR,ERROR,*999)
                                           !Loop over the solver rows associated with this equations set row
                                           DO solver_row_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
@@ -14667,7 +14667,7 @@ CONTAINS
                                               & COUPLING_COEFFICIENTS(solver_row_idx)
                                             VALUE=1.0_DP*SOURCE_VALUE*row_coupling_coefficient
                                             !Calculates the contribution from each row of the equations matrix and adds to solver matrix
-                                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
+                                            CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
                                               & ERR,ERROR,*999)
                                           ENDDO !solver_row_idx
                                         ENDIF
@@ -14678,7 +14678,7 @@ CONTAINS
                                         SELECT CASE(rhs_boundary_condition)
                                         CASE(BOUNDARY_CONDITION_DOF_FREE)
                                           !Add in equations RHS values
-                                          CALL DISTRIBUTED_VECTOR_VALUES_GET(EQUATIONS_RHS_VECTOR,equations_row_number, &
+                                          CALL DistributedVector_ValuesGet(EQUATIONS_RHS_VECTOR,equations_row_number, &
                                             & RHS_VALUE,ERR,ERROR,*999)
                                           IF(HAS_INTEGRATED_VALUES) THEN
                                             !Add any Neumann integrated values, b = f + N q
@@ -14697,7 +14697,7 @@ CONTAINS
                                               & equations_set_idx)%EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(equations_row_number)% &
                                               & COUPLING_COEFFICIENTS(solver_row_idx)
                                             VALUE=RHS_VALUE*row_coupling_coefficient
-                                            CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
+                                            CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
                                               & ERR,ERROR,*999)
                                           ENDDO !solver_row_idx
                                           !Set Dirichlet boundary conditions
@@ -14737,7 +14737,7 @@ CONTAINS
                                                         SELECT CASE(equationsMatrix%storageType)
                                                         CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                                                           DO dirichlet_row=1,vectorMatrices%totalNumberOfRows
-                                                            CALL DISTRIBUTED_MATRIX_VALUES_GET(equationsMatrix%MATRIX, &
+                                                            CALL DistributedMatrix_ValuesGet(equationsMatrix%MATRIX, &
                                                               & dirichlet_row,equations_column_number,MATRIX_VALUE,ERR,ERROR,*999)
                                                             IF(ABS(MATRIX_VALUE)>=ZERO_TOLERANCE) THEN
                                                               DO solver_row_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP( &
@@ -14751,10 +14751,10 @@ CONTAINS
                                                                   & EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(dirichlet_row)% &
                                                                   & COUPLING_COEFFICIENTS(solver_row_idx)
                                                                 VALUE=-1.0_DP*MATRIX_VALUE*DEPENDENT_VALUE*row_coupling_coefficient
-                                                                CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR, &
+                                                                CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR, &
                                                                   & solver_row_number,VALUE,ERR,ERROR,*999)
                                                                 IF(SUBTRACT_FIXED_BCS_FROM_RESIDUAL) THEN
-                                                                  CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR, &
+                                                                  CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR, &
                                                                       & solver_row_number,VALUE,ERR,ERROR,*999)
                                                                 ENDIF
                                                               ENDDO !solver_row_idx
@@ -14762,7 +14762,7 @@ CONTAINS
                                                           ENDDO !dirichlet_row
                                                         CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
                                                           dirichlet_row=equations_column_number
-                                                          CALL DISTRIBUTED_MATRIX_VALUES_GET(equationsMatrix%MATRIX, &
+                                                          CALL DistributedMatrix_ValuesGet(equationsMatrix%MATRIX, &
                                                             & dirichlet_row,equations_column_number,MATRIX_VALUE,ERR,ERROR,*999)
                                                           IF(ABS(MATRIX_VALUE)>=ZERO_TOLERANCE) THEN
                                                             DO solver_row_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP( &
@@ -14776,10 +14776,10 @@ CONTAINS
                                                                 & EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(dirichlet_row)% &
                                                                 & COUPLING_COEFFICIENTS(solver_row_idx)
                                                               VALUE=-1.0_DP*MATRIX_VALUE*DEPENDENT_VALUE*row_coupling_coefficient
-                                                              CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR, &
+                                                              CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR, &
                                                                 & solver_row_number,VALUE,ERR,ERROR,*999)
                                                               IF(SUBTRACT_FIXED_BCS_FROM_RESIDUAL) THEN
-                                                                CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR, &
+                                                                CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR, &
                                                                     & solver_row_number,VALUE,ERR,ERROR,*999)
                                                               ENDIF
                                                             ENDDO !solver_row_idx
@@ -14798,7 +14798,7 @@ CONTAINS
                                                               & dirichlet_idx+1)-1
                                                               dirichlet_row=SPARSITY_INDICES%SPARSE_ROW_INDICES( &
                                                                 & equations_row_number2)
-                                                              CALL DISTRIBUTED_MATRIX_VALUES_GET(equationsMatrix%MATRIX, &
+                                                              CALL DistributedMatrix_ValuesGet(equationsMatrix%MATRIX, &
                                                                 & dirichlet_row,equations_column_number,MATRIX_VALUE,ERR,ERROR,*999)
                                                               IF(ABS(MATRIX_VALUE)>=ZERO_TOLERANCE) THEN
                                                                 DO solver_row_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP( &
@@ -14813,10 +14813,10 @@ CONTAINS
                                                                     & COUPLING_COEFFICIENTS(solver_row_idx)
                                                                   VALUE=-1.0_DP*MATRIX_VALUE*DEPENDENT_VALUE* &
                                                                     & row_coupling_coefficient
-                                                                  CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR, &
+                                                                  CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR, &
                                                                     & solver_row_number,VALUE,ERR,ERROR,*999)
                                                                   IF(SUBTRACT_FIXED_BCS_FROM_RESIDUAL) THEN
-                                                                    CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RESIDUAL_VECTOR, &
+                                                                    CALL DistributedVector_ValuesAdd(SOLVER_RESIDUAL_VECTOR, &
                                                                         & solver_row_number,VALUE,ERR,ERROR,*999)
                                                                   ENDIF
                                                                 ENDDO !solver_row_idx
@@ -14867,7 +14867,7 @@ CONTAINS
                                               !For nonlinear problems, f(x) - b = 0, and for linear, K x = b, so we always add the
                                               !right hand side field value to the solver right hand side vector
                                               VALUE=RHS_VALUE*row_coupling_coefficient
-                                              CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
+                                              CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
                                                 & ERR,ERROR,*999)
                                             ENDDO !solver_row_idx
                                           ENDIF
@@ -14883,15 +14883,15 @@ CONTAINS
                                         END SELECT
                                       ENDDO !equations_row_number
                                       IF(ASSOCIATED(SOLVER_RESIDUAL_VECTOR)) THEN
-                                        CALL DISTRIBUTED_VECTOR_UPDATE_START(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
+                                        CALL DistributedVector_UpdateStart(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
+                                        CALL DistributedVector_UpdateFinish(SOLVER_RESIDUAL_VECTOR,ERR,ERROR,*999)
                                       ENDIF
                                       NULLIFY(CHECK_DATA2)
-                                      CALL DISTRIBUTED_VECTOR_DATA_GET(EQUATIONS_RHS_VECTOR,CHECK_DATA2,ERR,ERROR,*999)    
+                                      CALL DistributedVector_DataGet(EQUATIONS_RHS_VECTOR,CHECK_DATA2,ERR,ERROR,*999)    
                                       NULLIFY(CHECK_DATA3)
-                                      CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RHS_VECTOR,CHECK_DATA3,ERR,ERROR,*999)    
+                                      CALL DistributedVector_DataGet(SOLVER_RHS_VECTOR,CHECK_DATA3,ERR,ERROR,*999)    
                                       NULLIFY(CHECK_DATA4)
-                                      CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RHS_VECTOR,CHECK_DATA4,ERR,ERROR,*999)    
+                                      CALL DistributedVector_DataGet(SOLVER_RHS_VECTOR,CHECK_DATA4,ERR,ERROR,*999)    
                                     ELSE
                                       CALL FlagError("RHS boundary conditions variable is not associated.",ERR,ERROR,*999)
                                     ENDIF
@@ -14950,7 +14950,7 @@ CONTAINS
                                     IF(ASSOCIATED(INTERFACE_RHS_VECTOR)) THEN
                                       !Worry about BCs on the Lagrange variables later.
                                       DO interface_column_number=1,INTERFACE_MAPPING%TOTAL_NUMBER_OF_COLUMNS
-                                        CALL DISTRIBUTED_VECTOR_VALUES_GET(INTERFACE_RHS_VECTOR%RHS_VECTOR, &
+                                        CALL DistributedVector_ValuesGet(INTERFACE_RHS_VECTOR%RHS_VECTOR, &
                                           & interface_column_number,RHS_VALUE,ERR,ERROR,*999)
                                         !Loop over the solver rows this interface column is mapped to
                                         DO solver_row_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP( &
@@ -14963,7 +14963,7 @@ CONTAINS
                                             & interface_condition_idx)%INTERFACE_COLUMN_TO_SOLVER_ROWS_MAPS( &
                                             & interface_column_number)%COUPLING_COEFFICIENT
                                           VALUE=RHS_VALUE*row_coupling_coefficient
-                                          CALL DISTRIBUTED_VECTOR_VALUES_ADD(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
+                                          CALL DistributedVector_ValuesAdd(SOLVER_RHS_VECTOR,solver_row_number,VALUE, &
                                             & ERR,ERROR,*999)
                                         ENDDO !solver_row_idx
                                       ENDDO !interface_column_idx
@@ -15003,9 +15003,9 @@ CONTAINS
                     ENDIF
                   ENDDO !interface_condition_idx
                   !Start the update the solver RHS vector values
-                  CALL DISTRIBUTED_VECTOR_UPDATE_START(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
+                  CALL DistributedVector_UpdateStart(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
                   NULLIFY(CHECK_DATA)
-                  CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)   
+                  CALL DistributedVector_DataGet(SOLVER_RHS_VECTOR,CHECK_DATA,ERR,ERROR,*999)   
                 ELSE
                   CALL FlagError("The solver RHS vector is not associated.",ERR,ERROR,*999)
                 ENDIF
@@ -15021,7 +15021,7 @@ CONTAINS
               ENDIF
             ENDIF
             IF(ASSOCIATED(SOLVER_RHS_VECTOR)) THEN
-              CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
+              CALL DistributedVector_UpdateFinish(SOLVER_RHS_VECTOR,ERR,ERROR,*999)
             ENDIF
             !If required output the solver matrices
             IF(SOLVER%outputType>=SOLVER_MATRIX_OUTPUT) THEN
@@ -15787,11 +15787,11 @@ CONTAINS
                                       IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                         LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                         IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                          CALL DISTRIBUTED_VECTOR_CREATE_START(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
                                             & equationsMatrix%tempVector,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(equationsMatrix%tempVector, &
+                                          CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                             & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_VECTOR_CREATE_FINISH(equationsMatrix%tempVector,ERR,ERROR,*999)
+                                          CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,ERR,ERROR,*999)
                                         ELSE
                                           CALL FlagError("Linear mapping linear variable is not associated.",ERR,ERROR,*999)
                                         ENDIF
@@ -15849,17 +15849,17 @@ CONTAINS
                                         & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
                                       IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                         !Set up the temporary interface distributed vector to be used with interface matrices
-                                        CALL DISTRIBUTED_VECTOR_CREATE_START(INTERFACE_VARIABLE%DOMAIN_MAPPING, &
+                                        CALL DistributedVector_CreateStart(INTERFACE_VARIABLE%DOMAIN_MAPPING, &
                                           & INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(INTERFACE_MATRIX%TEMP_VECTOR, &
+                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_VECTOR, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_CREATE_FINISH(INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
+                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
                                         !Set up the temporary interface distributed vector to be used with transposed interface matrices
-                                        CALL DISTRIBUTED_VECTOR_CREATE_START(LAGRANGE_VARIABLE%DOMAIN_MAPPING, &
+                                        CALL DistributedVector_CreateStart(LAGRANGE_VARIABLE%DOMAIN_MAPPING, &
                                           & INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
+                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_CREATE_FINISH(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
+                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
                                           & ERR,ERROR,*999)
                                       ELSE
                                         CALL FlagError("Interface mapping variable is not associated.",ERR,ERROR,*999)
@@ -16030,7 +16030,7 @@ CONTAINS
                                 & LINESEARCH_SOLVER%QUASI_NEWTON_SOLVER%NONLINEAR_SOLVER%SOLVER,ERR,ERROR,*999)
                             CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
                               SOLVER_JACOBIAN%UPDATE_MATRIX=.FALSE. !Petsc will fill in the Jacobian values
-                              CALL DISTRIBUTED_MATRIX_FORM(JACOBIAN_MATRIX,ERR,ERROR,*999)
+                              CALL DistributedMatrix_Form(JACOBIAN_MATRIX,ERR,ERROR,*999)
                               SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                               CASE(SOLVER_SPARSE_MATRICES)
                                 CALL Petsc_MatColoringCreate(JACOBIAN_MATRIX%PETSC%MATRIX,LINESEARCH_SOLVER%jacobianMatColoring, &
@@ -16350,7 +16350,7 @@ CONTAINS
                         SELECT CASE(QUASI_NEWTON_SOLVER%SOLUTION_INITIALISE_TYPE)
                         CASE(SOLVER_SOLUTION_INITIALISE_ZERO)
                           !Zero the solution vector
-                          CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(SOLVER_VECTOR,0.0_DP,ERR,ERROR,*999)
+                          CALL DistributedVector_AllValuesSet(SOLVER_VECTOR,0.0_DP,ERR,ERROR,*999)
                         CASE(SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD)
                           !Make sure the solver vector contains the current dependent field values
                           CALL SOLVER_SOLUTION_UPDATE(SOLVER,ERR,ERROR,*999)
@@ -17020,11 +17020,11 @@ CONTAINS
                                       IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                         LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                         IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                          CALL DISTRIBUTED_VECTOR_CREATE_START(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
                                             & equationsMatrix%tempVector,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(equationsMatrix%tempVector, &
+                                          CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                             & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_VECTOR_CREATE_FINISH(equationsMatrix%tempVector,ERR,ERROR,*999)
+                                          CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,ERR,ERROR,*999)
                                         ELSE
                                           CALL FlagError("Linear mapping linear variable is not associated.",ERR,ERROR,*999)
                                         ENDIF
@@ -18561,11 +18561,11 @@ CONTAINS
                                       IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                         LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                         IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                          CALL DISTRIBUTED_VECTOR_CREATE_START(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
                                             & equationsMatrix%tempVector,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(equationsMatrix%tempVector, &
+                                          CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                             & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_VECTOR_CREATE_FINISH(equationsMatrix%tempVector,ERR,ERROR,*999)
+                                          CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,ERR,ERROR,*999)
                                         ELSE
                                           CALL FlagError("Linear mapping linear variable is not associated.",ERR,ERROR,*999)
                                         ENDIF
@@ -18623,17 +18623,17 @@ CONTAINS
                                         & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
                                       IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                         !Set up the temporary interface distributed vector to be used with interface matrices
-                                        CALL DISTRIBUTED_VECTOR_CREATE_START(INTERFACE_VARIABLE%DOMAIN_MAPPING, &
+                                        CALL DistributedVector_CreateStart(INTERFACE_VARIABLE%DOMAIN_MAPPING, &
                                           & INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(INTERFACE_MATRIX%TEMP_VECTOR, &
+                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_VECTOR, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_CREATE_FINISH(INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
+                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
                                         !Set up the temporary interface distributed vector to be used with transposed interface matrices
-                                        CALL DISTRIBUTED_VECTOR_CREATE_START(LAGRANGE_VARIABLE%DOMAIN_MAPPING, &
+                                        CALL DistributedVector_CreateStart(LAGRANGE_VARIABLE%DOMAIN_MAPPING, &
                                           & INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
+                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                        CALL DISTRIBUTED_VECTOR_CREATE_FINISH(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
+                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
                                           & ERR,ERROR,*999)
                                       ELSE
                                         CALL FlagError("Interface mapping variable is not associated.",ERR,ERROR,*999)
@@ -18763,7 +18763,7 @@ CONTAINS
                                 & LINESEARCH_SOLVER%NEWTON_SOLVER%NONLINEAR_SOLVER%SOLVER,ERR,ERROR,*999)
                             CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
                               SOLVER_JACOBIAN%UPDATE_MATRIX=.FALSE. !Petsc will fill in the Jacobian values
-                              CALL DISTRIBUTED_MATRIX_FORM(JACOBIAN_MATRIX,ERR,ERROR,*999)
+                              CALL DistributedMatrix_Form(JACOBIAN_MATRIX,ERR,ERROR,*999)
                               SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                               CASE(SOLVER_SPARSE_MATRICES)
                                 CALL Petsc_MatColoringCreate(JACOBIAN_MATRIX%petsc%matrix,LINESEARCH_SOLVER%jacobianMatColoring, &
@@ -19100,7 +19100,7 @@ CONTAINS
                         SELECT CASE(NEWTON_SOLVER%SOLUTION_INITIALISE_TYPE)
                         CASE(SOLVER_SOLUTION_INITIALISE_ZERO)
                           !Zero the solution vector
-                          CALL DISTRIBUTED_VECTOR_ALL_VALUES_SET(SOLVER_VECTOR,0.0_DP,ERR,ERROR,*999)
+                          CALL DistributedVector_AllValuesSet(SOLVER_VECTOR,0.0_DP,ERR,ERROR,*999)
                         CASE(SOLVER_SOLUTION_INITIALISE_CURRENT_FIELD)
                           !Make sure the solver vector contains the current dependent field values
                           CALL SOLVER_SOLUTION_UPDATE(SOLVER,ERR,ERROR,*999)
@@ -19777,11 +19777,11 @@ CONTAINS
                                       IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                         LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                         IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                          CALL DISTRIBUTED_VECTOR_CREATE_START(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
                                             & equationsMatrix%tempVector,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(equationsMatrix%tempVector, &
+                                          CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                             & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                                          CALL DISTRIBUTED_VECTOR_CREATE_FINISH(equationsMatrix%tempVector,ERR,ERROR,*999)
+                                          CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,ERR,ERROR,*999)
                                         ELSE
                                           CALL FlagError("Linear mapping linear variable is not associated.",ERR,ERROR,*999)
                                         ENDIF
@@ -20784,7 +20784,7 @@ CONTAINS
               DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
                 CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solution vector for solver matrix : ",solver_matrix_idx, &
                   & ERR,ERROR,*999)
-                CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr% &
+                CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr% &
                   & SOLVER_VECTOR,ERR,ERROR,*999)
               ENDDO !solver_matrix_idx
             ELSE
@@ -21584,7 +21584,7 @@ CONTAINS
                                   & variable_idx)%ADDITIVE_CONSTANTS(variable_dof_idx)
                                 VALUE=VARIABLE_DATA(variable_dof_idx)*coupling_coefficient+additive_constant
                                 local_number=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(column_number)%LOCAL_NUMBER(1)
-                                CALL DISTRIBUTED_VECTOR_VALUES_SET(SOLVER_VECTOR,local_number,VALUE,ERR,ERROR,*999)
+                                CALL DistributedVector_ValuesSet(SOLVER_VECTOR,local_number,VALUE,ERR,ERROR,*999)
                               ENDIF
                             ENDDO !variable_dof_idx
                             CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
@@ -21616,7 +21616,7 @@ CONTAINS
                                 & ADDITIVE_CONSTANTS(variable_dof_idx)
                               VALUE=VARIABLE_DATA(variable_dof_idx)*coupling_coefficient+additive_constant
                               local_number=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(column_number)%LOCAL_NUMBER(1)
-                              CALL DISTRIBUTED_VECTOR_VALUES_SET(SOLVER_VECTOR,local_number,VALUE,ERR,ERROR,*999)
+                              CALL DistributedVector_ValuesSet(SOLVER_VECTOR,local_number,VALUE,ERR,ERROR,*999)
                             ENDIF
                           ENDDO !variable_dof_idx
                           CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
@@ -21628,8 +21628,8 @@ CONTAINS
                     ELSE
                       CALL FlagError("Domain mapping is not associated.",ERR,ERROR,*999)
                     ENDIF
-                    CALL DISTRIBUTED_VECTOR_UPDATE_START(SOLVER_VECTOR,ERR,ERROR,*999)
-                    CALL DISTRIBUTED_VECTOR_UPDATE_FINISH(SOLVER_VECTOR,ERR,ERROR,*999)
+                    CALL DistributedVector_UpdateStart(SOLVER_VECTOR,ERR,ERROR,*999)
+                    CALL DistributedVector_UpdateFinish(SOLVER_VECTOR,ERR,ERROR,*999)
                   ELSE
                     CALL FlagError("Solver vector is not associated.",ERR,ERROR,*999)
                   ENDIF
@@ -21889,7 +21889,7 @@ CONTAINS
                     SOLVER_VECTOR=>SOLVER_MATRIX%SOLVER_VECTOR
                     IF(ASSOCIATED(SOLVER_VECTOR)) THEN
                       !Get the solver variables data
-                      CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
+                      CALL DistributedVector_DataGet(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                       !Loop over the solver variable dofs
                       DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%NUMBER_OF_DOFS
                         !Loop over the equations sets associated with this dof
@@ -22059,7 +22059,7 @@ CONTAINS
                         ENDDO !equations_idx
                       ENDDO !solver_dof_idx
                       !Restore the solver dof data
-                      CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
+                      CALL DistributedVector_DataRestore(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                       !Start the transfer of the field dofs
                       DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                         EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
@@ -22324,7 +22324,7 @@ CONTAINS
     
     EXITS("SOLVER_VARIABLES_DYNAMIC_FIELD_UPDATE")
     RETURN
-999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
+999 IF(ASSOCIATED(SOLVER_DATA)) CALL DistributedVector_DataRestore(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_VARIABLES_DYNAMIC_FIELD_UPDATE",ERR,ERROR)
     RETURN 1
    
@@ -22557,7 +22557,7 @@ CONTAINS
                   SOLVER_VECTOR=>SOLVER_MATRIX%SOLVER_VECTOR
                   IF(ASSOCIATED(SOLVER_VECTOR)) THEN
                     !Get the solver variables data                  
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                     !Loop over the solver variable dofs
                     DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%NUMBER_OF_DOFS
                       !Loop over the equations associated with this dof
@@ -22731,7 +22731,7 @@ CONTAINS
                       ENDDO !equations_idx
                     ENDDO !solver_dof_idx
                     !Restore the solver dof data
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                     !Start the transfer of the field dofs
                     DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
@@ -22798,7 +22798,7 @@ CONTAINS
     
     EXITS("SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE")
     RETURN
-999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
+999 IF(ASSOCIATED(SOLVER_DATA)) CALL DistributedVector_DataRestore(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE 
@@ -22848,7 +22848,7 @@ CONTAINS
                   SOLVER_VECTOR=>SOLVER_MATRIX%SOLVER_VECTOR
                   IF(ASSOCIATED(SOLVER_VECTOR)) THEN
                     !Get the solver variables data
-                    CALL DISTRIBUTED_VECTOR_DATA_GET(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
+                    CALL DistributedVector_DataGet(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                     !Loop over the solver variable dofs
                     DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%NUMBER_OF_DOFS
                       !Loop over the equations associated with this dof
@@ -22940,7 +22940,7 @@ CONTAINS
                       ENDDO
                     ENDIF
                     !Restore the solver dof data
-                    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
+                    CALL DistributedVector_DataRestore(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                     !Start the transfer of the field dofs
                     DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
@@ -22992,7 +22992,7 @@ CONTAINS
     
     EXITS("SOLVER_VARIABLES_FIELD_UPDATE")
     RETURN
-999 IF(ASSOCIATED(SOLVER_DATA)) CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
+999 IF(ASSOCIATED(SOLVER_DATA)) CALL DistributedVector_DataRestore(SOLVER_VECTOR,SOLVER_DATA,dummyErr,dummyError,*998)
 998 ERRORSEXITS("SOLVER_VARIABLES_FIELD_UPDATE",ERR,ERROR)
     RETURN 1
     

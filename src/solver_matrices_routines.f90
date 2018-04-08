@@ -201,32 +201,32 @@ CONTAINS
                   COLUMN_DOMAIN_MAP=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(matrix_idx)%COLUMN_DOFS_MAPPING
                   IF(ASSOCIATED(COLUMN_DOMAIN_MAP)) THEN
                     !!Create the distributed solver matrix
-                    CALL DISTRIBUTED_MATRIX_CREATE_START(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,SOLVER_MATRICES%MATRICES(matrix_idx)% &
+                    CALL DistributedMatrix_CreateStart(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,SOLVER_MATRICES%MATRICES(matrix_idx)% &
                          & PTR%MATRIX,ERR,ERROR,*999)
-                    CALL DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET(SOLVER_MATRIX%MATRIX,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
-                    CALL DISTRIBUTED_MATRIX_DATA_TYPE_SET(SOLVER_MATRIX%MATRIX,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                    CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_SET(SOLVER_MATRIX%MATRIX,SOLVER_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
+                    CALL DistributedMatrix_LibraryTypeSet(SOLVER_MATRIX%MATRIX,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
+                    CALL DistributedMatrix_DataTypeSet(SOLVER_MATRIX%MATRIX,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
+                    CALL DistributedMatrix_StorageTypeSet(SOLVER_MATRIX%MATRIX,SOLVER_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
                     !Calculate and set the matrix structure/sparsity pattern
                     IF(SOLVER_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
                       & SOLVER_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
                       CALL SOLVER_MATRIX_STRUCTURE_CALCULATE(SOLVER_MATRIX,NUMBER_OF_NON_ZEROS,ROW_INDICES, &
                         & COLUMN_INDICES,ERR,ERROR,*999)                  
-                      CALL DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET(SOLVER_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
+                      CALL DistributedMatrix_NumberOfNonZerosSet(SOLVER_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
                         & ERR,ERROR,*999)
-                      CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET(SOLVER_MATRIX%MATRIX,ROW_INDICES,COLUMN_INDICES, &
+                      CALL DistributedMatrix_StorageLocationsSet(SOLVER_MATRIX%MATRIX,ROW_INDICES,COLUMN_INDICES, &
                         & ERR,ERROR,*999)
                       IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
                       IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
                     ENDIF
                     CALL DistributedMatrix_SymmetryTypeSet(SOLVER_MATRIX%matrix,SOLVER_MATRIX%symmetryType,err,error,*999)
-                    CALL DISTRIBUTED_MATRIX_CREATE_FINISH(SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
+                    CALL DistributedMatrix_CreateFinish(SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
                     !Allocate the distributed solver vector
-                    CALL DISTRIBUTED_VECTOR_CREATE_START(COLUMN_DOMAIN_MAP,SOLVER_MATRICES%MATRICES(matrix_idx)% &
+                    CALL DistributedVector_CreateStart(COLUMN_DOMAIN_MAP,SOLVER_MATRICES%MATRICES(matrix_idx)% &
                          & PTR%SOLVER_VECTOR,ERR,ERROR,*999)
-                    CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRIX%SOLVER_VECTOR,SOLVER_MATRICES%matrixLibraryType, &
+                    CALL DistributedVector_LibraryTypeSet(SOLVER_MATRIX%SOLVER_VECTOR,SOLVER_MATRICES%matrixLibraryType, &
                       & ERR,ERROR,*999)
-                    CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(SOLVER_MATRIX%SOLVER_VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                    CALL DISTRIBUTED_VECTOR_CREATE_FINISH(SOLVER_MATRIX%SOLVER_VECTOR,ERR,ERROR,*999)
+                    CALL DistributedVector_DataTypeSet(SOLVER_MATRIX%SOLVER_VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
+                    CALL DistributedVector_CreateFinish(SOLVER_MATRIX%SOLVER_VECTOR,ERR,ERROR,*999)
                   ELSE
                     CALL FlagError("Column domain mapping is not associated.",ERR,ERROR,*999)
                   ENDIF
@@ -237,17 +237,17 @@ CONTAINS
               IF(SOLVER_EQUATIONS%linearity==PROBLEM_SOLVER_NONLINEAR) THEN
                 !Allocate the nonlinear matrices and vectors                  
                 !Allocate the distributed residual vector
-                CALL DISTRIBUTED_VECTOR_CREATE_START(ROW_DOMAIN_MAP,SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)
-                CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRICES%RESIDUAL,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
-                CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(SOLVER_MATRICES%RESIDUAL,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                CALL DISTRIBUTED_VECTOR_CREATE_FINISH(SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)                  
+                CALL DistributedVector_CreateStart(ROW_DOMAIN_MAP,SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)
+                CALL DistributedVector_LibraryTypeSet(SOLVER_MATRICES%RESIDUAL,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
+                CALL DistributedVector_DataTypeSet(SOLVER_MATRICES%RESIDUAL,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
+                CALL DistributedVector_CreateFinish(SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)                  
               ENDIF
 !!TODO: what to do if there is no RHS
               !Allocate the distributed rhs vector
-              CALL DISTRIBUTED_VECTOR_CREATE_START(ROW_DOMAIN_MAP,SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_LIBRARY_TYPE_SET(SOLVER_MATRICES%RHS_VECTOR,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_DATA_TYPE_SET(SOLVER_MATRICES%RHS_VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-              CALL DISTRIBUTED_VECTOR_CREATE_FINISH(SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
+              CALL DistributedVector_CreateStart(ROW_DOMAIN_MAP,SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
+              CALL DistributedVector_LibraryTypeSet(SOLVER_MATRICES%RHS_VECTOR,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
+              CALL DistributedVector_DataTypeSet(SOLVER_MATRICES%RHS_VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
+              CALL DistributedVector_CreateFinish(SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
               !Finish up
               SOLVER_MATRICES%SOLVER_MATRICES_FINISHED=.TRUE.
             ELSE
@@ -367,8 +367,8 @@ CONTAINS
         ENDDO !matrix_idx
         DEALLOCATE(SOLVER_MATRICES%MATRICES)
       ENDIF
-      IF(ASSOCIATED(SOLVER_MATRICES%RESIDUAL)) CALL DISTRIBUTED_VECTOR_DESTROY(SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)
-      IF(ASSOCIATED(SOLVER_MATRICES%RHS_VECTOR)) CALL DISTRIBUTED_VECTOR_DESTROY(SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
+      IF(ASSOCIATED(SOLVER_MATRICES%RESIDUAL)) CALL DistributedVector_Destroy(SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)
+      IF(ASSOCIATED(SOLVER_MATRICES%RHS_VECTOR)) CALL DistributedVector_Destroy(SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
       DEALLOCATE(SOLVER_MATRICES)
     ENDIF
         
@@ -549,19 +549,19 @@ CONTAINS
 
     IF(ASSOCIATED(SOLVER_MATRICES)) THEN
       IF(SOLVER_MATRICES%SOLVER_MATRICES_FINISHED) THEN
-        CALL WRITE_STRING(ID,"",ERR,ERROR,*999)
+        CALL WriteString(ID,"",ERR,ERROR,*999)
         IF(SELECTION_TYPE==SOLVER_MATRICES_ALL.OR. &
 !           & SELECTION_TYPE==SOLVER_MATRICES_DYNAMIC_ONLY.OR. &
           & SELECTION_TYPE==SOLVER_MATRICES_LINEAR_ONLY.OR. &
           & SELECTION_TYPE==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
           & SELECTION_TYPE==SOLVER_MATRICES_JACOBIAN_ONLY) THEN
-          CALL WRITE_STRING(ID,"Solver matrices:",ERR,ERROR,*999)
-          CALL WRITE_STRING_VALUE(ID,"Number of matrices = ",SOLVER_MATRICES%NUMBER_OF_MATRICES,ERR,ERROR,*999)
+          CALL WriteString(ID,"Solver matrices:",ERR,ERROR,*999)
+          CALL WriteStringValue(ID,"Number of matrices = ",SOLVER_MATRICES%NUMBER_OF_MATRICES,ERR,ERROR,*999)
           DO matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
             SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(matrix_idx)%PTR
             IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-              CALL WRITE_STRING_VALUE(ID,"Solver matrix : ",matrix_idx,ERR,ERROR,*999)
-              CALL DISTRIBUTED_MATRIX_OUTPUT(ID,SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
+              CALL WriteStringValue(ID,"Solver matrix : ",matrix_idx,ERR,ERROR,*999)
+              CALL DistributedMatrix_Output(ID,SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
             ELSE
               CALL FlagError("Solver matrix is not associated.",ERR,ERROR,*999)
             ENDIF
@@ -572,8 +572,8 @@ CONTAINS
           & SELECTION_TYPE==SOLVER_MATRICES_RESIDUAL_ONLY.OR. &
           & SELECTION_TYPE==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
           IF(ASSOCIATED(SOLVER_MATRICES%RESIDUAL)) THEN
-            CALL WRITE_STRING(ID,"Solver residual vector:",ERR,ERROR,*999)     
-            CALL DISTRIBUTED_VECTOR_OUTPUT(ID,SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)  
+            CALL WriteString(ID,"Solver residual vector:",ERR,ERROR,*999)     
+            CALL DistributedVector_Output(ID,SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)  
           ENDIF
         ENDIF
         IF(SELECTION_TYPE==SOLVER_MATRICES_ALL.OR. &
@@ -583,8 +583,8 @@ CONTAINS
           & SELECTION_TYPE==SOLVER_MATRICES_RHS_ONLY.OR. &
           & SELECTION_TYPE==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
           IF(ASSOCIATED(SOLVER_MATRICES%RHS_VECTOR)) THEN
-            CALL WRITE_STRING(ID,"Solver RHS vector:",ERR,ERROR,*999)     
-            CALL DISTRIBUTED_VECTOR_OUTPUT(ID,SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
+            CALL WriteString(ID,"Solver RHS vector:",ERR,ERROR,*999)     
+            CALL DistributedVector_Output(ID,SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
           ENDIF
         ENDIF
       ELSE
@@ -860,9 +860,9 @@ CONTAINS
                           IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
                             EQUATIONS_DISTRIBUTED_MATRIX=>equationsMatrix%MATRIX
                             IF(ASSOCIATED(EQUATIONS_DISTRIBUTED_MATRIX)) THEN
-                              CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(EQUATIONS_DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE, &
+                              CALL DistributedMatrix_StorageTypeGet(EQUATIONS_DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE, &
                                 & ERR,ERROR,*999)
-                              CALL DISTRIBUTED_MATRIX_DATA_GET(EQUATIONS_DISTRIBUTED_MATRIX,EQUATIONS_MATRIX_DATA,ERR,ERROR,*999)
+                              CALL DistributedMatrix_DataGet(EQUATIONS_DISTRIBUTED_MATRIX,EQUATIONS_MATRIX_DATA,ERR,ERROR,*999)
                               SELECT CASE(EQUATIONS_STORAGE_TYPE)
                               CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                                 !Loop over the rows of the equations matrix
@@ -890,7 +890,7 @@ CONTAINS
                                         VALUE=ALPHA*EQUATIONS_MATRIX_DATA(equations_row_number+ &
                                           & (equations_column_number-1)*vectorMatrices%totalNumberOfRows)* &
                                           & row_coupling_coefficient*column_coupling_coefficient
-                                        CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                        CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                           & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                       ENDDO !solver_column_idx
                                     ENDDO !equations_column_number
@@ -920,7 +920,7 @@ CONTAINS
                                       !Add in the solver matrix value
                                       VALUE=ALPHA*EQUATIONS_MATRIX_DATA(equations_row_number)* &
                                         & row_coupling_coefficient*column_coupling_coefficient
-                                      CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                      CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                         & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                     ENDDO !solver_column_idx
                                   ENDDO !solver_row_idx
@@ -930,7 +930,7 @@ CONTAINS
                               CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                                 CALL FlagError("Not implemented.",ERR,ERROR,*999)
                               CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                                CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(EQUATIONS_DISTRIBUTED_MATRIX, &
+                                CALL DistributedMatrix_StorageLocationsGet(EQUATIONS_DISTRIBUTED_MATRIX, &
                                   & ROW_INDICES,COLUMN_INDICES,ERR,ERROR,*999)
                                 !Loop over the rows of the equations matrix
                                 DO equations_row_number=1,vectorMatrices%numberOfRows
@@ -957,7 +957,7 @@ CONTAINS
                                         !Add in the solver matrix value
                                         VALUE=ALPHA*EQUATIONS_MATRIX_DATA(equations_column_idx)*row_coupling_coefficient* &
                                           & column_coupling_coefficient
-                                        CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                        CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                           & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                       ENDDO !solution_column_idx
                                     ENDDO !equations_column_idx
@@ -972,7 +972,7 @@ CONTAINS
                                   & TRIM(NUMBER_TO_VSTRING(EQUATIONS_STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
                                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               END SELECT
-                              CALL DISTRIBUTED_MATRIX_DATA_RESTORE(EQUATIONS_DISTRIBUTED_MATRIX,EQUATIONS_MATRIX_DATA, &
+                              CALL DistributedMatrix_DataRestore(EQUATIONS_DISTRIBUTED_MATRIX,EQUATIONS_MATRIX_DATA, &
                                 & ERR,ERROR,*999)
                             ELSE
                               CALL FlagError("The equations matrix distributed matrix is not associated",ERR,ERROR,*999)
@@ -1075,9 +1075,9 @@ CONTAINS
                         IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
                           INTERFACE_DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX
                           IF(ASSOCIATED(INTERFACE_DISTRIBUTED_MATRIX)) THEN
-                            CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_STORAGE_TYPE, &
+                            CALL DistributedMatrix_StorageTypeGet(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_STORAGE_TYPE, &
                                 & ERR,ERROR,*999)
-                            CALL DISTRIBUTED_MATRIX_DATA_GET(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_MATRIX_DATA,ERR,ERROR,*999)
+                            CALL DistributedMatrix_DataGet(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_MATRIX_DATA,ERR,ERROR,*999)
                             SELECT CASE(INTERFACE_STORAGE_TYPE)
                             CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                               !Loop over the rows of the interface matrix
@@ -1111,7 +1111,7 @@ CONTAINS
                                       VALUE=ALPHA(1)*INTERFACE_MATRIX_DATA(interface_row_number+ &
                                         & (interface_column_number-1)*INTERFACE_MATRIX%TOTAL_NUMBER_OF_ROWS)* &
                                         & row_coupling_coefficient*column_coupling_coefficient
-                                      CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                      CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                         & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                     ENDDO !solver_column_idx
                                   ENDDO !interface_column_number
@@ -1147,7 +1147,7 @@ CONTAINS
                                     !Add in the solver matrix value
                                     VALUE=ALPHA(1)*INTERFACE_MATRIX_DATA(interface_row_number)* &
                                       & row_coupling_coefficient*column_coupling_coefficient
-                                    CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                    CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                       & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                   ENDDO !solver_column_idx
                                 ENDDO !solver_row_idx
@@ -1157,7 +1157,7 @@ CONTAINS
                             CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                               CALL FlagError("Not implemented.",ERR,ERROR,*999)
                             CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                              CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(INTERFACE_DISTRIBUTED_MATRIX, &
+                              CALL DistributedMatrix_StorageLocationsGet(INTERFACE_DISTRIBUTED_MATRIX, &
                                 & ROW_INDICES,COLUMN_INDICES,ERR,ERROR,*999)
                               !Loop over the rows of the interface matrix
                               DO interface_row_number=1,INTERFACE_MATRIX%NUMBER_OF_ROWS
@@ -1190,7 +1190,7 @@ CONTAINS
                                       !Add in the solver matrix value
                                       VALUE=ALPHA(1)*INTERFACE_MATRIX_DATA(interface_column_idx)*row_coupling_coefficient* &
                                         & column_coupling_coefficient
-                                      CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                      CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                         & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                     ENDDO !solution_column_idx
                                   ENDDO !interface_column_idx
@@ -1205,15 +1205,15 @@ CONTAINS
                                 & TRIM(NUMBER_TO_VSTRING(INTERFACE_STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
                               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                             END SELECT
-                            CALL DISTRIBUTED_MATRIX_DATA_RESTORE(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_MATRIX_DATA, &
+                            CALL DistributedMatrix_DataRestore(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_MATRIX_DATA, &
                               & ERR,ERROR,*999)
                             IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                               IF(ABS(ALPHA(2))>ZERO_TOLERANCE) THEN
                                 INTERFACE_DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX_TRANSPOSE
                                 IF(ASSOCIATED(INTERFACE_DISTRIBUTED_MATRIX)) THEN
-                                  CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_STORAGE_TYPE, &
+                                  CALL DistributedMatrix_StorageTypeGet(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_STORAGE_TYPE, &
                                     & ERR,ERROR,*999)
-                                  CALL DISTRIBUTED_MATRIX_DATA_GET(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_MATRIX_DATA, &
+                                  CALL DistributedMatrix_DataGet(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_MATRIX_DATA, &
                                     & ERR,ERROR,*999)
                                   SELECT CASE(INTERFACE_STORAGE_TYPE)
                                   CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -1242,7 +1242,7 @@ CONTAINS
                                             VALUE=ALPHA(2)*INTERFACE_MATRIX_DATA(interface_column_number+ &
                                               & (interface_row_number-1)*INTERFACE_MATRICES%TOTAL_NUMBER_OF_COLUMNS)* &
                                               & row_coupling_coefficient*column_coupling_coefficient
-                                            CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                            CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                               & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                           ENDDO !solver_column_idx
                                         ENDDO !interface_row_number
@@ -1272,7 +1272,7 @@ CONTAINS
                                           !Add in the solver matrix value
                                           VALUE=ALPHA(2)*INTERFACE_MATRIX_DATA(interface_column_number)* &
                                             & row_coupling_coefficient*column_coupling_coefficient
-                                          CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                          CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                             & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                         ENDDO !solver_column_idx
                                       ENDDO !solver_row_idx
@@ -1282,7 +1282,7 @@ CONTAINS
                                   CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                                   CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                                    CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(INTERFACE_DISTRIBUTED_MATRIX, &
+                                    CALL DistributedMatrix_StorageLocationsGet(INTERFACE_DISTRIBUTED_MATRIX, &
                                       & ROW_INDICES,COLUMN_INDICES,ERR,ERROR,*999)
                                     !Loop over the columns of the interface matrix
                                     DO interface_column_number=1,INTERFACE_MATRICES%NUMBER_OF_COLUMNS
@@ -1310,7 +1310,7 @@ CONTAINS
                                             !Add in the solver matrix value
                                             VALUE=ALPHA(2)*INTERFACE_MATRIX_DATA(interface_row_idx)*row_coupling_coefficient* &
                                               & column_coupling_coefficient
-                                            CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                            CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                               & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                           ENDDO !solution_column_idx
                                         ENDDO !interface_row_idx
@@ -1325,7 +1325,7 @@ CONTAINS
                                       & TRIM(NUMBER_TO_VSTRING(INTERFACE_STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
                                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                   END SELECT
-                                  CALL DISTRIBUTED_MATRIX_DATA_RESTORE(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_MATRIX_DATA, &
+                                  CALL DistributedMatrix_DataRestore(INTERFACE_DISTRIBUTED_MATRIX,INTERFACE_MATRIX_DATA, &
                                     & ERR,ERROR,*999)
                                 ELSE
                                   CALL FlagError("The transpose interface matrix distributed matrix is not associated", &
@@ -1440,9 +1440,9 @@ CONTAINS
                           IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
                             JACOBIAN_DISTRIBUTED_MATRIX=>jacobianMatrix%JACOBIAN
                             IF(ASSOCIATED(JACOBIAN_DISTRIBUTED_MATRIX)) THEN
-                              CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(JACOBIAN_DISTRIBUTED_MATRIX,JACOBIAN_STORAGE_TYPE, &
+                              CALL DistributedMatrix_StorageTypeGet(JACOBIAN_DISTRIBUTED_MATRIX,JACOBIAN_STORAGE_TYPE, &
                                 & ERR,ERROR,*999)
-                              CALL DISTRIBUTED_MATRIX_DATA_GET(JACOBIAN_DISTRIBUTED_MATRIX,JACOBIAN_MATRIX_DATA,ERR,ERROR,*999)
+                              CALL DistributedMatrix_DataGet(JACOBIAN_DISTRIBUTED_MATRIX,JACOBIAN_MATRIX_DATA,ERR,ERROR,*999)
 
                               SELECT CASE(JACOBIAN_STORAGE_TYPE)
                               CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -1471,7 +1471,7 @@ CONTAINS
                                         VALUE=ALPHA*JACOBIAN_MATRIX_DATA(jacobian_row_number+(jacobian_column_number-1)* &
                                           & vectorMatrices%totalNumberOfRows)*row_coupling_coefficient* &
                                           & column_coupling_coefficient
-                                        CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX,solver_row_number, &
+                                        CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX,solver_row_number, &
                                           & solver_column_number,VALUE,ERR,ERROR,*999)
                                       ENDDO !solver_column_idx
                                     ENDDO !jacobian_column_number
@@ -1501,7 +1501,7 @@ CONTAINS
                                       !Add in the solver matrix value
                                       VALUE=ALPHA*JACOBIAN_MATRIX_DATA(jacobian_row_number)* &
                                         & row_coupling_coefficient*column_coupling_coefficient
-                                      CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX, &
+                                      CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX, &
                                         & solver_row_number,solver_column_number,VALUE,ERR,ERROR,*999)
                                     ENDDO !solver_column_idx
                                   ENDDO !solver_row_idx
@@ -1511,7 +1511,7 @@ CONTAINS
                               CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                                 CALL FlagError("Not implemented.",ERR,ERROR,*999)
                               CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                                CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(JACOBIAN_DISTRIBUTED_MATRIX,ROW_INDICES, &
+                                CALL DistributedMatrix_StorageLocationsGet(JACOBIAN_DISTRIBUTED_MATRIX,ROW_INDICES, &
                                   & COLUMN_INDICES,ERR,ERROR,*999)
                                 !Loop over the rows of the Jacobian matrix
                                 DO jacobian_row_number=1,vectorMatrices%numberOfRows
@@ -1539,7 +1539,7 @@ CONTAINS
                                         !Add in the solver matrix value
                                         VALUE=ALPHA*JACOBIAN_MATRIX_DATA(jacobian_column_idx)*row_coupling_coefficient* &
                                           & column_coupling_coefficient
-                                        CALL DISTRIBUTED_MATRIX_VALUES_ADD(SOLVER_DISTRIBUTED_MATRIX,solver_row_number, &
+                                        CALL DistributedMatrix_ValuesAdd(SOLVER_DISTRIBUTED_MATRIX,solver_row_number, &
                                           & solver_column_number,VALUE,ERR,ERROR,*999)
                                       ENDDO !solution_column_idx
                                     ENDDO !jacobian_column_idx
@@ -1554,7 +1554,7 @@ CONTAINS
                                   & TRIM(NUMBER_TO_VSTRING(JACOBIAN_STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
                                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                               END SELECT
-                              CALL DISTRIBUTED_MATRIX_DATA_RESTORE(JACOBIAN_DISTRIBUTED_MATRIX,JACOBIAN_MATRIX_DATA, &
+                              CALL DistributedMatrix_DataRestore(JACOBIAN_DISTRIBUTED_MATRIX,JACOBIAN_MATRIX_DATA, &
                                 & ERR,ERROR,*999)
                             ELSE
                               CALL FlagError("The Jacobian matrix distributed matrix is not associated",ERR,ERROR,*999)
@@ -1691,7 +1691,7 @@ CONTAINS
                                 IF(ASSOCIATED(vectorMatrices)) THEN
                                   DISTRIBUTED_MATRIX=>equationsMatrix%MATRIX
                                   IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
-                                    CALL DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET(DISTRIBUTED_MATRIX,MAX_COLUMNS_PER_ROW, &
+                                    CALL DistributedMatrix_MaxColumnsPerRowGet(DISTRIBUTED_MATRIX,MAX_COLUMNS_PER_ROW, &
                                       & ERR,ERROR,*999)
                                     MAX_COLUMN_INDICES=MAX_COLUMN_INDICES+MAX_COLUMNS_PER_ROW
                                   ELSE
@@ -1725,7 +1725,7 @@ CONTAINS
                                 IF(ASSOCIATED(vectorMatrices)) THEN
                                   DISTRIBUTED_MATRIX=>equationsMatrix%MATRIX
                                   IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
-                                    CALL DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET(DISTRIBUTED_MATRIX,MAX_COLUMNS_PER_ROW, &
+                                    CALL DistributedMatrix_MaxColumnsPerRowGet(DISTRIBUTED_MATRIX,MAX_COLUMNS_PER_ROW, &
                                       & ERR,ERROR,*999)
                                     MAX_COLUMN_INDICES=MAX_COLUMN_INDICES+MAX_COLUMNS_PER_ROW
                                   ELSE
@@ -1758,7 +1758,7 @@ CONTAINS
                                 IF(ASSOCIATED(vectorMatrices)) THEN
                                   DISTRIBUTED_MATRIX=>jacobianMatrix%JACOBIAN
                                   IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
-                                    CALL DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET(DISTRIBUTED_MATRIX,MAX_COLUMNS_PER_ROW, &
+                                    CALL DistributedMatrix_MaxColumnsPerRowGet(DISTRIBUTED_MATRIX,MAX_COLUMNS_PER_ROW, &
                                       & ERR,ERROR,*999)
                                     MAX_COLUMN_INDICES=MAX_COLUMN_INDICES+MAX_COLUMNS_PER_ROW
                                   ELSE
@@ -1793,7 +1793,7 @@ CONTAINS
                               IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
                                 DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX
                                 IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
-                                  CALL DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET(DISTRIBUTED_MATRIX,MAX_COLUMNS_PER_ROW, &
+                                  CALL DistributedMatrix_MaxColumnsPerRowGet(DISTRIBUTED_MATRIX,MAX_COLUMNS_PER_ROW, &
                                     & ERR,ERROR,*999)
                                 ELSE
                                   CALL FlagError("Interface matrix distributed matrix is not associated.",ERR,ERROR,*999)
@@ -1805,7 +1805,7 @@ CONTAINS
                               IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                 DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX_TRANSPOSE
                                 IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
-                                  CALL DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET(DISTRIBUTED_MATRIX, &
+                                  CALL DistributedMatrix_MaxColumnsPerRowGet(DISTRIBUTED_MATRIX, &
                                     & MAX_TRANSPOSE_COLUMNS_PER_ROW,ERR,ERROR,*999)
                                 ELSE
                                   CALL FlagError("Interface matrix distributed matrix transpose is not associated.",ERR,ERROR,*999)
@@ -1860,7 +1860,7 @@ CONTAINS
                           dynamicMatrices=>equationsMatrix%dynamicMatrices
                           vectorMatrices=>dynamicMatrices%vectorMatrices
                           DISTRIBUTED_MATRIX=>equationsMatrix%MATRIX
-                          CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
+                          CALL DistributedMatrix_StorageTypeGet(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
                           SELECT CASE(EQUATIONS_STORAGE_TYPE)
                           CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                             !Loop over the rows of the equations matrix
@@ -1909,7 +1909,7 @@ CONTAINS
                           CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                             CALL FlagError("Not implemented.",ERR,ERROR,*999)
                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                            CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(DISTRIBUTED_MATRIX,EQUATIONS_ROW_INDICES, &
+                            CALL DistributedMatrix_StorageLocationsGet(DISTRIBUTED_MATRIX,EQUATIONS_ROW_INDICES, &
                               & EQUATIONS_COLUMN_INDICES,ERR,ERROR,*999)
                             !Loop over the rows of the equations matrix
                             DO equations_row_number=1,vectorMatrices%numberOfRows
@@ -1956,7 +1956,7 @@ CONTAINS
                           linearMatrices=>equationsMatrix%linearMatrices
                           vectorMatrices=>linearMatrices%vectorMatrices
                           DISTRIBUTED_MATRIX=>equationsMatrix%MATRIX
-                          CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
+                          CALL DistributedMatrix_StorageTypeGet(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
                           SELECT CASE(EQUATIONS_STORAGE_TYPE)
                           CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                             !Loop over the rows of the equations matrix
@@ -2005,7 +2005,7 @@ CONTAINS
                           CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                             CALL FlagError("Not implemented.",ERR,ERROR,*999)
                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                            CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(DISTRIBUTED_MATRIX,EQUATIONS_ROW_INDICES, &
+                            CALL DistributedMatrix_StorageLocationsGet(DISTRIBUTED_MATRIX,EQUATIONS_ROW_INDICES, &
                               & EQUATIONS_COLUMN_INDICES,ERR,ERROR,*999)
                             !Loop over the rows of the equations matrix
                             DO equations_row_number=1,vectorMatrices%numberOfRows
@@ -2052,7 +2052,7 @@ CONTAINS
                             nonlinearMatrices=>jacobianMatrix%nonlinearMatrices
                             vectorMatrices=>nonlinearMatrices%vectorMatrices
                             DISTRIBUTED_MATRIX=>jacobianMatrix%JACOBIAN
-                            CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
+                            CALL DistributedMatrix_StorageTypeGet(DISTRIBUTED_MATRIX,EQUATIONS_STORAGE_TYPE,ERR,ERROR,*999)
                             SELECT CASE(EQUATIONS_STORAGE_TYPE)
                             CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                               !Loop over the rows of the Jacobian matrix
@@ -2101,7 +2101,7 @@ CONTAINS
                             CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                               CALL FlagError("Not implemented.",ERR,ERROR,*999)
                             CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                              CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(DISTRIBUTED_MATRIX,EQUATIONS_ROW_INDICES, &
+                              CALL DistributedMatrix_StorageLocationsGet(DISTRIBUTED_MATRIX,EQUATIONS_ROW_INDICES, &
                                 & EQUATIONS_COLUMN_INDICES,ERR,ERROR,*999)
                               !Loop over the rows of the Jacobian matrix
                               DO jacobian_row_number=1,vectorMatrices%numberOfRows
@@ -2156,7 +2156,7 @@ CONTAINS
                           INTERFACE_MATRIX=>INTERFACE_TO_SOLVER_MAP%INTERFACE_MATRIX
                           INTERFACE_MATRICES=>INTERFACE_MATRIX%INTERFACE_MATRICES
                           DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX
-                          CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX,INTERFACE_STORAGE_TYPE,ERR,ERROR,*999)
+                          CALL DistributedMatrix_StorageTypeGet(DISTRIBUTED_MATRIX,INTERFACE_STORAGE_TYPE,ERR,ERROR,*999)
                           SELECT CASE(INTERFACE_STORAGE_TYPE)
                           CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                             !Loop over the rows of the interface matrix
@@ -2211,7 +2211,7 @@ CONTAINS
                           CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                             CALL FlagError("Not implemented.",ERR,ERROR,*999)
                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                            CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(DISTRIBUTED_MATRIX,INTERFACE_ROW_INDICES, &
+                            CALL DistributedMatrix_StorageLocationsGet(DISTRIBUTED_MATRIX,INTERFACE_ROW_INDICES, &
                               & INTERFACE_COLUMN_INDICES,ERR,ERROR,*999)
                             !Loop over the rows of the interface matrix
                             DO interface_row_number=1,INTERFACE_MATRIX%NUMBER_OF_ROWS
@@ -2251,7 +2251,7 @@ CONTAINS
                           IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                             DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX_TRANSPOSE
                             !Loop over the rows of the transposed interface matrix
-                            CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(DISTRIBUTED_MATRIX,INTERFACE_STORAGE_TYPE,ERR,ERROR,*999)
+                            CALL DistributedMatrix_StorageTypeGet(DISTRIBUTED_MATRIX,INTERFACE_STORAGE_TYPE,ERR,ERROR,*999)
                             SELECT CASE(INTERFACE_STORAGE_TYPE)
                             CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                               !Loop over the columns of the interface matrix
@@ -2298,7 +2298,7 @@ CONTAINS
                             CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                               CALL FlagError("Not implemented.",ERR,ERROR,*999)
                             CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                              CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(DISTRIBUTED_MATRIX,INTERFACE_ROW_INDICES, &
+                              CALL DistributedMatrix_StorageLocationsGet(DISTRIBUTED_MATRIX,INTERFACE_ROW_INDICES, &
                                 & INTERFACE_COLUMN_INDICES,ERR,ERROR,*999)
                               !Loop over the columns of the interface matrix
                               DO interface_column_number=1,INTERFACE_MATRICES%NUMBER_OF_COLUMNS
@@ -2373,23 +2373,23 @@ CONTAINS
                   END SELECT
 
                   IF(DIAGNOSTICS1) THEN
-                    CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix structure:",ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix number : ",SOLVER_MATRIX%MATRIX_NUMBER, &
+                    CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix structure:",ERR,ERROR,*999)
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix number : ",SOLVER_MATRIX%MATRIX_NUMBER, &
                       & ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",SOLVER_MATRICES%NUMBER_OF_ROWS, &
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",SOLVER_MATRICES%NUMBER_OF_ROWS, &
                       & ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",SOLVER_MATRIX%NUMBER_OF_COLUMNS, &
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",SOLVER_MATRIX%NUMBER_OF_COLUMNS, &
                       & ERR,ERROR,*999)
-                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ",NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ",NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
                     IF(SOLVER_MATRICES%NUMBER_OF_ROWS*SOLVER_MATRIX%NUMBER_OF_COLUMNS/=0) THEN
                       SPARSITY=REAL(NUMBER_OF_NON_ZEROS,DP)/REAL(SOLVER_MATRICES%NUMBER_OF_ROWS* &
                         & SOLVER_MATRIX%NUMBER_OF_COLUMNS,DP)*100.0_DP
-                      CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (%) = ",SPARSITY,"F6.2", ERR,ERROR,*999)
+                      CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (%) = ",SPARSITY,"F6.2", ERR,ERROR,*999)
                     ENDIF
                     IF(DIAGNOSTICS2) THEN
-                      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,SOLVER_MATRICES%NUMBER_OF_ROWS+1,8,8,ROW_INDICES, &
+                      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,SOLVER_MATRICES%NUMBER_OF_ROWS+1,8,8,ROW_INDICES, &
                         & '("  Row indices    :",8(X,I13))','(18X,8(X,I13))',ERR,ERROR,*999)
-                      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_NON_ZEROS,8,8,COLUMN_INDICES, &
+                      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_NON_ZEROS,8,8,COLUMN_INDICES, &
                         & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', ERR,ERROR,*999)
                     ENDIF
                   ENDIF
@@ -2446,8 +2446,8 @@ CONTAINS
     ENTERS("SOLVER_MATRIX_FINALISE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-      IF(ASSOCIATED(SOLVER_MATRIX%MATRIX)) CALL DISTRIBUTED_MATRIX_DESTROY(SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
-      IF(ASSOCIATED(SOLVER_MATRIX%SOLVER_VECTOR)) CALL DISTRIBUTED_VECTOR_DESTROY(SOLVER_MATRIX%SOLVER_VECTOR,ERR,ERROR,*999)
+      IF(ASSOCIATED(SOLVER_MATRIX%MATRIX)) CALL DistributedMatrix_Destroy(SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
+      IF(ASSOCIATED(SOLVER_MATRIX%SOLVER_VECTOR)) CALL DistributedVector_Destroy(SOLVER_MATRIX%SOLVER_VECTOR,ERR,ERROR,*999)
       DEALLOCATE(SOLVER_MATRIX)
     ENDIF
     
@@ -2474,7 +2474,7 @@ CONTAINS
     ENTERS("SOLVER_MATRIX_FORM",ERR,ERROR,*999)
 
     IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-      CALL DISTRIBUTED_MATRIX_FORM(SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
+      CALL DistributedMatrix_Form(SOLVER_MATRIX%MATRIX,ERR,ERROR,*999)
     ELSE
       CALL FlagError("Solver matrix is not associated.",ERR,ERROR,*999)
     ENDIF

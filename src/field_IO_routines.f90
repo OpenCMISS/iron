@@ -3519,7 +3519,7 @@ CONTAINS
           & "Could not allocate scale buffer in IO", ERR, ERROR, *999 )
 
         IF( component%FIELD_VARIABLE%FIELD%SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING ) THEN
-          CALL DISTRIBUTED_VECTOR_DATA_GET(component%FIELD_VARIABLE%FIELD%SCALINGS%SCALINGS(component% &
+          CALL DistributedVector_DataGet(component%FIELD_VARIABLE%FIELD%SCALINGS%SCALINGS(component% &
             & SCALING_INDEX)%SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
         ENDIF
 
@@ -3555,7 +3555,10 @@ CONTAINS
         !  ENDDO
         !ENDIF
 
-        NULLIFY( SCALE_FACTORS )
+        IF( component%FIELD_VARIABLE%FIELD%SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING ) THEN
+          CALL DistributedVector_DataRestore(component%FIELD_VARIABLE%FIELD%SCALINGS%SCALINGS(component% &
+            & SCALING_INDEX)%SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
+        ENDIF
 
         ERR = FieldExport_ElementNodeScales( sessionHandle, firstScaleSet, scaleFactorCount, C_LOC( scaleBuffer ) )
 

@@ -1163,7 +1163,7 @@ CONTAINS
                   SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(solver_matrix_idx)%PTR
                   IF(ASSOCIATED(SOLVER_MATRIX)) THEN
                     CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver matrix : ",solver_matrix_idx,err,error,*999)
-                    CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRIX%SOLVER_VECTOR,err,error,*999)
+                    CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,SOLVER_MATRIX%SOLVER_VECTOR,err,error,*999)
                   ELSE
                     localError="Solver matrix is not associated for solver matrix index "// &
                       & TRIM(NumberToVString(solver_matrix_idx,"*",err,error))//"."
@@ -1298,7 +1298,7 @@ CONTAINS
                   SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(solver_matrix_idx)%PTR
                   IF(ASSOCIATED(SOLVER_MATRIX)) THEN
                     CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver matrix : ",solver_matrix_idx,err,error,*999)
-                    CALL DISTRIBUTED_VECTOR_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRIX%SOLVER_VECTOR,err,error,*999)
+                    CALL DistributedVector_Output(GENERAL_OUTPUT_TYPE,SOLVER_MATRIX%SOLVER_VECTOR,err,error,*999)
                   ELSE
                     localError="Solver matrix is not associated for solver matrix index "// &
                       & TRIM(NumberToVString(solver_matrix_idx,"*",err,error))//"."
@@ -3841,11 +3841,11 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
           IF(ASSOCIATED(solverMatrix)) THEN
             solverVector=>solverMatrix%SOLVER_VECTOR
             IF(ASSOCIATED(solverVector)) THEN
-              CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_ON(solverVector,x,err,error,*999)
+              CALL DistributedVector_OverrideSetOn(solverVector,x,err,error,*999)
               
               CALL PROBLEM_SOLVER_JACOBIAN_EVALUATE(ctx,err,error,*999)
               
-              CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF(solverVector,err,error,*999)
+              CALL DistributedVector_OverrideSetOff(solverVector,err,error,*999)
             ELSE
               CALL FlagError("Solver vector is not associated.",err,error,*998)              
             ENDIF
@@ -3893,7 +3893,7 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   ENDIF
   
   RETURN
-999 CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF(solverVector,dummyErr,dummyError,*998)
+999 CALL DistributedVector_OverrideSetOff(solverVector,dummyErr,dummyError,*998)
 998 CALL WriteError(err,error,*997)
 997 CALL FlagWarning("Error evaluating nonlinear Jacobian.",err,error,*996)
 996 RETURN 
@@ -3998,9 +3998,9 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               IF(ctx%outputType>=SOLVER_MATRIX_OUTPUT) THEN
-                CALL DISTRIBUTED_MATRIX_OVERRIDE_SET_ON(solverMatrices%matrices(1)%ptr%matrix,A,err,error,*999)
+                CALL DistributedMatrix_OverrideSetOn(solverMatrices%matrices(1)%ptr%matrix,A,err,error,*999)
                 CALL SOLVER_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES_JACOBIAN_ONLY,solverMatrices,err,error,*998)
-                CALL DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF(solverMatrices%matrices(1)%ptr%matrix,err,error,*999)
+                CALL DistributedMatrix_OverrideSetOff(solverMatrices%matrices(1)%ptr%matrix,err,error,*999)
               ENDIF
             ELSE
               CALL FlagError("Solver matrix is not associated.",err,error,*998)
@@ -4025,7 +4025,7 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   ENDIF
 
   RETURN
-999 CALL DISTRIBUTED_MATRIX_OVERRIDE_SET_OFF(solverMatrix%matrix,dummyErr,dummyError,*998)
+999 CALL DistributedMatrix_OverrideSetOff(solverMatrix%matrix,dummyErr,dummyError,*998)
 998 CALL WriteError(err,error,*997)
 997 CALL FlagWarning("Error evaluating nonlinear Jacobian.",err,error,*996)
 996 RETURN
@@ -4153,13 +4153,13 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
                 IF(ASSOCIATED(solverVector)) THEN
                   residualVector=>solverMatrices%RESIDUAL
                   IF(ASSOCIATED(residualVector)) THEN
-                    CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_ON(solverVector,X,err,error,*999)
-                    CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_ON(residualVector,F,err,error,*999)                
+                    CALL DistributedVector_OverrideSetOn(solverVector,X,err,error,*999)
+                    CALL DistributedVector_OverrideSetOn(residualVector,F,err,error,*999)                
                     
                     CALL PROBLEM_SOLVER_RESIDUAL_EVALUATE(ctx,err,error,*999)
                     
-                    CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF(solverVector,err,error,*999)
-                    CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF(residualVector,err,error,*999)                
+                    CALL DistributedVector_OverrideSetOff(solverVector,err,error,*999)
+                    CALL DistributedVector_OverrideSetOff(residualVector,err,error,*999)                
                   ELSE
                     CALL FlagError("Residual vector is not associated.",err,error,*997)                
                   ENDIF
@@ -4216,8 +4216,8 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   ENDIF
   
   RETURN
-999 CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF(solverVector,dummyErr,dummyError,*998)  
-998 CALL DISTRIBUTED_VECTOR_OVERRIDE_SET_OFF(residualVector,dummyErr,dummyError,*997)
+999 CALL DistributedVector_OverrideSetOff(solverVector,dummyErr,dummyError,*998)  
+998 CALL DistributedVector_OverrideSetOff(residualVector,dummyErr,dummyError,*997)
 997 CALL WriteError(err,error,*996)
 996 CALL FlagWarning("Error evaluating nonlinear residual.",err,error,*995)
 995 RETURN

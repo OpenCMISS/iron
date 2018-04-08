@@ -45604,7 +45604,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_StorageTypeGetObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(matrix%distributedMatrix,storageType,err,error,*999)
+    CALL DistributedMatrix_StorageTypeGet(matrix%distributedMatrix,storageType,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_StorageTypeGetObj")
 
@@ -45684,7 +45684,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_StorageLocationsGetObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(matrix%distributedMatrix,rowIndices,columnIndices,err,error,*999)
+    CALL DistributedMatrix_StorageLocationsGet(matrix%distributedMatrix,rowIndices,columnIndices,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_StorageLocationsGetObj")
 
@@ -45711,7 +45711,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_DataGetIntgObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_DATA_GET(matrix%distributedMatrix,data,err,error,*999)
+    CALL DistributedMatrix_DataGet(matrix%distributedMatrix,data,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_DataGetIntgObj")
 
@@ -45737,7 +45737,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_DataRestoreIntgObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_DATA_RESTORE(matrix%distributedMatrix,data,err,error,*999)
+    CALL DistributedMatrix_DataRestore(matrix%distributedMatrix,data,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_DataRestoreIntgObj")
 
@@ -45763,7 +45763,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_DataGetDPObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_DATA_GET(matrix%distributedMatrix,data,err,error,*999)
+    CALL DistributedMatrix_DataGet(matrix%distributedMatrix,data,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_DataGetDPObj")
 
@@ -45789,7 +45789,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_DataRestoreDPObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_DATA_RESTORE(matrix%distributedMatrix,data,err,error,*999)
+    CALL DistributedMatrix_DataRestore(matrix%distributedMatrix,data,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_DataRestoreDPObj")
 
@@ -45815,7 +45815,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_DataGetSPObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_DATA_GET(matrix%distributedMatrix,data,err,error,*999)
+    CALL DistributedMatrix_DataGet(matrix%distributedMatrix,data,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_DataGetSPObj")
 
@@ -45841,7 +45841,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_DataRestoreSPObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_DATA_RESTORE(matrix%distributedMatrix,data,err,error,*999)
+    CALL DistributedMatrix_DataRestore(matrix%distributedMatrix,data,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_DataRestoreSPObj")
 
@@ -45867,7 +45867,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_DataGetLObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_DATA_GET(matrix%distributedMatrix,data,err,error,*999)
+    CALL DistributedMatrix_DataGet(matrix%distributedMatrix,data,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_DataGetLObj")
 
@@ -45893,7 +45893,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedMatrix_DataRestoreLObj",err,error,*999)
 
-    CALL DISTRIBUTED_MATRIX_DATA_RESTORE(matrix%distributedMatrix,data,err,error,*999)
+    CALL DistributedMatrix_DataRestore(matrix%distributedMatrix,data,err,error,*999)
 
     EXITS("cmfe_DistributedMatrix_DataRestoreLObj")
 
@@ -45945,7 +45945,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedVector_DataGetIntgObj",err,error,*999)
 
-    CALL DISTRIBUTED_VECTOR_DATA_GET(vector%distributedVector,data,err,error,*999)
+    CALL DistributedVector_DataGet(vector%distributedVector,data,err,error,*999)
 
     EXITS("cmfe_DistributedVector_DataGetIntgObj")
 
@@ -45971,7 +45971,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedVector_DataRestoreIntgObj",err,error,*999)
 
-    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(vector%distributedVector,data,err,error,*999)
+    CALL DistributedVector_DataRestore(vector%distributedVector,data,err,error,*999)
 
     EXITS("cmfe_DistributedVector_DataRestoreIntgObj")
 
@@ -45997,7 +45997,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedVector_DataGetDPObj",err,error,*999)
 
-    CALL DISTRIBUTED_VECTOR_DATA_GET(vector%distributedVector,data,err,error,*999)
+    CALL DistributedVector_DataGet(vector%distributedVector,data,err,error,*999)
 
     EXITS("cmfe_DistributedVector_DataGetDPObj")
 
@@ -46023,7 +46023,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedVector_DataRestoreDPObj",err,error,*999)
 
-    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(vector%distributedVector,data,err,error,*999)
+    CALL DistributedVector_DataRestore(vector%distributedVector,data,err,error,*999)
 
     EXITS("cmfe_DistributedVector_DataRestoreDPObj")
 
@@ -46049,7 +46049,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedVector_DataGetSPObj",err,error,*999)
 
-    CALL DISTRIBUTED_VECTOR_DATA_GET(vector%distributedVector,data,err,error,*999)
+    CALL DistributedVector_DataGet(vector%distributedVector,data,err,error,*999)
 
     EXITS("cmfe_DistributedVector_DataGetSPObj")
 
@@ -46075,7 +46075,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedVector_DataRestoreSPObj",err,error,*999)
 
-    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(vector%distributedVector,data,err,error,*999)
+    CALL DistributedVector_DataRestore(vector%distributedVector,data,err,error,*999)
 
     EXITS("cmfe_DistributedVector_DataRestoreSPObj")
 
@@ -46101,7 +46101,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedVector_DataGetLObj",err,error,*999)
 
-    CALL DISTRIBUTED_VECTOR_DATA_GET(vector%distributedVector,data,err,error,*999)
+    CALL DistributedVector_DataGet(vector%distributedVector,data,err,error,*999)
 
     EXITS("cmfe_DistributedVector_DataGetLObj")
 
@@ -46127,7 +46127,7 @@ CONTAINS
 
     ENTERS("cmfe_DistributedVector_DataRestoreLObj",err,error,*999)
 
-    CALL DISTRIBUTED_VECTOR_DATA_RESTORE(vector%distributedVector,data,err,error,*999)
+    CALL DistributedVector_DataRestore(vector%distributedVector,data,err,error,*999)
 
     EXITS("cmfe_DistributedVector_DataRestoreLObj")
 
