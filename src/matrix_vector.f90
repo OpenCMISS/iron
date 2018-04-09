@@ -40,7 +40,7 @@
 !> the provisions above, a recipient may use your version of this file under
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
-!> \section MATRIX_VECTOR_MatrixStorageStructures MATRIX STORAGE STRUCTURES
+!> \section MatrixVector_MatrixStorageStructures MATRIX STORAGE STRUCTURES
 !>    The matrix storage structures used are governed by the STORAGE parameter associated with the array. If STORAGE is
 !>    MATRIX_BLOCK_STORAGE_TYPE the matrix is not sparse and the the non-sparse matrix dimension M is used to calculate
 !>    the matrix storage locations. If storage is MATRIX_DIAGONAL_STORAGE_TYPE then only the matrix diagonal is stored.
@@ -55,7 +55,7 @@
 !>    storage/sparsity (see below) and the sparsity structure arrays ROW_INDICES and COLUMN_INDICES are used for the
 !>    storage location calculation. 
 !>    
-!>    \subsection MATRIX_VECTOR_CompressedRowStorage COMPRESSED-ROW STORAGE:
+!>    \subsection MatrixVector_CompressedRowStorage COMPRESSED-ROW STORAGE:
 !>    
 !>      The storage structure scheme is based on storing a MxN matrix as a one dimensional array of length SIZE
 !>      (=NUMBER_NON_ZEROS) (where NUMBER_NON_ZEROS=sxMxN, s is the sparsity of the array) that stores only the non-zero
@@ -79,7 +79,7 @@
 !>      
 !>      \endverbatim
 !>
-!>    \subsection MATRIX_VECTOR_CompressedColumnStorage COMPRESSED-COLUMN STORAGE:
+!>    \subsection MatrixVector_CompressedColumnStorage COMPRESSED-COLUMN STORAGE:
 !>    
 !>      The storage structure scheme is based on storing a MxN matrix as a one dimensional array of length SIZE
 !>      (=NUMBER_NON_ZEROS) (where NUMBER_NON_ZEROS=sxMxN, s is the sparsity of the array) that stores only the non-zero
@@ -103,7 +103,7 @@
 !>      
 !>      \endverbatim
 !>
-!>    \subsection MATRIX_VECTOR_RowColumnStorage ROW-COLUMN STORAGE:
+!>    \subsection MatrixVector_RowColumnStorage ROW-COLUMN STORAGE:
 !>    
 !>      The storage structure scheme is based on storing a MxN matrix as a one dimensional array of length SIZE
 !>      (=NUMBER_NON_ZEROS) (where NUMBER_NON_ZEROS=sxMxN, s is the sparsity of the array) that stores only the non-zero
@@ -126,7 +126,7 @@
 !>      \endverbatim
 
 !>This module contains all routines dealing with (non-distributed) matrix and vectors types.
-MODULE MATRIX_VECTOR
+MODULE MatrixVector
 
   USE BaseRoutines
   USE CONSTANTS
@@ -146,39 +146,39 @@ MODULE MATRIX_VECTOR
 
   !Module parameters
 
-  !> \addtogroup MATRIX_VECTOR_DataTypes MATRIX_VECTOR::DataTypes
+  !> \addtogroup MatrixVector_DataTypes MatrixVector::DataTypes
   !> \brief Matrix vector data types
-  !> \see MATRIX_VECTOR
+  !> \see MatrixVector
   !>@{
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_INTG_TYPE=INTEGER_TYPE !<Integer matrix-vector data type \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_SP_TYPE=SINGLE_REAL_TYPE !<Single precision real matrix-vector data type \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_DP_TYPE=DOUBLE_REAL_TYPE !<Double precision real matrix-vector data type \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_L_TYPE=LOGICAL_TYPE !<Logical matrix-vector data type \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_SPC_TYPE=SINGLE_COMPLEX_TYPE !<Single precision complex matrix-vector data type \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_DPC_TYPE=DOUBLE_COMPLEX_TYPE !<Double precision complex matrix-vector data type \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
+  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_INTG_TYPE=INTEGER_TYPE !<Integer matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_SP_TYPE=SINGLE_REAL_TYPE !<Single precision real matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_DP_TYPE=DOUBLE_REAL_TYPE !<Double precision real matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_L_TYPE=LOGICAL_TYPE !<Logical matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_SPC_TYPE=SINGLE_COMPLEX_TYPE !<Single precision complex matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_DPC_TYPE=DOUBLE_COMPLEX_TYPE !<Double precision complex matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
    !>@}
   
-  !> \addtogroup MATRIX_VECTOR_StorageTypes MATRIX_VECTOR::StorageTypes
+  !> \addtogroup MatrixVector_StorageTypes MatrixVector::StorageTypes
   !> \brief Matrix-vector storage type parameters
-  !> \see MATRIX_VECTOR_MatrixStorageStructures,MATRIX_VECTOR
+  !> \see MatrixVector_MatrixStorageStructures,MatrixVector
   !>@{
-  INTEGER(INTG), PARAMETER :: MATRIX_BLOCK_STORAGE_TYPE=0 !<Matrix block storage type \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_DIAGONAL_STORAGE_TYPE=1 !<Matrix diagonal storage type \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_COLUMN_MAJOR_STORAGE_TYPE=2 !<Matrix column major storage type \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_ROW_MAJOR_STORAGE_TYPE=3 !<Matrix row major storage type \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_COMPRESSED_ROW_STORAGE_TYPE=4 !<Matrix compressed row storage type \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE=5 !<Matrix compressed column storage type \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_ROW_COLUMN_STORAGE_TYPE=6 !<Matrix row-column storage type \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
+  INTEGER(INTG), PARAMETER :: MATRIX_BLOCK_STORAGE_TYPE=0 !<Matrix block storage type \see MatrixVector_StorageTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_DIAGONAL_STORAGE_TYPE=1 !<Matrix diagonal storage type \see MatrixVector_StorageTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_COLUMN_MAJOR_STORAGE_TYPE=2 !<Matrix column major storage type \see MatrixVector_StorageTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_ROW_MAJOR_STORAGE_TYPE=3 !<Matrix row major storage type \see MatrixVector_StorageTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_COMPRESSED_ROW_STORAGE_TYPE=4 !<Matrix compressed row storage type \see MatrixVector_StorageTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE=5 !<Matrix compressed column storage type \see MatrixVector_StorageTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_ROW_COLUMN_STORAGE_TYPE=6 !<Matrix row-column storage type \see MatrixVector_StorageTypes,MatrixVector
   !>@}
   
-  !> \addtogroup MATRIX_VECTOR_SymmetryTypes MATRIX_VECTOR::SymmetryTypes
+  !> \addtogroup MatrixVector_SymmetryTypes MatrixVector::SymmetryTypes
   !> \brief Matrix-vector storage type parameters
-  !> \see MATRIX_VECTOR_MatrixStorageStructures,MATRIX_VECTOR
+  !> \see MatrixVector_MatrixStorageStructures,MatrixVector
   !>@{
-  INTEGER(INTG), PARAMETER :: MATRIX_SYMMETRIC_TYPE=0 !<Matrix is symmetric \see MATRIX_VECTOR_SymmetryTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_HERMITIAN_TYPE=1 !<Matrix is Hermitian (complex symmetric) \see MATRIX_VECTOR_SymmetryTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_SKEW_SYMMETRIC_TYPE=2 !<Matrix is skew-symmetric \see MATRIX_VECTOR_SymmetryTypes,MATRIX_VECTOR
-  INTEGER(INTG), PARAMETER :: MATRIX_UNSYMMETRIC_TYPE=3 !<Matrix is unsymmetric \see MATRIX_VECTOR_SymmetryTypes,MATRIX_VECTOR
+  INTEGER(INTG), PARAMETER :: MATRIX_SYMMETRIC_TYPE=0 !<Matrix is symmetric \see MatrixVector_SymmetryTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_HERMITIAN_TYPE=1 !<Matrix is Hermitian (complex symmetric) \see MatrixVector_SymmetryTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_SKEW_SYMMETRIC_TYPE=2 !<Matrix is skew-symmetric \see MatrixVector_SymmetryTypes,MatrixVector
+  INTEGER(INTG), PARAMETER :: MATRIX_UNSYMMETRIC_TYPE=3 !<Matrix is unsymmetric \see MatrixVector_SymmetryTypes,MatrixVector
   !>@}
 
   INTEGER(INTG), PARAMETER :: bisectionToLinearSearchThreshold=10 !<Threshold for transition from bisection to linear search.
@@ -256,6 +256,10 @@ MODULE MATRIX_VECTOR
   INTERFACE Matrix_StorageLocationFind
     MODULE PROCEDURE MATRIX_STORAGE_LOCATION_FIND
   END INTERFACE Matrix_StorageLocationFind
+
+  INTERFACE Matrix_StorageLocationsGet
+    MODULE PROCEDURE MATRIX_STORAGE_LOCATIONS_GET
+  END INTERFACE Matrix_StorageLocationsGet
 
   INTERFACE Matrix_StorageLocationsSet
     MODULE PROCEDURE MATRIX_STORAGE_LOCATIONS_SET
@@ -503,9 +507,9 @@ MODULE MATRIX_VECTOR
 
   PUBLIC Matrix_StorageLocationFind
 
-  PUBLIC MATRIX_STORAGE_LOCATIONS_SET
+  PUBLIC MATRIX_STORAGE_LOCATIONS_GET,MATRIX_STORAGE_LOCATIONS_SET
 
-  PUBLIC Matrix_StorageLocationsSet
+  PUBLIC Matrix_StorageLocationsGet,Matrix_StorageLocationsSet
 
   PUBLIC MATRIX_STORAGE_TYPE_GET,MATRIX_STORAGE_TYPE_SET
 
@@ -1067,7 +1071,7 @@ CONTAINS
 
     !Argument variables
     TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the data type of the matrix. \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the data type of the matrix. \see MatrixVector_DataTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -1098,7 +1102,7 @@ CONTAINS
 
     !Argument variables
     TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix 
-    INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type to set for the matrix. \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type to set for the matrix. \see MatrixVector_DataTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1559,19 +1563,19 @@ CONTAINS
         CASE(MATRIX_BLOCK_STORAGE_TYPE)
           SELECT CASE(MATRIX%DATA_TYPE)
           CASE(MATRIX_VECTOR_INTG_TYPE)
-            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_INTG,(/MATRIX%MAX_M,MATRIX%MAX_N/)), &
+            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_INTG,[MATRIX%MAX_M,MATRIX%MAX_N]), &
               & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,I13))','(20X,8(X,I13))', &
               & ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_SP_TYPE)
-            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_SP,(/MATRIX%MAX_M,MATRIX%MAX_N/)), &
+            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_SP,[MATRIX%MAX_M,MATRIX%MAX_N]), &
               & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,E13.6))','(20X,8(X,E13.6))', &
               & ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_DP_TYPE)
-            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_DP,(/MATRIX%MAX_M,MATRIX%MAX_N/)), &
+            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_DP,[MATRIX%MAX_M,MATRIX%MAX_N]), &
               & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,E13.6))','(20X,8(X,E13.6))', &
               & ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_L_TYPE)            
-            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_L,(/MATRIX%MAX_M,MATRIX%MAX_N/)), &
+            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_L,[MATRIX%MAX_M,MATRIX%MAX_N]), &
               & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,L13))','(20X,8(X,L13))', &
               & ERR,ERROR,*999)
           CASE(MATRIX_VECTOR_SPC_TYPE)
@@ -2145,7 +2149,7 @@ CONTAINS
 
     !Argument variables
     TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: STORAGE_TYPE !<On return, the storage type of the matrix. \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(OUT) :: STORAGE_TYPE !<On return, the storage type of the matrix. \see MatrixVector_StorageTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -2177,7 +2181,7 @@ CONTAINS
 
     !Argument variables
     TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE !<The storage type to set. \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE !<The storage type to set. \see MatrixVector_StorageTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -2228,7 +2232,7 @@ CONTAINS
 
     !Argument variables
     TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to get the symmetry type for
-    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type of the matrix. \see MATRIX_VECTOR_SymmetryTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type of the matrix. \see MatrixVector_SymmetryTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2255,7 +2259,7 @@ CONTAINS
 
     !Argument variables
     TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to set the symmetry type for.
-    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see MATRIX_VECTOR_SymmetryTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see MatrixVector_SymmetryTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5565,7 +5569,7 @@ CONTAINS
 
     !Argument variables
     TYPE(VECTOR_TYPE), POINTER :: vector !<A pointer to the vector
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the data type of the vector. \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the data type of the vector. \see MatrixVector_DataTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -5596,7 +5600,7 @@ CONTAINS
 
     !Argument variables
     TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector.
-    INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type to set. \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type to set. \see MatrixVector_DataTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -6629,4 +6633,4 @@ CONTAINS
   !================================================================================================================================
   !
   
-END MODULE MATRIX_VECTOR
+END MODULE MatrixVector

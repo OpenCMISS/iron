@@ -118,7 +118,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: FILE !<Should be pointer to file object
     INTEGER(INTG), INTENT(INOUT) :: OFFSET !Should be large integer
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<On exit, a pointer to the distributed vector read. Should not be associated on entry.
+    TYPE(DistributedVectorType), POINTER :: DISTRIBUTED_VECTOR !<On exit, a pointer to the distributed vector read. Should not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -142,7 +142,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: FILE !<Should be pointer to file object
     INTEGER(INTG), INTENT(INOUT) :: OFFSET !Should be large integer
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector to write
+    TYPE(DistributedVectorType), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector to write
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables

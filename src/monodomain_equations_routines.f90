@@ -45,34 +45,35 @@
 MODULE MONODOMAIN_EQUATIONS_ROUTINES
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
+  USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CONSTANTS
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE ELECTROPHYSIOLOGY_CELL_ROUTINES
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATRIX_VECTOR
+  USE Kinds
+  USE MatrixVector
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE SOLVER_ROUTINES
   USE SolverAccessRoutines
-  USE TIMER
-  USE TYPES
+  USE Timer
+  USE Types
 
 #include "macros.h"  
 
@@ -1428,7 +1429,7 @@ CONTAINS
         ENDDO
 
         IF(MOD(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME+1e-6,5.0)<1e-3) THEN
-          WRITE(*,*), 'T=',CONTROL_LOOP%TIME_LOOP%CURRENT_TIME
+          WRITE(*,*)  'T=',CONTROL_LOOP%TIME_LOOP%CURRENT_TIME
         ENDIF
 
       CASE DEFAULT

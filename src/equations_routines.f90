@@ -50,7 +50,7 @@ MODULE EquationsRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
@@ -695,7 +695,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the linearity for
-    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the equations. \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the equations. \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -723,7 +723,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to set the linearity for
-    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type to set \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type to set \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1039,7 +1039,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<A pointer to the equations to get the field variable for.
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to get the field variable for. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to get the field variable for. \see EquationsSetConstants_DerivedTypes.
     TYPE(FIELD_VARIABLE_TYPE), POINTER, INTENT(INOUT) :: fieldVariable !<On return, the field variable for the derived variable type.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1056,9 +1056,9 @@ CONTAINS
     !Check pointers
     IF(ASSOCIATED(fieldVariable)) CALL FlagError("Derived field variable is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations are not associated.",err,error,*999)
-    IF(derivedType<0.OR.derivedType>EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES)   THEN
+    IF(derivedType<0.OR.derivedType>EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES)   THEN
       localError="The derived variable type of "//TRIM(NumberToVString(derivedType,"*",err,error))// &
-        & " is invalid. It should be >= 1 and <= "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES,"*",err,error))//"."
+        & " is invalid. It should be >= 1 and <= "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     NULLIFY(equationsSet)
@@ -1210,7 +1210,7 @@ CONTAINS
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the linear matrix for
     INTEGER(INTG), INTENT(IN) :: matrixIndex !<The index of the linear matrix to get
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER, INTENT(INOUT) :: matrix !<On return, the linear matrix requested. Must not be associated on entry.
+    TYPE(DistributedMatrixType), POINTER, INTENT(INOUT) :: matrix !<On return, the linear matrix requested. Must not be associated on entry.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -1218,7 +1218,6 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Equations_LinearMatrixGet",err,error,*998)
 
@@ -1256,7 +1255,7 @@ CONTAINS
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the Jacobian matrix for
     INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER, INTENT(INOUT) :: matrix !<On return, the requested Jacobian matrix
+    TYPE(DistributedMatrixType), POINTER, INTENT(INOUT) :: matrix !<On return, the requested Jacobian matrix
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -1325,7 +1324,7 @@ CONTAINS
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the dynamic matrix for
     INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the dynamic matrix to get
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER, INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix. Must not be associated on entry.
+    TYPE(DistributedMatrixType), POINTER, INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix. Must not be associated on entry.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -1333,7 +1332,6 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("Equations_DynamicMatrixGet",err,error,*999)
 
@@ -1369,8 +1367,8 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the dynamic matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see EQUATIONS_SET_CONSTANTS_DynamicMatrixTypes,EQUATIONS_SET_CONSTANTS
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER, INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
+    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see EquationsSetConstants_DynamicMatrixTypes,EquationsSetConstants
+    TYPE(DistributedMatrixType), POINTER, INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -1447,7 +1445,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
@@ -1497,7 +1494,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the right hand side vector for
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER, INTENT(INOUT) :: vector !<On return, the right hand side vector for the equations. Must not be associated on entry.
+    TYPE(DistributedVectorType), POINTER, INTENT(INOUT) :: vector !<On return, the right hand side vector for the equations. Must not be associated on entry.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -1538,7 +1535,7 @@ CONTAINS
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the residual vector for
     INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER, INTENT(INOUT) :: vector !<On return, the residual vector for the equations
+    TYPE(DistributedVectorType), POINTER, INTENT(INOUT) :: vector !<On return, the residual vector for the equations
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
@@ -1739,7 +1736,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to get the source vector for
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER, INTENT(INOUT) :: vector !<On return, the source vector for the equations. Must not be associated on entry.
+    TYPE(DistributedVectorType), POINTER, INTENT(INOUT) :: vector !<On return, the source vector for the equations. Must not be associated on entry.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error message
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables

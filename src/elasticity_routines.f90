@@ -46,7 +46,7 @@ MODULE ELASTICITY_ROUTINES
 
   USE BaseRoutines
   USE CONTROL_LOOP_ROUTINES
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FINITE_ELASTICITY_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
@@ -83,6 +83,8 @@ MODULE ELASTICITY_ROUTINES
   PUBLIC Elasticity_EquationsSetSolutionMethodSet
 
   PUBLIC Elasticity_EquationsSetDerivedVariableCalculate
+
+  PUBLIC Elasticity_TensorInterpolateGaussPoint
 
   PUBLIC Elasticity_TensorInterpolateXi
 
@@ -463,7 +465,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the output for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived field type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -501,6 +503,52 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Evaluate a tensor at a given element Gauss point.
+  SUBROUTINE Elasticity_TensorInterpolateGaussPoint(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber,values, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field to interpolate.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Elasticity_TensorInterpolateGaussPoint",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) CALL FlagError("Equations set specification must have at least two entries.", &
+      & err,error,*999)
+
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_TensorInterpolateGaussPoint(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber, &
+        & values,err,error,*999)
+    CASE DEFAULT
+      localError="The second equations set specification of "// &
+        & TRIM(NumberToVstring(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for an elasticity equation set."
+      CALL FlagError(localError,err,error,*999)      
+    END SELECT
+
+    EXITS("Elasticity_TensorInterpolateGaussPoint")
+    RETURN
+999 ERRORSEXITS("Elasticity_TensorInterpolateGaussPoint",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Elasticity_TensorInterpolateGaussPoint
+
+  !
+  !================================================================================================================================
+  !
+
   !>Evaluate a tensor at a given element xi location.
   SUBROUTINE Elasticity_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*)
 
@@ -509,15 +557,13 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(3,3) !<The interpolated tensor values.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     ENTERS("Elasticity_TensorInterpolateXi",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) THEN
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
     SELECT CASE(equationsSet%specification(2))
     CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
@@ -534,6 +580,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("Elasticity_TensorInterpolateXi",err,error)
     RETURN 1
+    
   END SUBROUTINE Elasticity_TensorInterpolateXi
 
   !

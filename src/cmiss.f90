@@ -53,7 +53,7 @@ MODULE Cmiss
   USE ISO_C_BINDING
   
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
   USE ComputationEnvironment
   USE Constants
   USE COORDINATE_ROUTINES
@@ -214,13 +214,13 @@ CONTAINS
     !Finalise the coordinate systems
     CALL COORDINATE_SYSTEMS_FINALISE(err,error,*999)
     !Finalise bases
-    CALL BASES_FINALISE(err,error,*999)
+    CALL Bases_Finalise(err,error,*999)
     !Reset the signal handler
     CALL cmfe_ResetFatalHandler()
     !Finalise computational enviroment
     CALL ComputationalEnvironment_Finalise(err,error,*999)
     !Finalise the base routines
-    CALL BaseRoutinesFinalise(err,error,*999)
+    CALL BaseRoutines_Finalise(err,error,*999)
      
     RETURN
 999 RETURN 1
@@ -246,7 +246,7 @@ CONTAINS
     !Initialise error mode
     cmfe_ErrorHandlingMode = CMFE_OUTPUT_ERROR !Default for now, maybe make CMFE_RETURN_ERROR_CODE the default
     !Initialise the base routines
-    CALL BaseRoutinesInitialise(err,error,*999)
+    CALL BaseRoutines_Initialise(err,error,*999)
     !Intialise the computational environment
     CALL ComputationalEnvironment_Initialise(err,error,*999)
     !Setup signal handling
@@ -256,7 +256,7 @@ CONTAINS
       CALL FlagError("World region is already associated.",err,error,*999)
     ELSE
       !Intialise the bases
-      CALL BASES_INITIALISE(err,error,*999)
+      CALL Bases_Initialise(err,error,*999)
       !Initialise the coordinate systems
       CALL COORDINATE_SYSTEMS_INITIALISE(err,error,*999)
       !Initialise the regions 

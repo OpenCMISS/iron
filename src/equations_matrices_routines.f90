@@ -45,17 +45,17 @@
 MODULE EquationsMatricesRoutines
 
   USE BaseRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FIELD_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE Strings
   USE Types
   USE LINKEDLIST_ROUTINES
@@ -314,8 +314,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -429,7 +427,7 @@ CONTAINS
           NULLIFY(list)
           CALL EquationsMatrix_StructureCalculate(equationsMatrix,numberOfNonZeros,rowIndices,columnIndices,list,err,error,*999)
           CALL DistributedMatrix_LinkListSet(equationsMatrix%matrix,list,err,error,*999)
-          CALL DistributedMatrix_NumberNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_NumberOfNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
           CALL DistributedMatrix_StorageLocationsSet(equationsMatrix%matrix,rowIndices,columnIndices,err,error,*999)
           IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
           IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
@@ -463,7 +461,7 @@ CONTAINS
           NULLIFY(list)
           CALL EquationsMatrix_StructureCalculate(equationsMatrix,numberOfNonZeros,rowIndices,columnIndices,list,err,error,*999)
           CALL DistributedMatrix_LinkListSet(equationsMatrix%matrix,LIST,err,error,*999)
-          CALL DistributedMatrix_NumberNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_NumberOfNonZerosSet(equationsMatrix%matrix,numberOfNonZeros,err,error,*999)
           CALL DistributedMatrix_StorageLocationsSet(equationsMatrix%matrix,rowIndices,columnIndices,err,error,*999)
           IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
           IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
@@ -495,7 +493,7 @@ CONTAINS
         IF(jacobianMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
           & jacobianMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
           CALL JacobianMatrix_StructureCalculate(jacobianMatrix,numberOfNonZeros,rowIndices,columnIndices,err,error,*999)
-          CALL DistributedMatrix_NumberNonZerosSet(jacobianMatrix%jacobian,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_NumberOfNonZerosSet(jacobianMatrix%jacobian,numberOfNonZeros,err,error,*999)
           CALL DistributedMatrix_StorageLocationsSet(jacobianMatrix%jacobian,rowIndices,columnIndices,err,error,*999)
           IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
           IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
@@ -618,7 +616,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,dataPointIdx,derivative,derivativeIdx,globalDOFIdx,localDOFIdx,localNodeIdx,node,nodeIdx, &
+    INTEGER(INTG) :: componentIdx,dataPointIdx,derivative,derivativeIdx,globalDOFIdx,localDOFIdx,localNodeIdx,node, &
       & version,localDataPointNumber,elementIdx,rowElementNumber,colElementNumber
     TYPE(BASIS_TYPE), POINTER :: basis
     TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: elementsTopology
@@ -1151,7 +1149,6 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_ElementAdd()")
@@ -1291,7 +1288,6 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
-    TYPE(VARYING_STRING) :: localError
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_ElementCalculate()")
@@ -1410,7 +1406,6 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
-    TYPE(VARYING_STRING) :: localError
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_NodalCalculate()")
@@ -1795,7 +1790,6 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_NodeAdd()")
@@ -1934,7 +1928,6 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_NodalInitialise",err,error,*999)
 
@@ -2118,7 +2111,6 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_NodalFinalise",err,error,*999)
 
@@ -2306,7 +2298,6 @@ CONTAINS
     INTEGER(INTG) :: jacobianMatrixIdx
     TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_JacobianNodeAdd()")
@@ -2363,7 +2354,6 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_ElementFinalise",err,error,*999)
 
@@ -2441,7 +2431,6 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_ElementInitialise",err,error,*999)
 
@@ -2574,9 +2563,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -2639,9 +2626,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -2885,7 +2870,6 @@ CONTAINS
     INTEGER(INTG) :: jacobianMatrixIdx
     TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_JacobianElementAdd()")
@@ -2937,9 +2921,8 @@ CONTAINS
     INTEGER(INTG) :: jacobianMatrixIdx
     TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("EquationsMatrices_JacobianOutput",err,error,*999)
+    ENTERS("EquationsMatrices_JacobianOutput",err,error,*999)    
     
     IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)    
     IF(.NOT.vectorMatrices%vectorMatricesFinished) &
@@ -2995,7 +2978,7 @@ CONTAINS
       localError="Invalid number of Jacobian calculation types. The number of types "// &
         & TRIM(NumberToVString(numberOfJacobians,"*",err,error))//" should be "// &
         & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
+      CALL FlagError(localError,err,error,*999)      
     ENDIF
      
     DO matrixIdx=1,numberOfJacobians
@@ -4542,7 +4525,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnIdx,component,componentIdx,derivative,derivativeIdx,dofIdx,dummyErr,element,elementIdx,globalColumn, &
-      & localColumn,localDOF,localDOFIdx,localNodeIdx,matrixNumber,numberOfColumns,node,node2,numberOfDerivatives, &
+      & localColumn,localDOFIdx,localNodeIdx,matrixNumber,numberOfColumns,node,node2,numberOfDerivatives, &
       & numberOfVersions,version,versionIdx
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity

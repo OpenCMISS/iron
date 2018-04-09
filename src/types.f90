@@ -191,60 +191,62 @@ MODULE Types
     INTEGER(INTG) :: TYPE !< The type of basis \see BASIS_ROUTINES_BasisTypes 
     INTEGER(INTG) :: NUMBER_OF_XI !<The number of xi directions for the basis.
     INTEGER(INTG) :: NUMBER_OF_XI_COORDINATES !<The number of xi coordinate directions for the basis. For Lagrange Hermite tensor product basis functions this is equal to the number of Xi directions. For simplex basis functions this is equal to the number of Xi directions + 1
-    INTEGER(INTG), ALLOCATABLE :: INTERPOLATION_XI(:) !<INTERPOLATION_XI(ni). The interpolation specification used in the ni'th Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
-    INTEGER(INTG), ALLOCATABLE :: INTERPOLATION_TYPE(:) !<INTERPOLATION_TYPE(ni). The interpolation type in the nic'th Xi coordinate direction. Old CMISS name IBT(1,ni,nb) \see BASIS_ROUTINES_InterpolationTypes
-    INTEGER(INTG), ALLOCATABLE :: INTERPOLATION_ORDER(:)!<INTERPOLATION_ORDER(ni). The interpolation order in the nic'th Xi coordinate direction. Old CMISS name IBT(2,ni,nb) \see BASIS_ROUTINES_InterpolationOrder 
+    INTEGER(INTG), ALLOCATABLE :: INTERPOLATION_XI(:) !<INTERPOLATION_XI(xiIdx). The interpolation specification used in the xiIdx'th Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
+    INTEGER(INTG), ALLOCATABLE :: INTERPOLATION_TYPE(:) !<INTERPOLATION_TYPE(xiIdx). The interpolation type in the xiIdx'th Xi coordinate direction. Old CMISS name IBT(1,xiIdx,basisIdx) \see BASIS_ROUTINES_InterpolationTypes
+    INTEGER(INTG), ALLOCATABLE :: INTERPOLATION_ORDER(:)!<INTERPOLATION_ORDER(xiIdx). The interpolation order in the xiIdx'th Xi coordinate direction. Old CMISS name IBT(2,xiIdx,basisIdx) \see BASIS_ROUTINES_InterpolationOrder 
     !Degenerate information
     LOGICAL :: DEGENERATE !<Is .TRUE. if the basis is a degenerate basis (i.e., has collapsed nodes), .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: COLLAPSED_XI(:) !<COLLAPSED_XI(ni). The collapsed state of the ni'th direction. COLLAPSED_XI can be either XI_COLLAPSED, COLLAPSED_AT_XI0, COLLAPSED_AT_XI1 or NOT_COLLAPSED depending on whether or not the ni'th direction is collapsed, has a perpendicular Xi collapsed at the xi=0 end of the ni'th direction, has a perpendicular xi collapsed at the xi=1 of the ni'th direction or is not collapsed. NOTE: in old cmiss the value IBT(1,ni) = 5 or 6 was set for the ni that was collapsed. The perpendicular line/face was then stored in IBT(3,ni). For this the quadratic1 and quadratic2 type interpolation types are set on the perpendicular xi direction and the ni direction that is collapsed will have COLLAPSED_XI(ni) set to XI_COLLAPSED. BE CAREFUL WITH THIS WHEN TRANSLATING OLD CMISS CODE. Old CMISS name IBT(1,ni) ???? \see BASIS_ROUTINES_XiCollapse
+    INTEGER(INTG), ALLOCATABLE :: COLLAPSED_XI(:) !<COLLAPSED_XI(xiIdx). The collapsed state of the xiIdx'th direction. COLLAPSED_XI can be either XI_COLLAPSED, COLLAPSED_AT_XI0, COLLAPSED_AT_XI1 or NOT_COLLAPSED depending on whether or not the xiIdx'th direction is collapsed, has a perpendicular Xi collapsed at the xi=0 end of the xiIdx'th direction, has a perpendicular xi collapsed at the xi=1 of the xiIdx'th direction or is not collapsed. NOTE: in old cmiss the value IBT(1,xiIdx) = 5 or 6 was set for the xiIdx that was collapsed. The perpendicular line/face was then stored in IBT(3,xiIdx). For this the quadratic1 and quadratic2 type interpolation types are set on the perpendicular xi direction and the xiIdx direction that is collapsed will have COLLAPSED_XI(xiIdx) set to XI_COLLAPSED. BE CAREFUL WITH THIS WHEN TRANSLATING OLD CMISS CODE. Old CMISS name IBT(1,xiIdx) ???? \see BASIS_ROUTINES_XiCollapse
     INTEGER(INTG) :: NUMBER_OF_COLLAPSED_XI !<The number of xi directions in the basis that are collapsed.
-    LOGICAL, ALLOCATABLE :: NODE_AT_COLLAPSE(:) !<NODE_AT_COLLAPSE(nn). Is .TRUE. if the nn'th node of the basis is at a collapse, .FALSE. if not.
+    LOGICAL, ALLOCATABLE :: NODE_AT_COLLAPSE(:) !<NODE_AT_COLLAPSE(localNodeIdx). Is .TRUE. if the localNodeIdx'th node of the basis is at a collapse, .FALSE. if not.
     !Quadrature
     TYPE(QUADRATURE_TYPE) :: QUADRATURE !<The quadrature schemes for the basis.
-    INTEGER(INTG) :: NUMBER_OF_PARTIAL_DERIVATIVES !<The number of partial derivatives for the basis. Old CMISS name NUT(nbf)
-    INTEGER(INTG) :: NUMBER_OF_NODES !<The number of local nodes in the basis. Old CMISS name NNT(nbf)
+    INTEGER(INTG) :: NUMBER_OF_PARTIAL_DERIVATIVES !<The number of partial derivatives for the basis. Old CMISS name NUT(basisFamilyIdx)
+    INTEGER(INTG) :: NUMBER_OF_NODES !<The number of local nodes in the basis. Old CMISS name NNT(basisFamilyIdx)
     !\todo
-    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_NODES_XIC(:) !<NUMBER_OF_NODES_XIC(nic). The number of local nodes in the nic'th coordinate in the basis. Old CMISS name IBT(2,ni,nb).
-    INTEGER(INTG) :: NUMBER_OF_ELEMENT_PARAMETERS  !<The number of element parameters in the basis. Old CMISS name NST(nbf). 
-    INTEGER(INTG) :: MAXIMUM_NUMBER_OF_DERIVATIVES !<The maximum number of derivatives at any node in the basis. Old CMISS name NKT(0,nbf)
-    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_DERIVATIVES(:) !<NUMBER_OF_DERIVATIVES(nn). The number of derivatives at the nn'th node in the basis. Old CMISS name NKT(nn,nbf).
-    INTEGER(INTG), ALLOCATABLE :: NODE_POSITION_INDEX(:,:) !<NODE_POSITION_INDEX(nn,nic). The index of the node position for the nn'th local node in the nic'th coordinate. For Lagrange-Hermite tensor product basis functions: The number of coordinates equals the number of xi directions. Thus if NODE_POSITION_INDEX(nn,:)=1,2,2 then local node nn is the first node in the ni(c)=1 direction, the second node in the ni(c)=2 direction and the second node in the ni(c)=3 direction; For simplex basis functions: The number of coordinates equals the number of xi directions plus one. The index specifies the inverse distance away from the corner/end of that area coordinate. Thus if an element has quadratic interpolation the index will range from 3 (closest to the corner/end of the element that the area coordinate has the value 1) to 1 (closest to the corners/end of the element that the area coordinate has the value 0). If M is the order of the element then in NODE_POSITION_INDEX(nn,:)=1,1,M then that node is apex for the third area coordinate. In general the index values will add up to M+number of xi directions+1 (i.e., subtract one from the indicies to get the standard simplex coordinates. Old CMISS name INP(nn,ni,nb). \see Types::BASIS_TYPE::NODE_POSITION_INDEX_INV.
-    INTEGER(INTG), ALLOCATABLE :: NODE_POSITION_INDEX_INV(:,:,:,:) !<NODE_POSITION_INDEX_INV(nnc1,nnc2,nnc3,nnc4). The inverse of the node position index for the basis. The NODE_POSITION_INDEX_INV gives the local node number for the node that has node position indices of nnc1 in the 1st ni(c) direction, nnc2 in the 2nd ni(c) direction, nnc3 in the 3rd ni(c) direction and nnc4 in the 4th ni(c) direction. NOTE: that if the basis has less than 4 ni(c) direction the position index is 1. Old CMISS name NNB(inp1,inp2,inp3,nbf). \see Types::BASIS_TYPE::NODE_POSITION_INDEX.
-    INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_ORDER_INDEX(:,:,:) !<DERIVATIVE_ORDER_INDEX(nk,nn,0:ni). The index of the derivative order for the nk'th derivative of the nn'th node in the ni'th direction of the basis. The derivative index is NO_PART_DERIV for zeroth order, FIRST_PART_DERIV for the first order and SECOND_PART_DERIV for the second order derivative. Thus a DERIVATIVE_ORDER_INDEX(nk,nn,1..) of {NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV} indicates that the nk'th derivative of the nn'th node of the basis is the first derivative with respect to the s2 direction. Old CMISS name IDO(nk,nn,1:ni,nbf). \see Types::BASIS_TYPE::DERIVATIVE_ORDER_INDEX_INV,CONSTANTS_PartialDerivativeConstants
-    INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_ORDER_INDEX_INV(:,:,:,:) !<DERIVATIVE_ORDER_INDEX_INV(nu1,nu2,nu3,nn). The inverse of the derivative order index for the nn'th local node of the basis. DERIVATIVE_ORDER_INDEX_INV gives the derivative number for the nu1 partial derivative in the 1st xi direction, the nu2 partial derivative in the 2nd xi direction and the nu3 partial derivative in the 3rd xi direction. NOTE: local node nn does not carry any derivatives of the requested partial derivative type then DERIVATIVE_ORDER_INDEX_INV will return 0. If the basis has less than 3 xi directions then the nu index is 1. \see Types::BASIS_TYPE::DERIVATIVE_ORDER_INDEX
-    INTEGER(INTG), ALLOCATABLE :: PARTIAL_DERIVATIVE_INDEX(:,:) !<PARTIAL_DERIVATIVE_INDEX(nk,nn). Gives the partial derivative number (nu) of the nk'th derivative of the nn'th local node for the basis. Old CMISS name IDO(nk,nn,0,nbf).
-    INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETER_INDEX(:,:) !<ELEMENT_PARAMETER_INDEX(nk,nn). Gives the element parameter number (ns) of the nk'th derivative of the nn'th local node for the basis. Old CMISS name NSB(nk,nn,nbf).
-    INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETER_INDEX_INV(:,:) !<ELEMENT_PARAMETER_INDEX_INV(1..2,ns). Gives the inverse fo the element parameter index. ELEMENT_PARAMETER_INDEX_INV(1,ns) gives the local node number corresponding to the ns'th element parameter. ELEMENT_PARAMETER_INDEX_INV(2,ns) gives the local derivative number corresponding to the ns'th element parameter.
+    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_NODES_XIC(:) !<NUMBER_OF_NODES_XIC(xiCoordIdx). The number of local nodes in the xiCoordIdx'th coordinate in the basis. Old CMISS name IBT(2,xiIdx,basisIdx).
+    INTEGER(INTG) :: NUMBER_OF_ELEMENT_PARAMETERS  !<The number of element parameters in the basis. Old CMISS name NST(basisFamilyIdx). 
+    INTEGER(INTG) :: MAXIMUM_NUMBER_OF_DERIVATIVES !<The maximum number of derivatives at any node in the basis. Old CMISS name NKT(0,basisFamilyIdx)
+    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_DERIVATIVES(:) !<NUMBER_OF_DERIVATIVES(localNodeIdx). The number of derivatives at the localNodeIdx'th node in the basis. Old CMISS name NKT(localNodeIdx,basisFamilyIdx).
+    INTEGER(INTG), ALLOCATABLE :: NODE_POSITION_INDEX(:,:) !<NODE_POSITION_INDEX(localNodeIdx,xiCoordIdx). The index of the node position for the localNodeIdx'th local node in the xiCoordiIdx'th coordinate. For Lagrange-Hermite tensor product basis functions: The number of coordinates equals the number of xi directions. Thus if NODE_POSITION_INDEX(localNodeIdx,:)=1,2,2 then local node localNodeIdx is the first node in the xi(coord)=1 direction, the second node in the xi(coord)=2 direction and the second node in the xi(coord)=3 direction; For simplex basis functions: The number of coordinates equals the number of xi directions plus one. The index specifies the inverse distance away from the corner/end of that area coordinate. Thus if an element has quadratic interpolation the index will range from 3 (closest to the corner/end of the element that the area coordinate has the value 1) to 1 (closest to the corners/end of the element that the area coordinate has the value 0). If M is the order of the element then in NODE_POSITION_INDEX(localNodeIdx,:)=1,1,M then that node is apex for the third area coordinate. In general the index values will add up to M+number of xi directions+1 (i.e., subtract one from the indicies to get the standard simplex coordinates. Old CMISS name INP(localNodeIdx,xiIdx,basisIdx). \see Types::BASIS_TYPE::NODE_POSITION_INDEX_INV.
+    INTEGER(INTG), ALLOCATABLE :: NODE_POSITION_INDEX_INV(:,:,:,:) !<NODE_POSITION_INDEX_INV(localNodeCoord1,localNodeCoord2,localNodeCoord3,localNodeCoord4). The inverse of the node position index for the basis. The NODE_POSITION_INDEX_INV gives the local node number for the node that has node position indices of localNodeCoord1 in the 1st xi(coord) direction, localNodeCoord2 in the 2nd xi(coord) direction, localNodeCoord3 in the 3rd xi(coord) direction and localNodeCoord4 in the 4th xi(coord) direction. NOTE: that if the basis has less than 4 xi(coord) direction the position index is 1. Old CMISS name NNB(inp1,inp2,inp3,nbf). \see Types::BASIS_TYPE::NODE_POSITION_INDEX.
+    INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_ORDER_INDEX(:,:,:) !<DERIVATIVE_ORDER_INDEX(derivativeIdx,localNodeIdx,0:xiIdx). The index of the derivative order for the derivativeIdx'th derivative of the localNodeIdx'th node in the xiIdx'th direction of the basis. The derivative index is NO_PART_DERIV for zeroth order, FIRST_PART_DERIV for the first order and SECOND_PART_DERIV for the second order derivative. Thus a DERIVATIVE_ORDER_INDEX(derivativeIdx,localNodeIdx,1..) of {NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV} indicates that the derivativeIdx'th derivative of the localNodeIdx'th node of the basis is the first derivative with respect to the s2 direction. Old CMISS name IDO(derivativeIdx,localNodeIdx,1:xiIdx,basisFamilyIdx). \see Types::BASIS_TYPE::DERIVATIVE_ORDER_INDEX_INV,CONSTANTS_PartialDerivativeConstants
+    INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_ORDER_INDEX_INV(:,:,:,:) !<DERIVATIVE_ORDER_INDEX_INV(partialDerivIdx1,partialDerivIdx2,partialDerivIdx3,localNodeIdx). The inverse of the derivative order index for the nn'th local node of the basis. DERIVATIVE_ORDER_INDEX_INV gives the derivative number for the partialDerivIdx1 partial derivative in the 1st xi direction, the partialDerivIdx2 partial derivative in the 2nd xi direction and the partialDerivIdx3 partial derivative in the 3rd xi direction. NOTE: local node localNodeIdx does not carry any derivatives of the requested partial derivative type then DERIVATIVE_ORDER_INDEX_INV will return 0. If the basis has less than 3 xi directions then the partial derivative index is 1. \see Types::BASIS_TYPE::DERIVATIVE_ORDER_INDEX
+    INTEGER(INTG), ALLOCATABLE :: PARTIAL_DERIVATIVE_INDEX(:,:) !<PARTIAL_DERIVATIVE_INDEX(derivativeIdx,localNodeIdx). Gives the partial derivative number (partialDerivIdx) of the derivativeIdx'th derivative of the localNodeIdx'th local node for the basis. Old CMISS name IDO(derivativeIdx,localNodeIdx,0,basisFamilyIdx).
+    INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETER_INDEX(:,:) !<ELEMENT_PARAMETER_INDEX(derivativeIdx,localNodeIdx). Gives the element parameter number (elementParamIdx) of the derivativeIdx'th derivative of the localNodeIdx'th local node for the basis. Old CMISS name NSB(derivativeIdx,localNodeIdx,basisFamilyIdx).
+    INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETER_INDEX_INV(:,:) !<ELEMENT_PARAMETER_INDEX_INV(1..2,elementParamIdx). Gives the inverse of the element parameter index. ELEMENT_PARAMETER_INDEX_INV(1,elementParamIdx) gives the local node number corresponding to the elementParamIdx'th element parameter. ELEMENT_PARAMETER_INDEX_INV(2,elementParamIdx) gives the local derivative number corresponding to the elementParamIdx'th element parameter.
     !Line information
     INTEGER(INTG) :: NUMBER_OF_LOCAL_LINES !<The number of local lines in the basis.
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: localLineBasis(:) !<localLineBasis(localLineIdx). localLineBasis(localLineIdx)%ptr is a pointer to the sub-basis used for the localLineIdx'th local line. 
     INTEGER(INTG), ALLOCATABLE :: localLineXiDirection(:) !<localLineXiDirection(localLineIdx). The xi direction of the localLineIdx'th local line for the basis.
-    INTEGER(INTG), ALLOCATABLE :: localLineXiNormals(:,:) !<localLineXiNormals(xicIdx,localLineIdx). The xicIdx'th xi directions that are "normal" to the localLineIdx'th local line. There are number of xic directions - 2 normal xi directions. Not allocated for bases with only 1 xi direction. Note: Normals are always outward.
-    INTEGER(INTG), ALLOCATABLE :: xiNormalsLocalLine(:,:) !<xiNormalLocalLine(xicIdx1,xicIdx2). The local line number corresponding to the intersection of the xicIdx1'th and xicIdx2'th normal direction. xicIdx1 and xicIdx2 vary from -numberOfXiC to + numberOfXiC. For bases with 2 xi directions xicIdx2 is only 1. Not allocated for bases with only 1 xi direction.
-    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_NODES_IN_LOCAL_LINE(:) !<NUMBER_OF_NODES_IN_LOCAL_LINE(nae). The the number of nodes in the nae'th local line for the basis. Old CMISS name NNL(0,nae,nb).
-    INTEGER(INTG), ALLOCATABLE :: NODE_NUMBERS_IN_LOCAL_LINE(:,:) !<NODE_NUMBERS_IN_LOCAL_LINE(nnl,nae). The local node numbers (nn) for the nnl'th line node in the nae'th local line for the basis. Old CMISS name NNL(1..,nae,nb).
-    INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_NUMBERS_IN_LOCAL_LINE(:,:) !<DERIVATIVE_NUMBERS_IN_LOCAL_LINE(nnl,nae). The derivative numbers (nk) for the nnl'th line node in the nae'th local line for the basis.
+    INTEGER(INTG), ALLOCATABLE :: localLineXiNormals(:,:) !<localLineXiNormals(xiCoordIdx,localLineIdx). The xiCoordIdx'th xi directions that are "normal" to the localLineIdx'th local line. There are number of xi coordinate directions - 2 normal xi directions. Not allocated for bases with only 1 xi direction. Note: Normals are always outward.
+    INTEGER(INTG), ALLOCATABLE :: xiNormalsLocalLine(:,:) !<xiNormalLocalLine(xiCoordIdx1,xiCoordIdx2). The local line number corresponding to the intersection of the xiCoordIdx1'th and xiCoordIdx2'th normal direction. xiCoordIdx1 and xiCoordIdx2 vary from -numberOfXiCoordinates to + numberOfXiCoordinates. For bases with 2 xi directions xiCoordIdx2 is only 1. Not allocated for bases with only 1 xi direction.
+    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_NODES_IN_LOCAL_LINE(:) !<NUMBER_OF_NODES_IN_LOCAL_LINE(localLineIdx). The the number of nodes in the localLineIdx'th local line for the basis. Old CMISS name NNL(0,localLineIdx,basisIdx).
+    INTEGER(INTG), ALLOCATABLE :: NODE_NUMBERS_IN_LOCAL_LINE(:,:) !<NODE_NUMBERS_IN_LOCAL_LINE(localLineNodeIdx,localLineIdx). The local node numbers (localNodeIdx) for the localLineNodeIdx'th line node in the localLineIdx'th local line for the basis. Old CMISS name NNL(1..,localLineIdx,basisIdx).
+    INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_NUMBERS_IN_LOCAL_LINE(:,:) !<DERIVATIVE_NUMBERS_IN_LOCAL_LINE(localLineNodeIdx,localLineIdx). The derivative numbers (derivativeIdx) for the localLineNodeIdx'th line node in the localLineIdx'th local line for the basis.
     INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETERS_IN_LOCAL_LINE(:,:) !<ELEMENT_PARAMETERS_IN_LOCAL_LINE(lineParameterIdx,elementLineIdx). The local element parameter for the lineParameterIdx'th line parameter in the elementLineIdx'th local line for the basis.
     !Face information
     INTEGER(INTG) :: NUMBER_OF_LOCAL_FACES !<The number of local faces in the basis.
-    INTEGER(INTG), ALLOCATABLE :: localFaceXiDirections(:,:) !<localFaceXiDirections(xicIdx,localFaceIdx). The xicIdx'th Xi direction in the localFaceIdx'th local face for the basis. There are numberOfXic - 1 face xi directions. Not allocated for bases with only 2 xi directions. 
-    INTEGER(INTG), ALLOCATABLE :: localFaceXiNormal(:) !localFaceXiNormal(localFaceIdx). The xic direction normal to the localFaceIdx'th local face for the basis. Not allocated for bases with only 2 xi directions. Note: Normals are always outward.
-    INTEGER(INTG), ALLOCATABLE :: xiNormalLocalFace(:) !xiNormalLocalFace(xicIdx). The local face number of that corresponds to the xiIdx'th normal direction. xicIdx varies from -numberOfXiC to + numberOfXiC. Not allocated for bases with only 2 xi directions. 
-    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_NODES_IN_LOCAL_FACE(:) !<NUMBER_OF_NODES_IN_LOCAL_FACE(nae). The the number of nodes in the nae'th local face for the basis. Old CMISS name NNL(0,nae,nb).
-    INTEGER(INTG), ALLOCATABLE :: NODE_NUMBERS_IN_LOCAL_FACE(:,:) !<NODE_NUMBERS_IN_LOCAL_FACE(nnl,nae). The local element node numbers (nn) for the nnl'th face node in the nae'th local face for the basis. Old CMISS name NNL(1..,nae,nb).
-    INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_NUMBERS_IN_LOCAL_FACE(:,:,:) !<DERIVATIVES_NUMBERS_IN_LOCAL_FACE(0:derivativeIdx,faceNodeIdx,elementFaceIdx). The element derivative numbers for the derivativeIdx'th face derivative's of the faceNodeIdx'th face node in the elementFaceIdx'th local face for the basis. The number of derivatives at the faceNodeIdx'th face node in the elementFaceIdx'th local face is given by DERIVATIVES_NUMBERS_IN_LOCAL_FACE(0,faceNodeIdx,elementFaceIdx).
-    INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETERS_IN_LOCAL_FACE(:,:) !<ELEMENT_PARAMETERS_IN_LOCAL_FACE(faceParameterIdx,elementFaceIdx). The local element parameter for the faceParameterIdx'th face parameter in the elementFaceIdx'th local face for the basis.
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: localFaceBasis(:) !<localFaceBasis(localFaceIdx). localFaceBasis(localFaceIdx)%ptr is a pointer to the sub-basis used for the localFaceIdx'th local face. 
+    INTEGER(INTG), ALLOCATABLE :: localFaceXiDirections(:,:) !<localFaceXiDirections(xiCoordIdx,localFaceIdx). The xiCoordIdx'th Xi direction in the localFaceIdx'th local face for the basis. There are numberOfXiCoords - 1 face xi directions. Not allocated for bases with only 2 xi directions. 
+    INTEGER(INTG), ALLOCATABLE :: localFaceXiNormal(:) !localFaceXiNormal(localFaceIdx). The xi coordinate direction normal to the localFaceIdx'th local face for the basis. Not allocated for bases with only 2 xi directions. Note: Normals are always outward.
+    INTEGER(INTG), ALLOCATABLE :: xiNormalLocalFace(:) !xiNormalLocalFace(xiCoordIdx). The local face number of that corresponds to the xiCoordIdx'th normal direction. xiCoordIdx varies from -numberOfXiCoord to + numberOfXiCoord. Not allocated for bases with only 2 xi directions. 
+    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_NODES_IN_LOCAL_FACE(:) !<NUMBER_OF_NODES_IN_LOCAL_FACE(localFaceIdx). The the number of nodes in the localFaceIdx'th local face for the basis. Old CMISS name NNL(0,localFaceIdx,basisIdx).
+    INTEGER(INTG), ALLOCATABLE :: NODE_NUMBERS_IN_LOCAL_FACE(:,:) !<NODE_NUMBERS_IN_LOCAL_FACE(localFaceNodeIdx,localFaceIdx). The local element node numbers (localNodeIdx) for the localFaceNodeIdx'th face node in the localFaceIdx'th local face for the basis. Old CMISS name NNL(1..,localFaceIdx,basisIdx).
+    INTEGER(INTG), ALLOCATABLE :: DERIVATIVE_NUMBERS_IN_LOCAL_FACE(:,:,:) !<DERIVATIVES_NUMBERS_IN_LOCAL_FACE(0:derivativeIdx,localFaceNodeIdx,localFaceIdx). The element derivative numbers for the derivativeIdx'th face derivative's of the localFaceNodeIdx'th face node in the localFaceIdx'th local face for the basis. The number of derivatives at the localFaceNodeIdx'th face node in the localFaceIdx'th local face is given by DERIVATIVES_NUMBERS_IN_LOCAL_FACE(0,localFaceNodeIdx,localFaceIdx).
+    INTEGER(INTG), ALLOCATABLE :: ELEMENT_PARAMETERS_IN_LOCAL_FACE(:,:) !<ELEMENT_PARAMETERS_IN_LOCAL_FACE(faceParameterIdx,localFaceIdx). The local element parameter for the faceParameterIdx'th face parameter in the localFaceIdx'th local face for the basis.
     !Sub-basis information
-    TYPE(BASIS_PTR_TYPE), POINTER :: LINE_BASES(:) !<LINE_BASES(nae). The pointer to the basis for the nae'th line for the basis.
-    TYPE(BASIS_PTR_TYPE), POINTER :: FACE_BASES(:) !<FACE_BASES(naf). The pointer to the basis for the naf'th face for the basis.
-    INTEGER(INTG) :: NUMBER_OF_SUB_BASES !<The number of sub-bases (lines, faces) for the basis.
-    TYPE(BASIS_PTR_TYPE), POINTER :: SUB_BASES(:) !<SUB_BASES(sbn). The pointer to the sbn'th sub-basis for the basis.
-    TYPE(BASIS_TYPE), POINTER :: PARENT_BASIS !<The pointer to the parent basis for the basis. NOTE: that if the basis is not a sub-basis of another basis this pointer will be NULL. 
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: lineBases(:) !<lineBases(xiIdx). lineBases(xiIdx)%ptr is the pointer to the basis for the xiIdx'th xi direction for the basis. Only allocated if the number of xi directions > 1.
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: faceBases(:) !<faceBases(xicIdx). faceBases(xicIdx)%ptr pointer to the basis for the xic'th direction of the face normal for the basis. Only allocated if the number of xi directions > 2.
+    INTEGER(INTG) :: numberOfSubBases !<The number of sub-bases (lines, faces) for the basis.
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: subBases(:) !<subBases(subBasisIdx). The pointer to the subBasisIdx'th sub-basis for the basis.
+    TYPE(BASIS_TYPE), POINTER :: parentBasis !<The pointer to the parent basis for the basis. NOTE: that if the basis is not a sub-basis of another basis this pointer will be NULL. 
   END TYPE BASIS_TYPE
 
   !>Contains information on the defined basis functions
   TYPE BASIS_FUNCTIONS_TYPE
-   INTEGER(INTG) :: NUMBER_BASIS_FUNCTIONS !<The number of basis functions defined
-    TYPE(BASIS_PTR_TYPE), POINTER :: BASES(:) !<The array of pointers to the defined basis functions
+    INTEGER(INTG) :: numberOfBasisFunctions !<The number of basis functions defined
+    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: bases(:) !<The array of pointers to the defined basis functions
   END TYPE BASIS_FUNCTIONS_TYPE
   
   !
@@ -786,104 +788,103 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains the information for an adjacent domain for transfering the ghost data of a distributed vector to/from the
   !>current domain.
-  TYPE DISTRIBUTED_VECTOR_TRANSFER_TYPE
-    TYPE(DISTRIBUTED_VECTOR_CMISS_TYPE), POINTER :: CMISS_VECTOR !<The pointer to the CMISS distributed vector object for this transfer information.
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the distributed vector. This is "inherited" from the distributed vector.
-    INTEGER(INTG) :: SEND_BUFFER_SIZE !<The size of the buffer to send distributed vector data from the current domain to the adjacent domain.
-    INTEGER(INTG) :: RECEIVE_BUFFER_SIZE !<The size of the buffer to receive distributed vector data from the adjacent domain to the current domain.
-    INTEGER(INTG) :: SEND_TAG_NUMBER !<The MPI tag number for the data sending from the current domain to the adjacent domain. It is calculated as an offset from the base tag number of the distribued vector.
-    INTEGER(INTG) :: RECEIVE_TAG_NUMBER !<The MPI tag number for the data receiving from the adjacent domain to the current domain. It is calculated as an offset from the base tag number of the distribued vector.
-    INTEGER(INTG) :: MPI_SEND_REQUEST !<The MPI request pointer for sending data from the current domain to the adjacent domain.
-    INTEGER(INTG) :: MPI_RECEIVE_REQUEST !<The MPI request pointer for sending data from the adjacent domain to the current domain.
-    INTEGER(INTG), ALLOCATABLE :: SEND_BUFFER_INTG(:) !<The integer buffer for sending the distributed integer vector data from the current domain to the adjacent domain.
-    REAL(DP), ALLOCATABLE :: SEND_BUFFER_DP(:) !<The double precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
-    REAL(SP), ALLOCATABLE :: SEND_BUFFER_SP(:) !<The single precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
-    LOGICAL, ALLOCATABLE :: SEND_BUFFER_L(:) !<The logical buffer for sending the distributed logical vector data from the current domain to the adjacent domain.
-    INTEGER(INTG), ALLOCATABLE :: RECEIVE_BUFFER_INTG(:) !<The integer buffer for receiving the distributed integer vector data from the adjacent domain to the current domain.
-    REAL(DP), ALLOCATABLE :: RECEIVE_BUFFER_DP(:) !<The double precision real buffer for receiving the distributed real vector data from the adjacent domain to the current domain.
-    REAL(SP), ALLOCATABLE :: RECEIVE_BUFFER_SP(:) !<The single precision real buffer for receiving the distributed real vector data from the adjacent domain to the current domain.
-    LOGICAL, ALLOCATABLE :: RECEIVE_BUFFER_L(:) !<The logical buffer for receiving the distributed logical vector data from the adjacent domain to the current domain.  
-  END TYPE DISTRIBUTED_VECTOR_TRANSFER_TYPE
+  TYPE DistributedVectorTransferType
+    TYPE(DistributedVectorCMISSType), POINTER :: cmissVector !<The pointer to the CMISS distributed vector object for this transfer information.
+    INTEGER(INTG) :: dataType !<The data type of the distributed vector. This is "inherited" from the distributed vector.
+    INTEGER(INTG) :: sendBufferSize !<The size of the buffer to send distributed vector data from the current domain to the adjacent domain.
+    INTEGER(INTG) :: receiveBufferSize !<The size of the buffer to receive distributed vector data from the adjacent domain to the current domain.
+    INTEGER(INTG) :: sendTagNumber !<The MPI tag number for the data sending from the current domain to the adjacent domain. It is calculated as an offset from the base tag number of the distribued vector.
+    INTEGER(INTG) :: receiveTagNumber !<The MPI tag number for the data receiving from the adjacent domain to the current domain. It is calculated as an offset from the base tag number of the distribued vector.
+    INTEGER(INTG) :: mpiSendRequest !<The MPI request pointer for sending data from the current domain to the adjacent domain.
+    INTEGER(INTG) :: mpiReceiveRequest !<The MPI request pointer for sending data from the adjacent domain to the current domain.
+    INTEGER(INTG), ALLOCATABLE :: sendBufferIntg(:) !<The integer buffer for sending the distributed integer vector data from the current domain to the adjacent domain.
+    REAL(DP), ALLOCATABLE :: sendBufferDP(:) !<The double precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
+    REAL(SP), ALLOCATABLE :: sendBufferSP(:) !<The single precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
+    LOGICAL, ALLOCATABLE :: sendBufferL(:) !<The logical buffer for sending the distributed logical vector data from the current domain to the adjacent domain.
+    INTEGER(INTG), ALLOCATABLE :: receiveBufferIntg(:) !<The integer buffer for receiving the distributed integer vector data from the adjacent domain to the current domain.
+    REAL(DP), ALLOCATABLE :: receiveBufferDP(:) !<The double precision real buffer for receiving the distributed real vector data from the adjacent domain to the current domain.
+    REAL(SP), ALLOCATABLE :: receiveBufferSP(:) !<The single precision real buffer for receiving the distributed real vector data from the adjacent domain to the current domain.
+    LOGICAL, ALLOCATABLE :: receiveBufferL(:) !<The logical buffer for receiving the distributed logical vector data from the adjacent domain to the current domain.  
+  END TYPE DistributedVectorTransferType
 
   !>Contains information for a CMISS distributed vector
-  TYPE DISTRIBUTED_VECTOR_CMISS_TYPE
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector
-    INTEGER(INTG) :: BASE_TAG_NUMBER !<The base number for the MPI tag numbers that will be used to communicate the distributed vector data amongst the domains. The base tag number can be thought of as the identification number for the distributed vector object.
-    INTEGER(INTG) :: N !<The size of the distributed vector
-    INTEGER(INTG) :: DATA_SIZE !<The size of the distributed vector that is held locally by the domain.
-    INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
-    REAL(DP), ALLOCATABLE :: DATA_DP(:) !<DATA_DP(i). The real data for a double precision real distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
-    REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision real distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
-    LOGICAL, ALLOCATABLE :: DATA_L(:) !<DATA_L(i). The logical data for a logical distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain.  
-    TYPE(DISTRIBUTED_VECTOR_TRANSFER_TYPE), ALLOCATABLE :: TRANSFERS(:) !<TRANSFERS(adjacent_domain_idx). The transfer information for the adjacent_domain_idx'th adjacent domain to this domain. 
-  END TYPE DISTRIBUTED_VECTOR_CMISS_TYPE
+  TYPE DistributedVectorCMISSType
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
+    INTEGER(INTG) :: baseTagNumber !<The base number for the MPI tag numbers that will be used to communicate the distributed vector data amongst the domains. The base tag number can be thought of as the identification number for the distributed vector object.
+    INTEGER(INTG) :: n !<The size of the distributed vector
+    INTEGER(INTG) :: dataSize !<The size of the distributed vector that is held locally by the domain.
+    INTEGER(INTG), ALLOCATABLE :: dataIntg(:) !<dataIntg(i). The integer data for an integer distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
+    REAL(DP), ALLOCATABLE :: dataDP(:) !<dataDP(i). The real data for a double precision real distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
+    REAL(SP), ALLOCATABLE :: dataSP(:) !<dataSP(i). The real data for a single precision real distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain. 
+    LOGICAL, ALLOCATABLE :: dataL(:) !<dataL(i). The logical data for a logical distributed vector. The i'th component contains the data for the i'th local number of distributed vector data on the domain.  
+    TYPE(DistributedVectorTransferType), ALLOCATABLE :: transfers(:) !<transfers(adjacentDomainIdx). The transfer information for the adjacentDomainIdx'th adjacent domain to this domain. 
+  END TYPE DistributedVectorCMISSType
 
   !>Contains information for a PETSc distributed vector
-  TYPE DISTRIBUTED_VECTOR_PETSC_TYPE
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: DISTRIBUTED_VECTOR !<A pointer to the distributed vector
-    INTEGER(INTG) :: N !<The number of local components in the vector
-    INTEGER(INTG) :: GLOBAL_N !<The number of global components in the vector
-    INTEGER(INTG) :: DATA_SIZE  !<The size of the distributed vector that is held locally by the domain.
-    INTEGER(INTG), ALLOCATABLE :: GLOBAL_NUMBERS(:) !<GLOBAL_NUMBERS(i). The PETSc global number corresponding to the i'th local number.
-    LOGICAL :: USE_OVERRIDE_VECTOR !<Is .TRUE. if the override vector is used instead of the standard vector
-    TYPE(PetscVecType) :: VECTOR !<The PETSc vector
-    TYPE(PetscVecType) :: OVERRIDE_VECTOR !<The PETSc override vector
-  END TYPE DISTRIBUTED_VECTOR_PETSC_TYPE
+  TYPE DistributedVectorPETScType
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
+    INTEGER(INTG) :: n !<The number of local components in the vector
+    INTEGER(INTG) :: globalN !<The number of global components in the vector
+    INTEGER(INTG) :: dataSize  !<The size of the distributed vector that is held locally by the domain.
+    INTEGER(INTG), ALLOCATABLE :: globalNumbers(:) !<globalNumbers(i). The PETSc global number corresponding to the i'th local number.
+    LOGICAL :: useOverrideVector !<Is .TRUE. if the override vector is used instead of the standard vector
+    TYPE(PetscVecType) :: vector !<The PETSc vector
+    TYPE(PetscVecType) :: overrideVector !<The PETSc override vector
+  END TYPE DistributedVectorPETScType
   
   !>Contains the information for a vector that is distributed across a number of domains.
-  TYPE DISTRIBUTED_VECTOR_TYPE
-    LOGICAL :: VECTOR_FINISHED !<!<Is .TRUE. if the distributed vector has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: LIBRARY_TYPE !<The format of the distributed vector \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG) :: GHOSTING_TYPE !<The ghosting type \see DISTRIBUTED_MATRIX_VECTOR_GhostingTypes,DISTRIBUTED_MATRIX_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING !<The pointer for the domain mapping that identifies how the vector is distributed amongst the domains.
-    INTEGER(INTG) :: DATA_TYPE !<The type of data for the distributed vector \see DISTRIBUTED_MATRIX_VECTOR_DataTypes 
-    TYPE(DISTRIBUTED_VECTOR_CMISS_TYPE), POINTER :: CMISS !<A pointer to the CMISS distributed vector information
-    TYPE(DISTRIBUTED_VECTOR_PETSC_TYPE), POINTER :: PETSC !<A pointer to the PETSc distributed vector information
-  END TYPE DISTRIBUTED_VECTOR_TYPE
+  TYPE DistributedVectorType
+    LOGICAL :: vectorFinished !<!<Is .TRUE. if the distributed vector has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: libraryType !<The format of the distributed vector \see DistributedMatrixVector_LibraryTypes,DistributedMatrixVector
+    INTEGER(INTG) :: ghostingType !<The ghosting type \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping !<The pointer for the domain mapping that identifies how the vector is distributed amongst the domains.
+    INTEGER(INTG) :: dataType !<The type of data for the distributed vector \see DistributedMatrixVector_DataTypes 
+    TYPE(DistributedVectorCMISSType), POINTER :: cmiss !<A pointer to the CMISS distributed vector information
+    TYPE(DistributedVectorPETScType), POINTER :: petsc !<A pointer to the PETSc distributed vector information
+  END TYPE DistributedVectorType
 
   !>Contains information for a CMISS distributed matrix
-  TYPE DISTRIBUTED_MATRIX_CMISS_TYPE
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    INTEGER(INTG) :: BASE_TAG_NUMBER !<The base number for the MPI tag numbers that will be used to communicate the distributed matrix data amongst the domains. The base tag number can be thought of as the identification number for the distributed matrix object.
+  TYPE DistributedMatrixCMISSType
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    INTEGER(INTG) :: baseTagNumber !<The base number for the MPI tag numbers that will be used to communicate the distributed matrix data amongst the domains. The base tag number can be thought of as the identification number for the distributed matrix object.
     TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to store the rows corresponding to this domain.
-!   TYPE(LINKEDLIST),POINTER :: LIST(:) !< \todo Comment
-  END TYPE DISTRIBUTED_MATRIX_CMISS_TYPE
+  END TYPE DistributedMatrixCMISSType
 
   !>Contains information for a PETSc distributed matrix
-  TYPE DISTRIBUTED_MATRIX_PETSC_TYPE
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: DISTRIBUTED_MATRIX !<A pointer to the distributed matrix
-    INTEGER(INTG) :: M !<The number of local rows in the PETSc matrix
-    INTEGER(INTG) :: N !<The number of local columns in the PETSc matrix
-    INTEGER(INTG) :: GLOBAL_M !<The number of global rows in the PETSc matrix
-    INTEGER(INTG) :: GLOBAL_N !<The number of global columns in the PETSc matrix
-    INTEGER(INTG) :: STORAGE_TYPE !<The storage type (sparsity) of the PETSc matrix
+  TYPE DistributedMatrixPETScType
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    INTEGER(INTG) :: m !<The number of local rows in the PETSc matrix
+    INTEGER(INTG) :: n !<The number of local columns in the PETSc matrix
+    INTEGER(INTG) :: globalM !<The number of global rows in the PETSc matrix
+    INTEGER(INTG) :: globalN !<The number of global columns in the PETSc matrix
+    INTEGER(INTG) :: storageType !<The storage type (sparsity) of the PETSc matrix
     INTEGER(INTG) :: symmetryType !<The symmetry type of the PETSc matrix
-    INTEGER(INTG) :: NUMBER_NON_ZEROS !<The number of non-zeros in the PETSc matrix
-    INTEGER(INTG) :: DATA_SIZE !<The size of the allocated data in the PETSc matrix
-    INTEGER(INTG) :: MAXIMUM_COLUMN_INDICES_PER_ROW !<The maximum number of column indicies for the rows.
-    INTEGER(INTG), ALLOCATABLE :: DIAGONAL_NUMBER_NON_ZEROS(:) !<DIAGONAL_NUMBER_NON_ZEROS(i). The number of non-zeros in the diagonal part of the the i'th row
-    INTEGER(INTG), ALLOCATABLE :: OFFDIAGONAL_NUMBER_NON_ZEROS(:) !<OFFDIAGONAL_NUMBER_NON_ZEROS(i). The number of non-zeros in the off diagonal part of the the i'th row
-    INTEGER(INTG), ALLOCATABLE :: ROW_INDICES(:) !<ROW_INDICES(i). The row indices for the matrix.
-    INTEGER(INTG), ALLOCATABLE :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column indices for the matrix.
-    TYPE(LINKEDLIST),POINTER :: LIST(:) !< \todo Comment
-    INTEGER(INTG), ALLOCATABLE :: GLOBAL_ROW_NUMBERS(:) !<GLOBAL_ROW_NUMBERS(i). The PETSc global row number corresponding to the i'th local row number.
-    REAL(DP), POINTER :: DATA_DP(:) !<DATA_DP(i). The real data for the matrix. \todo Is this used???
-    LOGICAL :: USE_OVERRIDE_MATRIX !<Is .TRUE. if the override matrix is to be used instead of the standard matrix
-    TYPE(PetscMatType) :: MATRIX !<The PETSc matrix
-    TYPE(PetscMatType) :: OVERRIDE_MATRIX !<The PETSc override matrix
-  END TYPE DISTRIBUTED_MATRIX_PETSC_TYPE
+    INTEGER(INTG) :: numberOfNonZeros !<The number of non-zeros in the PETSc matrix
+    INTEGER(INTG) :: dataSize !<The size of the allocated data in the PETSc matrix
+    INTEGER(INTG) :: maximumColumnIndicesPerRow!<The maximum number of column indicies for the rows.
+    INTEGER(INTG), ALLOCATABLE :: diagonalNumberOfNonZeros(:) !<diagonalNumberOfNonZeros(i). The number of non-zeros in the diagonal part of the the i'th row
+    INTEGER(INTG), ALLOCATABLE :: offdiagonalNumberOfNonZeros(:) !<offdiagonalNumberOfNonZeros(i). The number of non-zeros in the off diagonal part of the the i'th row
+    INTEGER(INTG), ALLOCATABLE :: rowIndices(:) !<rowIndices(i). The row indices for the matrix.
+    INTEGER(INTG), ALLOCATABLE :: columnIndices(:) !<columnIndices(i). The column indices for the matrix.
+    TYPE(LINKEDLIST),POINTER :: list(:) !< \todo Comment
+    INTEGER(INTG), ALLOCATABLE :: globalRowNumbers(:) !<globalRowNumbers(i). The PETSc global row number corresponding to the i'th local row number.
+    REAL(DP), POINTER :: dataDP(:) !<dataDP(i). The real data for the matrix. \todo Is this used???
+    LOGICAL :: useOverrideMatrix !<Is .TRUE. if the override matrix is to be used instead of the standard matrix
+    TYPE(PetscMatType) :: matrix !<The PETSc matrix
+    TYPE(PetscMatType) :: overrideMatrix !<The PETSc override matrix
+  END TYPE DistributedMatrixPETScType
   
   !>Contains the information for a matrix that is distributed across a number of domains.
-  TYPE DISTRIBUTED_MATRIX_TYPE
-    LOGICAL :: MATRIX_FINISHED !<Is .TRUE. if the distributed matrix has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: LIBRARY_TYPE !<The library of the distributed matrix \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG) :: GHOSTING_TYPE !<The ghosting type \see DISTRIBUTED_MATRIX_VECTOR_GhostingTypes,DISTRIBUTED_MATRIX_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOMAIN_MAPPING !<The pointer for the domain mapping that identifies how the matrix rows are distributed amongst the domains.
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: COLUMN_DOMAIN_MAPPING !<The pointer for the domain mapping that identifies how the matrix columns are distributed amongst the domains.
-    INTEGER(INTG) :: DATA_TYPE !<The type of data for the distributed matrix \see DISTRIBUTED_MATRIX_VECTOR_DataTypes
-    TYPE(DISTRIBUTED_MATRIX_CMISS_TYPE), POINTER :: CMISS !<A pointer to the CMISS distributed matrix information
-    TYPE(DISTRIBUTED_MATRIX_PETSC_TYPE), POINTER :: PETSC !<A pointer to the PETSc distributed matrix information
-  END TYPE DISTRIBUTED_MATRIX_TYPE
+  TYPE DistributedMatrixType
+    LOGICAL :: matrixFinished !<Is .TRUE. if the distributed matrix has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: libraryType !<The library of the distributed matrix \see DistributedMatrixVector_LibraryTypes,DistributedMatrixVector
+    INTEGER(INTG) :: ghostingType !<The ghosting type \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping !<The pointer for the domain mapping that identifies how the matrix rows are distributed amongst the domains.
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: columnDomainMapping !<The pointer for the domain mapping that identifies how the matrix columns are distributed amongst the domains.
+    INTEGER(INTG) :: dataType !<The type of data for the distributed matrix \see DistributedMatrixVector_DataTypes
+    TYPE(DistributedMatrixCMISSType), POINTER :: cmiss !<A pointer to the CMISS distributed matrix information
+    TYPE(DistributedMatrixPETScType), POINTER :: petsc !<A pointer to the PETSc distributed matrix information
+  END TYPE DistributedMatrixType
 
   !
   !================================================================================================================================
@@ -896,7 +897,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: ID !<The ID of the vector.
     LOGICAL :: VECTOR_FINISHED !<Is .TRUE. if the vector has finished being created, .FALSE. if not.
     INTEGER(INTG) :: N !<The length of the vector
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the vector \see MATRIX_VECTOR_DataTypes 
+    INTEGER(INTG) :: DATA_TYPE !<The data type of the vector \see MatrixVector_DataTypes 
     INTEGER(INTG) :: SIZE !<The size of the data array of the vector
     INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer vector. The i'th component contains the data for the i'th component vector data on the domain. 
     REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision real vector. The i'th component contains the data for the i'th component vector data on the domain. 
@@ -912,14 +913,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: N !<The number of columns in the matrix
     INTEGER(INTG) :: MAX_M !<The maximum number of columns in the matrix storage
     INTEGER(INTG) :: MAX_N !<The maximum number of rows in the matrix storage
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the matrix  \see MATRIX_VECTOR_DataTypes 
-    INTEGER(INTG) :: STORAGE_TYPE !<The storage type of the matrix \see MATRIX_VECTOR_StorageTypes 
-    INTEGER(INTG) :: symmetryType !<The symmetry type of the matrix \see MATRIX_VECTOR_SymmetryTypes 
+    INTEGER(INTG) :: DATA_TYPE !<The data type of the matrix  \see MatrixVector_DataTypes 
+    INTEGER(INTG) :: STORAGE_TYPE !<The storage type of the matrix \see MatrixVector_StorageTypes 
+    INTEGER(INTG) :: symmetryType !<The symmetry type of the matrix \see MatrixVector_SymmetryTypes 
     INTEGER(INTG) :: NUMBER_NON_ZEROS !<The number of non-zero elements in the matrix 
     INTEGER(INTG) :: SIZE !<The size of the data arrays
     INTEGER(INTG) :: MAXIMUM_COLUMN_INDICES_PER_ROW !<The maximum number of column indicies for the rows.
-    INTEGER(INTG), ALLOCATABLE :: ROW_INDICES(:) !<ROW_INDICES(i). The row indices for the matrix storage scheme. \see MATRIX_VECTOR_MatrixStorageStructures
-    INTEGER(INTG), ALLOCATABLE :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column indices for the matrix storage scheme. \see MATRIX_VECTOR_MatrixStorageStructures
+    INTEGER(INTG), ALLOCATABLE :: ROW_INDICES(:) !<ROW_INDICES(i). The row indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
+    INTEGER(INTG), ALLOCATABLE :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
     TYPE(LINKEDLIST),POINTER :: LIST(:) !\todo Comment
     INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
     REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
@@ -1224,7 +1225,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER !<The mesh component number of a field variable component that the scaling factors are associated with.
     INTEGER(INTG) :: MAX_NUMBER_OF_DERIVATIVES !<The maximum number of derivatives in the mesh component. 
     INTEGER(INTG) :: MAX_NUMBER_OF_ELEMENT_PARAMETERS !<The maximum number of element parameters in the mesh component. 
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SCALE_FACTORS !<SCALE_FACTORS(nk,np). The scale factor that is applied to the nk'th derivative of the np'th node of the mesh component. \todo  Make scale factors nodally based for now. Will have to revert to element based and extended to be a matrix to allow for a global derivative to be mapped onto many different element derivatives at the points that closes meshes or for inconsistent xi directions
+    TYPE(DistributedVectorType), POINTER :: SCALE_FACTORS !<SCALE_FACTORS(nk,np). The scale factor that is applied to the nk'th derivative of the np'th node of the mesh component. \todo  Make scale factors nodally based for now. Will have to revert to element based and extended to be a matrix to allow for a global derivative to be mapped onto many different element derivatives at the points that closes meshes or for inconsistent xi directions
   END TYPE FIELD_SCALING_TYPE
 
   !>A type to hold the field scalings for the field.
@@ -1324,7 +1325,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: SET_INDEX !<The global set index (from 1 to the Types::FIELD_PARAMETER_SETS_TYPE::NUMBER_OF_PARAMETER_SETS) that this parameter set corresponds to.
     INTEGER(INTG) :: SET_TYPE !<The user set type (index) (from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_SET_TYPES) that this parameter set \see FIELD_ROUTINES_ParameterSetTypes
   !###      corresponds to.
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: PARAMETERS !<A pointer to the distributed vector that contains the field parameters for this field parameter set.
+    TYPE(DistributedVectorType), POINTER :: PARAMETERS !<A pointer to the distributed vector that contains the field parameters for this field parameter set.
   END TYPE FIELD_PARAMETER_SET_TYPE
   
   !>A buffer type to allow for an array of pointers to a FIELD_PARAMETER_SET_TYPE.
@@ -1416,7 +1417,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field that this field uses. If the field itself is a geometric field then this will be a pointer back to itself.
     TYPE(FIELD_GEOMETRIC_PARAMETERS_TYPE), POINTER :: GEOMETRIC_FIELD_PARAMETERS !<If the field is a geometric field the pointer to the geometric parameters (lines, areas, volumes etc.). If the field is not a geometric field the pointer is NULL.
     TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE !<The create values cache for the field.
-    TYPE(DataProjectionType), POINTER :: DataProjection !<A pointer to the data projection that this field uses.
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection that this field uses.
   END TYPE FIELD_TYPE
 
   !>A buffer type to allow for an array of pointers to a FIELD_TYPE.
@@ -1492,10 +1493,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this equations matrix
     LOGICAL :: updateMatrix !<Is .TRUE. if this equations matrix is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this equations matrix has not been assembled
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: matrix !<A pointer to the distributed equations matrix data
+    TYPE(DistributedMatrixType), POINTER :: matrix !<A pointer to the distributed equations matrix data
     TYPE(ElementMatrixType) :: elementMatrix !<The element matrix for this equations matrix
     TYPE(NodalMatrixType) :: nodalMatrix !<The nodal matrix for this equations matrix
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: tempVector !<Temporary vector used for assembly. 
+    TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
   END TYPE EquationsMatrixType
 
   !>A buffer type to allow for an array of pointers to a EquationsMatrixType \see Types::EquationsMatrixType.
@@ -1512,7 +1513,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: symmetric !<Is .TRUE. if the Jacobian matrix is symmetric
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this global matrix
     LOGICAL :: updateJacobian !<Is .TRUE. if this Jacobian matrix is to be updated
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: jacobian !<A pointer to the distributed jacobian matrix data
+    TYPE(DistributedMatrixType), POINTER :: jacobian !<A pointer to the distributed jacobian matrix data
     LOGICAL :: firstAssembly !<Is .TRUE. if this Jacobian matrix has not been assembled
     TYPE(ElementMatrixType) :: elementJacobian !<The element matrix for this Jacobian matrix. This is not used if the Jacobian is not supplied.
     TYPE(NodalMatrixType) :: nodalJacobian !<The nodal matrix for this Jacobian matrix. This is not used if the Jacobian is not supplied.
@@ -1533,7 +1534,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: symmetric !<Is .TRUE. if the Hessian matrix is symmetric
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this global matrix
     LOGICAL :: updateHessian !<Is .TRUE. if this Hessian matrix is to be updated
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: hessian !<A pointer to the distributed Hessian matrix data
+    TYPE(DistributedMatrixType), POINTER :: hessian !<A pointer to the distributed Hessian matrix data
     LOGICAL :: firstAssembly !<Is .TRUE. if this Hessian matrix has not been assembled
     TYPE(ElementMatrixType) :: elementHessian !<The element matrix for this Hessian matrix. This is not used if the Hessian is not supplied.
     INTEGER(INTG) :: hessianCalculationType !<The calculation type (analytic of finite difference) of the Hessian.
@@ -1569,7 +1570,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     INTEGER(INTG) :: numberOfDynamicMatrices !<The number of dynamic equations matrices defined for the equations set.
     TYPE(EquationsMatrixPtrType), ALLOCATABLE :: matrices(:) !<matrix(matrixIdx)%ptr contains the information on the matrixIdx'th dynamic equations matrix.
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: tempVector !<Temporary vector used for assembly. 
+    TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
   END TYPE EquationsMatricesDynamicType
 
   !>Contains information of the linear matrices for equations matrices
@@ -1586,7 +1587,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsJacobianPtrType), ALLOCATABLE :: jacobians(:) !<jacobians(matrixIdx)%ptr is a pointer to the matrixIdx'th Jacobian matrix for nonlinear equations
     LOGICAL :: updateResidual !<Is .TRUE. if the equations residual vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this residual vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residual !<A pointer to the distributed residual vector for nonlinear equations
+    TYPE(DistributedVectorType), POINTER :: residual !<A pointer to the distributed residual vector for nonlinear equations
     TYPE(ElementVectorType) :: elementResidual !<The element residual information for nonlinear equations. Old CMISS name RE1
     TYPE(NodalVectorType) :: nodalResidual !<The nodal residual information for nonlinear equations.
     INTEGER(INTG) :: nodalResidualCalculated !<The number of the nodal the residual is calculated for, or zero if it isn't calculated
@@ -1600,19 +1601,19 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfHessians !<The number of Hessian matrices for the equations set.
     TYPE(EquationsHessianPtrType), ALLOCATABLE :: hessians(:) !<hessians(matrixIdx)%ptr is a pointer to the matrixIdx'th Hessian matrix for optimisation equations
     LOGICAL :: updateGradient !<Is .TRUE. if the equations gradient vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation equations
     TYPE(ElementVectorType) :: elementGradient !<The element gradient information for optimisation equations.
     LOGICAL :: updateConstraints !<Is .TRUE. if the equations constraints vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: constraints !<A pointer to the distributed constraints vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: constraints !<A pointer to the distributed constraints vector for optimisation equations
     TYPE(ElementVectorType) :: elementConstraints !<The element constraints information for optimisation equations.
     LOGICAL :: updateBounds !<Is .TRUE. if the equations bounds vectors are to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: lowerBounds !<A pointer to the distributed lower bounds vector for optimisation equations
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: upperBounds !<A pointer to the distributed upper bounds vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: lowerBounds !<A pointer to the distributed lower bounds vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: upperBounds !<A pointer to the distributed upper bounds vector for optimisation equations
     TYPE(ElementVectorType) :: elementLowerBounds !<The element lower bounds information for optimisation equations.
     TYPE(ElementVectorType) :: elementUpperBounds !<The element upper bounds information for optimisation equations.
     LOGICAL :: updateResidual !<Is .TRUE. if the equations residual vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this residual vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residual !<A pointer to the distributed residual vector for optimisation equations
+    TYPE(DistributedVectorType), POINTER :: residual !<A pointer to the distributed residual vector for optimisation equations
     TYPE(ElementVectorType) :: elementResidual !<The element residual information for optimisation equations. Old CMISS name RE1
   END TYPE EquationsMatricesOptimisationType
 
@@ -1621,7 +1622,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     LOGICAL :: updateVector !<Is .TRUE. if the equations rhs vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this rhs vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: vector !<A pointer to the distributed global rhs vector data \todo rename this RHS_VECTOR
+    TYPE(DistributedVectorType), POINTER :: vector !<A pointer to the distributed global rhs vector data \todo rename this RHS_VECTOR
     TYPE(ElementVectorType) :: elementVector !<The element rhs information
     TYPE(NodalVectorType) :: nodalVector !<The nodal rhs information
   END TYPE EquationsMatricesRHSType
@@ -1631,7 +1632,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer back to the vector equations matrices.
     LOGICAL :: updateVector !<Is .TRUE. if the equations rhs vector is to be updated
     LOGICAL :: firstAssembly !<Is .TRUE. if this source vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: vector !<A pointer to the distributed source vector data \todo rename this SOURCE_VECTOR
+    TYPE(DistributedVectorType), POINTER :: vector !<A pointer to the distributed source vector data \todo rename this SOURCE_VECTOR
     TYPE(ElementVectorType) :: elementVector !<The element source information
     TYPE(NodalVectorType) :: NodalVector !<The nodal source information
   END TYPE EquationsMatricesSourceType
@@ -1972,8 +1973,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: equationsFinished !<Is .TRUE. if the equations have been finished, .FALSE. if not.
     INTEGER(INTG) :: equationType !<The equations type \see EquationsRoutines_EquationTypes,EquationsRoutines
     INTEGER(INTG) :: equalityType !<The equations equality type \see EquationsRoutines_EquationEqualityTypes,EquationsRoutines
-    INTEGER(INTG) :: linearity !<The equations linearity type \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
-    INTEGER(INTG) :: timeDependence !<The equations time dependence type \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG) :: linearity !<The equations linearity type \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
+    INTEGER(INTG) :: timeDependence !<The equations time dependence type \see EquationsSetConstants_TimeDependenceTypes,EquationsSetConstants
     INTEGER(INTG) :: outputType !<The output type for the equations \see EquationsRoutines_EquationsOutputTypes,EquationsRoutines
     INTEGER(INTG) :: sparsityType !<The sparsity type for the equation matrices of the equations \see EquationsRoutines_EquationsSparsityTypes,EquationsRoutines
     INTEGER(INTG) :: lumpingType !<The lumping type for the equation matrices of the equations \see EquationsRoutines_EquationsLumpingTypes,EquationsRoutines
@@ -2044,8 +2045,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information used to integrate Neumann boundary conditions
   TYPE BoundaryConditionsNeumannType
     INTEGER(INTG), ALLOCATABLE :: setDofs(:) !<setDofs(neumann_idx): the global dof for the neumann_idx'th Neumann condition
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: integrationMatrix !<The N matrix that multiples the point values vector q to give the integrated values f. Number of rows equals number of local dofs, and number of columns equals number of set point DOFs.
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: pointValues !<The vector of set point values q
+    TYPE(DistributedMatrixType), POINTER :: integrationMatrix !<The N matrix that multiples the point values vector q to give the integrated values f. Number of rows equals number of local dofs, and number of columns equals number of set point DOFs.
+    TYPE(DistributedVectorType), POINTER :: pointValues !<The vector of set point values q
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: pointDofMapping !<The domain mapping for DOFs with Neumann point conditions set.
   END TYPE BoundaryConditionsNeumannType
 
@@ -2101,8 +2102,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information on the setup information for an equations set
   TYPE EQUATIONS_SET_SETUP_TYPE
-    INTEGER(INTG) :: SETUP_TYPE !<The setup type for the equations set setup \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-    INTEGER(INTG) :: ACTION_TYPE !<The action type for the equations set setup \see EQUATIONS_SET_CONSTANTS_SetupActionTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG) :: SETUP_TYPE !<The setup type for the equations set setup \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+    INTEGER(INTG) :: ACTION_TYPE !<The action type for the equations set setup \see EquationsSetConstants_SetupActionTypes,EquationsSetConstants
     INTEGER(INTG) :: FIELD_USER_NUMBER !<The user number for the field for the equations set setup.
     TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field for the equations set setup.
     INTEGER(INTG) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to use.
@@ -2185,7 +2186,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The equations set specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     REAL(DP) :: currentTime !<The current time for the equations set
     REAL(DP) :: deltaTime !<The current time increment for the equations set
-    INTEGER(INTG) :: outputType !<The output type for the equations set \see EQUATIONS_SET_CONSTANTS_OutputTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG) :: outputType !<The output type for the equations set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG) :: SOLUTION_METHOD !<The solution method for the equations set \see EquationsRoutines_SolutionMethods 
     TYPE(EQUATIONS_SET_GEOMETRY_TYPE) :: GEOMETRY !<The geometry information for the equations set.
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: MATERIALS !<A pointer to the materials information for the equations set.
@@ -2228,10 +2229,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: UPDATE_MATRIX !<Is .TRUE. if this interface matrix is to be updated
     LOGICAL :: FIRST_ASSEMBLY !<Is .TRUE. if this interface matrix has not been assembled
     LOGICAL :: HAS_TRANSPOSE !<Is .TRUE. if this interface matrix has has transpose
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the distributed interface matrix data
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: MATRIX_TRANSPOSE !<A pointer to the distributed interface matrix transpose data
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: TEMP_VECTOR !<Temporary vector used for assembly. 
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: TEMP_TRANSPOSE_VECTOR !<Temporary vector used for assembly. 
+    TYPE(DistributedMatrixType), POINTER :: MATRIX !<A pointer to the distributed interface matrix data
+    TYPE(DistributedMatrixType), POINTER :: MATRIX_TRANSPOSE !<A pointer to the distributed interface matrix transpose data
+    TYPE(DistributedVectorType), POINTER :: TEMP_VECTOR !<Temporary vector used for assembly. 
+    TYPE(DistributedVectorType), POINTER :: TEMP_TRANSPOSE_VECTOR !<Temporary vector used for assembly. 
     TYPE(ElementMatrixType) :: ELEMENT_MATRIX !<The element matrix for this interface matrix
   END TYPE INTERFACE_MATRIX_TYPE
 
@@ -2245,7 +2246,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer back to the interface matrices.
     LOGICAL :: UPDATE_VECTOR !<Is .TRUE. if the interface rhs vector is to be updated
     LOGICAL :: FIRST_ASSEMBLY !<Is .TRUE. if this rhs vector has not been assembled
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RHS_VECTOR !<A pointer to the distributed global rhs vector data 
+    TYPE(DistributedVectorType), POINTER :: RHS_VECTOR !<A pointer to the distributed global rhs vector data 
     TYPE(ElementVectorType) :: ELEMENT_VECTOR !<The element rhs information
   END TYPE INTERFACE_RHS_TYPE
   
@@ -2659,8 +2660,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: STORAGE_TYPE !<The storage type for the solver matrix.
     INTEGER(INTG) :: symmetryType !<The solver matrix symmetry type.
     INTEGER(INTG) :: NUMBER_OF_COLUMNS !<The number of columns in the distributed solver matrix
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOLVER_VECTOR !<A pointer to the distributed solver vector associated with the matrix
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the distributed solver matrix data
+    TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR !<A pointer to the distributed solver vector associated with the matrix
+    TYPE(DistributedMatrixType), POINTER :: MATRIX !<A pointer to the distributed solver matrix data
   END TYPE SOLVER_MATRIX_TYPE
 
   !>A buffer type to allow for an array of pointers to a SOLVER_MATRIX_TYPE \see TYPES:SOLUTION_MATRIX_TYPE
@@ -2675,19 +2676,20 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping for these solver matrices
     INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of (local) rows in the distributed solution matrix for this computational node
     INTEGER(INTG) :: NUMBER_OF_GLOBAL_ROWS !<The number of global rows in the distributed solution matrix
-    INTEGER(INTG) :: LIBRARY_TYPE !<The library type for the solver matrices
+    INTEGER(INTG) :: solverLibraryType !<The library type of the solver for the solver matrices \see SOLVER_ROUTINES_SolverLibraries
+    INTEGER(INTG) :: matrixLibraryType !<The library type for the solver matrices \see DistributedMatrixVector_LibraryTypes
     !Linear matrices
     INTEGER(INTG) :: NUMBER_OF_MATRICES !<The number of solver matrices defined for the problem
     TYPE(SOLVER_MATRIX_PTR_TYPE), ALLOCATABLE :: MATRICES(:) !<MATRICES(matrix_idx)%PTR contains the information on the matrix_idx'th solver matrix
     !Nonlinear matrices and vectors
     LOGICAL :: UPDATE_RESIDUAL !<Is .TRUE. if the residual vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RESIDUAL !<A pointer to the distributed residual vector for nonlinear problems
+    TYPE(DistributedVectorType), POINTER :: RESIDUAL !<A pointer to the distributed residual vector for nonlinear problems
     !Optimiser matrices and vectors
     LOGICAL :: updateGradient !<Is .TRUE. if the gradient vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation problems
+    TYPE(DistributedVectorType), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation problems
     !Right hand side vector
     LOGICAL :: UPDATE_RHS_VECTOR !<Is .TRUE. if the RHS vector is to be updated
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: RHS_VECTOR !<A pointer to the distributed RHS vector for the solver matrices
+    TYPE(DistributedVectorType), POINTER :: RHS_VECTOR !<A pointer to the distributed RHS vector for the solver matrices
   END TYPE SOLVER_MATRICES_TYPE
 
   !
@@ -3404,12 +3406,13 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: ITERATION_NUMBER
     INTEGER(INTG) :: GLOBAL_ITERATION_NUMBER
 ! sebk: is thei usefull?
-    INTEGER(INTG) :: OUTPUT_NUMBER
+    INTEGER(INTG) :: OUTPUT_NUMBER          !< The frequency of output, is only used if the specific problem implementation accesses it
     INTEGER(INTG) :: INPUT_NUMBER
     REAL(DP) :: CURRENT_TIME
     REAL(DP) :: START_TIME
     REAL(DP) :: STOP_TIME
     REAL(DP) :: TIME_INCREMENT
+    INTEGER(INTG) :: NUMBER_OF_ITERATIONS   !< The total number of iterations for this loop, if 0 it will be computed from time span and increment
   END TYPE CONTROL_LOOP_TIME_TYPE
 
   !>Contains information on a do-while control loop
@@ -3418,6 +3421,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: ITERATION_NUMBER
     INTEGER(INTG) :: MAXIMUM_NUMBER_OF_ITERATIONS
     REAL(DP) :: ABSOLUTE_TOLERANCE
+    REAL(DP) :: RELATIVE_TOLERANCE
     LOGICAL :: CONTINUE_LOOP
   END TYPE CONTROL_LOOP_WHILE_TYPE
 

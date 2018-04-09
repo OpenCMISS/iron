@@ -63,6 +63,8 @@ MODULE SolverMatricesAccessRoutines
 
   !Interfaces
 
+  PUBLIC SolverMatrices_LibraryTypeGet
+
   PUBLIC SolverMatrices_SolverMappingGet
 
   PUBLIC SolverMatrices_SolverMatrixGet
@@ -70,6 +72,34 @@ MODULE SolverMatricesAccessRoutines
   
 CONTAINS
 
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the library type for the solver matrices (and vectors)
+  SUBROUTINE SolverMatrices_LibraryTypeGet(solverMatrices,libraryType,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices !<A pointer to the solver matrices.
+    INTEGER(INTG), INTENT(OUT) :: libraryType !<On return, the library type of the specified solver matrices \see SOLVER_ROUTINES_SolverLibraries
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverMatrices_LibraryTypeGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)    
+    IF(.NOT.solverMatrices%SOLVER_MATRICES_FINISHED) CALL FlagError("Solver matrices has not finished.",err,error,*999)
+    
+    libraryType=solverMatrices%solverLibraryType
+    
+    EXITS("SolverMatrices_LibraryTypeGet")
+    RETURN
+999 ERRORSEXITS("SolverMatrices_LibraryTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_LibraryTypeGet
+          
   !
   !================================================================================================================================
   !
@@ -99,7 +129,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE SolverMatrices_SolverMappingGet
-  
 
   !
   !================================================================================================================================

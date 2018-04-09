@@ -63,11 +63,19 @@ MODULE EquationsMappingAccessRoutines
 
   !Interfaces
 
+  PUBLIC EquationsMappingDynamic_DynamicVariableGet
+
+  PUBLIC EquationsMappingLinear_LinearVariableGet
+
   PUBLIC EquationsMappingNonlinear_ResidualVariableGet
+  
+  PUBLIC EquationsMappingRHS_RHSVariableGet
   
   PUBLIC EquationsMappingScalar_CreateValuesCacheGet
   
   PUBLIC EquationsMappingScalar_ScalarEquationsGet
+
+  PUBLIC EquationsMappingSource_SourceVariableGet
 
   PUBLIC EquationsMappingVector_CreateValuesCacheGet
 
@@ -88,6 +96,82 @@ MODULE EquationsMappingAccessRoutines
   PUBLIC EquationsMappingVector_VectorMatricesGet
  
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified dynamic variable for a dynamic mapping.
+  SUBROUTINE EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the dynamic variable for
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dynamicVariable !<On exit, a pointer to the requested dynamic variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingDynamic_DynamicVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(dynamicVariable)) CALL FlagError("Dynamic variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicMapping)) CALL FlagError("Dynamic mapping is not associated.",err,error,*999)
+    
+    dynamicVariable=>dynamicMapping%dynamicVariable  
+    IF(.NOT.ASSOCIATED(dynamicVariable)) CALL FlagError("The dynamic variable is not associated.",err,error,*999)
+    
+    EXITS("EquationsMappingDynamic_DynamicVariableGet")
+    RETURN
+999 NULLIFY(dynamicVariable)
+998 ERRORS("EquationsMappingDynamic_DynamicVariableGet",err,error)
+    EXITS("EquationsMappingDynamic_DynamicVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingDynamic_DynamicVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified linear variable for a linear mapping.
+  SUBROUTINE EquationsMappingLinear_LinearVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping !<A pointer to the linear mapping to get the linear variable for
+    INTEGER(INTG), INTENT(IN) :: linearMatrixIdx !<The index of the linear matrix to get the linear variable for. 
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: linearVariable !<On exit, a pointer to the requested linear variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMappingLinear_LinearVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(linearVariable)) CALL FlagError("Linear variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(linearMapping)) CALL FlagError("Linear mapping is not associated.",err,error,*999)
+    IF(linearMatrixIdx<1.OR.linearMatrixIdx>linearMapping%numberOfLinearMatrices) THEN
+      localError="The specified linear matrix index of "//TRIM(NumberToVString(linearMatrixIdx,"*",err,error))// &
+        & " is invalid for a linear mapping which has "// &
+        & TRIM(NumberToVString(linearMapping%numberOfLinearMatrices,"*",err,error))//" linear matrices."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(linearMapping%equationsMatrixToVarMaps)) &
+      & CALL FlagError("Linear mapping equations matrix to variable maps is not allocated.",err,error,*999)
+    
+    linearVariable=>linearMapping%equationsMatrixToVarMaps(linearMatrixIdx)%variable
+    IF(.NOT.ASSOCIATED(linearVariable)) THEN
+      localError="The linear variable is not associated for linear matrix index "// &
+        & TRIM(NumberToVString(linearMatrixIdx,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("EquationsMappingLinear_LinearVariableGet")
+    RETURN
+999 NULLIFY(linearVariable)
+998 ERRORS("EquationsMappingLinear_LinearVariableGet",err,error)
+    EXITS("EquationsMappingLinear_LinearVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingLinear_LinearVariableGet
 
   !
   !================================================================================================================================
@@ -140,6 +224,38 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingNonlinear_ResidualVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified RHS variable for a rhs mapping.
+  SUBROUTINE EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<A pointer to the RHS mapping to get the RHS variable for
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable !<On exit, a pointer to the requested RHS field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsMappingRHS_RHSVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(rhsVariable)) CALL FlagError("RHS Field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(rhsMapping)) CALL FlagError("RHS mapping is not associated.",err,error,*999)
+    
+    rhsVariable=>rhsMapping%rhsVariable
+    IF(.NOT.ASSOCIATED(rhsVariable)) CALL FlagError("The RHS field variable is not associated in the RHS mapping.",err,error,*999)
+    
+    EXITS("EquationsMappingRHS_RHSVariableGet")
+    RETURN
+999 NULLIFY(rhsVariable)
+998 ERRORS("EquationsMappingRHS_RHSVariableGet",err,error)
+    EXITS("EquationsMappingRHS_RHSVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingRHS_RHSVariableGet
 
   !
   !================================================================================================================================
@@ -201,6 +317,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMappingScalar_ScalarEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the specified source variable for a source mapping.
+  SUBROUTINE EquationsMappingSource_SourceVariableGet(sourceMapping,sourceVariable,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping !<A pointer to the source mapping to get the source variable for
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: sourceVariable !<On exit, a pointer to the requested source variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("EquationsMappingSoure_SourceVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(sourceVariable)) CALL FlagError("Source variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(sourceMapping)) CALL FlagError("Soure mapping is not associated.",err,error,*999)
+    
+    sourceVariable=>sourceMapping%sourceVariable  
+    IF(.NOT.ASSOCIATED(sourceVariable)) CALL FlagError("The source variable is not associated.",err,error,*999)
+    
+    EXITS("EquationsMappingSource_SourceVariableGet")
+    RETURN
+999 NULLIFY(sourceVariable)
+998 ERRORS("EquationsMappingSource_SourceVariableGet",err,error)
+    EXITS("EquationsMappingSource_SourceVariableGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsMappingSource_SourceVariableGet
 
   !
   !================================================================================================================================

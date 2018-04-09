@@ -1,28 +1,74 @@
+!!> \file
+!> $Id: Stokes_equations_routines.f90 372 2009-04-20
+!> \author Sebastian Krittian
+!> \brief This module handles all Stokes fluid routines.
+!>
+!> \section LICENSE
+!>
+!> Version: MPL 1.1/GPL 2.0/LGPL 2.1
+!>
+!> The contents of this file are subject to the Mozilla Public License
+!> Version 1.1 (the "License"); you may not use this file except in
+!> compliance with the License. You may obtain a copy of the License at
+!> http://www.mozilla.org/MPL/
+!>
+!> Software distributed under the License is distributed on an "AS IS"
+!> basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+!> License for the specific language governing rights and limitations
+!> under the License.
+!>
+!> The Original Code is OpenCMISS
+!>
+!> The Initial Developer of the Original Code is University of Auckland,
+!> Auckland, New Zealand, the University of Oxford, Oxford, United
+!> Kingdom and King's College, London, United Kingdom. Portions created
+!> by the University of Auckland, the University of Oxford and King's
+!> College, London are Copyright (C) 2007-2010 by the University of
+!> Auckland, the University of Oxford and King's College, London.
+!> All Rights Reserved.
+!>
+!> Contributor(s): Sebastian Krittian, Chris Bradley
+!>
+!> Alternatively, the contents of this file may be used under the terms of
+!> either the GNU General Public License Version 2 or later (the "GPL"), or
+!> the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+!> in which case the provisions of the GPL or the LGPL are applicable instead
+!> of those above. If you wish to allow use of your version of this file only
+!> under the terms of either the GPL or the LGPL, and not to allow others to
+!> use your version of this file under the terms of the MPL, indicate your
+!> decision by deleting the provisions above and replace them with the notice
+!> and other provisions required by the GPL or the LGPL. If you do not delete
+!> the provisions above, a recipient may use your version of this file under
+!> the terms of any one of the MPL, the GPL or the LGPL.
+!>
+
 !>This module handles all Stokes fluid routines.
 MODULE STOKES_EQUATIONS_ROUTINES
 
   USE ANALYTIC_ANALYSIS_ROUTINES
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
+  USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FIELD_IO_ROUTINES
   USE FieldAccessRoutines
   USE FLUID_MECHANICS_IO_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
   USE Strings
@@ -284,7 +330,7 @@ CONTAINS
                         !start creation of a new field
                         CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
                         !label the field
-                        CALL FIELD_LABEL_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
+                        CALL FIELD_LABEL_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"U",err,error,*999)
                         !define new created field to be dependent
                         CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                           & FIELD_DEPENDENT_TYPE,err,error,*999)
@@ -2177,14 +2223,14 @@ CONTAINS
                                                   materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
                                                   !Define MU_PARAM, density=1
                                                   MU_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                                    & parameters%cmiss%data_dp(1)
+                                                    & parameters%cmiss%dataDP(1)
                                                   !Define RHO_PARAM, density=2
                                                   IF(ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4.OR. &
                                                     & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5.OR. &
                                                     & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4.OR. &
                                                     & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
                                                     RHO_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                                      & parameters%cmiss%data_dp(2)
+                                                      & parameters%cmiss%dataDP(2)
                                                   ELSE
                                                     RHO_PARAM=0.0_DP
                                                   ENDIF
@@ -2952,16 +2998,13 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(VARYING_STRING) :: localError
+    TYPE(FIELDS_TYPE), POINTER :: Fields
+    TYPE(VARYING_STRING) :: localError,METHOD,FILENAME
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,NUMBER_OF_DIMENSIONS
-
     LOGICAL :: EXPORT_FIELD
-    TYPE(VARYING_STRING) :: METHOD!,FILE
-    CHARACTER(14) :: FILE
     CHARACTER(14) :: OUTPUT_FILE
-
 
     ENTERS("STOKES_POST_SOLVE_OUTPUT_DATA",err,error,*999)
 
@@ -2970,8 +3013,6 @@ CONTAINS
     NULLIFY(EQUATIONS_SET)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-!       write(*,*)'CURRENT_TIME = ',CURRENT_TIME
-!       write(*,*)'TIME_INCREMENT = ',TIME_INCREMENT
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
           IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
@@ -2979,91 +3020,84 @@ CONTAINS
           ELSE IF(SIZE(control_loop%problem%specification,1)<3) THEN
             CALL FlagError("Problem specification must have three entries for a Stokes problem.",err,error,*999)
           END IF
+          CALL SYSTEM('mkdir -p ./output')
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_STATIC_STOKES_SUBTYPE,PROBLEM_LAPLACE_STOKES_SUBTYPE)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
-                  IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                    !Make sure the equations sets are up to date
-                    DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                      EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                      METHOD="FORTRAN"
-                      EXPORT_FIELD=.TRUE.
-                      IF(EXPORT_FIELD) THEN
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                        CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,"STATICSOLUTION", &
-                          & err,error,*999)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"STATICSOLUTION",err,error,*999)
-                        CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                      ENDIF
-                    ENDDO
+          CASE(PROBLEM_STATIC_STOKES_SUBTYPE,PROBLEM_LAPLACE_STOKES_SUBTYPE)
+            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+              SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+                !Make sure the equations sets are up to date
+                DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  FILENAME="./output/"//"STATIC_SOLUTION"
+                  METHOD="FORTRAN"
+                  IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
+                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                    CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
                   ENDIF
-                ENDIF
-            CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE,PROBLEM_ALE_STOKES_SUBTYPE,PROBLEM_PGM_STOKES_SUBTYPE)
-              CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-              SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-              IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
-                IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  !Make sure the equations sets are up to date
-                  DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                    EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                    CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
-                    OUTPUT_ITERATION_NUMBER=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
-                    IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                      IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN
-                        IF(CURRENT_LOOP_ITERATION<10) THEN
-                          WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
-                        ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
-                          WRITE(OUTPUT_FILE,'("TIME_STEP_00",I0)') CURRENT_LOOP_ITERATION
-                        ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
-                          WRITE(OUTPUT_FILE,'("TIME_STEP_0",I0)') CURRENT_LOOP_ITERATION
-                        ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
-                          WRITE(OUTPUT_FILE,'("TIME_STEP_",I0)') CURRENT_LOOP_ITERATION
-                        END IF
-                        FILE=OUTPUT_FILE
-  !          FILE="TRANSIENT_OUTPUT"
-                        METHOD="FORTRAN"
-                        EXPORT_FIELD=.TRUE.
-                        IF(EXPORT_FIELD) THEN
-                          IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                            CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                            CALL FLUID_MECHANICS_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                              & err,error,*999)
-                            CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & NUMBER_OF_DIMENSIONS,err,error,*999)
-!\todo: Introduce subroutine for the user to set the ENCAS output option
-                            EXPORT_FIELD=.FALSE.
-                            IF(NUMBER_OF_DIMENSIONS==3) THEN
-                              IF(EXPORT_FIELD) THEN
-                                CALL FLUID_MECHANICS_IO_WRITE_ENCAS(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                                  & err,error,*999)
-                              ENDIF
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,OUTPUT_FILE,err,error,*999)
-                              CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                            ENDIF
-                          ENDIF
+                  Fields=>EQUATIONS_SET%REGION%FIELDS
+                  CALL FIELD_IO_NODES_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
+                  CALL FIELD_IO_ELEMENTS_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
+                  NULLIFY(Fields)
+                ENDDO
+              ENDIF
+            ENDIF
+          CASE(PROBLEM_TRANSIENT_STOKES_SUBTYPE,PROBLEM_ALE_STOKES_SUBTYPE,PROBLEM_PGM_STOKES_SUBTYPE)
+            CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
+            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
+              SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
+                !Make sure the equations sets are up to date
+                DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                  EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
+                  CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
+                  OUTPUT_ITERATION_NUMBER=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
+                  IF(OUTPUT_ITERATION_NUMBER/=0) THEN
+                    IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN
+                      IF(CURRENT_LOOP_ITERATION<10) THEN
+                        WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
+                      ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
+                        WRITE(OUTPUT_FILE,'("TIME_STEP_00",I0)') CURRENT_LOOP_ITERATION
+                      ELSE IF(CURRENT_LOOP_ITERATION<1000) THEN
+                        WRITE(OUTPUT_FILE,'("TIME_STEP_0",I0)') CURRENT_LOOP_ITERATION
+                      ELSE IF(CURRENT_LOOP_ITERATION<10000) THEN
+                        WRITE(OUTPUT_FILE,'("TIME_STEP_",I0)') CURRENT_LOOP_ITERATION
+                      END IF
+                      FILENAME="./output/"//"MainTime_"//TRIM(NumberToVString(CURRENT_LOOP_ITERATION,"*",err,error))
+                      METHOD="FORTRAN"
+                      IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER)==0)  THEN
+                        IF(CONTROL_LOOP%outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
                         ENDIF
-                        IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-                          IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4.OR. &
-                            & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5.OR. &
-                            & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4.OR. &
-                            & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5.OR. &
-                            & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1) THEN
-                            CALL AnalyticAnalysis_Output(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FILE,err,error,*999)
-                          ENDIF
+                        Fields=>EQUATIONS_SET%REGION%FIELDS
+                        CALL FIELD_IO_NODES_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
+                        CALL FIELD_IO_ELEMENTS_EXPORT(Fields,FILENAME,METHOD,err,error,*999)
+                        NULLIFY(Fields)
+                        IF(CONTROL_LOOP%outputtype >= CONTROL_LOOP_PROGRESS_OUTPUT) THEN
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,FILENAME,err,error,*999)
+                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                        ENDIF
+                      END IF
+                      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
+                        IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4.OR. &
+                          & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5.OR. &
+                          & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4.OR. &
+                          & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5.OR. &
+                          & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1) THEN
+                          CALL AnalyticAnalysis_Output(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,OUTPUT_FILE,err,error,*999)
                         ENDIF
                       ENDIF
                     ENDIF
-                  ENDDO
-                ENDIF
+                  ENDIF
+                ENDDO
               ENDIF
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for a Stokes equation fluid type of a fluid mechanics problem class."
+            ENDIF
+          CASE DEFAULT
+            localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
+              & " is not valid for a Stokes equation fluid type of a fluid mechanics problem class."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ELSE
@@ -3298,14 +3332,14 @@ CONTAINS
                                 materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
                                 !Define MU_PARAM, density=1
                                 MU_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                  & parameters%cmiss%data_dp(1)
+                                  & parameters%cmiss%dataDP(1)
                                 !Define RHO_PARAM, density=2
                                 IF(ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4.OR. &
                                   & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5.OR. &
                                   & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4.OR. &
                                   & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
                                   RHO_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
-                                    & parameters%cmiss%data_dp(2)
+                                    & parameters%cmiss%dataDP(2)
                                 ELSE
                                   RHO_PARAM=0.0_DP
                                 ENDIF

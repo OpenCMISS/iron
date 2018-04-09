@@ -45,6 +45,7 @@
 MODULE EquationsAccessRoutines
   
   USE BaseRoutines
+  USE FieldAccessRoutines
   USE Kinds
   USE Strings
   USE Types
@@ -65,9 +66,49 @@ MODULE EquationsAccessRoutines
 
   PUBLIC Equations_EquationsSetGet
   
+  PUBLIC Equations_InterpolationGet
+  
   PUBLIC Equations_ScalarEquationsGet
   
   PUBLIC Equations_VectorEquationsGet
+  
+  PUBLIC EquationsInterpolation_DependentParametersGet
+  
+  PUBLIC EquationsInterpolation_DependentPointGet
+  
+  PUBLIC EquationsInterpolation_DependentPointMetricsGet
+  
+  PUBLIC EquationsInterpolation_FibreParametersGet
+  
+  PUBLIC EquationsInterpolation_FibrePointGet
+  
+  PUBLIC EquationsInterpolation_FibrePointMetricsGet
+  
+  PUBLIC EquationsInterpolation_GeometricParametersGet
+  
+  PUBLIC EquationsInterpolation_GeometricPointGet
+  
+  PUBLIC EquationsInterpolation_GeometricPointMetricsGet
+  
+  PUBLIC EquationsInterpolation_IndependentParametersGet
+  
+  PUBLIC EquationsInterpolation_IndependentPointGet
+  
+  PUBLIC EquationsInterpolation_IndependentPointMetricsGet
+  
+  PUBLIC EquationsInterpolation_MaterialsParametersGet
+  
+  PUBLIC EquationsInterpolation_MaterialsPointGet
+  
+  PUBLIC EquationsInterpolation_PreviousDependentParametersGet
+  
+  PUBLIC EquationsInterpolation_PreviousDependentPointGet
+  
+  PUBLIC EquationsInterpolation_PreviousDependentPointMetricsGet
+  
+  PUBLIC EquationsInterpolation_SourceParametersGet
+  
+  PUBLIC EquationsInterpolation_SourcePointGet
   
   PUBLIC EquationsScalar_EquationsGet
 
@@ -112,6 +153,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Equations_EquationsSetGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interpolation for an equations.
+  SUBROUTINE Equations_InterpolationGet(equations,interpolation,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsType), POINTER :: equations !<A pointer to the equations to get the interpolation for
+    TYPE(EquationsInterpolationType), POINTER :: interpolation !<On exit, a pointer to the equations interpolation for the specified equations. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_InterpolationGet",err,error,*998)
+
+    IF(ASSOCIATED(interpolation)) CALL FlagError("Interpolation is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+
+    interpolation=>equations%interpolation
+    IF(.NOT.ASSOCIATED(interpolation)) CALL FlagError("Interpolation is not associated for the equations.",err,error,*999)
+       
+    EXITS("Equations_InterpolationGet")
+    RETURN
+999 NULLIFY(interpolation)
+998 ERRORSEXITS("Equations_InterpolationGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_InterpolationGet
 
   !
   !================================================================================================================================
@@ -172,6 +243,827 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Equations_VectorEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dependent interpolation parameters for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_DependentParametersGet(equationsInterpolation,variableType,dependentParameters,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the dependent parameters for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dependent parameters for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: dependentParameters !<On exit, a pointer to the dependent interpolation parameters for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_DependentParametersGet",err,error,*998)
+
+    IF(ASSOCIATED(dependentParameters)) CALL FlagError("Dependent parameters is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dependentParameters=>equationsInterpolation%dependentInterpParameters(variableType)%ptr
+    IF(.NOT.ASSOCIATED(dependentParameters)) THEN
+      localError="Equations interpolation dependent parameters is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_DependentParametersGet")
+    RETURN
+999 NULLIFY(dependentParameters)
+998 ERRORS("EquationsInterpolation_DependentParametersGet",err,error)
+    EXITS("EquationsInterpolation_DependentParametersGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_DependentParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dependent interpolated point for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_DependentPointGet(equationsInterpolation,variableType,dependentPoint,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the dependent point for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dependent point for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: dependentPoint !<On exit, a pointer to the dependent interpolated point for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_DependentPointGet",err,error,*998)
+
+    IF(ASSOCIATED(dependentPoint)) CALL FlagError("Dependent point is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dependentPoint=>equationsInterpolation%dependentInterpPoint(variableType)%ptr
+    IF(.NOT.ASSOCIATED(dependentPoint)) THEN
+      localError="Equations interpolated dependent point is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_DependentPointGet")
+    RETURN
+999 NULLIFY(dependentPoint)
+998 ERRORS("EquationsInterpolation_DependentPointGet",err,error)
+    EXITS("EquationsInterpolation_DependentPointGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_DependentPointGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the dependent interpolated point metrics for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_DependentPointMetricsGet(equationsInterpolation,variableType,dependentPointMetrics,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the dependent point metrics for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dependent point metrics for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: dependentPointMetrics !<On exit, a pointer to the dependent interpolated point metrics for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_DependentPointMetricsGet",err,error,*998)
+
+    IF(ASSOCIATED(dependentPointMetrics)) CALL FlagError("Dependent point metrics is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dependentPointMetrics=>equationsInterpolation%dependentInterpPointMetrics(variableType)%ptr
+    IF(.NOT.ASSOCIATED(dependentPointMetrics)) THEN
+      localError="Equations interpolated dependent point metrics is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_DependentPointMetricsGet")
+    RETURN
+999 NULLIFY(dependentPointMetrics)
+998 ERRORS("EquationsInterpolation_DependentPointMetricsGet",err,error)
+    EXITS("EquationsInterpolation_DependentPointMetricsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_DependentPointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the fibre interpolation parameters for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_FibreParametersGet(equationsInterpolation,variableType,fibreParameters,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the fibre parameters for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the fibre parameters for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: fibreParameters !<On exit, a pointer to the fibre interpolation parameters for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_FibreParametersGet",err,error,*998)
+
+    IF(ASSOCIATED(fibreParameters)) CALL FlagError("Fibre parameters is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    fibreParameters=>equationsInterpolation%fibreInterpParameters(variableType)%ptr
+    IF(.NOT.ASSOCIATED(fibreParameters)) THEN
+      localError="Equations interpolation fibre parameters is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_FibreParametersGet")
+    RETURN
+999 NULLIFY(fibreParameters)
+998 ERRORS("EquationsInterpolation_FibreParametersGet",err,error)
+    EXITS("EquationsInterpolation_FibreParametersGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_FibreParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the fibre interpolated point for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_FibrePointGet(equationsInterpolation,variableType,fibrePoint,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the fibre point for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the fibre point for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: fibrePoint !<On exit, a pointer to the fibre interpolated point for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_FibrePointGet",err,error,*998)
+
+    IF(ASSOCIATED(fibrePoint)) CALL FlagError("Fibre point is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    fibrePoint=>equationsInterpolation%fibreInterpPoint(variableType)%ptr
+    IF(.NOT.ASSOCIATED(fibrePoint)) THEN
+      localError="Equations interpolated fibre point is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_FibrePointGet")
+    RETURN
+999 NULLIFY(fibrePoint)
+998 ERRORS("EquationsInterpolation_FibrePointGet",err,error)
+    EXITS("EquationsInterpolation_FibrePointGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_FibrePointGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the fibre interpolated point metrics for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_FibrePointMetricsGet(equationsInterpolation,variableType,fibrePointMetrics,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the fibre point metrics for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the fibre point metrics for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: fibrePointMetrics !<On exit, a pointer to the fibre interpolated point metrics for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_FibrePointMetricsGet",err,error,*998)
+
+    IF(ASSOCIATED(fibrePointMetrics)) CALL FlagError("Fibre point metrics is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    fibrePointMetrics=>equationsInterpolation%fibreInterpPointMetrics(variableType)%ptr
+    IF(.NOT.ASSOCIATED(fibrePointMetrics)) THEN
+      localError="Equations interpolated fibre point metrics is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_FibrePointMetricsGet")
+    RETURN
+999 NULLIFY(fibrePointMetrics)
+998 ERRORS("EquationsInterpolation_FibrePointMetricsGet",err,error)
+    EXITS("EquationsInterpolation_FibrePointMetricsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_FibrePointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the geometric interpolation parameters for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_GeometricParametersGet(equationsInterpolation,variableType,geometricParameters,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the geometric parameters for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the geometric parameters for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: geometricParameters !<On exit, a pointer to the geometric interpolation parameters for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_GeometricParametersGet",err,error,*998)
+
+    IF(ASSOCIATED(geometricParameters)) CALL FlagError("Geometric parameters is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    geometricParameters=>equationsInterpolation%geometricInterpParameters(variableType)%ptr
+    IF(.NOT.ASSOCIATED(geometricParameters)) THEN
+      localError="Equations interpolation geometric parameters is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_GeometricParametersGet")
+    RETURN
+999 NULLIFY(geometricParameters)
+998 ERRORS("EquationsInterpolation_GeometricParametersGet",err,error)
+    EXITS("EquationsInterpolation_GeometricParametersGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_GeometricParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the geometric interpolated point for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_GeometricPointGet(equationsInterpolation,variableType,geometricPoint,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the geometric point for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the geometric point for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricPoint !<On exit, a pointer to the geometric interpolated point for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_GeometricPointGet",err,error,*998)
+
+    IF(ASSOCIATED(geometricPoint)) CALL FlagError("Geometric point is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    geometricPoint=>equationsInterpolation%geometricInterpPoint(variableType)%ptr
+    IF(.NOT.ASSOCIATED(geometricPoint)) THEN
+      localError="Equations interpolated geometric point is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_GeometricPointGet")
+    RETURN
+999 NULLIFY(geometricPoint)
+998 ERRORS("EquationsInterpolation_GeometricPointGet",err,error)
+    EXITS("EquationsInterpolation_GeometricPointGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_GeometricPointGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the geometric interpolated point metrics for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_GeometricPointMetricsGet(equationsInterpolation,variableType,geometricPointMetrics,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the geometric point metrics for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the geometric point metrics for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricPointMetrics !<On exit, a pointer to the geometric interpolated point metrics for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_GeometricPointMetricsGet",err,error,*998)
+
+    IF(ASSOCIATED(geometricPointMetrics)) CALL FlagError("Geometric point metrics is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    geometricPointMetrics=>equationsInterpolation%geometricInterpPointMetrics(variableType)%ptr
+    IF(.NOT.ASSOCIATED(geometricPointMetrics)) THEN
+      localError="Equations interpolated geometric point metrics is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_GeometricPointMetricsGet")
+    RETURN
+999 NULLIFY(geometricPointMetrics)
+998 ERRORS("EquationsInterpolation_GeometricPointMetricsGet",err,error)
+    EXITS("EquationsInterpolation_GeometricPointMetricsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_GeometricPointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the independent interpolation parameters for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_IndependentParametersGet(equationsInterpolation,variableType,independentParameters,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the independent parameters for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the independent parameters for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: independentParameters !<On exit, a pointer to the independent interpolation parameters for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_IndependentParametersGet",err,error,*998)
+
+    IF(ASSOCIATED(independentParameters)) CALL FlagError("Independent parameters is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    independentParameters=>equationsInterpolation%independentInterpParameters(variableType)%ptr
+    IF(.NOT.ASSOCIATED(independentParameters)) THEN
+      localError="Equations interpolation independent parameters is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_IndependentParametersGet")
+    RETURN
+999 NULLIFY(independentParameters)
+998 ERRORS("EquationsInterpolation_IndependentParametersGet",err,error)
+    EXITS("EquationsInterpolation_IndependentParametersGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_IndependentParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the independent interpolated point for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_IndependentPointGet(equationsInterpolation,variableType,independentPoint,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the independent point for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the independent point for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: independentPoint !<On exit, a pointer to the independent interpolated point for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_IndependentPointGet",err,error,*998)
+
+    IF(ASSOCIATED(independentPoint)) CALL FlagError("Independent point is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    independentPoint=>equationsInterpolation%independentInterpPoint(variableType)%ptr
+    IF(.NOT.ASSOCIATED(independentPoint)) THEN
+      localError="Equations interpolated independent point is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_IndependentPointGet")
+    RETURN
+999 NULLIFY(independentPoint)
+998 ERRORS("EquationsInterpolation_IndependentPointGet",err,error)
+    EXITS("EquationsInterpolation_IndependentPointGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_IndependentPointGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the independent interpolated point metrics for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_IndependentPointMetricsGet(equationsInterpolation,variableType,independentPointMetrics, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the independent point metrics for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the independent point metrics for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: independentPointMetrics !<On exit, a pointer to the independent interpolated point metrics for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_IndependentPointMetricsGet",err,error,*998)
+
+    IF(ASSOCIATED(independentPointMetrics)) CALL FlagError("Independent point metrics is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    independentPointMetrics=>equationsInterpolation%independentInterpPointMetrics(variableType)%ptr
+    IF(.NOT.ASSOCIATED(independentPointMetrics)) THEN
+      localError="Equations interpolated independent point metrics is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_IndependentPointMetricsGet")
+    RETURN
+999 NULLIFY(independentPointMetrics)
+998 ERRORS("EquationsInterpolation_IndependentPointMetricsGet",err,error)
+    EXITS("EquationsInterpolation_IndependentPointMetricsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_IndependentPointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the materials interpolation parameters for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_MaterialsParametersGet(equationsInterpolation,variableType,materialsParameters,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the materials parameters for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the materials parameters for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: materialsParameters !<On exit, a pointer to the materials interpolation parameters for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_MaterialsParametersGet",err,error,*998)
+
+    IF(ASSOCIATED(materialsParameters)) CALL FlagError("Materials parameters is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    materialsParameters=>equationsInterpolation%materialsInterpParameters(variableType)%ptr
+    IF(.NOT.ASSOCIATED(materialsParameters)) THEN
+      localError="Equations interpolation materials parameters is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_MaterialsParametersGet")
+    RETURN
+999 NULLIFY(materialsParameters)
+998 ERRORS("EquationsInterpolation_MaterialsParametersGet",err,error)
+    EXITS("EquationsInterpolation_MaterialsParametersGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_MaterialsParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the materials interpolated point for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_MaterialsPointGet(equationsInterpolation,variableType,materialsPoint,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the materials point for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the materials point for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: materialsPoint !<On exit, a pointer to the materials interpolated point for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_MaterialsPointGet",err,error,*998)
+
+    IF(ASSOCIATED(materialsPoint)) CALL FlagError("Materials point is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    materialsPoint=>equationsInterpolation%materialsInterpPoint(variableType)%ptr
+    IF(.NOT.ASSOCIATED(materialsPoint)) THEN
+      localError="Equations interpolated materials point is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_MaterialsPointGet")
+    RETURN
+999 NULLIFY(materialsPoint)
+998 ERRORS("EquationsInterpolation_MaterialsPointGet",err,error)
+    EXITS("EquationsInterpolation_MaterialsPointGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_MaterialsPointGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the previous dependent interpolation parameters for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_PreviousDependentParametersGet(equationsInterpolation,variableType,prevDependentParameters, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the previous dependent parameters for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the previous dependent parameters for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: prevDependentParameters !<On exit, a pointer to the previous dependent interpolation parameters for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_PreviousDependentParametersGet",err,error,*998)
+
+    IF(ASSOCIATED(prevDependentParameters)) CALL FlagError("Previous dependent parameters is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    prevDependentParameters=>equationsInterpolation%prevDependentInterpParameters(variableType)%ptr
+    IF(.NOT.ASSOCIATED(prevDependentParameters)) THEN
+      localError="Equations interpolation previous dependent parameters is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_PreviousDependentParametersGet")
+    RETURN
+999 NULLIFY(prevDependentParameters)
+998 ERRORS("EquationsInterpolation_PreviousDependentParametersGet",err,error)
+    EXITS("EquationsInterpolation_PreviousDependentParametersGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_PreviousDependentParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the previous dependent interpolated point for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_PreviousDependentPointGet(equationsInterpolation,variableType,prevDependentPoint,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the previous dependent point for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the prevous dependent point for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: prevDependentPoint !<On exit, a pointer to the previous dependent interpolated point for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_PreviousDependentPointGet",err,error,*998)
+
+    IF(ASSOCIATED(prevDependentPoint)) CALL FlagError("Previous dependent point is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    prevDependentPoint=>equationsInterpolation%prevDependentInterpPoint(variableType)%ptr
+    IF(.NOT.ASSOCIATED(prevDependentPoint)) THEN
+      localError="Equations interpolated previous dependent point is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_PreviousDependentPointGet")
+    RETURN
+999 NULLIFY(prevDependentPoint)
+998 ERRORS("EquationsInterpolation_PreviousDependentPointGet",err,error)
+    EXITS("EquationsInterpolation_PreviousDependentPointGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_PreviousDependentPointGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the previous dependent interpolated point metrics for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_PreviousDependentPointMetricsGet(equationsInterpolation,variableType, &
+    & prevDependentPointMetrics,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the previous dependent point metrics for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the prevous dependent point for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: prevDependentPointMetrics !<On exit, a pointer to the previous dependent interpolated point metrics for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_PreviousDependentPointMetricsGet",err,error,*998)
+
+    IF(ASSOCIATED(prevDependentPointMetrics)) CALL FlagError("Previous dependent point metrics is already associated.", &
+      & err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    prevDependentPointMetrics=>equationsInterpolation%prevDependentInterpPointMetrics(variableType)%ptr
+    IF(.NOT.ASSOCIATED(prevDependentPointMetrics)) THEN
+      localError="Equations interpolated previous dependent point metrics is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_PreviousDependentPointMetricsGet")
+    RETURN
+999 NULLIFY(prevDependentPointMetrics)
+998 ERRORS("EquationsInterpolation_PreviousDependentPointMetricsGet",err,error)
+    EXITS("EquationsInterpolation_PreviousDependentPointMetricsGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_PreviousDependentPointMetricsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the source interpolation parameters for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_SourceParametersGet(equationsInterpolation,variableType,sourceParameters,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the source parameters for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the source parameters for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: sourceParameters !<On exit, a pointer to the source interpolation parameters for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_SourceParametersGet",err,error,*998)
+
+    IF(ASSOCIATED(sourceParameters)) CALL FlagError("Source parameters is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    sourceParameters=>equationsInterpolation%sourceInterpParameters(variableType)%ptr
+    IF(.NOT.ASSOCIATED(sourceParameters)) THEN
+      localError="Equations interpolation source parameters is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_SourceParametersGet")
+    RETURN
+999 NULLIFY(sourceParameters)
+998 ERRORS("EquationsInterpolation_SourceParametersGet",err,error)
+    EXITS("EquationsInterpolation_SourceParametersGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_SourceParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the source interpolated point for an equations interpolation.
+  SUBROUTINE EquationsInterpolation_SourcePointGet(equationsInterpolation,variableType,sourcePoint,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation !<A pointer to the equations interpolation to get the source point for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the source point for. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: sourcePoint !<On exit, a pointer to the source interpolated point for the specified equations interpolation. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("EquationsInterpolation_SourcePointGet",err,error,*998)
+
+    IF(ASSOCIATED(sourcePoint)) CALL FlagError("Source point is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
+      localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " is invalid. The variable type needs to be >= 1 and <= "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    sourcePoint=>equationsInterpolation%sourceInterpPoint(variableType)%ptr
+    IF(.NOT.ASSOCIATED(sourcePoint)) THEN
+      localError="Equations interpolated source point is not associated for field variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of the equations interpolation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("EquationsInterpolation_SourcePointGet")
+    RETURN
+999 NULLIFY(sourcePoint)
+998 ERRORS("EquationsInterpolation_SourcePointGet",err,error)
+    EXITS("EquationsInterpolation_SourcePointGet")
+    RETURN 1
+    
+  END SUBROUTINE EquationsInterpolation_SourcePointGet
 
   !
   !================================================================================================================================

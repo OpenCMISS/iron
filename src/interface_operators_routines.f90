@@ -45,8 +45,9 @@
 MODULE INTERFACE_OPERATORS_ROUTINES
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
-  USE CONSTANTS
+  USE BasisRoutines
+  USE BasisAccessRoutines
+  USE Constants
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
@@ -55,11 +56,11 @@ MODULE INTERFACE_OPERATORS_ROUTINES
   USE INTERFACE_MAPPING_ROUTINES
   USE INTERFACE_MATRICES_ROUTINES
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATRIX_VECTOR
-  USE STRINGS
-  USE TIMER
-  USE TYPES
+  USE Kinds
+  USE MatrixVector
+  USE Strings
+  USE Timer
+  USE Types
 
 #include "macros.h"  
 
@@ -241,7 +242,7 @@ CONTAINS
                         derivative=coupledMeshBasis%DERIVATIVE_NUMBERS_IN_LOCAL_LINE(localLineNodeIdx,connectedLine)
                         derivative=coupledMeshDomainLine%DERIVATIVES_IN_LINE(1,derivativeIdx,localLineNodeIdx)
                         rowParameterIdx=coupledMeshBasis%ELEMENT_PARAMETER_INDEX(derivative,localElementNode)
-                        PGMSI=BASIS_EVALUATE_XI(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV,XI,err,error)
+                        PGMSI=BASIS_EVALUATE_XI(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV,XI(1:2),err,error)
                         rowIdx=rowParameterIdx+coupledMeshBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                         DO interfaceNode=1,interfaceDependentBasis%NUMBER_OF_NODES
                           DO interfaceDerivative=1,interfaceDependentBasis%NUMBER_OF_DERIVATIVES(interfaceNode)
@@ -992,7 +993,7 @@ CONTAINS
                         !===========================================================================================================
                         ! P G M S I - this represents the D E P E N D E N T _ F I E L D S (solid, fluid)
                         !Evaluates the appropriate partial derivative index at position XI for the basis
-                        PGMSI=BASIS_EVALUATE_XI(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV,XI,err,error)
+                        PGMSI=BASIS_EVALUATE_XI(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV,XI(1:2),err,error)
                         rowIdx=rowParameterIdx+coupledMeshBasis%NUMBER_OF_ELEMENT_PARAMETERS*(rowComponentIdx-1)
                         DO interfaceNode=1,interfaceDependentBasis%NUMBER_OF_NODES
                           DO interfaceDerivative=1,interfaceDependentBasis%NUMBER_OF_DERIVATIVES(interfaceNode)

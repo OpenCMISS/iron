@@ -47,11 +47,11 @@ MODULE SOLVER_MAPPING_ROUTINES
   USE BaseRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE ComputationEnvironment
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE EquationsAccessRoutines
   USE DOMAIN_MAPPINGS
   USE EquationsMappingAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
@@ -59,7 +59,7 @@ MODULE SOLVER_MAPPING_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE PROBLEM_CONSTANTS
   USE SolverMappingAccessRoutines
   USE Strings

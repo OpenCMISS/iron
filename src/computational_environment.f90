@@ -598,6 +598,7 @@ CONTAINS
     computationalEnvironment%cmissMPIInitialised=.FALSE.
     
     !Check if MPI has been initialised
+    mpiInitialised=.FALSE.
     CALL MPI_INITIALIZED(mpiInitialised,MPI_IERROR)
     CALL MPI_ERROR_CHECK("MPI_INITIALIZED",MPI_IERROR,err,error,*999)
     IF(.NOT.mpiInitialised) THEN

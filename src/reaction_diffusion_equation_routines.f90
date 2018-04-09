@@ -45,26 +45,27 @@
 MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
+  USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE ComputationEnvironment
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
-  USE MATRIX_VECTOR
+  USE MatrixVector
 #ifndef NOMPIMOD
   USE MPI
 #endif
@@ -103,13 +104,13 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
 
   PUBLIC ReactionDiffusion_FiniteElementCalculate
   
-  PUBLIC REACTION_DIFFUSION_PRE_SOLVE
+  PUBLIC ReactionDiffusion_PreSolve
   
   PUBLIC REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP
 
   PUBLIC ReactionDiffusion_ProblemSpecificationSet
 
-  PUBLIC REACTION_DIFFUSION_POST_SOLVE
+  PUBLIC ReactionDiffusion_PostSolve
 
   PUBLIC REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP
 
@@ -126,8 +127,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a bioelectric domain equation on.
     TYPE(EQUATIONS_SET_SETUP_TYPE), INTENT(INOUT) :: EQUATIONS_SET_SETUP !<The equations set setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,DIMENSION_MULTIPLIER,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE, &
       & NUMBER_OF_DIMENSIONS,NUMBER_OF_MATERIALS_COMPONENTS,GEOMETRIC_MESH_COMPONENT
@@ -162,8 +163,8 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!Todo: CHECK VALID SETUP
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a reaction diffusion domain equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -230,7 +231,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -265,7 +266,7 @@ CONTAINS
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
@@ -273,7 +274,7 @@ CONTAINS
           CASE(EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            localError="The equation set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+            localError="The equation set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
               & " is invalid for a reaction diffusion equation set class."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -282,8 +283,8 @@ CONTAINS
             CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
           ENDIF
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a reaction diffusion equation"
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -402,8 +403,8 @@ CONTAINS
             CALL FlagError("Equations set materials is not associated.",err,error,*999)
           ENDIF
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a reaction diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -466,7 +467,7 @@ CONTAINS
                     CALL FlagError("Not implemented.",err,error,*999)
                   CASE DEFAULT
                     localError="The solution method of " &
-                      & //TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
+                      & //TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// " is invalid."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
                   !Set the scaling to be the same as the geometric field
@@ -500,7 +501,7 @@ CONTAINS
                   CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
                     CALL FlagError("Not implemented.",err,error,*999)
                   CASE DEFAULT
-                    localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD, &
+                    localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD, &
                       &"*",err,error))//" is invalid."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
@@ -520,8 +521,8 @@ CONTAINS
             CALL FIELD_CREATE_FINISH(EQUATIONS_SET%SOURCE%SOURCE_FIELD,err,error,*999)
           ENDIF
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a reaction diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -532,8 +533,8 @@ CONTAINS
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a reaction diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -553,7 +554,7 @@ CONTAINS
                 CALL Equations_LinearityTypeSet(EQUATIONS,EQUATIONS_NONLINEAR,err,error,*999)
               CASE DEFAULT
                 localError="The equations matrices linearity set up of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
               CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
@@ -604,7 +605,7 @@ CONTAINS
                   [EQUATIONS_MATRIX_FEM_STRUCTURE,EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)                  
               CASE DEFAULT
                 localError="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
+                  & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
             ENDIF
@@ -620,18 +621,18 @@ CONTAINS
           CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            localError="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+            localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
               & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a bioelectric domain equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
+        localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
           & " is invalid for reaction diffusion equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -656,8 +657,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
     INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The solution method to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
@@ -688,11 +689,11 @@ CONTAINS
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
+        localError="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a reaction diffusion equation type of classical equations set class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -774,8 +775,8 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element calculations on
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to calculate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) FIELD_VAR_TYPE,mh,mhs,ms,ng,nh,nhs,ni,nj,ns,component_idx
     LOGICAL :: USE_FIBRES
@@ -1058,8 +1059,8 @@ CONTAINS
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem set to setup a bioelectric domain equation on.
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
@@ -1090,8 +1091,8 @@ CONTAINS
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Do nothing????
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a reaction diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -1108,8 +1109,8 @@ CONTAINS
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a reaction-diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -1180,7 +1181,7 @@ CONTAINS
             CALL SOLVER_DYNAMIC_SCHEME_SET(SOLVER,SOLVER_DYNAMIC_CRANK_NICOLSON_SCHEME,err,error,*999)
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,err,error,*999)
           CASE DEFAULT
-            localError="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+            localError="The problem subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
               & " is invalid for a reaction-diffusion problem type of a classical problem class."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1190,8 +1191,8 @@ CONTAINS
           !Finish the solvers creation
           CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a classical equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -1230,8 +1231,8 @@ CONTAINS
             CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC,err,error,*999)
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
               & " is invalid for a reaction-diffusion equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1261,14 +1262,14 @@ CONTAINS
             !Finish the solver equations creation
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup subtype of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
               & " is invalid for a reaction-diffusion equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a reaction-diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -1339,19 +1340,19 @@ CONTAINS
             !Finish the CellML equations creation
             CALL CELLML_EQUATIONS_CREATE_FINISH(CELLML_EQUATIONS,err,error,*999)
           CASE DEFAULT
-            localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
               & " is invalid for reaction-diffusion equation."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          localError="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
-            & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+          localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+            & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for reaction-diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        localError="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
+        localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
           & " is invalid for areaction-diffusion equation."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -1368,148 +1369,131 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
   !>Performs pre-solve actions for reaction-diffusion problems.
-  SUBROUTINE REACTION_DIFFUSION_PRE_SOLVE(SOLVER,err,error,*)
+  SUBROUTINE ReactionDiffusion_PreSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver to perform the pre-solve actions for.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to perform the pre-solve actions for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: localError
+    REAL(DP) :: currentTime,timeIncrement
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("REACTION_DIFFUSION_PRE_SOLVE",err,error,*999)
+    ENTERS("ReactionDiffusion_PreSolve",err,error,*999)
 
-    IF(ASSOCIATED(SOLVER)) THEN
-      SOLVERS=>SOLVER%SOLVERS
-      IF(ASSOCIATED(SOLVERS)) THEN
-        CONTROL_LOOP=>SOLVERS%CONTROL_LOOP
-        IF(ASSOCIATED(CONTROL_LOOP)) THEN
-          CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-          PROBLEM=>CONTROL_LOOP%PROBLEM
-          IF(ASSOCIATED(PROBLEM)) THEN
-            SELECT CASE(PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-              SELECT CASE(SOLVER%GLOBAL_NUMBER)
-              CASE(1)
-                CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT/2.0_DP,err,error,*999)
-              CASE(2)
-                !Do nothing
-              CASE(3)
-                CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT/2.0_DP, &
-                  & err,error,*999)
-              CASE DEFAULT
-                localError="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
-                  & " is invalid for a Strang split reaction-diffusion problem."
-                CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
-              !No splitting, therefore entire problem is solved as a dynamic one, with 1 solver nothing to do.
-            CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
-              !No splitting, therefore entire problem is solved as a dynamic one, with 1 solver nothing to do.
-            CASE DEFAULT
-              localError="The problem subtype of "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is invalid for a reaction-diffusion problem type."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Control loop problem is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Solvers control loop is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver solvers is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Solver is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<3) &
+      & CALL FlagError("Problem specification must have at least three entries for an advection-diffusion problem.",err,error,*999)
+    
+    SELECT CASE(problem%specification(3))
+    CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
+      CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)    
+      SELECT CASE(solver%GLOBAL_NUMBER)
+      CASE(1)
+        CALL Solver_DAETimesSet(solver,currentTime,currentTime+timeIncrement/2.0_DP,err,error,*999)
+      CASE(2)
+        !Do nothing
+      CASE(3)
+        CALL Solver_DAETimesSet(solver,currentTime,currentTime+timeIncrement/2.0_DP,err,error,*999)
+      CASE DEFAULT
+        localError="The solver global number of "//TRIM(NumberToVString(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
+          & " is invalid for a Strang split reaction-diffusion problem."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      !No splitting, therefore entire problem is solved as a dynamic one, with 1 solver nothing to do.
+    CASE(PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      !No splitting, therefore entire problem is solved as a dynamic one, with 1 solver nothing to do.
+    CASE DEFAULT
+      localError="The problem subtype of "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+        & " is invalid for a reaction-diffusion problem type."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
        
-    EXITS("REACTION_DIFFUSION_PRE_SOLVE")
+    EXITS("ReactionDiffusion_PreSolve")
     RETURN
-999 ERRORSEXITS("REACTION_DIFFUSION_PRE_SOLVE",err,error)
+999 ERRORSEXITS("ReactionDiffusion_PreSolve",err,error)
     RETURN 1
     
-  END SUBROUTINE REACTION_DIFFUSION_PRE_SOLVE
+  END SUBROUTINE ReactionDiffusion_PreSolve
 
   !
   !================================================================================================================================
   !
 
-  !>Sets up the reaction diffusion problem post solve.
-  SUBROUTINE REACTION_DIFFUSION_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
+  !>Performs post-solve operations for reaction-diffusion problems. 
+  SUBROUTINE ReactionDiffusion_PostSolve(solver,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(SOLVER_TYPE), POINTER :: PDE_SOLVER
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(SOLVER_TYPE), POINTER :: pdeSolver
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("REACTION_DIFFUSION_POST_SOLVE",err,error,*999)
+    ENTERS("ReactionDiffusion_PostSolve",err,error,*999)
 
-    IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN 
-          IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
-            CALL FlagError("Problem specification must have three entries for a reaction diffusion problem.",err,error,*999)
-          END IF
-          SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
-            CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
-              SELECT CASE(SOLVER%GLOBAL_NUMBER)
-                CASE(1)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+    NULLIFY(controlLoop)
+    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<3) &
+      & CALL FlagError("Problem specification must have at least three entries for an reaction-diffusion problem.",err,error,*999)
+    
+    SELECT CASE(problem%specification(3))
+      
+    CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
+      SELECT CASE(solver%GLOBAL_NUMBER)
+      CASE(1)        
+        !do nothing
+      CASE(2)        
+        !do nothing
+      CASE(3)
+        !OUTPUT SOLUTIONS AT EACH TIME STEP - should probably change this bit below to output 
+        !mesh solutions directly from the 3rd solver itself rather than by getting the 2nd solver.
+        !I just don't know how to work with cellml_equations to do this.
+        solvers=>solver%solvers
+        NULLIFY(pdeSolver)
+        CALL SOLVERS_SOLVER_GET(solvers,2,pdeSolver,err,error,*999)
+        CALL REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(controlLoop,pdeSolver,err,error,*999)
+      CASE DEFAULT
+        localError="The solver global number of "//TRIM(NumberToVString(solver%GLOBAL_NUMBER,"*",err,error))// &
+          & " is invalid for a Strang split reaction-diffusion problem."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE (PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      !do nothing - time output not implemented
+    CASE (PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
+      !OUTPUT SOLUTIONS AT TIME STEP
+      CALL REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(controlLoop,solver,err,error,*999)
+    CASE DEFAULT
+      localError="Problem subtype "//TRIM(NumberToVString(problem%specification(3),"*",err,error))// &
+        & " is not valid for a reaction diffusion type of a classical field problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-                !do nothing
-                CASE(2)
-
-                !do nothing
-                CASE(3)
-                  !OUTPUT SOLUTIONS AT EACH TIME STEP - should probably change this bit below to output 
-                  !mesh solutions directly from the 3rd solver itself rather than by getting the 2nd solver.
-                  !I just don't know how to work with cellml_equations to do this.
-                  SOLVERS=>SOLVER%SOLVERS
-                  NULLIFY(PDE_SOLVER)
-                  CALL SOLVERS_SOLVER_GET(SOLVERS,2,PDE_SOLVER,err,error,*999)
-                  CALL REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,PDE_SOLVER,err,error,*999)
-                CASE DEFAULT
-                  localError="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
-                    & " is invalid for a Strang split reaction-diffusion problem."
-                  CALL FlagError(localError,err,error,*999)
-              END SELECT
-            CASE (PROBLEM_CELLML_REAC_EVAL_REAC_DIFF_NO_SPLIT_SUBTYPE)
-              !do nothing - time output not implemented
-            CASE (PROBLEM_CONSTANT_REAC_DIFF_NO_SPLIT_SUBTYPE)
-              !OUTPUT SOLUTIONS AT TIME STEP
-              CALL REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*999)
-            CASE DEFAULT
-              localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
-                & " is not valid for a reaction diffusion type of a classical field problem class."
-              CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Problem is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Solver is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
-
-    EXITS("REACTION_DIFFUSION_POST_SOLVE")
+    EXITS("ReactionDiffusion_PostSolve")
     RETURN
-999 ERRORSEXITS("REACTION_DIFFUSION_POST_SOLVE",err,error)
+999 ERRORSEXITS("ReactionDiffusion_PostSolve",err,error)
     RETURN 1
-  END SUBROUTINE REACTION_DIFFUSION_POST_SOLVE
+    
+  END SUBROUTINE ReactionDiffusion_PostSolve
+  
   !   
   !================================================================================================================================
   !
@@ -1519,8 +1503,8 @@ CONTAINS
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
@@ -1530,11 +1514,11 @@ CONTAINS
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY,MAX_DIGITS
     INTEGER(INTG) :: myComputationalNodeNumber
+    LOGICAL :: exportExelem
 
     CHARACTER(30) :: FILE
     CHARACTER(30) :: OUTPUT_FILE
-		
-		CHARACTER(100) :: FMT, TEMP_FMT
+    CHARACTER(100) :: FMT, TEMP_FMT
 
     ENTERS("REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA",err,error,*999)
 
@@ -1584,10 +1568,14 @@ CONTAINS
                           ENDIF
                           WRITE(*,*) OUTPUT_FILE
                           FILE=TRIM(OUTPUT_FILE)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
-                          CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                          CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
+                          CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                          exportExelem = .False.
+                          IF (CURRENT_LOOP_ITERATION==0) THEN
+                             IF (equations_set_idx==1) exportExelem = .True.
+                          ENDIF
                           CALL REACTION_DIFFUSION_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                            & ERR,ERROR,*999)
+                            & exportExelem,err,error,*999)
                         ENDIF
                       ENDIF 
                     ENDIF
@@ -1598,7 +1586,7 @@ CONTAINS
               ! do nothing ???
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-              localError="Problem subtype "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
+              localError="Problem subtype "//TRIM(NumberToVString(CONTROL_LOOP%PROBLEM%SPECIFICATION(3),"*",err,error))// &
                 & " is not valid for an advection-diffusion equation type of a classical field problem class."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -1626,8 +1614,8 @@ CONTAINS
 
     !Argument variables
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations

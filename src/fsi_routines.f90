@@ -45,14 +45,14 @@
 MODULE FSIRoutines
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
   USE CMISS_CELLML
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_IO_ROUTINES
   USE FIELD_ROUTINES

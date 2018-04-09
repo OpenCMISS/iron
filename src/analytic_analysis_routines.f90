@@ -44,22 +44,23 @@
 !>This module handles all analytic analysis routines.
 MODULE ANALYTIC_ANALYSIS_ROUTINES
 
-  USE BASIS_ROUTINES
+  USE BasisRoutines
+  USE BasisAccessRoutines
   USE CmissMPI
   USE ComputationEnvironment
-  USE CONSTANTS
+  USE Constants
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATRIX_VECTOR
+  USE Kinds
+  USE MatrixVector
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE STRINGS
-  USE TIMER
-  USE TYPES
+  USE Strings
+  USE Timer
+  USE Types
 
 #include "macros.h"
 

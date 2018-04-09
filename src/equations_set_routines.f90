@@ -45,7 +45,8 @@
 MODULE EQUATIONS_SET_ROUTINES
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
+  USE BasisAccessRoutines
   USE BIOELECTRIC_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CLASSICAL_FIELD_ROUTINES
@@ -53,7 +54,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE ComputationEnvironment
   USE Constants
   USE COORDINATE_ROUTINES
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE ELASTICITY_ROUTINES
   USE EquationsRoutines
@@ -62,7 +63,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE EquationsMatricesRoutines
   USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE FittingRoutines
@@ -71,7 +72,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists
-  USE MATRIX_VECTOR
+  USE MatrixVector
   USE MONODOMAIN_EQUATIONS_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
@@ -107,8 +108,6 @@ MODULE EQUATIONS_SET_ROUTINES
 
   PUBLIC EQUATIONS_SET_ANALYTIC_EVALUATE
 
-  PUBLIC EQUATIONS_SET_ANALYTIC_TIME_GET,EQUATIONS_SET_ANALYTIC_TIME_SET
-  
   PUBLIC EQUATIONS_SET_ASSEMBLE
   
   PUBLIC EQUATIONS_SET_BACKSUBSTITUTE,EQUATIONS_SET_NONLINEAR_RHS_UPDATE
@@ -153,6 +152,8 @@ MODULE EQUATIONS_SET_ROUTINES
 
   PUBLIC EquationsSet_SpecificationGet,EquationsSet_SpecificationSizeGet
 
+  PUBLIC EquationsSet_TensorInterpolateGaussPoint
+
   PUBLIC EquationsSet_TensorInterpolateXi
 
   PUBLIC EquationsSet_DerivedVariableCalculate,EquationsSet_DerivedVariableSet
@@ -169,7 +170,7 @@ CONTAINS
   !================================================================================================================================
   !
       
-  !>Finish the creation of a analytic solution for equations set. \see OPENCMISS::CMISSEquationsSetAnalyticCreateFinish
+  !>Finish the creation of a analytic solution for equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticCreateFinish
   SUBROUTINE EQUATIONS_SET_ANALYTIC_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -220,13 +221,13 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a analytic solution for a equations set. \see OPENCMISS::CMISSEquationsSetAnalyticCreateStart
+  !>Start the creation of a analytic solution for a equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticCreateStart
   SUBROUTINE EQUATIONS_SET_ANALYTIC_CREATE_START(EQUATIONS_SET,ANALYTIC_FUNCTION_TYPE,ANALYTIC_FIELD_USER_NUMBER,ANALYTIC_FIELD, &
     & err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to start the creation of an analytic for.
-    INTEGER(INTG), INTENT(IN) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to setup \see EQUATIONS_SET_CONSTANTS_AnalyticFunctionTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to setup \see EquationsSetConstants_AnalyticFunctionTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(IN) :: ANALYTIC_FIELD_USER_NUMBER !<The user specified analytic field number
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD !<If associated on entry, a pointer to the user created analytic field which has the same user number as the specified analytic field user number. If not associated on entry, on exit, a pointer to the created analytic field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -334,7 +335,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the analytic solution for an equations set. \see OPENCMISS::CMISSEquationsSetAnalyticDestroy
+  !>Destroy the analytic solution for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticDestroy
   SUBROUTINE EQUATIONS_SET_ANALYTIC_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -365,7 +366,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Evaluates the current analytic solution for an equations set. \see OPENCMISS::CMISSEquationsSetAnalyticEvaluate
+  !>Evaluates the current analytic solution for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticEvaluate
   SUBROUTINE EQUATIONS_SET_ANALYTIC_EVALUATE(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -841,72 +842,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EQUATIONS_SET_ANALYTIC_INITIALISE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the analytic time for an equations set. \see OPENCMISS::CMISSEquationsSetAnalyticTimeGet
-  SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_GET(EQUATIONS_SET,TIME,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to get the time for.
-    REAL(DP), INTENT(OUT) :: TIME !<On return, the analytic time value .
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("EQUATIONS_SET_ANALYTIC_TIME_GET",err,error,*999)
-
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-        TIME=EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME
-      ELSE
-        CALL FlagError("Equations set analytic is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("EQUATIONS_SET_ANALYTIC_TIME_GET")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_SET_ANALYTIC_TIME_GET",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_GET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the analytic time for an equations set. \see OPENCMISS::CMISSEquationsSetAnalyticTimeSet
-  SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_SET(EQUATIONS_SET,TIME,err,error,*)
-
-    !Argument variables
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the time for.
-    REAL(DP), INTENT(IN) :: TIME !<The time value to set.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("EQUATIONS_SET_ANALYTIC_TIME_SET",err,error,*999)
-
-    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-        EQUATIONS_SET%ANALYTIC%ANALYTIC_TIME=TIME
-      ELSE
-        CALL FlagError("Equations set analytic is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
-       
-    EXITS("EQUATIONS_SET_ANALYTIC_TIME_SET")
-    RETURN
-999 ERRORSEXITS("EQUATIONS_SET_ANALYTIC_TIME_SET",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EQUATIONS_SET_ANALYTIC_TIME_SET
 
   !
   !================================================================================================================================
@@ -1718,8 +1653,8 @@ CONTAINS
     REAL(DP), POINTER :: DEPENDENT_PARAMETERS(:),equationsMatrixData(:),sourceVectorData(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: RHS_BOUNDARY_CONDITIONS
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: COLUMN_DOMAIN_MAPPING,RHS_DOMAIN_MAPPING
-    TYPE(DISTRIBUTED_MATRIX_TYPE), POINTER :: EQUATIONS_DISTRIBUTED_MATRIX
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: SOURCE_DISTRIBUTED_VECTOR
+    TYPE(DistributedMatrixType), POINTER :: EQUATIONS_DISTRIBUTED_MATRIX
+    TYPE(DistributedVectorType), POINTER :: SOURCE_DISTRIBUTED_VECTOR
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -1770,7 +1705,7 @@ CONTAINS
                             IF(ASSOCIATED(sourceVector)) THEN
                               SOURCE_DISTRIBUTED_VECTOR=>sourceVector%vector
                               IF(ASSOCIATED(SOURCE_DISTRIBUTED_VECTOR)) THEN
-                                CALL DISTRIBUTED_VECTOR_DATA_GET(SOURCE_DISTRIBUTED_VECTOR,sourceVectorData,err,error,*999)
+                                CALL DistributedVector_DataGet(SOURCE_DISTRIBUTED_VECTOR,sourceVectorData,err,error,*999)
                               ELSE
                                 CALL FlagError("Source distributed vector is not associated.",err,error,*999)
                               ENDIF
@@ -1801,9 +1736,9 @@ CONTAINS
                                       IF(ASSOCIATED(COLUMN_DOMAIN_MAPPING)) THEN
                                         EQUATIONS_DISTRIBUTED_MATRIX=>equationsMatrix%MATRIX
                                         IF(ASSOCIATED(EQUATIONS_DISTRIBUTED_MATRIX)) THEN
-                                          CALL DISTRIBUTED_MATRIX_STORAGE_TYPE_GET(EQUATIONS_DISTRIBUTED_MATRIX, &
+                                          CALL DistributedMatrix_StorageTypeGet(EQUATIONS_DISTRIBUTED_MATRIX, &
                                             & EQUATIONS_STORAGE_TYPE,err,error,*999)
-                                          CALL DISTRIBUTED_MATRIX_DATA_GET(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
+                                          CALL DistributedMatrix_DataGet(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
                                             & err,error,*999)
                                           SELECT CASE(EQUATIONS_STORAGE_TYPE)
                                           CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -1854,7 +1789,7 @@ CONTAINS
                                           CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                                            CALL DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_GET(EQUATIONS_DISTRIBUTED_MATRIX, &
+                                            CALL DistributedMatrix_StorageLocationsGet(EQUATIONS_DISTRIBUTED_MATRIX, &
                                               & ROW_INDICES,COLUMN_INDICES,err,error,*999)
                                             !Loop over the non-ghosted rows in the equations set
                                             DO equations_row_number=1,vectorMapping%numberOfRows
@@ -1902,7 +1837,7 @@ CONTAINS
                                               & TRIM(NumberToVString(EQUATIONS_STORAGE_TYPE,"*",err,error))//" is invalid."
                                             CALL FlagError(localError,err,error,*999)
                                           END SELECT
-                                          CALL DISTRIBUTED_MATRIX_DATA_RESTORE(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
+                                          CALL DistributedMatrix_DataRestore(EQUATIONS_DISTRIBUTED_MATRIX,equationsMatrixData, &
                                             & err,error,*999)
                                         ELSE
                                           CALL FlagError("Equations matrix distributed matrix is not associated.",err,error,*999)
@@ -1936,7 +1871,7 @@ CONTAINS
                             CALL FlagError("RHS variable is not associated.",err,error,*999)
                           ENDIF
                           IF(ASSOCIATED(sourceMapping)) THEN
-                            CALL DISTRIBUTED_VECTOR_DATA_RESTORE(SOURCE_DISTRIBUTED_VECTOR,sourceVectorData,err,error,*999)
+                            CALL DistributedVector_DataRestore(SOURCE_DISTRIBUTED_VECTOR,sourceVectorData,err,error,*999)
                           ENDIF
                         ELSE
                           CALL FlagError("Boundary conditions are not associated.",err,error,*999)
@@ -1999,7 +1934,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: residualVector
+    TYPE(DistributedVectorType), POINTER :: residualVector
     TYPE(FIELD_TYPE), POINTER :: RHS_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable,residualVariable
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: RHS_BOUNDARY_CONDITIONS
@@ -2121,7 +2056,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Set boundary conditions for an equation set according to the analytic equations. \see OPENCMISS::CMISSEquationsSetBoundaryConditionsAnalytic
+  !>Set boundary conditions for an equation set according to the analytic equations. \see OpenCMISS::cmfe_EquationsSet_BoundaryConditionsAnalytic
   SUBROUTINE EQUATIONS_SET_BOUNDARY_CONDITIONS_ANALYTIC(equationsSet,BOUNDARY_CONDITIONS,err,error,*)
 
     !Argument variables
@@ -2186,7 +2121,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating an equation set on a region. \see OPENCMISS::CMISSEquationsSetCreateStart
+  !>Finishes the process of creating an equation set on a region. \see OpenCMISS::cmfe_EquationsSet_CreateStart
   SUBROUTINE EQUATIONS_SET_CREATE_FINISH(equationsSet,err,error,*)
 
     !Argument variables
@@ -2230,7 +2165,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating an equations set defined by USER_NUMBER in the region identified by REGION. \see OPENCMISS::CMISSEquationsSetCreateStart
+  !>Starts the process of creating an equations set defined by USER_NUMBER in the region identified by REGION. \see OpenCMISS::cmfe_EquationsSet_CreateStart
   !>Default values set for the EQUATIONS_SET's attributes are:
   !>- LINEARITY: 1 (EQUATIONS_SET_LINEAR)
   !>- TIME_DEPENDENCE: 1 (EQUATIONS_SET_STATIC)
@@ -2433,7 +2368,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys an equations set identified by a user number on the give region and deallocates all memory. \see OPENCMISS::CMISSEquationsSetDestroy
+  !>Destroys an equations set identified by a user number on the give region and deallocates all memory. \see OpenCMISS::cmfe_EquationsSet_Destroy
   SUBROUTINE EQUATIONS_SET_DESTROY_NUMBER(USER_NUMBER,REGION,err,error,*)
 
     !Argument variables
@@ -2516,7 +2451,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys an equations set identified by a pointer and deallocates all memory. \see OPENCMISS::CMISSEquationsSetDestroy
+  !>Destroys an equations set identified by a pointer and deallocates all memory. \see OpenCMISS::cmfe_EquationsSet_Destroy
   SUBROUTINE EQUATIONS_SET_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -2913,7 +2848,7 @@ CONTAINS
     !Local Variables
     TYPE(BASIS_TYPE), POINTER :: basis
     TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: elementsTopology
-    TYPE(DISTRIBUTED_VECTOR_TYPE), POINTER :: parameters
+    TYPE(DistributedVectorType), POINTER :: parameters
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
@@ -3205,7 +3140,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of independent variables for an equations set. \see OPENCMISS::CMISSEquationsSetIndependentCreateFinish
+  !>Finish the creation of independent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_IndependentCreateFinish
   SUBROUTINE EQUATIONS_SET_INDEPENDENT_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3258,7 +3193,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of independent variables for an equations set. \see OPENCMISS::CMISSEquationsSetIndependentCreateStart
+  !>Start the creation of independent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_IndependentCreateStart
   SUBROUTINE EQUATIONS_SET_INDEPENDENT_CREATE_START(EQUATIONS_SET,INDEPENDENT_FIELD_USER_NUMBER,independentField,err,error,*)
 
     !Argument variables
@@ -3369,7 +3304,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the independent field for an equations set. \see OPENCMISS::CMISSEquationsSetIndependentDestroy
+  !>Destroy the independent field for an equations set. \see OpenCMISS::cmfe_EquationsSet_IndependentDestroy
   SUBROUTINE EQUATIONS_SET_INDEPENDENT_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3568,7 +3503,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of materials for an equations set. \see OPENCMISS::CMISSEquationsSetMaterialsCreateFinish
+  !>Finish the creation of materials for an equations set. \see OpenCMISS::cmfe_EquationsSet_MaterialsCreateFinish
   SUBROUTINE EQUATIONS_SET_MATERIALS_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3621,7 +3556,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of materials for a problem. \see OPENCMISS::CMISSEquationsSetMaterialsCreateStart
+  !>Start the creation of materials for a problem. \see OpenCMISS::cmfe_EquationsSet_MaterialsCreateStart
   SUBROUTINE EQUATIONS_SET_MATERIALS_CREATE_START(EQUATIONS_SET,MATERIALS_FIELD_USER_NUMBER,MATERIALS_FIELD,err,error,*)
 
     !Argument variables
@@ -3732,7 +3667,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the materials for an equations set. \see OPENCMISS::CMISSEquationsSetMaterialsDestroy
+  !>Destroy the materials for an equations set. \see OpenCMISS::cmfe_EquationsSet_MaterialsDestroy
   SUBROUTINE EQUATIONS_SET_MATERIALS_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -3828,7 +3763,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a dependent variables for an equations set. \see OPENCMISS::CMISSEquationsSetDependentCreateFinish
+  !>Finish the creation of a dependent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DependentCreateFinish
   SUBROUTINE EQUATIONS_SET_DEPENDENT_CREATE_FINISH(EQUATIONS_SET,err,error,*)
     
     !Argument variables
@@ -3877,7 +3812,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of dependent variables for an equations set. \see OPENCMISS::CMISSEquationsSetDependentCreateStart
+  !>Start the creation of dependent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DependentCreateStart
   SUBROUTINE EQUATIONS_SET_DEPENDENT_CREATE_START(EQUATIONS_SET,DEPENDENT_FIELD_USER_NUMBER,dependentField,err,error,*)
 
     !Argument variables
@@ -3986,7 +3921,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Destroy the dependent variables for an equations set. \see OPENCMISS::CMISSEquationsSetDependentDestroy
+  !>Destroy the dependent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DependentDestroy
   SUBROUTINE EQUATIONS_SET_DEPENDENT_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -4069,7 +4004,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a derived variables field for an equations set. \see OPENCMISS::CMISSEquationsSet_DerivedCreateFinish
+  !>Finish the creation of a derived variables field for an equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedCreateFinish
   SUBROUTINE EquationsSet_DerivedCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -4122,7 +4057,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of derived variables field for an equations set. \see OPENCMISS::CMISSEquationsSet_DerivedCreateStart
+  !>Start the creation of derived variables field for an equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedCreateStart
   SUBROUTINE EquationsSet_DerivedCreateStart(equationsSet,derivedFieldUserNumber,derivedField,err,error,*)
 
     !Argument variables
@@ -4230,7 +4165,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the derived variables for an equations set. \see OPENCMISS::CMISSEquationsSet_DerivedDestroy
+  !>Destroy the derived variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedDestroy
   SUBROUTINE EquationsSet_DerivedDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -4298,7 +4233,7 @@ CONTAINS
       ELSE
         ALLOCATE(equationsSet%derived,stat=err)
         IF(err/=0) CALL FlagError("Could not allocate equations set derived information.",err,error,*998)
-        ALLOCATE(equationsSet%derived%variableTypes(EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES),stat=err)
+        ALLOCATE(equationsSet%derived%variableTypes(EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES),stat=err)
         IF(err/=0) CALL FlagError("Could not allocate equations set derived variable types.",err,error,*999)
         equationsSet%derived%variableTypes=0
         equationsSet%derived%numberOfVariables=0
@@ -4443,7 +4378,7 @@ CONTAINS
   !================================================================================================================================
   !
 
- !>Finish the creation of equations for the equations set. \see OPENCMISS::CMISSEquationsSetEquationsCreateFinish
+ !>Finish the creation of equations for the equations set. \see OpenCMISS::cmfe_EquationsSet_EquationsCreateFinish
   SUBROUTINE EQUATIONS_SET_EQUATIONS_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -4531,7 +4466,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the equations for an equations set. \see OPENCMISS::CMISSEquationsSetEquationsDestroy
+  !>Destroy the equations for an equations set. \see OpenCMISS::cmfe_EquationsSet_EquationsDestroy
   SUBROUTINE EQUATIONS_SET_EQUATIONS_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -5406,7 +5341,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the output type for
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the equations set \see EQUATIONS_SET_CONSTANTS_OutputTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the equations set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5434,7 +5369,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to set the output type for
-    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see EQUATIONS_SET_CONSTANTS_OutputTypes,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see EquationsSetConstants_OutputTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5471,7 +5406,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
-    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The equations set solution method to set \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(IN) :: SOLUTION_METHOD !<The equations set solution method to set \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5537,7 +5472,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to get the solution method for
-    INTEGER(INTG), INTENT(OUT) :: SOLUTION_METHOD !<On return, the equations set solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
+    INTEGER(INTG), INTENT(OUT) :: SOLUTION_METHOD !<On return, the equations set solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5564,7 +5499,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a source for an equation set. \see OPENCMISS::CMISSEquationsSetSourceCreateFinish
+  !>Finish the creation of a source for an equation set. \see OpenCMISS::cmfe_EquationsSet_SourceCreateFinish
   SUBROUTINE EQUATIONS_SET_SOURCE_CREATE_FINISH(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -5617,7 +5552,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a source for an equations set. \see OPENCMISS::CMISSEquationsSetSourceCreateStart
+  !>Start the creation of a source for an equations set. \see OpenCMISS::cmfe_EquationsSet_SourceCreateStart
   SUBROUTINE EQUATIONS_SET_SOURCE_CREATE_START(EQUATIONS_SET,SOURCE_FIELD_USER_NUMBER,SOURCE_FIELD,err,error,*)
 
     !Argument variables
@@ -5728,7 +5663,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the source for an equations set. \see OPENCMISS::CMISSEquationsSetSourceDestroy
+  !>Destroy the source for an equations set. \see OpenCMISS::cmfe_EquationsSet_SourceDestroy
   SUBROUTINE EQUATIONS_SET_SOURCE_DESTROY(EQUATIONS_SET,err,error,*)
 
     !Argument variables
@@ -5824,7 +5759,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the equations set specification i.e., equations set class, type and subtype for an equations set. \see OPENCMISS::CMISSEquationsSetSpecificationGet
+  !>Returns the equations set specification i.e., equations set class, type and subtype for an equations set. \see OpenCMISS::cmfe_EquationsSet_SpecificationGet
   SUBROUTINE EquationsSet_SpecificationGet(equationsSet,equationsSetSpecification,err,error,*)
 
     !Argument variables
@@ -5872,7 +5807,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the size of the equations set specification array for a problem identified by a pointer. \see OPENCMISS::cmfe_EquationsSetSpecificationSizeGet
+  !>Gets the size of the equations set specification array for a problem identified by a pointer. \see OpenCMISS::cmfe_EquationsSet_SpecificationSizeGet
   SUBROUTINE EquationsSet_SpecificationSizeGet(equationsSet,specificationSize,err,error,*)
 
     !Argument variables
@@ -5909,7 +5844,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the current times for an equations set. \see OPENCMISS::cmfe_EquationsSet_TimesGet
+  !>Gets the current times for an equations set. \see OpenCMISS::cmfe_EquationsSet_TimesGet
   SUBROUTINE EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*)
 
     !Argument variables
@@ -5940,7 +5875,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the current times for an equations set. \see OPENCMISS::cmfe_EquationsSet_TimesSet
+  !>Sets/changes the current times for an equations set. \see OpenCMISS::cmfe_EquationsSet_TimesSet
   SUBROUTINE EquationsSet_TimesSet(equationsSet,currentTime,deltaTime,err,error,*)
 
     !Argument variables
@@ -5971,123 +5906,107 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  !
-  !================================================================================================================================
-  !
 
-  !>Calculates a derived variable value for the equations set. \see OPENCMISS::CMISSEquationsSet_DerivedVariableCalculate
+  !>Calculates a derived variable value for the equations set. \see OpenCMISS::cmfe_EquationsSet_DerivedVariableCalculate
   SUBROUTINE EquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate output for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_DerivedVariableCalculate",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) THEN
-        CALL FlagError("Equations set has not been finished.",err,error,*999)
-      ELSE
-        IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-          CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-        ELSE IF(SIZE(equationsSet%specification,1)<1) THEN
-          CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
-        END IF
-        SELECT CASE(equationsSet%specification(1))
-        CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-          CALL Elasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
-        CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_FITTING_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_MODAL_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          CALL FlagError("The first equations set specification of "// &
-            & TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))// &
-            & " is not valid.",err,error,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) &
+      & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(1))  
+    CASE(EQUATIONS_SET_ELASTICITY_CLASS)
+      CALL Elasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
+    CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_FITTING_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MODAL_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The first equations set specification of "//TRIM(NumberToVString(equationsSet%specification(1),"*",err,error))// &
+        & " is not valid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("EquationsSet_DerivedVariableCalculate")
     RETURN
 999 ERRORSEXITS("EquationsSet_DerivedVariableCalculate",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsSet_DerivedVariableCalculate
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the field variable type of the derived field to be used to store a derived variable. \see OPENCMISS::CMISSEquationsSet_DerivedVariableSet
+  !>Sets the field variable type of the derived field to be used to store a derived variable. \see OpenCMISS::cmfe_EquationsSet_DerivedVariableSet
   SUBROUTINE EquationsSet_DerivedVariableSet(equationsSet,derivedType,fieldVariableType,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate a derived field for
-    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EQUATIONS_SET_CONSTANTS_DerivedTypes.
+    INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EquationsSetConstants_DerivedTypes.
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type used to store the calculated derived value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FIELD_TYPE), POINTER :: derivedField
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_DerivedVariableSet",err,error,*999)
 
     !Check pointers and finished state
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(equationsSet%EQUATIONS_SET_FINISHED) THEN
-        IF(ASSOCIATED(equationsSet%derived)) THEN
-          IF(equationsSet%derived%derivedFinished) THEN
-            CALL FlagError("Equations set derived information is already finished.",err,error,*999)
-          END IF
-        ELSE
-          CALL FlagError("Equations set derived information is not associated.",err,error,*999)
-        END IF
-      ELSE
-        CALL FlagError("Equations set has not been finished.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%EQUATIONS_SET_FINISHED) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    NULLIFY(derivedField)
+    CALL EquationsSet_DerivedFieldGet(equationsSet,derivedField,err,error,*999)
+    IF(equationsSet%derived%derivedFinished) CALL FlagError("Equations set derived information is already finished.",err,error,*999)
+    IF(derivedType<1.OR.derivedType>EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES) THEN
+      localError="The specified derived variable type of "//TRIM(NumberToVString(derivedType,"*",err,error))// &
+        & " is invalid. It should be between >= 1 and <= "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES,"*", &
+        & err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    IF(derivedType>0.AND.derivedType<=EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES) THEN
-      IF(fieldVariableType>0.AND.fieldVariableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-        IF(equationsSet%derived%variableTypes(derivedType)==0) THEN
-          equationsSet%derived%numberOfVariables=equationsSet%derived%numberOfVariables+1
-        END IF
-        equationsSet%derived%variableTypes(derivedType)=fieldVariableType
-      ELSE
-        CALL FlagError("The field variable type of "//TRIM(NumberToVString(fieldVariableType,"*",err,error))// &
-          & " is invalid. It should be between 1 and "//TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*", &
-          & err,error))//" inclusive.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("The derived variable type of "//TRIM(NumberToVString(derivedType,"*",err,error))// &
-        & " is invalid. It should be between 1 and "//TRIM(NumberToVString(EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES,"*", &
-        & err,error))//" inclusive.",err,error,*999)
-    END IF
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(derivedField,fieldVariableType,fieldVariable,err,error,*999)
+    
+    IF(equationsSet%derived%variableTypes(derivedType)==0) &
+      & equationsSet%derived%numberOfVariables=equationsSet%derived%numberOfVariables+1
+    equationsSet%derived%variableTypes(derivedType)=fieldVariableType
 
     EXITS("EquationsSet_DerivedVariableSet")
     RETURN
 999 ERRORSEXITS("EquationsSet_DerivedVariableSet",err,error)
     RETURN 1
+    
   END SUBROUTINE EquationsSet_DerivedVariableSet
+  
   !
   !================================================================================================================================
   !
 
-  !>Sets/changes the equations set specification i.e., equations set class, type and subtype for an equations set. \see OPENCMISS::CMISSEquationsSetSpecificationSet
+  !>Sets/changes the equations set specification i.e., equations set class, type and subtype for an equations set. \see OpenCMISS::cmfe_EquationsSet_SpecificationSet
   SUBROUTINE EquationsSet_SpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
@@ -6156,6 +6075,65 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Evaluate a tensor at a given element Gauss point.
+  SUBROUTINE EquationsSet_TensorInterpolateGaussPoint(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber,values, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to interpolate the tensor for.
+    INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field to interpolate.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_TensorInterpolateGaussPoint",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%equations_set_finished) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) CALL FlagError("Equations set specification must have at least one entry.", &
+      & err,error,*999)
+
+    SELECT CASE(equationsSet%specification(1))
+    CASE(EQUATIONS_SET_ELASTICITY_CLASS)
+      CALL Elasticity_TensorInterpolateGaussPoint(equationsSet,tensorEvaluateType,gaussPointNumber,userElementNumber,values, &
+        & err,error,*999)
+    CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MODAL_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_FITTING_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_OPTIMISATION_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The first equations set specification of "// &
+        & TRIM(NumberToVstring(equationsSet%specification(1),"*",err,error))// &
+        & " is not valid."
+      CALL FlagError(localError,err,error,*999)      
+    END SELECT
+
+    EXITS("EquationsSet_TensorInterpolateGaussPoint")
+    RETURN
+999 ERRORSEXITS("EquationsSet_TensorInterpolateGaussPoint",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_TensorInterpolateGaussPoint
+
+  !
+  !================================================================================================================================
+  !
+
   !>Evaluate a tensor at a given element xi location.
   SUBROUTINE EquationsSet_TensorInterpolateXi(equationsSet,tensorEvaluateType,userElementNumber,xi,values,err,error,*)
 
@@ -6164,23 +6142,17 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: tensorEvaluateType !<The type of tensor to evaluate.
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field to interpolate.
     REAL(DP), INTENT(IN) :: xi(:) !<The element xi to interpolate the field at.
-    REAL(DP), INTENT(OUT) :: values(3,3) !<The interpolated tensor values.
+    REAL(DP), INTENT(OUT) :: values(:,:) !<On exit, the interpolated tensor values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     ENTERS("EquationsSet_TensorInterpolateXi",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) THEN
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
-    IF(.NOT.equationsSet%equations_set_finished) THEN
-      CALL FlagError("Equations set has not been finished.",err,error,*999)
-    END IF
-    IF(.NOT.ALLOCATED(equationsSet%specification)) THEN
-      CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    ELSE IF(SIZE(equationsSet%specification,1)<1) THEN
-      CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
-    END IF
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(.NOT.equationsSet%equations_set_finished) CALL FlagError("Equations set has not been finished.",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) CALL FlagError("Equations set specification must have at least one entry.", &
+      & err,error,*999)
 
     SELECT CASE(equationsSet%specification(1))
     CASE(EQUATIONS_SET_ELASTICITY_CLASS)

@@ -45,7 +45,8 @@
 MODULE MESH_ROUTINES
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
+  USE BasisAccessRoutines
   USE CmissMPI
   USE CMISS_PARMETIS
   USE ComputationEnvironment
@@ -523,7 +524,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: decomposition_idx,decomposition_position
     LOGICAL :: FOUND    
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(MESH_TYPE), POINTER :: MESH !
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DECOMPOSITION_PTR_TYPE), ALLOCATABLE :: newDecompositions(:)
@@ -2632,7 +2632,12 @@ CONTAINS
                             DOMAIN_LINE%NUMBER=LINE_NUMBER
                             DOMAIN_LINE%ELEMENT_NUMBER=element_idx !Needs checking
                             DECOMPOSITION_LINE%XI_DIRECTION=BASIS%localLineXiDirection(basis_local_line_idx)
-                            DOMAIN_LINE%BASIS=>BASIS%LINE_BASES(DECOMPOSITION_LINE%XI_DIRECTION)%PTR
+                            IF(ALLOCATED(BASIS%localLineBasis)) THEN
+                              DOMAIN_LINE%BASIS=>BASIS%localLineBasis(basis_local_line_idx)%PTR
+                            ELSE
+                              !Basis is only 1D
+                              DOMAIN_LINE%BASIS=>BASIS
+                            ENDIF
                             ALLOCATE(DOMAIN_LINE%NODES_IN_LINE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(basis_local_line_idx)),STAT=ERR)
                             IF(ERR/=0) CALL FlagError("Could not allocate line nodes in line.",ERR,ERROR,*999)
                             ALLOCATE(DOMAIN_LINE%DERIVATIVES_IN_LINE(2,DOMAIN_LINE%BASIS%MAXIMUM_NUMBER_OF_DERIVATIVES, &
@@ -2791,7 +2796,12 @@ CONTAINS
                                 DOMAIN_ELEMENT=>DOMAIN_ELEMENTS%ELEMENTS(element_idx)
                                 BASIS=>DOMAIN_ELEMENT%BASIS
                                 DOMAIN_LINE%ELEMENT_NUMBER=DOMAIN_ELEMENT%NUMBER
-                                DOMAIN_LINE%BASIS=>BASIS%LINE_BASES(DECOMPOSITION_LINE%XI_DIRECTION)%PTR
+                                IF(ALLOCATED(BASIS%localLineBasis)) THEN
+                                  DOMAIN_LINE%BASIS=>BASIS%localLineBasis(basis_local_line_idx)%PTR
+                                ELSE
+                                  !Basis is only 1D
+                                  DOMAIN_LINE%BASIS=>BASIS
+                                ENDIF
                                 ALLOCATE(DOMAIN_LINE%NODES_IN_LINE(BASIS%NUMBER_OF_NODES_IN_LOCAL_LINE(basis_local_line_idx)), &
                                   & STAT=ERR)
                                 IF(ERR/=0) CALL FlagError("Could not allocate nodes in line.",ERR,ERROR,*999)
@@ -3280,7 +3290,12 @@ CONTAINS
 !                              DECOMPOSITION_FACE%ELEMENT_NUMBER=DECOMPOSITION_ELEMENT%NUMBER
 !                              DOMAIN_FACE%ELEMENT_NUMBER=DOMAIN_ELEMENT%NUMBER
                               DECOMPOSITION_FACE%XI_DIRECTION=BASIS%localFaceXiNormal(basis_local_face_idx)
-                              DOMAIN_FACE%BASIS=>BASIS%FACE_BASES(ABS(DECOMPOSITION_FACE%XI_DIRECTION))%PTR
+                              IF(ALLOCATED(BASIS%localFaceBasis)) THEN
+                                DOMAIN_FACE%BASIS=>BASIS%localFaceBasis(basis_local_face_idx)%PTR
+                              ELSE
+                                !Basis is only 2D
+                                DOMAIN_FACE%BASIS=>BASIS
+                              ENDIF
                               ALLOCATE(DOMAIN_FACE%NODES_IN_FACE(BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(basis_local_face_idx)), &
                                 & STAT=ERR)
                               IF(ERR/=0) CALL FlagError("Could not allocate face nodes in face",ERR,ERROR,*999)
@@ -3455,7 +3470,12 @@ CONTAINS
                                 DOMAIN_FACE%NUMBER=face_idx
                                 DOMAIN_ELEMENT=>DOMAIN_ELEMENTS%ELEMENTS(ne)
                                 BASIS=>DOMAIN_ELEMENT%BASIS
-                                DOMAIN_FACE%BASIS=>BASIS%FACE_BASES(ABS(DECOMPOSITION_FACE%XI_DIRECTION))%PTR
+                                IF(ALLOCATED(BASIS%localFaceBasis)) THEN
+                                  DOMAIN_FACE%BASIS=>BASIS%localFaceBasis(basis_local_face_idx)%PTR
+                                ELSE
+                                  !Basis is only 2D
+                                  DOMAIN_FACE%BASIS=>BASIS
+                                ENDIF
                                 ALLOCATE(DOMAIN_FACE%NODES_IN_FACE(BASIS%NUMBER_OF_NODES_IN_LOCAL_FACE(basis_local_face_idx)), &
                                   & STAT=ERR)
                                 IF(ERR/=0) CALL FlagError("Could not allocate nodes in face",ERR,ERROR,*999)
@@ -9791,12 +9811,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: meshComponentNumber,meshNumber
-    LOGICAL :: nodeExists
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
-    TYPE(VARYING_STRING) :: localError
-
+    INTEGER(INTG) :: meshNumber
+ 
     ENTERS("MeshTopology_NodeOnBoundaryGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)

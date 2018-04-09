@@ -46,7 +46,7 @@
 MODULE FIELD_IO_ROUTINES
   USE BaseRoutines
   USE LISTS
-  USE BASIS_ROUTINES
+  USE BasisRoutines
   USE BasisAccessRoutines
   USE MESH_ROUTINES
   USE NODE_ROUTINES
@@ -54,20 +54,20 @@ MODULE FIELD_IO_ROUTINES
   USE COORDINATE_ROUTINES
   USE ISO_VARYING_STRING
   USE MACHINE_CONSTANTS
-  USE KINDS
+  USE Kinds
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   !USE, INTRINSIC :: ISO_C_BINDING
-  USE STRINGS
-  USE TYPES
-  USE CONSTANTS
+  USE Strings
+  USE Types
+  USE Constants
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE CmissMPI
   USE INPUT_OUTPUT
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
 
 #include "macros.h"  
 
@@ -94,6 +94,21 @@ MODULE FIELD_IO_ROUTINES
   !>Type of scale factor
   INTEGER(INTG), PARAMETER :: FIELD_IO_SCALE_FACTORS_NUMBER_TYPE=5
   INTEGER(INTG), PARAMETER :: FIELD_IO_SCALE_FACTORS_PROPERTY_TYPE=6
+
+  INTEGER(INTG), PARAMETER :: NUMBER_SIMPLEX_NODES(3,3) = RESHAPE([2,3,4,3,6,10,4,10,20],[3,3]) !NUMBER_SIMPLEX_NODES(simplexOrderIdx,simplexDimensionIdx) is the number of local nodes in a simplex element of simplexOrderIdx'th order and simplexDimensionIdx'th dimension.
+  
+  INTEGER(INTG), PARAMETER :: SIMPLEX_TWIZEL(20,3,3) = &
+    & RESHAPE([ &
+    & 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, & !SIMPLEX_TWIZEL(:,1,1)
+    & 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, & !SIMPLEX_TWIZEL(:,2,1)
+    & 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, & !SIMPLEX_TWIZEL(:,3,1)
+    & 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, & !SIMPLEX_TWIZEL(:,1,2)
+    & 1, 3, 6, 2, 5, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, & !SIMPLEX_TWIZEL(:,2,2)
+    & 1, 4,10, 2, 3, 7, 9, 8, 5, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, & !SIMPLEX_TWIZEL(:,3,2)
+    & 1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, & !SIMPLEX_TWIZEL(:,1,3)
+    & 1, 3, 6,10, 2, 4, 7, 5, 9, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, & !SIMPLEX_TWIZEL(:,2,3)
+    & 1, 4,10,20, 2, 3, 5, 8,11,17, 7, 9,16,19,13,18, 6,12,14,15  & !SIMPLEX_TWIZEL(:,3,3)
+    & ],[20,3,3]) !SIMPLEX_TWIZEL(ironLocalNodeIdx,simplexOrderIdx,simplexDimensionIdx) is the cmgui local node index for the cmguiLocalNodeIdx'th cmgui local node for a simplexOrderIdx'th simplex order of simplexDimensionIdx'th dimension simplex.
 
   !Module types
 
@@ -1672,7 +1687,7 @@ CONTAINS
     !   CALL FlagError("bases are associated, pls release the memory first",ERR,ERROR,*999)
     !   GOTO 999
     !ENDIF
-    !BASES%NUMBER_BASIS_FUNCTIONS=0
+    !BASES%numberOfBasisFunctions=0
     NUMBER_OF_DIMENSIONS=REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
     FILE_STATUS="OLD"
     CMISS_KEYWORD_SHAPE="Shape.  Dimension="//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))
@@ -2035,7 +2050,7 @@ CONTAINS
     CALL REALLOCATE( ELEMENTS_PTR, NUMBER_OF_MESH_COMPONENTS, &
       & "can not allocate list of mesh element pointers", ERR, ERROR, *999 )
 
-    IF(basisFunctions%NUMBER_BASIS_FUNCTIONS<=0)  THEN
+    IF(basisFunctions%numberOfBasisFunctions<=0)  THEN
       CALL BASIS_CREATE_START(1,BASIS,ERR,ERROR,*999)
       CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
       CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)
@@ -2331,7 +2346,7 @@ CONTAINS
         IF(MESH_COMPONENTS_OF_FIELD_COMPONENTS(idx_comp)==current_mesh_comp) THEN
           !find out whether the basis has been created
           pos=0
-          DO idx_basis=1, basisFunctions%NUMBER_BASIS_FUNCTIONS
+          DO idx_basis=1, basisFunctions%numberOfBasisFunctions
             IF(SUM(basisFunctions%BASES(idx_basis)%PTR%INTERPOLATION_XI(:)-INTERPOLATION_XI(idx_comp,:))==0) THEN
               pos=idx_basis
               EXIT
@@ -2340,7 +2355,7 @@ CONTAINS
 
           IF(pos==0) THEN
             IF(ASSOCIATED(BASIS)) NULLIFY(BASIS)
-            CALL BASIS_CREATE_START(basisFunctions%NUMBER_BASIS_FUNCTIONS+1,BASIS,ERR,ERROR,*999)
+            CALL BASIS_CREATE_START(basisFunctions%numberOfBasisFunctions+1,BASIS,ERR,ERROR,*999)
             CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
             CALL BASIS_INTERPOLATION_XI_SET(BASIS,INTERPOLATION_XI(idx_comp,:),ERR,ERROR,*999)
             CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)
@@ -2579,7 +2594,7 @@ CONTAINS
     INTEGER(INTG) :: nn, nx, ny, nz, NodesX, NodesY, NodesZ, mm, NUM_OF_VARIABLES, MAX_NUM_NODES !NUM_OF_NODES
     INTEGER(INTG) :: local_number, interpType, NODE_NUMBER, NODE_NUMBER_COUNTER, NODE_NUMBER_COLLAPSED, NUMBER_OF_ELEMENT_NODES
     INTEGER(INTG) :: num_scl, num_node, comp_idx, scaleIndex, scaleIndex1, var_idx, derivativeIndex !value_idx field_idx global_var_idx comp_idx1 ny2
-    INTEGER(INTG) :: NODE_LOCAL_NUMBER,NODE_USER_NUMBER,MAX_ELEMENT_LOCAL_NUMBER,MAX_ELEMENT_USER_NUMBER
+    INTEGER(INTG) :: NODE_LOCAL_NUMBER,NODE_USER_NUMBER,MAX_ELEMENT_LOCAL_NUMBER,MAX_ELEMENT_USER_NUMBER,MAX_SIMPLEX_ORDER
     LOGICAL :: SAME_SCALING_SET
 
     ENTERS("FieldIO_ExportElementalGroupHeaderFortran",ERR,ERROR,*999)
@@ -2594,6 +2609,7 @@ CONTAINS
     NUM_OF_VARIABLES=0
     MAX_NUM_NODES=0
     MAX_NODE_COMP_INDEX=0
+    MAX_SIMPLEX_ORDER=1
     NULLIFY(variable_ptr)
 
     CALL REALLOCATE( GROUP_LOCAL_NUMBER, elementalInfoSet%NUMBER_OF_COMPONENTS, &
@@ -2626,6 +2642,9 @@ CONTAINS
         MAX_NODE_ELEMENT => DOMAIN_ELEMENTS%ELEMENTS(local_number)
         MAX_NUM_NODES=BASIS%NUMBER_OF_NODES
         MAX_ELEMENT_DOMAIN_NODES=>componentDomain%TOPOLOGY%NODES
+      ENDIF
+      IF(BASIS%TYPE==BASIS_SIMPLEX_TYPE) THEN
+        IF(BASIS%INTERPOLATION_ORDER(1)>MAX_SIMPLEX_ORDER) MAX_SIMPLEX_ORDER=BASIS%INTERPOLATION_ORDER(1)
       ENDIF
       !IF(.NOT.BASIS%DEGENERATE)  THEN
       IF(comp_idx == 1) THEN
@@ -2852,7 +2871,7 @@ CONTAINS
         IF(LIST_COMP_SCALE(comp_idx)==1) THEN
           scaleIndex=0
         ELSE
-          scaleIndex= SUM(GROUP_SCALE_FACTORS(1:LIST_COMP_SCALE(comp_idx)))-1
+          scaleIndex= SUM(GROUP_SCALE_FACTORS(1:(LIST_COMP_SCALE(comp_idx)-1)))
         ENDIF
 
         ! Fortran numbering instead of c numbering
@@ -3394,7 +3413,11 @@ CONTAINS
               MAX_ELEMENT_LOCAL_NUMBER = MAX_NODE_ELEMENT%ELEMENT_NODES( mm )
               MAX_ELEMENT_USER_NUMBER = MAX_ELEMENT_DOMAIN_NODES%NODES(MAX_ELEMENT_LOCAL_NUMBER)%USER_NUMBER
               IF( NODE_USER_NUMBER == MAX_ELEMENT_USER_NUMBER ) THEN
-                NODE_INDEXES( nn ) = mm
+                IF(BASIS%TYPE==BASIS_SIMPLEX_TYPE.AND.BASIS%NUMBER_OF_NODES/=MAX_NODE_ELEMENT%BASIS%NUMBER_OF_NODES) THEN
+                  NODE_INDEXES( nn) = SIMPLEX_TWIZEL(mm,MAX_SIMPLEX_ORDER,BASIS%NUMBER_OF_XI)
+                ELSE  
+                  NODE_INDEXES( nn ) = mm
+                ENDIF
                 EXIT
               ENDIF
             ENDDO !mm
@@ -3496,7 +3519,7 @@ CONTAINS
           & "Could not allocate scale buffer in IO", ERR, ERROR, *999 )
 
         IF( component%FIELD_VARIABLE%FIELD%SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING ) THEN
-          CALL DISTRIBUTED_VECTOR_DATA_GET(component%FIELD_VARIABLE%FIELD%SCALINGS%SCALINGS(component% &
+          CALL DistributedVector_DataGet(component%FIELD_VARIABLE%FIELD%SCALINGS%SCALINGS(component% &
             & SCALING_INDEX)%SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
         ENDIF
 
@@ -3532,7 +3555,10 @@ CONTAINS
         !  ENDDO
         !ENDIF
 
-        NULLIFY( SCALE_FACTORS )
+        IF( component%FIELD_VARIABLE%FIELD%SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING ) THEN
+          CALL DistributedVector_DataRestore(component%FIELD_VARIABLE%FIELD%SCALINGS%SCALINGS(component% &
+            & SCALING_INDEX)%SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
+        ENDIF
 
         ERR = FieldExport_ElementNodeScales( sessionHandle, firstScaleSet, scaleFactorCount, C_LOC( scaleBuffer ) )
 
@@ -3579,7 +3605,7 @@ CONTAINS
     INTEGER(INTG) :: local_number, global_number, MAX_NODE_COMP_INDEX, NUM_DIM
     INTEGER(INTG), ALLOCATABLE :: LIST_COMP_SCALE(:), NODAL_NUMBER(:)!LIST_COMP(:) !Components which will be used for export scale factors
     INTEGER(C_INT), TARGET :: USER_ELEMENT_NODES(64)
-    INTEGER(INTG) :: elem_idx, comp_idx, NUM_OF_SCALING_FACTOR_SETS, isFirstValueSet !dev_idx  elem_num
+    INTEGER(INTG) :: elem_idx, comp_idx, NUM_OF_SCALING_FACTOR_SETS, isFirstValueSet, ironLocalNodeIdx,cmguiLocalNodeIdx !dev_idx  elem_num
     REAL(DP), ALLOCATABLE :: SCALE_FACTORS(:)
     TYPE(FIELD_IO_COMPONENT_INFO_SET), POINTER :: components
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
@@ -3780,78 +3806,82 @@ CONTAINS
       CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
         USER_ELEMENT_NODES(1:BASIS%NUMBER_OF_NODES)=element%USER_ELEMENT_NODES(1:BASIS%NUMBER_OF_NODES)
       CASE(BASIS_SIMPLEX_TYPE)
-        SELECT CASE(BASIS%NUMBER_OF_XI)
-        CASE(1)
-          USER_ELEMENT_NODES(1:BASIS%NUMBER_OF_NODES)=element%USER_ELEMENT_NODES(1:BASIS%NUMBER_OF_NODES)
-        CASE(2)
-          SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
-          CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
-            USER_ELEMENT_NODES(1:3)=element%USER_ELEMENT_NODES(1:3)
-          CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
-            USER_ELEMENT_NODES(1)=element%USER_ELEMENT_NODES(1)
-            USER_ELEMENT_NODES(2)=element%USER_ELEMENT_NODES(4)
-            USER_ELEMENT_NODES(3)=element%USER_ELEMENT_NODES(2)
-            USER_ELEMENT_NODES(4)=element%USER_ELEMENT_NODES(6)
-            USER_ELEMENT_NODES(5)=element%USER_ELEMENT_NODES(5)
-            USER_ELEMENT_NODES(6)=element%USER_ELEMENT_NODES(3)
-            !USER_ELEMENT_NODES(1:6)=element%USER_ELEMENT_NODES(1:6)
-          CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
-            USER_ELEMENT_NODES(1)=element%USER_ELEMENT_NODES(1)
-            USER_ELEMENT_NODES(2)=element%USER_ELEMENT_NODES(4)
-            USER_ELEMENT_NODES(3)=element%USER_ELEMENT_NODES(5)
-            USER_ELEMENT_NODES(4)=element%USER_ELEMENT_NODES(2)
-            USER_ELEMENT_NODES(5)=element%USER_ELEMENT_NODES(9)
-            USER_ELEMENT_NODES(6)=element%USER_ELEMENT_NODES(10)
-            USER_ELEMENT_NODES(7)=element%USER_ELEMENT_NODES(6)
-            USER_ELEMENT_NODES(8)=element%USER_ELEMENT_NODES(8)
-            USER_ELEMENT_NODES(9)=element%USER_ELEMENT_NODES(7)
-            !USER_ELEMENT_NODES(10)=element%USER_ELEMENT_NODES(3)
-            USER_ELEMENT_NODES(1:10)=element%USER_ELEMENT_NODES(1:10)
-         CASE DEFAULT
-            CALL FlagError("Invalid basis order.",ERR,ERROR,*999)
-          END SELECT
-        CASE(3)
-          SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
-          CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
-            USER_ELEMENT_NODES(1:4)=element%USER_ELEMENT_NODES(1:4)
-          CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
-            USER_ELEMENT_NODES(1)=element%USER_ELEMENT_NODES(1)
-            USER_ELEMENT_NODES(2)=element%USER_ELEMENT_NODES(5)
-            USER_ELEMENT_NODES(3)=element%USER_ELEMENT_NODES(2)
-            USER_ELEMENT_NODES(4)=element%USER_ELEMENT_NODES(6)
-            USER_ELEMENT_NODES(5)=element%USER_ELEMENT_NODES(8)
-            USER_ELEMENT_NODES(6)=element%USER_ELEMENT_NODES(3)
-            USER_ELEMENT_NODES(7)=element%USER_ELEMENT_NODES(7)
-            USER_ELEMENT_NODES(8)=element%USER_ELEMENT_NODES(10)
-            USER_ELEMENT_NODES(9)=element%USER_ELEMENT_NODES(9)
-            USER_ELEMENT_NODES(10)=element%USER_ELEMENT_NODES(4)
-          CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
-            USER_ELEMENT_NODES(1)=element%USER_ELEMENT_NODES(1)
-            USER_ELEMENT_NODES(2)=element%USER_ELEMENT_NODES(5)
-            USER_ELEMENT_NODES(3)=element%USER_ELEMENT_NODES(6)
-            USER_ELEMENT_NODES(4)=element%USER_ELEMENT_NODES(2)
-            USER_ELEMENT_NODES(5)=element%USER_ELEMENT_NODES(7)
-            USER_ELEMENT_NODES(6)=element%USER_ELEMENT_NODES(17)
-            USER_ELEMENT_NODES(7)=element%USER_ELEMENT_NODES(11)
-            USER_ELEMENT_NODES(8)=element%USER_ELEMENT_NODES(8)
-            USER_ELEMENT_NODES(9)=element%USER_ELEMENT_NODES(12)
-            USER_ELEMENT_NODES(10)=element%USER_ELEMENT_NODES(3)
-            USER_ELEMENT_NODES(11)=element%USER_ELEMENT_NODES(9)
-            USER_ELEMENT_NODES(12)=element%USER_ELEMENT_NODES(18)
-            USER_ELEMENT_NODES(13)=element%USER_ELEMENT_NODES(15)
-            USER_ELEMENT_NODES(14)=element%USER_ELEMENT_NODES(19)
-            USER_ELEMENT_NODES(15)=element%USER_ELEMENT_NODES(20)
-            USER_ELEMENT_NODES(16)=element%USER_ELEMENT_NODES(13)
-            USER_ELEMENT_NODES(17)=element%USER_ELEMENT_NODES(10)
-            USER_ELEMENT_NODES(18)=element%USER_ELEMENT_NODES(16)
-            USER_ELEMENT_NODES(19)=element%USER_ELEMENT_NODES(14)
-            USER_ELEMENT_NODES(20)=element%USER_ELEMENT_NODES(4)
-          CASE DEFAULT
-            CALL FlagError("Invalid basis order.",ERR,ERROR,*999)
-          END SELECT
-        CASE DEFAULT
-          CALL FlagError("Invalid number of xi.",ERR,ERROR,*999)
-        END SELECT
+        DO ironLocalNodeIdx=1,NUMBER_SIMPLEX_NODES(BASIS%INTERPOLATION_ORDER(1),BASIS%NUMBER_OF_XI)
+          cmguiLocalNodeIdx=SIMPLEX_TWIZEL(ironLocalNodeIdx,BASIS%INTERPOLATION_ORDER(1),BASIS%NUMBER_OF_XI)
+          USER_ELEMENT_NODES(cmguiLocalNodeIdx)=element%USER_ELEMENT_NODES(ironLocalNodeIdx)
+        ENDDO !ironLocalNodeIdx
+        ! SELECT CASE(BASIS%NUMBER_OF_XI)
+        ! CASE(1)
+        !   USER_ELEMENT_NODES(1:BASIS%NUMBER_OF_NODES)=element%USER_ELEMENT_NODES(1:BASIS%NUMBER_OF_NODES)
+        ! CASE(2)
+        !   SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
+        !   CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
+        !     USER_ELEMENT_NODES(1:3)=element%USER_ELEMENT_NODES(1:3)
+        !   CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
+        !     USER_ELEMENT_NODES(1)=element%USER_ELEMENT_NODES(1)
+        !     USER_ELEMENT_NODES(2)=element%USER_ELEMENT_NODES(4)
+        !     USER_ELEMENT_NODES(3)=element%USER_ELEMENT_NODES(2)
+        !     USER_ELEMENT_NODES(4)=element%USER_ELEMENT_NODES(6)
+        !     USER_ELEMENT_NODES(5)=element%USER_ELEMENT_NODES(5)
+        !     USER_ELEMENT_NODES(6)=element%USER_ELEMENT_NODES(3)
+        !     !USER_ELEMENT_NODES(1:6)=element%USER_ELEMENT_NODES(1:6)
+        !   CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
+        !     USER_ELEMENT_NODES(1)=element%USER_ELEMENT_NODES(1)
+        !     USER_ELEMENT_NODES(2)=element%USER_ELEMENT_NODES(4)
+        !     USER_ELEMENT_NODES(3)=element%USER_ELEMENT_NODES(5)
+        !     USER_ELEMENT_NODES(4)=element%USER_ELEMENT_NODES(2)
+        !     USER_ELEMENT_NODES(5)=element%USER_ELEMENT_NODES(9)
+        !     USER_ELEMENT_NODES(6)=element%USER_ELEMENT_NODES(10)
+        !     USER_ELEMENT_NODES(7)=element%USER_ELEMENT_NODES(6)
+        !     USER_ELEMENT_NODES(8)=element%USER_ELEMENT_NODES(8)
+        !     USER_ELEMENT_NODES(9)=element%USER_ELEMENT_NODES(7)
+        !     USER_ELEMENT_NODES(10)=element%USER_ELEMENT_NODES(3)
+        !     !USER_ELEMENT_NODES(1:10)=element%USER_ELEMENT_NODES(1:10)
+        !   CASE DEFAULT
+        !     CALL FlagError("Invalid basis order.",ERR,ERROR,*999)
+        !   END SELECT
+        ! CASE(3)
+        !   SELECT CASE(BASIS%INTERPOLATION_ORDER(1))
+        !   CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
+        !     USER_ELEMENT_NODES(1:4)=element%USER_ELEMENT_NODES(1:4)
+        !   CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
+        !     USER_ELEMENT_NODES(1)=element%USER_ELEMENT_NODES(1)
+        !     USER_ELEMENT_NODES(2)=element%USER_ELEMENT_NODES(5)
+        !     USER_ELEMENT_NODES(3)=element%USER_ELEMENT_NODES(2)
+        !     USER_ELEMENT_NODES(4)=element%USER_ELEMENT_NODES(6)
+        !     USER_ELEMENT_NODES(5)=element%USER_ELEMENT_NODES(8)
+        !     USER_ELEMENT_NODES(6)=element%USER_ELEMENT_NODES(3)
+        !     USER_ELEMENT_NODES(7)=element%USER_ELEMENT_NODES(7)
+        !     USER_ELEMENT_NODES(8)=element%USER_ELEMENT_NODES(10)
+        !     USER_ELEMENT_NODES(9)=element%USER_ELEMENT_NODES(9)
+        !     USER_ELEMENT_NODES(10)=element%USER_ELEMENT_NODES(4)
+        !   CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
+        !     USER_ELEMENT_NODES(1)=element%USER_ELEMENT_NODES(1)
+        !     USER_ELEMENT_NODES(2)=element%USER_ELEMENT_NODES(5)
+        !     USER_ELEMENT_NODES(3)=element%USER_ELEMENT_NODES(6)
+        !     USER_ELEMENT_NODES(4)=element%USER_ELEMENT_NODES(2)
+        !     USER_ELEMENT_NODES(5)=element%USER_ELEMENT_NODES(7)
+        !     USER_ELEMENT_NODES(6)=element%USER_ELEMENT_NODES(17)
+        !     USER_ELEMENT_NODES(7)=element%USER_ELEMENT_NODES(11)
+        !     USER_ELEMENT_NODES(8)=element%USER_ELEMENT_NODES(8)
+        !     USER_ELEMENT_NODES(9)=element%USER_ELEMENT_NODES(12)
+        !     USER_ELEMENT_NODES(10)=element%USER_ELEMENT_NODES(3)
+        !     USER_ELEMENT_NODES(11)=element%USER_ELEMENT_NODES(9)
+        !     USER_ELEMENT_NODES(12)=element%USER_ELEMENT_NODES(18)
+        !     USER_ELEMENT_NODES(13)=element%USER_ELEMENT_NODES(15)
+        !     USER_ELEMENT_NODES(14)=element%USER_ELEMENT_NODES(19)
+        !     USER_ELEMENT_NODES(15)=element%USER_ELEMENT_NODES(20)
+        !     USER_ELEMENT_NODES(16)=element%USER_ELEMENT_NODES(13)
+        !     USER_ELEMENT_NODES(17)=element%USER_ELEMENT_NODES(10)
+        !     USER_ELEMENT_NODES(18)=element%USER_ELEMENT_NODES(16)
+        !     USER_ELEMENT_NODES(19)=element%USER_ELEMENT_NODES(14)
+        !     USER_ELEMENT_NODES(20)=element%USER_ELEMENT_NODES(4)
+        !   CASE DEFAULT
+        !     CALL FlagError("Invalid basis order.",ERR,ERROR,*999)
+        !   END SELECT
+        ! CASE DEFAULT
+        !   CALL FlagError("Invalid number of xi.",ERR,ERROR,*999)
+        ! END SELECT
       CASE DEFAULT
         CALL FlagError("Not implemented.",ERR,ERROR,*999)
       END SELECT
@@ -6162,9 +6192,9 @@ CONTAINS
 
     ENTERS("FIELD_IO_INFO_SET_INITIALISE",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(LOCAL_PROCESS_INFO_SET%FIELDS)) THEN
-       NULLIFY(LOCAL_PROCESS_INFO_SET%FIELDS)
-    ENDIF
+    !IF(ASSOCIATED(LOCAL_PROCESS_INFO_SET%FIELDS)) THEN
+    NULLIFY(LOCAL_PROCESS_INFO_SET%FIELDS)
+    !ENDIF
     IF(ALLOCATED(LOCAL_PROCESS_INFO_SET%COMPONENT_INFO_SET)) THEN
       DO nn=1, LOCAL_PROCESS_INFO_SET%NUMBER_OF_ENTRIES
         IF(ALLOCATED(LOCAL_PROCESS_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS)) THEN

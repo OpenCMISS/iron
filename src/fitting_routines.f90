@@ -45,35 +45,36 @@
 MODULE FittingRoutines
 
   USE BaseRoutines
-  USE BASIS_ROUTINES
+  USE BasisRoutines
+  USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
-  USE CONSTANTS
+  USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
   USE DARCY_EQUATIONS_ROUTINES, ONLY: idebug1
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
   USE EquationsMatricesRoutines
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsSetConstants
   USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE FLUID_MECHANICS_IO_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATRIX_VECTOR
-  USE MATHS
+  USE Kinds
+  USE MatrixVector
+  USE Maths
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE SOLVER_ROUTINES
   USE SolverAccessRoutines
-  USE TIMER
-  USE TYPES
+  USE Timer
+  USE Types
 
 #include "macros.h"
 
@@ -138,8 +139,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,independentField,materialsField,sourceField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dataVariable,dataWeightVariable,dependentVariable,fieldVariable, &
-      & independentVariable
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dataVariable,dataWeightVariable,dependentVariable,fieldVariable
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: materialsInterpolatedPoint
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpolatedPoint
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: referenceGeometricInterpolatedPoint
@@ -1410,7 +1410,7 @@ CONTAINS
               !Create the auto created dependent field
               CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION,equationsSet%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
-              CALL FIELD_LABEL_SET(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
+              CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
               CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
@@ -1611,7 +1611,7 @@ CONTAINS
             IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
               CALL Field_CreateFinish(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
             ENDIF
-            CALL FIELD_PARAMETER_SET_CREATE(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_ParameterSetCreate(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
               & FIELD_BOUNDARY_SET_TYPE,err,error,*999)
           CASE DEFAULT
             localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
@@ -2616,7 +2616,6 @@ CONTAINS
               ELSE
                 !Check the user specified field
                 CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
-                CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
                 ! U (vector) variable
                 CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
                   & err,error,*999)
@@ -3463,7 +3462,7 @@ CONTAINS
               !Create the auto created dependent field
               CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION,equationsSet%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
-              CALL FIELD_LABEL_SET(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
+              CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
               CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
@@ -3704,7 +3703,7 @@ CONTAINS
             IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
               CALL Field_CreateFinish(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
             ENDIF
-            CALL FIELD_PARAMETER_SET_CREATE(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+            CALL Field_ParameterSetCreate(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
               & FIELD_BOUNDARY_SET_TYPE,err,error,*999)
           CASE DEFAULT
             localError="The action type of "//TRIM(NumberToVString(equationsSetSetup%ACTION_TYPE,"*",err,error))// &
@@ -3894,14 +3893,14 @@ CONTAINS
               IF(equationsSet%SOURCE%SOURCE_FIELD_AUTO_CREATED) THEN
                 CALL Field_CreateFinish(equationsSet%SOURCE%SOURCE_FIELD,err,error,*999)
                 !These 2 parameter sets will contain the fitted hermite/lagrange velocity field
-!                 CALL FIELD_PARAMETER_SET_CREATE(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
+!                 CALL Field_ParameterSetCreate(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
 !                   & FIELD_INPUT_DATA1_SET_TYPE,err,error,*999)
-!                 CALL FIELD_PARAMETER_SET_CREATE(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
+!                 CALL Field_ParameterSetCreate(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
 !                   & FIELD_INPUT_DATA2_SET_TYPE,err,error,*999)
 
-!                 CALL FIELD_PARAMETER_SET_CREATE(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
+!                 CALL Field_ParameterSetCreate(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
 !                   & FIELD_INPUT_DATA3_SET_TYPE,err,error,*999)
-!                 CALL FIELD_PARAMETER_SET_CREATE(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
+!                 CALL Field_ParameterSetCreate(equationsSet%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
 !                   & FIELD_BOUNDARY_SET_TYPE,err,error,*999)
               ENDIF
             CASE DEFAULT
