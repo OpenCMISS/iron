@@ -1514,11 +1514,11 @@ CONTAINS
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY,MAX_DIGITS
     INTEGER(INTG) :: myComputationalNodeNumber
+    LOGICAL :: exportExelem
 
     CHARACTER(30) :: FILE
     CHARACTER(30) :: OUTPUT_FILE
-		
-		CHARACTER(100) :: FMT, TEMP_FMT
+    CHARACTER(100) :: FMT, TEMP_FMT
 
     ENTERS("REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA",err,error,*999)
 
@@ -1570,8 +1570,12 @@ CONTAINS
                           FILE=TRIM(OUTPUT_FILE)
                           CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                           CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
+                          exportExelem = .False.
+                          IF (CURRENT_LOOP_ITERATION==0) THEN
+                             IF (equations_set_idx==1) exportExelem = .True.
+                          ENDIF
                           CALL REACTION_DIFFUSION_IO_WRITE_CMGUI(EQUATIONS_SET%REGION,EQUATIONS_SET%GLOBAL_NUMBER,FILE, &
-                            & err,error,*999)
+                            & exportExelem,err,error,*999)
                         ENDIF
                       ENDIF 
                     ENDIF

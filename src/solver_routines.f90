@@ -3918,8 +3918,10 @@ CONTAINS
           ctx%dofIdx=dofIdx
           ALLOCATE(ctx%rates(cellml%MAXIMUM_NUMBER_OF_STATE),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate context rates.",err,error,*999)
-          ALLOCATE(ctx%ratesIndices(cellml%MAXIMUM_NUMBER_OF_STATE),STAT=err)
-          IF(err/=0) CALL FlagError("Could not allocate context rates.",err,error,*999)
+          IF (.NOT. ALLOCATED(ctx%ratesIndices)) THEN
+            ALLOCATE(ctx%ratesIndices(cellml%MAXIMUM_NUMBER_OF_STATE),STAT=err)
+          ENDIF
+          IF(err/=0) CALL FlagError("Could not allocate context rates indicies.",err,error,*999)
           ctx%ratesIndices=[(arrayIdx,arrayIdx=0,(cellml%MAXIMUM_NUMBER_OF_STATE-1))]
         ELSE
           CALL FlagError("CellML environment is not associated.",err,error,*999)
@@ -4767,7 +4769,7 @@ CONTAINS
         ENDIF
       ELSE
         !State data is contiguous
-        
+
         stateStartDOF=(stateStartIdx-1)*stateDataOffset+1
         stateEndDOF=stateStartDOF+numberOfStates-1
         
@@ -4785,7 +4787,7 @@ CONTAINS
             IF(rateDataOffset>1.OR.numberOfStates==0) THEN
               !Rates data is not contiguous or there are no rates
               
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,states(stateStartDOF:stateEndDOF), &
+              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,stateData(stateStartDOF:stateEndDOF), &
                 & rates,intermediates,parameters)          
               
               !Copy intermediate data from temporary array
@@ -4804,7 +4806,7 @@ CONTAINS
               rateStartDOF=(rateStartIdx-1)*rateDataOffset+1
               rateEndDOF=rateStartDOF+numberOfStates-1
               
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,states(stateStartDOF:stateEndDOF), &
+              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,stateData(stateStartDOF:stateEndDOF), &
                 & rateData(rateStartDOF:rateEndDOF),intermediates,parameters)          
               
               !Copy intermediate data from temporary array
@@ -4823,7 +4825,7 @@ CONTAINS
             IF(rateDataOffset>1.OR.numberOfStates==0) THEN
               !Rates data is not contiguous or there are no rates
               
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,states(stateStartDOF:stateEndDOF),rates, &
+              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,stateData(stateStartDOF:stateEndDOF),rates, &
                 & intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)          
               
               !Copy rate data from temporary array
@@ -4837,7 +4839,7 @@ CONTAINS
               rateStartDOF=(rateStartIdx-1)*rateDataOffset+1
               rateEndDOF=rateStartDOF+numberOfStates-1
               
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,states(stateStartDOF:stateEndDOF), &
+              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,stateData(stateStartDOF:stateEndDOF), &
                 & rateData(rateStartDOF:rateEndDOF),intermediateData(intermediateStartDOF:intermediateEndDOF), &
                 & parameters)
               
@@ -4855,7 +4857,7 @@ CONTAINS
             IF(rateDataOffset>1.OR.numberOfStates==0) THEN
               !Rates data is not contiguous or there are no rates
               
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,states(stateStartDOF:stateEndDOF), &
+              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,stateData(stateStartDOF:stateEndDOF), &
                 & rates,intermediates,parameters(parameterStartDOF:parameterEndDOF))     
               
               !Copy intermediate data from temporary array
@@ -4874,7 +4876,7 @@ CONTAINS
               rateStartDOF=(rateStartIdx-1)*rateDataOffset+1
               rateEndDOF=rateStartDOF+numberOfStates-1
               
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,states(stateStartDOF:stateEndDOF), &
+              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,stateData(stateStartDOF:stateEndDOF), &
                 & rateData(rateStartDOF:rateEndDOF),intermediates,parameters(parameterStartDOF:parameterEndDOF))          
               
               !Copy intermediate data from temporary array
@@ -4893,7 +4895,7 @@ CONTAINS
             IF(rateDataOffset>1.OR.numberOfStates==0) THEN
               !Rates data is not contiguous or there are no rates
                 
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,states(stateStartDOF:stateEndDOF), &
+              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,stateData(stateStartDOF:stateEndDOF), &
                 & rates,intermediateData(intermediateStartDOF:intermediateEndDOF), &
                 & parameters(parameterStartDOF:parameterEndDOF))
               
@@ -4908,7 +4910,7 @@ CONTAINS
               rateStartDOF=(rateStartIdx-1)*rateDataOffset+1
               rateEndDOF=rateStartDOF+numberOfStates-1
               
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,states(stateStartDOF:stateEndDOF), &
+              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(model%ptr,time,stateData(stateStartDOF:stateEndDOF), &
                 & rateData(rateStartDOF:rateEndDOF),intermediateData(intermediateStartDOF:intermediateEndDOF), &
                 & parameters(parameterStartDOF:parameterEndDOF))
               
