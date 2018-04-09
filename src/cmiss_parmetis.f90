@@ -44,7 +44,7 @@
 !> This module is a CMISS buffer module to the ParMETIS library.
 MODULE CMISS_PARMETIS
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE KINDS
   USE ISO_VARYING_STRING
   

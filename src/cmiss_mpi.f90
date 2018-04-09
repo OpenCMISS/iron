@@ -42,16 +42,16 @@
 !>
 
 !> This module contains CMISS MPI routines.
-MODULE CMISS_MPI
+MODULE CmissMPI
   
-  USE BASE_ROUTINES
-  USE CONSTANTS
-  USE KINDS
+  USE BaseRoutines
+  USE Constants
+  USE Kinds
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE ISO_VARYING_STRING
-  USE STRINGS
+  USE Strings
 
 #include "macros.h"
 
@@ -71,7 +71,13 @@ MODULE CMISS_MPI
 
   !Interfaces
 
+  INTERFACE MPI_ErrorCheck
+    MODULE PROCEDURE MPI_ERROR_CHECK
+  END INTERFACE MPI_ErrorCheck
+
   PUBLIC MPI_ERROR_CHECK
+
+  PUBLIC MPI_ErrorCheck
  
 CONTAINS
 
@@ -111,4 +117,4 @@ CONTAINS
   !================================================================================================================================
   !
     
-END MODULE CMISS_MPI
+END MODULE CmissMPI

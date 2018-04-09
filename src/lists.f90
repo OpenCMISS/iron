@@ -45,7 +45,7 @@
 !> Implements lists of base types.
 MODULE LISTS
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CONSTANTS
   USE ISO_VARYING_STRING
   USE KINDS
@@ -60,31 +60,34 @@ MODULE LISTS
 
   !Module parameters
 
-  !> \addtogroup LISTS_DataType LISTS::DataType
+  !> \addtogroup Lists_DataType Lists::DataType
   !> \brief Data type parameters for a list.
-  !> \see LISTS
+  !> \see Lists
   !>@{
-  INTEGER(INTG), PARAMETER :: LIST_INTG_TYPE=INTEGER_TYPE !<Integer data type for a list \see LISTS_DataType,LISTS
-  INTEGER(INTG), PARAMETER :: LIST_SP_TYPE=SINGLE_REAL_TYPE !<Single precision real data type for a list \see LISTS_DataType,LISTS
-  INTEGER(INTG), PARAMETER :: LIST_DP_TYPE=DOUBLE_REAL_TYPE !<Double precision real data type for a list \see LISTS_DataType,LISTS
+  INTEGER(INTG), PARAMETER :: LIST_INTG_TYPE=INTEGER_TYPE !<Integer data type for a list \see Lists_DataType,Lists
+  INTEGER(INTG), PARAMETER :: LIST_SP_TYPE=SINGLE_REAL_TYPE !<Single precision real data type for a list \see Lists_DataType,Lists
+  INTEGER(INTG), PARAMETER :: LIST_DP_TYPE=DOUBLE_REAL_TYPE !<Double precision real data type for a list \see Lists_DataType,Lists
   !>@}
   
-  !> \addtogroup LISTS_SortingOrder LISTS::SortingOrder
+  !> \addtogroup Lists_SortingOrder Lists::SortingOrder
   !> \brief Sorting order parameters for a list.
-  !> \see LISTS
+  !> \see Lists
   !>@{
-  INTEGER(INTG), PARAMETER :: LIST_UNSORTED_TYPE=1 !<Unsorted list type \see LISTS_SortingOrder,LISTS
-  INTEGER(INTG), PARAMETER :: LIST_SORT_ASCENDING_TYPE=2 !<Ascending order for sort \see LISTS_SortingOrder,LISTS
-  INTEGER(INTG), PARAMETER :: LIST_SORT_DESCENDING_TYPE=3 !<Descending order for sort \see LISTS_SortingOrder,LISTS
+  INTEGER(INTG), PARAMETER :: LIST_UNSORTED_TYPE=1 !<Unsorted list type \see Lists_SortingOrder,Lists
+  INTEGER(INTG), PARAMETER :: LIST_SORT_ASCENDING_TYPE=2 !<Ascending order for sort \see Lists_SortingOrder,Lists
+  INTEGER(INTG), PARAMETER :: LIST_SORT_DESCENDING_TYPE=3 !<Descending order for sort \see Lists_SortingOrder,Lists
   !>@}
 
-  !> \addtogroup LISTSSortingMethod LISTS::SortingMethod
+
+  !\todo Change lists sorting to use sorting module
+  
+  !> \addtogroup Lists_SortingMethod Lists::SortingMethod
   !> \brief Sorting method parameters for a list.
-  !> \see LISTS
+  !> \see Lists
   !>@{
-  INTEGER(INTG), PARAMETER :: LIST_BUBBLE_SORT_METHOD=1 !<Bubble sort method \see LISTS_SortingMethod,LISTS
-  INTEGER(INTG), PARAMETER :: LIST_SHELL_SORT_METHOD=2 !<Shell sort method \see LISTS_SortingMethod,LISTS
-  INTEGER(INTG), PARAMETER :: LIST_HEAP_SORT_METHOD=3 !<Heap sort method \see LISTS_SortingMethod,LISTS
+  INTEGER(INTG), PARAMETER :: LIST_BUBBLE_SORT_METHOD=1 !<Bubble sort method \see Lists_SortingMethod,Lists
+  INTEGER(INTG), PARAMETER :: LIST_SHELL_SORT_METHOD=2 !<Shell sort method \see Lists_SortingMethod,Lists
+  INTEGER(INTG), PARAMETER :: LIST_HEAP_SORT_METHOD=3 !<Heap sort method \see Lists_SortingMethod,Lists
   !>@}
 
   !Module types
@@ -109,7 +112,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_DATA_TYPE_SET
   END INTERFACE List_DataTypeSet
   
-  !>Detaches the list values from a list and returns them as a pointer to a array of base type before destroying the list \see LISTS.
+  !>Detaches the list values from a list and returns them as a pointer to a array of base type before destroying the list \see Lists.
   INTERFACE LIST_DETACH_AND_DESTROY
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_INTG1
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_INTG2
@@ -119,7 +122,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_DP2
   END INTERFACE LIST_DETACH_AND_DESTROY
 
-  !>Detaches the list values from a list and returns them as a pointer to a array of base type before destroying the list \see LISTS.
+  !>Detaches the list values from a list and returns them as a pointer to a array of base type before destroying the list \see Lists.
   INTERFACE List_DetachAndDestroy
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_INTG1
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_INTG2
@@ -129,7 +132,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_DP2
   END INTERFACE List_DetachAndDestroy
 
-  !>Adds an item to the end of a list \see LISTS.
+  !>Adds an item to the end of a list \see Lists.
   INTERFACE LIST_ITEM_ADD
     MODULE PROCEDURE LIST_ITEM_ADD_INTG1
     MODULE PROCEDURE LIST_ITEM_ADD_INTG2
@@ -139,7 +142,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_ITEM_ADD_DP2
   END INTERFACE LIST_ITEM_ADD
   
-  !>Adds an item to the end of a list \see LISTS.
+  !>Adds an item to the end of a list \see Lists.
   INTERFACE List_ItemAdd
     MODULE PROCEDURE LIST_ITEM_ADD_INTG1
     MODULE PROCEDURE LIST_ITEM_ADD_INTG2
@@ -153,7 +156,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_ITEM_DELETE
   END INTERFACE List_ItemDelete
   
-  !>Sets an item in the list \see LISTS.
+  !>Sets an item in the list \see Lists.
   INTERFACE LIST_ITEM_SET
     MODULE PROCEDURE LIST_ITEM_SET_INTG1
     MODULE PROCEDURE LIST_ITEM_SET_INTG2
@@ -163,7 +166,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_ITEM_SET_DP2
   END INTERFACE LIST_ITEM_SET
   
-  !>Sets an item in the list \see LISTS.
+  !>Sets an item in the list \see Lists.
   INTERFACE List_ItemSet
     MODULE PROCEDURE LIST_ITEM_SET_INTG1
     MODULE PROCEDURE LIST_ITEM_SET_INTG2
@@ -173,7 +176,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_ITEM_SET_DP2
   END INTERFACE List_ItemSet
   
-  !>Returns an item in a list at a specififed position. \see LISTS.
+  !>Returns an item in a list at a specififed position. \see Lists.
   INTERFACE LIST_ITEM_GET
     MODULE PROCEDURE LIST_ITEM_GET_INTG1
     MODULE PROCEDURE LIST_ITEM_GET_INTG2
@@ -183,7 +186,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_ITEM_GET_DP2
   END INTERFACE LIST_ITEM_GET
 
-  !>Returns an item in a list at a specififed position. \see LISTS.
+  !>Returns an item in a list at a specififed position. \see Lists.
   INTERFACE List_ItemGet
     MODULE PROCEDURE LIST_ITEM_GET_INTG1
     MODULE PROCEDURE LIST_ITEM_GET_INTG2
@@ -193,14 +196,14 @@ MODULE LISTS
     MODULE PROCEDURE LIST_ITEM_GET_DP2
   END INTERFACE List_ItemGet
 
-  !>Determines if an item is in a list and returns the position of the item \see LISTS.
+  !>Determines if an item is in a list and returns the position of the item \see Lists.
   INTERFACE LIST_ITEM_IN_LIST
     MODULE PROCEDURE LIST_ITEM_IN_LIST_INTG1
     MODULE PROCEDURE LIST_ITEM_IN_LIST_SP1
     MODULE PROCEDURE LIST_ITEM_IN_LIST_DP1
   END INTERFACE LIST_ITEM_IN_LIST
 
-  !>Determines if an item is in a list and returns the position of the item \see LISTS.
+  !>Determines if an item is in a list and returns the position of the item \see Lists.
   INTERFACE List_ItemInList
     MODULE PROCEDURE LIST_ITEM_IN_LIST_INTG1
     MODULE PROCEDURE LIST_ITEM_IN_LIST_SP1
@@ -227,7 +230,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_REMOVE_DUPLICATES
   END INTERFACE List_RemoveDuplicates
   
-  !>Searches a list for a given value and returns the position in the list if the value exists \see LISTS.
+  !>Searches a list for a given value and returns the position in the list if the value exists \see Lists.
   INTERFACE List_Search
     MODULE PROCEDURE LIST_SEARCH_INTG_ARRAY
     MODULE PROCEDURE LIST_SEARCH_SP_ARRAY
@@ -326,12 +329,12 @@ MODULE LISTS
 
   !>Checks whether an array is a subset of another array
   INTERFACE LIST_SUBSET_OF
-    MODULE PROCEDURE LISTS_SUBSET_OF_INTG_ARRAY
+    MODULE PROCEDURE Lists_SUBSET_OF_INTG_ARRAY
   END INTERFACE LIST_SUBSET_OF
 
   !>Checks whether an array is a subset of another array
   INTERFACE List_SubsetOf
-    MODULE PROCEDURE LISTS_SUBSET_OF_INTG_ARRAY
+    MODULE PROCEDURE Lists_SUBSET_OF_INTG_ARRAY
   END INTERFACE List_SubsetOf
 
   PUBLIC LIST_INTG_TYPE,LIST_SP_TYPE,LIST_DP_TYPE
@@ -394,6 +397,8 @@ MODULE LISTS
 
   PUBLIC LIST_REMOVE_DUPLICATES
 
+  PUBLIC List_RemoveDuplicates
+
   PUBLIC LIST_SEARCH_LINEAR
   
   PUBLIC List_Search,List_SearchLinear
@@ -414,7 +419,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a list created with LIST_CREATE_START \see LISTS::LIST_CREATE_START.
+  !>Finishes the creation of a list created with LIST_CREATE_START \see Lists::LIST_CREATE_START.
   SUBROUTINE LIST_CREATE_FINISH(LIST,ERR,ERROR,*)
 
     !Argument Variables
@@ -481,7 +486,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a list and returns a pointer to the created list \see LISTS::LIST_CREATE_FINISH.
+  !>Starts the creation of a list and returns a pointer to the created list \see Lists::LIST_CREATE_FINISH.
   SUBROUTINE LIST_CREATE_START(LIST,ERR,ERROR,*)
 
     !Argument Variables
@@ -579,7 +584,7 @@ CONTAINS
 
     !Argument Variables
     TYPE(LIST_TYPE), POINTER, INTENT(IN) :: LIST !<A pointer to the list 
-    INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type of the list to set \see LISTS_DataType,LISTS
+    INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type of the list to set \see Lists_DataType,Lists
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -887,7 +892,7 @@ CONTAINS
       CALL FlagError("List is not associated",ERR,ERROR,*999)
     ENDIF
 
-    EXITS("LIST_INTIIAL_SIZE_SET")
+    EXITS("LIST_INITIAL_SIZE_SET")
     RETURN
 999 ERRORSEXITS("LIST_INITIAL_SIZE_SET",ERR,ERROR)
     RETURN 1
@@ -4624,9 +4629,9 @@ CONTAINS
       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
     ENDIF
 
-    EXITS("LIST_SORT_SHELL_DP1_ARRAY")
+    EXITS("LIST_SORT_SHELL_DP2_ARRAY")
     RETURN
-999 ERRORSEXITS("LIST_SORT_SHELL_DP1_ARRAY",ERR,ERROR)
+999 ERRORSEXITS("LIST_SORT_SHELL_DP2_ARRAY",ERR,ERROR)
     RETURN 1
   END SUBROUTINE LIST_SORT_SHELL_DP2_ARRAY
   
@@ -4825,7 +4830,7 @@ CONTAINS
   !
 
   !>Finds out whether array A is a subset of array B
-  SUBROUTINE LISTS_SUBSET_OF_INTG_ARRAY(A,B,SUBSET,ERR,ERROR,*)
+  SUBROUTINE Lists_SUBSET_OF_INTG_ARRAY(A,B,SUBSET,ERR,ERROR,*)
     ! Argument variables
     INTEGER(INTG), INTENT(IN) :: A(:)   !<Supposed subset (to test for)
     INTEGER(INTG), INTENT(IN) :: B(:)   !<Supposed superset
@@ -4836,7 +4841,7 @@ CONTAINS
     INTEGER(INTG) :: SIZE_A,SIZE_B,I,J,START,SIZE_REDUCE
     INTEGER(INTG), ALLOCATABLE :: A_SORTED(:),B_SORTED(:)
 
-    ENTERS("LISTS_SUBSET_OF_INTG_ARRAY",ERR,ERROR,*999)
+    ENTERS("Lists_SUBSET_OF_INTG_ARRAY",ERR,ERROR,*999)
 
     SIZE_A=SIZE(A)
     SIZE_B=SIZE(B)
@@ -4844,7 +4849,7 @@ CONTAINS
     
     ! some easy tests
     IF(SIZE_A>SIZE_B) THEN
-      EXITS("LISTS_SUBSET_OF_INTG_ARRAY")
+      EXITS("Lists_SUBSET_OF_INTG_ARRAY")
       RETURN
     ENDIF
 
@@ -4867,7 +4872,7 @@ CONTAINS
           IF(A(I)==B(J)) THEN
             EXIT
           ELSEIF(J==SIZE_B) THEN
-            EXITS("LISTS_SUBSET_OF_INTG_ARRAY")
+            EXITS("Lists_SUBSET_OF_INTG_ARRAY")
             RETURN
           ENDIF
         ENDDO
@@ -4888,7 +4893,7 @@ CONTAINS
             EXIT
           ELSEIF(A(I)<B(J)) THEN
             DEALLOCATE(A_SORTED,B_SORTED)
-            EXITS("LISTS_SUBSET_OF_INTG_ARRAY")
+            EXITS("Lists_SUBSET_OF_INTG_ARRAY")
             RETURN
           ENDIF
         ENDDO
@@ -4897,19 +4902,19 @@ CONTAINS
       DEALLOCATE(A_SORTED,B_SORTED)
     ENDIF
 
-    EXITS("LISTS_SUBSET_OF_INTG_ARRAY")
+    EXITS("Lists_SUBSET_OF_INTG_ARRAY")
     RETURN
-999 ERRORSEXITS("LISTS_SUBSET_OF_INTG_ARRAY",ERR,ERROR)
+999 ERRORSEXITS("Lists_SUBSET_OF_INTG_ARRAY",ERR,ERROR)
     RETURN 1
 
-  END SUBROUTINE LISTS_SUBSET_OF_INTG_ARRAY
+  END SUBROUTINE Lists_SUBSET_OF_INTG_ARRAY
 
   !
   !================================================================================================================================
   !
 
   !>Finds out whether array A is a subset of array B
-  SUBROUTINE LISTS_SUBSET_OF_C_INT_ARRAY(A,B,SUBSET,ERR,ERROR,*)
+  SUBROUTINE Lists_SUBSET_OF_C_INT_ARRAY(A,B,SUBSET,ERR,ERROR,*)
     ! Argument variables
     INTEGER(C_INT), INTENT(IN) :: A(:)   !<Supposed subset (to test for)
     INTEGER(C_INT), INTENT(IN) :: B(:)   !<Supposed superset
@@ -4920,7 +4925,7 @@ CONTAINS
     INTEGER(INTG) :: SIZE_A,SIZE_B,I,J,START,SIZE_REDUCE
     INTEGER(C_INT), ALLOCATABLE :: A_SORTED(:),B_SORTED(:)
 
-    ENTERS("LISTS_SUBSET_OF_C_INT_ARRAY",ERR,ERROR,*999)
+    ENTERS("Lists_SUBSET_OF_C_INT_ARRAY",ERR,ERROR,*999)
 
     SIZE_A=SIZE(A)
     SIZE_B=SIZE(B)
@@ -4928,7 +4933,7 @@ CONTAINS
     
     ! some easy tests
     IF(SIZE_A>SIZE_B) THEN
-      EXITS("LISTS_SUBSET_OF_C_INT_ARRAY")
+      EXITS("Lists_SUBSET_OF_C_INT_ARRAY")
       RETURN
     ENDIF
 
@@ -4951,7 +4956,7 @@ CONTAINS
           IF(A(I)==B(J)) THEN
             EXIT
           ELSEIF(J==SIZE_B) THEN
-            EXITS("LISTS_SUBSET_OF_C_INT_ARRAY")
+            EXITS("Lists_SUBSET_OF_C_INT_ARRAY")
             RETURN
           ENDIF
         ENDDO
@@ -4972,7 +4977,7 @@ CONTAINS
             EXIT
           ELSEIF(A(I)<B(J)) THEN
             DEALLOCATE(A_SORTED,B_SORTED)
-            EXITS("LISTS_SUBSET_OF_C_INT_ARRAY")
+            EXITS("Lists_SUBSET_OF_C_INT_ARRAY")
             RETURN
           ENDIF
         ENDDO
@@ -4981,15 +4986,15 @@ CONTAINS
       DEALLOCATE(A_SORTED,B_SORTED)
     ENDIF
 
-    EXITS("LISTS_SUBSET_OF_C_INT_ARRAY")
+    EXITS("Lists_SUBSET_OF_C_INT_ARRAY")
     RETURN
-999 ERRORSEXITS("LISTS_SUBSET_OF_C_INT_ARRAY",ERR,ERROR)
+999 ERRORSEXITS("Lists_SUBSET_OF_C_INT_ARRAY",ERR,ERROR)
     RETURN 1
 
-  END SUBROUTINE LISTS_SUBSET_OF_C_INT_ARRAY
+  END SUBROUTINE Lists_SUBSET_OF_C_INT_ARRAY
 
   !
   !================================================================================================================================
   !
 
-END MODULE LISTS
+END MODULE Lists

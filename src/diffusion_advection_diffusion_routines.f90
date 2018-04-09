@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -47,33 +47,32 @@
 MODULE DIFFUSION_ADVECTION_DIFFUSION_ROUTINES
 
   USE ADVECTION_DIFFUSION_EQUATION_ROUTINES
-  USE BASE_ROUTINES
-  USE BASIS_ROUTINES
+  USE BaseRoutines
+  USE BasisRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CONSTANTS
   USE CONTROL_LOOP_ROUTINES
   USE COORDINATE_ROUTINES  
   USE DIFFUSION_EQUATION_ROUTINES
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
-  USE EQUATIONS_ROUTINES
-  USE EQUATIONS_MAPPING_ROUTINES
-  USE EQUATIONS_MATRICES_ROUTINES
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsRoutines
+  USE EquationsSetConstants
   USE FIELD_ROUTINES
   USE FLUID_MECHANICS_IO_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATHS  
-  USE MATRIX_VECTOR
+  USE Kinds
+  USE Maths  
+  USE MatrixVector
   USE MESH_ROUTINES
   USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE SOLVER_ROUTINES
-  USE TIMER
-  USE TYPES
+  USE SolverAccessRoutines
+  USE Timer
+  USE Types
 
 #include "macros.h"
 

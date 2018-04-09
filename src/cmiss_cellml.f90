@@ -47,7 +47,8 @@ MODULE CMISS_CELLML
   !Module imports
   USE ISO_C_BINDING
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
+  USE CellMLAccessRoutines
   
 #ifdef WITH_CELLML
   USE CELLML_MODEL_DEFINITION
@@ -59,11 +60,16 @@ MODULE CMISS_CELLML
   ! the file (=module) dependency correctly and hence breaks the build
   ! on some platforms.
   USE CMISS_FORTRAN_C
-
+  USE CmissMPI
+  USE ComputationEnvironment
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   USE INPUT_OUTPUT
   USE KINDS
+#ifndef NOMPIMOD
+  USE MPI
+#endif
   USE STRINGS
   USE TYPES
 
@@ -72,6 +78,10 @@ MODULE CMISS_CELLML
   IMPLICIT NONE
 
   PRIVATE
+
+#ifdef NOMPIMOD
+#include "mpif.h"
+#endif
 
   !Module parameters
 
@@ -190,8 +200,6 @@ MODULE CMISS_CELLML
 
   PUBLIC CELLML_GENERATE
 
-  PUBLIC CELLML_USER_NUMBER_FIND
-
   PUBLIC CELLML_ENVIRONMENTS_FINALISE,CELLML_ENVIRONMENTS_INITIALISE
   
 CONTAINS
@@ -221,325 +229,329 @@ CONTAINS
     
     ENTERS("CELLML_CELLML_TO_FIELD_UPDATE",ERR,ERROR,*999)
 
-#ifdef WITH_CELLML
-
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
         FIELD_MAPS=>CELLML%FIELD_MAPS
         IF(ASSOCIATED(FIELD_MAPS)) THEN
-          IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
-            !The CellML environement only uses one model and so we can optimise for this.
-            MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX)%PTR
-            IF(ASSOCIATED(MODEL_MAPS)) THEN
-              IF(DIAGNOSTICS1) THEN
-                CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"CellML to field update:",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  One model index = ",CELLML%MODELS_FIELD% &
-                  & ONLY_ONE_MODEL_INDEX,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of model maps = ",MODEL_MAPS% &
-                  & NUMBER_OF_FIELDS_MAPPED_TO,ERR,ERROR,*999)
-              ENDIF
-              !Loop over the number of CellML to field maps
-              DO map_idx=1,MODEL_MAPS%NUMBER_OF_FIELDS_MAPPED_FROM
-                MODEL_MAP=>MODEL_MAPS%FIELDS_MAPPED_FROM(map_idx)%PTR
-                IF(ASSOCIATED(MODEL_MAP)) THEN
-                  SELECT CASE(MODEL_MAP%CELLML_FIELD_TYPE)
-                  CASE(CELLML_MODELS_FIELD)
-                    CALL FlagError("Cannot map models field.",ERR,ERROR,*999)
-                  CASE(CELLML_STATE_FIELD)
-                    IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
-                      CALL Field_ParametersToFieldParametersCopy(CELLML%STATE_FIELD%STATE_FIELD, &
-                        & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                        & MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE,MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER, &
-                        & ERR,ERROR,*999)
-                    ELSE
-                      CALL FlagError("CellML environment state field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE(CELLML_INTERMEDIATE_FIELD)
-                    IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
-                      CALL Field_ParametersToFieldParametersCopy(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                        & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,MODEL_MAP%FIELD, &
-                        & MODEL_MAP%VARIABLE_TYPE,MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,ERR,ERROR,*999)
-                    ELSE
-                      CALL FlagError("CellML environment intermediate field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE(CELLML_PARAMETERS_FIELD)
-                    IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
-                      CALL Field_ParametersToFieldParametersCopy(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                        & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,MODEL_MAP%FIELD, &
-                        & MODEL_MAP%VARIABLE_TYPE,MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,ERR,ERROR,*999)
-                    ELSE
-                      CALL FlagError("CellML environment parameters field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE DEFAULT
-                    LOCAL_ERROR="The CellML to field model map CellML field type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(MODEL_MAP%CELLML_FIELD_TYPE,"*",ERR,ERROR))// &
-                      & " is invalid for map index "//TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
+          IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=0) THEN
+            !We have CellML models on this rank
+            IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+              !The CellML environement only uses one model and so we can optimise for this.
+              MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX)%PTR
+              IF(ASSOCIATED(MODEL_MAPS)) THEN
+                IF(DIAGNOSTICS1) THEN
+                  CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"CellML to field update:",ERR,ERROR,*999)
+                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
+                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  One model index = ",CELLML%MODELS_FIELD% &
+                    & ONLY_ONE_MODEL_INDEX,ERR,ERROR,*999)
+                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of model maps = ",MODEL_MAPS% &
+                    & NUMBER_OF_FIELDS_MAPPED_TO,ERR,ERROR,*999)
+                ENDIF
+                !Loop over the number of CellML to field maps
+                DO map_idx=1,MODEL_MAPS%NUMBER_OF_FIELDS_MAPPED_FROM
+                  MODEL_MAP=>MODEL_MAPS%FIELDS_MAPPED_FROM(map_idx)%PTR
+                  IF(ASSOCIATED(MODEL_MAP)) THEN
+                    SELECT CASE(MODEL_MAP%CELLML_FIELD_TYPE)
+                    CASE(CELLML_MODELS_FIELD)
+                      CALL FlagError("Cannot map models field.",ERR,ERROR,*999)
+                    CASE(CELLML_STATE_FIELD)
+                      IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
+                        CALL Field_ParametersToFieldParametersCopy(CELLML%STATE_FIELD%STATE_FIELD, &
+                          & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                          & MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE,MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER, &
+                          & ERR,ERROR,*999)
+                      ELSE
+                        CALL FlagError("CellML environment state field is not associated.",ERR,ERROR,*999)
+                      ENDIF
+                    CASE(CELLML_INTERMEDIATE_FIELD)
+                      IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
+                        CALL Field_ParametersToFieldParametersCopy(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                          & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                          & MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE,MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER, &
+                          & ERR,ERROR,*999)
+                      ELSE
+                        CALL FlagError("CellML environment intermediate field is not associated.",ERR,ERROR,*999)
+                      ENDIF
+                    CASE(CELLML_PARAMETERS_FIELD)
+                      IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
+                        CALL Field_ParametersToFieldParametersCopy(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                          & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                          & MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE,MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER, &
+                          & ERR,ERROR,*999)
+                      ELSE
+                        CALL FlagError("CellML environment parameters field is not associated.",ERR,ERROR,*999)
+                      ENDIF
+                    CASE DEFAULT
+                      LOCAL_ERROR="The CellML to field model map CellML field type of "// &
+                        & TRIM(NUMBER_TO_VSTRING(MODEL_MAP%CELLML_FIELD_TYPE,"*",ERR,ERROR))// &
+                        & " is invalid for map index "//TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
+                        & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
+                        & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    END SELECT
+                  ELSE
+                    LOCAL_ERROR="The CellML to field map is not associated for map index "// &
+                      & TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
                       & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
                       & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  END SELECT
-                ELSE
-                  LOCAL_ERROR="The CellML to field map is not associated for map index "// &
-                    & TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
-                    & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
-                    & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-                IF(DIAGNOSTICS1) THEN
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Map index : ",map_idx,ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML field type      = ",MODEL_MAP%CELLML_FIELD_TYPE, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML parameter set   = ",MODEL_MAP%CELLML_PARAMETER_SET, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML variable number = ",MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field user number      = ",MODEL_MAP%FIELD%USER_NUMBER, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field variable type    = ",MODEL_MAP%VARIABLE_TYPE, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field parameter set    = ",MODEL_MAP%FIELD_PARAMETER_SET, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field component number = ",MODEL_MAP%COMPONENT_NUMBER, &
-                    & ERR,ERROR,*999)                   
-                ENDIF
-              ENDDO !map_idx
-            ELSE
-              LOCAL_ERROR="The CellML field maps models map is not associated for model index "// &
-                & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
-                & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            !More than one model used in the models field.
-            MODELS_FIELD=>CELLML%MODELS_FIELD%MODELS_FIELD
-            IF(ASSOCIATED(MODELS_FIELD)) THEN
-              NULLIFY(MODELS_VARIABLE)
-              CALL FIELD_VARIABLE_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
-              NULLIFY(MODELS_DATA)
-              CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & MODELS_DATA,ERR,ERROR,*999)
-              IF(DIAGNOSTICS1) THEN
-                CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"CellML to field update:",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
+                  ENDIF
+                  IF(DIAGNOSTICS1) THEN
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Map index : ",map_idx,ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML field type      = ",MODEL_MAP%CELLML_FIELD_TYPE, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML parameter set   = ", &
+                      & MODEL_MAP%CELLML_PARAMETER_SET,ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML variable number = ", &
+                      & MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field user number      = ",MODEL_MAP%FIELD%USER_NUMBER, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field variable type    = ",MODEL_MAP%VARIABLE_TYPE, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field parameter set    = ",MODEL_MAP%FIELD_PARAMETER_SET, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field component number = ",MODEL_MAP%COMPONENT_NUMBER, &
+                      & ERR,ERROR,*999)                   
+                  ENDIF
+                ENDDO !map_idx
+              ELSE
+                LOCAL_ERROR="The CellML field maps models map is not associated for model index "// &
+                  & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
+                  & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
-              !Loop over the dofs in the models field
-              DO dofIdx=1,MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                modelIdx=MODELS_DATA(dofIdx)
-                IF(modelIdx>0) THEN
-                  MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(modelIdx)%PTR
-                  IF(ASSOCIATED(MODEL_MAPS)) THEN
-                    dofType=MODELS_VARIABLE%DOF_TO_PARAM_MAP%DOF_TYPE(1,dofIdx)
-                    dof2ParamIdx=MODELS_VARIABLE%DOF_TO_PARAM_MAP%DOF_TYPE(2,dofIdx)
-                    SELECT CASE(dofType)
-                    CASE(FIELD_CONSTANT_INTERPOLATION)
-                      !Do nothing
-                    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                      elementNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(1,dof2ParamIdx)
-                    CASE(FIELD_NODE_BASED_INTERPOLATION)
-                      versionNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(1,dof2ParamIdx)
-                      derivativeNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(2,dof2ParamIdx)
-                      nodeNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,dof2ParamIdx)
-                    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                      gridNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GRID_POINT_DOF2PARAM_MAP(1,dof2ParamIdx)
-                    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                      gaussNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(1,dof2ParamIdx)
-                      elementNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(2,dof2ParamIdx)
-                    CASE DEFAULT
-                      LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
-                        & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    END SELECT
-                    IF(DIAGNOSTICS1) THEN
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  DOF index : ",dofIdx,ERR,ERROR,*999)
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Model index : ",modelIdx,ERR,ERROR,*999)
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      DOF type = ",dofType,ERR,ERROR,*999)
+            ELSE
+              !More than one model used in the models field.
+              MODELS_FIELD=>CELLML%MODELS_FIELD%MODELS_FIELD
+              IF(ASSOCIATED(MODELS_FIELD)) THEN
+                NULLIFY(MODELS_VARIABLE)
+                CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
+                NULLIFY(MODELS_DATA)
+                CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                  & MODELS_DATA,ERR,ERROR,*999)
+                IF(DIAGNOSTICS1) THEN
+                  CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"CellML to field update:",ERR,ERROR,*999)
+                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
+                ENDIF
+                !Loop over the dofs in the models field
+                DO dofIdx=1,MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS
+                  modelIdx=MODELS_DATA(dofIdx)
+                  IF(modelIdx>0) THEN
+                    MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(modelIdx)%PTR
+                    IF(ASSOCIATED(MODEL_MAPS)) THEN
+                      dofType=MODELS_VARIABLE%DOF_TO_PARAM_MAP%DOF_TYPE(1,dofIdx)
+                      dof2ParamIdx=MODELS_VARIABLE%DOF_TO_PARAM_MAP%DOF_TYPE(2,dofIdx)
                       SELECT CASE(dofType)
                       CASE(FIELD_CONSTANT_INTERPOLATION)
                         !Do nothing
                       CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element number = ",elementNumber,ERR,ERROR,*999)
+                        elementNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(1,dof2ParamIdx)
                       CASE(FIELD_NODE_BASED_INTERPOLATION)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Version number = ",versionNumber,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Derivative number = ",derivativeNumber, &
-                          & ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Node number = ",nodeNumber,ERR,ERROR,*999)
+                        versionNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(1,dof2ParamIdx)
+                        derivativeNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(2,dof2ParamIdx)
+                        nodeNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,dof2ParamIdx)
                       CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Grid number = ",gridNumber,ERR,ERROR,*999)
+                        gridNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GRID_POINT_DOF2PARAM_MAP(1,dof2ParamIdx)
                       CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss number = ",gaussNumber,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element number = ",elementNumber,ERR,ERROR,*999)
+                        gaussNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(1,dof2ParamIdx)
+                        elementNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(2,dof2ParamIdx)
                       CASE DEFAULT
                         LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
                           & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      END SELECT                      
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of model maps = ",MODEL_MAPS% &
-                        & NUMBER_OF_FIELDS_MAPPED_TO,ERR,ERROR,*999)
-                    ENDIF
-                    !Loop over the number of CellML to field maps
-                    DO map_idx=1,MODEL_MAPS%NUMBER_OF_FIELDS_MAPPED_FROM
-                      MODEL_MAP=>MODEL_MAPS%FIELDS_MAPPED_FROM(map_idx)%PTR
-                      IF(ASSOCIATED(MODEL_MAP)) THEN
-                        !Get the CellML field DOF value
-                        SELECT CASE(MODEL_MAP%CELLML_FIELD_TYPE)
-                        CASE(CELLML_MODELS_FIELD)
-                          CALL FlagError("Cannot map models field.",ERR,ERROR,*999)
-                        CASE(CELLML_STATE_FIELD)
-                          IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
-                            SELECT CASE(dofType)
-                            CASE(FIELD_CONSTANT_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue, &
-                                & ERR,ERROR,*999)
-                            CASE(FIELD_NODE_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetGetLocalNode(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetGetLocalGaussPoint(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                                & dofValue,ERR,ERROR,*999)
-                            CASE DEFAULT
-                              LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
-                                & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
-                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                            END SELECT
-                          ELSE
-                            CALL FlagError("CellML environment state field is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE(CELLML_INTERMEDIATE_FIELD)
-                          IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
-                            SELECT CASE(dofType)
-                            CASE(FIELD_CONSTANT_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                                & dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_NODE_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetGetLocalNode(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetGetLocalGaussPoint(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE DEFAULT
-                              LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
-                                & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
-                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                            END SELECT
-                          ELSE
-                            CALL FlagError("CellML environment intermediate field is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE(CELLML_PARAMETERS_FIELD)
-                          IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
-                            SELECT CASE(dofType)
-                            CASE(FIELD_CONSTANT_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                                & dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue, &
-                                & ERR,ERROR,*999)
-                            CASE(FIELD_NODE_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetGetLocalNode(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetGetLocalGaussPoint(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE DEFAULT
-                              LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
-                                & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
-                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                            END SELECT                             
-                          ELSE
-                            CALL FlagError("CellML environment parameters field is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          LOCAL_ERROR="The CellML to field model map CellML field type of "// &
-                            & TRIM(NUMBER_TO_VSTRING(MODEL_MAP%CELLML_FIELD_TYPE,"*",ERR,ERROR))// &
-                            & " is invalid for map index "//TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
-                            & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
-                            & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        END SELECT
-                        !Update the OpenCMISS mapped field DOF value
+                      END SELECT
+                      IF(DIAGNOSTICS1) THEN
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  DOF index : ",dofIdx,ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Model index : ",modelIdx,ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      DOF type = ",dofType,ERR,ERROR,*999)
                         SELECT CASE(dofType)
                         CASE(FIELD_CONSTANT_INTERPOLATION)
-                          CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                            & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          !Do nothing
                         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                          CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                            & MODEL_MAP%FIELD_PARAMETER_SET,elementNumber,MODEL_MAP%COMPONENT_NUMBER,dofValue, &
-                            & ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element number = ",elementNumber,ERR,ERROR,*999)
                         CASE(FIELD_NODE_BASED_INTERPOLATION)
-                          CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                            & MODEL_MAP%FIELD_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
-                            & MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Version number = ",versionNumber,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Derivative number = ",derivativeNumber, &
+                            & ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Node number = ",nodeNumber,ERR,ERROR,*999)
                         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Grid number = ",gridNumber,ERR,ERROR,*999)
                         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                          CALL Field_ParameterSetUpdateGaussPoint(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                            & MODEL_MAP%FIELD_PARAMETER_SET,gaussNumber,elementNumber,MODEL_MAP%COMPONENT_NUMBER, &
-                            & dofValue,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss number = ",gaussNumber,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element number = ",elementNumber,ERR,ERROR,*999)
                         CASE DEFAULT
                           LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
                             & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
                           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        END SELECT                     
-                      ELSE
-                        LOCAL_ERROR="The CellML to field map is not associated for map index "// &
-                          & TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
-                          & TRIM(NUMBER_TO_VSTRING(modelIdx,"*",ERR,ERROR))//" of CellML environment number "// &
-                          & TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                        END SELECT
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of model maps = ",MODEL_MAPS% &
+                          & NUMBER_OF_FIELDS_MAPPED_TO,ERR,ERROR,*999)
                       ENDIF
-                      IF(DIAGNOSTICS1) THEN
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Map index : ",map_idx,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML field type      = ", &
-                          & MODEL_MAP%CELLML_FIELD_TYPE,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML parameter set   = ", &
-                          & MODEL_MAP%CELLML_PARAMETER_SET,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML variable number = ", &
-                          & MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field user number      = ", &
-                          & MODEL_MAP%FIELD%USER_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field variable type    = ", &
-                          & MODEL_MAP%VARIABLE_TYPE,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field parameter set    = ", &
-                          & MODEL_MAP%FIELD_PARAMETER_SET,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field component number = ", &
-                          & MODEL_MAP%COMPONENT_NUMBER,ERR,ERROR,*999)                   
-                      ENDIF                      
-                    ENDDO !map_idx
-                  ELSE
-                    LOCAL_ERROR="The CellML field maps models map is not associated for model index "// &
-                      & TRIM(NUMBER_TO_VSTRING(modelIdx,"*",ERR,ERROR))//" of CellML environment number "// &
-                      & TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ENDIF !modelIdx>0
-              ENDDO !dofIdx              
-              CALL FIELD_PARAMETER_SET_DATA_RESTORE(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & MODELS_DATA,ERR,ERROR,*999)
-            ELSE
-              CALL FlagError("CellML environment models field models field is not associated.",ERR,ERROR,*999)
+                      !Loop over the number of CellML to field maps
+                      DO map_idx=1,MODEL_MAPS%NUMBER_OF_FIELDS_MAPPED_FROM
+                        MODEL_MAP=>MODEL_MAPS%FIELDS_MAPPED_FROM(map_idx)%PTR
+                        IF(ASSOCIATED(MODEL_MAP)) THEN
+                          !Get the CellML field DOF value
+                          SELECT CASE(MODEL_MAP%CELLML_FIELD_TYPE)
+                          CASE(CELLML_MODELS_FIELD)
+                            CALL FlagError("Cannot map models field.",ERR,ERROR,*999)
+                          CASE(CELLML_STATE_FIELD)
+                            IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
+                              SELECT CASE(dofType)
+                              CASE(FIELD_CONSTANT_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                  & MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                  & MODEL_MAP%CELLML_PARAMETER_SET,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue, &
+                                  & ERR,ERROR,*999)
+                              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetGetLocalNode(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                  & MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetGetLocalGaussPoint(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                  & MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                                  & dofValue,ERR,ERROR,*999)
+                              CASE DEFAULT
+                                LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
+                                  & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
+                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                              END SELECT
+                            ELSE
+                              CALL FlagError("CellML environment state field is not associated.",ERR,ERROR,*999)
+                            ENDIF
+                          CASE(CELLML_INTERMEDIATE_FIELD)
+                            IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
+                              SELECT CASE(dofType)
+                              CASE(FIELD_CONSTANT_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                                  & dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetGetLocalNode(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber, &
+                                  & nodeNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetGetLocalGaussPoint(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE DEFAULT
+                                LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
+                                  & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
+                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                              END SELECT
+                            ELSE
+                              CALL FlagError("CellML environment intermediate field is not associated.",ERR,ERROR,*999)
+                            ENDIF
+                          CASE(CELLML_PARAMETERS_FIELD)
+                            IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
+                              SELECT CASE(dofType)
+                              CASE(FIELD_CONSTANT_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_GET_CONSTANT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                                  & dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_GET_ELEMENT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetGetLocalNode(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber, &
+                                  & nodeNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetGetLocalGaussPoint(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE DEFAULT
+                                LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
+                                  & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
+                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                              END SELECT
+                            ELSE
+                              CALL FlagError("CellML environment parameters field is not associated.",ERR,ERROR,*999)
+                            ENDIF
+                          CASE DEFAULT
+                            LOCAL_ERROR="The CellML to field model map CellML field type of "// &
+                              & TRIM(NUMBER_TO_VSTRING(MODEL_MAP%CELLML_FIELD_TYPE,"*",ERR,ERROR))// &
+                              & " is invalid for map index "//TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))// &
+                              & " of model index "// &
+                              & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
+                              & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                          END SELECT
+                          !Update the OpenCMISS mapped field DOF value
+                          SELECT CASE(dofType)
+                          CASE(FIELD_CONSTANT_INTERPOLATION)
+                            CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                              & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                            CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                              & MODEL_MAP%FIELD_PARAMETER_SET,elementNumber,MODEL_MAP%COMPONENT_NUMBER,dofValue, &
+                              & ERR,ERROR,*999)
+                          CASE(FIELD_NODE_BASED_INTERPOLATION)
+                            CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                              & MODEL_MAP%FIELD_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
+                              & MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                            CALL Field_ParameterSetUpdateGaussPoint(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                              & MODEL_MAP%FIELD_PARAMETER_SET,gaussNumber,elementNumber,MODEL_MAP%COMPONENT_NUMBER, &
+                              & dofValue,ERR,ERROR,*999)
+                          CASE DEFAULT
+                            LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
+                              & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
+                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                          END SELECT
+                        ELSE
+                          LOCAL_ERROR="The CellML to field map is not associated for map index "// &
+                            & TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
+                            & TRIM(NUMBER_TO_VSTRING(modelIdx,"*",ERR,ERROR))//" of CellML environment number "// &
+                            & TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                        ENDIF
+                        IF(DIAGNOSTICS1) THEN
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Map index : ",map_idx,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML field type      = ", &
+                            & MODEL_MAP%CELLML_FIELD_TYPE,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML parameter set   = ", &
+                            & MODEL_MAP%CELLML_PARAMETER_SET,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML variable number = ", &
+                            & MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field user number      = ", &
+                            & MODEL_MAP%FIELD%USER_NUMBER,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field variable type    = ", &
+                            & MODEL_MAP%VARIABLE_TYPE,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field parameter set    = ", &
+                            & MODEL_MAP%FIELD_PARAMETER_SET,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field component number = ", &
+                            & MODEL_MAP%COMPONENT_NUMBER,ERR,ERROR,*999)                   
+                        ENDIF
+                      ENDDO !map_idx
+                    ELSE
+                      LOCAL_ERROR="The CellML field maps models map is not associated for model index "// &
+                        & TRIM(NUMBER_TO_VSTRING(modelIdx,"*",ERR,ERROR))//" of CellML environment number "// &
+                        & TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    ENDIF
+                  ENDIF !modelIdx>0
+                ENDDO !dofIdx              
+                CALL FIELD_PARAMETER_SET_DATA_RESTORE(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                  & MODELS_DATA,ERR,ERROR,*999)
+              ELSE
+                CALL FlagError("CellML environment models field models field is not associated.",ERR,ERROR,*999)
+              ENDIF
             ENDIF
           ENDIF
         ELSE
@@ -551,12 +563,6 @@ CONTAINS
     ELSE
       CALL FlagError("CellML environment is not associated.",ERR,ERROR,*999)
     END IF
-
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
 
     EXITS("CELLML_CELLML_TO_FIELD_UPDATE")
     RETURN
@@ -588,8 +594,6 @@ CONTAINS
     NULLIFY(NEW_CELLML)
 
     ENTERS("CELLML_CREATE_START",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
 
     IF(ASSOCIATED(REGION)) THEN
       IF(ASSOCIATED(CELLML)) THEN
@@ -631,12 +635,6 @@ CONTAINS
       CALL FlagError("Region is not associated.",ERR,ERROR,*999)
     ENDIF
 
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
-
     EXITS("CELLML_CREATE_START")
     RETURN
 999 IF(ALLOCATED(NEW_CELLML_ENVIRONMENTS)) DEALLOCATE(NEW_CELLML_ENVIRONMENTS)
@@ -663,8 +661,6 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("CELLML_CREATE_FINISH",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
       IF(CELLML%CELLML_FINISHED) THEN
@@ -700,12 +696,6 @@ CONTAINS
       CALL FlagError("CellML is not associated.",ERR,ERROR,*999)
     ENDIF
 
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
-
     EXITS("CELLML_CREATE_FINISH")
     RETURN
 999 ERRORSEXITS("CELLML_CREATE_FINISH",ERR,ERROR)
@@ -727,8 +717,6 @@ CONTAINS
     TYPE(CELLML_PTR_TYPE), ALLOCATABLE :: NEW_CELLML_ENVIRONMENTS(:)
     
     ENTERS("CELLML_DESTROY",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
 
     IF(ASSOCIATED(CELLML)) THEN
 
@@ -760,12 +748,6 @@ CONTAINS
     ELSE
       CALL FlagError("CellML is not associated.",ERR,ERROR,*999)
     END IF
-
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
 
     EXITS("CELLML_DESTROY")
     RETURN
@@ -800,324 +782,326 @@ CONTAINS
     
     ENTERS("CELLML_FIELD_TO_CELLML_UPDATE",ERR,ERROR,*999)
 
-#ifdef WITH_CELLML
-
     IF(ASSOCIATED(CELLML)) THEN
       IF(ASSOCIATED(CELLML%MODELS_FIELD)) THEN
         FIELD_MAPS=>CELLML%FIELD_MAPS
         IF(ASSOCIATED(FIELD_MAPS)) THEN
-          IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
-            !The CellML environement only uses one model and so we can optimise for this.
-            MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX)%PTR
-            IF(ASSOCIATED(MODEL_MAPS)) THEN
-              IF(DIAGNOSTICS1) THEN
-                CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Field to CellML update:",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  One model index = ",CELLML%MODELS_FIELD% &
-                  & ONLY_ONE_MODEL_INDEX,ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of model maps = ",MODEL_MAPS% &
-                  & NUMBER_OF_FIELDS_MAPPED_TO,ERR,ERROR,*999)
-              ENDIF
-             !Loop over the number of field to CellML maps
-              DO map_idx=1,MODEL_MAPS%NUMBER_OF_FIELDS_MAPPED_TO
-                MODEL_MAP=>MODEL_MAPS%FIELDS_MAPPED_TO(map_idx)%PTR
-                IF(ASSOCIATED(MODEL_MAP)) THEN
-                  SELECT CASE(MODEL_MAP%CELLML_FIELD_TYPE)
-                  CASE(CELLML_MODELS_FIELD)
-                    CALL FlagError("Cannot map models field.",ERR,ERROR,*999)
-                  CASE(CELLML_STATE_FIELD)
-                    IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
-                      CALL Field_ParametersToFieldParametersCopy(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                        & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,CELLML%STATE_FIELD%STATE_FIELD, &
-                        & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
-                    ELSE
-                      CALL FlagError("CellML environment state field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE(CELLML_INTERMEDIATE_FIELD)
-                    IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
-                      CALL Field_ParametersToFieldParametersCopy(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                        & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                        & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
-                    ELSE
-                      CALL FlagError("CellML environment intermediate field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE(CELLML_PARAMETERS_FIELD)
-                    IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
-                      CALL Field_ParametersToFieldParametersCopy(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                        & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                        & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
-                    ELSE
-                      CALL FlagError("CellML environment parameters field is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  CASE DEFAULT
-                    LOCAL_ERROR="The CellML to field model map CellML field type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(MODEL_MAP%CELLML_FIELD_TYPE,"*",ERR,ERROR))// &
-                      & " is invalid for map index "//TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
+          IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=0) THEN
+            !We have CellML models on this rank
+            IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+              !The CellML environement only uses one model and so we can optimise for this.
+              MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX)%PTR
+              IF(ASSOCIATED(MODEL_MAPS)) THEN
+                IF(DIAGNOSTICS1) THEN
+                  CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Field to CellML update:",ERR,ERROR,*999)
+                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
+                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  One model index = ",CELLML%MODELS_FIELD% &
+                    & ONLY_ONE_MODEL_INDEX,ERR,ERROR,*999)
+                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of model maps = ",MODEL_MAPS% &
+                    & NUMBER_OF_FIELDS_MAPPED_TO,ERR,ERROR,*999)
+                ENDIF
+                !Loop over the number of field to CellML maps
+                DO map_idx=1,MODEL_MAPS%NUMBER_OF_FIELDS_MAPPED_TO
+                  MODEL_MAP=>MODEL_MAPS%FIELDS_MAPPED_TO(map_idx)%PTR
+                  IF(ASSOCIATED(MODEL_MAP)) THEN
+                    SELECT CASE(MODEL_MAP%CELLML_FIELD_TYPE)
+                    CASE(CELLML_MODELS_FIELD)
+                      CALL FlagError("Cannot map models field.",ERR,ERROR,*999)
+                    CASE(CELLML_STATE_FIELD)
+                      IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
+                        CALL Field_ParametersToFieldParametersCopy(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                          & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,CELLML%STATE_FIELD%STATE_FIELD, &
+                          & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
+                      ELSE
+                        CALL FlagError("CellML environment state field is not associated.",ERR,ERROR,*999)
+                      ENDIF
+                    CASE(CELLML_INTERMEDIATE_FIELD)
+                      IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
+                        CALL Field_ParametersToFieldParametersCopy(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                          & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                          & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
+                      ELSE
+                        CALL FlagError("CellML environment intermediate field is not associated.",ERR,ERROR,*999)
+                      ENDIF
+                    CASE(CELLML_PARAMETERS_FIELD)
+                      IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
+                        CALL Field_ParametersToFieldParametersCopy(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                          & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                          & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
+                      ELSE
+                        CALL FlagError("CellML environment parameters field is not associated.",ERR,ERROR,*999)
+                      ENDIF
+                    CASE DEFAULT
+                      LOCAL_ERROR="The CellML to field model map CellML field type of "// &
+                        & TRIM(NUMBER_TO_VSTRING(MODEL_MAP%CELLML_FIELD_TYPE,"*",ERR,ERROR))// &
+                        & " is invalid for map index "//TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
+                        & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
+                        & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    END SELECT
+                  ELSE
+                    LOCAL_ERROR="The CellML to field map is not associated for map index "// &
+                      & TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
                       & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
                       & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  END SELECT
-                ELSE
-                  LOCAL_ERROR="The CellML to field map is not associated for map index "// &
-                    & TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
-                    & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
-                    & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-                IF(DIAGNOSTICS1) THEN
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Map index : ",map_idx,ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field user number      = ",MODEL_MAP%FIELD%USER_NUMBER, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field variable type    = ",MODEL_MAP%VARIABLE_TYPE, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field parameter set    = ",MODEL_MAP%FIELD_PARAMETER_SET, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field component number = ",MODEL_MAP%COMPONENT_NUMBER, &
-                    & ERR,ERROR,*999)                   
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML field type      = ",MODEL_MAP%CELLML_FIELD_TYPE, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML parameter set   = ",MODEL_MAP%CELLML_PARAMETER_SET, &
-                    & ERR,ERROR,*999)
-                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML variable number = ",MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                    & ERR,ERROR,*999)
-                ENDIF
-              ENDDO !map_idx
-            ELSE
-              LOCAL_ERROR="The CellML field maps models map is not associated for model index "// &
-                & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
-                & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            !More than one model is used in the models field
-            MODELS_FIELD=>CELLML%MODELS_FIELD%MODELS_FIELD
-            IF(ASSOCIATED(MODELS_FIELD)) THEN
-              NULLIFY(MODELS_VARIABLE)
-              CALL FIELD_VARIABLE_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
-              NULLIFY(MODELS_DATA)
-              CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & MODELS_DATA,ERR,ERROR,*999)
-              IF(DIAGNOSTICS1) THEN
-                CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Field to CellML update:",ERR,ERROR,*999)
-                CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
+                  ENDIF
+                  IF(DIAGNOSTICS1) THEN
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Map index : ",map_idx,ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field user number      = ",MODEL_MAP%FIELD%USER_NUMBER, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field variable type    = ",MODEL_MAP%VARIABLE_TYPE, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field parameter set    = ",MODEL_MAP%FIELD_PARAMETER_SET, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Field component number = ",MODEL_MAP%COMPONENT_NUMBER, &
+                      & ERR,ERROR,*999)                   
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML field type      = ",MODEL_MAP%CELLML_FIELD_TYPE, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML parameter set   = ",MODEL_MAP%CELLML_PARAMETER_SET, &
+                      & ERR,ERROR,*999)
+                    CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    CellML variable number = ", &
+                      & MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
+                  ENDIF
+                ENDDO !map_idx
+              ELSE
+                LOCAL_ERROR="The CellML field maps models map is not associated for model index "// &
+                  & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
+                  & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
-              !Loop over the dofs in the models field
-              DO dofIdx=1,MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                modelIdx=MODELS_DATA(dofIdx)
-                IF(modelIdx>0) THEN
-                  MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(modelIdx)%PTR
-                  IF(ASSOCIATED(MODEL_MAPS)) THEN
-                    dofType=MODELS_VARIABLE%DOF_TO_PARAM_MAP%DOF_TYPE(1,dofIdx)
-                    dof2ParamIdx=MODELS_VARIABLE%DOF_TO_PARAM_MAP%DOF_TYPE(2,dofIdx)
-                    SELECT CASE(dofType)
-                    CASE(FIELD_CONSTANT_INTERPOLATION)
-                      !Do nothing
-                    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                      elementNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(1,dof2ParamIdx)
-                    CASE(FIELD_NODE_BASED_INTERPOLATION)
-                      versionNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(1,dof2ParamIdx)
-                      derivativeNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(2,dof2ParamIdx)
-                      nodeNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,dof2ParamIdx)
-                    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                      gridNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GRID_POINT_DOF2PARAM_MAP(1,dof2ParamIdx)
-                    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                      gaussNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(1,dof2ParamIdx)
-                      elementNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(2,dof2ParamIdx)
-                    CASE DEFAULT
-                      LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
-                        & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    END SELECT
-                    IF(DIAGNOSTICS1) THEN
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  DOF index : ",dofIdx,ERR,ERROR,*999)
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Model index : ",modelIdx,ERR,ERROR,*999)
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      DOF type = ",dofType,ERR,ERROR,*999)
+            ELSE
+              !More than one model is used in the models field
+              MODELS_FIELD=>CELLML%MODELS_FIELD%MODELS_FIELD
+              IF(ASSOCIATED(MODELS_FIELD)) THEN
+                NULLIFY(MODELS_VARIABLE)
+                CALL Field_VariableGet(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
+                NULLIFY(MODELS_DATA)
+                CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                  & MODELS_DATA,ERR,ERROR,*999)
+                IF(DIAGNOSTICS1) THEN
+                  CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Field to CellML update:",ERR,ERROR,*999)
+                  CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  CellML user number = ",CELLML%USER_NUMBER,ERR,ERROR,*999)
+                ENDIF
+                !Loop over the dofs in the models field
+                DO dofIdx=1,MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS
+                  modelIdx=MODELS_DATA(dofIdx)
+                  IF(modelIdx>0) THEN
+                    MODEL_MAPS=>FIELD_MAPS%MODEL_MAPS(modelIdx)%PTR
+                    IF(ASSOCIATED(MODEL_MAPS)) THEN
+                      dofType=MODELS_VARIABLE%DOF_TO_PARAM_MAP%DOF_TYPE(1,dofIdx)
+                      dof2ParamIdx=MODELS_VARIABLE%DOF_TO_PARAM_MAP%DOF_TYPE(2,dofIdx)
                       SELECT CASE(dofType)
                       CASE(FIELD_CONSTANT_INTERPOLATION)
                         !Do nothing
                       CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element number = ",elementNumber,ERR,ERROR,*999)
+                        elementNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(1,dof2ParamIdx)
                       CASE(FIELD_NODE_BASED_INTERPOLATION)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Version number = ",versionNumber,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Derivative number = ",derivativeNumber, &
-                          & ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Node number = ",nodeNumber,ERR,ERROR,*999)
+                        versionNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(1,dof2ParamIdx)
+                        derivativeNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(2,dof2ParamIdx)
+                        nodeNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,dof2ParamIdx)
                       CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Grid number = ",gridNumber,ERR,ERROR,*999)
+                        gridNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GRID_POINT_DOF2PARAM_MAP(1,dof2ParamIdx)
                       CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss number = ",gaussNumber,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element number = ",elementNumber,ERR,ERROR,*999)
+                        gaussNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(1,dof2ParamIdx)
+                        elementNumber=MODELS_VARIABLE%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(2,dof2ParamIdx)
                       CASE DEFAULT
                         LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
                           & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      END SELECT                      
-                      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of model maps = ",MODEL_MAPS% &
-                        & NUMBER_OF_FIELDS_MAPPED_TO,ERR,ERROR,*999)
-                    ENDIF
-                    !Loop over the number of field to CellML maps
-                    DO map_idx=1,MODEL_MAPS%NUMBER_OF_FIELDS_MAPPED_TO
-                      MODEL_MAP=>MODEL_MAPS%FIELDS_MAPPED_TO(map_idx)%PTR
-                      IF(ASSOCIATED(MODEL_MAP)) THEN
-                        !Get the OpenCMISS mapped field DOF value
+                      END SELECT
+                      IF(DIAGNOSTICS1) THEN
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  DOF index : ",dofIdx,ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Model index : ",modelIdx,ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      DOF type = ",dofType,ERR,ERROR,*999)
                         SELECT CASE(dofType)
                         CASE(FIELD_CONSTANT_INTERPOLATION)
-                          CALL FIELD_PARAMETER_SET_GET_CONSTANT(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                            & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          !Do nothing
                         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                          CALL FIELD_PARAMETER_SET_GET_ELEMENT(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                            & MODEL_MAP%FIELD_PARAMETER_SET,elementNumber,MODEL_MAP%COMPONENT_NUMBER,dofValue, &
-                            & ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element number = ",elementNumber,ERR,ERROR,*999)
                         CASE(FIELD_NODE_BASED_INTERPOLATION)
-                          CALL Field_ParameterSetGetLocalNode(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                            & MODEL_MAP%FIELD_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
-                            & MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Version number = ",versionNumber,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Derivative number = ",derivativeNumber, &
+                            & ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Node number = ",nodeNumber,ERR,ERROR,*999)
                         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Grid number = ",gridNumber,ERR,ERROR,*999)
                         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                          CALL Field_ParameterSetGetLocalGaussPoint(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
-                            & MODEL_MAP%FIELD_PARAMETER_SET,gaussNumber,elementNumber, &
-                            & MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss number = ",gaussNumber,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Element number = ",elementNumber,ERR,ERROR,*999)
                         CASE DEFAULT
                           LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
                             & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
                           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        END SELECT                     
-                        !Update the CellML field DOF value
-                        SELECT CASE(MODEL_MAP%CELLML_FIELD_TYPE)
-                        CASE(CELLML_MODELS_FIELD)
-                          CALL FlagError("Cannot map models field.",ERR,ERROR,*999)
-                        CASE(CELLML_STATE_FIELD)
-                          IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
-                            SELECT CASE(dofType)
-                            CASE(FIELD_CONSTANT_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue, &
-                                & ERR,ERROR,*999)
-                            CASE(FIELD_NODE_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetUpdateGaussPoint(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                                & MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                                & dofValue,ERR,ERROR,*999)
-                            CASE DEFAULT
-                              LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
-                                & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
-                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                            END SELECT
-                          ELSE
-                            CALL FlagError("CellML environment state field is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE(CELLML_INTERMEDIATE_FIELD)
-                          IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
-                            SELECT CASE(dofType)
-                            CASE(FIELD_CONSTANT_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                                & dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_NODE_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetUpdateGaussPoint(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE DEFAULT
-                              LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
-                                & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
-                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                            END SELECT
-                          ELSE
-                            CALL FlagError("CellML environment intermediate field is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE(CELLML_PARAMETERS_FIELD)
-                          IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
-                            SELECT CASE(dofType)
-                            CASE(FIELD_CONSTANT_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
-                                & dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_NODE_BASED_INTERPOLATION)
-                              CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                              CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                            CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                              CALL Field_ParameterSetUpdateGaussPoint(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                                & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber, &
-                                & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
-                            CASE DEFAULT
-                              LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
-                                & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
-                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                            END SELECT                             
-                          ELSE
-                            CALL FlagError("CellML environment parameters field is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          LOCAL_ERROR="The CellML to field model map CellML field type of "// &
-                            & TRIM(NUMBER_TO_VSTRING(MODEL_MAP%CELLML_FIELD_TYPE,"*",ERR,ERROR))// &
-                            & " is invalid for map index "//TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
-                            & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
-                            & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         END SELECT
-                      ELSE
-                        LOCAL_ERROR="The CellML to field map is not associated for map index "// &
-                          & TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
-                          & TRIM(NUMBER_TO_VSTRING(modelIdx,"*",ERR,ERROR))//" of CellML environment number "// &
-                          & TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of model maps = ",MODEL_MAPS% &
+                          & NUMBER_OF_FIELDS_MAPPED_TO,ERR,ERROR,*999)
                       ENDIF
-                      IF(DIAGNOSTICS1) THEN
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Map index : ",map_idx,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML field type      = ", &
-                          & MODEL_MAP%CELLML_FIELD_TYPE,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML parameter set   = ", &
-                          & MODEL_MAP%CELLML_PARAMETER_SET,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML variable number = ", &
-                          & MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field user number      = ", &
-                          & MODEL_MAP%FIELD%USER_NUMBER,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field variable type    = ", &
-                          & MODEL_MAP%VARIABLE_TYPE,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field parameter set    = ", &
-                          & MODEL_MAP%FIELD_PARAMETER_SET,ERR,ERROR,*999)
-                        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field component number = ", &
-                          & MODEL_MAP%COMPONENT_NUMBER,ERR,ERROR,*999)                   
-                      ENDIF                      
-                    ENDDO !map_idx
-                  ELSE
-                    LOCAL_ERROR="The CellML field maps models map is not associated for model index "// &
-                      & TRIM(NUMBER_TO_VSTRING(modelIdx,"*",ERR,ERROR))//" of CellML environment number "// &
-                      & TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
-                ENDIF !modelIdx>0
-              ENDDO !dofIdx              
-              CALL FIELD_PARAMETER_SET_DATA_RESTORE(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & MODELS_DATA,ERR,ERROR,*999)
-            ELSE
-              CALL FlagError("CellML environment models field models field is not associated.",ERR,ERROR,*999)
+                      !Loop over the number of field to CellML maps
+                      DO map_idx=1,MODEL_MAPS%NUMBER_OF_FIELDS_MAPPED_TO
+                        MODEL_MAP=>MODEL_MAPS%FIELDS_MAPPED_TO(map_idx)%PTR
+                        IF(ASSOCIATED(MODEL_MAP)) THEN
+                          !Get the OpenCMISS mapped field DOF value
+                          SELECT CASE(dofType)
+                          CASE(FIELD_CONSTANT_INTERPOLATION)
+                            CALL FIELD_PARAMETER_SET_GET_CONSTANT(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                              & MODEL_MAP%FIELD_PARAMETER_SET,MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                            CALL FIELD_PARAMETER_SET_GET_ELEMENT(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                              & MODEL_MAP%FIELD_PARAMETER_SET,elementNumber,MODEL_MAP%COMPONENT_NUMBER,dofValue, &
+                              & ERR,ERROR,*999)
+                          CASE(FIELD_NODE_BASED_INTERPOLATION)
+                            CALL Field_ParameterSetGetLocalNode(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                              & MODEL_MAP%FIELD_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
+                              & MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                            CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                            CALL Field_ParameterSetGetLocalGaussPoint(MODEL_MAP%FIELD,MODEL_MAP%VARIABLE_TYPE, &
+                              & MODEL_MAP%FIELD_PARAMETER_SET,gaussNumber,elementNumber, &
+                              & MODEL_MAP%COMPONENT_NUMBER,dofValue,ERR,ERROR,*999)
+                          CASE DEFAULT
+                            LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
+                              & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
+                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                          END SELECT
+                          !Update the CellML field DOF value
+                          SELECT CASE(MODEL_MAP%CELLML_FIELD_TYPE)
+                          CASE(CELLML_MODELS_FIELD)
+                            CALL FlagError("Cannot map models field.",ERR,ERROR,*999)
+                          CASE(CELLML_STATE_FIELD)
+                            IF(ASSOCIATED(CELLML%STATE_FIELD)) THEN
+                              SELECT CASE(dofType)
+                              CASE(FIELD_CONSTANT_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                  & MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                  & MODEL_MAP%CELLML_PARAMETER_SET,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue, &
+                                  & ERR,ERROR,*999)
+                              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                  & MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber,nodeNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetUpdateGaussPoint(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                                  & MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                                  & dofValue,ERR,ERROR,*999)
+                              CASE DEFAULT
+                                LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
+                                  & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
+                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                              END SELECT
+                            ELSE
+                              CALL FlagError("CellML environment state field is not associated.",ERR,ERROR,*999)
+                            ENDIF
+                          CASE(CELLML_INTERMEDIATE_FIELD)
+                            IF(ASSOCIATED(CELLML%INTERMEDIATE_FIELD)) THEN
+                              SELECT CASE(dofType)
+                              CASE(FIELD_CONSTANT_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                                  & dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber, &
+                                  & nodeNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetUpdateGaussPoint(CELLML%INTERMEDIATE_FIELD%INTERMEDIATE_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE DEFAULT
+                                LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
+                                  & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
+                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                              END SELECT
+                            ELSE
+                              CALL FlagError("CellML environment intermediate field is not associated.",ERR,ERROR,*999)
+                            ENDIF
+                          CASE(CELLML_PARAMETERS_FIELD)
+                            IF(ASSOCIATED(CELLML%PARAMETERS_FIELD)) THEN
+                              SELECT CASE(dofType)
+                              CASE(FIELD_CONSTANT_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,MODEL_MAP%CELLML_VARIABLE_NUMBER, &
+                                  & dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_ELEMENT(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,elementNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,versionNumber,derivativeNumber, &
+                                  & nodeNumber,MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                                CALL Field_ParameterSetUpdateGaussPoint(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                                  & FIELD_U_VARIABLE_TYPE,MODEL_MAP%CELLML_PARAMETER_SET,gaussNumber,elementNumber, &
+                                  & MODEL_MAP%CELLML_VARIABLE_NUMBER,dofValue,ERR,ERROR,*999)
+                              CASE DEFAULT
+                                LOCAL_ERROR="The DOF type of "//TRIM(NUMBER_TO_VSTRING(dofType,"*",ERR,ERROR))// &
+                                  & " for local DOF number "//TRIM(NUMBER_TO_VSTRING(dofIdx,"*",ERR,ERROR))//" is invalid."
+                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                              END SELECT
+                            ELSE
+                              CALL FlagError("CellML environment parameters field is not associated.",ERR,ERROR,*999)
+                            ENDIF
+                          CASE DEFAULT
+                            LOCAL_ERROR="The CellML to field model map CellML field type of "// &
+                              & TRIM(NUMBER_TO_VSTRING(MODEL_MAP%CELLML_FIELD_TYPE,"*",ERR,ERROR))// &
+                              & " is invalid for map index "//TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))// &
+                              & " of model index "// &
+                              & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))// &
+                              & " of CellML environment number "//TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                          END SELECT
+                        ELSE
+                          LOCAL_ERROR="The CellML to field map is not associated for map index "// &
+                            & TRIM(NUMBER_TO_VSTRING(map_idx,"*",ERR,ERROR))//" of model index "// &
+                            & TRIM(NUMBER_TO_VSTRING(modelIdx,"*",ERR,ERROR))//" of CellML environment number "// &
+                            & TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                        ENDIF
+                        IF(DIAGNOSTICS1) THEN
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Map index : ",map_idx,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML field type      = ", &
+                            & MODEL_MAP%CELLML_FIELD_TYPE,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML parameter set   = ", &
+                            & MODEL_MAP%CELLML_PARAMETER_SET,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        CellML variable number = ", &
+                            & MODEL_MAP%CELLML_VARIABLE_NUMBER,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field user number      = ", &
+                            & MODEL_MAP%FIELD%USER_NUMBER,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field variable type    = ", &
+                            & MODEL_MAP%VARIABLE_TYPE,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field parameter set    = ", &
+                            & MODEL_MAP%FIELD_PARAMETER_SET,ERR,ERROR,*999)
+                          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"        Field component number = ", &
+                            & MODEL_MAP%COMPONENT_NUMBER,ERR,ERROR,*999)                   
+                        ENDIF
+                      ENDDO !map_idx
+                    ELSE
+                      LOCAL_ERROR="The CellML field maps models map is not associated for model index "// &
+                        & TRIM(NUMBER_TO_VSTRING(modelIdx,"*",ERR,ERROR))//" of CellML environment number "// &
+                        & TRIM(NUMBER_TO_VSTRING(CELLML%USER_NUMBER,"*",ERR,ERROR))//"."
+                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    ENDIF
+                  ENDIF !modelIdx>0
+                ENDDO !dofIdx              
+                CALL FIELD_PARAMETER_SET_DATA_RESTORE(MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                  & MODELS_DATA,ERR,ERROR,*999)
+              ELSE
+                CALL FlagError("CellML environment models field models field is not associated.",ERR,ERROR,*999)
+              ENDIF
             ENDIF
           ENDIF
         ELSE
@@ -1129,12 +1113,6 @@ CONTAINS
     ELSE
       CALL FlagError("CellML environment is not associated.",ERR,ERROR,*999)
     END IF
-
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
 
     EXITS("CELLML_FIELD_TO_CELLML_UPDATE")
     RETURN
@@ -1157,8 +1135,6 @@ CONTAINS
     
     ENTERS("CELLML_FINALISE",ERR,ERROR,*999)
 
-#ifdef WITH_CELLML
-
     IF(ASSOCIATED(CELLML)) THEN
       IF(ALLOCATED(CELLML%MODELS)) THEN
         DO model_idx=1,SIZE(CELLML%MODELS,1)
@@ -1173,12 +1149,6 @@ CONTAINS
       CALL CELLML_PARAMETERS_FIELD_FINALISE(CELLML%PARAMETERS_FIELD,ERR,ERROR,*999)
       DEALLOCATE(CELLML)
     ENDIF
-
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
 
     EXITS("CELLML_FINALISE")
     RETURN
@@ -2034,7 +2004,7 @@ CONTAINS
             CALL FlagError("CellML field maps have already been finished.",ERR,ERROR,*999)
           ELSE
             NULLIFY(FIELD_VARIABLE)
-            CALL FIELD_VARIABLE_GET(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+            CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
             NULLIFY(PARAMETER_SET)
             CALL FIELD_PARAMETER_SET_GET(FIELD,VARIABLE_TYPE,FIELD_PARAMETER_SET,PARAMETER_SET,ERR,ERROR,*999)
             IF(COMPONENT_NUMBER>0.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
@@ -2282,7 +2252,7 @@ CONTAINS
             CALL FlagError("CellML field maps have already been finished.",ERR,ERROR,*999)
           ELSE
             NULLIFY(FIELD_VARIABLE)
-            CALL FIELD_VARIABLE_GET(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
+            CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
             NULLIFY(PARAMETER_SET)
             CALL FIELD_PARAMETER_SET_GET(FIELD,VARIABLE_TYPE,FIELD_PARAMETER_SET,PARAMETER_SET,ERR,ERROR,*999)
             IF(COMPONENT_NUMBER>0.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
@@ -2559,7 +2529,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !< The error string
     !Local variables
-    INTEGER(INTG) :: model_idx,source_dof_idx,first_dof_idx
+    INTEGER(INTG) :: model_idx,source_dof_idx,first_dof_idx,mpiIError,onlyOneModelIndex
     INTEGER(INTG), POINTER :: MODELS_DATA(:)
     TYPE(CELLML_TYPE), POINTER :: CELLML
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: MODELS_VARIABLE
@@ -2576,7 +2546,7 @@ CONTAINS
           IF(ASSOCIATED(CELLML)) THEN
             !Models field has not been checked before.
             NULLIFY(MODELS_VARIABLE)
-            CALL FIELD_VARIABLE_GET(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
+            CALL Field_VariableGet(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
             IF(MODELS_VARIABLE%NUMBER_OF_DOFS>0) THEN
               NULLIFY(MODELS_DATA)
               CALL FIELD_PARAMETER_SET_DATA_GET(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -2615,7 +2585,11 @@ CONTAINS
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
                 ENDDO !source_dof_idx
-                IF(MODELS_FIELD%ONLY_ONE_MODEL_INDEX==0) &
+                onlyOneModelIndex=0
+                CALL MPI_ALLREDUCE(MODELS_FIELD%ONLY_ONE_MODEL_INDEX,onlyOneModelIndex,1,MPI_INTEGER,MPI_MAX, &
+                  & computationalEnvironment%mpiCommunicator,mpiIerror)
+                CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,ERR,ERROR,*999)
+                IF(onlyOneModelIndex==0) &
                   & CALL FlagError("Models field does not have any models set.",ERR,ERROR,*999)
               ELSE
                 LOCAL_ERROR="The model index of "//TRIM(NUMBER_TO_VSTRING(model_idx,"*",ERR,ERROR))// &
@@ -3191,71 +3165,74 @@ CONTAINS
 !              CALL FIELD_DOF_ORDER_TYPE_CHECK(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
 !                & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
               !Set the default field values to the initial CellML values.
-              IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
-                !Only one model so optimise
-                MODEL=>CELLML%MODELS(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX)%PTR
-                IF(ASSOCIATED(MODEL)) THEN
-                  DO state_component_idx=1,MODEL%NUMBER_OF_STATE
-                    CELLML_VARIABLE_TYPE=MAP_CELLML_FIELD_TYPE_TO_VARIABLE_TYPE(CELLML_STATE_FIELD,ERR,ERROR)
-                    ERR = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(MODEL%PTR,CELLML_VARIABLE_TYPE,&
-                      & state_component_idx,INITIAL_VALUE)
-                    IF(ERR /= 0) THEN
-                      !problem getting the initial value
-                      LOCAL_ERROR="Failed to get an initial value for state variable with index "//&
-                        & TRIM(NUMBER_TO_VSTRING(state_component_idx,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                    !WRITE(*,*) '(single model) Initial value for state variable: ',state_component_idx,'; type: ',&
-                    !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
-                    CALL FIELD_COMPONENT_VALUES_INITIALISE(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,state_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
-                  ENDDO !state_component_idx
-                ELSE
-                  LOCAL_ERROR="The model is not associated for model index "// &
-                    & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                !Multiple models so go through each dof.
-                IF(ASSOCIATED(CELLML%FIELD_MAPS)) THEN
-                  NULLIFY(MODELS_VARIABLE)
-                  CALL FIELD_VARIABLE_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
-                  NULLIFY(MODELS_DATA)
-                  CALL FIELD_PARAMETER_SET_DATA_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
-                  DO models_dof_idx=1,MODELS_VARIABLE%NUMBER_OF_DOFS
-                    model_idx=MODELS_DATA(models_dof_idx)
-                    IF(model_idx>0) THEN
-                      MODEL=>CELLML%MODELS(model_idx)%PTR
-                      IF(ASSOCIATED(MODEL)) THEN
-                        DO state_component_idx=1,MODEL%NUMBER_OF_STATE
-                          CELLML_VARIABLE_TYPE=MAP_CELLML_FIELD_TYPE_TO_VARIABLE_TYPE(CELLML_STATE_FIELD,ERR,ERROR)
-                          IF(ERR/=0) GOTO 999
-                          ERR = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(MODEL%PTR,CELLML_VARIABLE_TYPE,&
-                            & state_component_idx,INITIAL_VALUE)
-                          IF(ERR /= 0) THEN
-                            !problem getting the initial value
-                            LOCAL_ERROR="Failed to get an initial value for state variable with index "//&
-                              & TRIM(NUMBER_TO_VSTRING(state_component_idx,"*",ERR,ERROR))//"."
-                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                          ENDIF
-                          !WRITE(*,*) '(multiple models) Initial value for state variable: ',state_component_idx,'; type: ',&
-                          !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
-                          CALL CellML_FieldModelDofSet(MODELS_VARIABLE,models_dof_idx,CELLML%STATE_FIELD%STATE_FIELD, &
-                            & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,state_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
-                        ENDDO !state_component_idx
-                      ELSE
-                        LOCAL_ERROR="The model is not associated for model index "// &
-                          & TRIM(NUMBER_TO_VSTRING(model_idx,"*",ERR,ERROR))//"."
+              IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=0) THEN
+                !If there are CellML models on this rank
+                IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+                  !Only one model so optimise
+                  MODEL=>CELLML%MODELS(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX)%PTR
+                  IF(ASSOCIATED(MODEL)) THEN
+                    DO state_component_idx=1,MODEL%NUMBER_OF_STATE
+                      CELLML_VARIABLE_TYPE=MAP_CELLML_FIELD_TYPE_TO_VARIABLE_TYPE(CELLML_STATE_FIELD,ERR,ERROR)
+                      ERR = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(MODEL%PTR,CELLML_VARIABLE_TYPE,&
+                        & state_component_idx,INITIAL_VALUE)
+                      IF(ERR /= 0) THEN
+                        !problem getting the initial value
+                        LOCAL_ERROR="Failed to get an initial value for state variable with index "//&
+                          & TRIM(NUMBER_TO_VSTRING(state_component_idx,"*",ERR,ERROR))//"."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
-                    ENDIF
-                  ENDDO !dofIdx
-                  CALL FIELD_PARAMETER_SET_DATA_RESTORE(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
+                      !WRITE(*,*) '(single model) Initial value for state variable: ',state_component_idx,'; type: ',&
+                      !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
+                      CALL FIELD_COMPONENT_VALUES_INITIALISE(CELLML%STATE_FIELD%STATE_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,state_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
+                    ENDDO !state_component_idx
+                  ELSE
+                    LOCAL_ERROR="The model is not associated for model index "// &
+                      & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  ENDIF
                 ELSE
+                  !Multiple models so go through each dof.
+                  IF(ASSOCIATED(CELLML%FIELD_MAPS)) THEN
+                    NULLIFY(MODELS_VARIABLE)
+                    CALL Field_VariableGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
+                    NULLIFY(MODELS_DATA)
+                    CALL FIELD_PARAMETER_SET_DATA_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
+                    DO models_dof_idx=1,MODELS_VARIABLE%NUMBER_OF_DOFS
+                      model_idx=MODELS_DATA(models_dof_idx)
+                      IF(model_idx>0) THEN
+                        MODEL=>CELLML%MODELS(model_idx)%PTR
+                        IF(ASSOCIATED(MODEL)) THEN
+                          DO state_component_idx=1,MODEL%NUMBER_OF_STATE
+                            CELLML_VARIABLE_TYPE=MAP_CELLML_FIELD_TYPE_TO_VARIABLE_TYPE(CELLML_STATE_FIELD,ERR,ERROR)
+                            IF(ERR/=0) GOTO 999
+                            ERR = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(MODEL%PTR,CELLML_VARIABLE_TYPE,&
+                              & state_component_idx,INITIAL_VALUE)
+                            IF(ERR /= 0) THEN
+                              !problem getting the initial value
+                              LOCAL_ERROR="Failed to get an initial value for state variable with index "//&
+                                & TRIM(NUMBER_TO_VSTRING(state_component_idx,"*",ERR,ERROR))//"."
+                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                            ENDIF
+                            !WRITE(*,*) '(multiple models) Initial value for state variable: ',state_component_idx,'; type: ',&
+                            !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
+                            CALL CellML_FieldModelDofSet(MODELS_VARIABLE,models_dof_idx,CELLML%STATE_FIELD%STATE_FIELD, &
+                              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,state_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
+                          ENDDO !state_component_idx
+                        ELSE
+                          LOCAL_ERROR="The model is not associated for model index "// &
+                            & TRIM(NUMBER_TO_VSTRING(model_idx,"*",ERR,ERROR))//"."
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                        ENDIF
+                      ENDIF
+                    ENDDO !dofIdx
+                    CALL FIELD_PARAMETER_SET_DATA_RESTORE(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
+                  ELSE
                     CALL FlagError("CellML environment field maps is not associated.",ERR,ERROR,*999)
                   ENDIF
+                ENDIF
               ENDIF
               CELLML%STATE_FIELD%STATE_FIELD_FINISHED=.TRUE.
             ELSE
@@ -4060,77 +4037,80 @@ CONTAINS
                 & CALL FIELD_CREATE_FINISH(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,ERR,ERROR,*999)
 !              CALL FIELD_DOF_ORDER_TYPE_CHECK(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
 !                & FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER,ERR,ERROR,*999)
-              IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
-                !Only one model so optimise
-                MODEL=>CELLML%MODELS(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX)%PTR
-                IF(ASSOCIATED(MODEL)) THEN
-                  DO parameter_component_idx=1,MODEL%NUMBER_OF_PARAMETERS
-                    CELLML_VARIABLE_TYPE=MAP_CELLML_FIELD_TYPE_TO_VARIABLE_TYPE(CELLML_PARAMETERS_FIELD,ERR,ERROR)
-                    ERR = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(MODEL%PTR,CELLML_VARIABLE_TYPE,&
-                      & parameter_component_idx,INITIAL_VALUE)
-                    IF(ERR /= 0) THEN
-                      !problem getting the initial value
-                      LOCAL_ERROR="Failed to get an initial value for parameter variable with index "//&
-                        & TRIM(NUMBER_TO_VSTRING(parameter_component_idx,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                    !WRITE(*,*) '(single model) Initial value for parameter variable: ',parameter_component_idx,'; type: ',&
-                    !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
-                    CALL FIELD_COMPONENT_VALUES_INITIALISE(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,parameter_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
-                  ENDDO !parameter_component_idx
-                ELSE
-                  LOCAL_ERROR="The model is not associated for model index "// &
-                    & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                !Multiple models so go through each dof.
-                IF(ASSOCIATED(CELLML%FIELD_MAPS)) THEN
-                  NULLIFY(MODELS_VARIABLE)
-                  CALL FIELD_VARIABLE_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE, &
-                    & ERR,ERROR,*999)
-                  NULLIFY(MODELS_DATA)
-                  CALL FIELD_PARAMETER_SET_DATA_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
-                  DO models_dof_idx=1,MODELS_VARIABLE%NUMBER_OF_DOFS
-                    model_idx=MODELS_DATA(models_dof_idx)
-                    IF(model_idx==0) THEN
-                      ! Do nothing- empty model index specified
-                    ELSE IF(model_idx > 0 .AND. model_idx <= CELLML%NUMBER_OF_MODELS) THEN
-                      MODEL=>CELLML%MODELS(model_idx)%PTR
-                      IF(ASSOCIATED(MODEL)) THEN
-                        DO parameter_component_idx=1,MODEL%NUMBER_OF_PARAMETERS
-                          CELLML_VARIABLE_TYPE=MAP_CELLML_FIELD_TYPE_TO_VARIABLE_TYPE(CELLML_PARAMETERS_FIELD,ERR,ERROR)
-                          ERR = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(MODEL%PTR,CELLML_VARIABLE_TYPE,&
-                            & parameter_component_idx,INITIAL_VALUE)
-                          IF(ERR /= 0) THEN
-                            !problem getting the initial value
-                            LOCAL_ERROR="Failed to get an initial value for parameter variable with index "//&
-                              & TRIM(NUMBER_TO_VSTRING(parameter_component_idx,"*",ERR,ERROR))//"."
-                            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                          ENDIF
-                          !WRITE(*,*) '(multiple models) Initial value for parameter variable: ',parameter_component_idx,'; type: ',&
-                          !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
-                          CALL CellML_FieldModelDofSet(MODELS_VARIABLE,models_dof_idx,CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
-                            & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,parameter_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
-                        ENDDO !parameter_component_idx
-                      ELSE
-                        LOCAL_ERROR="The model is not associated for model index "// &
-                          & TRIM(NUMBER_TO_VSTRING(model_idx,"*",ERR,ERROR))//"."
+              IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=0) THEN
+                !There are CellML models on this rank
+                IF(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX/=CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
+                  !Only one model so optimise
+                  MODEL=>CELLML%MODELS(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX)%PTR
+                  IF(ASSOCIATED(MODEL)) THEN
+                    DO parameter_component_idx=1,MODEL%NUMBER_OF_PARAMETERS
+                      CELLML_VARIABLE_TYPE=MAP_CELLML_FIELD_TYPE_TO_VARIABLE_TYPE(CELLML_PARAMETERS_FIELD,ERR,ERROR)
+                      ERR = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(MODEL%PTR,CELLML_VARIABLE_TYPE,&
+                        & parameter_component_idx,INITIAL_VALUE)
+                      IF(ERR /= 0) THEN
+                        !problem getting the initial value
+                        LOCAL_ERROR="Failed to get an initial value for parameter variable with index "//&
+                          & TRIM(NUMBER_TO_VSTRING(parameter_component_idx,"*",ERR,ERROR))//"."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
-                    ELSE
-                      LOCAL_ERROR="Invalid CellML model index: "// &
-                        & TRIM(NUMBER_TO_VSTRING(model_idx,"*",ERR,ERROR))//". The specified index should be between 1 and "// &
-                        & TRIM(NUMBER_TO_VSTRING(CELLML%NUMBER_OF_MODELS,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDDO !models_dof_idx
-                  CALL FIELD_PARAMETER_SET_DATA_RESTORE(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
+                      !WRITE(*,*) '(single model) Initial value for parameter variable: ',parameter_component_idx,'; type: ',&
+                      !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
+                      CALL FIELD_COMPONENT_VALUES_INITIALISE(CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,parameter_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
+                    ENDDO !parameter_component_idx
+                  ELSE
+                    LOCAL_ERROR="The model is not associated for model index "// &
+                      & TRIM(NUMBER_TO_VSTRING(CELLML%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,"*",ERR,ERROR))//"."
+                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  ENDIF
                 ELSE
-                  CALL FlagError("CellML environment field maps is not associated.",ERR,ERROR,*999)
+                  !Multiple models so go through each dof.
+                  IF(ASSOCIATED(CELLML%FIELD_MAPS)) THEN
+                    NULLIFY(MODELS_VARIABLE)
+                    CALL Field_VariableGet(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE, &
+                      & ERR,ERROR,*999)
+                    NULLIFY(MODELS_DATA)
+                    CALL FIELD_PARAMETER_SET_DATA_GET(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
+                    DO models_dof_idx=1,MODELS_VARIABLE%NUMBER_OF_DOFS
+                      model_idx=MODELS_DATA(models_dof_idx)
+                      IF(model_idx==0) THEN
+                        ! Do nothing- empty model index specified
+                      ELSE IF(model_idx > 0 .AND. model_idx <= CELLML%NUMBER_OF_MODELS) THEN
+                        MODEL=>CELLML%MODELS(model_idx)%PTR
+                        IF(ASSOCIATED(MODEL)) THEN
+                          DO parameter_component_idx=1,MODEL%NUMBER_OF_PARAMETERS
+                            CELLML_VARIABLE_TYPE=MAP_CELLML_FIELD_TYPE_TO_VARIABLE_TYPE(CELLML_PARAMETERS_FIELD,ERR,ERROR)
+                            ERR = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(MODEL%PTR,CELLML_VARIABLE_TYPE,&
+                              & parameter_component_idx,INITIAL_VALUE)
+                            IF(ERR /= 0) THEN
+                              !problem getting the initial value
+                              LOCAL_ERROR="Failed to get an initial value for parameter variable with index "//&
+                                & TRIM(NUMBER_TO_VSTRING(parameter_component_idx,"*",ERR,ERROR))//"."
+                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                            ENDIF
+                            !WRITE(*,*) '(multiple models) Initial value for parameter variable: ',parameter_component_idx,'; type: ',&
+                            !  & CELLML_VARIABLE_TYPE,'; value = ',INITIAL_VALUE
+                            CALL CellML_FieldModelDofSet(MODELS_VARIABLE,models_dof_idx,CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD, &
+                              & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,parameter_component_idx,INITIAL_VALUE,ERR,ERROR,*999)
+                          ENDDO !parameter_component_idx
+                        ELSE
+                          LOCAL_ERROR="The model is not associated for model index "// &
+                            & TRIM(NUMBER_TO_VSTRING(model_idx,"*",ERR,ERROR))//"."
+                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                        ENDIF
+                      ELSE
+                        LOCAL_ERROR="Invalid CellML model index: "// &
+                          & TRIM(NUMBER_TO_VSTRING(model_idx,"*",ERR,ERROR))//". The specified index should be between 1 and "// &
+                          & TRIM(NUMBER_TO_VSTRING(CELLML%NUMBER_OF_MODELS,"*",ERR,ERROR))//"."
+                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      ENDIF
+                    ENDDO !models_dof_idx
+                    CALL FIELD_PARAMETER_SET_DATA_RESTORE(CELLML%MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,MODELS_DATA,ERR,ERROR,*999)
+                  ELSE
+                    CALL FlagError("CellML environment field maps is not associated.",ERR,ERROR,*999)
+                  ENDIF
                 ENDIF
               ENDIF
               CELLML%PARAMETERS_FIELD%PARAMETERS_FIELD_FINISHED=.TRUE.
@@ -4328,62 +4308,6 @@ CONTAINS
 999 ERRORSEXITS("CELLML_GENERATE",ERR,ERROR)
     RETURN 1
   END SUBROUTINE CELLML_GENERATE
-
-  !
-  !=================================================================================================================================
-  !
-
-  !>Finds and returns in CELLML a pointer to the CellML environment identified by USER_NUMBER on a region. If no CellML environment with that USER_NUMBER exists CELLML is left nullified.
-  SUBROUTINE CELLML_USER_NUMBER_FIND(USER_NUMBER,REGION,CELLML,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to find.
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to find the CellML user number.
-    TYPE(CELLML_TYPE), POINTER :: CELLML !<On return a pointer to the CellML environment with the given user number. If no CellML environment with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: cellml_idx
-    TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: CELLML_ENVIRONMENTS
-
-    ENTERS("CELLML_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-#ifdef WITH_CELLML
-
-    IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(CELLML)) THEN
-        CALL FlagError("CellML is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(CELLML)
-        CELLML_ENVIRONMENTS=>REGION%CELLML_ENVIRONMENTS        
-        IF(ASSOCIATED(CELLML_ENVIRONMENTS)) THEN
-          cellml_idx=1
-          DO WHILE(cellml_idx<=CELLML_ENVIRONMENTS%NUMBER_OF_ENVIRONMENTS.AND..NOT.ASSOCIATED(CELLML))
-            IF(CELLML_ENVIRONMENTS%ENVIRONMENTS(cellml_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-              CELLML=>CELLML_ENVIRONMENTS%ENVIRONMENTS(cellml_idx)%PTR
-            ELSE
-              cellml_idx=cellml_idx+1
-            ENDIF
-          ENDDO
-        ELSE
-          CALL FlagError("Region CellML environments is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-#else
-
-    CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",ERR,ERROR,*999)
-
-#endif
-
-    EXITS("CELLML_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("CELLML_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE CELLML_USER_NUMBER_FIND
 
   !
   !=================================================================================================================================

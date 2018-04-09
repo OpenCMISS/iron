@@ -46,7 +46,7 @@
 !#### Module: BINARY_FILE 
 !###  Description:
 !###    This module handles the reading and writing of binary files.
-!###  Uses: KINDS,CONSTANTS,MACHINE_CONSTANTS,BASE_ROUTINES,F90C,ISO_VARYING_STRING
+!###  Uses: KINDS,CONSTANTS,MACHINE_CONSTANTS,BaseRoutines,F90C,ISO_VARYING_STRING
 !###  Routine: INQUIRE_OPEN_BINARY_FILE
 !###  Routine: INQUIRE_EOF_BINARY_FILE
 !###  Routine: CLOSE_BINARY_FILE
@@ -225,7 +225,7 @@ MODULE BINARY_FILE
   USE KINDS
   USE CONSTANTS
   USE MACHINE_CONSTANTS
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE F90C
   USE ISO_VARYING_STRING
   
@@ -407,7 +407,7 @@ CONTAINS
   !============================================================================
   !
   
-  FUNCTION INQUIRE_OPEN_BINARY_FILE(FILEID)
+  PURE FUNCTION INQUIRE_OPEN_BINARY_FILE(FILEID)
     
     !#### Function: INQUIRE_OPEN_BINARY_FILE
     !###  Type: LOGICAL
