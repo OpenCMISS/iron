@@ -48,12 +48,13 @@ PROGRAM IRON_TEST_FIELDML_IO
   IMPLICIT NONE
 
   ! CMISS variables
+  TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
   TYPE(cmfe_CoordinateSystemType) :: worldCoordinateSystem
   TYPE(cmfe_RegionType) :: worldRegion
 
   ! Generic CMISS variables
 
-  INTEGER(CMISSIntg) :: numberOfComputationalNodes, computationalNodeNumber
+  INTEGER(CMISSIntg) :: numberOfComputationNodes, computationNodeNumber
   INTEGER(CMISSIntg) :: err
 
   CALL INITIALISE_TESTS()
@@ -63,10 +64,10 @@ PROGRAM IRON_TEST_FIELDML_IO
   CALL cmfe_Initialise(worldCoordinateSystem, worldRegion, err)
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR, err)
 
-  ! Get computational nodes information
-
-  CALL cmfe_ComputationalNumberOfNodesGet(numberOfComputationalNodes, err)
-  CALL cmfe_ComputationalNodeNumberGet(computationalNodeNumber, err)
+  ! Get computation nodes information
+  CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
   CALL TestFieldMLIOCube(worldRegion)
   CALL TestFieldMLArguments(worldRegion)

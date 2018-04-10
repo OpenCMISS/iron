@@ -3286,9 +3286,9 @@ CONTAINS
       CALL DistributedVector_Output(id,sourceVector%vector,err,error,*999)
     ENDIF
     
-    EXITS("EquationsMatrices_Output")
+    EXITS("EquationsMatrices_VectorOutput")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_Output",err,error)
+999 ERRORSEXITS("EquationsMatrices_VectorOutput",err,error)
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_VectorOutput

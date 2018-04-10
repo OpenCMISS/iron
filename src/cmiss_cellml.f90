@@ -61,7 +61,8 @@ MODULE CMISS_CELLML
   ! on some platforms.
   USE CMISS_FORTRAN_C
   USE CmissMPI
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
@@ -70,8 +71,8 @@ MODULE CMISS_CELLML
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
 
 #include "macros.h"
 
@@ -2529,7 +2530,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !< The error string
     !Local variables
-    INTEGER(INTG) :: model_idx,source_dof_idx,first_dof_idx,mpiIError,onlyOneModelIndex
+    INTEGER(INTG) :: model_idx,source_dof_idx,first_dof_idx,mpiIError,onlyOneModelIndex,worldCommunicator
     INTEGER(INTG), POINTER :: MODELS_DATA(:)
     TYPE(CELLML_TYPE), POINTER :: CELLML
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: MODELS_VARIABLE
@@ -2544,6 +2545,7 @@ CONTAINS
         IF(MODELS_FIELD%ONLY_ONE_MODEL_INDEX==CELLML_MODELS_FIELD_NOT_CHECKED) THEN
           CELLML=>MODELS_FIELD%CELLML
           IF(ASSOCIATED(CELLML)) THEN
+            CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
             !Models field has not been checked before.
             NULLIFY(MODELS_VARIABLE)
             CALL Field_VariableGet(MODELS_FIELD%MODELS_FIELD,FIELD_U_VARIABLE_TYPE,MODELS_VARIABLE,ERR,ERROR,*999)
@@ -2587,7 +2589,7 @@ CONTAINS
                 ENDDO !source_dof_idx
                 onlyOneModelIndex=0
                 CALL MPI_ALLREDUCE(MODELS_FIELD%ONLY_ONE_MODEL_INDEX,onlyOneModelIndex,1,MPI_INTEGER,MPI_MAX, &
-                  & computationalEnvironment%mpiCommunicator,mpiIerror)
+                  & worldCommunicator,mpiIerror)
                 CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",mpiIerror,ERR,ERROR,*999)
                 IF(onlyOneModelIndex==0) &
                   & CALL FlagError("Models field does not have any models set.",ERR,ERROR,*999)

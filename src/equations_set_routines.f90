@@ -51,7 +51,8 @@ MODULE EQUATIONS_SET_ROUTINES
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CLASSICAL_FIELD_ROUTINES
   USE CmissMPI
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE COORDINATE_ROUTINES
   USE DistributedMatrixVector
@@ -6277,7 +6278,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: DIRICHLET_BOUNDARY_CONDITIONS
     TYPE(BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE), POINTER :: PRESSURE_INCREMENTED_BOUNDARY_CONDITIONS
     INTEGER(INTG) :: variable_idx,variable_type,dirichlet_idx,dirichlet_dof_idx,neumann_point_dof
-    INTEGER(INTG) :: condition_idx, condition_global_dof, condition_local_dof, myComputationalNodeNumber
+    INTEGER(INTG) :: condition_idx, condition_global_dof, condition_local_dof, myWorldComputationNodeNumber
     REAL(DP), POINTER :: FULL_LOADS(:),CURRENT_LOADS(:), PREV_LOADS(:)
     REAL(DP) :: FULL_LOAD, CURRENT_LOAD, NEW_LOAD, PREV_LOAD
     TYPE(VARYING_STRING) :: localError
@@ -6292,9 +6293,9 @@ CONTAINS
     NULLIFY(PREV_LOADS)
     NULLIFY(CURRENT_LOADS)
 
-    myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(err,error)
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
     
-    !Take the stored load, scale it down appropriately then apply to the unknown variables
+    !Take the stored load, scale it down appropriately then apply to the unknown variables    
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(DIAGNOSTICS1) THEN
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  equations set",EQUATIONS_SET%USER_NUMBER,err,error,*999)
@@ -6339,7 +6340,7 @@ CONTAINS
                             & BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED)
                           !Convert dof index to local index
                           IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(dirichlet_dof_idx)%DOMAIN_NUMBER(1)== &
-                            & myComputationalNodeNumber) THEN
+                            & myWorldComputationNodeNumber) THEN
                             dirichlet_dof_idx=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(dirichlet_dof_idx)%LOCAL_NUMBER(1)
                             IF(0<dirichlet_dof_idx.AND.dirichlet_dof_idx<DOMAIN_MAPPING%GHOST_START) THEN
                               FULL_LOAD=FULL_LOADS(dirichlet_dof_idx)
@@ -6397,7 +6398,7 @@ CONTAINS
                         IF(BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(condition_global_dof)/= &
                           & BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) CYCLE
                         IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
-                          & myComputationalNodeNumber) THEN
+                          & myWorldComputationNodeNumber) THEN
                           condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
                             & LOCAL_NUMBER(1)
                           neumann_point_dof=BOUNDARY_CONDITIONS_VARIABLE%neumannBoundaryConditions%pointDofMapping% &
@@ -6444,7 +6445,7 @@ CONTAINS
                             & (condition_idx)
                           !Must convert into local dof index
                           IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
-                            & myComputationalNodeNumber) THEN
+                            & myWorldComputationNodeNumber) THEN
                             condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
                               & LOCAL_NUMBER(1)
                             IF(0<condition_local_dof.AND.condition_local_dof<DOMAIN_MAPPING%GHOST_START) THEN
@@ -6475,7 +6476,7 @@ CONTAINS
                             & (condition_idx)
                           !Must convert into local dof index
                           IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
-                            & myComputationalNodeNumber) THEN
+                            & myWorldComputationNodeNumber) THEN
                             condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
                               & LOCAL_NUMBER(1)
                             IF(0<condition_local_dof.AND.condition_local_dof<DOMAIN_MAPPING%GHOST_START) THEN

@@ -46,20 +46,21 @@ MODULE GENERATED_MESH_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
-  USE ComputationEnvironment
-  USE CONSTANTS
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
+  USE Constants
   USE COORDINATE_ROUTINES
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE GeneratedMeshAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATHS
+  USE Kinds
+  USE Maths
   USE MESH_ROUTINES
   USE NODE_ROUTINES
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
 
 #include "macros.h"  
 
@@ -3305,7 +3306,7 @@ CONTAINS
                       END IF
                     ENDIF
                   END SELECT
-                  !Update geometric parameters in this computational domain only
+                  !Update geometric parameters in this computation domain only
                   DOMAIN=>FIELD_VARIABLE_COMPONENT%DOMAIN
                   DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                   DO component_node=1,TOTAL_NUMBER_OF_NODES_XI(1)*TOTAL_NUMBER_OF_NODES_XI(2)*TOTAL_NUMBER_OF_NODES_XI(3)
@@ -3570,7 +3571,7 @@ CONTAINS
     TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: FIELD_VARIABLE_COMPONENT
-    INTEGER(INTG) :: MY_COMPUTATIONAL_NODE,DOMAIN_NUMBER,MESH_COMPONENT,basis_idx
+    INTEGER(INTG) :: MY_COMPUTATION_NODE,DOMAIN_NUMBER,MESH_COMPONENT,basis_idx
     INTEGER(INTG) :: NUMBER_ELEMENTS_XI(3),NUMBER_OF_NODES_XIC(3)
     INTEGER(INTG) :: TOTAL_NUMBER_NODES_XI(3),INTERPOLATION_TYPES(3)
     INTEGER(INTG) :: component_idx,xi_idx
@@ -3586,7 +3587,7 @@ CONTAINS
 
     ENTERS("GeneratedMesh_EllipsoidGeometricParametersCalculate",ERR,ERROR,*999)
 
-    MY_COMPUTATIONAL_NODE=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,MY_COMPUTATION_NODE,err,error,*999)
 
     ! assign to the field
     np=0
@@ -3649,7 +3650,7 @@ CONTAINS
                    np=1
                    npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                    CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                   IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                   IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                       RECT_COORDS(1)=0
                       RECT_COORDS(2)=0
                       RECT_COORDS(3)=-ELLIPSOID_EXTENT(1)
@@ -3676,7 +3677,7 @@ CONTAINS
                          np=np+1
                          npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                          CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                         IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                         IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                             DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                                CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                     & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
@@ -3699,7 +3700,7 @@ CONTAINS
                       np=np+1
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                       CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                      IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                      IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
@@ -3730,7 +3731,7 @@ CONTAINS
                             np=np+1
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                             CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                            IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                            IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
@@ -3757,7 +3758,7 @@ CONTAINS
                       np=np+1
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                       CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                      IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                      IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
@@ -3780,7 +3781,7 @@ CONTAINS
                             np=np+1
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                             CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                            IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                            IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
@@ -3807,7 +3808,7 @@ CONTAINS
                    np=1
                    npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                    CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                   IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                   IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                       RECT_COORDS(1)=0
                       RECT_COORDS(2)=0
                       RECT_COORDS(3)=-ELLIPSOID_EXTENT(1)
@@ -3833,7 +3834,7 @@ CONTAINS
                          np=np+1
                          npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                          CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                         IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                         IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                             DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                                CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                     & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
@@ -3856,7 +3857,7 @@ CONTAINS
                       np=np+1
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                       CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                      IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                      IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
@@ -3887,7 +3888,7 @@ CONTAINS
                             np=np+1
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%GENERATED_MESH,basis_idx,np,ERR,ERROR)
                             CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
-                            IF(DOMAIN_NUMBER==MY_COMPUTATIONAL_NODE) THEN
+                            IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)

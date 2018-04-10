@@ -121,6 +121,8 @@ MODULE PROBLEM_ROUTINES
   PUBLIC PROBLEM_SOLVERS_CREATE_START,PROBLEM_SOLVERS_CREATE_FINISH
   
   PUBLIC PROBLEM_SOLVERS_DESTROY
+
+  PUBLIC Problem_WorkGroupSet
   
 CONTAINS
 
@@ -726,6 +728,7 @@ CONTAINS
     TYPE(PROBLEM_PTR_TYPE), POINTER :: NEW_PROBLEMS(:)
     TYPE(PROBLEM_SETUP_TYPE) :: PROBLEM_SETUP_INFO
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: worldWorkGroup
  
     NULLIFY(NEW_PROBLEM)
     NULLIFY(NEW_PROBLEMS)
@@ -750,6 +753,9 @@ CONTAINS
         NEW_PROBLEM%USER_NUMBER=USER_NUMBER
         NEW_PROBLEM%GLOBAL_NUMBER=PROBLEMS%NUMBER_OF_PROBLEMS+1
         NEW_PROBLEM%PROBLEMS=>PROBLEMS
+        NULLIFY(worldWorkGroup)
+        CALL ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err,error,*999)
+        NEW_PROBLEM%workGroup=>worldWorkGroup
         !Set problem specification
         CALL Problem_SpecificationSet(NEW_PROBLEM,PROBLEM_SPECIFICATION,err,error,*999)
         !For compatibility with old code, set class, type and subtype
@@ -938,6 +944,7 @@ CONTAINS
       PROBLEM%GLOBAL_NUMBER=0
       PROBLEM%PROBLEM_FINISHED=.FALSE.
       NULLIFY(PROBLEM%PROBLEMS)
+      NULLIFY(problem%workGroup)
       NULLIFY(PROBLEM%CONTROL_LOOP)
     ELSE
       CALL FlagError("Problem is not associated.",err,error,*999)
@@ -3738,6 +3745,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Problem_SpecificationSizeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the work group for a problem. \see OpenCMISS::cmfe_Problem_WorkGroupGet
+  SUBROUTINE Problem_WorkGroupSet(problem,workGroup,err,error,*)
+
+    !Argument variables
+    TYPE(PROBLEM_TYPE), POINTER, INTENT(INOUT) :: problem !<A pointer to the problem to set the work group for.
+    TYPE(WorkGroupType), POINTER, INTENT(IN) :: workGroup !<A pointer to the workgroup to set for the problem.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Problem_WorkGroupSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(problem%PROBLEM_FINISHED) CALL FlagError("Problem has already been finished.",err,error,*999)
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+    IF(.NOT.workGroup%workGroupFinished) CALL FlagError("Work group has not been finished.",err,error,*999)
+
+    problem%workGroup=>workGroup
+
+    EXITS("Problem_WorkGroupSet")
+    RETURN
+999 ERRORSEXITS("Problem_WorkGroupSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_WorkGroupSet
 
   !
   !================================================================================================================================

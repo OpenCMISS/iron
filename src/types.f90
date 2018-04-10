@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -71,6 +71,7 @@ MODULE Types
 
   USE CmissPetscTypes, ONLY : PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType,PetscMatFDColoringType, &
     & PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTaoType,PetscVecType
+  USE ComputationAccessRoutines
   USE Constants
   USE Kinds
   USE ISO_C_BINDING
@@ -1094,8 +1095,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfDataPoints !<The number of data points excluding ghost data points in this decomposition topology.
     INTEGER(INTG) :: totalNumberOfDataPoints !<Number of projected data in this decomposition topology.
     INTEGER(INTG) :: numberOfGlobalDataPoints !<Number of global projected data 
-    INTEGER(INTG), ALLOCATABLE :: numberOfDomainLocal(:) !<numberOfDomainLocal(compDomainIdx). Number of local data points in each computational domain 
-    INTEGER(INTG), ALLOCATABLE :: numberOfDomainGhost(:) !<numberOfDomainGhost(compDomainIdx). Number of ghost data points in each computational domain 
+    INTEGER(INTG), ALLOCATABLE :: numberOfDomainLocal(:) !<numberOfDomainLocal(compDomainIdx). Number of local data points in each computation domain 
+    INTEGER(INTG), ALLOCATABLE :: numberOfDomainGhost(:) !<numberOfDomainGhost(compDomainIdx). Number of ghost data points in each computation domain 
     INTEGER(INTG), ALLOCATABLE :: numberOfElementDataPoints(:) !<numberOfElementDataPoints(elementIdx). Number of data points in each global element
     TYPE(DecompositionElementDataPointsType), ALLOCATABLE :: elementDataPoint(:) !<elementDataPoint(elementIdx). Information of the projected data on the elements for decomposition of data points
     TYPE(TREE_TYPE), POINTER :: dataPointsTree !<A tree mapping the domain local number to the region data point user number.
@@ -1123,12 +1124,13 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfComponents !<The number of mesh components in this decomposition/mesh.
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER !<The component number (index) of the mesh component that this decomposition belongs to (i.e., was generated from).
     INTEGER(INTG) :: DECOMPOSITION_TYPE !<The type of the domain decomposition \see MESH_ROUTINES_DecompositionTypes.
+    TYPE(WorkGroupType), POINTER :: workGroup !<The work group to use for this decomposition
     INTEGER(INTG) :: NUMBER_OF_DOMAINS !<The number of domains that this decomposition contains.
     INTEGER(INTG) :: NUMBER_OF_EDGES_CUT !<For automatically calculated decompositions, the number of edges of the mesh dual graph that were cut for the composition. It provides an indication of the optimally of the automatic decomposition.
     INTEGER(INTG) :: numberOfElements !<The number of elements in the decomposition
     INTEGER(INTG), ALLOCATABLE :: ELEMENT_DOMAIN(:) !<ELEMENT_DOMAIN(ne). The domain number that the ne'th global element is in for the decomposition. Note: the domain numbers start at 0 and go up to the NUMBER_OF_DOMAINS-1.
     TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: topology !<A pointer to the topology for this decomposition.
-    TYPE(DOMAIN_PTR_TYPE), POINTER :: domain(:) !<DOMAIN(mesh_component_idx). A pointer to the domain for mesh component for the domain associated with the computational node. \todo Change this to allocatable???
+    TYPE(DOMAIN_PTR_TYPE), POINTER :: domain(:) !<DOMAIN(mesh_component_idx). A pointer to the domain for mesh component for the domain associated with the computation node. \todo Change this to allocatable???
     LOGICAL :: CALCULATE_FACES !<Boolean flag to determine whether faces should be calculated
     LOGICAL :: CALCULATE_LINES !<Boolean flag to determine whether lines should be calculated
   END TYPE DECOMPOSITION_TYPE
@@ -2674,7 +2676,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer to the solver
     LOGICAL :: SOLVER_MATRICES_FINISHED !<Is .TRUE. if the solver matrices have finished being created, .FALSE. if not.
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping for these solver matrices
-    INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of (local) rows in the distributed solution matrix for this computational node
+    INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of (local) rows in the distributed solution matrix for this computation node
     INTEGER(INTG) :: NUMBER_OF_GLOBAL_ROWS !<The number of global rows in the distributed solution matrix
     INTEGER(INTG) :: solverLibraryType !<The library type of the solver for the solver matrices \see SOLVER_ROUTINES_SolverLibraries
     INTEGER(INTG) :: matrixLibraryType !<The library type for the solver matrices \see DistributedMatrixVector_LibraryTypes
@@ -3495,6 +3497,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: PROBLEM_FINISHED !<Is .TRUE. if the problem has finished being created, .FALSE. if not.
     TYPE(PROBLEMS_TYPE), POINTER :: PROBLEMS !<A pointer to the problems for this problem.
     INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The problem specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
+    TYPE(WorkGroupType), POINTER :: workGroup !<The work group to use for the problem.
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop information for the problem.
   END TYPE PROBLEM_TYPE
   

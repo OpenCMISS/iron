@@ -278,7 +278,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a region given by USER_NUMBER and all sub-regions under it. \todo create destroy by pointer method. \see OPENCMISS::Iron::cmfe_RegionDestroy
+  !>Destroys a region given by USER_NUMBER and all sub-regions under it. \todo create destroy by pointer method. \see OpenCMISS::Iron::cmfe_Region_Destroy
   RECURSIVE SUBROUTINE REGION_DESTROY_NUMBER(USER_NUMBER,ERR,ERROR,*)
 
     !Argument variables

@@ -46,7 +46,8 @@
 MODULE DataPointRoutines
 
   USE BaseRoutines
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE DataPointAccessRoutines
   USE DataProjectionRoutines
