@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s): Ting Yu, Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -48,7 +48,8 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE BasisRoutines
   USE BasisAccessRoutines
   USE CmissMPI
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE CONSTANTS
   USE COORDINATE_ROUTINES
   USE DistributedMatrixVector
@@ -283,7 +284,7 @@ CONTAINS
     INTEGER(INTG) :: MPI_IERROR,SEND_COUNT,STORAGE_TYPE, NUMBER_OF_NON_ZEROS, NUMBER_OF_ROWS,COUNT
     INTEGER(INTG) :: variable_idx,dof_idx, equ_matrix_idx, dirichlet_idx, row_idx, DUMMY, LAST, DIRICHLET_DOF
     INTEGER(INTG) :: col_idx,equations_set_idx,parameterSetIdx
-    INTEGER(INTG) :: pressureIdx,neumannIdx
+    INTEGER(INTG) :: pressureIdx,neumannIdx,numberOfWorldComputationNodes,myWorldComputationNodeNumber,worldCommunicator
     INTEGER(INTG), POINTER :: ROW_INDICES(:), COLUMN_INDICES(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITION_VARIABLE
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: VARIABLE_DOMAIN_MAPPING
@@ -313,8 +314,11 @@ CONTAINS
         CALL FlagError("Boundary conditions have already been finished.",ERR,ERROR,*999)
       ELSE
         IF(ALLOCATED(BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES)) THEN
-          IF(computationalEnvironment%numberOfComputationalNodes>0) THEN
-            !Transfer all the boundary conditions to all the computational nodes.
+          CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
+          CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+          CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+          IF(numberOfWorldComputationNodes>0) THEN
+            !Transfer all the boundary conditions to all the computation nodes.
             !\todo Look at this.
             DO variable_idx=1,BOUNDARY_CONDITIONS%NUMBER_OF_BOUNDARY_CONDITIONS_VARIABLES
               BOUNDARY_CONDITION_VARIABLE=>BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES(variable_idx)%PTR
@@ -324,41 +328,41 @@ CONTAINS
                   VARIABLE_DOMAIN_MAPPING=>FIELD_VARIABLE%DOMAIN_MAPPING
                   IF(ASSOCIATED(VARIABLE_DOMAIN_MAPPING)) THEN
                     SEND_COUNT=VARIABLE_DOMAIN_MAPPING%NUMBER_OF_GLOBAL
-                    IF(computationalEnvironment%numberOfComputationalNodes>1) THEN
+                    IF(numberOfWorldComputationNodes>1) THEN
                       !\todo This operation is a little expensive as we are doing an unnecessary sum across all the ranks in order to combin
                       !\todo the data from each rank into all ranks. We will see how this goes for now.
                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%DOF_TYPES, &
-                        & SEND_COUNT,MPI_INTEGER,MPI_SUM,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+                        & SEND_COUNT,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                       CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%CONDITION_TYPES, &
-                        & SEND_COUNT,MPI_INTEGER,MPI_SUM,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+                        & SEND_COUNT,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                     ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
 
-                  ELSE
+                 ELSE
                     LOCAL_ERROR="Field variable domain mapping is not associated for variable type "// &
                       & TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))//"."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   ENDIF
 
-                  IF(computationalEnvironment%numberOfComputationalNodes>1) THEN
+                  IF(numberOfWorldComputationNodes>1) THEN
 
                     ! Update the total number of boundary condition types by summing across all nodes
                     CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%DOF_COUNTS, &
-                      & MAX_BOUNDARY_CONDITION_NUMBER,MPI_INTEGER,MPI_SUM,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+                      & MAX_BOUNDARY_CONDITION_NUMBER,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                     CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                     CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS, &
-                      & 1,MPI_INTEGER,MPI_SUM,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+                      & 1,MPI_INTEGER,MPI_SUM,worldCommunicator,MPI_IERROR)
                     CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                   ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
 
                   ! Check that the boundary conditions set are appropriate for equations sets
                   CALL BoundaryConditions_CheckEquations(BOUNDARY_CONDITION_VARIABLE,ERR,ERROR,*999)
 
-                  IF(computationalEnvironment%numberOfComputationalNodes>1) THEN
+                  IF(numberOfWorldComputationNodes>1) THEN
                     !Make sure the required parameter sets are created on all computational nodes and begin updating them
                     CALL MPI_ALLREDUCE(MPI_IN_PLACE,BOUNDARY_CONDITION_VARIABLE%parameterSetRequired, &
-                      & FIELD_NUMBER_OF_SET_TYPES,MPI_LOGICAL,MPI_LOR,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+                      & FIELD_NUMBER_OF_SET_TYPES,MPI_LOGICAL,MPI_LOR,worldCommunicator,MPI_IERROR)
                     CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                     DO parameterSetIdx=1,FIELD_NUMBER_OF_SET_TYPES
                       IF(BOUNDARY_CONDITION_VARIABLE%parameterSetRequired(parameterSetIdx)) THEN
@@ -1432,6 +1436,7 @@ CONTAINS
     !Local Variables
 
     ENTERS("BOUNDARY_CONDITIONS_SET_LOCAL_DOF1",ERR,ERROR,*999)
+
     CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOFS(BOUNDARY_CONDITIONS,FIELD,VARIABLE_TYPE,[DOF_INDEX],[CONDITION],[VALUE], &
       & ERR,ERROR,*999)
 
@@ -2226,7 +2231,7 @@ CONTAINS
     TYPE(DOMAIN_LINE_TYPE), POINTER :: line
     TYPE(DOMAIN_FACE_TYPE), POINTER :: face
     TYPE(LIST_TYPE), POINTER :: columnIndicesList, rowColumnIndicesList
-    INTEGER(INTG) :: myComputationalNodeNumber
+    INTEGER(INTG) :: myWorldComputationNodeNumber
     INTEGER(INTG) :: numberOfPointDofs, numberNonZeros, numberRowEntries, neumannConditionNumber, localNeumannConditionIdx
     INTEGER(INTG) :: neumannIdx, globalDof, localDof, localDofNyy, domainIdx, numberOfDomains, domainNumber, componentNumber
     INTEGER(INTG) :: nodeIdx, derivIdx, nodeNumber, versionNumber, derivativeNumber, columnNodeNumber, lineIdx, faceIdx, columnDof
@@ -2521,11 +2526,11 @@ CONTAINS
         !Set up vector of Neumann point values
         CALL DistributedVector_CreateStart(pointDofMapping,boundaryConditionsNeumann%pointValues,err,error,*999)
         CALL DistributedVector_CreateFinish(boundaryConditionsNeumann%pointValues,err,error,*999)
-        myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(err,error)
+        CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
         !Set point values vector from boundary conditions field parameter set
         DO neumannIdx=1,numberOfPointDofs
           globalDof=boundaryConditionsNeumann%setDofs(neumannIdx)
-          IF(rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%DOMAIN_NUMBER(1)==myComputationalNodeNumber) THEN
+          IF(rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%DOMAIN_NUMBER(1)==myWorldComputationNodeNumber) THEN
             localDof=rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%LOCAL_NUMBER(1)
             ! Set point DOF vector value
             localNeumannConditionIdx=boundaryConditionsNeumann%pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_NUMBER(1)
@@ -2647,7 +2652,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local variables
-    INTEGER(INTG) :: componentNumber,globalDof,localDof,neumannDofIdx,myComputationalNodeNumber
+    INTEGER(INTG) :: componentNumber,globalDof,localDof,neumannDofIdx,myWorldComputationNodeNumber
     INTEGER(INTG) :: numberOfNeumann,neumannLocalDof,neumannDofNyy
     INTEGER(INTG) :: neumannGlobalDof,neumannNodeNumber,neumannLocalNodeNumber,neumannLocalDerivNumber
     INTEGER(INTG) :: faceIdx,lineIdx,nodeIdx,derivIdx,gaussIdx
@@ -2693,7 +2698,7 @@ CONTAINS
 
       numberOfNeumann=rhsBoundaryConditions%DOF_COUNTS(BOUNDARY_CONDITION_NEUMANN_POINT) + &
         & rhsBoundaryConditions%DOF_COUNTS(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)
-      myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(err,error)
+      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
 
       ! Initialise field interpolation parameters for the geometric field, which are required for the
       ! face/line Jacobian and scale factors
@@ -2706,7 +2711,7 @@ CONTAINS
       ! and integrating over them
       DO neumannDofIdx=1,numberOfNeumann
         neumannGlobalDof=neumannConditions%setDofs(neumannDofIdx)
-        IF(rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(neumannGlobalDof)%DOMAIN_NUMBER(1)==myComputationalNodeNumber) THEN
+        IF(rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(neumannGlobalDof)%DOMAIN_NUMBER(1)==myWorldComputationNodeNumber) THEN
           neumannLocalDof=rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(neumannGlobalDof)%LOCAL_NUMBER(1)
           ! Get Neumann DOF component and topology for that component
           neumannDofNyy=rhsVariable%DOF_TO_PARAM_MAP%DOF_TYPE(2,neumannLocalDof)

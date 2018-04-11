@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s): Vijay Rajagopal,Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -48,7 +48,8 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE BasisRoutines
   USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
@@ -1513,8 +1514,8 @@ CONTAINS
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY,MAX_DIGITS
-    INTEGER(INTG) :: myComputationalNodeNumber
-    LOGICAL :: exportExelem
+    INTEGER(INTG) :: myWorldComputationNodeNumber
+   LOGICAL :: exportExelem
 
     CHARACTER(30) :: FILE
     CHARACTER(30) :: OUTPUT_FILE
@@ -1543,7 +1544,8 @@ CONTAINS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                     CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
                     OUTPUT_FREQUENCY=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
-                    myComputationalNodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
+                    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber, &
+                      & err,error,*999)
                     MAX_DIGITS=FLOOR(LOG10((CONTROL_LOOP%TIME_LOOP%STOP_TIME-CONTROL_LOOP%TIME_LOOP%START_TIME)/ &
                       & CONTROL_LOOP%TIME_LOOP%TIME_INCREMENT))+1
                     IF(OUTPUT_FREQUENCY>0) THEN
@@ -1556,7 +1558,7 @@ CONTAINS
                             WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_1.part",I2.2,".",',FMT,")"
                             FMT = TRIM(TEMP_FMT)
                             WRITE(OUTPUT_FILE,FMT) &
-                              & myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                              & myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
                           ELSE
                             WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
                             !200 FORMAT 
@@ -1564,7 +1566,7 @@ CONTAINS
                             WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_",I0,".part",I2.2,".",',FMT,")"
                             FMT = TRIM(TEMP_FMT)
                             WRITE(OUTPUT_FILE,FMT) &
-                              & equations_set_idx, myComputationalNodeNumber,CURRENT_LOOP_ITERATION
+                              & equations_set_idx, myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
                           ENDIF
                           WRITE(*,*) OUTPUT_FILE
                           FILE=TRIM(OUTPUT_FILE)

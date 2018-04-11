@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -49,7 +49,8 @@ MODULE MESH_ROUTINES
   USE BasisAccessRoutines
   USE CmissMPI
   USE CMISS_PARMETIS
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE DataProjectionAccessRoutines
   USE DOMAIN_MAPPINGS
@@ -153,6 +154,8 @@ MODULE MESH_ROUTINES
   PUBLIC DECOMPOSITION_MESH_COMPONENT_NUMBER_GET,DECOMPOSITION_MESH_COMPONENT_NUMBER_SET
   
   PUBLIC DECOMPOSITION_NUMBER_OF_DOMAINS_GET,DECOMPOSITION_NUMBER_OF_DOMAINS_SET
+
+  PUBLIC Decomposition_WorkGroupSet
 
   PUBLIC DecompositionTopology_DataPointCheckExists
   
@@ -282,7 +285,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a domain decomposition on a given mesh. \see OPENCMISS::Iron::cmfe_DecompositionCreateFinish
+  !>Finishes the creation of a domain decomposition on a given mesh. \see OpenCMISS::Iron::cmfe_Decomposition_CreateFinish
   SUBROUTINE DECOMPOSITION_CREATE_FINISH(DECOMPOSITION,ERR,ERROR,*)
 
     !Argument variables
@@ -300,7 +303,7 @@ CONTAINS
       CALL DECOMPOSITION_ELEMENT_DOMAIN_CALCULATE(DECOMPOSITION,ERR,ERROR,*999)
       !Initialise the topology information for this decomposition
       CALL DECOMPOSITION_TOPOLOGY_INITIALISE(DECOMPOSITION,ERR,ERROR,*999)
-      !Initialise the domain for this computational node
+      !Initialise the domain for this computation node
       CALL DOMAIN_INITIALISE(DECOMPOSITION,ERR,ERROR,*999)
       !Calculate the decomposition topology
       CALL DECOMPOSITION_TOPOLOGY_CALCULATE(DECOMPOSITION,ERR,ERROR,*999)
@@ -332,13 +335,14 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("DECOMPOSITION_CREATE_FINISH",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE DECOMPOSITION_CREATE_FINISH
 
   !
   !================================================================================================================================
   !
 
-  !>Starts the creation of a domain decomposition for a given mesh. \see OPENCMISS::Iron::cmfe_DecompositionCreateStart
+  !>Starts the creation of a domain decomposition for a given mesh. \see OpenCMISS::Iron::cmfe_Decomposition_CreateStart
   SUBROUTINE DECOMPOSITION_CREATE_START(USER_NUMBER,MESH,DECOMPOSITION,ERR,ERROR,*)
 
     !Argument variables
@@ -349,9 +353,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: decompositionIdx,dummyErr
-    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
     TYPE(DECOMPOSITION_TYPE), POINTER :: newDecomposition
     TYPE(DECOMPOSITION_PTR_TYPE), ALLOCATABLE :: newDecompositions(:)
+    TYPE(VARYING_STRING) :: dummyError,LOCAL_ERROR
+    TYPE(WorkGroupType), POINTER :: worldWorkGroup
 
     NULLIFY(newDecomposition)
 
@@ -387,6 +392,9 @@ CONTAINS
                 newDecomposition%MESH_COMPONENT_NUMBER=1
                 !Default decomposition is all the mesh with one domain.
                 newDecomposition%DECOMPOSITION_TYPE=DECOMPOSITION_ALL_TYPE
+                NULLIFY(worldWorkGroup)
+                CALL ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err,error,*999)
+                newDecomposition%workGroup=>worldWorkGroup
                 newDecomposition%NUMBER_OF_DOMAINS=1
                 newDecomposition%numberOfElements=mesh%NUMBER_OF_ELEMENTS
                 ALLOCATE(newDecomposition%ELEMENT_DOMAIN(MESH%NUMBER_OF_ELEMENTS),STAT=ERR)
@@ -433,7 +441,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a domain decomposition identified by a user number and deallocates all memory. \see OPENCMISS::Iron::cmfe_DecompositionDestroy
+  !>Destroys a domain decomposition identified by a user number and deallocates all memory. \see OpenCMISS::Iron::cmfe_Decomposition_Destroy
   SUBROUTINE DECOMPOSITION_DESTROY_NUMBER(USER_NUMBER,MESH,ERR,ERROR,*)
 
     !Argument variables
@@ -514,7 +522,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a domain decomposition identified by an object and deallocates all memory. \see OPENCMISS::Iron::cmfe_DecompositionDestroy
+  !>Destroys a domain decomposition identified by an object and deallocates all memory. \see OpenCMISS::Iron::cmfe_Decomposition_Destroy
   SUBROUTINE DECOMPOSITION_DESTROY(DECOMPOSITION,ERR,ERROR,*)
 
     !Argument variables
@@ -587,7 +595,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates the element domains for a decomposition of a mesh. \see OPENCMISS::Iron::cmfe_DecompositionElementDomainCalculate
+  !>Calculates the element domains for a decomposition of a mesh. \see OpenCMISS::Iron::cmfe_Decomposition_ElementDomainCalculate
   SUBROUTINE DECOMPOSITION_ELEMENT_DOMAIN_CALCULATE(DECOMPOSITION,ERR,ERROR,*)
 
     !Argument variables
@@ -595,13 +603,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: number_elem_indicies,elem_index,elem_count,ne,nn,my_computational_node_number,number_computational_nodes, &
-      & no_computational_node,ELEMENT_START,ELEMENT_STOP,MY_ELEMENT_START,MY_ELEMENT_STOP,NUMBER_OF_ELEMENTS, &
+    INTEGER(INTG) :: number_elem_indicies,elem_index,elem_count,ne,nn,my_computation_node_number,number_computation_nodes, &
+      & no_computation_node,ELEMENT_START,ELEMENT_STOP,MY_ELEMENT_START,MY_ELEMENT_STOP,NUMBER_OF_ELEMENTS, &
       & MY_NUMBER_OF_ELEMENTS,MPI_IERROR,MAX_NUMBER_ELEMENTS_PER_NODE,component_idx,minNumberXi
     INTEGER(INTG), ALLOCATABLE :: ELEMENT_COUNT(:),ELEMENT_PTR(:),ELEMENT_INDICIES(:),ELEMENT_DISTANCE(:),DISPLACEMENTS(:), &
       & RECEIVE_COUNTS(:)
     INTEGER(INTG) :: ELEMENT_WEIGHT(1),WEIGHT_FLAG,NUMBER_FLAG,NUMBER_OF_CONSTRAINTS, &
       & NUMBER_OF_COMMON_NODES,PARMETIS_OPTIONS(0:2)
+    INTEGER(INTG) :: worldCommunicator
     !ParMETIS now has double for these
     !REAL(SP) :: UBVEC(1)
     !REAL(SP), ALLOCATABLE :: TPWGTS(:)
@@ -620,11 +629,10 @@ CONTAINS
         IF(ASSOCIATED(MESH%TOPOLOGY)) THEN
 
           component_idx=DECOMPOSITION%MESH_COMPONENT_NUMBER
-          
-          number_computational_nodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
-          IF(ERR/=0) GOTO 999
-          my_computational_node_number=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
-          IF(ERR/=0) GOTO 999
+
+          CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+          CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,number_computation_nodes,err,error,*999)
+          CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,my_computation_node_number,err,error,*999)
           
           SELECT CASE(DECOMPOSITION%DECOMPOSITION_TYPE)
           CASE(DECOMPOSITION_ALL_TYPE)
@@ -634,38 +642,35 @@ CONTAINS
 
             IF(DECOMPOSITION%NUMBER_OF_DOMAINS==1) THEN
               DECOMPOSITION%ELEMENT_DOMAIN=0
-            ELSE
-              number_computational_nodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
-              IF(ERR/=0) GOTO 999
-              
-              NUMBER_ELEMENTS_PER_NODE=REAL(MESH%NUMBER_OF_ELEMENTS,DP)/REAL(number_computational_nodes,DP)
+            ELSE              
+              NUMBER_ELEMENTS_PER_NODE=REAL(MESH%NUMBER_OF_ELEMENTS,DP)/REAL(number_computation_nodes,DP)
               ELEMENT_START=1
               ELEMENT_STOP=0
               MAX_NUMBER_ELEMENTS_PER_NODE=-1
-              ALLOCATE(RECEIVE_COUNTS(0:number_computational_nodes-1),STAT=ERR)
+              ALLOCATE(RECEIVE_COUNTS(0:number_computation_nodes-1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate recieve counts.",ERR,ERROR,*999)
-              ALLOCATE(DISPLACEMENTS(0:number_computational_nodes-1),STAT=ERR)
+              ALLOCATE(DISPLACEMENTS(0:number_computation_nodes-1),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate displacements.",ERR,ERROR,*999)
-              ALLOCATE(ELEMENT_DISTANCE(0:number_computational_nodes),STAT=ERR)
+              ALLOCATE(ELEMENT_DISTANCE(0:number_computation_nodes),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate element distance.",ERR,ERROR,*999)
               ELEMENT_DISTANCE(0)=0
-              DO no_computational_node=0,number_computational_nodes-1
+              DO no_computation_node=0,number_computation_nodes-1
                 ELEMENT_START=ELEMENT_STOP+1
-                IF(no_computational_node==number_computational_nodes-1) THEN
+                IF(no_computation_node==number_computation_nodes-1) THEN
                   ELEMENT_STOP=MESH%NUMBER_OF_ELEMENTS
                 ELSE
                   ELEMENT_STOP=ELEMENT_START+NINT(NUMBER_ELEMENTS_PER_NODE,INTG)-1
                 ENDIF
-                IF((number_computational_nodes-1-no_computational_node)>(MESH%NUMBER_OF_ELEMENTS-ELEMENT_STOP)) &
-                  & ELEMENT_STOP=MESH%NUMBER_OF_ELEMENTS-(number_computational_nodes-1-no_computational_node)
+                IF((number_computation_nodes-1-no_computation_node)>(MESH%NUMBER_OF_ELEMENTS-ELEMENT_STOP)) &
+                  & ELEMENT_STOP=MESH%NUMBER_OF_ELEMENTS-(number_computation_nodes-1-no_computation_node)
                 IF(ELEMENT_START>MESH%NUMBER_OF_ELEMENTS) ELEMENT_START=MESH%NUMBER_OF_ELEMENTS
                 IF(ELEMENT_STOP>MESH%NUMBER_OF_ELEMENTS) ELEMENT_STOP=MESH%NUMBER_OF_ELEMENTS
-                DISPLACEMENTS(no_computational_node)=ELEMENT_START-1
-                ELEMENT_DISTANCE(no_computational_node+1)=ELEMENT_STOP !C numbering
+                DISPLACEMENTS(no_computation_node)=ELEMENT_START-1
+                ELEMENT_DISTANCE(no_computation_node+1)=ELEMENT_STOP !C numbering
                 NUMBER_OF_ELEMENTS=ELEMENT_STOP-ELEMENT_START+1
-                RECEIVE_COUNTS(no_computational_node)=NUMBER_OF_ELEMENTS
+                RECEIVE_COUNTS(no_computation_node)=NUMBER_OF_ELEMENTS
                 IF(NUMBER_OF_ELEMENTS>MAX_NUMBER_ELEMENTS_PER_NODE) MAX_NUMBER_ELEMENTS_PER_NODE=NUMBER_OF_ELEMENTS
-                IF(no_computational_node==my_computational_node_number) THEN
+                IF(no_computation_node==my_computation_node_number) THEN
                   MY_ELEMENT_START=ELEMENT_START
                   MY_ELEMENT_STOP=ELEMENT_STOP
                   MY_NUMBER_OF_ELEMENTS=ELEMENT_STOP-ELEMENT_START+1
@@ -675,7 +680,7 @@ CONTAINS
                     number_elem_indicies=number_elem_indicies+BASIS%NUMBER_OF_NODES
                   ENDDO !ne
                 ENDIF
-              ENDDO !no_computational_node
+              ENDDO !no_computation_node
               
               ALLOCATE(ELEMENT_PTR(0:MY_NUMBER_OF_ELEMENTS),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate element pointer list.",ERR,ERROR,*999)
@@ -702,7 +707,7 @@ CONTAINS
               !Set up ParMETIS variables
               WEIGHT_FLAG=0 !No weights
               ELEMENT_WEIGHT(1)=1 !Isn't used due to weight flag
-              NUMBER_FLAG=0 !C Numbering as there is a bug with Fortran numbering
+              NUMBER_FLAG=0 !C Numbering as there is a bug with Fortran numbering              
               NUMBER_OF_CONSTRAINTS=1
               IF(minNumberXi==1) THEN
                 NUMBER_OF_COMMON_NODES=1
@@ -721,14 +726,14 @@ CONTAINS
               !Call ParMETIS to calculate the partitioning of the mesh graph.
               CALL PARMETIS_PARTMESHKWAY(ELEMENT_DISTANCE,ELEMENT_PTR,ELEMENT_INDICIES,ELEMENT_WEIGHT,WEIGHT_FLAG,NUMBER_FLAG, &
                 & NUMBER_OF_CONSTRAINTS,NUMBER_OF_COMMON_NODES,DECOMPOSITION%NUMBER_OF_DOMAINS,TPWGTS,UBVEC,PARMETIS_OPTIONS, &
-                & DECOMPOSITION%NUMBER_OF_EDGES_CUT,DECOMPOSITION%ELEMENT_DOMAIN(DISPLACEMENTS(my_computational_node_number)+1:), &
-                & computationalEnvironment%mpiCommunicator,ERR,ERROR,*999)
+                & DECOMPOSITION%NUMBER_OF_EDGES_CUT,DECOMPOSITION%ELEMENT_DOMAIN(DISPLACEMENTS(my_computation_node_number)+1:), &
+                & worldCommunicator,ERR,ERROR,*999)
               
-              !Transfer all the element domain information to the other computational nodes so that each rank has all the info
-              IF(number_computational_nodes>1) THEN
+              !Transfer all the element domain information to the other computation nodes so that each rank has all the info
+              IF(number_computation_nodes>1) THEN
                 !This should work on a single processor but doesn't for mpich2 under windows. Maybe a bug? Avoid for now.
                 CALL MPI_ALLGATHERV(MPI_IN_PLACE,MAX_NUMBER_ELEMENTS_PER_NODE,MPI_INTEGER,DECOMPOSITION%ELEMENT_DOMAIN, &
-                  & RECEIVE_COUNTS,DISPLACEMENTS,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+                  & RECEIVE_COUNTS,DISPLACEMENTS,MPI_INTEGER,worldCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPI_IERROR,ERR,ERROR,*999)
               ENDIF
               
@@ -748,28 +753,28 @@ CONTAINS
           END SELECT
 
           !Check decomposition and check that each domain has an element in it.
-          ALLOCATE(ELEMENT_COUNT(0:number_computational_nodes-1),STAT=ERR)
+          ALLOCATE(ELEMENT_COUNT(0:number_computation_nodes-1),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate element count.",ERR,ERROR,*999)
           ELEMENT_COUNT=0
           DO elem_index=1,MESH%NUMBER_OF_ELEMENTS
-            no_computational_node=DECOMPOSITION%ELEMENT_DOMAIN(elem_index)
-            IF(no_computational_node>=0.AND.no_computational_node<number_computational_nodes) THEN
-              ELEMENT_COUNT(no_computational_node)=ELEMENT_COUNT(no_computational_node)+1
+            no_computation_node=DECOMPOSITION%ELEMENT_DOMAIN(elem_index)
+            IF(no_computation_node>=0.AND.no_computation_node<number_computation_nodes) THEN
+              ELEMENT_COUNT(no_computation_node)=ELEMENT_COUNT(no_computation_node)+1
             ELSE
-              LOCAL_ERROR="The computational node number of "//TRIM(NUMBER_TO_VSTRING(no_computational_node,"*",ERR,ERROR))// &
+              LOCAL_ERROR="The computation node number of "//TRIM(NUMBER_TO_VSTRING(no_computation_node,"*",ERR,ERROR))// &
                 & " for element number "//TRIM(NUMBER_TO_VSTRING(elem_index,"*",ERR,ERROR))// &
-                & " is invalid. The computational node number must be between 0 and "// &
-                & TRIM(NUMBER_TO_VSTRING(number_computational_nodes-1,"*",ERR,ERROR))//"."
+                & " is invalid. The computation node number must be between 0 and "// &
+                & TRIM(NUMBER_TO_VSTRING(number_computation_nodes-1,"*",ERR,ERROR))//"."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ENDDO !elem_index
-          DO no_computational_node=0,number_computational_nodes-1
-            IF(ELEMENT_COUNT(no_computational_node)==0) THEN
-              LOCAL_ERROR="Invalid decomposition. There are no elements in computational node "// &
-                & TRIM(NUMBER_TO_VSTRING(no_computational_node,"*",ERR,ERROR))//"."
+          DO no_computation_node=0,number_computation_nodes-1
+            IF(ELEMENT_COUNT(no_computation_node)==0) THEN
+              LOCAL_ERROR="Invalid decomposition. There are no elements in computation node "// &
+                & TRIM(NUMBER_TO_VSTRING(no_computation_node,"*",ERR,ERROR))//"."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
-          ENDDO !no_computational_node
+          ENDDO !no_computation_node
           DEALLOCATE(ELEMENT_COUNT)
           
         ELSE
@@ -820,7 +825,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the domain for a given element in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OPENCMISS::Iron::cmfe_DecompositionElementDomainGet
+  !>Gets the domain for a given element in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OpenCMISS::Iron::cmfe_Decomposition_ElementDomainGet
   SUBROUTINE DECOMPOSITION_ELEMENT_DOMAIN_GET(DECOMPOSITION,USER_ELEMENT_NUMBER,DOMAIN_NUMBER,ERR,ERROR,*)
 
     !Argument variables
@@ -892,7 +897,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the domain for a given element in a decomposition of a mesh. \todo move to user number, should be able to specify lists of elements. \see OPENCMISS::Iron::cmfe_DecompositionElementDomainSet 
+  !>Sets the domain for a given element in a decomposition of a mesh. \todo move to user number, should be able to specify lists of elements. \see OpenCMISS::Iron::cmfe_Decomposition_ElementDomainSet 
   SUBROUTINE DECOMPOSITION_ELEMENT_DOMAIN_SET(DECOMPOSITION,GLOBAL_ELEMENT_NUMBER,DOMAIN_NUMBER,ERR,ERROR,*)
 
     !Argument variables
@@ -902,7 +907,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: number_computational_nodes
+    INTEGER(INTG) :: number_computation_nodes
     TYPE(MESH_TYPE), POINTER :: MESH
     TYPE(MeshComponentTopologyType), POINTER :: MESH_TOPOLOGY
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -920,13 +925,13 @@ CONTAINS
           MESH_TOPOLOGY=>MESH%TOPOLOGY(DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
           IF(ASSOCIATED(MESH_TOPOLOGY)) THEN
             IF(GLOBAL_ELEMENT_NUMBER>0.AND.GLOBAL_ELEMENT_NUMBER<=MESH_TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS) THEN
-              number_computational_nodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
-              IF(ERR/=0) GOTO 999
-              IF(DOMAIN_NUMBER>=0.AND.DOMAIN_NUMBER<number_computational_nodes) THEN
+              CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,number_computation_nodes, &
+                & err,error,*999)
+              IF(DOMAIN_NUMBER>=0.AND.DOMAIN_NUMBER<number_computation_nodes) THEN
                 DECOMPOSITION%ELEMENT_DOMAIN(GLOBAL_ELEMENT_NUMBER)=DOMAIN_NUMBER
               ELSE
                 LOCAL_ERROR="Domain number "//TRIM(NUMBER_TO_VSTRING(DOMAIN_NUMBER,"*",ERR,ERROR))// &
-                  & " is invalid. The limits are 0 to "//TRIM(NUMBER_TO_VSTRING(number_computational_nodes,"*",ERR,ERROR))//"."
+                  & " is invalid. The limits are 0 to "//TRIM(NUMBER_TO_VSTRING(number_computation_nodes,"*",ERR,ERROR))//"."
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
@@ -1015,6 +1020,7 @@ CONTAINS
       decomposition%numberOfDimensions=0
       decomposition%numberOfComponents=0
       decomposition%DECOMPOSITION_TYPE=DECOMPOSITION_ALL_TYPE
+      NULLIFY(decomposition%workGroup)
       decomposition%NUMBER_OF_DOMAINS=0
       decomposition%NUMBER_OF_EDGES_CUT=0
       decomposition%numberOfElements=0
@@ -1038,7 +1044,7 @@ CONTAINS
 
   !!MERGE: ditto
   
-  !>Gets the mesh component number which will be used for the decomposition of a mesh. \see OPENCMISS::Iron::cmfe_DecompositionMeshComponentGet
+  !>Gets the mesh component number which will be used for the decomposition of a mesh. \see OpenCMISS::Iron::cmfe_DecompositionMeshComponentGet
   SUBROUTINE DECOMPOSITION_MESH_COMPONENT_NUMBER_GET(DECOMPOSITION,MESH_COMPONENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
@@ -1075,7 +1081,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the mesh component number which will be used for the decomposition of a mesh. \see OPENCMISS::Iron::cmfe_DecompositionMeshComponentSet
+  !>Sets/changes the mesh component number which will be used for the decomposition of a mesh. \see OpenCMISS::Iron::cmfe_DecompositionMeshComponentSet
   SUBROUTINE DECOMPOSITION_MESH_COMPONENT_NUMBER_SET(DECOMPOSITION,MESH_COMPONENT_NUMBER,ERR,ERROR,*)
 
     !Argument variables
@@ -1121,7 +1127,7 @@ CONTAINS
 
   !!MERGE: ditto
   
-  !>Gets the number of domains for a decomposition. \see OPENCMISS::Iron::cmfe_DecompositionNumberOfDomainsGet
+  !>Gets the number of domains for a decomposition. \see OpenCMISS::Iron::cmfe_DecompositionNumberOfDomainsGet
   SUBROUTINE DECOMPOSITION_NUMBER_OF_DOMAINS_GET(DECOMPOSITION,NUMBER_OF_DOMAINS,ERR,ERROR,*)
 
     !Argument variables
@@ -1154,7 +1160,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of domains for a decomposition. \see OPENCMISS::Iron::cmfe_DecompositionNumberOfDomainsSet
+  !>Sets/changes the number of domains for a decomposition. \see OpenCMISS::Iron::cmfe_DecompositionNumberOfDomainsSet
   SUBROUTINE DECOMPOSITION_NUMBER_OF_DOMAINS_SET(DECOMPOSITION,NUMBER_OF_DOMAINS,ERR,ERROR,*)
 
     !Argument variables
@@ -1163,7 +1169,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfComputationalNodes
+    INTEGER(INTG) :: numberOfWorldComputationNodes
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("DECOMPOSITION_NUMBER_OF_DOMAINS_SET",ERR,ERROR,*999)
@@ -1183,16 +1189,16 @@ CONTAINS
           IF(NUMBER_OF_DOMAINS>=1) THEN
             !wolfye???<=?
             IF(NUMBER_OF_DOMAINS<=DECOMPOSITION%numberOfElements) THEN
-              !Get the number of computational nodes
-              numberOfComputationalNodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
-              IF(ERR/=0) GOTO 999
+              !Get the number of computation nodes
+              CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes, &
+                & err,error,*999)
               !!TODO: relax this later
-              !IF(NUMBER_OF_DOMAINS==numberOfComputationalNodes) THEN
+              !IF(NUMBER_OF_DOMAINS==numberOfWorldComputationNodes) THEN
                 DECOMPOSITION%NUMBER_OF_DOMAINS=NUMBER_OF_DOMAINS             
               !ELSE
               !  LOCAL_ERROR="The number of domains ("//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DOMAINSS,"*",ERR,ERROR))// &
-              !    & ") is not equal to the number of computational nodes ("// &
-              !    & TRIM(NUMBER_TO_VSTRING(numberOfComputationalNodes,"*",ERR,ERROR))//")"
+              !    & ") is not equal to the number of computation nodes ("// &
+              !    & TRIM(NUMBER_TO_VSTRING(numberOfWorldComputationNodes,"*",ERR,ERROR))//")"
               !  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               !ENDIF
             ELSE
@@ -1219,6 +1225,38 @@ CONTAINS
 999 ERRORSEXITS("DECOMPOSITION_NUMBER_OF_DOMAINS_SET",ERR,ERROR)
     RETURN 1
   END SUBROUTINE DECOMPOSITION_NUMBER_OF_DOMAINS_SET
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the workgroup to use for a decomposition on a given mesh. \see OpenCMISS::Iron::cmfe_Decomposition_WorkGroupSet
+  SUBROUTINE Decomposition_WorkGroupSet(decomposition,workGroup,err,error,*)
+
+    !Argument variables
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<A pointer to the decomposition to set the work group for
+    TYPE(WorkGroupType), POINTER :: workGroup !<A pointer to the work group to use for the decomposition
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: decomposition_no
+    TYPE(MESH_TYPE), POINTER :: MESH
+
+    ENTERS("Decomposition_WorkGroupSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+    IF(decomposition%DECOMPOSITION_FINISHED) CALL FlagError("Decomposition has already been finished.",err,error,*999)
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+    IF(.NOT.workGroup%workGroupFinished) CALL FlagError("Work group has not been finished.",err,error,*999)
+
+    decomposition%workGroup=>workGroup
+       
+    EXITS("Decomposition_WorkGroupSet")
+    RETURN
+999 ERRORSEXITS("Decomposition_WorkGroupSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_WorkGroupSet
 
   !
   !================================================================================================================================
@@ -1274,8 +1312,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: localElement,globalElement,dataPointIdx,localData,meshComponentNumber
-    INTEGER(INTG) :: INSERT_STATUS,MPI_IERROR,NUMBER_OF_COMPUTATIONAL_NODES,myComputationalNodeNumber,NUMBER_OF_GHOST_DATA, &
+    INTEGER(INTG) :: localElement,globalElement,dataPointIdx,localData,meshComponentNumber,worldCommunicator
+    INTEGER(INTG) :: INSERT_STATUS,MPI_IERROR,NUMBER_OF_COMPUTATION_NODES,myWorldComputationNodeNumber,NUMBER_OF_GHOST_DATA, &
       & NUMBER_OF_LOCAL_DATA
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
@@ -1290,19 +1328,20 @@ CONTAINS
       IF(ASSOCIATED(decompositionData)) THEN
         decomposition=>decompositionData%DECOMPOSITION
         IF(ASSOCIATED(decomposition)) THEN
-         decompositionElements=>TOPOLOGY%ELEMENTS
-         IF(ASSOCIATED(decompositionElements)) THEN
-           elementsMapping=>decomposition%DOMAIN(decomposition%MESH_COMPONENT_NUMBER)%PTR%MAPPINGS%ELEMENTS
-           IF(ASSOCIATED(elementsMapping)) THEN
+          CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+          decompositionElements=>TOPOLOGY%ELEMENTS
+          IF(ASSOCIATED(decompositionElements)) THEN
+            elementsMapping=>decomposition%DOMAIN(decomposition%MESH_COMPONENT_NUMBER)%PTR%MAPPINGS%ELEMENTS
+            IF(ASSOCIATED(elementsMapping)) THEN
               meshComponentNumber=decomposition%MESH_COMPONENT_NUMBER
               meshData=>decomposition%MESH%TOPOLOGY(meshComponentNumber)%PTR%dataPoints
               IF(ASSOCIATED(meshData)) THEN
-                NUMBER_OF_COMPUTATIONAL_NODES=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
-                IF(ERR/=0) GOTO 999
-                myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
-                IF(ERR/=0) GOTO 999
-                ALLOCATE(decompositionData%numberOfDomainLocal(0:NUMBER_OF_COMPUTATIONAL_NODES-1),STAT=ERR)
-                ALLOCATE(decompositionData%numberOfDomainGhost(0:NUMBER_OF_COMPUTATIONAL_NODES-1),STAT=ERR)
+                CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,NUMBER_OF_COMPUTATION_NODES, &
+                  & err,error,*999)
+                CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber, &
+                  & err,error,*999)
+                ALLOCATE(decompositionData%numberOfDomainLocal(0:NUMBER_OF_COMPUTATION_NODES-1),STAT=ERR)
+                ALLOCATE(decompositionData%numberOfDomainGhost(0:NUMBER_OF_COMPUTATION_NODES-1),STAT=ERR)
                 ALLOCATE(decompositionData%numberOfElementDataPoints(decompositionElements%NUMBER_OF_GLOBAL_ELEMENTS),STAT=ERR)
                 ALLOCATE(decompositionData%elementDataPoint(decompositionElements%TOTAL_NUMBER_OF_ELEMENTS),STAT=ERR)
                 IF(ERR/=0) CALL FlagError("Could not allocate decomposition element data points.",ERR,ERROR,*999)
@@ -1340,16 +1379,16 @@ CONTAINS
                       & INSERT_STATUS,ERR,ERROR,*999)
                   ENDDO !dataPointIdx
                 ENDDO !localElement   
-                !Calculate number of ghost data points on the current computational domain
+                !Calculate number of ghost data points on the current computation domain
                 NUMBER_OF_LOCAL_DATA=decompositionData%numberOfDataPoints
                 NUMBER_OF_GHOST_DATA=decompositionData%totalNumberOfDataPoints-decompositionData%numberOfDataPoints
-                !Gather number of local data points on all computational nodes
+                !Gather number of local data points on all computation nodes
                 CALL MPI_ALLGATHER(NUMBER_OF_LOCAL_DATA,1,MPI_INTEGER,decompositionData% &
-                  & numberOfDomainLocal,1,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+                  & numberOfDomainLocal,1,MPI_INTEGER,worldCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
-                !Gather number of ghost data points on all computational nodes
+                !Gather number of ghost data points on all computation nodes
                 CALL MPI_ALLGATHER(NUMBER_OF_GHOST_DATA,1,MPI_INTEGER,decompositionData% &
-                  & numberOfDomainGhost,1,MPI_INTEGER,computationalEnvironment%mpiCommunicator,MPI_IERROR)
+                  & numberOfDomainGhost,1,MPI_INTEGER,worldCommunicator,MPI_IERROR)
                 CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
               ELSE
                 CALL FlagError("Mesh data points topology is not associated.",ERR,ERROR,*999)
@@ -1374,6 +1413,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("DecompositionTopology_DataPointsCalculate",ERR,ERROR)
     RETURN 1
+    
   END SUBROUTINE DecompositionTopology_DataPointsCalculate
 
   !
@@ -3696,7 +3736,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the decomposition type for a decomposition. \see OPENCMISS::Iron::cmfe_DecompositionTypeGet
+  !>Gets the decomposition type for a decomposition. \see OpenCMISS::Iron::cmfe_DecompositionTypeGet
   SUBROUTINE DECOMPOSITION_TYPE_GET(DECOMPOSITION,TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -3728,7 +3768,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the decomposition type for a decomposition.  \see OPENCMISS::Iron::cmfe_DecompositionTypeSet
+  !>Sets/changes the decomposition type for a decomposition.  \see OpenCMISS::Iron::cmfe_DecompositionTypeSet
   SUBROUTINE DECOMPOSITION_TYPE_SET(DECOMPOSITION,TYPE,ERR,ERROR,*)
 
     !Argument variables
@@ -3772,7 +3812,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes whether lines should be calculated in the the decomposition. \see OPENCMISS::Iron::cmfe_DecompositionCalculateLinesSet
+  !>Sets/changes whether lines should be calculated in the the decomposition. \see OpenCMISS::Iron::cmfe_DecompositionCalculateLinesSet
   SUBROUTINE DECOMPOSITION_CALCULATE_LINES_SET(DECOMPOSITION,CALCULATE_LINES_FLAG,ERR,ERROR,*)
 
     !Argument variables
@@ -3803,7 +3843,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes whether faces should be calculated in the the decomposition. \see OPENCMISS::Iron::cmfe_DecompositionCalculateFacesSet
+  !>Sets/changes whether faces should be calculated in the the decomposition. \see OpenCMISS::Iron::cmfe_DecompositionCalculateFacesSet
   SUBROUTINE DECOMPOSITION_CALCULATE_FACES_SET(DECOMPOSITION,CALCULATE_FACES_FLAG,ERR,ERROR,*)
 
     !Argument variables
@@ -4070,7 +4110,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,no_adjacent_element,adjacent_element,domain_no,domain_idx,ne,nn,np,NUMBER_OF_DOMAINS, &
-      & NUMBER_OF_ADJACENT_ELEMENTS,myComputationalNodeNumber,component_idx
+      & NUMBER_OF_ADJACENT_ELEMENTS,myWorldComputationNodeNumber,component_idx
     INTEGER(INTG), ALLOCATABLE :: ADJACENT_ELEMENTS(:),DOMAINS(:),LOCAL_ELEMENT_NUMBERS(:)
     TYPE(LIST_TYPE), POINTER :: ADJACENT_DOMAINS_LIST
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: ADJACENT_ELEMENTS_LIST(:)
@@ -4091,10 +4131,11 @@ CONTAINS
             IF(ASSOCIATED(DOMAIN%MESH)) THEN
               MESH=>DOMAIN%MESH
               component_idx=DOMAIN%MESH_COMPONENT_NUMBER
-              myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
-              IF(ERR/=0) GOTO 999        
               
-              !Calculate the local and global numbers and set up the mappings
+              CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber, &
+                & err,error,*999)
+              
+              !Calculate the local and global numbers and set up the mappings                           
               ALLOCATE(ELEMENTS_MAPPING%GLOBAL_TO_LOCAL_MAP(MESH%NUMBER_OF_ELEMENTS),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate element mapping global to local map.",ERR,ERROR,*999)
               ELEMENTS_MAPPING%NUMBER_OF_GLOBAL=MESH%TOPOLOGY(component_idx)%PTR%ELEMENTS%NUMBER_OF_ELEMENTS
@@ -4117,7 +4158,7 @@ CONTAINS
                 !Calculate the local numbers
                 domain_no=DECOMPOSITION%ELEMENT_DOMAIN(ne)
                 LOCAL_ELEMENT_NUMBERS(domain_no)=LOCAL_ELEMENT_NUMBERS(domain_no)+1
-                !Calculate the adjacent elements to the computational domains and the adjacent domain numbers themselves
+                !Calculate the adjacent elements to the computation domains and the adjacent domain numbers themselves
                 BASIS=>MESH%TOPOLOGY(component_idx)%PTR%ELEMENTS%ELEMENTS(ne)%BASIS
                 NULLIFY(ADJACENT_DOMAINS_LIST)
                 CALL LIST_CREATE_START(ADJACENT_DOMAINS_LIST,ERR,ERROR,*999)
@@ -4152,7 +4193,7 @@ CONTAINS
                   !Element is an internal element
                   ELEMENTS_MAPPING%GLOBAL_TO_LOCAL_MAP(ne)%LOCAL_TYPE(1)=DOMAIN_LOCAL_INTERNAL
                 ELSE
-                  !Element is on the boundary of computational domains
+                  !Element is on the boundary of computation domains
                   ELEMENTS_MAPPING%GLOBAL_TO_LOCAL_MAP(ne)%LOCAL_TYPE(1)=DOMAIN_LOCAL_BOUNDARY
                 ENDIF
               ENDDO !ne
@@ -4427,9 +4468,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,no_adjacent_element,no_computational_node,no_ghost_node,adjacent_element,ghost_node, &
+    INTEGER(INTG) :: DUMMY_ERR,no_adjacent_element,no_computation_node,no_ghost_node,adjacent_element,ghost_node, &
       & NUMBER_OF_NODES_PER_DOMAIN,domain_idx,domain_idx2,domain_no,node_idx,derivative_idx,version_idx,ny,NUMBER_OF_DOMAINS, &
-      & MAX_NUMBER_DOMAINS,NUMBER_OF_GHOST_NODES,myComputationalNodeNumber,numberOfComputationalNodes,component_idx
+      & MAX_NUMBER_DOMAINS,NUMBER_OF_GHOST_NODES,myWorldComputationNodeNumber,numberOfWorldComputationNodes,component_idx
     INTEGER(INTG), ALLOCATABLE :: LOCAL_NODE_NUMBERS(:),LOCAL_DOF_NUMBERS(:),NODE_COUNT(:),NUMBER_INTERNAL_NODES(:), &
       & NUMBER_BOUNDARY_NODES(:)
     INTEGER(INTG), ALLOCATABLE :: DOMAINS(:),ALL_DOMAINS(:),GHOST_NODES(:)
@@ -4460,12 +4501,12 @@ CONTAINS
                   MESH=>DOMAIN%MESH
                   component_idx=DOMAIN%MESH_COMPONENT_NUMBER
                   MESH_TOPOLOGY=>MESH%TOPOLOGY(component_idx)%PTR
-                  
-                  numberOfComputationalNodes=ComputationalEnvironment_NumberOfNodesGet(ERR,ERROR)
-                  IF(ERR/=0) GOTO 999
-                  myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
-                  IF(ERR/=0) GOTO 999
-                  
+
+                  CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes, &
+                    & err,error,*999)
+                  CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber, &
+                    & err,error,*999)
+                   
                   !Calculate the local and global numbers and set up the mappings
                   ALLOCATE(NODES_MAPPING%GLOBAL_TO_LOCAL_MAP(MESH_TOPOLOGY%NODES%numberOfNodes),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate node mapping global to local map.",ERR,ERROR,*999)
@@ -4571,7 +4612,7 @@ CONTAINS
                         ENDDO !version_idx
                       ENDDO !derivative_idx
                     ELSE
-                      !Node is on the boundary of computational domains
+                      !Node is on the boundary of computation domains
                       NODES_MAPPING%GLOBAL_TO_LOCAL_MAP(node_idx)%NUMBER_OF_DOMAINS=NUMBER_OF_DOMAINS
                       DO derivative_idx=1,MESH_TOPOLOGY%NODES%NODES(node_idx)%numberOfDerivatives
                         DO version_idx=1,MESH_TOPOLOGY%NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
@@ -4697,29 +4738,29 @@ CONTAINS
                   ENDDO !domain_idx
                   
                   !Check decomposition and check that each domain has a node in it.
-                  ALLOCATE(NODE_COUNT(0:numberOfComputationalNodes-1),STAT=ERR)
+                  ALLOCATE(NODE_COUNT(0:numberOfWorldComputationNodes-1),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate node count.",ERR,ERROR,*999)
                   NODE_COUNT=0
                   DO node_idx=1,MESH_TOPOLOGY%NODES%numberOfNodes
-                    no_computational_node=DOMAIN%NODE_DOMAIN(node_idx)
-                    IF(no_computational_node>=0.AND.no_computational_node<numberOfComputationalNodes) THEN
-                      NODE_COUNT(no_computational_node)=NODE_COUNT(no_computational_node)+1
+                    no_computation_node=DOMAIN%NODE_DOMAIN(node_idx)
+                    IF(no_computation_node>=0.AND.no_computation_node<numberOfWorldComputationNodes) THEN
+                      NODE_COUNT(no_computation_node)=NODE_COUNT(no_computation_node)+1
                     ELSE
-                      LOCAL_ERROR="The computational node number of "// &
-                        & TRIM(NUMBER_TO_VSTRING(no_computational_node,"*",ERR,ERROR))// &
+                      LOCAL_ERROR="The computation node number of "// &
+                        & TRIM(NUMBER_TO_VSTRING(no_computation_node,"*",ERR,ERROR))// &
                         & " for node number "//TRIM(NUMBER_TO_VSTRING(node_idx,"*",ERR,ERROR))// &
-                        & " is invalid. The computational node number must be between 0 and "// &
-                        & TRIM(NUMBER_TO_VSTRING(numberOfComputationalNodes-1,"*",ERR,ERROR))//"."
+                        & " is invalid. The computation node number must be between 0 and "// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfWorldComputationNodes-1,"*",ERR,ERROR))//"."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ENDDO !node_idx
-                  DO no_computational_node=0,numberOfComputationalNodes-1
-                    IF(NODE_COUNT(no_computational_node)==0) THEN
-                      LOCAL_ERROR="Invalid decomposition. There are no nodes in computational node "// &
-                        & TRIM(NUMBER_TO_VSTRING(no_computational_node,"*",ERR,ERROR))//"."
+                  DO no_computation_node=0,numberOfWorldComputationNodes-1
+                    IF(NODE_COUNT(no_computation_node)==0) THEN
+                      LOCAL_ERROR="Invalid decomposition. There are no nodes in computation node "// &
+                        & TRIM(NUMBER_TO_VSTRING(no_computation_node,"*",ERR,ERROR))//"."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
-                  ENDDO !no_computational_node
+                  ENDDO !no_computation_node
                   DEALLOCATE(NODE_COUNT)
           
                   DEALLOCATE(GHOST_NODES_LIST)
@@ -6182,7 +6223,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating a mesh. \see OPENCMISS::Iron::cmfe_MeshCreateFinish
+  !>Finishes the process of creating a mesh. \see OpenCMISS::Iron::cmfe_MeshCreateFinish
   SUBROUTINE MESH_CREATE_FINISH(MESH,ERR,ERROR,*)
 
     !Argument variables
@@ -6311,7 +6352,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating a mesh defined by a user number with the specified NUMBER_OF_DIMENSIONS in an interface. \see OPENCMISS::Iron::cmfe_MeshCreateStart
+  !>Starts the process of creating a mesh defined by a user number with the specified NUMBER_OF_DIMENSIONS in an interface. \see OpenCMISS::Iron::cmfe_MeshCreateStart
   !>Default values set for the MESH's attributes are:
   !>- NUMBER_OF_COMPONENTS: 1
   SUBROUTINE MESH_CREATE_START_INTERFACE(USER_NUMBER,INTERFACE,NUMBER_OF_DIMENSIONS,MESH,ERR,ERROR,*)
@@ -6390,7 +6431,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating a mesh defined by a user number with the specified NUMBER_OF_DIMENSIONS in the region identified by REGION. \see OPENCMISS::Iron::cmfe_MeshCreateStart
+  !>Starts the process of creating a mesh defined by a user number with the specified NUMBER_OF_DIMENSIONS in the region identified by REGION. \see OpenCMISS::Iron::cmfe_MeshCreateStart
   !>Default values set for the MESH's attributes are:
   !>- NUMBER_OF_COMPONENTS: 1
   SUBROUTINE MESH_CREATE_START_REGION(USER_NUMBER,REGION,NUMBER_OF_DIMENSIONS,MESH,ERR,ERROR,*)
@@ -6460,7 +6501,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys the mesh identified by a user number on the given region and deallocates all memory. \see OPENCMISS::Iron::cmfe_MeshDestroy
+  !>Destroys the mesh identified by a user number on the given region and deallocates all memory. \see OpenCMISS::Iron::cmfe_MeshDestroy
   SUBROUTINE MESH_DESTROY_NUMBER(USER_NUMBER,REGION,ERR,ERROR,*)
 
     !Argument variables
@@ -6543,7 +6584,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys the mesh and deallocates all memory. \see OPENCMISS::Iron::cmfe_MeshDestroy
+  !>Destroys the mesh and deallocates all memory. \see OpenCMISS::Iron::cmfe_MeshDestroy
   SUBROUTINE MESH_DESTROY(MESH,ERR,ERROR,*)
 
     !Argument variables
@@ -6735,7 +6776,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the number of mesh components for a mesh identified by a pointer. \see OPENCMISS::Iron::cmfe_MeshNumberOfComponentsGet
+  !>Gets the number of mesh components for a mesh identified by a pointer. \see OpenCMISS::Iron::cmfe_MeshNumberOfComponentsGet
   SUBROUTINE MESH_NUMBER_OF_COMPONENTS_GET(MESH,NUMBER_OF_COMPONENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -6767,7 +6808,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the number of mesh components for a mesh. \see OPENCMISS::Iron::cmfe_MeshNumberOfComponentsSet
+  !>Changes/sets the number of mesh components for a mesh. \see OpenCMISS::Iron::cmfe_MeshNumberOfComponentsSet
   SUBROUTINE MESH_NUMBER_OF_COMPONENTS_SET(MESH,NUMBER_OF_COMPONENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -6843,7 +6884,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the number of elements for a mesh identified by a pointer. \see OPENCMISS::Iron::cmfe_MeshNumberOfElementsGet
+  !>Gets the number of elements for a mesh identified by a pointer. \see OpenCMISS::Iron::cmfe_MeshNumberOfElementsGet
   SUBROUTINE MESH_NUMBER_OF_ELEMENTS_GET(MESH,NUMBER_OF_ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -6875,7 +6916,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the number of elements for a mesh. \see OPENCMISS::Iron::cmfe_MeshNumberOfElementsSet
+  !>Changes/sets the number of elements for a mesh. \see OpenCMISS::Iron::cmfe_MeshNumberOfElementsSet
   SUBROUTINE MESH_NUMBER_OF_ELEMENTS_SET(MESH,NUMBER_OF_ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -6934,7 +6975,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the surrounding elements calculate flag. \see OPENCMISS::Iron::cmfe_MeshSurroundingElementsCalculateSet
+  !>Changes/sets the surrounding elements calculate flag. \see OpenCMISS::Iron::cmfe_MeshSurroundingElementsCalculateSet
   SUBROUTINE MESH_SURROUNDING_ELEMENTS_CALCULATE_SET(MESH,SURROUNDING_ELEMENTS_CALCULATE_FLAG,ERR,ERROR,*)
 
     !Argument variables
@@ -7234,7 +7275,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating elements for a specified mesh component in a mesh topology. \see OPENCMISS::Iron::cmfe_MeshElementsCreateFinish
+  !>Finishes the process of creating elements for a specified mesh component in a mesh topology. \see OpenCMISS::Iron::cmfe_MeshElementsCreateFinish
   SUBROUTINE MESH_TOPOLOGY_ELEMENTS_CREATE_FINISH(ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -7311,7 +7352,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating elements in the mesh component identified by MESH and component_idx. The elements will be created with a default basis of BASIS. ELEMENTS is the returned pointer to the MESH_ELEMENTS data structure. \see OPENCMISS::Iron::cmfe_MeshElementsCreateStart
+  !>Starts the process of creating elements in the mesh component identified by MESH and component_idx. The elements will be created with a default basis of BASIS. ELEMENTS is the returned pointer to the MESH_ELEMENTS data structure. \see OpenCMISS::Iron::cmfe_MeshElementsCreateStart
   SUBROUTINE MESH_TOPOLOGY_ELEMENTS_CREATE_START(MESH,MESH_COMPONENT_NUMBER,BASIS,ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -7487,7 +7528,7 @@ CONTAINS
 
 !!MERGE: Take user number
   
-  !>Gets the basis for a mesh element identified by a given global number. \todo should take user number \see OPENCMISS::Iron::cmfe_MeshElementsBasisGet
+  !>Gets the basis for a mesh element identified by a given global number. \todo should take user number \see OpenCMISS::Iron::cmfe_MeshElementsBasisGet
   SUBROUTINE MESH_TOPOLOGY_ELEMENTS_ELEMENT_BASIS_GET(GLOBAL_NUMBER,ELEMENTS,BASIS,ERR,ERROR,*)
 
     !Argument variables
@@ -7608,7 +7649,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the adjacent element number for a mesh element identified by a global number. \todo specify by user number not global number \see OPENCMISS::Iron::cmfe_MeshElementsNo
+  !>Returns the adjacent element number for a mesh element identified by a global number. \todo specify by user number not global number \see OpenCMISS::Iron::cmfe_MeshElementsNo
   SUBROUTINE MESH_TOPOLOGY_ELEMENTS_ADJACENT_ELEMENT_GET(GLOBAL_NUMBER,ELEMENTS,ADJACENT_ELEMENT_XI,ADJACENT_ELEMENT_NUMBER, &
     & ERR,ERROR,*)
 
@@ -7664,7 +7705,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the element nodes for a mesh element identified by a given global number. \todo specify by user number not global number \see OPENCMISS::Iron::cmfe_MeshElementsNodesGet
+  !>Gets the element nodes for a mesh element identified by a given global number. \todo specify by user number not global number \see OpenCMISS::Iron::cmfe_MeshElementsNodesGet
   SUBROUTINE MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_GET(GLOBAL_NUMBER,ELEMENTS,USER_ELEMENT_NODES,ERR,ERROR,*)
 
     !Argument variables
@@ -7712,7 +7753,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the element nodes for a mesh element identified by a given global number. \todo specify by user number not global number \see OPENCMISS::Iron::cmfe_MeshElementsNodesSet
+  !>Changes/sets the element nodes for a mesh element identified by a given global number. \todo specify by user number not global number \see OpenCMISS::Iron::cmfe_MeshElementsNodesSet
   SUBROUTINE MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(GLOBAL_NUMBER,ELEMENTS,USER_ELEMENT_NODES,ERR,ERROR,*)
 
     !Argument variables
@@ -7843,7 +7884,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets an element node's version for a mesh element identified by a given global number. \todo specify by user number not global number \see OPENCMISS::Iron::cmfe_MeshElementsNodesSet
+  !>Changes/sets an element node's version for a mesh element identified by a given global number. \todo specify by user number not global number \see OpenCMISS::Iron::cmfe_MeshElementsNodesSet
   SUBROUTINE MeshElements_ElementNodeVersionSet(GLOBAL_NUMBER,ELEMENTS,VERSION_NUMBER,DERIVATIVE_NUMBER, &
       & USER_ELEMENT_NODE_INDEX,ERR,ERROR,*)
 
@@ -8326,7 +8367,7 @@ CONTAINS
 
 !!MERGE: ditto.
   
-  !>Gets the user number for a global element identified by a given global number. \todo Check that the user number doesn't already exist. \see OPENCMISS::Iron::cmfe_MeshElementsUserNumberGet
+  !>Gets the user number for a global element identified by a given global number. \todo Check that the user number doesn't already exist. \see OpenCMISS::Iron::cmfe_MeshElementsUserNumberGet
   SUBROUTINE MESH_TOPOLOGY_ELEMENTS_NUMBER_GET(GLOBAL_NUMBER,USER_NUMBER,ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -8367,7 +8408,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the user number for a global element identified by a given global number. \see OPENCMISS::Iron::cmfe_MeshElementsUserNumberGet
+  !>Returns the user number for a global element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElementsUserNumberGet
   SUBROUTINE MeshElements_ElementUserNumberGet(GLOBAL_NUMBER,USER_NUMBER,ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -8409,7 +8450,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the user number for a global element identified by a given global number. \see OPENCMISS::Iron::cmfe_MeshElementsUserNumberSet
+  !>Changes/sets the user number for a global element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElementsUserNumberSet
   SUBROUTINE MeshElements_ElementUserNumberSet(GLOBAL_NUMBER,USER_NUMBER,ELEMENTS,ERR,ERROR,*)
 
     !Argument variables
@@ -10127,7 +10168,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the domain for a given node in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OPENCMISS::Iron::cmfe_DecompositionNodeDomainGet
+  !>Gets the domain for a given node in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OpenCMISS::Iron::cmfe_Decomposition_NodeDomainGet
   SUBROUTINE DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,USER_NODE_NUMBER,MESH_COMPONENT_NUMBER,DOMAIN_NUMBER,ERR,ERROR,*)
 
     !Argument variables
@@ -10365,4 +10406,5 @@ CONTAINS
   !
 
 END MODULE MESH_ROUTINES
+
 

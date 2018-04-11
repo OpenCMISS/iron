@@ -124,6 +124,7 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
   TYPE(cmfe_CellMLType) :: CellML
   TYPE(cmfe_CellMLEquationsType) :: CellMLEquations
+  TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
   TYPE(cmfe_ControlLoopType) :: ControlLoop
   TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem,WorldCoordinateSystem
   TYPE(cmfe_DecompositionType) :: Decomposition
@@ -141,7 +142,7 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
 
   !Generic CMISS variables
   
-  INTEGER(CMISSIntg) :: NumberOfComputationalNodes,ComputationalNodeNumber
+  INTEGER(CMISSIntg) :: NumberOfComputationNodes,ComputationNodeNumber
   INTEGER(CMISSIntg) :: EquationsSetIndex,CellMLIndex
   INTEGER(CMISSIntg) :: FirstNodeNumber,LastNodeNumber
   INTEGER(CMISSIntg) :: FirstNodeDomain,LastNodeDomain,NodeDomain
@@ -188,12 +189,13 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
   !Trap errors
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
   
-  !Get the computational nodes information
-  CALL cmfe_ComputationalNumberOfNodesGet(NumberOfComputationalNodes,Err)
-  CALL cmfe_ComputationalNodeNumberGet(ComputationalNodeNumber,Err)
+  !Get the computation nodes information
+  CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
+  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
-!  IF (NumberOfComputationalNodes .gt. 2)
-!    WRITE(*,'(">>NOTE: ",A)') "It doesn't make any sense to use more than 2 computational nodes for this example?"
+!  IF (NumberOfComputationNodes .gt. 2)
+!    WRITE(*,'(">>NOTE: ",A)') "It doesn't make any sense to use more than 2 computation nodes for this example?"
 !    STOP
 !  ENDIF
 
@@ -248,7 +250,7 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
   CALL cmfe_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
   !Set the decomposition to be a general decomposition with the specified number of domains
   CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
-  CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfComputationalNodes,Err)
+  CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfComputationNodes,Err)
   !Finish the decomposition
   CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
   
@@ -384,7 +386,7 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
   !Set the Stimulus all nodes?
   DO node_idx=1,NUMBER_OF_ELEMENTS+1
     CALL cmfe_Decomposition_NodeDomainGet(Decomposition,node_idx,1,NodeDomain,Err)
-    IF(NodeDomain==ComputationalNodeNumber) THEN
+    IF(NodeDomain==ComputationNodeNumber) THEN
       CALL cmfe_Field_ParameterSetUpdateNode(CellMLParametersField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,1,1, &
         & node_idx,stimcomponent,STIM_VALUE,Err)
     ENDIF
@@ -396,7 +398,7 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
 !  !Loop over the nodes
 !  DO node_idx=1,LastNodeNumber
 !    CALL cmfe_Decomposition_NodeDomainGet(Decomposition,node_idx,1,NodeDomain,Err)
-!    IF(NodeDomain==ComputationalNodeNumber) THEN
+!    IF(NodeDomain==ComputationNodeNumber) THEN
 !      CALL cmfe_Field_ParameterSetGetNode(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,1,1,node_idx,1, &
 !        & X,Err)
 !      CALL cmfe_Field_ParameterSetGetNode(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,1,1,node_idx,2, &
@@ -488,11 +490,11 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
   CALL cmfe_BoundaryConditions_Initialise(BoundaryConditions,Err)
   CALL cmfe_SolverEquations_BoundaryConditionsCreateStart(SolverEquations,BoundaryConditions,Err)
  !Set the first node to 0.0 and the last node to 1.0
-  IF(FirstNodeDomain==ComputationalNodeNumber) THEN
+  IF(FirstNodeDomain==ComputationNodeNumber) THEN
    !CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,FirstNodeNumber,1, &
    !  & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
   ENDIF
-  IF(LastNodeDomain==ComputationalNodeNumber) THEN
+  IF(LastNodeDomain==ComputationNodeNumber) THEN
    !CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, &
    !  & CMFE_BOUNDARY_CONDITION_FIXED,1.0_CMISSRP,Err)
   ENDIF
@@ -506,7 +508,7 @@ PROGRAM CELLMLINTEGRATIONFORTRANEXAMPLE
   !Set the Stimulus at node 1
   DO node_idx=1,NUMBER_OF_ELEMENTS+1
     CALL cmfe_Decomposition_NodeDomainGet(Decomposition,node_idx,1,NodeDomain,Err)
-    IF(NodeDomain==ComputationalNodeNumber) THEN
+    IF(NodeDomain==ComputationNodeNumber) THEN
       CALL cmfe_Field_ParameterSetUpdateNode(CellMLParametersField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,1,1, &
         & node_idx,stimcomponent,0.0_CMISSRP,Err)
     ENDIF

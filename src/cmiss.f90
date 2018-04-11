@@ -32,7 +32,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -54,7 +54,8 @@ MODULE Cmiss
   
   USE BaseRoutines
   USE BasisRoutines
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE COORDINATE_ROUTINES
   USE GENERATED_MESH_ROUTINES
@@ -89,18 +90,18 @@ MODULE Cmiss
 
   !> \addtogroup CMFE_ErrorHandlingModes OpenCMISS::Iron::ErrorHandlingModes
   !> \brief Error handling mode parameters
-  !> \see CMISS
+  !> \see OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_RETURN_ERROR_CODE = 0 !<Just return the error code \see CMFE_ErrorHandlingModes,CMISS
-  INTEGER(INTG), PARAMETER :: CMFE_OUTPUT_ERROR = 1 !<Output the error traceback and return the error code \see CMFE_ErrorHandlingModes,CMISS
-  INTEGER(INTG), PARAMETER :: CMFE_TRAP_ERROR = 2 !<Trap the error by outputing the error traceback and stopping the program \see CMFE_ErrorHandlingModes,CMISS
+  INTEGER(INTG), PARAMETER :: CMFE_RETURN_ERROR_CODE = 0 !<Just return the error code \see cmfe_ErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_OUTPUT_ERROR = 1 !<Output the error traceback and return the error code \see cmfe_ErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_TRAP_ERROR = 2 !<Trap the error by outputing the error traceback and stopping the program \see cmfe_ErrorHandlingModes,OpenCMISS
   !>@}
   
   !Module types
 
   !Module variables
 
-  INTEGER(INTG), SAVE :: cmfe_ErrorHandlingMode !<The current error handling mode for OpenCMISS \see CMFE_ErrorHandlingModes
+  INTEGER(INTG), SAVE :: cmfe_ErrorHandlingMode !<The current error handling mode for OpenCMISS \see cmfe_ErrorHandlingModes
  
   !Interfaces
 
@@ -135,11 +136,11 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Returns the error handling mode for CMISS \see OPENOpenCMISS::Iron::CMISSErrorHandlingModeGet
+  !>Returns the error handling mode for OpenCMISS \see OpenCMISS::Iron::cmfe_ErrorHandlingModeGet
   SUBROUTINE cmfe_ErrorHandlingModeGet_(errorHandlingMode,err,error,*)
   
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see CMFE_ErrorHandlingModes,CMISS
+    INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see cmfe_ErrorHandlingModes,OpenCMISS
     INTEGER(INTG), INTENT(INOUT) :: err !<The error string
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
@@ -161,11 +162,11 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Sets the error handling mode for cmiss \see OPENOpenCMISS::Iron::CMISSErrorHandlingModeSet
+  !>Sets the error handling mode for cmiss \see OpenCMISS::Iron::cmfe_ErrorHandlingModeSet
   SUBROUTINE cmfe_ErrorHandlingModeSet_(errorHandlingMode,err,error,*)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see CMFE_ErrorHandlingModes,CMISS
+    INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see cmfe_ErrorHandlingModes,OpenCMISS
     INTEGER(INTG), INTENT(INOUT) :: err !<The error string
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
@@ -199,7 +200,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
   
-  !>Finalises CMISS. \see OPENOpenCMISS::Iron::CMISSFinalise
+  !>Finalises OpenCMISS. \see OpenCMISS::Iron::cmfe_Finalise
   SUBROUTINE cmfe_Finalise_(err,error,*)
   
     !Argument variables
@@ -217,8 +218,8 @@ CONTAINS
     CALL Bases_Finalise(err,error,*999)
     !Reset the signal handler
     CALL cmfe_ResetFatalHandler()
-    !Finalise computational enviroment
-    CALL ComputationalEnvironment_Finalise(err,error,*999)
+    !Finalise computation
+    CALL Computation_Finalise(err,error,*999)
     !Finalise the base routines
     CALL BaseRoutines_Finalise(err,error,*999)
      
@@ -233,7 +234,7 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Initialises CMISS. \see OPENOpenCMISS::Iron::CMISSInitialise
+  !>Initialises OpenCMISS. \see OpenCMISS::Iron::cmfe_Initialise
   SUBROUTINE cmfe_Initialise_(worldRegion,err,error,*)
   
     !Argument variables
@@ -241,14 +242,15 @@ CONTAINS
     INTEGER(INTG), INTENT(INOUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: myWorldComputationNodeNumber
     TYPE(VARYING_STRING) :: versionString
 
     !Initialise error mode
     cmfe_ErrorHandlingMode = CMFE_OUTPUT_ERROR !Default for now, maybe make CMFE_RETURN_ERROR_CODE the default
     !Initialise the base routines
     CALL BaseRoutines_Initialise(err,error,*999)
-    !Intialise the computational environment
-    CALL ComputationalEnvironment_Initialise(err,error,*999)
+    !Intialise the computation
+    CALL Computation_Initialise(err,error,*999)
     !Setup signal handling
     CALL cmfe_InitFatalHandler()
     CALL cmfe_SetFatalHandler()
@@ -260,12 +262,13 @@ CONTAINS
       !Initialise the coordinate systems
       CALL COORDINATE_SYSTEMS_INITIALISE(err,error,*999)
       !Initialise the regions 
-      CALL REGIONS_INITIALISE(worldRegion,err,error,*999)
+      CALL Regions_Initialise(worldRegion,err,error,*999)
       !Initialise the problems
-      CALL PROBLEMS_INITIALISE(err,error,*999)
+      CALL Problems_Initialise(err,error,*999)
       
       !Write out the CMISS version
-      IF(computationalEnvironment%myComputationalNodeNumber==0) THEN
+      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+      IF(myWorldComputationNodeNumber==0) THEN
         versionString="OpenCMISS(Iron) version "//TRIM(NumberToVString(CMFE_MAJOR_VERSION,"*",err,error))
         versionString=versionString//"."
         versionString=versionString//TRIM(NumberToVString(CMFE_MINOR_VERSION,"*",err,error))

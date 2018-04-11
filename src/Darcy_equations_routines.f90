@@ -7,7 +7,8 @@ MODULE DARCY_EQUATIONS_ROUTINES
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
@@ -7213,7 +7214,7 @@ CONTAINS
 
     INTEGER(INTG) :: FIELD_VAR_TYPE
     INTEGER(INTG) :: dof_number,NUMBER_OF_DOFS,equations_set_idx
-    INTEGER(INTG) :: COMPUTATIONAL_NODE_NUMBER
+    INTEGER(INTG) :: COMPUTATION_NODE_NUMBER
     INTEGER(INTG) :: FILEUNIT_N, FILEUNIT_N1
 
     ENTERS("DARCY_EQUATION_MONITOR_CONVERGENCE",err,error,*999)
@@ -7226,8 +7227,8 @@ CONTAINS
     NULLIFY(vectorMapping)
     NULLIFY(FIELD_VARIABLE)
 
-    COMPUTATIONAL_NODE_NUMBER=ComputationalEnvironment_NodeNumberGet(err,error)
-    WRITE(FILENAME,'("Darcy_",I3.3,".conv")') COMPUTATIONAL_NODE_NUMBER
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,COMPUTATION_NODE_NUMBER,err,error,*999)
+    WRITE(FILENAME,'("Darcy_",I3.3,".conv")') COMPUTATION_NODE_NUMBER
     FILEPATH = "./output/"//FILENAME
     OPEN(UNIT=23, FILE=CHAR(FILEPATH),STATUS='unknown',ACCESS='append')
 

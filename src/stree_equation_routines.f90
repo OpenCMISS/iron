@@ -54,7 +54,8 @@ MODULE Stree_EQUATION_ROUTINES
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE CmissMPI
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS

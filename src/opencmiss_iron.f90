@@ -32,7 +32,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -64,7 +64,8 @@ MODULE OpenCMISS_Iron
   USE Cmiss
   USE CmissPetsc
   USE CMISS_CELLML
-  USE ComputationEnvironment
+  USE ComputationRoutines
+  USE ComputationAccessRoutines
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
@@ -151,6 +152,12 @@ MODULE OpenCMISS_Iron
     PRIVATE
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellmlEquations
   END TYPE cmfe_CellMLEquationsType
+
+  !>Contains information on a computation environment
+  TYPE cmfe_ComputationEnvironmentType
+    PRIVATE
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment_
+  END TYPE cmfe_ComputationEnvironmentType
 
   !>Contains information on a control loop.
   TYPE cmfe_ControlLoopType
@@ -248,14 +255,14 @@ MODULE OpenCMISS_Iron
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity
   END TYPE cmfe_InterfacePointsConnectivityType
 
-  !>A matrix that may be distributed across multiple computational nodes
+  !>A matrix that may be distributed across multiple computation nodes
   !>and may use sparse or full storage.
   TYPE cmfe_DistributedMatrixType
     PRIVATE
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
   END TYPE cmfe_DistributedMatrixType
 
-  !>A vector that may be distributed across multiple computational nodes
+  !>A vector that may be distributed across multiple computation nodes
   TYPE cmfe_DistributedVectorType
     PRIVATE
     TYPE(DistributedVectorType), POINTER :: distributedVector
@@ -321,19 +328,15 @@ MODULE OpenCMISS_Iron
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
   END TYPE cmfe_SolverEquationsType
 
-  !>Contains information on a computational work group
-  TYPE cmfe_ComputationalWorkGroupType
+  !>Contains information on a work group
+  TYPE cmfe_WorkGroupType
     PRIVATE
-    TYPE(ComputationalWorkGroupType), POINTER :: computationalWorkGroup
-  END TYPE cmfe_ComputationalWorkGroupType
+    TYPE(WorkGroupType), POINTER :: workGroup
+  END TYPE cmfe_WorkGroupType
 
   !Module variables
 
   TYPE(VARYING_STRING) :: error
-
-  !INTERFACE cmfe_Finalise_
-  !  MODULE PROCEDURE cmfe_Finalise
-  !END INTERFACE cmfe_Finalise_
 
   INTERFACE cmfe_Initialise
     MODULE PROCEDURE cmfe_InitialiseNumber
@@ -345,7 +348,6 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Fields_CreateRegion
   END INTERFACE cmfe_Fields_Create
 
-  !PUBLIC cmfe_Finalise,cmfe_Initialise
   PUBLIC cmfe_Finalise,cmfe_Initialise
 
   PUBLIC cmfe_WorkingRealPrecisionGet
@@ -360,7 +362,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_CellMLEquationsType,cmfe_CellMLEquations_Finalise,cmfe_CellMLEquations_Initialise
 
-  PUBLIC cmfe_ComputationalWorkGroupType,cmfe_ComputationalWorkGroup_Initialise
+  PUBLIC cmfe_ComputationEnvironmentType,cmfe_ComputationEnvironment_Initialise,cmfe_ComputationEnvironment_Finalise
 
   PUBLIC cmfe_ControlLoopType,cmfe_ControlLoop_Finalise,cmfe_ControlLoop_Initialise,cmfe_ControlLoop_LoadOutputSet
 
@@ -373,6 +375,10 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_DecompositionType,cmfe_Decomposition_Finalise,cmfe_Decomposition_Initialise
 
   PUBLIC cmfe_Decomposition_CalculateFacesSet,cmfe_Decomposition_CalculateLinesSet
+
+  PUBLIC cmfe_DistributedMatrixType,cmfe_DistributedVectorType
+
+  PUBLIC cmfe_DistributedMatrix_Initialise,cmfe_DistributedVector_Initialise
 
   PUBLIC cmfe_EquationsType,cmfe_Equations_Finalise,cmfe_Equations_Initialise
 
@@ -398,10 +404,6 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_InterfacePointsConnectivityType,cmfe_InterfacePointsConnectivity_Initialise, &
     & cmfe_InterfacePointsConnectivity_Finalise
 
-  PUBLIC cmfe_DistributedMatrixType,cmfe_DistributedVectorType
-
-  PUBLIC cmfe_DistributedMatrix_Initialise,cmfe_DistributedVector_Initialise
-
   PUBLIC cmfe_MeshType,cmfe_Mesh_Finalise,cmfe_Mesh_Initialise
 
   PUBLIC cmfe_MeshElementsType,cmfe_MeshElements_Finalise,cmfe_MeshElements_Initialise
@@ -419,6 +421,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_SolverType,cmfe_Solver_Finalise,cmfe_Solver_Initialise
 
   PUBLIC cmfe_SolverEquationsType,cmfe_SolverEquations_Finalise,cmfe_SolverEquations_Initialise
+
+  PUBLIC cmfe_WorkGroupType,cmfe_WorkGroup_Initialise,cmfe_WorkGroup_Finalise
 
 !!==================================================================================================================================
 !!
@@ -1257,7 +1261,7 @@ MODULE OpenCMISS_Iron
 
 !!==================================================================================================================================
 !!
-!! ComputationalEnvironment
+!! Computation
 !!
 !!==================================================================================================================================
 
@@ -1269,23 +1273,89 @@ MODULE OpenCMISS_Iron
 
   !Interfaces
 
-  PUBLIC cmfe_ComputationalWorldCommunicatorGet,cmfe_ComputationalWorldCommunicatorSet
+  !>Starts the creation of a work group
+  INTERFACE cmfe_WorkGroup_CreateStart
+    MODULE PROCEDURE cmfe_WorkGroup_CreateStartNumber
+    MODULE PROCEDURE cmfe_WorkGroup_CreateStartObj
+  END INTERFACE cmfe_WorkGroup_CreateStart
+    
+  !>Finishes the creation of a work group
+  INTERFACE cmfe_WorkGroup_CreateFinish
+    MODULE PROCEDURE cmfe_WorkGroup_CreateFinishNumber
+    MODULE PROCEDURE cmfe_WorkGroup_CreateFinishObj
+  END INTERFACE cmfe_WorkGroup_CreateFinish
+    
+  !>Destroys a work group
+  INTERFACE cmfe_WorkGroup_Destroy
+    MODULE PROCEDURE cmfe_WorkGroup_DestroyNumber
+    MODULE PROCEDURE cmfe_WorkGroup_DestroyObj
+  END INTERFACE cmfe_WorkGroup_Destroy
+    
+  !>Gets the group communicator for a work group
+  INTERFACE cmfe_WorkGroup_GroupCommunicatorGet
+    MODULE PROCEDURE cmfe_WorkGroup_GroupCommunicatorGetNumber
+    MODULE PROCEDURE cmfe_WorkGroup_GroupCommunicatorGetObj
+  END INTERFACE cmfe_WorkGroup_GroupCommunicatorGet
+    
+  !>Returns the label of a work group.
+  INTERFACE cmfe_WorkGroup_LabelGet
+    MODULE PROCEDURE cmfe_WorkGroup_LabelGetCNumber
+    MODULE PROCEDURE cmfe_WorkGroup_LabelGetCObj
+    MODULE PROCEDURE cmfe_WorkGroup_LabelGetVSNumber
+    MODULE PROCEDURE cmfe_WorkGroup_LabelGetVSObj
+  END INTERFACE cmfe_WorkGroup_LabelGet
+  
+  !>Sets/changes the label of a work group.
+  INTERFACE cmfe_WorkGroup_LabelSet
+    MODULE PROCEDURE cmfe_WorkGroup_LabelSetCNumber
+    MODULE PROCEDURE cmfe_WorkGroup_LabelSetCObj
+    MODULE PROCEDURE cmfe_WorkGroup_LabelSetVSNumber
+    MODULE PROCEDURE cmfe_WorkGroup_LabelSetVSObj
+  END INTERFACE cmfe_WorkGroup_LabelSet
 
-  PUBLIC cmfe_ComputationalNodeNumberGet
+  !>Gets the group node number in a work group
+  INTERFACE cmfe_WorkGroup_GroupNodeNumberGet
+    MODULE PROCEDURE cmfe_WorkGroup_GroupNodeNumberGetNumber
+    MODULE PROCEDURE cmfe_WorkGroup_GroupNodeNumberGetObj
+  END INTERFACE cmfe_WorkGroup_GroupNodeNumberGet
+    
+  !>Gets the number of group nodes in a work group
+  INTERFACE cmfe_WorkGroup_NumberOfGroupNodesGet
+    MODULE PROCEDURE cmfe_WorkGroup_NumberOfGroupNodesGetNumber
+    MODULE PROCEDURE cmfe_WorkGroup_NumberOfGroupNodesGetObj
+  END INTERFACE cmfe_WorkGroup_NumberOfGroupNodesGet
+    
+  !>Sets/changes the number of group nodes in a work group
+  INTERFACE cmfe_WorkGroup_NumberOfGroupNodesSet
+    MODULE PROCEDURE cmfe_WorkGroup_NumberOfGroupNodesSetNumber
+    MODULE PROCEDURE cmfe_WorkGroup_NumberOfGroupNodesSetObj
+  END INTERFACE cmfe_WorkGroup_NumberOfGroupNodesSet
+  
+  PUBLIC cmfe_ComputationEnvironment_NumberOfWorldNodesGet
 
-  PUBLIC cmfe_ComputationalNumberOfNodesGet
+  PUBLIC cmfe_ComputationEnvironment_WorldCommunicatorGet
+  
+  PUBLIC cmfe_ComputationEnvironment_WorldNodeNumberGet
 
-  PUBLIC cmfe_ComputationalWorkGroup_CreateStart
+  PUBLIC cmfe_ComputationEnvironment_WorldWorkGroupGet
 
-  PUBLIC cmfe_ComputationalWorkGroup_CreateFinish
+  PUBLIC cmfe_WorkGroup_CreateStart
 
-  PUBLIC cmfe_ComputationalWorkGroup_SubgroupAdd
+  PUBLIC cmfe_WorkGroup_CreateFinish
 
-  PUBLIC cmfe_Decomposition_WorldWorkGroupSet
+  PUBLIC cmfe_WorkGroup_Destroy
 
+  PUBLIC cmfe_WorkGroup_GroupCommunicatorGet
+
+  PUBLIC cmfe_WorkGroup_GroupNodeNumberGet
+
+  PUBLIC cmfe_WorkGroup_LabelGet,cmfe_WorkGroup_LabelSet
+
+  PUBLIC cmfe_WorkGroup_NumberOfGroupNodesGet,cmfe_WorkGroup_NumberOfGroupNodesSet
+  
 !!==================================================================================================================================
 !!
-!! CONSTANTS
+!! Constants
 !!
 !!==================================================================================================================================
 
@@ -5280,6 +5350,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Decomposition_TypeSetObj
   END INTERFACE cmfe_Decomposition_TypeSet
 
+  !>Sets/changes the work group for a decomposition.
+  INTERFACE cmfe_Decomposition_WorkGroupSet
+    MODULE PROCEDURE cmfe_Decomposition_WorkGroupSetNumber
+    MODULE PROCEDURE cmfe_Decomposition_WorkGroupSetObj
+  END INTERFACE cmfe_Decomposition_WorkGroupSet
+
   !>Sets/changes whether lines should be calculated for the decomposition.
   INTERFACE cmfe_Decomposition_CalculateLinesSet
     MODULE PROCEDURE cmfe_Decomposition_CalculateLinesSetNumber
@@ -5532,6 +5608,8 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_Decomposition_TypeGet,cmfe_Decomposition_TypeSet
 
+  PUBLIC cmfe_Decomposition_WorkGroupSet
+
   PUBLIC cmfe_Decomposition_NodeDomainGet
 
   PUBLIC cmfe_Mesh_CreateFinish,cmfe_Mesh_CreateStart
@@ -5630,7 +5708,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DistributedMatrix_DataTypeGetObj
   END INTERFACE cmfe_DistributedMatrix_DataTypeGet
 
-  !>Get the dimensions for a distributed matrix on this computational node
+  !>Get the dimensions for a distributed matrix on this computation node
   INTERFACE cmfe_DistributedMatrix_DimensionsGet
     MODULE PROCEDURE cmfe_DistributedMatrix_DimensionsGetObj
   END INTERFACE cmfe_DistributedMatrix_DimensionsGet
@@ -5640,7 +5718,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DistributedMatrix_StorageLocationsGetObj
   END INTERFACE cmfe_DistributedMatrix_StorageLocationsGet
 
-  !>Get the data array for this matrix on this computational node
+  !>Get the data array for this matrix on this computation node
   INTERFACE cmfe_DistributedMatrix_DataGet
     MODULE PROCEDURE cmfe_DistributedMatrix_DataGetIntgObj
     MODULE PROCEDURE cmfe_DistributedMatrix_DataGetDPObj
@@ -5661,7 +5739,7 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DistributedVector_DataTypeGetObj
   END INTERFACE cmfe_DistributedVector_DataTypeGet
 
-  !>Get the data array for this vector on this computational node
+  !>Get the data array for this vector on this computation node
   INTERFACE cmfe_DistributedVector_DataGet
     MODULE PROCEDURE cmfe_DistributedVector_DataGetIntgObj
     MODULE PROCEDURE cmfe_DistributedVector_DataGetDPObj
@@ -6285,6 +6363,12 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Problem_SpecificationSizeGetObj
   END INTERFACE cmfe_Problem_SpecificationSizeGet
 
+  !>Sets/changes the work group for a problem.
+  INTERFACE cmfe_Problem_WorkGroupSet
+    MODULE PROCEDURE cmfe_Problem_WorkGroupSetNumber
+    MODULE PROCEDURE cmfe_Problem_WorkGroupSetObj
+  END INTERFACE cmfe_Problem_WorkGroupSet
+
   PUBLIC cmfe_Problem_CellMLEquationsCreateFinish,cmfe_Problem_CellMLEquationsCreateStart
 
   PUBLIC cmfe_Problem_CellMLEquationsGet
@@ -6316,6 +6400,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_Problem_SolversDestroy
 
   PUBLIC cmfe_Problem_SpecificationGet,cmfe_Problem_SpecificationSizeGet
+
+  PUBLIC cmfe_Problem_WorkGroupSet
 
 !!==================================================================================================================================
 !!
@@ -8110,26 +8196,51 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises a cmfe_ComputationalWorkGroupType object.
-  SUBROUTINE cmfe_ComputationalWorkGroup_Initialise(cmfe_ComputationalWorkGroup,err)
-    !DLLEXPORT(cmfe_ComputationalWorkGroup_Initialise)
+  !>Finalises a cmfe_ComputationEnvironmentType object.
+  SUBROUTINE cmfe_ComputationEnvironment_Finalise(cmfe_ComputationEnvironment,err)
+    !DLLEXPORT(cmfe_ComputationEnvironment_Finalise)
 
     !Argument variables
-    TYPE(cmfe_ComputationalWorkGroupType), INTENT(OUT) :: cmfe_ComputationalWorkGroup !<The cmfe_ComputationalWorkGroupType object to initialise.
+    TYPE(cmfe_ComputationEnvironmentType), INTENT(OUT) :: cmfe_ComputationEnvironment !<The cmfe_ComputationEnvironmentType object to finalise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_ComputationalWorkGroup_Initialise",err,error,*999)
+    ENTERS("cmfe_ComputationEnvironment_Finalise",err,error,*999)
 
-    NULLIFY(cmfe_ComputationalWorkGroup%computationalWorkGroup)
+    NULLIFY(cmfe_ComputationEnvironment%computationEnvironment_)
 
-    EXITS("cmfe_ComputationalWorkGroup_Initialise")
+    EXITS("cmfe_ComputationEnvironment_Finalise")
     RETURN
-999 ERRORSEXITS("cmfe_ComputationalWorkGroup_Initialise",err,error)
+999 ERRORSEXITS("cmfe_ComputationEnvironment_Finalise",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_ComputationalWorkGroup_Initialise
+  END SUBROUTINE cmfe_ComputationEnvironment_Finalise
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a cmfe_ComputationEnvironmentType object.
+  SUBROUTINE cmfe_ComputationEnvironment_Initialise(cmfe_ComputationEnvironment,err)
+    !DLLEXPORT(cmfe_ComputationEnvironment_Initialise)
+
+    !Argument variables
+    TYPE(cmfe_ComputationEnvironmentType), INTENT(OUT) :: cmfe_ComputationEnvironment !<The cmfe_ComputationEnvironmentType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ComputationEnvironment_Initialise",err,error,*999)
+
+    cmfe_ComputationEnvironment%computationEnvironment_=>computationEnvironment
+
+    EXITS("cmfe_ComputationEnvironment_Initialise")
+    RETURN
+999 ERRORSEXITS("cmfe_ComputationEnvironment_Initialise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ComputationEnvironment_Initialise
 
   !
   !================================================================================================================================
@@ -8156,7 +8267,8 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_ControlLoop_Finalise
-  !
+  
+  !  
   !================================================================================================================================
   !
 
@@ -8383,6 +8495,56 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Decomposition_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a cmfe_DistributedMatrixType object.
+  SUBROUTINE cmfe_DistributedMatrix_Initialise(cmfe_DistributedMatrix,err)
+    !DLLEXPORT(cmfe_DistributedMatrix_Initialise)
+
+    !Argument variables
+    TYPE(cmfe_DistributedMatrixType), INTENT(OUT) :: cmfe_DistributedMatrix !<The cmfe_DistributedMatrixType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DistributedMatrix_Initialise",err,error,*999)
+
+    NULLIFY(cmfe_DistributedMatrix%distributedMatrix)
+
+    EXITS("cmfe_DistributedMatrix_Initialise")
+    RETURN
+999 ERRORSEXITS("cmfe_DistributedMatrix_Initialise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DistributedMatrix_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a cmfe_DistributedVectorType object.
+  SUBROUTINE cmfe_DistributedVector_Initialise(cmfe_DistributedVector,err)
+    !DLLEXPORT(cmfe_DistributedVector_Initialise)
+
+    !Argument variables
+    TYPE(cmfe_DistributedVectorType), INTENT(OUT) :: cmfe_DistributedVector !<The cmfe_DistributedVectorType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DistributedVector_Initialise",err,error,*999)
+
+    NULLIFY(cmfe_DistributedVector%distributedVector)
+
+    EXITS("cmfe_DistributedVector_Initialise")
+    RETURN
+999 ERRORSEXITS("cmfe_DistributedVector_Initialise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DistributedVector_Initialise
 
   !
   !================================================================================================================================
@@ -9023,56 +9185,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises a cmfe_DistributedMatrixType object.
-  SUBROUTINE cmfe_DistributedMatrix_Initialise(cmfe_DistributedMatrix,err)
-    !DLLEXPORT(cmfe_DistributedMatrix_Initialise)
-
-    !Argument variables
-    TYPE(cmfe_DistributedMatrixType), INTENT(OUT) :: cmfe_DistributedMatrix !<The cmfe_DistributedMatrixType object to initialise.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_DistributedMatrix_Initialise",err,error,*999)
-
-    NULLIFY(cmfe_DistributedMatrix%distributedMatrix)
-
-    EXITS("cmfe_DistributedMatrix_Initialise")
-    RETURN
-999 ERRORSEXITS("cmfe_DistributedMatrix_Initialise",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_DistributedMatrix_Initialise
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises a cmfe_DistributedVectorType object.
-  SUBROUTINE cmfe_DistributedVector_Initialise(cmfe_DistributedVector,err)
-    !DLLEXPORT(cmfe_DistributedVector_Initialise)
-
-    !Argument variables
-    TYPE(cmfe_DistributedVectorType), INTENT(OUT) :: cmfe_DistributedVector !<The cmfe_DistributedVectorType object to initialise.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_DistributedVector_Initialise",err,error,*999)
-
-    NULLIFY(cmfe_DistributedVector%distributedVector)
-
-    EXITS("cmfe_DistributedVector_Initialise")
-    RETURN
-999 ERRORSEXITS("cmfe_DistributedVector_Initialise",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_DistributedVector_Initialise
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises a cmfe_MeshType object.
   SUBROUTINE cmfe_Mesh_Finalise(cmfe_Mesh,err)
     !DLLEXPORT(cmfe_Mesh_Finalise)
@@ -9524,6 +9636,56 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_SolverEquations_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a cmfe_WorkGroupType object.
+  SUBROUTINE cmfe_WorkGroup_Finalise(cmfe_WorkGroup,err)
+    !DLLEXPORT(cmfe_WorkGroup_Finalise)
+
+    !Argument variables
+    TYPE(cmfe_WorkGroupType), INTENT(OUT) :: cmfe_WorkGroup !<The cmfe_WorkGroupType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_WorkGroup_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(cmfe_WorkGroup%workGroup)) CALL WorkGroup_Destroy(cmfe_WorkGroup%workGroup,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_Finalise")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_Finalise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_Finalise
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a cmfe_WorkGroupType object.
+  SUBROUTINE cmfe_WorkGroup_Initialise(cmfe_WorkGroup,err)
+    !DLLEXPORT(cmfe_WorkGroup_Initialise)
+
+    !Argument variables
+    TYPE(cmfe_WorkGroupType), INTENT(OUT) :: cmfe_WorkGroup !<The cmfe_WorkGroupType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_WorkGroup_Initialise",err,error,*999)
+
+    NULLIFY(cmfe_WorkGroup%workGroup)
+
+    EXITS("cmfe_WorkGroup_Initialise")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_Initialise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_Initialise
 
 !!==================================================================================================================================
 !!
@@ -15740,202 +15902,688 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! Computational Environment
+!! Computation
 !!
 !!==================================================================================================================================
 
-  !
+
+  !>Returns the number of computation nodes in the world communicator.
+  SUBROUTINE cmfe_ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldNodes,err)
+    !DLLEXPORT(cmfe_ComputationEnvironment_NumberOfWorldNodesGet)
+
+    !Argument variables
+    TYPE(cmfe_ComputationEnvironmentType), INTENT(IN) :: computationEnvironment !<The computation environment to get the number of nodes in the world communicator for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfWorldNodes !<On return, the number of computation nodes in the world communicator.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ComputationEnvironment_NumberOfWorldNodesGet",err,error,*999)
+
+    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment%computationEnvironment_,numberOfWorldNodes, &
+      & err,error,*999)
+
+    EXITS("cmfe_ComputationEnvironment_NumberOfWorldNodesGet")
+    RETURN
+999 ERRORS("cmfe_ComputationEnvironment_NumberOfWorldNodesGet",err,error)
+    EXITS("cmfe_ComputationEnvironment_NumberOfWorldNodesGet")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ComputationEnvironment_NumberOfWorldNodesGet
+  
+  !  
   !================================================================================================================================
   !
 
-  !>Returns the current world communicator.
-  SUBROUTINE cmfe_ComputationalWorldCommunicatorGet(worldCommunicator,err)
-    !DLLEXPORT(cmfe_ComputationalWorldCommunicatorGet)
+  !>Returns the current world communicator for the computation environment.
+  SUBROUTINE cmfe_ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err)
+    !DLLEXPORT(cmfe_ComputationEnvironment_WorldCommunicatorGet)
 
     !Argument variables
+    TYPE(cmfe_ComputationEnvironmentType), INTENT(IN) :: computationEnvironment !<The computation environment to get the world communicator for.
     INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_ComputationalWorldCommunicatorGet",err,error,*999)
+    ENTERS("cmfe_ComputationEnvironment_WorldCommunicatorGet",err,error,*999)
 
-    CALL ComputationalEnvironment_WorldCommunicatorGet(worldCommunicator,err,error,*999)
-
-    EXITS("cmfe_ComputationalWorldCommunicatorGet")
-    RETURN
-999 ERRORSEXITS("cmfe_ComputationalWorldCommunicatorGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_ComputationalWorldCommunicatorGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the current world communicator.
-  SUBROUTINE cmfe_ComputationalWorldCommunicatorSet(worldCommunicator,err)
-    !DLLEXPORT(cmfe_ComputationalWorldCommunicatorSet)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: worldCommunicator !<The world communicator to set.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_ComputationalWorldCommunicatorSet",err,error,*999)
-
-    CALL ComputationalEnvironment_WorldCommunicatorSet(worldCommunicator,err,error,*999)
-
-    EXITS("cmfe_ComputationalWorldCommunicatorSet")
-    RETURN
-999 ERRORSEXITS("cmfe_ComputationalWorldCommunicatorSet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_ComputationalWorldCommunicatorSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the computational node number of the running process.
-  SUBROUTINE cmfe_ComputationalNodeNumberGet(nodeNumber,err)
-    !DLLEXPORT(cmfe_ComputationalNodeNumberGet)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: nodeNumber !<On return, the computational node number.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_ComputationalNodeNumberGet",err,error,*999)
-
-    nodeNumber = ComputationalEnvironment_NodeNumberGet(err,error)
-
-    EXITS("cmfe_ComputationalNodeNumberGet")
-    RETURN
-999 ERRORSEXITS("cmfe_ComputationalNodeNumberGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_ComputationalNodeNumberGet
-
-  !>Returns the number of computational nodes for the running process.
-  SUBROUTINE cmfe_ComputationalNumberOfNodesGet(numberOfNodes,err)
-    !DLLEXPORT(cmfe_ComputationalNumberOfNodesGet)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On return, the number of computational nodes.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_ComputationalNumberOfNodesGet",err,error,*999)
-
-    numberOfNodes = ComputationalEnvironment_NumberOfNodesGet(err,error)
-
-    EXITS("cmfe_ComputationalNumberOfNodesGet")
-    RETURN
-999 ERRORSEXITS("cmfe_ComputationalNumberOfNodesGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_ComputationalNumberOfNodesGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>CREATE THE HIGHEST LEVEL WORK GROUP (DEFAULT: GROUP_WORLD)
-  SUBROUTINE cmfe_ComputationalWorkGroup_CreateStart(worldWorkGroup, numberComputationalNodes, err)
-    !DLLEXPORT(cmfe_ComputationalWorkGroup_CreateStart)
-    !Argument Variables
-    TYPE(cmfe_ComputationalWorkGroupType), INTENT(INOUT) :: worldWorkGroup
-    INTEGER(INTG),INTENT(IN) :: numberComputationalNodes
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_ComputationalWorkGroup_CreateStart",err,error,*999)
-
-    CALL COMPUTATIONAL_WORK_GROUP_CREATE_START(worldWorkGroup%computationalWorkGroup,numberComputationalNodes, &
+    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment%computationEnvironment_,worldCommunicator, &
       & err,error,*999)
 
-    EXITS("cmfe_ComputationalWorkGroup_CreateStart")
+    EXITS("cmfe_ComputationEnvironment_WorldCommunicatorGet")
     RETURN
-999 ERRORSEXITS("cmfe_ComputationalWorkGroup_CreateStart",err,error)
+999 ERRORS("cmfe_ComputationEnvironment_WorldCommunicatorGet",err,error)
+    EXITS("cmfe_ComputationEnvironment_WorldCommunicatorGet")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_ComputationalWorkGroup_CreateStart
+  END SUBROUTINE cmfe_ComputationEnvironment_WorldCommunicatorGet
 
   !
   !================================================================================================================================
   !
 
-  !>GENERATE THE HIERARCHY COMPUTATIONAL ENVIRONMENT BASED ON WORK GROUP TREE
-  SUBROUTINE cmfe_ComputationalWorkGroup_CreateFinish(worldWorkGroup, err)
-    !DLLEXPORT(cmfe_ComputationalWorkGroup_CreateFinish)
-    !Argument Variables
-    TYPE(cmfe_ComputationalWorkGroupType), INTENT(INOUT) :: worldWorkGroup
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+  !>Returns the computation node number in the world communicator.
+  SUBROUTINE cmfe_ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,worldNodeNumber,err)
+    !DLLEXPORT(cmfe_ComputationEnvironment_WorldNodeNumberGet)
 
-    ENTERS("cmfe_ComputationalWorkGroup_CreateFinish",err,error,*999)
+    !Argument variables
+    TYPE(cmfe_ComputationEnvironmentType), INTENT(IN) :: computationEnvironment !<The computation environment to get the node number in the world communicator for.
+    INTEGER(INTG), INTENT(OUT) :: worldNodeNumber !<On return, the computation node number in the world communicator.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
 
-    CALL COMPUTATIONAL_WORK_GROUP_CREATE_FINISH(worldWorkGroup%computationalWorkGroup, err,error,*999)
+    ENTERS("cmfe_ComputationEnvironment_WorldNodeNumberGet",err,error,*999)
 
-    EXITS("cmfe_ComputationalWorkGroup_CreateFinish")
+    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment%computationEnvironment_,worldNodeNumber, &
+      & err,error,*999)
+
+    EXITS("cmfe_ComputationEnvironment_WorldNodeNumberGet")
     RETURN
-999 ERRORSEXITS("cmfe_ComputationalWorkGroup_CreateFinish",err,error)
+999 ERRORS("cmfe_ComputationEnvironment_WorldNodeNumberGet",err,error)
+    EXITS("cmfe_ComputationEnvironment_WorldNodeNumberGet")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_ComputationalWorkGroup_CreateFinish
+  END SUBROUTINE cmfe_ComputationEnvironment_WorldNodeNumberGet
+  
+  !  
+  !================================================================================================================================
+  !
+
+  !>Returns the world work group for the computation environment.
+  SUBROUTINE cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+    !DLLEXPORT(cmfe_ComputationEnvironment_WorldWorkGroupGet)
+
+    !Argument variables
+    TYPE(cmfe_ComputationEnvironmentType), INTENT(IN) :: computationEnvironment !<The computation environment to get the world work group for.
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: worldWorkGroup !<On return, the world work group for the computation environment.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_ComputationEnvironment_WorldWorkGroupGet",err,error,*999)
+
+    CALL ComputationEnvironment_WorldWorkGroupGet(computationEnvironment%computationEnvironment_,worldWorkGroup%workGroup, &
+      & err,error,*999)
+
+    EXITS("cmfe_ComputationEnvironment_WorldWorkGroupGet")
+    RETURN
+999 ERRORS("cmfe_ComputationEnvironment_WorldWorkGroupGet",err,error)
+    EXITS("cmfe_ComputationEnvironment_WorldWorkGroupGet")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_ComputationEnvironment_WorldWorkGroupGet
 
   !
   !================================================================================================================================
   !
 
-  !>ADD WORK SUB-GROUP TO THE PARENT GROUP BASED ON THE COMPUTATIONAL REQUIREMENTS (CALLED BY THE USER)
-  SUBROUTINE cmfe_ComputationalWorkGroup_SubgroupAdd(parentWorkGroup, numberComputationalNodes,addedWorkGroup, err)
-    !DLLEXPORT(cmfe_ComputationalWorkGroup_SubgroupAdd)
+  !>Start the creation of a computation work group specified by number.
+  SUBROUTINE cmfe_WorkGroup_CreateStartNumber(workGroupUserNumber,parentWorkGroupUserNumber,err)
+    !DLLEXPORT(cmfe_WorkGroup_CreateStartNumber)
     !Argument Variables
-    TYPE(cmfe_ComputationalWorkGroupType), INTENT(INOUT) :: parentWorkGroup
-    TYPE(cmfe_ComputationalWorkGroupType), INTENT(INOUT) :: addedWorkGroup
-    INTEGER(INTG),INTENT(IN) :: numberComputationalNodes
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to start the creation of.
+    INTEGER(INTG), INTENT(IN) :: parentWorkGroupUserNumber !<The user number of the parent work group to start the creation for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: parentWorkGroup,workGroup 
 
-    ENTERS("cmfe_ComputationalWorkGroup_SubgroupAdd",err,error,*999)
+    ENTERS("cmfe_WorkGroup_CreateStartNumber",err,error,*999)
 
-    CALL COMPUTATIONAL_WORK_GROUP_SUBGROUP_ADD(parentWorkGroup%computationalWorkGroup,numberComputationalNodes, &
-      & addedWorkGroup%computationalWorkGroup, err,error,*999)
+    NULLIFY(parentWorkGroup)
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,parentWorkGroupUserNumber,parentWorkGroup,err,error,*999)
+    CALL WorkGroup_CreateStart(workGroupUserNumber,parentWorkGroup,workGroup,err,error,*999)
 
-    EXITS("cmfe_ComputationalWorkGroup_SubgroupAdd")
+    EXITS("cmfe_WorkGroup_CreateStartNumber")
     RETURN
-999 ERRORSEXITS("cmfe_ComputationalWorkGroup_SubgroupAdd",err,error)
+999 ERRORSEXITS("cmfe_WorkGroup_CreateStartNumber",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_ComputationalWorkGroup_SubgroupAdd  !
+  END SUBROUTINE cmfe_WorkGroup_CreateStartNumber
+
+  !  
   !================================================================================================================================
   !
 
-  !>Set the working group tree in order to performe mesh decomposition
-  SUBROUTINE cmfe_Decomposition_WorldWorkGroupSet(decomposition, worldWorkGroup, err)
-    !DLLEXPORT(cmfe_Decomposition_WorldWorkGroupSet)
+  !>Start the creation of a computation work group specified by object under a parent work group
+  SUBROUTINE cmfe_WorkGroup_CreateStartObj(userNumber,parentWorkGroup,workGroup,err)
+    !DLLEXPORT(cmfe_WorkGroup_CreateStartObj)
     !Argument Variables
-    TYPE(cmfe_DecompositionType), INTENT(INOUT) :: decomposition
-    TYPE(cmfe_ComputationalWorkGroupType),INTENT(IN) :: worldWorkGroup
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of computation nodes to create
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: parentWorkGroup !<The parent work group to create the work group under
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<On exit, the created work group. 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 
-    ENTERS("cmfe_Decomposition_WorldWorkGroupSet",err,error,*999)
+    ENTERS("cmfe_WorkGroup_CreateStartObj",err,error,*999)
 
-    ! todo
-    CALL FlagError('not implemented yet', err,error, *999)
+    CALL WorkGroup_CreateStart(userNumber,parentWorkGroup%workGroup,workGroup%workGroup,err,error,*999)
 
-    EXITS("cmfe_Decomposition_WorldWorkGroupSet")
+    EXITS("cmfe_WorkGroup_CreateStartObj")
     RETURN
-999 ERRORSEXITS("cmfe_Decomposition_WorldWorkGroupSet",err,error)
+999 ERRORSEXITS("cmfe_WorkGroup_CreateStartObj",err,error)
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Decomposition_WorldWorkGroupSet
+  END SUBROUTINE cmfe_WorkGroup_CreateStartObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finish the creation of a computation work group specified by number.
+  SUBROUTINE cmfe_WorkGroup_CreateFinishNumber(workGroupUserNumber,err)
+    !DLLEXPORT(cmfe_WorkGroup_CreateFinishNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to finish the creation of.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_CreateFinishNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_CreateFinish(workGroup,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_CreateFinishNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_CreateFinishNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_CreateFinishNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finish the creation of a computation work group specified by object.
+  SUBROUTINE cmfe_WorkGroup_CreateFinishObj(workGroup,err)
+    !DLLEXPORT(cmfe_WorkGroup_CreateFinishObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to finish the creation of
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_CreateFinishObj",err,error,*999)
+
+    CALL WorkGroup_CreateFinish(workGroup%workGroup,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_CreateFinishObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_CreateFinishObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_CreateFinishObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroy a work group specified by number.
+  SUBROUTINE cmfe_WorkGroup_DestroyNumber(workGroupUserNumber,err)
+    !DLLEXPORT(cmfe_WorkGroup_DestroyNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_DestroyNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_Destroy(workGroup,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_DestroyNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_DestroyNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_DestroyNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroy a work group specified by object.
+  SUBROUTINE cmfe_WorkGroup_DestroyObj(workGroup,err)
+    !DLLEXPORT(cmfe_WorkGroup_DestroyObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_DestroyObj",err,error,*999)
+
+    CALL WorkGroup_Destroy(workGroup%workGroup,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_DestroyObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_DestroyObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_DestroyObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the group communicator for a work group specified by a user number.
+  SUBROUTINE cmfe_WorkGroup_GroupCommunicatorGetNumber(workGroupUserNumber,groupCommunicator,err)
+    !DLLEXPORT(cmfe_WorkGroup_GroupCommunicatorNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to get the group communicator for.
+    INTEGER(INTG), INTENT(OUT) :: groupCommunicator !<On return, the group communicator for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_GroupCommunicatorGetNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_GroupCommunicatorGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_GroupCommunicatorGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_GroupCommunicatorGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the group communicator for a work group specified by an object.
+  SUBROUTINE cmfe_WorkGroup_GroupCommunicatorGetObj(workGroup,groupCommunicator,err)
+    !DLLEXPORT(cmfe_WorkGroup_GroupCommunicatorGetObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to get the group communicator for
+    INTEGER(INTG), INTENT(OUT) :: groupCommunicator !<On return, the group communicator for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_GroupCommunicatorGetObj",err,error,*999)
+
+    CALL WorkGroup_GroupCommunicatorGet(workGroup%workGroup,groupCommunicator,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_GroupCommunicatorGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_GroupCommunicatorGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_GroupCommunicatorGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the group node number a work group specified by a user number.
+  SUBROUTINE cmfe_WorkGroup_GroupNodeNumberGetNumber(workGroupUserNumber,groupNodeNumber,err)
+    !DLLEXPORT(cmfe_WorkGroup_GroupNodeNumberGetNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to get the group node number for.
+    INTEGER(INTG), INTENT(OUT) :: groupNodeNumber !<On return, the node number in the group communicator for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_GroupNodeNumberGetNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,groupNodeNumber,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_GroupNodeNumberGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_GroupNodeNumberGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_GroupNodeNumberGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the group node number for a work group specified by an object.
+  SUBROUTINE cmfe_WorkGroup_GroupNodeNumberGetObj(workGroup,groupNodeNumber,err)
+    !DLLEXPORT(cmfe_WorkGroup_GroupNodeNumberGetObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to get the group node number for
+    INTEGER(INTG), INTENT(OUT) :: groupNodeNumber !<On return, the node number in the group communicator for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_GroupNodeNumberGetObj",err,error,*999)
+
+    CALL WorkGroup_GroupNodeNumberGet(workGroup%workGroup,groupNodeNumber,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_GroupNodeNumberGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_GroupNodeNumberGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_GroupNodeNumberGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the character label a work group specified by a user number.
+  SUBROUTINE cmfe_WorkGroup_LabelGetCNumber(workGroupUserNumber,label,err)
+    !DLLEXPORT(cmfe_WorkGroup_LabelGetCNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to get the label for.
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the label for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_LabelGetCNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_LabelGet(workGroup,label,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_LabelGetCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_LabelGetCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_LabelGetCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the character label for a work group specified by an object.
+  SUBROUTINE cmfe_WorkGroup_LabelGetCObj(workGroup,label,err)
+    !DLLEXPORT(cmfe_WorkGroup_LabelGetCObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to get the label for
+    CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the label for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_LabelGetCObj",err,error,*999)
+
+    CALL WorkGroup_LabelGet(workGroup%workGroup,label,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_LabelGetCObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_LabelGetCObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_LabelGetCObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the varying string label a work group specified by a user number.
+  SUBROUTINE cmfe_WorkGroup_LabelGetVSNumber(workGroupUserNumber,label,err)
+    !DLLEXPORT(cmfe_WorkGroup_LabelGetVSNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to get the label for.
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the label for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_LabelGetVSNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_LabelGet(workGroup,label,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_LabelGetVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_LabelGetVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_LabelGetVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the varying string label for a work group specified by an object.
+  SUBROUTINE cmfe_WorkGroup_LabelGetVSObj(workGroup,label,err)
+    !DLLEXPORT(cmfe_WorkGroup_LabelGetVSObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to get the label for
+    TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the label for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_LabelGetVSObj",err,error,*999)
+
+    CALL WorkGroup_LabelGet(workGroup%workGroup,label,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_LabelGetVSObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_LabelGetVSObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_LabelGetVSObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the character label a work group specified by a user number.
+  SUBROUTINE cmfe_WorkGroup_LabelSetCNumber(workGroupUserNumber,label,err)
+    !DLLEXPORT(cmfe_WorkGroup_LabelSetCNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to set the label for.
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_LabelSetCNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_LabelSet(workGroup,label,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_LabelSetCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_LabelSetCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_LabelSetCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the character label for a work group specified by an object.
+  SUBROUTINE cmfe_WorkGroup_LabelSetCObj(workGroup,label,err)
+    !DLLEXPORT(cmfe_WorkGroup_LabelSetCObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to set the label for
+    CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_LabelSetCObj",err,error,*999)
+
+    CALL WorkGroup_LabelSet(workGroup%workGroup,label,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_LabelSetCObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_LabelSetCObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_LabelSetCObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the varying string label a work group specified by a user number.
+  SUBROUTINE cmfe_WorkGroup_LabelSetVSNumber(workGroupUserNumber,label,err)
+    !DLLEXPORT(cmfe_WorkGroup_LabelSetVSNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to set the label for.
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_LabelSetVSNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_LabelSet(workGroup,label,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_LabelSetVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_LabelSetVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_LabelSetVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the varying string label for a work group specified by an object.
+  SUBROUTINE cmfe_WorkGroup_LabelSetVSObj(workGroup,label,err)
+    !DLLEXPORT(cmfe_WorkGroup_LabelSetVSObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to set the label for
+    TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_LabelSetVSObj",err,error,*999)
+
+    CALL WorkGroup_LabelSet(workGroup%workGroup,label,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_LabelSetVSObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_LabelSetVSObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_LabelSetVSObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the group number of nodes in a work group specified by a user number.
+  SUBROUTINE cmfe_WorkGroup_NumberOfGroupNodesGetNumber(workGroupUserNumber,numberOfGroupNodes,err)
+    !DLLEXPORT(cmfe_WorkGroup_NumberOfGroupNodesGetNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to get the group number of nodes for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfGroupNodes !<On return, the number of nodes in the group communicator for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_NumberOfGroupNodesGetNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupNodes,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_NumberOfGroupNodesGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_NumberOfGroupNodesGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_NumberOfGroupNodesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the group number of nodes for a work group specified by an object.
+  SUBROUTINE cmfe_WorkGroup_NumberOfGroupNodesGetObj(workGroup,numberOfGroupNodes,err)
+    !DLLEXPORT(cmfe_WorkGroup_NumberOfGroupNodesGetObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to get the group number of nodes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfGroupNodes !<On return, the number of nodes in the group communicator for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_NumberOfGroupNodesGetObj",err,error,*999)
+
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup%workGroup,numberOfGroupNodes,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_NumberOfGroupNodesGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_NumberOfGroupNodesGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_NumberOfGroupNodesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/Changes the group number of nodes for a work group specified by a user number.
+  SUBROUTINE cmfe_WorkGroup_NumberOfGroupNodesSetNumber(workGroupUserNumber,numberOfGroupNodes,err)
+    !DLLEXPORT(cmfe_WorkGroup_NumberOfGroupNodesSetNumber)
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to set the group number of nodes for.
+    INTEGER(INTG), INTENT(IN) :: numberOfGroupNodes !<The number of nodes in the group communicator to set for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+    TYPE(WorkGroupType), POINTER :: workGroup 
+
+    ENTERS("cmfe_WorkGroup_NumberOfGroupNodesSetNumber",err,error,*999)
+
+    NULLIFY(workGroup)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesSet(workGroup,numberOfGroupNodes,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_NumberOfGroupNodesSetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_NumberOfGroupNodesSetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_NumberOfGroupNodesSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/Changes the group number of nodes for a work group specified by an object.
+  SUBROUTINE cmfe_WorkGroup_NumberOfGroupNodesSetObj(workGroup,numberOfGroupNodes,err)
+    !DLLEXPORT(cmfe_WorkGroup_NumberOfGroupNodesSetObj)
+    !Argument Variables
+    TYPE(cmfe_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to set the group number of nodes for
+    INTEGER(INTG), INTENT(IN) :: numberOfGroupNodes !<The number of nodes in the group communicator to set for the work group.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_WorkGroup_NumberOfGroupNodesSetObj",err,error,*999)
+
+    CALL WorkGroup_NumberOfGroupNodesSet(workGroup%workGroup,numberOfGroupNodes,err,error,*999)
+
+    EXITS("cmfe_WorkGroup_NumberOfGroupNodesSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_WorkGroup_NumberOfGroupNodesSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_WorkGroup_NumberOfGroupNodesSetObj
 
 !!==================================================================================================================================
 !!
@@ -18077,7 +18725,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_CoordinateSystem_CreateFinishNumber",err,error,*999)
 
@@ -42755,7 +43402,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the element domain for.
     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the element domain for.
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to get the domain for.
-    INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computational domain of the element.
+    INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computation domain of the element.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
@@ -42791,7 +43438,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to get the domain for.
-    INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computational domain of the element.
+    INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computation domain of the element.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -42821,7 +43468,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to set the element domain for.
     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to set the element domain for.
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to set the domain for.
-    INTEGER(INTG), INTENT(IN) :: domain !<The computational domain of the element to set.
+    INTEGER(INTG), INTENT(IN) :: domain !<The computation domain of the element to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
@@ -42857,7 +43504,7 @@ CONTAINS
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to set the element domain for.
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to set the domain for.
-    INTEGER(INTG), INTENT(IN) :: domain !<The computational domain of the element to set.
+    INTEGER(INTG), INTENT(IN) :: domain !<The computation domain of the element to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -43259,6 +43906,72 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets/changes the work group of a decomposition identified by a user number.
+  SUBROUTINE cmfe_Decomposition_WorkGroupSetNumber(regionUserNumber,meshUserNumber,decompositionUserNumber,workGroupUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposition_WorkGroupSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the decomposition work group for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to set the work group for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to set the work group for.
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(WorkGroupType), POINTER :: workGroup
+
+    ENTERS("cmfe_Decomposition_WorkGroupSetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(workGroup)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL Decomposition_WorkGroupSet(decomposition,workGroup,err,error,*999)
+    
+    EXITS("cmfe_Decomposition_WorkGroupSetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposition_WorkGroupSetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposition_WorkGroupSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the work group for a decomposition identified by an object.
+  SUBROUTINE cmfe_Decomposition_WorkGroupSetObj(decomposition,workGroup,err)
+    !DLLEXPORT(cmfe_Decomposition_WorkGroupSetObj)
+
+    !Argument variables
+    TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to set the work group for.
+    TYPE(cmfe_WorkGroupType), INTENT(IN) :: workGroup !<The work group to set for the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposition_WorkGroupSetObj",err,error,*999)
+
+    CALL Decomposition_WorkGroupSet(decomposition%decomposition,workGroup%workGroup,err,error,*999)
+
+    EXITS("cmfe_Decomposition_WorkGroupSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposition_WorkGroupSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposition_WorkGroupSetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets whether lines should be calculated
   SUBROUTINE cmfe_Decomposition_CalculateLinesSetNumber(regionUserNumber,meshUserNumber,&
                                                      & decompositionUserNumber,calculateLinesFlag,err)
@@ -43398,7 +44111,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node domain for.
     INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the domain for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the domain for.
-    INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computational domain of the node.
+    INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computation domain of the node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
@@ -43435,7 +44148,7 @@ CONTAINS
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
     INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the domain for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the domain for.
-    INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computational domain of the node.
+    INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computation domain of the node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -45645,13 +46358,13 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the dimensions of a distributed matrix on this computational node
+  !>Get the dimensions of a distributed matrix on this computation node
   SUBROUTINE cmfe_DistributedMatrix_DimensionsGetObj(matrix,m,n,err)
     !DLLEXPORT(cmfe_DistributedMatrix_DimensionsGetObj)
 
     !Argument variables
     TYPE(cmfe_DistributedMatrixType), INTENT(IN) :: matrix !<The matrix to get the data type for
-    INTEGER(INTG), INTENT(OUT) :: m !<On return, the number of rows for this computational node
+    INTEGER(INTG), INTENT(OUT) :: m !<On return, the number of rows for this computation node
     INTEGER(INTG), INTENT(OUT) :: n !<On return, the number of columns
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
@@ -45700,7 +46413,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the data array for this matrix on this computational node
+  !>Get the data array for this matrix on this computation node
   SUBROUTINE cmfe_DistributedMatrix_DataGetIntgObj(matrix,data,err)
     !DLLEXPORT(cmfe_DistributedMatrix_DataGetIntgObj)
 
@@ -45752,7 +46465,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the data array for this matrix on this computational node
+  !>Get the data array for this matrix on this computation node
   SUBROUTINE cmfe_DistributedMatrix_DataGetDPObj(matrix,data,err)
     !DLLEXPORT(cmfe_DistributedMatrix_DataGetDPObj)
 
@@ -45804,7 +46517,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the data array for this matrix on this computational node
+  !>Get the data array for this matrix on this computation node
   SUBROUTINE cmfe_DistributedMatrix_DataGetSPObj(matrix,data,err)
     !DLLEXPORT(cmfe_DistributedMatrix_DataGetSPObj)
 
@@ -45856,7 +46569,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the data array for this matrix on this computational node
+  !>Get the data array for this matrix on this computation node
   SUBROUTINE cmfe_DistributedMatrix_DataGetLObj(matrix,data,err)
     !DLLEXPORT(cmfe_DistributedMatrix_DataGetLObj)
 
@@ -45934,7 +46647,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the data array for this vector on this computational node
+  !>Get the data array for this vector on this computation node
   SUBROUTINE cmfe_DistributedVector_DataGetIntgObj(vector,data,err)
     !DLLEXPORT(cmfe_DistributedVector_DataGetIntgObj)
 
@@ -45986,7 +46699,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the data array for this vector on this computational node
+  !>Get the data array for this vector on this computation node
   SUBROUTINE cmfe_DistributedVector_DataGetDPObj(vector,data,err)
     !DLLEXPORT(cmfe_DistributedVector_DataGetDPObj)
 
@@ -46038,7 +46751,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the data array for this vector on this computational node
+  !>Get the data array for this vector on this computation node
   SUBROUTINE cmfe_DistributedVector_DataGetSPObj(vector,data,err)
     !DLLEXPORT(cmfe_DistributedVector_DataGetSPObj)
 
@@ -46090,7 +46803,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the data array for this vector on this computational node
+  !>Get the data array for this vector on this computation node
   SUBROUTINE cmfe_DistributedVector_DataGetLObj(vector,data,err)
     !DLLEXPORT(cmfe_DistributedVector_DataGetLObj)
 
@@ -48412,6 +49125,65 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Problem_SpecificationSizeGetObj
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the work group of a problem identified by a user number.
+  SUBROUTINE cmfe_Problem_WorkGroupSetNumber(problemUserNumber,workGroupUserNumber,err)
+    !DLLEXPORT(cmfe_Problem_WorkGroupSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to set the work group for.
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(WorkGroupType), POINTER :: workGroup
+
+    ENTERS("cmfe_Problem_WorkGroupSetNumber",err,error,*999)
+
+    NULLIFY(problem)
+    NULLIFY(workGroup)
+    CALL Problem_Get(problemUserNumber,problem,err,error,*999)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL Problem_WorkGroupSet(problem,workGroup,err,error,*999)
+    
+    EXITS("cmfe_Problem_WorkGroupSetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Problem_WorkGroupSetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Problem_WorkGroupSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the work group for a problem identified by an object.
+  SUBROUTINE cmfe_Problem_WorkGroupSetObj(problem,workGroup,err)
+    !DLLEXPORT(cmfe_Problem_WorkGroupSetObj)
+
+    !Argument variables
+    TYPE(cmfe_ProblemType), INTENT(INOUT) :: problem !<The problem to set the work group for.
+    TYPE(cmfe_WorkGroupType), INTENT(IN) :: workGroup !<The work group to set for the problem.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Problem_WorkGroupSetObj",err,error,*999)
+
+    CALL Problem_WorkGroupSet(problem%problem,workGroup%workGroup,err,error,*999)
+
+    EXITS("cmfe_Problem_WorkGroupSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Problem_WorkGroupSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Problem_WorkGroupSetObj
+
 
 !!==================================================================================================================================
 !!
