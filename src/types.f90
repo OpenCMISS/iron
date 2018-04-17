@@ -399,22 +399,22 @@ MODULE Types
   !
 
   !>Contains information about a node.
-  TYPE NODE_TYPE
-    INTEGER(INTG) :: GLOBAL_NUMBER !<The global number of the node.
-    INTEGER(INTG) :: USER_NUMBER !<The user defined number of the node.
-    TYPE(VARYING_STRING) :: LABEL !<A string label for the node
-  END TYPE NODE_TYPE
+  TYPE NodeType
+    INTEGER(INTG) :: globalNumber !<The global number of the node.
+    INTEGER(INTG) :: userNumber !<The user defined number of the node.
+    TYPE(VARYING_STRING) :: label !<A string label for the node
+  END TYPE NodeType
 
   !>Contains information on the nodes defined on a region. \see OPENCMISS::Iron::cmfe_NodesType
-  TYPE NODES_TYPE
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region containing the nodes. If the nodes are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface containing the nodes. If the nodes are in a region rather than an interface then this pointer will be NULL and the region pointer should be used.
-    LOGICAL :: NODES_FINISHED !<Is .TRUE. if the nodes have finished being created, .FALSE. if not.
-    INTEGER(INTG) :: NUMBER_OF_NODES !<The number of nodes defined on the region.
-    TYPE(NODE_TYPE), ALLOCATABLE :: NODES(:) !<NODES(nodes_idx). The nodal information for the nodes_idx'th global node.
-    INTEGER(INTG), ALLOCATABLE :: COUPLED_NODES(:,:) !<Coupled meshes nodes numbers
-    TYPE(TREE_TYPE), POINTER :: NODES_TREE !<The tree for user to global node mapping
-  END TYPE NODES_TYPE
+  TYPE NodesType
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region containing the nodes. If the nodes are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
+    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface containing the nodes. If the nodes are in a region rather than an interface then this pointer will be NULL and the region pointer should be used.
+    LOGICAL :: nodesFinished !<Is .TRUE. if the nodes have finished being created, .FALSE. if not.
+    INTEGER(INTG) :: numberOfNodes !<The number of nodes defined on the region.
+    TYPE(NodeType), ALLOCATABLE :: nodes(:) !<nodes(nodesIdx). The nodal information for the nodesIdx'th global node.
+    INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<Coupled meshes nodes numbers
+    TYPE(TREE_TYPE), POINTER :: nodesTree !<The tree for user to global node mapping
+  END TYPE NodesType
 
   !
   !================================================================================================================================
@@ -2483,7 +2483,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: MESH_CONNECTIVITY !<A pointer to the meshes connectivity the interface.
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<A pointer to the points connectivity the interface.
     TYPE(DataPointSetsType), POINTER :: dataPointSets  !<A pointer to the data points defined in an interface.
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes in an interface
+    TYPE(NodesType), POINTER :: NODES !<A pointer to the nodes in an interface
     TYPE(MESHES_TYPE), POINTER :: MESHES !<A pointer to the mesh in an interface.
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes in an interface.
     TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields defined over an interface.
@@ -3523,19 +3523,19 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE REGION_TYPE 
     INTEGER(INTG) :: USER_NUMBER !<The user defined identifier for the region. The user number must be unique.
     LOGICAL :: REGION_FINISHED !<Is .TRUE. if the region has finished being created, .FALSE. if not.
-    TYPE(VARYING_STRING) :: LABEL !<A user defined label for the region.
+    TYPE(VARYING_STRING) :: label !<A user defined label for the region.
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system used by the region.
     TYPE(DataPointSetsType), POINTER :: dataPointSets !<A pointer to the data point sets defined on the region.          
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes defined on the region.
-    TYPE(MESHES_TYPE), POINTER :: MESHES !<A pointer to the meshes defined on the region.
+    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes defined on the region.
+    TYPE(MESHES_TYPE), POINTER :: meshes !<A pointer to the meshes defined on the region.
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes defined on the region.
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields defined on the region.
+    TYPE(FIELDS_TYPE), POINTER :: fields !<A pointer to the fields defined on the region.
     TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer to the equation sets defined on the region.
     TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: CELLML_ENVIRONMENTS !<A pointer to the CellML environments for the region.
     TYPE(REGION_TYPE), POINTER :: PARENT_REGION !<A pointer to the parent region for the region. If the region has no parent region then it is the global (world) region and PARENT_REGION is NULL.
     INTEGER(INTG) :: NUMBER_OF_SUB_REGIONS !<The number of sub-regions defined for the region.
     TYPE(REGION_PTR_TYPE), POINTER :: SUB_REGIONS(:) !<An array of pointers to the sub-regions defined on the region. \todo make this allocatable
-    TYPE(INTERFACES_TYPE), POINTER :: INTERFACES !<A pointer to the interfaces defined on the region.
+    TYPE(INTERFACES_TYPE), POINTER :: interfaces !<A pointer to the interfaces defined on the region.
   END TYPE REGION_TYPE
 
   !>Contains information about the regions

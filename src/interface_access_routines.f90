@@ -347,7 +347,7 @@ CONTAINS
 
     !Argument variables
     TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the nodes for
-    TYPE(NODES_TYPE), POINTER :: nodes !<On exit, a pointer to the nodes for the interface. Must not be associated on entry.
+    TYPE(NodesType), POINTER :: nodes !<On exit, a pointer to the nodes for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
