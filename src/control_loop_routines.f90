@@ -45,18 +45,19 @@
 MODULE CONTROL_LOOP_ROUTINES
 
   USE BaseRoutines
+  USE Constants
   USE ControlLoopAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE PROBLEM_CONSTANTS
   USE SOLVER_ROUTINES
   USE SolverAccessRoutines
   USE SolverMatricesAccessRoutines  
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
 
 #include "macros.h"
 

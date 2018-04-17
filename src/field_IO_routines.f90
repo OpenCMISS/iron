@@ -152,7 +152,7 @@ MODULE FIELD_IO_ROUTINES
   INTERFACE
     FUNCTION FieldExport_OpenSession( exportType, filename, handle ) &
       & BIND(C,NAME="FieldExport_OpenSession")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: exportType
       CHARACTER(C_CHAR), INTENT(IN) :: filename(*)
@@ -162,7 +162,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_Group( handle, groupName ) &
       & BIND(C,NAME="FieldExport_Group")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       CHARACTER(C_CHAR), INTENT(IN) :: groupName(*)
@@ -171,7 +171,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_MeshDimensions( handle, meshDimensions , basisType) &
       & BIND(C,NAME="FieldExport_MeshDimensions")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: meshDimensions
@@ -181,7 +181,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ScalingFactorCount( handle, scalingFactorCount ) &
       & BIND(C,NAME="FieldExport_ScalingFactorCount")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: scalingFactorCount
@@ -190,7 +190,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ScaleFactors( handle, numberOfXi, interpolationXi, numberOfScaleFactors ) &
       & BIND(C,NAME="FieldExport_ScaleFactors")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: numberOfXi
@@ -201,7 +201,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_NodeCount( handle, nodeCount ) &
       & BIND(C,NAME="FieldExport_NodeCount")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: nodeCount
@@ -210,7 +210,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_FieldCount( handle, fieldCount ) &
       & BIND(C,NAME="FieldExport_FieldCount")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: fieldCount
@@ -219,7 +219,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_CoordinateVariable( handle, variableName, variableNumber, coordinateSystemType, componentCount ) &
       & BIND(C,NAME="FieldExport_CoordinateVariable")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       CHARACTER(LEN=1, KIND=C_CHAR) :: variableName(*)
@@ -231,7 +231,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_Variable( handle, variableName, variableNumber, fieldType, variableType, componentCount ) &
       & BIND(C,NAME="FieldExport_Variable")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       CHARACTER(LEN=1, KIND=C_CHAR) :: variableName(*)
@@ -245,7 +245,7 @@ MODULE FIELD_IO_ROUTINES
     FUNCTION FieldExport_CoordinateComponent( handle, coordinateSystemType, componentNumber, interpType, &
       & numberOfXi, interpolationXi ) &
       & BIND(C,NAME="FieldExport_CoordinateComponent")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: coordinateSystemType
@@ -258,7 +258,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_Component( handle, componentNumber, interpType, numberOfXi, interpolationXi ) &
       & BIND(C,NAME="FieldExport_Component")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: componentNumber
@@ -270,7 +270,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementGridSize( handle, headerType, numberOfXi, numberGauss ) &
       & BIND(C,NAME="FieldExport_ElementGridSize")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: headerType
@@ -282,7 +282,7 @@ MODULE FIELD_IO_ROUTINES
     FUNCTION FieldExport_NodeScaleIndexes( handle, nodeCount, derivativeCount, elementDerivatives, nodeIndexes, &
       & scaleIndexes ) &
       & BIND(C,NAME="FieldExport_NodeScaleIndexes")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: nodeCount
@@ -295,7 +295,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementIndex( handle, dimensionCount, elementIndex ) &
       & BIND(C,NAME="FieldExport_ElementIndex")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: dimensionCount
@@ -305,7 +305,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementNodeIndices( handle, nodeCount, nodeIndices ) &
       & BIND(C,NAME="FieldExport_ElementNodeIndices")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: nodeCount
@@ -315,7 +315,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementNodeScales( handle, isFirstSet, scaleCount, scales ) &
       & BIND(C,NAME="FieldExport_ElementNodeScales")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: isFirstSet
@@ -326,7 +326,8 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementGridValues( handle, isFirstSet, numberOfXi, elementValue ) &
       & BIND(C,NAME="FieldExport_ElementGridValues")
-      USE TYPES
+      USE Kinds
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: isFirstSet
@@ -337,7 +338,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_NodeValues( handle, nodeNumber, valueCount, nodeValues ) &
       & BIND(C,NAME="FieldExport_NodeValues")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: nodeNumber
@@ -348,7 +349,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_CloseSession( handle ) &
       & BIND(C,NAME="FieldExport_CloseSession")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT) :: FieldExport_CloseSession
@@ -356,7 +357,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_CoordinateDerivativeIndices( handle, componentNumber, coordinateSystemType, numberOfDerivatives,  &
       & derivatives, valueIndex ) BIND(C,NAME="FieldExport_CoordinateDerivativeIndices")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: componentNumber
@@ -369,7 +370,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_DerivativeIndices( handle, componentNumber, fieldType, variableType, numberOfDerivatives, &
       & derivatives, valueIndex ) BIND(C,NAME="FieldExport_DerivativeIndices")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: componentNumber
@@ -382,14 +383,14 @@ MODULE FIELD_IO_ROUTINES
     END FUNCTION FieldExport_DerivativeIndices
 
     FUNCTION FieldExport_EndComponent(handle) BIND(C,NAME="FieldExport_EndComponent")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT) :: FieldExport_EndComponent
     END FUNCTION FieldExport_EndComponent
 
     FUNCTION FieldExport_VersionInfo(handle, numberOfVersions) BIND(C,NAME="FieldExport_VersionInfo")
-      USE TYPES
+      USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: numberOfVersions
@@ -1057,7 +1058,8 @@ CONTAINS
     INTEGER(INTG) :: number_of_comps, VARIABLE_IDX,variable_type
     REAL(DP), ALLOCATABLE :: LIST_DEV_VALUE(:)
     LOGICAL :: SECTION_START, FILE_END, NODE_SECTION, FILE_OPEN, NODE_IN_DOMAIN
-
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
+    TYPE(ContextType), POINTER :: context
 
     ENTERS("FIELD_IO_CREATE_FIELDS",ERR,ERROR,*999)
 
@@ -1071,6 +1073,11 @@ CONTAINS
       GOTO 999
     ENDIF
 
+    NULLIFY(context)
+    CALL Region_ContextGet(region,context,err,error,*999)
+    NULLIFY(computationEnvironment)
+    CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
+    
     CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
     
     CMISS_KEYWORD_FIELDS="#Fields="
@@ -1517,7 +1524,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: DECOMPOSITION_METHOD !<decompistion method
     INTEGER(INTG), INTENT(IN) :: FIELD_VALUES_SET_TYPE
     INTEGER(INTG), INTENT(IN) :: FIELD_SCALING_TYPE
-    !TYPE(BASIS_FUNCTIONS_TYPE), POINTER :: BASES !< bases function
+    !TYPE(BasisFunctionsType), POINTER :: BASES !< bases function
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1529,9 +1536,16 @@ CONTAINS
     !INTEGER(INTG), ALLOCATABLE :: USER_NODAL_NUMBER_MAP_GLOBAL_NODAL_NUMBER(:)
     INTEGER(INTG), ALLOCATABLE :: MESH_COMPONENTS_OF_FIELD_COMPONENTS(:)
     INTEGER(INTG), ALLOCATABLE :: COMPONENTS_IN_FIELDS(:)
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
+    TYPE(ContextType), POINTER :: context
 
     ENTERS("FIELD_IO_FIELDS_IMPORT",ERR,ERROR,*999)
 
+    NULLIFY(context)
+    CALL Region_ContextGet(region,context,err,error,*999)
+    NULLIFY(computationEnvironment)
+    CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
+    
     !Get the number of computation nodes
     CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,computation_node_numbers,err,error,*999)
     !Get my computation node number
@@ -1640,6 +1654,9 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING), ALLOCATABLE :: LIST_STR(:)
     TYPE(BASIS_TYPE), POINTER :: BASIS
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
+    TYPE(ContextType), POINTER :: context
     TYPE(NODES_TYPE), POINTER :: NODES
     TYPE(MESH_ELEMENTS_TYPE_PTR_TYPE), ALLOCATABLE :: ELEMENTS_PTR(:)
     TYPE(VARYING_STRING) :: FILE_NAME, FILE_STATUS, LINE
@@ -1677,6 +1694,13 @@ CONTAINS
       CALL FlagError("region is not finished",ERR,ERROR,*999)
       GOTO 999
     ENDIF
+
+    NULLIFY(context)
+    CALL Region_ContextGet(region,context,err,error,*999)
+    NULLIFY(basisFunctions)
+    CALL Context_BasisFunctionsGet(context,basisFunctions,err,error,*999)
+    NULLIFY(computationEnvironment)
+    CALL Context_ComputationEnvironment(context,computationEnvironment,err,error,*999)
 
     CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
     
@@ -2042,7 +2066,7 @@ CONTAINS
       & "can not allocate list of mesh element pointers", ERR, ERROR, *999 )
 
     IF(basisFunctions%numberOfBasisFunctions<=0)  THEN
-      CALL BASIS_CREATE_START(1,BASIS,ERR,ERROR,*999)
+      CALL BASIS_CREATE_START(basisFunctions,1,BASIS,ERR,ERROR,*999)
       CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
       CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)
     ENDIF
@@ -2342,7 +2366,7 @@ CONTAINS
 
           IF(pos==0) THEN
             IF(ASSOCIATED(BASIS)) NULLIFY(BASIS)
-            CALL BASIS_CREATE_START(basisFunctions%numberOfBasisFunctions+1,BASIS,ERR,ERROR,*999)
+            CALL BASIS_CREATE_START(basisFunctions,basisFunctions%numberOfBasisFunctions+1,BASIS,ERR,ERROR,*999)
             CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
             CALL BASIS_INTERPOLATION_XI_SET(BASIS,INTERPOLATION_XI(idx_comp,:),ERR,ERROR,*999)
             CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)
@@ -6221,9 +6245,18 @@ CONTAINS
     TYPE(FIELD_IO_INFO_SET) :: NODAL_INFO_SET !<nodal information in this process
     INTEGER(INTG):: myWorldComputationNodeNumber !<local process number
     INTEGER(INTG):: computation_node_numbers   !<total process number
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
+    TYPE(ContextType), POINTER :: context
 
     ENTERS("FIELD_IO_NODES_EXPORT", ERR,ERROR,*999)
 
+    IF(.NOT.ASSOCIATED(fields)) CALL FlagError("Fields is not associated.",err,error,*999)
+
+    NULLIFY(context)
+    CALL Region_ContextGet(fields%region,context,err,error,*999)
+    NULLIFY(computationEnvironment)
+    CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
+    
     !Get the number of computation nodes
     CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,computation_node_numbers,err,error,*999)
     !Get my computation node number
@@ -6269,9 +6302,18 @@ CONTAINS
     TYPE(FIELD_IO_INFO_SET) :: LOCAL_PROCESS_ELEMENTAL_INFO_SET !<elemental information in this process
     INTEGER(INTG):: myWorldComputationNodeNumber !<local process number
     INTEGER(INTG):: computation_node_numbers   !<total process numbers
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
+    TYPE(ContextType), POINTER :: context
 
     ENTERS("FIELD_IO_ELEMENTS_EXPORT", ERR,ERROR,*999)
 
+    IF(.NOT.ASSOCIATED(fields)) CALL FlagError("Fields is not associated.",err,error,*999)
+
+    NULLIFY(context)
+    CALL Region_ContextGet(fields%region,context,err,error,*999)
+    NULLIFY(computationEnvironment)
+    CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
+    
     !Get the number of computation nodes
     CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,computation_node_numbers,err,error,*999)
     !Get my computation node number

@@ -45,11 +45,12 @@
 MODULE ProfilingRoutines
   
   USE BaseRoutines
+  USE Constants
   USE INPUT_OUTPUT
+  USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
   USE Types
-  USE ISO_VARYING_STRING
   
 #include "macros.h"  
 

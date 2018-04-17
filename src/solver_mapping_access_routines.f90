@@ -45,6 +45,7 @@
 MODULE SolverMappingAccessRoutines
   
   USE BaseRoutines
+  USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
   USE Types

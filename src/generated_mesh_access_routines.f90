@@ -46,6 +46,7 @@ MODULE GeneratedMeshAccessRoutines
   
   USE BaseRoutines
   USE Kinds
+  USE ISO_VARYING_STRING
   USE MeshAccessRoutines
   USE Strings
   USE Types

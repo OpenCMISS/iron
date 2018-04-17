@@ -48,6 +48,7 @@ MODULE InterfaceAccessRoutines
   USE DataPointAccessRoutines
   USE FieldAccessRoutines
   USE InterfaceConditionAccessRoutines
+  USE ISO_VARYING_STRING
   USE Kinds
   USE MeshAccessRoutines
   USE Strings

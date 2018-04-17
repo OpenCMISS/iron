@@ -3582,12 +3582,21 @@ CONTAINS
     REAL(DP) :: DELTA(3),DELTAi(3),RECT_COORDS(3),t,phi,alpha,xi,nu,x,y,z
     REAL(DP) :: ELLIPSOID_EXTENT(4)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     NULLIFY(BASIS,DOMAIN,DECOMPOSITION,DOMAIN_NODES,FIELD_VARIABLE,FIELD_VARIABLE_COMPONENT)
 
     ENTERS("GeneratedMesh_EllipsoidGeometricParametersCalculate",ERR,ERROR,*999)
 
-    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,MY_COMPUTATION_NODE,err,error,*999)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(field,decomposition,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,MY_COMPUTATION_NODE,err,error,*999)
+    
 
     ! assign to the field
     np=0

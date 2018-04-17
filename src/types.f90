@@ -69,19 +69,28 @@
 !> This module contains all type definitions in order to avoid cyclic module references.
 MODULE Types
 
-  USE CmissPetscTypes, ONLY : PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType,PetscMatFDColoringType, &
+  USE CMISSPETScTypes, ONLY : PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType,PetscMatFDColoringType, &
     & PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTaoType,PetscVecType
-  USE ComputationAccessRoutines
   USE Constants
   USE Kinds
   USE ISO_C_BINDING
   USE ISO_VARYING_STRING
+#ifndef NOMPIMOD
+  USE MPI
+#endif
   USE Trees
   use linkedlist_routines
 
   IMPLICIT NONE
 
-  !
+  PRIVATE
+
+#ifdef NOMPIMOD
+#include "mpif.h"
+#endif
+  
+  
+  !  
   !================================================================================================================================
   !
   ! Base types
@@ -99,7 +108,9 @@ MODULE Types
     INTEGER(C_INT), ALLOCATABLE :: ARRAY(:)
   END TYPE INTEGER_CINT_ALLOC_TYPE
   
-  !
+  PUBLIC REAL_DP_PTR_TYPE,INTEGER_INTG_PTR_TYPE,INTEGER_CINT_ALLOC_TYPE
+  
+  !  
   !================================================================================================================================
   !
   ! List types
@@ -131,6 +142,8 @@ MODULE Types
     INTEGER(C_INT), ALLOCATABLE :: LIST_C_INT(:) !<The integer data (dimension = 1) for integer lists. 
     INTEGER(C_INT), ALLOCATABLE :: LIST_C_INT2(:,:) !<The integer data (dimension > 1) for integer lists. 
   END TYPE LIST_TYPE
+
+  PUBLIC LIST_PTR_TYPE,LIST_TYPE
     
   !
   !================================================================================================================================
@@ -138,7 +151,7 @@ MODULE Types
   ! Quadrature types
   !
 
-  !>Contains information for a particular quadrature scheme. \see OPENCMISS::Iron::cmfe_QuadratureSchemeType \todo Also evaluate the product of the basis functions at gauss points for speed???
+  !>Contains information for a particular quadrature scheme. \see OpenCMISS::Iron::cmfe_QuadratureSchemeType \todo Also evaluate the product of the basis functions at gauss points for speed???
   TYPE QUADRATURE_SCHEME_TYPE
     INTEGER(INTG) :: GLOBAL_NUMBER !<The global number of the quadrature scheme in the list of quadrature schemes for a particular quadrature.
     TYPE(QUADRATURE_TYPE), POINTER :: QUADRATURE !<The pointer back to the quadrature for a particular quadrature scheme
@@ -158,7 +171,7 @@ MODULE Types
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: PTR !<A pointer to the quadrature scheme
   END TYPE QUADRATURE_SCHEME_PTR_TYPE
 
-  !>Contains information on the quadrature to be used for integrating a basis. \see OPENCMISS::Iron::cmfe_QuadratureType
+  !>Contains information on the quadrature to be used for integrating a basis. \see OpenCMISS::Iron::cmfe_QuadratureType
   TYPE QUADRATURE_TYPE
     INTEGER(INTG) :: TYPE !<The type of the quadrature \see BASIS_ROUTINES_QuadratureTypes
     TYPE(BASIS_TYPE), POINTER :: BASIS !<The pointer back to the basis
@@ -169,6 +182,8 @@ MODULE Types
     TYPE(QUADRATURE_SCHEME_PTR_TYPE), POINTER :: SCHEMES(:) !<SCHEMES(scheme_idx). The array of pointers to the quadrature schemes defined for the basis. scheme_idx must be between 1 and QUADRATURE_TYPE::NUMBER_OF_SCHEMES.
     LOGICAL :: EVALUATE_FACE_GAUSS=.FALSE. !! \todo should this be here??
   END TYPE QUADRATURE_TYPE
+
+  PUBLIC QUADRATURE_SCHEME_TYPE,QUADRATURE_SCHEME_PTR_TYPE,QUADRATURE_TYPE
 
   !
   !================================================================================================================================
@@ -187,6 +202,7 @@ MODULE Types
     INTEGER(INTG) :: USER_NUMBER !<The user defined identifier for the basis. The user number must be unique.
     INTEGER(INTG) :: GLOBAL_NUMBER !<The global number for the basis i.e., the position indentifier for the list of bases defined.
     INTEGER(INTG) :: FAMILY_NUMBER !<The family number for the basis. A basis has a number of sub-bases attached which make a basis family. The main parent basis is the basis defined by the user and it will have a family number of 0. The sub-bases of the parent basis will be the line and face bases that make up the basis. These will have different family numbers.
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<A pointer back to the basis functions for the basis.
     LOGICAL :: BASIS_FINISHED !<Is .TRUE. if the basis has finished being created, .FALSE. if not.
     LOGICAL :: HERMITE !<Is .TRUE. if the basis is a hermite basis, .FALSE. if not.
     INTEGER(INTG) :: TYPE !< The type of basis \see BASIS_ROUTINES_BasisTypes 
@@ -245,10 +261,13 @@ MODULE Types
   END TYPE BASIS_TYPE
 
   !>Contains information on the defined basis functions
-  TYPE BASIS_FUNCTIONS_TYPE
+  TYPE BasisFunctionsType
+    TYPE(ContextType), POINTER :: context !<A pointer to the context for the basis functions
     INTEGER(INTG) :: numberOfBasisFunctions !<The number of basis functions defined
     TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: bases(:) !<The array of pointers to the defined basis functions
-  END TYPE BASIS_FUNCTIONS_TYPE
+  END TYPE BasisFunctionsType
+
+  PUBLIC BASIS_PTR_TYPE,BASIS_TYPE,BasisFunctionsType
   
   !
   !================================================================================================================================
@@ -257,8 +276,9 @@ MODULE Types
   !
 
   !>Contains information on a coordinate system. \todo Have a list of coordinate systems and have a pointer in the coordinate_system_type back to the regions that use them.
-  TYPE, BIND(C) :: COORDINATE_SYSTEM_TYPE
+  TYPE COORDINATE_SYSTEM_TYPE
     INTEGER(INTG) :: USER_NUMBER !<The user defined identifier for the coordinate. The user number must be unique.
+    TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer back to the coordinate systems for the coordinate system
     LOGICAL :: COORDINATE_SYSTEM_FINISHED !<Is .TRUE. if the coordinate system has finished being created, .FALSE. if not.
     INTEGER(INTG) :: TYPE !<The type of coordinate system. Old CMISS name ITYP10(nr). \see COORINDATE_ROUTINES_CoordinateSystemTypes
     INTEGER(INTG) :: RADIAL_INTERPOLATION_TYPE !<The type of radial interpolation type for non-rectangular cartesian systems. Old CMISS name JTYP10(nr). \see COORDINATE_ROUTINES_RadialInterpolations
@@ -275,9 +295,12 @@ MODULE Types
 
   !>Contains information on the list of coordinate systems
   TYPE CoordinateSystemsType
+    TYPE(ContextType), POINTER :: context !<A pointer to the context for the list of coordinate systems
     INTEGER(INTG) :: numberOfCoordinateSystems !<The number of coordinate systems defined
     TYPE(COORDINATE_SYSTEM_PTR_TYPE), POINTER :: coordinateSystems(:) !<coordinateSystems(coordinateSystemIdx). The coordinateSystemIdx'th coordinate system.
   END TYPE CoordinateSystemsType
+
+  PUBLIC COORDINATE_SYSTEM_TYPE,COORDINATE_SYSTEM_PTR_TYPE,CoordinateSystemsType
   
   !
   !================================================================================================================================
@@ -348,6 +371,8 @@ MODULE Types
     TYPE(DataProjectionPtrType), ALLOCATABLE :: dataProjections(:) !<dataProjections(projectionIdx). A pointer to the projection_idx'th data projection for the data points.
   END TYPE DataProjectionsType
 
+  PUBLIC DataProjectionResultType,DataProjectionCandidateType,DataProjectionType,DataProjectionPtrType,DataProjectionsType
+
   !
   !================================================================================================================================
   !
@@ -363,7 +388,7 @@ MODULE Types
     REAL(DP), ALLOCATABLE :: weights(:) !<weights(coordinateIdx). Weights of the data point, has the size of region dimension the data point belongs to.
   END TYPE DataPointType
 
-  !>Contains information on the data points defined on a region. \see OPENCMISS::Iron::cmfe_DataPointsType
+  !>Contains information on the data points defined on a region. \see OpenCMISS::Iron::cmfe_DataPointsType
   TYPE DataPointsType
     INTEGER(INTG) :: globalNumber !<The global number of data points
     INTEGER(INTG) :: userNumber !<The user number of the data points
@@ -393,6 +418,8 @@ MODULE Types
     TYPE(TREE_TYPE), POINTER :: dataPointSetsTree !<The tree for user to global data point sets mapping.
   END TYPE DataPointSetsType
 
+  PUBLIC DataPointType,DataPointsType,DataPointsPtrType,DataPointSetsType
+
   !
   !================================================================================================================================
   !
@@ -406,7 +433,7 @@ MODULE Types
     TYPE(VARYING_STRING) :: LABEL !<A string label for the node
   END TYPE NODE_TYPE
 
-  !>Contains information on the nodes defined on a region. \see OPENCMISS::Iron::cmfe_NodesType
+  !>Contains information on the nodes defined on a region. \see OpenCMISS::Iron::cmfe_NodesType
   TYPE NODES_TYPE
     TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region containing the nodes. If the nodes are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface containing the nodes. If the nodes are in a region rather than an interface then this pointer will be NULL and the region pointer should be used.
@@ -416,6 +443,8 @@ MODULE Types
     INTEGER(INTG), ALLOCATABLE :: COUPLED_NODES(:,:) !<Coupled meshes nodes numbers
     TYPE(TREE_TYPE), POINTER :: NODES_TREE !<The tree for user to global node mapping
   END TYPE NODES_TYPE
+
+  PUBLIC NODE_TYPE,NODES_TYPE
 
   !
   !================================================================================================================================
@@ -549,8 +578,7 @@ MODULE Types
     TYPE(EMBEDDING_GAUSSPOINT_TYPE), ALLOCATABLE :: GAUSS_POINT_XI_POSITION(:,:) !<GAUSS_POINT_XI_POSITION(gauss_idx,element_idx) Location of the gauss_idx'th Gauss point of the element_idx'th parent mesh in the child mesh
   END TYPE MESH_EMBEDDING_TYPE
 
-
-  !>Contains information on a mesh defined on a region. \see OPENCMISS::Iron::cmfe_MeshType
+  !>Contains information on a mesh defined on a region. \see OpenCMISS::Iron::cmfe_MeshType
   TYPE MESH_TYPE
     INTEGER(INTG) :: USER_NUMBER !<The user number of the mesh. The user number must be unique.
     INTEGER(INTG) :: GLOBAL_NUMBER !<The corresponding global number for the mesh.
@@ -583,6 +611,20 @@ MODULE Types
     INTEGER(INTG) :: NUMBER_OF_MESHES !<The number of meshes defined on the region.
     TYPE(MESH_PTR_TYPE), POINTER :: MESHES(:) !<MESHES(meshes_idx). The array of pointers to the meshes.
   END TYPE MESHES_TYPE
+
+  PUBLIC MeshDofsType
+
+  PUBLIC MESH_ADJACENT_ELEMENT_TYPE,MESH_ELEMENT_TYPE,MeshElementsType
+
+  PUBLIC MeshNodeDerivativeType,MeshNodeType,MeshNodesType
+
+  PUBLIC MeshElementDataPointsType,MeshDataPointType,MeshDataPointsType
+
+  PUBLIC MeshComponentTopologyType,MeshComponentTopologyPtrType
+
+  PUBLIC EMBEDDING_XI_TYPE,EMBEDDING_GAUSSPOINT_TYPE,MESH_EMBEDDING_TYPE
+
+  PUBLIC MESH_TYPE,MESH_PTR_TYPE,MESHES_TYPE
 
   !
   !================================================================================================================================
@@ -626,7 +668,7 @@ MODULE Types
     LOGICAL :: APPEND_LINEAR_COMPONENT=.FALSE. !<True when two mesh components are needed 
 END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
-  !>Contains information on a generated mesh. \see OPENCMISS::Iron::cmfe_GeneratedMeshType
+  !>Contains information on a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMeshType
   TYPE GENERATED_MESH_TYPE
     INTEGER(INTG) :: USER_NUMBER !<The user number of the generated mesh. The user number must be unique.
     INTEGER(INTG) :: GLOBAL_NUMBER !<The corresponding global number for the generated mesh.
@@ -653,6 +695,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfGeneratedMeshes !<The number of generated meshes defined.
     TYPE(GENERATED_MESH_PTR_TYPE), POINTER :: generatedMeshes(:) !<The array of pointers to the generated meshes.
   END TYPE GeneratedMeshesType
+
+  PUBLIC GENERATED_MESH_REGULAR_TYPE,GENERATED_MESH_CYLINDER_TYPE,GENERATED_MESH_ELLIPSOID_TYPE
+
+  PUBLIC GENERATED_MESH_TYPE,GENERATED_MESH_PTR_TYPE,GeneratedMeshesType
   
   !
   !================================================================================================================================
@@ -781,6 +827,18 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DOMAIN_LINES_TYPE), POINTER :: LINES !<The pointer to the topology information for the lines of this domain.
   END TYPE DOMAIN_TOPOLOGY_TYPE
 
+  PUBLIC DOMAIN_DOFS_TYPE
+
+  PUBLIC DOMAIN_LINE_TYPE,DOMAIN_LINE_PTR_TYPE,DOMAIN_LINES_TYPE
+
+  PUBLIC DOMAIN_FACE_TYPE,DOMAIN_FACE_PTR_TYPE,DOMAIN_FACES_TYPE
+
+  PUBLIC DOMAIN_ELEMENT_TYPE,DOMAIN_ELEMENTS_TYPE
+
+  PUBLIC DOMAIN_NODE_DERIVATIVE_TYPE,DOMAIN_NODE_TYPE,DOMAIN_NODES_TYPE
+
+  PUBLIC DOMAIN_TOPOLOGY_TYPE  
+
   !
   !================================================================================================================================
   !
@@ -887,6 +945,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DistributedMatrixPETScType), POINTER :: petsc !<A pointer to the PETSc distributed matrix information
   END TYPE DistributedMatrixType
 
+  PUBLIC DistributedVectorTransferType,DistributedVectorCMISSType,DistributedVectorPETScType,DistributedVectorType
+
+  PUBLIC DistributedMatrixCMISSType,DistributedMatrixPETScType,DistributedMatrixType
+
   !
   !================================================================================================================================
   !
@@ -929,6 +991,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL, ALLOCATABLE :: DATA_L(:) !<DATA_L(i). The logical data for a logical matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
   END TYPE MATRIX_TYPE
 
+  PUBLIC VECTOR_TYPE
+
+  PUBLIC MATRIX_TYPE
+
   !
   !================================================================================================================================
   !
@@ -954,6 +1020,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information on the domain mappings (i.e., local and global numberings).
   TYPE DOMAIN_MAPPING_TYPE
+    TYPE(WorkGroupType), POINTER :: workGroup !<A pointer to the work group for the domain mapping \TODO temp until permanent fix.
     INTEGER(INTG) :: NUMBER_OF_LOCAL !<The number of local numbers in the domain excluding ghost numbers
     INTEGER(INTG) :: TOTAL_NUMBER_OF_LOCAL !<The total number of local numbers in the domain including ghost numbers.
     INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_DOMAIN_LOCAL(:) !<NUMBER_OF_DOMAIN_LOCAL(domain_no). The number of locals for domain_no'th domain. NOTE: the domain_no goes from 0 to the number of domains-1.
@@ -1002,6 +1069,12 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE DOMAIN_PTR_TYPE 
     TYPE(DOMAIN_TYPE), POINTER :: PTR !<The pointer to the domain.
   END TYPE DOMAIN_PTR_TYPE
+
+  PUBLIC DOMAIN_ADJACENT_DOMAIN_TYPE
+
+  PUBLIC DOMAIN_GLOBAL_MAPPING_TYPE,DOMAIN_MAPPING_TYPE,DOMAIN_MAPPINGS_TYPE
+
+  PUBLIC DOMAIN_TYPE,DOMAIN_PTR_TYPE
 
   !
   !================================================================================================================================
@@ -1111,7 +1184,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints !<The pointer to the topology information for the data of this decomposition.
   END TYPE DECOMPOSITION_TOPOLOGY_TYPE
 
-  !>Contains information on the mesh decomposition. \see OPENCMISS::Iron::cmfe_DecompositionType
+  !>Contains information on the mesh decomposition. \see OpenCMISS::Iron::cmfe_DecompositionType
   TYPE DECOMPOSITION_TYPE
     INTEGER(INTG) :: USER_NUMBER !<The user defined identifier for the domain decomposition. The user number must be unique.
     INTEGER(INTG) :: GLOBAL_NUMBER !<The global number of the domain decomposition in the list of domain decompositions for a particular mesh.
@@ -1146,6 +1219,18 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NUMBER_OF_DECOMPOSITIONS !<The number of decompositions defined on the mesh.
     TYPE(DECOMPOSITION_PTR_TYPE), ALLOCATABLE :: decompositions(:) !<decompositions(decompositionIdx). The array of pointers to the domain decompositions.
   END TYPE DECOMPOSITIONS_TYPE
+
+  PUBLIC DECOMPOSITION_LINE_TYPE,DECOMPOSITION_LINES_TYPE
+
+  PUBLIC DECOMPOSITION_FACE_TYPE,DECOMPOSITION_FACES_TYPE
+
+  PUBLIC DECOMPOSITION_ADJACENT_ELEMENT_TYPE,DECOMPOSITION_ELEMENT_TYPE,DECOMPOSITION_ELEMENTS_TYPE
+
+  PUBLIC DecompositionElementDataPointType,DecompositionElementDataPointsType,DecompositionDataPointsType
+
+  PUBLIC DECOMPOSITION_TOPOLOGY_TYPE
+
+  PUBLIC DECOMPOSITION_TYPE,DECOMPOSITION_PTR_TYPE,DECOMPOSITIONS_TYPE
 
   !
   !================================================================================================================================
@@ -1400,7 +1485,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL, ALLOCATABLE :: MESH_COMPONENT_NUMBER_LOCKED(:,:) !<MESH_COMPONENT_NUMBER_LOCKED(component_idx,variable_type_idx). Is .TRUE. if the mesh component number of the component_idx'th component of the variable_type_idx'th varible type has been locked, .FALSE. if not.
   END TYPE FIELD_CREATE_VALUES_CACHE_TYPE
 
-  !>Contains information for a field defined on a region. \see OPENCMISS::Iron::cmfe_FieldType
+  !>Contains information for a field defined on a region. \see OpenCMISS::Iron::cmfe_FieldType
   TYPE FIELD_TYPE
     INTEGER(INTG) :: GLOBAL_NUMBER !<The global number of the field in the list of fields for a region.
     INTEGER(INTG) :: USER_NUMBER !<The user defined identifier for the field. The user number must be unique.
@@ -1434,6 +1519,42 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NUMBER_OF_FIELDS !<The number of fields defined on the region.
     TYPE(FIELD_PTR_TYPE), POINTER :: FIELDS(:) !<FIELDS(fields_idx). The array of pointers to the fields.
   END TYPE FIELDS_TYPE
+
+  PUBLIC FIELD_PHYSICAL_POINT_TYPE,FIELD_PHYSICAL_POINT_PTR_TYPE
+
+  PUBLIC FIELD_INTERPOLATED_POINT_METRICS_TYPE,FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE
+
+  PUBLIC FIELD_INTERPOLATED_POINT_TYPE,FIELD_INTERPOLATED_POINT_PTR_TYPE
+
+  PUBLIC FIELD_INTERPOLATION_PARAMETERS_TYPE,FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE
+
+  PUBLIC FIELD_GEOMETRIC_PARAMETERS_TYPE
+
+  PUBLIC FIELD_SCALING_TYPE,FIELD_SCALINGS_TYPE
+
+  PUBLIC FIELD_DOF_TO_PARAM_MAP_TYPE
+
+  PUBLIC FIELD_NODE_PARAM_TO_DOF_MAP_DERIVATIVE_TYPE,FIELD_NODE_PARAM_TO_DOF_MAP_NODE_TYPE,FIELD_NODE_PARAM_TO_DOF_MAP_TYPE
+
+  PUBLIC FIELD_ELEMENT_PARAM_TO_DOF_MAP_TYPE
+
+  PUBLIC FIELD_GRID_POINT_PARAM_TO_DOF_MAP_TYPE
+
+  PUBLIC FIELD_GAUSS_POINT_PARAM_TO_DOF_MAP_TYPE
+
+  PUBLIC FIELD_DATA_POINT_PARAM_TO_DOF_MAP_TYPE
+
+  PUBLIC FIELD_PARAM_TO_DOF_MAP_TYPE
+
+  PUBLIC FIELD_VARIABLE_COMPONENT_TYPE
+
+  PUBLIC FIELD_PARAMETER_SET_TYPE,FIELD_PARAMETER_SET_PTR_TYPE,FIELD_PARAMETER_SETS_TYPE
+
+  PUBLIC FIELD_VARIABLE_TYPE,FIELD_VARIABLE_PTR_TYPE
+
+  PUBLIC FIELD_CREATE_VALUES_CACHE_TYPE
+
+  PUBLIC FIELD_TYPE,FIELD_PTR_TYPE,FIELDS_TYPE
 
   !
   !================================================================================================================================
@@ -1669,6 +1790,36 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector !<A pointer to the source vector information for the vector equations matrices
   END TYPE EquationsMatricesVectorType
 
+  PUBLIC ElementMatrixType,ElementVectorType
+
+  PUBLIC NodalMatrixType,NodalVectorType
+
+  PUBLIC EquationsMatrixType,EquationsMatrixPtrType
+
+  PUBLIC EquationsJacobianType,EquationsJacobianPtrType
+
+  PUBLIC EquationsHessianType,EquationsHessianPtrType
+
+  PUBLIC EquationsMatricesFunctionType
+
+  PUBLIC EquationsMatricesNormType
+
+  PUBLIC EquationsMatricesDotProductType
+
+  PUBLIC EquationsMatricesQuadraticType
+
+  PUBLIC EquationsMatricesDynamicType,EquationsMatricesLinearType,EquationsMatricesNonlinearType
+
+  PUBLIC EquationsMatricesOptimisationType
+
+  PUBLIC EquationsMatricesRHSType
+
+  PUBLIC EquationsMatricesSourceType
+
+  PUBLIC EquationsMatricesScalarType
+
+  PUBLIC EquationsMatricesVectorType
+  
   !
   !================================================================================================================================
   !
@@ -1676,12 +1827,12 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !
   
    !>Contains the information about the mapping of a variable DOF to an equations matrix column
-  TYPE varToEquationsColumnMapType
+  TYPE VarToEquationsColumnMapType
     INTEGER(INTG), ALLOCATABLE :: columnDOF(:) !<columnDOF(dofIdx). The equations column number for this equations matrix that the dofIdx'th variable DOF is mapped to.  
-  END TYPE varToEquationsColumnMapType
+  END TYPE VarToEquationsColumnMapType
 
   !>Contains the mapping for a dependent variable type to the equations matrices
-  TYPE varToEquationsMatricesMapType
+  TYPE VarToEquationsMatricesMapType
     INTEGER(INTG) :: variableIndex !<The variable index for this variable to equations matrices map
     INTEGER(INTG) :: variableType !<The variable type for this variable to equations matrices map
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: variable !<A pointer to the field variable for this variable to equations matrices map
@@ -1689,7 +1840,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: equationsMatrixNumbers(:) !<equationsMatrixNumbers(i). The equations matrix number for the i'th matrix that this variable type is mapped to.
     TYPE(varToEquationsColumnMapType), ALLOCATABLE :: dofToColumnsMaps(:) !<dofToColumnsMaps(i). The variable dof to equations columns for the i'th equations matrix.
     INTEGER(INTG), ALLOCATABLE :: dofToRowsMap(:) !<dofToRowsMap(dofIdx). The row number that the dofIdx'th variable dof is mapped to.
-  END TYPE varToEquationsMatricesMapType
+  END TYPE VarToEquationsMatricesMapType
 
   !>Contains information for mapping an equations matrix to a field variable.
   TYPE EquationsMatrixToVarMapType
@@ -1917,6 +2068,42 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     !Create values cache
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache !<The create values cache for the vector equations mapping
   END TYPE EquationsMappingVectorType
+
+  PUBLIC VarToEquationsColumnMapType
+
+  PUBLIC VarToEquationsMatricesMapType
+
+  PUBLIC EquationsMatrixToVarMapType
+
+  PUBLIC EquationsMappingFunctionType,EquationsMappingFunctionsType
+
+  PUBLIC EquationsMappingNormType,EquationsMappingNormsType
+
+  PUBLIC EquationsMappingDotProductType,EquationsMappingDotProductsType
+
+  PUBLIC EquationsMappingQuadraticType,EquationsMappingQuadraticsType
+
+  PUBLIC EquationsMappingDynamicType
+
+  PUBLIC EquationsMappingLinearType
+
+  PUBLIC EquationsJacobianToVarMapType,VarToEquationsJacobianMapType
+
+  PUBLIC EquationsMappingNonlinearType
+
+  PUBLIC EquationsMappingRHSType
+
+  PUBLIC EquationsMappingSourceType
+
+  PUBLIC EquationsMappingScalarCreateValuesCacheType
+
+  PUBLIC EquationsMappingVectorCreateValuesCacheType
+
+  PUBLIC EquationsMappingLHSType
+
+  PUBLIC EquationsMappingScalarType
+
+  PUBLIC EquationsMappingVectorType
   
   !
   !================================================================================================================================
@@ -1969,7 +2156,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the matrices, vectors for the vector equations
   END TYPE EquationsVectorType
   
-  !>Contains information about the equations in an equations set. \see OPENCMISS::Iron::cmfe_EquationsType
+  !>Contains information about the equations in an equations set. \see OpenCMISS::Iron::cmfe_EquationsType
   TYPE EquationsType
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations_set
     LOGICAL :: equationsFinished !<Is .TRUE. if the equations have been finished, .FALSE. if not.
@@ -1989,6 +2176,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsType), POINTER :: ptr
   END TYPE EquationsPtrType
 
+  PUBLIC EquationsInterpolationType
+
+  PUBLIC EquationsScalarType
+
+  PUBLIC EquationsVectorType
+
+  PUBLIC EquationsType,EquationsPtrType
+
   !
   !================================================================================================================================
   !
@@ -2000,8 +2195,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions for this boundary conditions variable
     INTEGER(INTG) :: VARIABLE_TYPE !<The type of variable for this variable boundary conditions
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: VARIABLE !<A pointer to the field variable for this boundary condition variable
-    INTEGER(INTG), ALLOCATABLE :: DOF_TYPES(:) !<DOF_TYPES(dof_idx). The general boundary condition type (eg. fixed or free) of the dof_idx'th dof in the dependent field variable. \see OPENCMISS_BoundaryConditionsTypes,OPENCMISS
-    INTEGER(INTG), ALLOCATABLE :: CONDITION_TYPES(:) !<CONDITION_TYPES(dof_idx). The specific boundary condition type (eg. incremented pressure) of the dof_idx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOF_TYPES array. \see OPENCMISS_BoundaryConditionsDOFTypes,OPENCMISS
+    INTEGER(INTG), ALLOCATABLE :: DOF_TYPES(:) !<DOF_TYPES(dof_idx). The general boundary condition type (eg. fixed or free) of the dof_idx'th dof in the dependent field variable. \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
+    INTEGER(INTG), ALLOCATABLE :: CONDITION_TYPES(:) !<CONDITION_TYPES(dof_idx). The specific boundary condition type (eg. incremented pressure) of the dof_idx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOF_TYPES array. \see OpenCMISS_BoundaryConditionsDOFTypes,OpenCMISS
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: DIRICHLET_BOUNDARY_CONDITIONS  !<A pointer to the dirichlet boundary condition type for this boundary condition variable
     INTEGER(INTG) :: NUMBER_OF_DIRICHLET_CONDITIONS !<Stores the number of dirichlet conditions associated with this variable
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
@@ -2016,7 +2211,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: PTR !<A pointer to the boundary conditions variable
   END TYPE BOUNDARY_CONDITIONS_VARIABLE_PTR_TYPE
 
-  !>Contains information on the boundary conditions for the solver equations. \see OPENCMISS::Iron::cmfe_BoundaryConditionsType
+  !>Contains information on the boundary conditions for the solver equations. \see OpenCMISS::Iron::cmfe_BoundaryConditionsType
   TYPE BOUNDARY_CONDITIONS_TYPE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer to the solver equations.
     LOGICAL :: BOUNDARY_CONDITIONS_FINISHED !<Is .TRUE. if the boundary conditions for the equations set has finished being created, .FALSE. if not.
@@ -2095,6 +2290,22 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(BoundaryConditionsDofConstraintPtrType), ALLOCATABLE :: constraints(:) !<constraints(constraintIdx) is a pointer to the dof constraint for the constraintIdx'th constraint.
     TYPE(BoundaryConditionsCoupledDofsPtrType), ALLOCATABLE :: dofCouplings(:) !<dofCouplings(dofIdx) is a pointer to the coupled DOF information for the solver row/column corresponding to the dofIdx'th equations DOF.
   END TYPE BoundaryConditionsDofConstraintsType
+
+  PUBLIC BOUNDARY_CONDITIONS_VARIABLE_TYPE,BOUNDARY_CONDITIONS_VARIABLE_PTR_TYPE
+
+  PUBLIC BOUNDARY_CONDITIONS_TYPE
+
+  PUBLIC BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE,BOUNDARY_CONDITIONS_SPARSITY_INDICES_PTR_TYPE
+
+  PUBLIC BOUNDARY_CONDITIONS_DIRICHLET_TYPE
+
+  PUBLIC BoundaryConditionsNeumannType
+
+  PUBLIC BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE
+
+  PUBLIC BoundaryConditionsDofConstraintType,BoundaryConditionsDofConstraintPtrType,BoundaryConditionsDofConstraintsType
+
+  PUBLIC BoundaryConditionsCoupledDofsType,BoundaryConditionsCoupledDofsPtrType
 
   !
   !================================================================================================================================
@@ -2177,7 +2388,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(FIELD_TYPE), POINTER :: EQUATIONS_SET_FIELD_FIELD !<A pointer to the equations set field for the equations set.
   END TYPE EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE
 
-  !>Contains information on an equations set. \see OPENCMISS::Iron::cmfe_EquationsSetType
+  !>Contains information on an equations set. \see OpenCMISS::Iron::cmfe_EquationsSetType
   TYPE EQUATIONS_SET_TYPE
     INTEGER(INTG) :: USER_NUMBER !<The user identifying number of the equations set
     INTEGER(INTG) :: GLOBAL_NUMBER !<The global index of the equations set in the region.
@@ -2213,6 +2424,26 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: EQUATIONS_SETS(:) !<EQUATIONS_SETS(equations_set_idx). EQUATIONS_SETS(equations_set_idx)%PTR is the pointer to the equations_set_idx'th equations set.
   END TYPE EQUATIONS_SETS_TYPE
 
+  PUBLIC EQUATIONS_SET_SETUP_TYPE
+
+  PUBLIC EQUATIONS_SET_GEOMETRY_TYPE
+
+  PUBLIC EQUATIONS_SET_MATERIALS_TYPE
+
+  PUBLIC EQUATIONS_SET_DEPENDENT_TYPE
+
+  PUBLIC EquationsSetDerivedType
+
+  PUBLIC EQUATIONS_SET_INDEPENDENT_TYPE
+
+  PUBLIC EQUATIONS_SET_SOURCE_TYPE
+
+  PUBLIC EQUATIONS_SET_ANALYTIC_TYPE
+
+  PUBLIC EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE
+
+  PUBLIC EQUATIONS_SET_TYPE,EQUATIONS_SET_PTR_TYPE,EQUATIONS_SETS_TYPE
+  
   !
   !================================================================================================================================
   !
@@ -2504,6 +2735,48 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_PTR_TYPE), POINTER :: INTERFACES(:) !<INTERFACES(interface_idx). A pointer to the interface_idx'th interface.
   END TYPE INTERFACES_TYPE
 
+  PUBLIC INTERFACE_MATRIX_TYPE,INTERFACE_MATRIX_PTR_TYPE
+
+  PUBLIC INTERFACE_MATRIX_TO_VAR_MAP_TYPE
+
+  PUBLIC INTERFACE_MATRICES_TYPE
+
+  PUBLIC INTERFACE_RHS_TYPE
+
+  PUBLIC INTERFACE_MAPPING_RHS_TYPE
+
+  PUBLIC INTERFACE_MAPPING_CREATE_VALUES_CACHE_TYPE
+
+  PUBLIC INTERFACE_MAPPING_TYPE
+
+  PUBLIC INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE
+
+  PUBLIC INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE
+
+  PUBLIC INTERFACE_EQUATIONS_INTERPOLATION_TYPE
+
+  PUBLIC INTERFACE_EQUATIONS_TYPE
+
+  PUBLIC INTERFACE_GEOMETRY_TYPE
+
+  PUBLIC INTERFACE_PENALTY_TYPE
+
+  PUBLIC INTERFACE_LAGRANGE_TYPE
+
+  PUBLIC INTERFACE_DEPENDENT_TYPE
+
+  PUBLIC INTERFACE_CONDITION_TYPE,INTERFACE_CONDITION_PTR_TYPE,INTERFACE_CONDITIONS_TYPE
+
+  PUBLIC INTERFACE_ELEMENT_CONNECTIVITY_TYPE
+
+  PUBLIC INTERFACE_MESH_CONNECTIVITY_TYPE
+
+  PUBLIC InterfacePointConnectivityType,InterfacePointsConnectivityType
+
+  PUBLIC InterfaceCoupledElementsType
+
+  PUBLIC INTERFACE_TYPE,INTERFACE_PTR_TYPE,INTERFACES_TYPE
+  
   !
   !================================================================================================================================
   !
@@ -2648,6 +2921,26 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(CELLML_PTR_TYPE), ALLOCATABLE :: ENVIRONMENTS(:) !<The array of pointers to the CellML environments.
   END TYPE CELLML_ENVIRONMENTS_TYPE
 
+  PUBLIC CELLML_MODEL_TYPE,CELLML_MODEL_PTR_TYPE
+
+  PUBLIC CELLML_MODELS_FIELD_TYPE
+
+  PUBLIC CELLML_STATE_FIELD_TYPE
+
+  PUBLIC CELLML_INTERMEDIATE_FIELD_TYPE
+
+  PUBLIC CELLML_PARAMETERS_FIELD_TYPE
+
+  PUBLIC CellMLPETScContextType
+
+  PUBLIC CELLML_MODEL_MAP_TYPE,CELLML_MODEL_MAP_PTR_TYPE,CELLML_MODEL_MAPS_TYPE,CELLML_MODEL_MAPS_PTR_TYPE
+
+  PUBLIC CELLML_FIELD_MAPS_TYPE
+
+  PUBLIC CELLML_TYPE,CELLML_PTR_TYPE
+
+  PUBLIC CELLML_ENVIRONMENTS_TYPE
+
   !
   !================================================================================================================================
   !
@@ -2694,13 +2987,17 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DistributedVectorType), POINTER :: RHS_VECTOR !<A pointer to the distributed RHS vector for the solver matrices
   END TYPE SOLVER_MATRICES_TYPE
 
+  PUBLIC SOLVER_MATRIX_TYPE,SOLVER_MATRIX_PTR_TYPE
+
+  PUBLIC SOLVER_MATRICES_TYPE
+
   !
   !================================================================================================================================
   !
   ! Solver equations types
   !
 
-  !>Contains information about the solver equations for a solver. \see OPENCMISS::Iron::cmfe_SolverEquationsType
+  !>Contains information about the solver equations for a solver. \see OpenCMISS::Iron::cmfe_SolverEquationsType
   TYPE SOLVER_EQUATIONS_TYPE
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     LOGICAL :: SOLVER_EQUATIONS_FINISHED !<Is .TRUE. if the solver equations have finished being created, .FALSE. if not.
@@ -2719,6 +3016,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   END TYPE SOLVER_EQUATIONS_TYPE
 
+  PUBLIC SOLVER_EQUATIONS_TYPE
+
   !
   !================================================================================================================================
   !
@@ -2735,6 +3034,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NUMBER_OF_CELLML_ENVIRONMENTS !<The number of CellML environments in the equations
     TYPE(CELLML_PTR_TYPE), ALLOCATABLE :: CELLML_ENVIRONMENTS(:) !<CELLML_ENVIORNMENTS(cellml_idx). The array of pointers to the CellML environments for these CellML equations.     
   END TYPE CELLML_EQUATIONS_TYPE
+
+  PUBLIC CELLML_EQUATIONS_TYPE
   
   !
   !================================================================================================================================
@@ -3029,7 +3330,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_TYPE), POINTER :: PTR
   END TYPE SOLVER_PTR_TYPE
 
- !>Contains information on the type of solver to be used. \see OPENCMISS::Iron::cmfe_SolverType
+ !>Contains information on the type of solver to be used. \see OpenCMISS::Iron::cmfe_SolverType
   TYPE SOLVER_TYPE
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS !<A pointer to the control loop solvers. Note that if this is a linked solver this will be NULL and solvers should be accessed through the linking solver.
     INTEGER(INTG) :: GLOBAL_NUMBER !<The global number of the solver in the list of solvers
@@ -3054,7 +3355,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(GeometricTransformationSolverType), POINTER :: geometricTransformationSolver !<A pointer to the geometric transformation solver information
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer to the solver equations
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS !<A pointer to the CellML equations
-    
+    TYPE(WorkGroupType), POINTER :: workGroup !<A pointer to the computation work group for the solver
   END TYPE SOLVER_TYPE
 
   !>Contains information on the solvers to be used in a control loop
@@ -3064,6 +3365,34 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NUMBER_OF_SOLVERS !<The number of solvers
     TYPE(SOLVER_PTR_TYPE), ALLOCATABLE :: SOLVERS(:) !<A pointer to the solvers information for the problem.
   END TYPE SOLVERS_TYPE
+
+  PUBLIC DYNAMIC_SOLVER_TYPE
+
+  PUBLIC FORWARD_EULER_DAE_SOLVER_TYPE,BACKWARD_EULER_DAE_SOLVER_TYPE,IMPROVED_EULER_DAE_SOLVER_TYPE,EULER_DAE_SOLVER_TYPE
+
+  PUBLIC CRANK_NICOLSON_DAE_SOLVER_TYPE,RUNGE_KUTTA_DAE_SOLVER_TYPE,ADAMS_MOULTON_DAE_SOLVER_TYPE,BDF_DAE_SOLVER_TYPE
+
+  PUBLIC RUSH_LARSON_DAE_SOLVER_TYPE,EXTERNAL_DAE_SOLVER_TYPE,DAE_SOLVER_TYPE
+
+  PUBLIC LINEAR_DIRECT_SOLVER_TYPE,LINEAR_ITERATIVE_SOLVER_TYPE,LINEAR_SOLVER_TYPE
+
+  PUBLIC NEWTON_LINESEARCH_SOLVER_TYPE,NEWTON_TRUSTREGION_SOLVER_TYPE,NEWTON_SOLVER_TYPE
+
+  PUBLIC NewtonSolverConvergenceTest
+
+  PUBLIC QUASI_NEWTON_LINESEARCH_SOLVER_TYPE,QUASI_NEWTON_TRUSTREGION_SOLVER_TYPE,QUASI_NEWTON_SOLVER_TYPE
+
+  PUBLIC NONLINEAR_SOLVER_TYPE
+
+  PUBLIC EIGENPROBLEM_SOLVER_TYPE
+
+  PUBLIC OptimiserSolverType
+
+  PUBLIC CELLML_EVALUATOR_SOLVER_TYPE
+
+  PUBLIC GeometricTransformationSolverType
+
+  PUBLIC SOLVER_TYPE,SOLVER_PTR_TYPE,SOLVERS_TYPE
   
   !
   !================================================================================================================================
@@ -3366,13 +3695,61 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOlVER_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE !<The create values cache for the solver mapping
   END TYPE SOLVER_MAPPING_TYPE
 
+  PUBLIC EQUATIONS_COL_TO_SOLVER_COLS_MAP_TYPE
+
+  PUBLIC EQUATIONS_TO_SOLVER_MAPS_TYPE,EQUATIONS_TO_SOLVER_MAPS_PTR_TYPE
+
+  PUBLIC INTERFACE_TO_SOLVER_MAPS_TYPE,INTERFACE_TO_SOLVER_MAPS_PTR_TYPE
+
+  PUBLIC JACOBIAN_COL_TO_SOLVER_COLS_MAP_TYPE
+
+  PUBLIC JACOBIAN_TO_SOLVER_MAP_TYPE,JACOBIAN_TO_SOLVER_MAP_PTR_TYPE
+
+  PUBLIC VARIABLE_TO_SOLVER_COL_MAP_TYPE
+
+  PUBLIC EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE_TYPE
+
+  PUBLIC EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM_TYPE,EQUATIONS_TO_SOLVER_MATRIX_MAPS_EM_TYPE
+
+  PUBLIC EQUATIONS_ROW_TO_SOLVER_ROWS_MAP_TYPE
+
+  PUBLIC EQUATIONS_SET_TO_SOLVER_MAP_TYPE
+
+  PUBLIC INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE,INTERFACE_TO_SOLVER_MATRIX_MAPS_IM_TYPE
+
+  PUBLIC INTERFACE_ROW_TO_SOLVER_ROWS_MAP_TYPE
+
+  PUBLIC INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE
+
+  PUBLIC INTERFACE_COLUMN_TO_SOLVER_ROWS_MAP_TYPE
+
+  PUBLIC INTERFACE_CONDITION_TO_SOLVER_MAP_TYPE
+
+  PUBLIC SOLVER_COL_TO_DYNAMIC_EQUATIONS_MAP_TYPE,SOLVER_COL_TO_STATIC_EQUATIONS_MAP_TYPE
+
+  PUBLIC SOLVER_DOF_TO_VARIABLE_MAP_TYPE
+
+  PUBLIC SOLVER_COL_TO_EQUATIONS_SET_MAP_TYPE,SOLVER_COL_TO_INTERFACE_EQUATIONS_MAP_TYPE
+
+  PUBLIC SOLVER_COL_TO_INTERFACE_MAP_TYPE
+
+  PUBLIC SOLVER_COL_TO_EQUATIONS_MAPS_TYPE,SOLVER_ROW_TO_EQUATIONS_MAPS_TYPE
+
+  PUBLIC SOLVER_MAPPING_CREATE_VALUES_CACHE_TYPE
+
+  PUBLIC SOLVER_MAPPING_VARIABLE_TYPE,SOLVER_MAPPING_VARIABLES_TYPE
+
+  PUBLIC SolverMappingDofCouplingsType
+
+  PUBLIC SOLVER_MAPPING_TYPE
+  
   !
   !================================================================================================================================
   !
   ! History types
   !
 
-  !>Contains information about a history file for a control loop. \see OPENCMISS::Iron::cmfe_HistoryType
+  !>Contains information about a history file for a control loop. \see OpenCMISS::Iron::cmfe_HistoryType
   TYPE HISTORY_TYPE
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop for the history file
     LOGICAL :: HISTORY_FINISHED !<Is .TRUE. if the history file has finished being created, .FALSE. if not.
@@ -3381,6 +3758,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: UNIT_NUMBER !<The unit number of the history file.
     TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field that will be read/written in the history file
   END TYPE HISTORY_TYPE
+
+  PUBLIC HISTORY_TYPE
   
   !
   !================================================================================================================================
@@ -3453,7 +3832,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(CONTROL_LOOP_TYPE), POINTER :: PTR !<The pointer to the control loop
   END TYPE CONTROL_LOOP_PTR_TYPE
 
-  !>Contains information on a control loop. \see OPENCMISS::Iron::cmfe_ControlLoopType
+  !>Contains information on a control loop. \see OpenCMISS::Iron::cmfe_ControlLoopType
   TYPE CONTROL_LOOP_TYPE
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer back to the problem for the control loop
     TYPE(CONTROL_LOOP_TYPE), POINTER :: PARENT_LOOP !<A pointer back to the parent control loop if this is a sub loop
@@ -3477,7 +3856,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(ControlLoopFieldVariablesType), POINTER :: fieldVariables !<A pointer to the field variables information for this control loop.
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS !<A pointer to the solvers for this control loop
     TYPE(HISTORY_TYPE), POINTER :: HISTORY !<A pointer to the history file for this control loop.
-  END TYPE CONTROL_LOOP_TYPE  
+  END TYPE CONTROL_LOOP_TYPE
+
+  PUBLIC CONTROL_LOOP_SIMPLE_TYPE,CONTROL_LOOP_FIXED_TYPE,CONTROL_LOOP_TIME_TYPE,CONTROL_LOOP_WHILE_TYPE, &
+    & CONTROL_LOOP_LOAD_INCREMENT_TYPE
+
+  PUBLIC ControlLoopFieldVariableType,ControlLoopFieldVariablesType
+
+  PUBLIC CONTROL_LOOP_TYPE,CONTROL_LOOP_PTR_TYPE
   
   !
   !================================================================================================================================
@@ -3490,12 +3876,12 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: ACTION_TYPE !<The action type \see PROBLEM_CONSTANTS_SetupActionTypes,CONSTANTS_ROUTINES
   END TYPE PROBLEM_SETUP_TYPE
   
-  !>Contains information for a problem. \see OPENCMISS::Iron::cmfe_ProblemType
+  !>Contains information for a problem. \see OpenCMISS::Iron::cmfe_ProblemType
   TYPE PROBLEM_TYPE
     INTEGER(INTG) :: USER_NUMBER !<The user defined identifier for the problem. The user number must be unique.
     INTEGER(INTG) :: GLOBAL_NUMBER !<The global number of the problem in the list of problems.
     LOGICAL :: PROBLEM_FINISHED !<Is .TRUE. if the problem has finished being created, .FALSE. if not.
-    TYPE(PROBLEMS_TYPE), POINTER :: PROBLEMS !<A pointer to the problems for this problem.
+    TYPE(ProblemsType), POINTER :: PROBLEMS !<A pointer to the problems for this problem.
     INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The problem specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     TYPE(WorkGroupType), POINTER :: workGroup !<The work group to use for the problem.
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop information for the problem.
@@ -3507,10 +3893,15 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE PROBLEM_PTR_TYPE
        
   !>Contains information on the problems defined.
-  TYPE PROBLEMS_TYPE
-    INTEGER(INTG) :: NUMBER_OF_PROBLEMS !<The number of problems defined.
-    TYPE(PROBLEM_PTR_TYPE), POINTER :: PROBLEMS(:) !<The array of pointers to the problems.
-  END TYPE PROBLEMS_TYPE
+  TYPE ProblemsType
+    TYPE(ContextType), POINTER :: context !<A pointer to the context for the problems
+    INTEGER(INTG) :: numberOfProblems !<The number of problems defined.
+    TYPE(PROBLEM_PTR_TYPE), POINTER :: problems(:) !<The array of pointers to the problems.
+  END TYPE ProblemsType
+
+  PUBLIC PROBLEM_SETUP_TYPE
+
+  PUBLIC PROBLEM_TYPE,PROBLEM_PTR_TYPE,ProblemsType
 
   !
   !================================================================================================================================
@@ -3522,9 +3913,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(REGION_TYPE), POINTER :: PTR !<The pointer to the region.
   END TYPE REGION_PTR_TYPE
      
-  !>Contains information for a region. \see OPENCMISS::Iron::cmfe_RegionType
+  !>Contains information for a region. \see OpenCMISS::Iron::cmfe_RegionType
   TYPE REGION_TYPE 
     INTEGER(INTG) :: USER_NUMBER !<The user defined identifier for the region. The user number must be unique.
+    TYPE(RegionsType), POINTER :: regions !<A pointer back to the regions for this region.
     LOGICAL :: REGION_FINISHED !<Is .TRUE. if the region has finished being created, .FALSE. if not.
     TYPE(VARYING_STRING) :: LABEL !<A user defined label for the region.
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system used by the region.
@@ -3542,14 +3934,123 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE REGION_TYPE
 
   !>Contains information about the regions
-  TYPE REGIONS_TYPE
-    TYPE(REGION_TYPE), POINTER :: WORLD_REGION !<A pointer to the world region
-  END TYPE REGIONS_TYPE
+  TYPE RegionsType
+    TYPE(ContextType), POINTER :: context !<A pointer to the context for the regions
+    TYPE(REGION_TYPE), POINTER :: worldRegion !<A pointer to the world region
+  END TYPE RegionsType
 
-  !
+  PUBLIC REGION_TYPE,REGION_PTR_TYPE,RegionsType
+  
+  !    
   !================================================================================================================================
   !
+  ! Computation types
+  
+  !>Pointer type to WorkGroupType
+  TYPE WorkGroupPtrType
+    TYPE(WorkGroupType), POINTER :: ptr
+  END TYPE WorkGroupPtrType
+  
+  !>Contains information on logical working groups
+  TYPE WorkGroupType
+    INTEGER(INTG) :: userNumber !<The user number of the work group
+    LOGICAL :: workGroupFinished !<Is .TRUE. if the work group has been finished. .FALSE. if not. 
+    TYPE(WorkGroupType), POINTER:: parentWorkGroup !<Parent of this working groups
+    TYPE(VARYING_STRING) :: label !<The label of the work group
+    INTEGER(INTG) :: numberOfGroupComputationNodes !<The size of the total computational nodes belonging to this group
+    INTEGER(INTG), ALLOCATABLE :: worldRanks(:) !<worldRanks(rankIdx). The rank in the world communicator corresponding to the rankIdx'th group rank. 
+    INTEGER(INTG) :: numberOfAvailableRanks !<The number of available ranks for this work group. Note that the numberOfAvaiableRanks plus the sum of the number of ranks in one sub group level down should be the number of nodes in the parent work group.
+    INTEGER(INTG), ALLOCATABLE :: availableRanks(:) !<availableRanks(rankIdx). The list of available ranks for this work group.
+    INTEGER(INTG) :: numberOfSubGroups !<The number of sub work groups
+    TYPE(WorkGroupPtrType), ALLOCATABLE:: subGroups(:) !<subGroups(subgg365GroupIdx). A pointer to the subGroupIdx'th sub work group.
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<A pointer to the computational environment
+    INTEGER(INTG) :: mpiGroupCommunicator !<The MPI communicator for this work group
+    INTEGER(INTG) :: mpiGroup !<The MPI communicator for this work group
+    INTEGER(INTG) :: myGroupComputationNodeNumber !<The rank number in the group communicator
+    INTEGER(INTG) :: myWorldComputationNodeNumber !<The rank number in the world communicator
+  END TYPE WorkGroupType
 
+  !>Contains information on a cache heirarchy
+  TYPE ComputationCacheType
+    INTEGER(INTG) :: numberOfLevels !<The number of levels in the cache hierarchy
+    INTEGER(INTG), ALLOCATABLE :: size(:) !<size(levelIdx). The size of the levelIdx'th cache level.
+  END TYPE ComputationCacheType
+
+  !>Contains information on a computation node containing a number of processors
+  TYPE ComputationNodeType
+    INTEGER(INTG) :: numberOfProcessors !<The number of processors for this computation node
+    INTEGER(INTG) :: rank !<The MPI rank of this computation node in the world communicator
+    TYPE(ComputationCacheType) :: cache !<Information about the caches of this computational node (not currently used).
+    INTEGER(INTG) :: nodeNameLength !<The length of the name of the computation node
+    CHARACTER(LEN=MPI_MAX_PROCESSOR_NAME) :: nodeName !<The name of the computation node
+  END TYPE ComputationNodeType
+
+  !>Contains information on the MPI type to transfer information about a computation node
+  TYPE MPIComputationNodeType
+    INTEGER(INTG) :: mpiType !<The MPI data type
+    INTEGER(INTG) :: numberOfBlocks !<The number of blocks in the MPI data type. This will be equal to 4.
+    INTEGER(INTG) :: blockLengths(4) !<The length of each block.
+    INTEGER(INTG) :: types(4) !<The data types of each block.
+    INTEGER(MPI_ADDRESS_KIND) :: displacements(4) !<The address displacements to each block.
+  END TYPE MPIComputationNodeType
+
+  !>Contains information on the computation environment the program is running in.
+  TYPE ComputationEnvironmentType
+    TYPE(ContextType), POINTER :: context !<A pointer back to the context for the compuation environment
+    INTEGER(INTG) :: mpiVersion !<The version of MPI that we are running with
+    INTEGER(INTG) :: mpiSubVersion !<The sub-version of MPI that we are running with
+    INTEGER(INTG) :: mpiCommWorld !<The clone of the MPI world communicator for OpenCMISS
+    INTEGER(INTG) :: mpiGroupWorld !<The group of the cloned MPI world communicator for OpenCMISS
+    INTEGER(INTG) :: numberOfWorldComputationNodes !<The number of computation nodes in the world communicator
+    INTEGER(INTG) :: myWorldComputationNodeNumber !<The rank of the running process in the world communicator
+    TYPE(ComputationNodeType), ALLOCATABLE :: computationNodes(:) !<computationNodes(node_idx). Contains information on the node_idx'th computation node.
+    TYPE(MPIComputationNodeType) :: mpiComputationNode !<The MPI data type information to transfer the computation node information.
+    TYPE(WorkGroupType), POINTER :: worldWorkGroup !<A pointer to the work group corresponding to the world communicator
+  END TYPE ComputationEnvironmentType
+  
+  PUBLIC WorkGroupType,WorkGroupPtrType
+
+  PUBLIC ComputationCacheType
+
+  PUBLIC ComputationNodeType,MPIComputationNodeType
+
+  PUBLIC ComputationEnvironmentType
+  
+  !    
+  !================================================================================================================================
+  !
+  ! Context type
+
+  !>Contains information on the OpenCMISS context that contains all base level objects
+  TYPE ContextType
+    INTEGER(INTG) :: userNumber !<The context user number
+    TYPE(ContextsType), POINTER :: contexts !<A pointer to the contexts for the context.
+    INTEGER(INTG), ALLOCATABLE :: cmissRandomSeeds(:) !<The current random seeds for OpenCMISS
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<A pointer to the list of basis functions
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<A pointer to the computtional environment
+    TYPE(ProblemsType), POINTER :: problems !<A pointer to the list of problems
+    TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the list of coordinate systems for the context
+    TYPE(RegionsType), POINTER :: regions !<A pointer to the regions for the context
+  END TYPE ContextType
+
+  !>A buffer type to allow for an array of pointers to a ContexType \see OpenCMISS::Types::ContexTypes
+  TYPE ContextPtrType
+    TYPE(ContextType), POINTER :: ptr !<A pointer to the context
+  END TYPE ContextPtrType
+
+  !>Contains information on the OpenCMISS contexts. 
+  TYPE ContextsType
+    INTEGER(INTG) :: numberOfContexts !<The number of contexts
+    INTEGER(INTG) :: lastContextUserNumber !<The user number of the last context created.
+    TYPE(ContextPtrType), ALLOCATABLE :: contexts(:) !<contexts(contexIdx)%ptr is a pointer to the contextIdx'th context.
+  END TYPE ContextsType
+
+  PUBLIC ContextType,ContextPtrType,ContextsType
+  
+  !  
+  !================================================================================================================================
+  !
+  
 
 END MODULE Types
 

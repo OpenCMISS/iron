@@ -43,11 +43,12 @@
 
 module electrophysiology_cell_routines
   USE BaseRoutines
-  USE field_routines
+  USE FIELD_ROUTINES
   USE FieldAccessRoutines
-  use kinds
-  use strings
-  use types
+  USE ISO_VARYING_STRING
+  use Kinds
+  use Strings
+  use Types
 
 #include "macros.h"  
 

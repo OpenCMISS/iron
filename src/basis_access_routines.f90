@@ -46,6 +46,7 @@ MODULE BasisAccessRoutines
   
   USE BaseRoutines
   USE Kinds
+  USE ISO_VARYING_STRING
   USE Strings
   USE Types
   
@@ -73,8 +74,6 @@ MODULE BasisAccessRoutines
 
   !Module variables
 
-  TYPE(BASIS_FUNCTIONS_TYPE) :: basisFunctions !<The tree of defined basis functions
-
   !Interfaces
 
   INTERFACE BASIS_FAMILY_NUMBER_FIND
@@ -87,9 +86,11 @@ MODULE BasisAccessRoutines
 
   PUBLIC BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,BASIS_DEFAULT_QUADRATURE_SCHEME,BASIS_LOW_QUADRATURE_SCHEME, &
     & BASIS_MID_QUADRATURE_SCHEME,BASIS_HIGH_QUADRATURE_SCHEME
-  
-  PUBLIC basisFunctions
 
+  PUBLIC Basis_BasisFunctionsGet
+
+  PUBLIC Basis_ContextGet
+  
   PUBLIC Basis_FamilyNumberFind
 
   PUBLIC BASIS_FAMILY_NUMBER_FIND
@@ -114,11 +115,88 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finds and returns a pointer to the basis with the given user number and family number. If no basis with that
-  !>number and family number exists then basis is returned nullified \see BasisAccessRoutines::Basis_UserNumberFind
-  RECURSIVE SUBROUTINE Basis_FamilyNumberFind(userNumber,familyNumber,basis,err,error,*)
+  !>Returns the basis functionsfor the basis. 
+  SUBROUTINE Basis_BasisFunctionsGet(basis,basisFunctions,err,error,*)
 
     !Argument variables
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the quadrature scheme for
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<On return, the basis fucntions for the basis. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Basis_BasisFunctionsGet",err,error,*998)
+
+    IF(ASSOCIATED(basisFunctions)) CALL FlagError("Basis functions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)    
+    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    
+    basisFunctions=>basis%basisFunctions
+    IF(.NOT.ASSOCIATED(basisFunctions)) THEN
+      localError="Basis functions is not associated for basis number "// &
+        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("Basis_BasisFunctionsGet")
+    RETURN
+999 NULLIFY(basisFunctions)
+998 ERRORSEXITS("Basis_BasisFunctionsGet",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE Basis_BasisFunctionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the context for a basis.
+  SUBROUTINE Basis_ContextGet(basis,context,err,error,*)
+
+    !Argument variables
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the context for
+    TYPE(ContextType), POINTER :: context !<On exit, a pointer to the context for the basis. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Basis_ContextGet",err,error,*998)
+
+    IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(basis%basisFunctions)) THEN
+      localError="Basis functions is not associated for basis number "// &
+        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    context=>basis%basisFunctions%context
+    IF(.NOT.ASSOCIATED(context)) THEN
+      localError="The context is not associated for the basis functions for basis number "// &
+        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Basis_ContextGet")
+    RETURN
+999 NULLIFY(context)
+998 ERRORSEXITS("Basis_ContextGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_ContextGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds and returns a pointer to the basis with the given user number and family number. If no basis with that
+  !>number and family number exists then basis is returned nullified \see BasisAccessRoutines::Basis_UserNumberFind
+  RECURSIVE SUBROUTINE Basis_FamilyNumberFind(basisFunctions,userNumber,familyNumber,basis,err,error,*)
+
+    !Argument variables
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to find the user number. 
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to find
     INTEGER(INTG), INTENT(IN) :: familyNumber !<The family number of the basis to find
     TYPE(BASIS_TYPE), POINTER :: basis !<On exit, A pointer to the basis. If no basis with the specified user and family numbers can be found the pointer is not associated.
@@ -131,6 +209,7 @@ CONTAINS
     ENTERS("Basis_FamilyNumberFind",err,error,*999)
     
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(basisFunctions)) CALL FlagError("Basis functions is not associated.",err,error,*999)
     
     NULLIFY(basis)
     IF(ALLOCATED(basisFunctions%bases)) THEN
@@ -179,9 +258,10 @@ CONTAINS
   !
 
   !>Finds and returns a pointer to the basis with the given user number. 
-  SUBROUTINE Basis_Get(userNumber,basis,err,error,*)
+  SUBROUTINE Basis_Get(basisFunctions,userNumber,basis,err,error,*)
 
     !Argument variables
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to get the user number for. 
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to find
     TYPE(BASIS_TYPE), POINTER :: basis !<On exit, a pointer to the basis with the specified user number if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -191,7 +271,7 @@ CONTAINS
     
     ENTERS("Basis_Get",err,error,*999)
 
-    CALL Basis_UserNumberFind(userNumber,basis,err,error,*999)
+    CALL Basis_UserNumberFind(basisFunctions,userNumber,basis,err,error,*999)
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="A basis with an user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
       CALL FlagError(localError,err,error,*999)
@@ -355,9 +435,10 @@ CONTAINS
   !
 
   !>Finds and returns a pointer to a basis with the given user number. If no basis with that number exists basis is left nullified.
-  SUBROUTINE Basis_UserNumberFind(userNumber,basis,err,error,*)
+  SUBROUTINE Basis_UserNumberFind(basisFunctions,userNumber,basis,err,error,*)
 
     !Argument variables
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to find the user number for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to find.
     TYPE(BASIS_TYPE), POINTER :: basis !<On exit, a pointer to the found basis. If no basis with the given user number exists the pointer is NULL.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -366,7 +447,7 @@ CONTAINS
 
     ENTERS("Basis_UserNumberFind",err,error,*999)
     
-    CALL Basis_FamilyNumberFind(userNumber,0,basis,err,error,*999)
+    CALL Basis_FamilyNumberFind(basisFunctions,userNumber,0,basis,err,error,*999)
   
     EXITS("Basis_UserNumberFind")
     RETURN

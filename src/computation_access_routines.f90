@@ -51,6 +51,7 @@ MODULE ComputationAccessRoutines
   USE MPI
 #endif
   USE Strings
+  USE Types
 
 #include "macros.h"  
 
@@ -66,87 +67,14 @@ MODULE ComputationAccessRoutines
   
   !Module types
 
-  !>pointer type to WorkGroupType
-  TYPE WorkGroupPtrType
-    TYPE(WorkGroupType), POINTER :: ptr
-  END TYPE WorkGroupPtrType
-  
-  !>Contains information on logical working groups
-  TYPE WorkGroupType
-    INTEGER(INTG) :: userNumber !<The user number of the work group
-    LOGICAL :: workGroupFinished !<Is .TRUE. if the work group has been finished. .FALSE. if not. 
-    TYPE(WorkGroupType), POINTER:: parentWorkGroup !<Parent of this working groups
-    TYPE(VARYING_STRING) :: label !<The label of the work group
-    INTEGER(INTG) :: numberOfGroupComputationNodes !<The size of the total computational nodes belonging to this group
-    INTEGER(INTG), ALLOCATABLE :: worldRanks(:) !<worldRanks(rankIdx). The rank in the world communicator corresponding to the rankIdx'th group rank. 
-    INTEGER(INTG) :: numberOfAvailableRanks !<The number of available ranks for this work group. Note that the numberOfAvaiableRanks plus the sum of the number of ranks in one sub group level down should be the number of nodes in the parent work group.
-    INTEGER(INTG), ALLOCATABLE :: availableRanks(:) !<availableRanks(rankIdx). The list of available ranks for this work group.
-    INTEGER(INTG) :: numberOfSubGroups !<The number of sub work groups
-    TYPE(WorkGroupPtrType), ALLOCATABLE:: subGroups(:) !<subGroups(subgg365GroupIdx). A pointer to the subGroupIdx'th sub work group.
-    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<A pointer to the computational environment
-    INTEGER(INTG) :: mpiGroupCommunicator !<The MPI communicator for this work group
-    INTEGER(INTG) :: mpiGroup !<The MPI communicator for this work group
-    INTEGER(INTG) :: myGroupComputationNodeNumber !<The rank number in the group communicator
-    INTEGER(INTG) :: myWorldComputationNodeNumber !<The rank number in the world communicator
-  END TYPE WorkGroupType
-
-  !>Contains information on a cache heirarchy
-  TYPE ComputationCacheType
-    INTEGER(INTG) :: numberOfLevels !<The number of levels in the cache hierarchy
-    INTEGER(INTG), ALLOCATABLE :: size(:) !<size(levelIdx). The size of the levelIdx'th cache level.
-  END TYPE ComputationCacheType
-
-  !>Contains information on a computation node containing a number of processors
-  TYPE ComputationNodeType
-    INTEGER(INTG) :: numberOfProcessors !<The number of processors for this computation node
-    INTEGER(INTG) :: rank !<The MPI rank of this computation node in the world communicator
-    TYPE(ComputationCacheType) :: cache !<Information about the caches of this computational node (not currently used).
-    INTEGER(INTG) :: nodeNameLength !<The length of the name of the computation node
-    CHARACTER(LEN=MPI_MAX_PROCESSOR_NAME) :: nodeName !<The name of the computation node
-  END TYPE ComputationNodeType
-
-  !>Contains information on the MPI type to transfer information about a computation node
-  TYPE MPIComputationNodeType
-    INTEGER(INTG) :: mpiType !<The MPI data type
-    INTEGER(INTG) :: numberOfBlocks !<The number of blocks in the MPI data type. This will be equal to 4.
-    INTEGER(INTG) :: blockLengths(4) !<The length of each block.
-    INTEGER(INTG) :: types(4) !<The data types of each block.
-    INTEGER(MPI_ADDRESS_KIND) :: displacements(4) !<The address displacements to each block.
-  END TYPE MPIComputationNodeType
-
-  !>Contains information on the computation environment the program is running in.
-  TYPE ComputationEnvironmentType
-    INTEGER(INTG) :: mpiVersion !<The version of MPI that we are running with
-    INTEGER(INTG) :: mpiSubVersion !<The sub-version of MPI that we are running with
-    INTEGER(INTG) :: mpiCommWorld !<The clone of the MPI world communicator for OpenCMISS
-    INTEGER(INTG) :: mpiGroupWorld !<The group of the cloned MPI world communicator for OpenCMISS
-    INTEGER(INTG) :: numberOfWorldComputationNodes !<The number of computation nodes in the world communicator
-    INTEGER(INTG) :: myWorldComputationNodeNumber !<The rank of the running process in the world communicator
-    TYPE(ComputationNodeType), ALLOCATABLE :: computationNodes(:) !<computationNodes(node_idx). Contains information on the node_idx'th computation node.
-    TYPE(MPIComputationNodeType) :: mpiComputationNode !<The MPI data type information to transfer the computation node information.
-    TYPE(WorkGroupType), POINTER :: worldWorkGroup !<A pointer to the work group corresponding to the world communicator
-  END TYPE ComputationEnvironmentType
-
   !Module variables
-  
-  TYPE(ComputationEnvironmentType), POINTER, SAVE :: computationEnvironment !<The computation environment the program is running in.  
-
+ 
   !Interfaces
 
   INTERFACE WorkGroup_LabelGet
     MODULE PROCEDURE WorkGroup_LabelGetC
     MODULE PROCEDURE WorkGroup_LabelGetVS
   END INTERFACE WorkGroup_LabelGet
-
-  PUBLIC ComputationEnvironmentType
-  
-  PUBLIC ComputationNodeType
-
-  PUBLIC WorkGroupType,WorkGroupPtrType
-
-  PUBLIC MPIComputationNodeType
-  
-  PUBLIC computationEnvironment
 
   PUBLIC ComputationEnvironment_NumberOfWorldNodesGet
 
@@ -155,6 +83,10 @@ MODULE ComputationAccessRoutines
   PUBLIC ComputationEnvironment_WorldNodeNumberGet
 
   PUBLIC ComputationEnvironment_WorldWorkGroupGet
+
+  PUBLIC WorkGroup_ComputationEnvironmentGet
+
+  PUBLIC WorkGroup_ContextGet
 
   PUBLIC WorkGroup_Get
 
@@ -181,10 +113,10 @@ CONTAINS
   !
 
   !>Gets the current world communicator.
-  SUBROUTINE ComputationEnvironment_WorldCommunicatorGet(computationEnviron,worldCommunicator,err,error,*)
+  SUBROUTINE ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*)
 
     !Argument Variables
-    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnviron !<The computational environment to get the world node number for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnvironment !<The computational environment to get the world node number for.
     INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -192,9 +124,9 @@ CONTAINS
 
     ENTERS("ComputationEnvironment_WorldCommunicatorGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
     
-    worldCommunicator=computationEnviron%mpiCommWorld
+    worldCommunicator=computationEnvironment%mpiCommWorld
  
     EXITS("ComputationEnvironment_WorldCommunicatorGet")
     RETURN
@@ -209,10 +141,10 @@ CONTAINS
   !
   
   !>Returns the number/rank of the computation node in the world communicator  
-  SUBROUTINE ComputationEnvironment_WorldNodeNumberGet(computationEnviron,worldNodeNumber,err,error,*)
+  SUBROUTINE ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,worldNodeNumber,err,error,*)
       
     !Argument Variables
-    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnviron !<The computational environment to get the world node number for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnvironment !<The computational environment to get the world node number for.
     INTEGER(INTG), INTENT(OUT) :: worldNodeNumber !<On return, the node number in the world communicator.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -220,9 +152,9 @@ CONTAINS
 
     ENTERS("ComputationEnvironment_WorldNodeNumberGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
     
-    worldNodeNumber=computationEnviron%myWorldComputationNodeNumber
+    worldNodeNumber=computationEnvironment%myWorldComputationNodeNumber
         
     EXITS("ComputationEnvironment_WorldNodeNumberGet")
     RETURN
@@ -237,10 +169,10 @@ CONTAINS
   !
   
   !>Gets the number of computation nodes in the world communicator.
-  SUBROUTINE ComputationEnvironment_NumberOfWorldNodesGet(computationEnviron,numberOfWorldNodes,err,error,*)
+  SUBROUTINE ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldNodes,err,error,*)
      
     !Argument Variables
-    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnviron !<The computational environment to get the world number of nodes for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnvironment !<The computational environment to get the world number of nodes for.
     INTEGER(INTG), INTENT(OUT) :: numberOfWorldNodes !<On return, the number of nodes in the world communicator.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -248,9 +180,9 @@ CONTAINS
     
     ENTERS("ComputationEnvironment_NumberOfWorldNodesGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
     
-    numberOfWorldNodes=computationEnviron%numberOfWorldComputationNodes    
+    numberOfWorldNodes=computationEnvironment%numberOfWorldComputationNodes    
     
     EXITS("ComputationEnvironment_NumberOfWorldNodesGet")
     RETURN
@@ -265,10 +197,10 @@ CONTAINS
   !
 
   !>Gets the world work group from a computational environment.
-  SUBROUTINE ComputationEnvironment_WorldWorkGroupGet(computationEnviron,worldWorkGroup,err,error,*)
+  SUBROUTINE ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err,error,*)
 
     !Argument variables
-    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnviron !<The computational environment to get the world work group for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnvironment !<The computational environment to get the world work group for.
     TYPE(WorkGroupType), POINTER, INTENT(OUT) :: worldWorkGroup !<On exit, a pointer to the world work group for the computation environment. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -278,10 +210,10 @@ CONTAINS
 
     !Check input arguments
     IF(ASSOCIATED(worldWorkGroup)) CALL FlagError("World work group is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(computationEnviron)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
 
     !Get the world work group
-    worldWorkGroup=>computationEnviron%worldWorkGroup
+    worldWorkGroup=>computationEnvironment%worldWorkGroup
     !Check world work group is associated.
     IF(.NOT.ASSOCIATED(worldWorkGroup)) &
       & CALL FlagError("World work group is not associated for the computation environment.",err,error,*999)
@@ -293,6 +225,81 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ComputationEnvironment_WorldWorkGroupGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the computation environment associated with a work group.
+  SUBROUTINE WorkGroup_ComputationEnvironmentGet(workGroup,computationEnvironment,err,error,*)
+
+    !Argument variables
+    TYPE(WorkGroupType), POINTER, INTENT(IN) :: workGroup !<A pointer to the work group to get the computation environment for.
+    TYPE(ComputationEnvironmentType), POINTER, INTENT(OUT) :: computationEnvironment !<On return, the computational environment for the work group. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("WorkGroup_ComputationEnvironmentGet",err,error,*998)
+
+    IF(ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+
+    computationEnvironment=>workGroup%computationEnvironment
+    IF(.NOT.ASSOCIATED(computationEnvironment)) THEN      
+      localError="The computation environment is not associated for work group number "// &
+        & TRIM(NumberToVString(workGroup%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("WorkGroup_ComputationEnvironmentGet")
+    RETURN
+999 NULLIFY(computationEnvironment)
+998 ERRORSEXITS("WorkGroup_ComputationEnvironmentGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_ComputationEnvironmentGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the context for a work group.
+  SUBROUTINE WorkGroup_ContextGet(workGroup,context,err,error,*)
+
+    !Argument variables
+    TYPE(WorkGroupType), POINTER :: workGroup !<A pointer to the work group to get the context for
+    TYPE(ContextType), POINTER :: context !<On exit, a pointer to the context for the work group. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("WorkGroup_ContextGet",err,error,*998)
+
+    IF(ASSOCIATED(context)) CALL FlagError("Context is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(workGroup%computationEnvironment)) THEN
+      localError="Computation environment is not associated for work group number "// &
+        & TRIM(NumberToVString(workGroup%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    context=>workGroup%computationEnvironment%context
+    IF(.NOT.ASSOCIATED(context)) THEN
+      localError="The context is not associated for the computation environment for work group number "// &
+        & TRIM(NumberToVString(workGroup%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("WorkGroup_ContextGet")
+    RETURN
+999 NULLIFY(context)
+998 ERRORSEXITS("WorkGroup_ContextGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_ContextGet
 
   !
   !================================================================================================================================
@@ -312,7 +319,7 @@ CONTAINS
  
     ENTERS("WorkGroup_Get",err,error,*999)
 
-    CALL WorkGroup_UserNumberFind(workGroupUserNumber,computationEnvironment,workGroup,err,error,*999)
+    CALL WorkGroup_UserNumberFind(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
     IF(.NOT.ASSOCIATED(workGroup)) THEN
       localError="A work group with an user number of "//TRIM(NumberToVString(workGroupUserNumber,"*",err,error))// &
         & " does not exist."
@@ -503,11 +510,11 @@ CONTAINS
   !
 
   !>Finds and returns a pointer to the work group with the given user number. If no work group with that number exists work group is left nullified.
-  SUBROUTINE WorkGroup_UserNumberFind(userNumber,computationEnvironment,workGroup,err,error,*)
+  SUBROUTINE WorkGroup_UserNumberFind(computationEnvironment,userNumber,workGroup,err,error,*)
 
     !Argument variables
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<The computation environment containing the work group.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the work Group to find
-    TYPE(ComputationEnvironmentType) :: computationEnvironment !<The computation environment containing the work group.
     TYPE(WorkGroupType), POINTER, INTENT(OUT) :: workGroup !<On exit, a pointer to the work group with the specified user number if it exists. If no work group exists with the specified user number a NULL pointer is returned. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -516,7 +523,9 @@ CONTAINS
     
     ENTERS("WorkGroup_UserNumberFind",err,error,*999)
 
-    IF(ASSOCIATED(workGroup)) CALL FlagError("Region is already associated.",err,error,*999)
+    IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+    
     worldWorkGroup=>computationEnvironment%worldWorkGroup
     IF(.NOT.ASSOCIATED(worldWorkGroup)) CALL FlagError("World work group is not associated.",err,error,*999)
     
@@ -578,7 +587,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the user number for a region.
+  !>Returns the user number for a work group.
   SUBROUTINE WorkGroup_UserNumberGet(workGroup,userNumber,err,error,*)
 
     !Argument variables

@@ -1532,8 +1532,10 @@ CONTAINS
     LOGICAL :: NODE_EXISTS
     LOGICAL, ALLOCATABLE :: IS_NODE_BASED(:)
     TYPE(C_PTR) :: SIZE_POINTER
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(VARYING_STRING) :: ARRAY_LOCATION
-    INTEGER(INTG) :: myWorldComputationNodeNumber,nodeDomain,meshComponentNumber
+    TYPE(WorkGroupType), POINTER :: workGroup
+    INTEGER(INTG) :: myGroupComputationNodeNumber,nodeDomain,meshComponentNumber
 
     ENTERS( "FIELDML_OUTPUT_ADD_FIELD_NODE_DOFS", ERR, ERROR, *999 )
     
@@ -1616,7 +1618,13 @@ CONTAINS
     WRITER = Fieldml_OpenArrayWriter( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, REAL_1D_HANDLE, 0, SIZE_POINTER, RANK )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot open nodal parameter writer for "//BASE_NAME//".dofs.node.data.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
-      
+
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(field,decomposition,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+
     OFFSETS(:) = 0
     SIZES(1) = 1
     SIZES(2) = COMPONENT_COUNT
@@ -1630,10 +1638,9 @@ CONTAINS
             !Default to version 1 of each node derivative (value hardcoded in loop)
             VERSION_NUMBER = 1
 
-            CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
             CALL DECOMPOSITION_MESH_COMPONENT_NUMBER_GET(FIELD%DECOMPOSITION,meshComponentNumber,err,error,*999)
             CALL DECOMPOSITION_NODE_DOMAIN_GET(FIELD%DECOMPOSITION,I,meshComponentNumber,nodeDomain,err,error,*999)
-            IF(nodeDomain==myWorldComputationNodeNumber) THEN
+            IF(nodeDomain==myGroupComputationNodeNumber) THEN
               CALL FIELD_PARAMETER_SET_GET_NODE( FIELD, VARIABLE_TYPE, SET_TYPE, VERSION_NUMBER, &
                 & NO_GLOBAL_DERIV, I, FIELD_COMPONENT_NUMBERS(J), DVALUE, ERR, ERROR, *999 )
             ENDIF

@@ -59,6 +59,7 @@ MODULE DistributedMatrixVector
 #ifndef NOMPIMOD
   USE MPI
 #endif
+  USE CMISSPETScTypes, ONLY : PetscMatType,PetscVecType
   USE Strings
   USE Types
   USE LINKEDLIST_ROUTINES
@@ -2468,7 +2469,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,rowIdx,worldCommunicator
+    INTEGER(INTG) :: dummyErr,rowIdx,groupCommunicator
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -2483,7 +2484,7 @@ CONTAINS
     CALL DistributedMatrix_RowMappingGet(distributedMatrix,rowDomainMapping,err,error,*999)
     NULLIFY(columnDomainMapping)
     CALL DistributedMatrix_ColumnMappingGet(distributedMatrix,columnDomainMapping,err,error,*999)
-    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+    CALL WorkGroup_CommunicatorGet(rowDomainMapping%workGroup,groupCommunicator,err,error,*999)
     
     SELECT CASE(petscMatrix%storageType)
     CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -2499,7 +2500,7 @@ CONTAINS
       !Set up the matrix
       ALLOCATE(petscMatrix%dataDP(petscMatrix%dataSize),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate PETSc matrix data.",err,error,*999)
-      CALL Petsc_MatCreateDense(worldCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
+      CALL Petsc_MatCreateDense(groupCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
         & petscMatrix%dataDP,petscMatrix%matrix,err,error,*999)
     CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
       petscMatrix%numberOfNonZeros=petscMatrix%m
@@ -2519,7 +2520,7 @@ CONTAINS
       petscMatrix%diagonalNumberOfNonZeros=1
       petscMatrix%offdiagonalNumberOfNonZeros=0
       !Create the PETsc AIJ matrix
-      CALL Petsc_MatCreateAIJ(worldCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
+      CALL Petsc_MatCreateAIJ(groupCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
         & PETSC_NULL_INTEGER,petscMatrix%diagonalNumberOfNonZeros,PETSC_NULL_INTEGER,petscMatrix%offdiagonalNumberOfNonZeros, &
         & petscMatrix%matrix,err,error,*999)
     CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -2532,7 +2533,7 @@ CONTAINS
       IF(.NOT.ALLOCATED(petscMatrix%offdiagonalNumberOfNonZeros)) &
         & CALL FlagError("Matrix off diagonal storage locations have not been set.",err,error,*999)
       !Create the PETSc AIJ matrix
-      CALL Petsc_MatCreateAIJ(worldCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
+      CALL Petsc_MatCreateAIJ(groupCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
         & PETSC_NULL_INTEGER,petscMatrix%diagonalNumberOfNonZeros,PETSC_NULL_INTEGER,petscMatrix%offdiagonalNumberOfNonZeros, &
         & petscMatrix%matrix,err,error,*999)
       !Set matrix options
@@ -5834,7 +5835,7 @@ CONTAINS
       distributedDataId=distributedDataId+domainMapping%ADJACENT_DOMAINS_PTR(domainMapping%NUMBER_OF_DOMAINS)
     END IF
     IF(domainMapping%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
-      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myComputationNodeNumber,err,error,*999)
+      CALL WorkGroup_GroupNodeNumberGet(domainMapping%workGroup,myComputationNodeNumber,err,error,*999)
       IF(distributedVector%ghostingType==DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE) THEN
         ALLOCATE(cmissVector%transfers(domainMapping%NUMBER_OF_ADJACENT_DOMAINS),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate CMISS distributed vector transfer buffers.",err,error,*999)
@@ -6872,7 +6873,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,i,worldCommunicator
+    INTEGER(INTG) :: dummyErr,i,groupCommunicator
     TYPE(DistributedVectorType), POINTER :: distributedVector
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: dummyError
@@ -6884,11 +6885,11 @@ CONTAINS
     CALL DistributedVectorPETSc_DistributedVectorGet(petscVector,distributedVector,err,error,*999)
     NULLIFY(domainMapping)
     CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
-    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)          
+    CALL WorkGroup_GroupCommunicatorGet(domainMapping%workGroup,groupCommunicator,err,error,*999)          
     
     !Create the PETSc vector
     petscVector%dataSize=petscVector%n
-    CALL Petsc_VecCreateMPI(worldCommunicator,petscVector%n,petscVector%globalN,petscVector%vector, &
+    CALL Petsc_VecCreateMPI(groupCommunicator,petscVector%n,petscVector%globalN,petscVector%vector, &
       & err,error,*999)
     !Set up the Local to Global Mappings
     DO i=1,petscVector%n
@@ -7115,7 +7116,7 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissVector)
       CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
-      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfComputationalNodes,err,error,*999)
+      CALL WorkGroup_NumberOfGroupNodesGet(domainMapping%workGroup,numberOfComputationalNodes,err,error,*999)
       IF(numberOfComputationalNodes>1) THEN
         CALL DistributedVector_UpdateWaitFinished(distributedVector,err,error,*999)
         !Copy the receive buffers back to the ghost positions in the data vector
@@ -7348,7 +7349,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: domainIdx,i,mpiIError,numberOfComputationNodes,worldCommunicator
+    INTEGER(INTG) :: domainIdx,i,mpiIError,numberOfComputationNodes,groupCommunicator
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DistributedVectorPETScType), POINTER :: petscVector
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
@@ -7365,8 +7366,8 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissVector)
       CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
-      CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
-      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfComputationNodes,err,error,*999)
+      CALL WorkGroup_GroupCommunicatorGet(domainMapping%workGroup,groupCommunicator,err,error,*999)
+      CALL WorkGroup_NumberOfGroupNodesGet(domainMapping%workGroup,numberOfComputationNodes,err,error,*999)
       IF(numberOfComputationNodes>1) THEN
         IF(domainMapping%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
           !Fill in the send buffers with the send ghost values
@@ -7410,7 +7411,7 @@ CONTAINS
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_INTEGER, &
                 & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
-                & worldCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI IRECV call posted:",err,error,*999)
@@ -7421,7 +7422,7 @@ CONTAINS
                   & DOMAIN_NUMBER,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",worldCommunicator,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",cmissVector%transfers(domainIdx)% &
                   & mpiReceiveRequest,err,error,*999)
               ENDIF
@@ -7430,7 +7431,7 @@ CONTAINS
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_REAL, &
                 & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
-                & worldCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI IRECV call posted:",err,error,*999)
@@ -7441,7 +7442,7 @@ CONTAINS
                   & DOMAIN_NUMBER,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",worldCommunicator,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",cmissVector%transfers(domainIdx)% &
                   & mpiReceiveRequest,err,error,*999)
               ENDIF
@@ -7450,7 +7451,7 @@ CONTAINS
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_DOUBLE_PRECISION, &
                 & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
-                & worldCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI IRECV call posted:",err,error,*999)
@@ -7461,7 +7462,7 @@ CONTAINS
                   & DOMAIN_NUMBER,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)%receiveTagNumber, &
                   & err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",worldCommunicator,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",cmissVector%transfers(domainIdx)% &
                   & mpiReceiveRequest,err,error,*999)
               ENDIF
@@ -7470,7 +7471,7 @@ CONTAINS
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_LOGICAL, &
                 & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
-                & worldCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI IRECV call posted:",err,error,*999)
@@ -7481,7 +7482,7 @@ CONTAINS
                   & DOMAIN_NUMBER,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",worldCommunicator,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",cmissVector%transfers(domainIdx)% &
                   & mpiReceiveRequest,err,error,*999)
               ENDIF
@@ -7503,7 +7504,7 @@ CONTAINS
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_INTEGER, &
                 & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
-                & worldCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI ISEND call posted:",err,error,*999)
@@ -7514,7 +7515,7 @@ CONTAINS
                   & DOMAIN_NUMBER,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",worldCommunicator,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",cmissVector%transfers(domainIdx)% &
                   & mpiSendRequest,err,error,*999)
               ENDIF
@@ -7523,7 +7524,7 @@ CONTAINS
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_REAL, &
                 & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
-                & worldCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI ISEND call posted:",err,error,*999)
@@ -7534,7 +7535,7 @@ CONTAINS
                   & DOMAIN_NUMBER,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",worldCommunicator,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",cmissVector%transfers(domainIdx)% &
                   & mpiSendRequest,err,error,*999)
               ENDIF
@@ -7543,7 +7544,7 @@ CONTAINS
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_DOUBLE_PRECISION, &
                 & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
-                & worldCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI ISEND call posted:",err,error,*999)
@@ -7554,7 +7555,7 @@ CONTAINS
                   & DOMAIN_NUMBER,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",worldCommunicator,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",cmissVector%transfers(domainIdx)%mpiSendRequest, &
                   & err,error,*999)
               ENDIF
@@ -7563,7 +7564,7 @@ CONTAINS
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_LOGICAL, &
                 & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
-                & worldCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI ISEND call posted:",err,error,*999)
@@ -7574,7 +7575,7 @@ CONTAINS
                   & DOMAIN_NUMBER,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",worldCommunicator,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",cmissVector%transfers(domainIdx)%mpiSendRequest, &
                   & err,error,*999)
               ENDIF

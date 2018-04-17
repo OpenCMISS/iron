@@ -52,10 +52,11 @@ MODULE REACTION_DIFFUSION_IO_ROUTINES
  USE EquationsSetConstants
  USE FIELD_ROUTINES
  USE FieldAccessRoutines
- USE TYPES
  USE INPUT_OUTPUT
+ USE ISO_VARYING_STRING
  USE KINDS
  USE MESH_ROUTINES
+ USE TYPES
 
 #ifndef NOMPIMOD
   USE MPI
@@ -89,8 +90,9 @@ CONTAINS
     LOGICAL, INTENT(IN) :: exportExelem !<A flag to indicate whether to write an exelem file.
     INTEGER(INTG) :: ERR !<The error code    
     TYPE(VARYING_STRING):: ERROR !<The error string
-
     !Local Variables
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
+    TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(DOMAIN_TYPE), POINTER :: COMPUTATION_DOMAIN
     TYPE(FIELD_TYPE), POINTER :: SOURCE_FIELD
@@ -107,6 +109,11 @@ CONTAINS
 
 
     ENTERS("REACTION_DIFFUSION_IO_WRITE_CMGUI",ERR,ERROR,*999)
+
+    NULLIFY(context)
+    CALL Region_ContextGet(region,context,err,error,*999)
+    NULLIFY(computationEnvironment)
+    CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
 
     CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
     CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
@@ -251,7 +258,7 @@ CONTAINS
       CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Elements...",ERR,ERROR,*999)
       FILENAME="./output/"//TRIM(NAME)//".exelem"
       OPEN(UNIT=myWorldComputationNodeNumber, FILE=CHAR(FILENAME),STATUS='unknown')
-      WRITE(myWorldComputationNodeNumber,*) 'Group name: Cell'
+      WRITE(myWorldComputationNodeNumber,*) 'World name: Cell'
       IF (BasisType==1) THEN !lagrange basis in 1 and 2D
         WRITE(INTG_STRING,'(I0)') NumberOfDimensions
         WRITE(myWorldComputationNodeNumber,*) 'Shape.  Dimension= ',TRIM(INTG_STRING)

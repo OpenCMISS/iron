@@ -148,7 +148,6 @@ MODULE BaseRoutines
 
   INTEGER(INTG), SAVE :: myWorldComputationNodeNumber !<The computation rank for this node
   INTEGER(INTG), SAVE :: numberOfWorldComputationNodes !<The number of computation nodes
-  INTEGER(INTG), ALLOCATABLE :: cmissRandomSeeds(:) !<The current error handling seeds for OpenCMISS
   LOGICAL, SAVE :: diagnostics !<.TRUE. if diagnostic output is required in any routines.
   LOGICAL, SAVE :: diagnostics1 !<.TRUE. if level 1 diagnostic output is active in the current routine
   LOGICAL, SAVE :: diagnostics2 !<.TRUE. if level 2 diagnostic output is active in the current routine
@@ -240,8 +239,6 @@ MODULE BaseRoutines
 
   PUBLIC diagnostics1,diagnostics2,diagnostics3,diagnostics4,diagnostics5
 
-  PUBLIC cmissRandomSeeds
-  
   PUBLIC outputString
 
   PUBLIC BaseRoutines_Finalise,BaseRoutines_Initialise
@@ -261,9 +258,7 @@ MODULE BaseRoutines
   PUBLIC FlagError,FlagWarning
   
   PUBLIC OutputSetOff,OutputSetOn
-
-  PUBLIC RandomSeedsGet,RandomSeedsSizeGet,RandomSeedsSet
-  
+ 
   PUBLIC TimingSetOn,TimingSetOff
   
   PUBLIC TimingSummaryOutput
@@ -278,7 +273,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Records the entry into the named procedure and initialises the error code \see BaseRoutines::EXITS
+  !>Records the entry into the named procedure and initialises the error code \see BaseRoutines::Exits
   SUBROUTINE Enters(name,err,error,*)
 
     !Argument variables
@@ -418,7 +413,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Records the exit out of the named procedure \see BaseRoutines::ENTERS
+  !>Records the exit out of the named procedure \see BaseRoutines::Enters
   SUBROUTINE Exits(name)
 
     !Argument variables
@@ -761,11 +756,10 @@ CONTAINS
 
     err=0
     error=""
-    !Deallocate the random seeds
-    IF(ALLOCATED(cmissRandomSeeds)) DEALLOCATE(cmissRandomSeeds)
     
     RETURN 
 999 RETURN 1
+    
   END SUBROUTINE BaseRoutines_Finalise
 
   !
@@ -779,7 +773,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: i,j,randomSeedsSize,time(8)
+    INTEGER(INTG) :: i,j
 
     err=0
     error=""
@@ -809,14 +803,6 @@ CONTAINS
     !Initialise loose tolerance here rather than in constants.f90
     LOOSE_TOLERANCE=SQRT(EPSILON(1.0_DP))
     LOOSE_TOLERANCE_SP=SQRT(EPSILON(1.0_SP))
-    !Setup the random seeds based on the time
-    CALL RANDOM_SEED(SIZE=randomSeedsSize)
-    ALLOCATE(cmissRandomSeeds(randomSeedsSize),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate random seeds.",err,error,*999)
-    cmissRandomSeeds(1:randomSeedsSize)=[(i,i=1,randomSeedsSize)]
-    CALL DATE_AND_TIME(VALUES=time)
-    cmissRandomSeeds(1)=3600000*time(5)+60000*time(6)+1000*time(7)+time(8)
-    CALL RANDOM_SEED(PUT=cmissRandomSeeds)
 
     !Initialise outputString
     SELECT CASE(MACHINE_OS)
@@ -852,7 +838,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics off. \see BaseRoutines::DiagnosticsSetOn,OpenCMISS::Iron::DiagnosticsSetOn
+  !>Sets diagnositics off. \see BaseRoutines::DiagnosticsSetOn,OpenCMISS::Iron::cmfe_DiagnosticsSetOn
   SUBROUTINE DiagnosticsSetOff(err,error,*)
 
     !Argument variables
@@ -907,7 +893,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics on. \see BaseRoutines::DiagnosticsSetOff,OpenCMISS::Iron::DiagnosticsSetOff
+  !>Sets diagnositics on. \see BaseRoutines::DiagnosticsSetOff,OpenCMISS::Iron::cmfe_DiagnosticsSetOff
   SUBROUTINE DiagnosticsSetOn(diagType,levelList,diagFilename,routineList,err,error,*)
 
     !Argument variables
@@ -1020,7 +1006,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets writes file echo output off. \see BaseRoutines::OutputSetOn,OpenCMISS::Iron::OutputSetOff
+  !>Sets writes file echo output off. \see BaseRoutines::OutputSetOn,OpenCMISS::Iron::cmfe_OutputSetOff
   SUBROUTINE OutputSetOff(err,error,*)
 
     !Argument variables
@@ -1048,7 +1034,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets writes file echo output on. \see BaseRoutines::OutputSetOff,OpenCMISS::Iron::OutputSetOn
+  !>Sets writes file echo output on. \see BaseRoutines::OutputSetOff,OpenCMISS::Iron::cmfe_OutputSetOn
   SUBROUTINE OutputSetOn(echoFilename,err,error,*)
 
     !Argument variables
@@ -1084,90 +1070,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the random seeds for CMISS \see OpenCMISS::Iron::RandomSeedsGet
-  SUBROUTINE RandomSeedsGet(randomSeeds,err,error,*)
-  
-    !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: randomSeeds(:) !<On return, the random seeds.
-    INTEGER(INTG), INTENT(INOUT) :: err !<The error string
-    TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
-    !Local Variables
-    CHARACTER(LEN=MAXSTRLEN) :: localError
-    
-    ENTERS("RandomSeedsGet",err,error,*999)
-
-    IF(SIZE(randomSeeds,1)>=SIZE(cmissRandomSeeds,1)) THEN
-      randomSeeds(1:SIZE(cmissRandomSeeds,1))=cmissRandomSeeds(1:SIZE(cmissRandomSeeds,1))
-    ELSE
-      WRITE(localError,'("The size of the supplied random seeds array of ",I2," is too small. The size must be >= ",I2,".")') &
-        & SIZE(randomSeeds,1),SIZE(cmissRandomSeeds,1)
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
-    EXITS("RandomSeedsGet")
-    RETURN
-999 ERRORSEXITS("RandomSeedsGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE RandomSeedsGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the size of the random seeds array for CMISS \see OpenCMISS::Iron::RandomSeedsSizeGet
-  SUBROUTINE RandomSeedsSizeGet(randomSeedsSize,err,error,*)
-  
-    !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: randomSeedsSize !<On return, the size of the random seeds array.
-    INTEGER(INTG), INTENT(INOUT) :: err !<The error string
-    TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
-    !Local Variables
-
-    ENTERS("RandomSeedsSizeGet",err,error,*999)
-
-    randomSeedsSize=SIZE(cmissRandomSeeds,1)
-    
-    EXITS("RandomSeedsSizeGet")
-    RETURN
-999 ERRORSEXITS("RandomSeedsSizeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE RandomSeedsSizeGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets the random seeds for cmiss \see OpenCMISS::Iron::RandomSeedsSet
-  SUBROUTINE RandomSeedsSet(randomSeeds,err,error,*)
-  
-    !Argument variables 
-    INTEGER(INTG), INTENT(IN) :: randomSeeds(:) !<The random seeds to set. 
-    INTEGER(INTG), INTENT(INOUT) :: err !<The error string
-    TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
-    !Local Variables
-    
-    ENTERS("RandomSeedsSet",err,error,*999)
-
-    IF(SIZE(randomSeeds,1)>SIZE(cmissRandomSeeds,1)) THEN
-      cmissRandomSeeds(1:SIZE(cmissRandomSeeds,1))=randomSeeds(1:SIZE(cmissRandomSeeds,1))
-    ELSE
-      cmissRandomSeeds(1:SIZE(randomSeeds,1))=randomSeeds(1:SIZE(randomSeeds,1))
-    ENDIF
-
-    EXITS("RandomSeedsSet")
-    RETURN
-999 ERRORSEXITS("RandomSeedsSet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE RandomSeedsSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets timing off. \see BaseRoutines:TimingSetOn,OpenCMISS::Iron::TimingSetOff
+  !>Sets timing off. \see BaseRoutines:TimingSetOn,OpenCMISS::Iron::cmfe_TimingSetOff
   SUBROUTINE TimingSetOff(err,error,*)
 
    !Argument variables
@@ -1213,7 +1116,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets timing on. \see BaseRoutines:TimingSetOff,OpenCMISS::Iron::TimingSetOn
+  !>Sets timing on. \see BaseRoutines:TimingSetOff,OpenCMISS::Iron::cmfe_TimingSetOn
   SUBROUTINE TimingSetOn(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*)
 
     !Argument variables
@@ -1314,7 +1217,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Outputs the timing summary. \see OpenCMISS::Iron::TimingSummaryOutput
+  !>Outputs the timing summary. \see OpenCMISS::Iron::cmfe_TimingSummaryOutput
   SUBROUTINE TimingSummaryOutput(err,error,*)    
 
     !Argument variables

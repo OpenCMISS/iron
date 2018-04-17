@@ -49,6 +49,7 @@ MODULE FIELD_ROUTINES
   USE BasisAccessRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
+  USE Constants
   USE COORDINATE_ROUTINES
   USE CmissMPI
   USE DistributedMatrixVector
@@ -9893,12 +9894,13 @@ CONTAINS
       & NUMBER_OF_CONSTANT_DOFS,NUMBER_OF_ELEMENT_DOFS,NUMBER_OF_NODE_DOFS,NUMBER_OF_GRID_POINT_DOFS,NUMBER_OF_GAUSS_POINT_DOFS, &
       & NUMBER_OF_LOCAL_VARIABLE_DOFS,TOTAL_NUMBER_OF_VARIABLE_DOFS,NUMBER_OF_DOMAINS,variable_global_ny, &
       & variable_local_ny,domain_idx,domain_no,constant_nyy,element_ny,element_nyy,node_ny,node_nyy,grid_point_nyy, &
-      & Gauss_point_nyy,version_idx,derivative_idx,ny,NUMBER_OF_COMPUTATION_NODES, &
-      & myWorldComputationNodeNumber,domain_type_stop,start_idx,stop_idx,element_idx,node_idx,NUMBER_OF_LOCAL, NGP, MAX_NGP, &
+      & Gauss_point_nyy,version_idx,derivative_idx,ny,numberOfGroupComputationNodes, &
+      & myGroupComputationNodeNumber,domain_type_stop,start_idx,stop_idx,element_idx,node_idx,NUMBER_OF_LOCAL, NGP, MAX_NGP, &
       & gp,MPI_IERROR,NUMBER_OF_GLOBAL_DOFS,gauss_point_idx,NUMBER_OF_DATA_POINT_DOFS,data_point_nyy,dataPointIdx,elementIdx, &
-      & localDataNumber,globalElementNumber,worldCommunicator
+      & localDataNumber,globalElementNumber,groupCommunicator
     INTEGER(INTG), ALLOCATABLE :: VARIABLE_LOCAL_DOFS_OFFSETS(:),VARIABLE_GHOST_DOFS_OFFSETS(:), &
       & localDataParamCount(:),ghostDataParamCount(:)
+    TYPE(BASIS_TYPE), POINTER :: BASIS
     TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
     TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
     TYPE(DOMAIN_TYPE), POINTER :: domain
@@ -9906,14 +9908,19 @@ CONTAINS
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: DOMAIN_TOPOLOGY
     TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: FIELD_COMPONENT
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(BASIS_TYPE), POINTER :: BASIS
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     ENTERS("FIELD_MAPPINGS_CALCULATE",ERR,ERROR,*999)
     
     IF(ASSOCIATED(FIELD)) THEN
-      CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
-      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,NUMBER_OF_COMPUTATION_NODES,err,error,*999)
-      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+      NULLIFY(decomposition)
+      CALL Field_DecompositionGet(field,decomposition,err,error,*999)
+      NULLIFY(workGroup)
+      CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+      CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+      CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+      CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+
       !Calculate the number of global and local degrees of freedom for the field variables and components. Each field variable
       !component has a set of DOFs so loop over the components for each variable component and count up the DOFs.
       DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
@@ -9959,7 +9966,7 @@ CONTAINS
               NGP=BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
               MAX_NGP=MAX(MAX_NGP,NGP)
             ENDDO !element_idx
-            CALL MPI_ALLREDUCE(MPI_IN_PLACE,MAX_NGP,1,MPI_INTEGER,MPI_MAX,worldCommunicator,MPI_IERROR)
+            CALL MPI_ALLREDUCE(MPI_IN_PLACE,MAX_NGP,1,MPI_INTEGER,MPI_MAX,groupCommunicator,MPI_IERROR)
             CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)             
             NUMBER_OF_GAUSS_POINT_DOFS=NUMBER_OF_GAUSS_POINT_DOFS+DOMAIN_TOPOLOGY%ELEMENTS%TOTAL_NUMBER_OF_ELEMENTS*MAX_NGP
             NUMBER_OF_LOCAL_VARIABLE_DOFS=NUMBER_OF_LOCAL_VARIABLE_DOFS+DOMAIN_TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS*MAX_NGP
@@ -10028,7 +10035,7 @@ CONTAINS
       IF(ERR/=0) CALL FlagError("Could not allocate variable ghost dofs offsets.",ERR,ERROR,*999)
       !We want to ensure that the ghost DOFs are at the end so loop over the DOFs in two passes. The first pass will process
       !the local DOFs for each variable component and the second pass will process the ghost DOFs for each variable component.
-      IF(NUMBER_OF_COMPUTATION_NODES==1) THEN
+      IF(numberOfGroupComputationNodes==1) THEN
         domain_type_stop=1 !Local only
       ELSE
         domain_type_stop=2 !Local+Ghosts
@@ -10074,7 +10081,7 @@ CONTAINS
                     variable_global_ny=1+VARIABLE_GLOBAL_DOFS_OFFSET
                     CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(FIELD_VARIABLE_DOFS_MAPPING% &
                       & GLOBAL_TO_LOCAL_MAP(variable_global_ny),ERR,ERROR,*999)
-                    NUMBER_OF_DOMAINS=NUMBER_OF_COMPUTATION_NODES !Constant is in all domains
+                    NUMBER_OF_DOMAINS=numberOfGroupComputationNodes !Constant is in all domains
                     ALLOCATE(FIELD_VARIABLE_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(variable_global_ny)%LOCAL_NUMBER(NUMBER_OF_DOMAINS), &
                       & STAT=ERR)
                     IF(ERR/=0) CALL FlagError("Could not allocate field variable dofs global to local map local number.", &
@@ -10602,13 +10609,13 @@ CONTAINS
             CASE(FIELD_CONSTANT_INTERPOLATION)
               DO component_idx=1,FIELD%VARIABLES(variable_idx)%NUMBER_OF_COMPONENTS
                 FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
-                variable_local_ny=1+VARIABLE_LOCAL_DOFS_OFFSETS(myWorldComputationNodeNumber)
+                variable_local_ny=1+VARIABLE_LOCAL_DOFS_OFFSETS(myGroupComputationNodeNumber)
                 !Allocate and set up global to local domain map for variable mapping
                 IF(ASSOCIATED(FIELD_VARIABLE_DOFS_MAPPING)) THEN
                   variable_global_ny=1+VARIABLE_GLOBAL_DOFS_OFFSET
                   CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(FIELD_VARIABLE_DOFS_MAPPING% &
                     & GLOBAL_TO_LOCAL_MAP(variable_global_ny),ERR,ERROR,*999)
-                  NUMBER_OF_DOMAINS=NUMBER_OF_COMPUTATION_NODES !Constant is in all domains
+                  NUMBER_OF_DOMAINS=numberOfGroupComputationNodes !Constant is in all domains
                   ALLOCATE(FIELD_VARIABLE_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(variable_global_ny)%LOCAL_NUMBER(NUMBER_OF_DOMAINS), &
                     & STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate field variable dofs global to local map local number.", &
@@ -10710,7 +10717,7 @@ CONTAINS
                   DO component_idx=1,FIELD%VARIABLES(variable_idx)%NUMBER_OF_COMPONENTS
                     FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
                     element_ny=element_ny+1
-                    variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myWorldComputationNodeNumber)
+                    variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myGroupComputationNodeNumber)
                     element_nyy=element_nyy+1
                     !Setup dof to parameter map
                     FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_ELEMENT_DOF_TYPE
@@ -10817,7 +10824,7 @@ CONTAINS
                     FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
                     DOMAIN=>FIELD_COMPONENT%DOMAIN
                     node_ny=node_ny+1
-                    variable_local_ny=node_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myWorldComputationNodeNumber)
+                    variable_local_ny=node_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myGroupComputationNodeNumber)
                     node_nyy=node_nyy+1
                     version_idx=DOMAIN%TOPOLOGY%DOFS%DOF_INDEX(1,ny)
                     derivative_idx=DOMAIN%TOPOLOGY%DOFS%DOF_INDEX(2,ny)
@@ -10918,7 +10925,7 @@ CONTAINS
                       FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
                       DOMAIN=>FIELD_COMPONENT%DOMAIN
                       element_ny=element_ny+1
-                      variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myWorldComputationNodeNumber)
+                      variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myGroupComputationNodeNumber)
                       node_nyy=node_nyy+1
                       !Setup dof to parameter map
                       FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_GAUSS_POINT_DOF_TYPE
@@ -31136,8 +31143,8 @@ CONTAINS
           FIELD_VARIABLE%NUMBER_OF_GLOBAL_DOFS=0
           ALLOCATE(FIELD_VARIABLE%DOMAIN_MAPPING,STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate field variable domain mapping.",ERR,ERROR,*999)
-          CALL DOMAIN_MAPPINGS_MAPPING_INITIALISE(FIELD_VARIABLE%DOMAIN_MAPPING, &
-            & FIELD%DECOMPOSITION%NUMBER_OF_DOMAINS,ERR,ERROR,*999)
+          CALL DOMAIN_MAPPINGS_MAPPING_INITIALISE(FIELD%DECOMPOSITION%workGroup, &
+            & FIELD_VARIABLE%DOMAIN_MAPPING,ERR,ERROR,*999)
           CALL FIELD_DOF_TO_PARAM_MAP_INITIALISE(FIELD_VARIABLE%DOF_TO_PARAM_MAP,ERR,ERROR,*999)
         ELSE
           LOCAL_ERROR="Variable number "//TRIM(NumberToVString(VARIABLE_NUMBER,"*",ERR,ERROR))// &

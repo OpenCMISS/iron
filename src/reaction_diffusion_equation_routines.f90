@@ -1511,11 +1511,12 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY,MAX_DIGITS
-    INTEGER(INTG) :: myWorldComputationNodeNumber
-   LOGICAL :: exportExelem
+    INTEGER(INTG) :: myGroupComputationNodeNumber
+    LOGICAL :: exportExelem
 
     CHARACTER(30) :: FILE
     CHARACTER(30) :: OUTPUT_FILE
@@ -1544,8 +1545,9 @@ CONTAINS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
                     CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
                     OUTPUT_FREQUENCY=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
-                    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber, &
-                      & err,error,*999)
+                    NULLIFY(workGroup)
+                    CALL Solver_WorkGroup(solver,workGroup,err,error,*999)
+                    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
                     MAX_DIGITS=FLOOR(LOG10((CONTROL_LOOP%TIME_LOOP%STOP_TIME-CONTROL_LOOP%TIME_LOOP%START_TIME)/ &
                       & CONTROL_LOOP%TIME_LOOP%TIME_INCREMENT))+1
                     IF(OUTPUT_FREQUENCY>0) THEN
@@ -1558,7 +1560,7 @@ CONTAINS
                             WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_1.part",I2.2,".",',FMT,")"
                             FMT = TRIM(TEMP_FMT)
                             WRITE(OUTPUT_FILE,FMT) &
-                              & myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
+                              & myGroupComputationNodeNumber,CURRENT_LOOP_ITERATION
                           ELSE
                             WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
                             !200 FORMAT 
@@ -1566,7 +1568,7 @@ CONTAINS
                             WRITE(TEMP_FMT,'(A2,A38,A20,A2)') "(", '"TIME_STEP_SPEC_",I0,".part",I2.2,".",',FMT,")"
                             FMT = TRIM(TEMP_FMT)
                             WRITE(OUTPUT_FILE,FMT) &
-                              & equations_set_idx, myWorldComputationNodeNumber,CURRENT_LOOP_ITERATION
+                              & equations_set_idx, myGroupComputationNodeNumber,CURRENT_LOOP_ITERATION
                           ENDIF
                           WRITE(*,*) OUTPUT_FILE
                           FILE=TRIM(OUTPUT_FILE)

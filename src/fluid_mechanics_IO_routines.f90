@@ -46,14 +46,16 @@
 
 MODULE FLUID_MECHANICS_IO_ROUTINES
 
- USE BaseRoutines
- USE EquationsSetConstants
- USE FIELD_ROUTINES
- USE FieldAccessRoutines
- USE TYPES
- USE INPUT_OUTPUT
- USE KINDS
-
+  USE BaseRoutines
+  USE Constants
+  USE EquationsSetConstants
+  USE FIELD_ROUTINES
+  USE FieldAccessRoutines
+  USE INPUT_OUTPUT
+  USE ISO_VARYING_STRING
+  USE KINDS
+  USE TYPES
+  
 #include "macros.h"
 #include "dllexport.h"
 

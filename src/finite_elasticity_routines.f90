@@ -165,7 +165,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local variables
     INTEGER(INTG) :: node_idx,component_idx,deriv_idx,variable_idx,dim_idx,local_ny,variable_type
-    INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,user_node,global_node,local_node,worldCommunicator
+    INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,user_node,global_node,local_node,groupCommuicator
     REAL(DP) :: X(3),DEFORMED_X(3),P
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
     TYPE(DOMAIN_TYPE), POINTER :: DOMAIN,DOMAIN_PRESSURE
@@ -179,22 +179,29 @@ CONTAINS
     !BC stuff
     INTEGER(INTG),ALLOCATABLE :: INNER_SURFACE_NODES(:),OUTER_SURFACE_NODES(:),TOP_SURFACE_NODES(:),BOTTOM_SURFACE_NODES(:)
     INTEGER(INTG) :: INNER_NORMAL_XI,OUTER_NORMAL_XI,TOP_NORMAL_XI,BOTTOM_NORMAL_XI,MESH_COMPONENT
-    INTEGER(INTG) :: myWorldComputationNodeNumber, DOMAIN_NUMBER, MPI_IERROR
+    INTEGER(INTG) :: myGroupComputationNodeNumber, DOMAIN_NUMBER, MPI_IERROR
     REAL(DP) :: PIN,POUT,LAMBDA,DEFORMED_Z
     LOGICAL :: X_FIXED,Y_FIXED,NODE_EXISTS, X_OKAY,Y_OKAY
     TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     NULLIFY(GEOMETRIC_PARAMETERS)
 
     ENTERS("FiniteElasticity_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
-    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
-    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
-
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
+
+          NULLIFY(decomposition)
+          CALL Field_DecompositionGet(DEPENDENT_FIELD,decomposition,err,error,*999)
+          NULLIFY(workGroup)
+          CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+          
+          CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+          CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommuicator,err,error,*999)
+
           GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
             CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
@@ -229,7 +236,7 @@ CONTAINS
                         user_node=INNER_SURFACE_NODES(node_idx)
                         !Need to test if this node is in current decomposition
                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
-                        IF(DOMAIN_NUMBER==myWorldComputationNodeNumber) THEN
+                        IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
                           CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
                             & user_node,ABS(INNER_NORMAL_XI),BOUNDARY_CONDITION_PRESSURE_INCREMENTED,PIN,err,error,*999)
@@ -241,7 +248,7 @@ CONTAINS
                         user_node=OUTER_SURFACE_NODES(node_idx)
                         !Need to test if this node is in current decomposition
                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
-                        IF(DOMAIN_NUMBER==myWorldComputationNodeNumber) THEN
+                        IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
                           CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
                             & user_node,ABS(OUTER_NORMAL_XI),BOUNDARY_CONDITION_PRESSURE_INCREMENTED,POUT,err,error,*999)
@@ -253,7 +260,7 @@ CONTAINS
                         user_node=TOP_SURFACE_NODES(node_idx)
                         !Need to test if this node is in current decomposition
                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
-                        IF(DOMAIN_NUMBER==myWorldComputationNodeNumber) THEN
+                        IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           CALL MeshTopology_NodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,err,error,*999)
                           IF(.NOT.NODE_EXISTS) CYCLE
                           CALL DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(NODES_MAPPING,global_node,NODE_EXISTS,local_node,err,error,*999)
@@ -271,7 +278,7 @@ CONTAINS
                         user_node=BOTTOM_SURFACE_NODES(node_idx)
                         !Need to check this node exists in the current domain
                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
-                        IF(DOMAIN_NUMBER==myWorldComputationNodeNumber) THEN
+                        IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
                           CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
                             & user_node,ABS(BOTTOM_NORMAL_XI),BOUNDARY_CONDITION_FIXED,0.0_DP,err,error,*999)
@@ -284,7 +291,7 @@ CONTAINS
                       DO node_idx=1,SIZE(BOTTOM_SURFACE_NODES,1)
                         user_node=BOTTOM_SURFACE_NODES(node_idx)
                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
-                        IF(DOMAIN_NUMBER==myWorldComputationNodeNumber) THEN
+                        IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           CALL MeshTopology_NodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,err,error,*999)
                           IF(.NOT.NODE_EXISTS) CYCLE
                           CALL DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(NODES_MAPPING,global_node,NODE_EXISTS,local_node,err,error,*999)
@@ -317,9 +324,9 @@ CONTAINS
                         ENDIF
                       ENDDO
                       !Check it went well
-                      CALL MPI_REDUCE(X_FIXED,X_OKAY,1,MPI_LOGICAL,MPI_LOR,0,worldCommunicator,MPI_IERROR)
-                      CALL MPI_REDUCE(Y_FIXED,Y_OKAY,1,MPI_LOGICAL,MPI_LOR,0,worldCommunicator,MPI_IERROR)
-                      IF(myWorldComputationNodeNumber==0) THEN
+                      CALL MPI_REDUCE(X_FIXED,X_OKAY,1,MPI_LOGICAL,MPI_LOR,0,groupCommuicator,MPI_IERROR)
+                      CALL MPI_REDUCE(Y_FIXED,Y_OKAY,1,MPI_LOGICAL,MPI_LOR,0,groupCommuicator,MPI_IERROR)
+                      IF(myGroupComputationNodeNumber==0) THEN
                         IF(.NOT.(X_OKAY.AND.Y_OKAY)) THEN
                           CALL FlagError("Could not fix nodes to prevent rigid body motion",err,error,*999)
                         ENDIF
@@ -436,7 +443,7 @@ CONTAINS
                                       IF(NODE_EXISTS) THEN
                                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node, &
                                           & DOMAIN_PRESSURE%MESH_COMPONENT_NUMBER,DOMAIN_NUMBER,err,error,*999)
-                                        IF(DOMAIN_NUMBER==myWorldComputationNodeNumber) THEN
+                                        IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                                           !\todo: test the domain node mappings pointer properly
                                           local_node=DOMAIN_PRESSURE%mappings%nodes%global_to_local_map(global_node)%local_number(1)
                                           !Default to version 1 of each node derivative

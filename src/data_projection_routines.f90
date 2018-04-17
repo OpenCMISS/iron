@@ -1352,7 +1352,7 @@ CONTAINS
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMappingElements
     TYPE(DOMAIN_MAPPINGS_TYPE), POINTER :: domainMappings
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
-    INTEGER(INTG) :: myComputationalNode,numberOfWorldComputationNodes !<computational node/rank of the current process    
+    INTEGER(INTG) :: myComputationalNode,numberOfGroupComputationNodes !<computational node/rank of the current process    
     INTEGER(INTG) :: numberOfDataPoints
     INTEGER(INTG) :: numberOfElements,numberOfFaces,numberOfLines,numberOfCandidates,dataNumberOfCandidates
     INTEGER(INTG) :: numberOfClosestCandidates,totalNumberOfClosestCandidates,reducedNumberOfCLosestCandidates
@@ -1362,7 +1362,7 @@ CONTAINS
     INTEGER(INTG), ALLOCATABLE :: globalMPIDisplacements(:),sortingIndices1(:),sortingIndices2(:)
     INTEGER(INTG), ALLOCATABLE :: globalNumberOfProjectedPoints(:)
     INTEGER(INTG) :: MPIClosestDistances,dataProjectionGlobalNumber
-    INTEGER(INTG) :: MPIIError,worldCommunicator,myComputationNode
+    INTEGER(INTG) :: MPIIError,groupCommunicator,myComputationNode
     INTEGER(INTG), ALLOCATABLE :: projectedElement(:),projectedLineFace(:),projectionExitTag(:)
     REAL(DP), ALLOCATABLE :: closestDistances(:,:),globalClosestDistances(:,:)
     REAL(DP), ALLOCATABLE :: projectedDistance(:,:),projectedXi(:,:),projectionVectors(:,:)   
@@ -1371,6 +1371,7 @@ CONTAINS
     INTEGER(INTG) :: startIdx,finishIdx,dataPointIdx
     LOGICAL :: boundaryProjection,elementExists,ghostElement
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
     
     ENTERS("DataProjection_DataPointsProjectionEvaluate",err,error,*999)
     
@@ -1410,9 +1411,11 @@ CONTAINS
     IF(.NOT.ASSOCIATED(domainElements%elements)) CALL FlagError("Domain elements elements is not associated.",err,error,*999)
     
     numberOfDataPoints=dataPoints%numberOfDataPoints
-    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
-    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myComputationNode,err,error,*999)
-    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myComputationNode,err,error,*999)
     boundaryProjection=(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE).OR. &
       & (dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)          
     !#########################################################################################################
@@ -1649,16 +1652,16 @@ CONTAINS
     !Newton project data point to the list of closest elements, faces or lines
     !project the data points to each of the closest elements,
     !use MPI if number of computation nodes is greater than 1
-    IF(numberOfWorldComputationNodes>1) THEN
+    IF(numberOfGroupComputationNodes>1) THEN
       !Use MPI
       !Allocate arrays for MPI communication
       ALLOCATE(globalToLocalNumberOfClosestCandidates(numberOfDataPoints),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate global to local number of closest elements.",err,error,*999)
-      ALLOCATE(globalNumberOfClosestCandidates(numberOfWorldComputationNodes),STAT=err) 
+      ALLOCATE(globalNumberOfClosestCandidates(numberOfGroupComputationNodes),STAT=err) 
       IF(err/=0) CALL FlagError("Could not allocate global number of closest candidates.",err,error,*999)
-      ALLOCATE(globalMPIDisplacements(numberOfWorldComputationNodes),STAT=err) 
+      ALLOCATE(globalMPIDisplacements(numberOfGroupComputationNodes),STAT=err) 
       IF(err/=0) CALL FlagError("Could not allocate global MPI displacements.",err,error,*999)
-      ALLOCATE(globalNumberOfProjectedPoints(numberOfWorldComputationNodes),STAT=err) 
+      ALLOCATE(globalNumberOfProjectedPoints(numberOfGroupComputationNodes),STAT=err) 
       IF(err/=0) CALL FlagError("Could not allocate all number of projected points.",err,error,*999)
       ALLOCATE(projectionExitTag(numberOfDataPoints),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate projected.",err,error,*999)
@@ -1682,7 +1685,7 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate sorting indices 2.",err,error,*999)          
       !gather and distribute the number of closest elements from all computation nodes
       CALL MPI_ALLGATHER(numberOfClosestCandidates,1,MPI_INTEGER,globalNumberOfClosestCandidates,1,MPI_INTEGER, &
-        & worldCommunicator,MPIIError)
+        & groupCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPIIError,err,error,*999)
       !Sum all number of closest candidates from all computation nodes
       totalNumberOfClosestCandidates=SUM(globalNumberOfClosestCandidates,1) 
@@ -1700,14 +1703,14 @@ CONTAINS
       CALL MPI_ERROR_CHECK("MPI_TYPE_COMMIT",MPIIError,err,error,*999)
       !Create displacement vectors for MPI_ALLGATHERV
       globalMPIDisplacements(1)=0
-      DO computationNodeIdx=1,(numberOfWorldComputationNodes-1)
+      DO computationNodeIdx=1,(numberOfGroupComputationNodes-1)
         globalMPIDisplacements(computationNodeIdx+1)=globalMPIDisplacements(computationNodeIdx)+ &
           & globalNumberOfClosestCandidates(computationNodeIdx)
       ENDDO !computationNodeIdx
       !Share closest element distances between all domains
       CALL MPI_ALLGATHERV(closestDistances(1,1),numberOfClosestCandidates,MPIClosestDistances, &
         & globalClosestDistances,globalNumberOfClosestCandidates,globalMPIDisplacements, &
-        & MPIClosestDistances,worldCommunicator,MPIIError)
+        & MPIClosestDistances,groupCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       reducedNumberOfCLosestCandidates=MIN(dataProjection%numberOfClosestElements,totalNumberOfClosestCandidates)
       projectedDistance(2,:)=myComputationNode
@@ -1814,46 +1817,46 @@ CONTAINS
       END SELECT
       !Find the shortest projected distance in all domains
       CALL MPI_ALLREDUCE(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
-        & worldCommunicator,MPIIError)
+        & groupCommunicator,MPIIError)
       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPIIError,err,error,*999)
       !Sort the computation node/rank from 0 to number of computation node
       CALL Sorting_BubbleIndexSort(projectedDistance(2,:),sortingIndices2,err,error,*999)
-      DO computationNodeIdx=0,(numberOfWorldComputationNodes-1)
+      DO computationNodeIdx=0,(numberOfGroupComputationNodes-1)
         globalNumberOfProjectedPoints(computationNodeIdx+1)=COUNT(ABS(projectedDistance(2,:)- &
           & REAL(computationNodeIdx))<ZERO_TOLERANCE)
       ENDDO !computationNodeIdx
       startIdx=SUM(globalNumberOfProjectedPoints(1:myComputationNode))+1
       finishIdx=startIdx+globalNumberOfProjectedPoints(myComputationNode+1)-1
       !create displacement vectors for MPI_ALLGATHERV          
-      DO computationNodeIdx=1,(numberOfWorldComputationNodes-1)
+      DO computationNodeIdx=1,(numberOfGroupComputationNodes-1)
         globalMPIDisplacements(computationNodeIdx+1)=globalMPIDisplacements(computationNodeIdx)+ &
           & globalNumberOfProjectedPoints(computationNodeIdx)
       ENDDO !computationNodeIdx  
       !Shares minimum projection information between all domains
       CALL MPI_ALLGATHERV(projectedElement(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
         & myComputationNode+1),MPI_INTEGER,projectedElement,globalNumberOfProjectedPoints, &
-        & globalMPIDisplacements,MPI_INTEGER,worldCommunicator,MPIIError) !projectedElement
+        & globalMPIDisplacements,MPI_INTEGER,groupCommunicator,MPIIError) !projectedElement
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       IF(boundaryProjection) THEN
         CALL MPI_ALLGATHERV(projectedLineFace(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
           & myComputationNode+1),MPI_INTEGER,projectedLineFace,globalNumberOfProjectedPoints, &
-          & globalMPIDisplacements,MPI_INTEGER,worldCommunicator,MPIIError) !projectedLineFace
+          & globalMPIDisplacements,MPI_INTEGER,groupCommunicator,MPIIError) !projectedLineFace
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999) 
       ENDIF
       DO xiIdx=1,dataProjection%numberOfXi
         CALL MPI_ALLGATHERV(projectedXi(xiIdx,sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
           & myComputationNode+1),MPI_DOUBLE_PRECISION,projectedXi(xiIdx,:),globalNumberOfProjectedPoints, &
-          & globalMPIDisplacements,MPI_DOUBLE_PRECISION,worldCommunicator,MPIIError) !projectedXi
+          & globalMPIDisplacements,MPI_DOUBLE_PRECISION,groupCommunicator,MPIIError) !projectedXi
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       ENDDO !xiIdx
       CALL MPI_ALLGATHERV(projectionExitTag(sortingIndices2(startIdx:finishIdx)),globalNumberOfProjectedPoints( &
         & myComputationNode+1),MPI_INTEGER,projectionExitTag,globalNumberOfProjectedPoints, &
-        & globalMPIDisplacements,MPI_INTEGER,worldCommunicator,MPIIError) !projectionExitTag
+        & globalMPIDisplacements,MPI_INTEGER,groupCommunicator,MPIIError) !projectionExitTag
       CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       DO xiIdx=1,dataProjection%numberOfCoordinates
         CALL MPI_ALLGATHERV(projectionVectors(xiIdx, sortingIndices2(startIdx:finishIdx)), &
           & globalNumberOfProjectedPoints(myComputationNode+1),MPI_DOUBLE_PRECISION,projectionVectors(xiIdx,:), &
-          & globalNumberOfProjectedPoints,globalMPIDisplacements,MPI_DOUBLE_PRECISION,worldCommunicator, &
+          & globalNumberOfProjectedPoints,globalMPIDisplacements,MPI_DOUBLE_PRECISION,groupCommunicator, &
           & MPIIError)  !projectionVectors
         CALL MPI_ERROR_CHECK("MPI_ALLGATHERV",MPIIError,err,error,*999)
       ENDDO
@@ -1947,7 +1950,7 @@ CONTAINS
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ENDIF !numberOfWorldComputationNodes>1
+    ENDIF !numberOfGroupComputationNodes>1
     !Compute full elemental xi
     IF(dataProjection%numberOfXi==dataProjection%numberOfElementXi) THEN
       DO dataPointIdx=1,numberOfDataPoints
@@ -4686,7 +4689,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dataPointExitTag,dataPointIdx,dataPointUserNumber,elementUserNumber,filenameLength,localElementNumber, &
-      & localLineFaceNumber,myWorldComputationNodeNumber,normalIdx1,normalIdx2,numberOfWorldComputationNodes,outputID
+      & localLineFaceNumber,myGroupComputationNodeNumber,normalIdx1,normalIdx2,numberOfGroupComputationNodes,outputID
     REAL(DP) :: distance
     CHARACTER(LEN=MAXSTRLEN) :: analFilename,format1,format2,localString
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -4699,6 +4702,7 @@ CONTAINS
     TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
     TYPE(FIELD_TYPE), POINTER :: projectionField
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
         
     ENTERS("DataProjection_ResultAnalysisOutput",err,error,*999)
 
@@ -4722,13 +4726,15 @@ CONTAINS
     CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
     CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
-    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
-    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
     !Find the correct output ID and open a file if necessary
     filenameLength=LEN_TRIM(filename)
     IF(filenameLength>=1) THEN
-      IF(numberOfWorldComputationNodes>1) THEN
-        WRITE(analFilename,('(A,A,I0)')) filename(1:filenameLength),".opdataproj.",myWorldComputationNodeNumber              
+      IF(numberOfGroupComputationNodes>1) THEN
+        WRITE(analFilename,('(A,A,I0)')) filename(1:filenameLength),".opdataproj.",myGroupComputationNodeNumber              
       ELSE
         analFilename=filename(1:filenameLength)//".opdataproj"
       ENDIF

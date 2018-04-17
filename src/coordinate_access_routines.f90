@@ -46,6 +46,7 @@ MODULE CoordinateSystemAccessRoutines
   
   USE BaseRoutines
   USE Kinds
+  USE ISO_VARYING_STRING
   USE Strings
   USE Types
   
@@ -61,9 +62,7 @@ MODULE CoordinateSystemAccessRoutines
 
   !Module variables
 
-  TYPE(CoordinateSystemsType) :: coordinateSystems
-  
-   !Interfaces
+  !Interfaces
 
   INTERFACE COORDINATE_SYSTEM_DIMENSION_GET
     MODULE PROCEDURE CoordinateSystem_DimensionGet
@@ -73,8 +72,8 @@ MODULE CoordinateSystemAccessRoutines
     MODULE PROCEDURE CoordinateSystem_UserNumberFind
   END INTERFACE COORDINATE_SYSTEM_USER_NUMBER_FIND
 
-  PUBLIC coordinateSystems
-
+  PUBLIC CoordinateSystem_CoordinateSystemsGet
+  
   PUBLIC CoordinateSystem_DimensionGet
 
   PUBLIC COORDINATE_SYSTEM_DIMENSION_GET
@@ -87,6 +86,42 @@ MODULE CoordinateSystemAccessRoutines
 
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the coordinate systems for the coordinate system. 
+  SUBROUTINE CoordinateSystem_CoordinateSystemsGet(coordinateSystem,coordinateSystems,err,error,*)
+
+    !Argument variables
+    TYPE(COORDINATE_SYSTEM_TYPE), POINTER, INTENT(IN) :: coordinateSystem !<A pointer to the coordinate system to get the coordinate systems for
+    TYPE(CoordinateSystemsType), POINTER, INTENT(OUT) :: coordinateSystems !<On return, a pointer to the coordinate systems for the coordinate system. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("CoordinateSystem_CoordinateSystemsGet",err,error,*998)
+
+    IF(ASSOCIATED(coordinateSystems)) CALL FlagError("Coordinate systems is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
+
+    coordinateSystems=>coordinateSystem%coordinateSystems
+    IF(.NOT.ASSOCIATED(coordinateSystems)) THEN
+      localError="Coordinate systems is not associated for coordinate system number "// &
+        & TRIM(NumberToVString(coordinateSystem%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("CoordinateSystem_CoordinateSystemsGet")
+    RETURN
+998 NULLIFY(coordinateSystems)
+999 ERRORS("CoordinateSystem_CoordinateSystemsGet",err,error)
+    EXITS("CoordinateSystem_CoordinateSystemsGet")
+    RETURN 1
+
+  END SUBROUTINE CoordinateSystem_CoordinateSystemsGet
 
   !
   !================================================================================================================================
@@ -121,10 +156,11 @@ CONTAINS
   !
 
   !>Finds and returns a pointer to the coordinate system with the given user number. 
-  SUBROUTINE CoordinateSystem_Get(userNumber,coordinateSystem,err,error,*)
+  SUBROUTINE CoordinateSystem_Get(coordinateSystems,userNumber,coordinateSystem,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the coordinate system to find
+    TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the coordinate systems to get the user number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the coordinate system to get
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system with the specified user number if it exists. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -133,7 +169,7 @@ CONTAINS
     
     ENTERS("CoordinateSystem_Get",err,error,*999)
 
-    CALL CoordinateSystem_UserNumberFind(userNumber,coordinateSystem,err,error,*999)
+    CALL CoordinateSystem_UserNumberFind(coordinateSystems,userNumber,coordinateSystem,err,error,*999)
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
       localError="A coordinate system with an user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
       CALL FlagError(localError,err,error,*999)
@@ -152,9 +188,10 @@ CONTAINS
 
   !>Returns a pointer to the coordinate system identified by a user number. If a coordinate system with that number is not
   !>found then coordinate system is set to NULL.
-  SUBROUTINE CoordinateSystem_UserNumberFind(userNumber,coordinateSystem,ERR,ERROR,*)
+  SUBROUTINE CoordinateSystem_UserNumberFind(coordinateSystems,userNumber,coordinateSystem,err,error,*)
 
     !Argument variables
+    TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<The coordinate systems to find the user number for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the coordinate system to find.
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system with the specified user number if it exists. If no coordinate system has the specified user number the pointer is returned as NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -165,7 +202,8 @@ CONTAINS
     
     ENTERS("CoordinateSystem_UserNumberFind",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate_system is already associated.",ERR,ERROR,*999)
+    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(coordinateSystems)) CALL FlagError("Coordinate systems is not associated.",err,error,*999)
    
     NULLIFY(coordinateSystem)
     IF(ASSOCIATED(coordinateSystems%coordinateSystems)) THEN
@@ -185,7 +223,8 @@ CONTAINS
     
     EXITS("CoordinateSystem_UserNumberFind")
     RETURN
-999 ERRORSEXITS("CoordinateSystem_UserNumberFind",ERR,ERROR)
+999 ERRORS("CoordinateSystem_UserNumberFind",err,error)
+    EXITS("CoordinateSystem_UserNumberFind")
     RETURN 1
     
   END SUBROUTINE CoordinateSystem_UserNumberFind

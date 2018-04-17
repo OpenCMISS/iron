@@ -58,6 +58,7 @@ MODULE ComputationRoutines
   USE ISO_VARYING_STRING
   USE Sorting
   USE Strings
+  USE Types
  
 #include "macros.h"
 
@@ -144,7 +145,7 @@ CONTAINS
     computationNode%numberOfProcessors=1
     computationNode%rank=rank
     CALL MPI_GET_PROCESSOR_NAME(computationNode%nodeName,computationNode%nodeNameLength,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GET_PROCESSOR_NAME",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_GET_PROCESSOR_NAME",mpiIError,err,error,*999)
     
     EXITS("Computation_ComputationNodeInitialise")
     RETURN
@@ -179,7 +180,7 @@ CONTAINS
 
     IF(mpiComputationNode%mpiType/=MPI_DATATYPE_NULL) THEN
       CALL MPI_TYPE_FREE(mpiComputationNode%mpiType,mpiIError)
-      CALL MPI_ERROR_CHECK("MPI_TYPE_FREE",mpiIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_TYPE_FREE",mpiIError,err,error,*999)
     ENDIF
 
     EXITS("Computation_MPIComputationNodeFinalise")
@@ -226,18 +227,18 @@ CONTAINS
 		
     CALL MPI_GET_ADDRESS(computationEnvironment%computationNodes(rank)%numberOfProcessors, &
       & computationEnvironment%mpiComputationNode%displacements(1),mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GET_ADDRESS",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_GET_ADDRESS",mpiIError,err,error,*999)
     CALL MPI_GET_ADDRESS(computationEnvironment%computationNodes(rank)%rank, &
       & computationEnvironment%mpiComputationNode%displacements(2),mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GET_ADDRESS",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_GET_ADDRESS",mpiIError,err,error,*999)
     CALL MPI_GET_ADDRESS(computationEnvironment%computationNodes(rank)%nodeNameLength, &
       & computationEnvironment%mpiComputationNode%displacements(3),mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GET_ADDRESS",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_GET_ADDRESS",mpiIError,err,error,*999)
     !CPB 19/02/07 AIX compiler complains about the type of the first parameter i.e., the previous 3 have been integers
     !and this one is not so cast the type.
     CALL MPI_GET_ADDRESS(computationEnvironment%computationNodes(rank)%nodeName, &
       & computationEnvironment%mpiComputationNode%displacements(4),mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GET_ADDRESS",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_GET_ADDRESS",mpiIError,err,error,*999)
 
     DO blockIdx=4,1,-1
       computationEnvironment%mpiComputationNode%displacements(blockIdx)= &
@@ -250,10 +251,10 @@ CONTAINS
       & computationEnvironment%mpiComputationNode%displacements, &
       & computationEnvironment%mpiComputationNode%types, &
       & computationEnvironment%mpiComputationNode%mpiType,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_TYPE_CREATE_STRUCT",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_TYPE_CREATE_STRUCT",mpiIError,err,error,*999)
 
     CALL MPI_TYPE_COMMIT(computationEnvironment%mpiComputationNode%mpiType,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_TYPE_COMMIT",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_TYPE_COMMIT",mpiIError,err,error,*999)
     
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI Computation Node Type Data:",err,error,*999)
@@ -283,9 +284,10 @@ CONTAINS
   !
 
   !>Finalises the computation data structures and deallocates all memory.
-  SUBROUTINE Computation_Finalise(err,error,*)
+  SUBROUTINE Computation_Finalise(computationEnvironment,err,error,*)
 
     !Argument Variables
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<A pointer to the computation environment to finalise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -304,10 +306,10 @@ CONTAINS
     IF(cmissMPIInitialised) THEN
       !Check if MPI has been finalised
       CALL MPI_FINALIZED(mpiFinalised,mpiIError)
-      CALL MPI_ERROR_CHECK("MPI_FINALIZED",mpiIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_FINALIZED",mpiIError,err,error,*999)
       IF(.NOT.mpiFinalised) THEN
         CALL MPI_FINALIZE(mpiIError)
-        CALL MPI_ERROR_CHECK("MPI_FINALIZE",mpiIError,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_FINALIZE",mpiIError,err,error,*999)
       ENDIF
     ENDIF
 
@@ -323,9 +325,10 @@ CONTAINS
   !
 
   !>Initialises the computation data structures.
-  SUBROUTINE Computation_Initialise(err,error,*)
+  SUBROUTINE Computation_Initialise(context,err,error,*)
 
     !Argument Variables
+    TYPE(ContextType), POINTER :: context !<A pointer to the context to initialise the computation for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -334,24 +337,25 @@ CONTAINS
     TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("Computation_Initialise",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
     
     !Check if MPI has been initialised
     cmissMPIInitialised=.FALSE.
     CALL MPI_INITIALIZED(mpiInitialised,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_INITIALIZED",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_INITIALIZED",mpiIError,err,error,*999)
     IF(.NOT.mpiInitialised) THEN
       !Initialise the MPI environment
       CALL MPI_INIT(mpiIError)
-      CALL MPI_ERROR_CHECK("MPI_INIT",mpiIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_INIT",mpiIError,err,error,*999)
       cmissMPIInitialised=.TRUE.
     ENDIF
 
-    NULLIFY(computationEnvironment)
-    CALL ComputationEnvironment_Initialise(computationEnvironment,err,error,*999)
+    CALL ComputationEnvironment_Initialise(context,err,error,*999)
 
     !Initialise node numbers in base routines.
-    CALL ComputationNodeNumbersSet(computationEnvironment%myWorldComputationNodeNumber,computationEnvironment% &
-      & numberOfWorldComputationNodes,err,error,*999)
+    CALL ComputationNodeNumbersSet(context%computationEnvironment%myWorldComputationNodeNumber, &
+      & context%computationEnvironment%numberOfWorldComputationNodes,err,error,*999)
     
     !Initialise PETSc
     CALL Petsc_Initialise(PETSC_NULL_CHARACTER,err,error,*999)
@@ -362,7 +366,7 @@ CONTAINS
     
     EXITS("Computation_Initialise")        
     RETURN
-999 CALL Computation_Finalise(dummyErr,dummyError,*998)
+999 CALL Computation_Finalise(context%computationEnvironment,dummyErr,dummyError,*998)
 998 ERRORSEXITS("Computation_Initialise",err,error)
     RETURN 1
     
@@ -398,11 +402,11 @@ CONTAINS
       
       IF(computationEnvironment%mpiGroupWorld /= MPI_GROUP_NULL) THEN
         CALL MPI_GROUP_FREE(computationEnvironment%mpiGroupWorld,mpiIError)
-        CALL MPI_ERROR_CHECK("MPI_GROUP_FREE",mpiIError,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_GROUP_FREE",mpiIError,err,error,*999)
       ENDIF
       IF(computationEnvironment%mpiCommWorld /= MPI_COMM_NULL) THEN
         CALL MPI_COMM_FREE(computationEnvironment%mpiCommWorld,mpiIError)
-        CALL MPI_ERROR_CHECK("MPI_COMM_FREE",mpiIError,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_COMM_FREE",mpiIError,err,error,*999)
       ENDIF
     
       DEALLOCATE(computationEnvironment)
@@ -420,11 +424,11 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the computation environment data structures.
-  SUBROUTINE ComputationEnvironment_Initialise(computationEnvironment,err,error,*)
+  !>Initialises the computation environment data structures for a context.
+  SUBROUTINE ComputationEnvironment_Initialise(context,err,error,*)
 
     !Argument Variables
-    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<A pointer to the comptuation environment to initialise. Must not be associated on entry.
+    TYPE(ContextType), POINTER :: context !<A pointer to the context to initialise the computation environment for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -433,122 +437,135 @@ CONTAINS
 
     ENTERS("ComputationEnvironment_Initialise",err,error,*999)
 
-    IF(ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+    IF(ASSOCIATED(context%computationEnvironment)) &
+      & CALL FlagError("The context computation environment is already associated.",err,error,*999)
 
-    ALLOCATE(computationEnvironment,STAT=err)
+    ALLOCATE(context%computationEnvironment,STAT=err)
     IF(err/=0) CALL FlagError("Computation environment could not be allocated.",err,error,*999)
-    
-    computationEnvironment%mpiVersion=0
-    computationEnvironment%mpiSubversion=0
-    computationEnvironment%mpiCommWorld=MPI_COMM_NULL
-    computationEnvironment%mpiGroupWorld=MPI_GROUP_NULL
-    computationEnvironment%numberOfWorldComputationNodes=0
-    computationEnvironment%myWorldComputationNodeNumber=-1
-    NULLIFY(computationEnvironment%worldWorkGroup)
+    !Initialise
+    context%computationEnvironment%context=>context
+    context%computationEnvironment%mpiVersion=0
+    context%computationEnvironment%mpiSubversion=0
+    context%computationEnvironment%mpiCommWorld=MPI_COMM_NULL
+    context%computationEnvironment%mpiGroupWorld=MPI_GROUP_NULL
+    context%computationEnvironment%numberOfWorldComputationNodes=0
+    context%computationEnvironment%myWorldComputationNodeNumber=-1
+    NULLIFY(context%computationEnvironment%worldWorkGroup)
 
     !Get the version of MPI that we are running with
-    CALL MPI_GET_VERSION(computationEnvironment%mpiVersion,computationEnvironment%mpiSubversion,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GET_VERSION",mpiIError,err,error,*999)
+    CALL MPI_GET_VERSION(context%computationEnvironment%mpiVersion,context%computationEnvironment%mpiSubversion,mpiIError)
+    CALL MPI_ErrorCheck("MPI_GET_VERSION",mpiIError,err,error,*999)
     
     !Create a (private) communicator for OpenCMISS as a duplicate MPI_COMM_WORLD
-    CALL MPI_COMM_DUP(MPI_COMM_WORLD,computationEnvironment%mpiCommWorld,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_DUP",mpiIError,err,error,*999)
+    CALL MPI_COMM_DUP(MPI_COMM_WORLD,context%computationEnvironment%mpiCommWorld,mpiIError)
+    CALL MPI_ErrorCheck("MPI_COMM_DUP",mpiIError,err,error,*999)
     !Get the default MPI_COMM_GROUP for the world communicator
-    CALL MPI_COMM_GROUP(computationEnvironment%mpiCommWorld,computationEnvironment%mpiGroupWorld,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_GROUP",mpiIError,err,error,*999)
+    CALL MPI_COMM_GROUP(context%computationEnvironment%mpiCommWorld,context%computationEnvironment%mpiGroupWorld,mpiIError)
+    CALL MPI_ErrorCheck("MPI_COMM_GROUP",mpiIError,err,error,*999)
     !Set the default MPI world communicator to be the cloned communicator
-    computationEnvironment%mpiCommWorld=computationEnvironment%mpiCommWorld
+    context%computationEnvironment%mpiCommWorld=context%computationEnvironment%mpiCommWorld
     
     !Determine the number of ranks/computation nodes we have in our world computation environment
-    CALL MPI_COMM_SIZE(computationEnvironment%mpiCommWorld,computationEnvironment%numberOfWorldComputationNodes,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_SIZE",mpiIError,err,error,*999)
+    CALL MPI_COMM_SIZE(context%computationEnvironment%mpiCommWorld,context%computationEnvironment%numberOfWorldComputationNodes, &
+      & mpiIError)
+    CALL MPI_ErrorCheck("MPI_COMM_SIZE",mpiIError,err,error,*999)
 
     !Allocate the computation node data structures
-    ALLOCATE(computationEnvironment%computationNodes(0:computationEnvironment%numberOfWorldComputationNodes-1),STAT=ERR)
-    IF(ERR /=0) CALL FlagError("Could not allocate computation environment computation nodes.",err,error,*999)
+    ALLOCATE(context%computationEnvironment%computationNodes(0:context%computationEnvironment%numberOfWorldComputationNodes-1), &
+      & STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate computation environment computation nodes.",err,error,*999)
 
     !Determine my processes rank in the world communicator
-    CALL MPI_COMM_RANK(computationEnvironment%mpiCommWorld,rank,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
-    computationEnvironment%myWorldComputationNodeNumber=rank
+    CALL MPI_COMM_RANK(context%computationEnvironment%mpiCommWorld,rank,mpiIError)
+    CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
+    context%computationEnvironment%myWorldComputationNodeNumber=rank
     
 #ifdef TAUPROF
     CALL TAU_PROFILE_SET_NODE(rank)
 #endif
     
     !Create the MPI type information for the ComputationNodeType
-    CALL Computation_MPIComputationNodeInitialise(computationEnvironment,rank,err,error,*999)
+    CALL Computation_MPIComputationNodeInitialise(context%computationEnvironment,rank,err,error,*999)
     !Fill in all the computation node data structures for this rank at the root position (will be changed later with an
     !allgather call)
-    CALL Computation_ComputationNodeInitialise(computationEnvironment%computationNodes(0),rank,err,error,*999)
+    CALL Computation_ComputationNodeInitialise(context%computationEnvironment%computationNodes(0),rank,err,error,*999)
 
     !Now transfer all the computation node information to the other computation nodes so that each rank has all the
     !information.
-    CALL MPI_ALLGATHER(MPI_IN_PLACE,1,computationEnvironment%mpiComputationNode%mpiType, &
-      & computationEnvironment%computationNodes(0),1,computationEnvironment%mpiComputationNode%mpiType, &
-      & computationEnvironment%mpiCommWorld,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_ALLGATHER",mpiIError,err,error,*999)
+    CALL MPI_ALLGATHER(MPI_IN_PLACE,1,context%computationEnvironment%mpiComputationNode%mpiType, &
+      & context%computationEnvironment%computationNodes(0),1,context%computationEnvironment%mpiComputationNode%mpiType, &
+      & context%computationEnvironment%mpiCommWorld,mpiIError)
+    CALL MPI_ErrorCheck("MPI_ALLGATHER",mpiIError,err,error,*999)
     
     !Setup the world work group.
     !Initialise
-    CALL WorkGroup_Initialise(computationEnvironment%worldWorkGroup,err,error,*999)
+    CALL WorkGroup_Initialise(context%computationEnvironment%worldWorkGroup,err,error,*999)
     !Set the world work group to have all the ranks in the world communicator
-    computationEnvironment%worldWorkGroup%userNumber=0
-    computationEnvironment%worldWorkGroup%label="World Work Group"
-    computationEnvironment%worldWorkGroup%parentWorkGroup=>computationEnvironment%worldWorkGroup
-    computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes=computationEnvironment%numberOfWorldComputationNodes
+    context%computationEnvironment%worldWorkGroup%userNumber=0
+    context%computationEnvironment%worldWorkGroup%label="World Work Group"
+    context%computationEnvironment%worldWorkGroup%parentWorkGroup=>context%computationEnvironment%worldWorkGroup
+    context%computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes= &
+      & context%computationEnvironment%numberOfWorldComputationNodes
     !computationEnvironment%worldWorkGroup%computationEnvironment=>computationEnvironment
-    ALLOCATE(computationEnvironment%worldWorkGroup%worldRanks(computationEnvironment%numberOfWorldComputationNodes),STAT=err)
+    ALLOCATE(context%computationEnvironment%worldWorkGroup%worldRanks( &
+      & context%computationEnvironment%numberOfWorldComputationNodes),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate world work group world ranks.",err,error,*999)
-    ALLOCATE(computationEnvironment%worldWorkGroup%availableRanks(computationEnvironment%numberOfWorldComputationNodes),STAT=err)
+    ALLOCATE(context%computationEnvironment%worldWorkGroup%availableRanks( &
+      & context%computationEnvironment%numberOfWorldComputationNodes),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate world work group available ranks.",err,error,*999)
-    DO rankIdx=1,computationEnvironment%numberOfWorldComputationNodes
-      computationEnvironment%worldWorkGroup%worldRanks(rankIdx)=rankIdx-1
-      computationEnvironment%worldWorkGroup%availableRanks(rankIdx)=rankIdx-1
+    DO rankIdx=1,context%computationEnvironment%numberOfWorldComputationNodes
+      context%computationEnvironment%worldWorkGroup%worldRanks(rankIdx)=rankIdx-1
+      context%computationEnvironment%worldWorkGroup%availableRanks(rankIdx)=rankIdx-1
     ENDDO !rankIdx
-    computationEnvironment%worldWorkGroup%numberOfAvailableRanks=computationEnvironment%numberOfWorldComputationNodes
+    context%computationEnvironment%worldWorkGroup%numberOfAvailableRanks= &
+      & context%computationEnvironment%numberOfWorldComputationNodes
     !Create a new MPI group
-    CALL MPI_GROUP_INCL(computationEnvironment%mpiGroupWorld,computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes, &
-      & computationEnvironment%worldWorkGroup%worldRanks,computationEnvironment%worldWorkGroup%mpiGroup,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GROUP_INCL",mpiIError,err,error,*999)    
-    CALL MPI_COMM_CREATE(computationEnvironment%mpiCommWorld,computationEnvironment%worldWorkGroup%mpiGroup, &
-      & computationEnvironment%worldWorkGroup%mpiGroupCommunicator,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_CREATE",mpiIError,err,error,*999)
+    CALL MPI_GROUP_INCL(context%computationEnvironment%mpiGroupWorld, &
+      & context%computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes, &
+      & context%computationEnvironment%worldWorkGroup%worldRanks, &
+      & context%computationEnvironment%worldWorkGroup%mpiGroup,mpiIError)
+    CALL MPI_ErrorCheck("MPI_GROUP_INCL",mpiIError,err,error,*999)    
+    CALL MPI_COMM_CREATE(context%computationEnvironment%mpiCommWorld, &
+      & context%computationEnvironment%worldWorkGroup%mpiGroup, &
+      & context%computationEnvironment%worldWorkGroup%mpiGroupCommunicator,mpiIError)
+    CALL MPI_ErrorCheck("MPI_COMM_CREATE",mpiIError,err,error,*999)
     !Determine ranks
-    CALL MPI_COMM_RANK(computationEnvironment%mpiCommWorld,rank,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
-    computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
-    CALL MPI_COMM_RANK(computationEnvironment%worldWorkGroup%mpiGroupCommunicator,rank,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
-    computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
+    CALL MPI_COMM_RANK(context%computationEnvironment%mpiCommWorld,rank,mpiIError)
+    CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
+    context%computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
+    CALL MPI_COMM_RANK(context%computationEnvironment%worldWorkGroup%mpiGroupCommunicator,rank,mpiIError)
+    CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
+    context%computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
     
-    computationEnvironment%worldWorkGroup%workGroupFinished=.TRUE.
+    context%computationEnvironment%worldWorkGroup%workGroupFinished=.TRUE.
     
     IF(diagnostics1) THEN
       !Just let the master node write out this information
       IF(rank==0) THEN
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Computation environment:",err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI version = ", &
-          & computationEnvironment%mpiVersion,err,error,*999)
+          & context%computationEnvironment%mpiVersion,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI subversion = ", &
-          & computationEnvironment%mpiSubversion,err,error,*999)
+          & context%computationEnvironment%mpiSubversion,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI world communicator = ", &
-          & computationEnvironment%mpiCommWorld,err,error,*999)
+          & context%computationEnvironment%mpiCommWorld,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI world group = ", &
-          & computationEnvironment%mpiGroupWorld,err,error,*999)
+          & context%computationEnvironment%mpiGroupWorld,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of world computation nodes = ", &
-          & computationEnvironment%numberOfWorldComputationNodes,err,error,*999)
+          & context%computationEnvironment%numberOfWorldComputationNodes,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  My world computation node number = ", &
-          & computationEnvironment%myWorldComputationNodeNumber,err,error,*999)
+          & context%computationEnvironment%myWorldComputationNodeNumber,err,error,*999)
         IF(diagnostics2) THEN
-          DO computationNodeIdx=0,computationEnvironment%numberOfWorldComputationNodes-1
+          DO computationNodeIdx=0,context%computationEnvironment%numberOfWorldComputationNodes-1
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Computation Node:",err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of Processors = ", &
-              & computationEnvironment%computationNodes(computationNodeIdx)%numberOfProcessors,err,error,*999)
+              & context%computationEnvironment%computationNodes(computationNodeIdx)%numberOfProcessors, &
+              & err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    MPI rank = ", &
-              & computationEnvironment%computationNodes(computationNodeIdx)%rank,err,error,*999)
+              & context%computationEnvironment%computationNodes(computationNodeIdx)%rank,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Node Name = ", &
-              & computationEnvironment%computationNodes(computationNodeIdx)%nodeName,err,error,*999)
+              & context%computationEnvironment%computationNodes(computationNodeIdx)%nodeName,err,error,*999)
           ENDDO !computationNodeIdx
         ENDIF
       ENDIF
@@ -556,7 +573,7 @@ CONTAINS
     
     EXITS("ComputationEnvironment_Initialise")    
     RETURN
-999 CALL ComputationEnvironment_Finalise(computationEnvironment,dummyErr,dummyError,*998)
+999 CALL ComputationEnvironment_Finalise(context%computationEnvironment,dummyErr,dummyError,*998)
 998 ERRORS("ComputationEnvironment_Initialise",err,error)
     EXITS("ComputationEnvironment_Initialise")
     RETURN 1
@@ -578,6 +595,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: subGroupIdx
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(WorkGroupPtrType), ALLOCATABLE :: newSubGroups(:)
     TYPE(VARYING_STRING) :: localError
 
@@ -585,7 +603,9 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(parentWorkGroup)) CALL FlagError('Parent work group is not associated.',err,error,*999)
     IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*999)
-    CALL WorkGroup_UserNumberFind(userNumber,computationEnvironment,workGroup,err,error,*999)
+    NULLIFY(computationEnvironment)
+    CALL WorkGroup_ComputationEnvironmentGet(parentWorkGroup,computationEnvironment,err,error,*999)
+    CALL WorkGroup_UserNumberFind(computationEnvironment,userNumber,workGroup,err,error,*999)
     IF(ASSOCIATED(workGroup)) THEN
       localError="The user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" is already is use."
       CALL FlagError(localError,err,error,*999)
@@ -629,6 +649,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG),ALLOCATABLE:: newAvailableRanks(:)
     INTEGER(INTG) :: groupRank,mpiIError,newNumberOfAvailableRanks,rankIdx,worldRank
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(WorkGroupType), POINTER :: parentWorkGroup
     TYPE(VARYING_STRING) :: localError
 
@@ -670,25 +691,27 @@ CONTAINS
       workGroup%availableRanks(rankIdx)=workGroup%worldRanks(rankIdx)
     ENDDO !rankIdx
     workGroup%numberOfAvailableRanks=workGroup%numberOfGroupComputationNodes
-    
+
+    NULLIFY(computationEnvironment)
+    CALL WorkGroup_ComputationEnvironmentGet(workGroup,computationEnvironment,err,error,*999)
     !Create a new MPI group
-    CALL MPI_GROUP_INCL(computationEnvironment%mpiGroupWorld,workGroup%numberOfGroupComputationNodes,workGroup%worldRanks, &
-      & workGroup%mpiGroup,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_GROUP_INCL",mpiIError,err,error,*999)    
+    CALL MPI_GROUP_INCL(workGroup%computationEnvironment%mpiGroupWorld,workGroup%numberOfGroupComputationNodes, &
+      & workGroup%worldRanks,workGroup%mpiGroup,mpiIError)
+    CALL MPI_ErrorCheck("MPI_GROUP_INCL",mpiIError,err,error,*999)    
     CALL MPI_COMM_CREATE(computationEnvironment%mpiCommWorld,workGroup%mpiGroup,workGroup%mpiGroupCommunicator,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_CREATE",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_COMM_CREATE",mpiIError,err,error,*999)
     
     !Determine my processes rank in the group communicator
     IF(workGroup%mpiGroupCommunicator /= MPI_COMM_NULL) THEN
       CALL MPI_COMM_RANK(workGroup%mpiGroupCommunicator,groupRank,mpiIError)
-      CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
+      CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
       workGroup%myGroupComputationNodeNumber=groupRank
     ELSE
       workGroup%myGroupComputationNodeNumber=-1
     ENDIF
     !Determine my process rank in the world communicator
     CALL MPI_COMM_RANK(computationEnvironment%mpiCommWorld,worldRank,mpiIError)
-    CALL MPI_ERROR_CHECK("MPI_COMM_RANK",mpiIError,err,error,*999)
+    CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
     workGroup%myWorldComputationNodeNumber=worldRank
 
 
@@ -715,14 +738,17 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: userNumber
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
  
     ENTERS("WorkGroup_Destroy",err,error,*999)
 
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
     IF(workGroup%userNumber==0) CALL FlagError("Cannot destroy the world work group.",err,error,*999)
-    
+
+    NULLIFY(computationEnvironment)
+    CALL WorkGroup_ComputationEnvironmentGet(workGroup,computationEnvironment,err,error,*999)
     userNumber=workGroup%userNumber
-    CALL WorkGroup_DestroyNumber(userNumber,err,error,*999)
+    CALL WorkGroup_DestroyNumber(computationEnvironment,userNumber,err,error,*999)
     
     EXITS("WorkGroup_Destroy")
     RETURN
@@ -736,9 +762,10 @@ CONTAINS
   !
 
   !>Destroy a work group given by a user number and all sub groups under it
-  RECURSIVE SUBROUTINE WorkGroup_DestroyNumber(workGroupUserNumber,err,error,*)
+  RECURSIVE SUBROUTINE WorkGroup_DestroyNumber(computationEnvironment,workGroupUserNumber,err,error,*)
 
     !Argument Variables
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<The computation environment in which to destroy the work group
     INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The work group user number to destroy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -751,8 +778,10 @@ CONTAINS
  
     ENTERS("WorkGroup_DestroyNumber",err,error,*999)
 
+    IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
+
     NULLIFY(workGroup)
-    CALL WorkGroup_UserNumberFind(workGroupUserNumber,computationEnvironment,workGroup,err,error,*999)
+    CALL WorkGroup_UserNumberFind(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
     IF(.NOT.ASSOCIATED(workGroup)) THEN
       localError="A work group with a user number of "//TRIM(NumberToVString(workGroupUserNumber,"*",err,error))// &
         & " does not exist."
@@ -806,10 +835,10 @@ CONTAINS
       DO WHILE(workGroup%numberOfSubGroups>0)
         NULLIFY(workGroup2)
         CALL WorkGroup_WorkSubGroupGet(workGroup,1,workGroup2,err,error,*999)
-        CALL WorkGroup_DestroyNumber(workGroup2%userNumber,err,error,*999)
+        CALL WorkGroup_DestroyNumber(computationEnvironment,workGroup2%userNumber,err,error,*999)
       ENDDO
       !Now delete this instance
-      CALL WorkGroup_DestroyNumber(workGroup%userNumber,err,error,*999)     
+      CALL WorkGroup_DestroyNumber(computationEnvironment,workGroup%userNumber,err,error,*999)     
     ENDIF
 
     EXITS("WorkGroup_DestroyNumber")
@@ -848,11 +877,11 @@ CONTAINS
       ENDIF
       IF(workGroup%mpiGroupCommunicator/=MPI_COMM_NULL) THEN
         CALL MPI_COMM_FREE(workGroup%mpiGroupCommunicator,mpiIError) 
-        CALL MPI_ERROR_CHECK("MPI_COMM_FREE",mpiIError,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_COMM_FREE",mpiIError,err,error,*999)
       ENDIF
       IF(workGroup%mpiGroup/=MPI_GROUP_NULL) THEN
         CALL MPI_GROUP_FREE(workGroup%mpiGroup,mpiIError) 
-        CALL MPI_ERROR_CHECK("MPI_GROUP_FREE",mpiIError,err,error,*999)
+        CALL MPI_ErrorCheck("MPI_GROUP_FREE",mpiIError,err,error,*999)
       ENDIF
       DEALLOCATE(workGroup)
     ENDIF

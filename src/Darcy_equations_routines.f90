@@ -7205,6 +7205,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     CHARACTER(25) :: FILENAME
     TYPE(VARYING_STRING) :: FILEPATH
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     REAL(DP), POINTER :: ITERATION_VALUES_N(:),ITERATION_VALUES_N1(:)
     REAL(DP) :: RESIDUAL_NORM
@@ -7227,7 +7228,10 @@ CONTAINS
     NULLIFY(vectorMapping)
     NULLIFY(FIELD_VARIABLE)
 
-    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,COMPUTATION_NODE_NUMBER,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
+
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,COMPUTATION_NODE_NUMBER,err,error,*999)
     WRITE(FILENAME,'("Darcy_",I3.3,".conv")') COMPUTATION_NODE_NUMBER
     FILEPATH = "./output/"//FILENAME
     OPEN(UNIT=23, FILE=CHAR(FILEPATH),STATUS='unknown',ACCESS='append')

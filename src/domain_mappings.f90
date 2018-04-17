@@ -79,7 +79,7 @@ MODULE DOMAIN_MAPPINGS
 
   PUBLIC DOMAIN_LOCAL_INTERNAL,DOMAIN_LOCAL_BOUNDARY,DOMAIN_LOCAL_GHOST
   
-  PUBLIC DOMAIN_MAPPINGS_MAPPING_FINALISE,DOMAIN_MAPPINGS_MAPPING_INITIALISE,DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE, &
+  PUBLIC DOMAIN_MAPPINGS_MAPPING_FINALISE,DomainMappings_MappingInitialise,DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE, &
     & DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET,DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE
 
 CONTAINS
@@ -89,15 +89,15 @@ CONTAINS
   !
 
   !>Finalises the adjacent domain and deallocates all memory for a domain mapping.
-  SUBROUTINE DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE(ADJACENT_DOMAIN,ERR,ERROR,*)
+  SUBROUTINE DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE(ADJACENT_DOMAIN,err,error,*)
 
     !Argument variables
     TYPE(DOMAIN_ADJACENT_DOMAIN_TYPE) :: ADJACENT_DOMAIN !<The adjacent domain to finalise.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE",ERR,ERROR,*999)
+    ENTERS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE",err,error,*999)
 
     IF(ALLOCATED(ADJACENT_DOMAIN%LOCAL_GHOST_SEND_INDICES)) DEALLOCATE(ADJACENT_DOMAIN%LOCAL_GHOST_SEND_INDICES)
     IF(ALLOCATED(ADJACENT_DOMAIN%LOCAL_GHOST_RECEIVE_INDICES)) DEALLOCATE(ADJACENT_DOMAIN%LOCAL_GHOST_RECEIVE_INDICES)
@@ -107,7 +107,7 @@ CONTAINS
     
     EXITS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE")
     RETURN
-999 ERRORSEXITS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE",err,error)
     RETURN 1
   END SUBROUTINE DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE
   
@@ -116,15 +116,15 @@ CONTAINS
   !
 
   !>Initialise the adjacent domain for a domain mapping.
-  SUBROUTINE DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE(ADJACENT_DOMAIN,ERR,ERROR,*)
+  SUBROUTINE DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE(ADJACENT_DOMAIN,err,error,*)
 
     !Argument variables
     TYPE(DOMAIN_ADJACENT_DOMAIN_TYPE) :: ADJACENT_DOMAIN !<The adjacent domain to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE",ERR,ERROR,*999)
+    ENTERS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE",err,error,*999)
 
     ADJACENT_DOMAIN%NUMBER_OF_SEND_GHOSTS=0
     ADJACENT_DOMAIN%NUMBER_OF_RECEIVE_GHOSTS=0
@@ -132,7 +132,7 @@ CONTAINS
     
     EXITS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE")
     RETURN
-999 ERRORSEXITS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE",err,error)
     RETURN 1
   END SUBROUTINE DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE
   
@@ -141,43 +141,43 @@ CONTAINS
   !
 
   !>Returns the local number, if it exists on the rank, for the specifed global number
-  SUBROUTINE DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(DOMAIN_MAPPING,GLOBAL_NUMBER,LOCAL_EXISTS,LOCAL_NUMBER,ERR,ERROR,*)
+  SUBROUTINE DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(DOMAIN_MAPPING,GLOBAL_NUMBER,LOCAL_EXISTS,LOCAL_NUMBER,err,error,*)
 
     !Argument variables
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING !<A pointer to the domain mapping to get the local number from
     INTEGER(INTG), INTENT(IN) :: GLOBAL_NUMBER !<The global number to get the local number for
     LOGICAL, INTENT(OUT) :: LOCAL_EXISTS !<On exit, is .TRUE. if the specifed global number exists on the local rank, .FALSE. if not
     INTEGER(INTG), INTENT(OUT) :: LOCAL_NUMBER !<On exit, the local number corresponding to the global number if it exists. If it doesn't exist then 0.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: myWorldComputationNodeNumber
+    INTEGER(INTG) :: myGroupComputationNodeNumber
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET",ERR,ERROR,*999)
+    ENTERS("DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET",err,error,*999)
 
     LOCAL_EXISTS=.FALSE.
     LOCAL_NUMBER=0
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
       IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DOMAIN_MAPPING%NUMBER_OF_GLOBAL) THEN
-        CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
-        IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_NUMBER)%DOMAIN_NUMBER(1)==myWorldComputationNodeNumber) THEN
+        CALL WorkGroup_GroupNodeNumberGet(DOMAIN_MAPPING%workGroup,myGroupComputationNodeNumber,err,error,*999)
+        IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_NUMBER)%DOMAIN_NUMBER(1)==myGroupComputationNodeNumber) THEN
           LOCAL_NUMBER=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_NUMBER)%LOCAL_NUMBER(1)
           LOCAL_EXISTS=.TRUE.
         ENDIF
       ELSE
-        LOCAL_ERROR="The specified global number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",ERR,ERROR))// &
+        LOCAL_ERROR="The specified global number of "//TRIM(NUMBER_TO_VSTRING(GLOBAL_NUMBER,"*",err,error))// &
           & " is invalid. The number must be between 1 and "// &
-          & TRIM(NUMBER_TO_VSTRING(DOMAIN_MAPPING%NUMBER_OF_GLOBAL,"*",ERR,ERROR))//"."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          & TRIM(NUMBER_TO_VSTRING(DOMAIN_MAPPING%NUMBER_OF_GLOBAL,"*",err,error))//"."
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Domain mapping is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Domain mapping is not associated.",err,error,*999)
     ENDIF
     
     EXITS("DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET")
     RETURN
-999 ERRORSEXITS("DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET",ERR,ERROR)
+999 ERRORSEXITS("DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET",err,error)
     RETURN 1
   END SUBROUTINE DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET
   
@@ -186,15 +186,15 @@ CONTAINS
   !
 
   !>Calculates the domain mappings local map from a domain mappings global map.
-  SUBROUTINE DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(DOMAIN_MAPPING,ERR,ERROR,*)
+  SUBROUTINE DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(DOMAIN_MAPPING,err,error,*)
 
     !Argument variables
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING !<The domain mapping to calculate the local mappings
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: domain_idx,domain_idx2,domain_no,domain_no2,global_number,idx,local_number,local_number2,NUMBER_INTERNAL, &
-      & NUMBER_BOUNDARY,NUMBER_GHOST,myWorldComputationNodeNumber,MY_DOMAIN_INDEX,TEMP,NUMBER_OF_ADJACENT_DOMAINS, &
+      & NUMBER_BOUNDARY,NUMBER_GHOST,myGroupComputationNodeNumber,MY_DOMAIN_INDEX,TEMP,NUMBER_OF_ADJACENT_DOMAINS, &
       & RECEIVE_FROM_DOMAIN,DUMMY_ERR,NUMBER_OF_GHOST_RECEIVE,NUMBER_OF_GHOST_SEND,local_type,COUNT, &
       & TOTAL_NUMBER_OF_ADJACENT_DOMAINS
     INTEGER(INTG), ALLOCATABLE :: ADJACENT_DOMAIN_MAP(:),ADJACENT_DOMAINS(:,:),SEND_LIST(:),RECEIVE_LIST(:)
@@ -202,19 +202,19 @@ CONTAINS
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: GHOST_SEND_LISTS(:),GHOST_RECEIVE_LISTS(:)
     TYPE(VARYING_STRING) :: LOCAL_ERROR,DUMMY_ERROR
     
-    ENTERS("DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE",ERR,ERROR,*999)
+    ENTERS("DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE",err,error,*999)
 
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
-      CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
+      CALL WorkGroup_GroupNodeNumberGet(DOMAIN_MAPPING%workGroup,myGroupComputationNodeNumber,err,error,*999)
       IF(ERR/=0) GOTO 999        
       
       !Calculate local to global maps from global to local map
       ALLOCATE(DOMAIN_MAPPING%NUMBER_OF_DOMAIN_LOCAL(0:DOMAIN_MAPPING%NUMBER_OF_DOMAINS-1),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate number of domain local.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate number of domain local.",err,error,*999)
       DOMAIN_MAPPING%NUMBER_OF_DOMAIN_LOCAL=0
       
       ALLOCATE(DOMAIN_MAPPING%NUMBER_OF_DOMAIN_GHOST(0:DOMAIN_MAPPING%NUMBER_OF_DOMAINS-1),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate number of domain ghost.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate number of domain ghost.",err,error,*999)
       
       DOMAIN_MAPPING%NUMBER_OF_DOMAIN_GHOST=0
       NUMBER_INTERNAL=0   ! counters for my computational node
@@ -222,7 +222,7 @@ CONTAINS
       NUMBER_GHOST=0
       
       ALLOCATE(ADJACENT_DOMAINS(0:DOMAIN_MAPPING%NUMBER_OF_DOMAINS-1,0:DOMAIN_MAPPING%NUMBER_OF_DOMAINS-1),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domains.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domains.",err,error,*999)
       ADJACENT_DOMAINS=0
       
       ! loop over global elements
@@ -232,7 +232,7 @@ CONTAINS
         MY_DOMAIN_INDEX=1
         DO domain_idx=2,DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%NUMBER_OF_DOMAINS
           domain_no=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%DOMAIN_NUMBER(domain_idx)
-          IF(domain_no==myWorldComputationNodeNumber) THEN
+          IF(domain_no==myGroupComputationNodeNumber) THEN
             MY_DOMAIN_INDEX=domain_idx
             EXIT
           ENDIF
@@ -278,7 +278,7 @@ CONTAINS
           ENDIF
           
           !increment counter of internal, boundary and ghost elements on my domain
-          IF(domain_no==myWorldComputationNodeNumber) THEN
+          IF(domain_no==myGroupComputationNodeNumber) THEN
             SELECT CASE(local_type)
             CASE(DOMAIN_LOCAL_INTERNAL)
               NUMBER_INTERNAL=NUMBER_INTERNAL+1
@@ -288,8 +288,8 @@ CONTAINS
               NUMBER_GHOST=NUMBER_GHOST+1
             CASE DEFAULT
               LOCAL_ERROR="The domain local type of "//TRIM(NUMBER_TO_VSTRING(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP( &
-                & global_number)%LOCAL_TYPE(domain_idx),"*",ERR,ERROR))//" is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                & global_number)%LOCAL_TYPE(domain_idx),"*",err,error))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
           ENDIF
         ENDDO !domain_idx
@@ -304,16 +304,16 @@ CONTAINS
           IF(domain_no/=domain_no2) THEN 
             IF(ADJACENT_DOMAINS(domain_no,domain_no2)>0) THEN
               TOTAL_NUMBER_OF_ADJACENT_DOMAINS=TOTAL_NUMBER_OF_ADJACENT_DOMAINS+1
-              IF(domain_no==myWorldComputationNodeNumber) NUMBER_OF_ADJACENT_DOMAINS=NUMBER_OF_ADJACENT_DOMAINS+1
+              IF(domain_no==myGroupComputationNodeNumber) NUMBER_OF_ADJACENT_DOMAINS=NUMBER_OF_ADJACENT_DOMAINS+1
             ENDIF
           ENDIF
         ENDDO !domain_no2
       ENDDO !domain_no
       
       ALLOCATE(DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(0:DOMAIN_MAPPING%NUMBER_OF_DOMAINS),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domains ptr.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domains ptr.",err,error,*999)
       ALLOCATE(DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST(TOTAL_NUMBER_OF_ADJACENT_DOMAINS),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domains list.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domains list.",err,error,*999)
       
       ! store the adjacent domains for a domain in ADJACENT_DOMAINS_LIST starting at index COUNT and store the starting index COUNT in ADJACENT_DOMAINS_PTR
       ! the adjacent domains for a domain are then ADJACENT_DOMAINS_LIST(ADJACENT_DOMAINS_PTR(domain) : ADJACENT_DOMAINS_PTR(domain+1))
@@ -335,9 +335,9 @@ CONTAINS
       
       !compute domain list for my computational node
       ALLOCATE(DOMAIN_MAPPING%DOMAIN_LIST(NUMBER_INTERNAL+NUMBER_BOUNDARY+NUMBER_GHOST),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate domain map domain list.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate domain map domain list.",err,error,*999)
       ALLOCATE(DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(NUMBER_INTERNAL+NUMBER_BOUNDARY+NUMBER_GHOST),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate domain map local to global list.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate domain map local to global list.",err,error,*999)
       
       !set constants
       DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL=NUMBER_INTERNAL+NUMBER_BOUNDARY+NUMBER_GHOST
@@ -354,46 +354,46 @@ CONTAINS
       
       ! adjacent_domains maps a domain index (index between 1 and DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS) to the domain number
       ALLOCATE(DOMAIN_MAPPING%ADJACENT_DOMAINS(NUMBER_OF_ADJACENT_DOMAINS),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domains.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domains.",err,error,*999)
       DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS=NUMBER_OF_ADJACENT_DOMAINS
       
       ! adjacent_domain_map maps a domain number back to its index (index between 1 and DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS)
       ALLOCATE(ADJACENT_DOMAIN_MAP(0:DOMAIN_MAPPING%NUMBER_OF_DOMAINS-1),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domain map.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate adjacent domain map.",err,error,*999)
       
       ! ghost_send_lists contains a list for each adjacent domain with elements in my domain (by local element numbers) that will be sent to that foreign domain
       ALLOCATE(GHOST_SEND_LISTS(DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate ghost send list.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate ghost send list.",err,error,*999)
       
       ! ghost_receive_lists contains a list for each adjacent domain and contains the local numbers of ghost elements that can be received from that foreign domain
       ALLOCATE(GHOST_RECEIVE_LISTS(DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS),STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate ghost recieve list.",ERR,ERROR,*999)
+      IF(ERR/=0) CALL FlagError("Could not allocate ghost recieve list.",err,error,*999)
       
       ! set adjacent domains data structures and initialize ghost send and receive lists
       ! loop over adjacent domains of my computational node
       DO domain_idx=1,DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
         ! set variables to 0
-        CALL DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE(DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx),ERR,ERROR,*999)
+        CALL DOMAIN_MAPPINGS_ADJACENT_DOMAIN_INITIALISE(DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx),err,error,*999)
         
         ! get number of current adjacent domain
         domain_no= &
-          & DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST(DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(myWorldComputationNodeNumber)+domain_idx-1)
+          & DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST(DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(myGroupComputationNodeNumber)+domain_idx-1)
         ! set number in adjacent_domains and adjacent_domain_map
         DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER=domain_no
         ADJACENT_DOMAIN_MAP(domain_no)=domain_idx
         
         ! initialize send and receive lists for ghosts
         NULLIFY(GHOST_SEND_LISTS(domain_idx)%PTR)
-        CALL LIST_CREATE_START(GHOST_SEND_LISTS(domain_idx)%PTR,ERR,ERROR,*999)
-        CALL LIST_DATA_TYPE_SET(GHOST_SEND_LISTS(domain_idx)%PTR,LIST_INTG_TYPE,ERR,ERROR,*999)
-        CALL LIST_INITIAL_SIZE_SET(GHOST_SEND_LISTS(domain_idx)%PTR,MAX(DOMAIN_MAPPING%NUMBER_OF_GHOST,1),ERR,ERROR,*999)
-        CALL LIST_CREATE_FINISH(GHOST_SEND_LISTS(domain_idx)%PTR,ERR,ERROR,*999)
+        CALL LIST_CREATE_START(GHOST_SEND_LISTS(domain_idx)%PTR,err,error,*999)
+        CALL LIST_DATA_TYPE_SET(GHOST_SEND_LISTS(domain_idx)%PTR,LIST_INTG_TYPE,err,error,*999)
+        CALL LIST_INITIAL_SIZE_SET(GHOST_SEND_LISTS(domain_idx)%PTR,MAX(DOMAIN_MAPPING%NUMBER_OF_GHOST,1),err,error,*999)
+        CALL LIST_CREATE_FINISH(GHOST_SEND_LISTS(domain_idx)%PTR,err,error,*999)
         
         NULLIFY(GHOST_RECEIVE_LISTS(domain_idx)%PTR)
-        CALL LIST_CREATE_START(GHOST_RECEIVE_LISTS(domain_idx)%PTR,ERR,ERROR,*999)
-        CALL LIST_DATA_TYPE_SET(GHOST_RECEIVE_LISTS(domain_idx)%PTR,LIST_INTG_TYPE,ERR,ERROR,*999)
-        CALL LIST_INITIAL_SIZE_SET(GHOST_RECEIVE_LISTS(domain_idx)%PTR,MAX(DOMAIN_MAPPING%NUMBER_OF_GHOST,1),ERR,ERROR,*999)
-        CALL LIST_CREATE_FINISH(GHOST_RECEIVE_LISTS(domain_idx)%PTR,ERR,ERROR,*999)
+        CALL LIST_CREATE_START(GHOST_RECEIVE_LISTS(domain_idx)%PTR,err,error,*999)
+        CALL LIST_DATA_TYPE_SET(GHOST_RECEIVE_LISTS(domain_idx)%PTR,LIST_INTG_TYPE,err,error,*999)
+        CALL LIST_INITIAL_SIZE_SET(GHOST_RECEIVE_LISTS(domain_idx)%PTR,MAX(DOMAIN_MAPPING%NUMBER_OF_GHOST,1),err,error,*999)
+        CALL LIST_CREATE_FINISH(GHOST_RECEIVE_LISTS(domain_idx)%PTR,err,error,*999)
       ENDDO !domain_idx
       
       NUMBER_INTERNAL=0
@@ -431,22 +431,22 @@ CONTAINS
               local_type=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%LOCAL_TYPE(domain_idx)
               
               IF(local_type/=DOMAIN_LOCAL_GHOST) THEN
-                IF(domain_no==myWorldComputationNodeNumber) SEND_GLOBAL=.TRUE.
+                IF(domain_no==myGroupComputationNodeNumber) SEND_GLOBAL=.TRUE.
                 IF(RECEIVE_FROM_DOMAIN==-1) THEN
                   RECEIVE_FROM_DOMAIN=domain_no
                 ELSE
-                  LOCAL_ERROR="Invalid domain mapping. Global number "//TRIM(NUMBER_TO_VSTRING(global_number,"*",ERR,ERROR))// &
-                    & " is owned by domain number "//TRIM(NUMBER_TO_VSTRING(RECEIVE_FROM_DOMAIN,"*",ERR,ERROR))// &
-                    & " as well as domain number "//TRIM(NUMBER_TO_VSTRING(domain_no,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  LOCAL_ERROR="Invalid domain mapping. Global number "//TRIM(NUMBER_TO_VSTRING(global_number,"*",err,error))// &
+                    & " is owned by domain number "//TRIM(NUMBER_TO_VSTRING(RECEIVE_FROM_DOMAIN,"*",err,error))// &
+                    & " as well as domain number "//TRIM(NUMBER_TO_VSTRING(domain_no,"*",err,error))//"."
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
                 ENDIF
               ENDIF
             ENDDO !domain_idx
             
             IF(RECEIVE_FROM_DOMAIN==-1) THEN
-              LOCAL_ERROR="Invalid domain mapping. Global number "//TRIM(NUMBER_TO_VSTRING(global_number,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Invalid domain mapping. Global number "//TRIM(NUMBER_TO_VSTRING(global_number,"*",err,error))// &
                 & " is not owned by any domain."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)          
+              CALL FlagError(LOCAL_ERROR,err,error,*999)          
             ENDIF
           ENDIF
         ENDIF
@@ -457,7 +457,7 @@ CONTAINS
           local_number=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%LOCAL_NUMBER(domain_idx)
           local_type=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%LOCAL_TYPE(domain_idx)
           
-          IF(domain_no==myWorldComputationNodeNumber) THEN
+          IF(domain_no==myGroupComputationNodeNumber) THEN
             ! set local number
             DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_number)=global_number
             
@@ -474,16 +474,16 @@ CONTAINS
               DOMAIN_MAPPING%DOMAIN_LIST(DOMAIN_MAPPING%BOUNDARY_FINISH+NUMBER_GHOST)=local_number
               
               ! add local number of ghost element to receive list of domain from which to receive
-              CALL LIST_ITEM_ADD(GHOST_RECEIVE_LISTS(ADJACENT_DOMAIN_MAP(RECEIVE_FROM_DOMAIN))%PTR,local_number,ERR,ERROR,*999)              
+              CALL LIST_ITEM_ADD(GHOST_RECEIVE_LISTS(ADJACENT_DOMAIN_MAP(RECEIVE_FROM_DOMAIN))%PTR,local_number,err,error,*999)              
             CASE DEFAULT
               LOCAL_ERROR="The domain local type of "//TRIM(NUMBER_TO_VSTRING(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP( &
-                & global_number)%LOCAL_TYPE(domain_idx),"*",ERR,ERROR))//" is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                & global_number)%LOCAL_TYPE(domain_idx),"*",err,error))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
             
           ELSE IF(SEND_GLOBAL.AND.local_type==DOMAIN_LOCAL_GHOST) THEN
             local_number2=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%LOCAL_NUMBER(1) !The local number for this node
-            CALL LIST_ITEM_ADD(GHOST_SEND_LISTS(ADJACENT_DOMAIN_MAP(domain_no))%PTR,local_number2,ERR,ERROR,*999)            
+            CALL LIST_ITEM_ADD(GHOST_SEND_LISTS(ADJACENT_DOMAIN_MAP(domain_no))%PTR,local_number2,err,error,*999)            
           ENDIF
         ENDDO !domain_idx
       ENDDO !global_number
@@ -492,11 +492,11 @@ CONTAINS
       DO domain_idx=1,DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
         
         ! transfer the ghost_send_list for adjacent domain to LOCAL_GHOST_SEND_INDICES
-        CALL LIST_REMOVE_DUPLICATES(GHOST_SEND_LISTS(domain_idx)%PTR,ERR,ERROR,*999)
-        CALL LIST_DETACH_AND_DESTROY(GHOST_SEND_LISTS(domain_idx)%PTR,NUMBER_OF_GHOST_SEND,SEND_LIST,ERR,ERROR,*999)
+        CALL LIST_REMOVE_DUPLICATES(GHOST_SEND_LISTS(domain_idx)%PTR,err,error,*999)
+        CALL LIST_DETACH_AND_DESTROY(GHOST_SEND_LISTS(domain_idx)%PTR,NUMBER_OF_GHOST_SEND,SEND_LIST,err,error,*999)
         
         ALLOCATE(DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%LOCAL_GHOST_SEND_INDICES(NUMBER_OF_GHOST_SEND),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate local ghost send inidices.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate local ghost send inidices.",err,error,*999)
         
         DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%LOCAL_GHOST_SEND_INDICES(1:NUMBER_OF_GHOST_SEND)= &
           & SEND_LIST(1:NUMBER_OF_GHOST_SEND)
@@ -505,11 +505,11 @@ CONTAINS
         DEALLOCATE(SEND_LIST)
         
         ! transfer the ghost_receive_lists for the current adjacent domain to LOCAL_GHOST_RECEIVE_INDICES
-        CALL LIST_REMOVE_DUPLICATES(GHOST_RECEIVE_LISTS(domain_idx)%PTR,ERR,ERROR,*999)
-        CALL LIST_DETACH_AND_DESTROY(GHOST_RECEIVE_LISTS(domain_idx)%PTR,NUMBER_OF_GHOST_RECEIVE,RECEIVE_LIST,ERR,ERROR,*999)
+        CALL LIST_REMOVE_DUPLICATES(GHOST_RECEIVE_LISTS(domain_idx)%PTR,err,error,*999)
+        CALL LIST_DETACH_AND_DESTROY(GHOST_RECEIVE_LISTS(domain_idx)%PTR,NUMBER_OF_GHOST_RECEIVE,RECEIVE_LIST,err,error,*999)
         
         ALLOCATE(DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%LOCAL_GHOST_RECEIVE_INDICES(NUMBER_OF_GHOST_RECEIVE),STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate local ghost receive inidices.",ERR,ERROR,*999)
+        IF(ERR/=0) CALL FlagError("Could not allocate local ghost receive inidices.",err,error,*999)
         
         DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%LOCAL_GHOST_RECEIVE_INDICES(1:NUMBER_OF_GHOST_RECEIVE)= &
           & RECEIVE_LIST(1:NUMBER_OF_GHOST_RECEIVE)
@@ -524,83 +524,83 @@ CONTAINS
       DEALLOCATE(GHOST_RECEIVE_LISTS)
       
       IF(DIAGNOSTICS1) THEN
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Domain mappings:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of domains  = ",DOMAIN_MAPPING%NUMBER_OF_DOMAINS,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of global = ",DOMAIN_MAPPING%NUMBER_OF_GLOBAL,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of local = ",DOMAIN_MAPPING%NUMBER_OF_LOCAL,ERR,ERROR,*999)
+        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Domain mappings:",err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of domains  = ",DOMAIN_MAPPING%NUMBER_OF_DOMAINS,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of global = ",DOMAIN_MAPPING%NUMBER_OF_GLOBAL,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of local = ",DOMAIN_MAPPING%NUMBER_OF_LOCAL,err,error,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of local = ",DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL, &
-          & ERR,ERROR,*999)
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Domain numbers:",ERR,ERROR,*999)
+          & err,error,*999)
+        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Domain numbers:",err,error,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%NUMBER_OF_DOMAINS,8,8,DOMAIN_MAPPING% &
-          & NUMBER_OF_DOMAIN_LOCAL,'("    Number of domain local :",8(X,I10))','(26X,8(X,I10))',ERR,ERROR,*999)      
+          & NUMBER_OF_DOMAIN_LOCAL,'("    Number of domain local :",8(X,I10))','(26X,8(X,I10))',err,error,*999)      
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%NUMBER_OF_DOMAINS,8,8,DOMAIN_MAPPING% &
-          & NUMBER_OF_DOMAIN_GHOST,'("    Number of domain ghost :",8(X,I10))','(26X,8(X,I10))',ERR,ERROR,*999)      
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Domain list:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of internal = ",DOMAIN_MAPPING%NUMBER_OF_INTERNAL,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of boundary = ",DOMAIN_MAPPING%NUMBER_OF_BOUNDARY,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of ghost = ",DOMAIN_MAPPING%NUMBER_OF_GHOST,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Internal start = ",DOMAIN_MAPPING%INTERNAL_START,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Internal finish = ",DOMAIN_MAPPING%INTERNAL_FINISH,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Boundary start = ",DOMAIN_MAPPING%BOUNDARY_START,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Boundary finish = ",DOMAIN_MAPPING%BOUNDARY_FINISH,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Ghost start = ",DOMAIN_MAPPING%GHOST_START,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Ghost finish = ",DOMAIN_MAPPING%GHOST_FINISH,ERR,ERROR,*999)
+          & NUMBER_OF_DOMAIN_GHOST,'("    Number of domain ghost :",8(X,I10))','(26X,8(X,I10))',err,error,*999)      
+        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Domain list:",err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of internal = ",DOMAIN_MAPPING%NUMBER_OF_INTERNAL,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of boundary = ",DOMAIN_MAPPING%NUMBER_OF_BOUNDARY,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of ghost = ",DOMAIN_MAPPING%NUMBER_OF_GHOST,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Internal start = ",DOMAIN_MAPPING%INTERNAL_START,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Internal finish = ",DOMAIN_MAPPING%INTERNAL_FINISH,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Boundary start = ",DOMAIN_MAPPING%BOUNDARY_START,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Boundary finish = ",DOMAIN_MAPPING%BOUNDARY_FINISH,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Ghost start = ",DOMAIN_MAPPING%GHOST_START,err,error,*999)
+        CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Ghost finish = ",DOMAIN_MAPPING%GHOST_FINISH,err,error,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,DOMAIN_MAPPING%INTERNAL_START,1,DOMAIN_MAPPING%INTERNAL_FINISH,8,8, &
-          & DOMAIN_MAPPING%DOMAIN_LIST,'("    Internal list :",8(X,I10))','(19X,8(X,I10))',ERR,ERROR,*999)      
+          & DOMAIN_MAPPING%DOMAIN_LIST,'("    Internal list :",8(X,I10))','(19X,8(X,I10))',err,error,*999)      
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,DOMAIN_MAPPING%BOUNDARY_START,1,DOMAIN_MAPPING%BOUNDARY_FINISH,8,8, &
-          & DOMAIN_MAPPING%DOMAIN_LIST,'("    Boundary list :",8(X,I10))','(19X,8(X,I10))',ERR,ERROR,*999)      
+          & DOMAIN_MAPPING%DOMAIN_LIST,'("    Boundary list :",8(X,I10))','(19X,8(X,I10))',err,error,*999)      
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,DOMAIN_MAPPING%GHOST_START,1,DOMAIN_MAPPING%GHOST_FINISH,8,8, &
-          & DOMAIN_MAPPING%DOMAIN_LIST,'("    Ghost list    :",8(X,I10))','(19X,8(X,I10))',ERR,ERROR,*999)      
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Local to global map:",ERR,ERROR,*999)
+          & DOMAIN_MAPPING%DOMAIN_LIST,'("    Ghost list    :",8(X,I10))','(19X,8(X,I10))',err,error,*999)      
+        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Local to global map:",err,error,*999)
         DO idx=1,DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Local index : ",idx,ERR,ERROR,*999)
+          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Local index : ",idx,err,error,*999)
           CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Global index = ",DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(idx), &
-            & ERR,ERROR,*999)
+            & err,error,*999)
         ENDDO !idx
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Global to local map:",ERR,ERROR,*999)
+        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Global to local map:",err,error,*999)
         DO idx=1,DOMAIN_MAPPING%NUMBER_OF_GLOBAL
-          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Global idx : ",idx,ERR,ERROR,*999)
+          CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Global idx : ",idx,err,error,*999)
           CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of domains  = ", &
-            & DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx)%NUMBER_OF_DOMAINS,ERR,ERROR,*999)
+            & DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx)%NUMBER_OF_DOMAINS,err,error,*999)
           CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx)% &
             & NUMBER_OF_DOMAINS,8,8,DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx)%LOCAL_NUMBER, &
-            & '("      Local number  :",8(X,I10))','(21X,8(X,I10))',ERR,ERROR,*999)      
+            & '("      Local number  :",8(X,I10))','(21X,8(X,I10))',err,error,*999)      
           CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx)% &
             & NUMBER_OF_DOMAINS,8,8,DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx)%DOMAIN_NUMBER, &
-            & '("      Domain number :",8(X,I10))','(21X,8(X,I10))',ERR,ERROR,*999)      
+            & '("      Domain number :",8(X,I10))','(21X,8(X,I10))',err,error,*999)      
           CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx)% &
             & NUMBER_OF_DOMAINS,8,8,DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(IDX)%LOCAL_TYPE, &
-            & '("      Local type    :",8(X,I10))','(21X,8(X,I10))',ERR,ERROR,*999)      
+            & '("      Local type    :",8(X,I10))','(21X,8(X,I10))',err,error,*999)      
         ENDDO !ne
-        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Adjacent domains:",ERR,ERROR,*999)
+        CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Adjacent domains:",err,error,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of adjacent domains = ", &
-          & DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS,ERR,ERROR,*999)
+          & DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS,err,error,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%NUMBER_OF_DOMAINS+1,8,8, &
-          & DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR,'("    Adjacent domains ptr  :",8(X,I5))','(27X,8(X,I5))',ERR,ERROR,*999)
+          & DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR,'("    Adjacent domains ptr  :",8(X,I5))','(27X,8(X,I5))',err,error,*999)
         IF(DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
           CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR( &
             & DOMAIN_MAPPING%NUMBER_OF_DOMAINS)-1,8,8,DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST, &
-            '("    Adjacent domains list :",8(X,I5))','(27X,8(X,I5))',ERR,ERROR,*999)
+            '("    Adjacent domains list :",8(X,I5))','(27X,8(X,I5))',err,error,*999)
           DO domain_idx=1,DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS
-            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Adjacent domain idx : ",domain_idx,ERR,ERROR,*999)
+            CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Adjacent domain idx : ",domain_idx,err,error,*999)
             CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Domain number = ", &
-              & DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,ERR,ERROR,*999)
+              & DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER,err,error,*999)
             CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of send ghosts    = ", &
-              & DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_SEND_GHOSTS,ERR,ERROR,*999)
+              & DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_SEND_GHOSTS,err,error,*999)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
               & NUMBER_OF_SEND_GHOSTS,8,8,DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%LOCAL_GHOST_SEND_INDICES, &
-              & '("      Local send ghost indices        :",8(X,I10))','(39X,8(X,I10))',ERR,ERROR,*999)      
+              & '("      Local send ghost indices        :",8(X,I10))','(39X,8(X,I10))',err,error,*999)      
             CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"      Number of receive ghosts = ", &
-              & DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_RECEIVE_GHOSTS,ERR,ERROR,*999)
+              & DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%NUMBER_OF_RECEIVE_GHOSTS,err,error,*999)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)% &
               & NUMBER_OF_RECEIVE_GHOSTS,8,8,DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%LOCAL_GHOST_RECEIVE_INDICES, &
-              & '("      Local receive ghost indices     :",8(X,I10))','(39X,8(X,I10))',ERR,ERROR,*999)              
+              & '("      Local receive ghost indices     :",8(X,I10))','(39X,8(X,I10))',err,error,*999)              
           ENDDO !domain_idx
         ENDIF
       ENDIF
       
     ELSE
-      CALL FlagError("Domain mapping is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Domain mapping is not associated.",err,error,*999)
     ENDIF
     
     EXITS("DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE")
@@ -623,7 +623,7 @@ CONTAINS
       ENDDO ! domain_idx
 997   DEALLOCATE(GHOST_RECEIVE_LISTS)
     ENDIF
-    ERRORSEXITS("DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE",ERR,ERROR)
+    ERRORSEXITS("DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE",err,error)
     RETURN 1
     
   END SUBROUTINE DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE
@@ -633,16 +633,16 @@ CONTAINS
   !
 
   !>Finalises the mapping for a domain mappings mapping and deallocates all memory.
-  SUBROUTINE DOMAIN_MAPPINGS_MAPPING_FINALISE(DOMAIN_MAPPING,ERR,ERROR,*)
+  SUBROUTINE DOMAIN_MAPPINGS_MAPPING_FINALISE(DOMAIN_MAPPING,err,error,*)
 
     !Argument variables
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING !<A pointer to the domain mapping to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: idx
 
-    ENTERS("DOMAIN_MAPPINGS_MAPPING_FINALISE",ERR,ERROR,*999)
+    ENTERS("DOMAIN_MAPPINGS_MAPPING_FINALISE",err,error,*999)
 
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
       IF(ALLOCATED(DOMAIN_MAPPING%NUMBER_OF_DOMAIN_LOCAL)) DEALLOCATE(DOMAIN_MAPPING%NUMBER_OF_DOMAIN_LOCAL)
@@ -651,7 +651,7 @@ CONTAINS
       IF(ALLOCATED(DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP)) DEALLOCATE(DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP)
       IF(ALLOCATED(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP)) THEN
         DO idx=1,SIZE(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP,1)
-          CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx),ERR,ERROR,*999)
+          CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(idx),err,error,*999)
         ENDDO !idx
         DEALLOCATE(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP)
       ENDIF
@@ -659,7 +659,7 @@ CONTAINS
       IF(ALLOCATED(DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST)) DEALLOCATE(DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST)
       IF(ALLOCATED(DOMAIN_MAPPING%ADJACENT_DOMAINS)) THEN
         DO idx=1,SIZE(DOMAIN_MAPPING%ADJACENT_DOMAINS,1)
-          CALL DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE(DOMAIN_MAPPING%ADJACENT_DOMAINS(idx),ERR,ERROR,*999)
+          CALL DOMAIN_MAPPINGS_ADJACENT_DOMAIN_FINALISE(DOMAIN_MAPPING%ADJACENT_DOMAINS(idx),err,error,*999)
         ENDDO !idx
         DEALLOCATE(DOMAIN_MAPPING%ADJACENT_DOMAINS)
       ENDIF
@@ -668,7 +668,7 @@ CONTAINS
     
     EXITS("DOMAIN_MAPPINGS_MAPPING_FINALISE")
     RETURN
-999 ERRORSEXITS("DOMAIN_MAPPINGS_MAPPING_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("DOMAIN_MAPPINGS_MAPPING_FINALISE",err,error)
     RETURN 1
   END SUBROUTINE DOMAIN_MAPPINGS_MAPPING_FINALISE
   
@@ -677,15 +677,15 @@ CONTAINS
   !
 
   !> Finalises the global mapping in the given domain mappings.
-  SUBROUTINE DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE(MAPPING_GLOBAL_MAP,ERR,ERROR,*)
+  SUBROUTINE DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE(MAPPING_GLOBAL_MAP,err,error,*)
 
     !Argument variables
     TYPE(DOMAIN_GLOBAL_MAPPING_TYPE) :: MAPPING_GLOBAL_MAP !<The domain global mapping to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<Th error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<Th error string
     !Local Variables
 
-    ENTERS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE",ERR,ERROR,*999)
+    ENTERS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE",err,error,*999)
 
     IF(ALLOCATED(MAPPING_GLOBAL_MAP%LOCAL_NUMBER)) DEALLOCATE(MAPPING_GLOBAL_MAP%LOCAL_NUMBER)
     IF(ALLOCATED(MAPPING_GLOBAL_MAP%DOMAIN_NUMBER)) DEALLOCATE(MAPPING_GLOBAL_MAP%DOMAIN_NUMBER)
@@ -693,7 +693,7 @@ CONTAINS
  
     EXITS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE")
     RETURN
-999 ERRORSEXITS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE",err,error)
     RETURN 1
    
   END SUBROUTINE DOMAIN_MAPPINGS_MAPPING_GLOBAL_FINALISE
@@ -703,21 +703,21 @@ CONTAINS
   !
 
   !>Finalises the global mapping in the given domain mappings.
-  SUBROUTINE DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(MAPPING_GLOBAL_MAP,ERR,ERROR,*)
+  SUBROUTINE DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(MAPPING_GLOBAL_MAP,err,error,*)
 
     !Argument variables
     TYPE(DOMAIN_GLOBAL_MAPPING_TYPE) :: MAPPING_GLOBAL_MAP !<The domain global mapping to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE",ERR,ERROR,*999)
+    ENTERS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE",err,error,*999)
 
     MAPPING_GLOBAL_MAP%NUMBER_OF_DOMAINS=0
     
     EXITS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE")
     RETURN
-999 ERRORSEXITS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE",err,error)
     RETURN 1
    
   END SUBROUTINE DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE
@@ -727,46 +727,45 @@ CONTAINS
   !
 
   !>Initialises the mapping for a domain mappings mapping.
-  SUBROUTINE DOMAIN_MAPPINGS_MAPPING_INITIALISE(DOMAIN_MAPPING,NUMBER_OF_DOMAINS,ERR,ERROR,*)
+  SUBROUTINE DomainMappings_MappingInitialise(workGroup,domainMapping,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING !<A pointer to the domain mapping to initialise the mappings for
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_DOMAINS !<The number of domains 
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(WorkGroupType), POINTER :: workGroup !<A pointer to the work group to initialise the mappings for
+    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping !<A pointer to the domain mapping to initialise the mappings for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: numberOfDomains
+ 
+    ENTERS("DomainMappings_MappingInitialise",err,error,*999)
 
-    ENTERS("DOMAIN_MAPPINGS_MAPPING_INITIALISE",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("WorkGroup is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
 
-    IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
-      IF(NUMBER_OF_DOMAINS>0) THEN
-        DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL=0
-        DOMAIN_MAPPING%NUMBER_OF_LOCAL=0
-        DOMAIN_MAPPING%NUMBER_OF_GLOBAL=0
-        DOMAIN_MAPPING%NUMBER_OF_DOMAINS=NUMBER_OF_DOMAINS
-        DOMAIN_MAPPING%NUMBER_OF_INTERNAL=0
-        DOMAIN_MAPPING%NUMBER_OF_BOUNDARY=0
-        DOMAIN_MAPPING%NUMBER_OF_GHOST=0
-        DOMAIN_MAPPING%INTERNAL_START=0
-        DOMAIN_MAPPING%INTERNAL_FINISH=0
-        DOMAIN_MAPPING%BOUNDARY_START=0
-        DOMAIN_MAPPING%BOUNDARY_FINISH=0
-        DOMAIN_MAPPING%GHOST_START=0
-        DOMAIN_MAPPING%GHOST_FINISH=0
-        DOMAIN_MAPPING%NUMBER_OF_ADJACENT_DOMAINS=0
-      ELSE
-        LOCAL_ERROR="The specified number of domains of "//TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DOMAINS,"*",ERR,ERROR))// &
-          & " is invalid. The number of domains must be > 0."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ENDIF
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfDomains,err,error,*999)
+
+    domainMapping%workGroup=>workGroup
+    domainMapping%TOTAL_NUMBER_OF_LOCAL=0
+    domainMapping%NUMBER_OF_LOCAL=0
+    domainMapping%NUMBER_OF_GLOBAL=0
+    domainMapping%NUMBER_OF_DOMAINS=numberOfDomains
+    domainMapping%NUMBER_OF_INTERNAL=0
+    domainMapping%NUMBER_OF_BOUNDARY=0
+    domainMapping%NUMBER_OF_GHOST=0
+    domainMapping%INTERNAL_START=0
+    domainMapping%INTERNAL_FINISH=0
+    domainMapping%BOUNDARY_START=0
+    domainMapping%BOUNDARY_FINISH=0
+    domainMapping%GHOST_START=0
+    domainMapping%GHOST_FINISH=0
+    domainMapping%NUMBER_OF_ADJACENT_DOMAINS=0
     
-    EXITS("DOMAIN_MAPPINGS_MAPPING_INITIALISE")
+    EXITS("DomainMappings_MappingInitialise")
     RETURN
-999 ERRORSEXITS("DOMAIN_MAPPINGS_MAPPING_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("DomainMappings_MappingInitialise",err,error)
     RETURN 1
-  END SUBROUTINE DOMAIN_MAPPINGS_MAPPING_INITIALISE
+    
+  END SUBROUTINE DomainMappings_MappingInitialise
 
   !
   !================================================================================================================================

@@ -6998,6 +6998,7 @@ CONTAINS
     TYPE(SOLVER_TYPE), POINTER :: Solver2
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
     INTEGER(INTG) :: nodeIdx,derivativeIdx,versionIdx,variableIdx,numberOfSourceTimesteps,timeIdx,componentIdx
     INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_CHECK_VARIABLE,GLOBAL_DERIV_INDEX,node_idx,variable_type
     INTEGER(INTG) :: variable_idx,local_ny,ANALYTIC_FUNCTION_TYPE,component_idx,deriv_idx,dim_idx,version_idx
@@ -7769,8 +7770,9 @@ CONTAINS
                               INQUIRE(FILE=inputFile, EXIST=importDataFromFile)
                               IF(importDataFromFile) THEN
                                 !Read fitted data from input file (if exists)
-                                CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,computationNode, &
-                                  & err,error,*999)
+                                NULLIFY(workGroup)
+                                CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
+                                CALL WorkGroup_GroupNodeNumberGet(workGroup,computationNode,err,error,*999)
                                 IF(computationNode==0) THEN
                                   CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Updating independent field and boundary nodes from " &
                                     & //inputFile,ERR,ERROR,*999)
@@ -12505,14 +12507,15 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: dependentField1D
     TYPE(FIELD_TYPE), POINTER :: independentField1D
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
+    TYPE(WorkGroupType), POINTER :: workGroup
     INTEGER(INTG) :: faceIdx, faceNumber,elementIdx,nodeNumber,versionNumber
     INTEGER(INTG) :: componentIdx,gaussIdx
     INTEGER(INTG) :: faceNodeIdx, elementNodeIdx
     INTEGER(INTG) :: faceNodeDerivativeIdx, meshComponentNumber
     INTEGER(INTG) :: normalComponentIdx
     INTEGER(INTG) :: boundaryID,numberOfBoundaries,boundaryType,coupledNodeNumber,numberOfGlobalBoundaries
-    INTEGER(INTG) :: MPI_IERROR,numberOfWorldComputationNodes
-    INTEGER(INTG) :: i,j,computationNode,worldCommunicator
+    INTEGER(INTG) :: MPI_IERROR,numberOfGroupComputationNodes
+    INTEGER(INTG) :: i,j,computationNode,groupCommunicator
     REAL(DP) :: gaussWeight, normalProjection,elementNormal(3)
     REAL(DP) :: normalDifference,normalTolerance
     REAL(DP) :: courant,maxCourant,toleranceCourant
@@ -12832,21 +12835,24 @@ CONTAINS
       globalBoundaryArea = 0.0_DP
       globalBoundaryPressure = 0.0_DP
       globalBoundaryNormalStress = 0.0_DP
-      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
-      CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
-      IF(numberOfWorldComputationNodes>1) THEN !use mpi
-        CALL MPI_ALLREDUCE(localBoundaryFlux,globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,worldCommunicator,MPI_IERROR)
+      NULLIFY(workGroup)
+      CALL Decomposition_WorkGroupGet(decomposition3D,workGroup,err,error,*999)
+      CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+      CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+      CALL WorkGroup_GroupNodeNumberGet(workGroup,computationNode,err,error,*999)
+      IF(numberOfGroupComputationNodes>1) THEN !use mpi
+        CALL MPI_ALLREDUCE(localBoundaryFlux,globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,err,error,*999)
-        CALL MPI_ALLREDUCE(localBoundaryArea,globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,worldCommunicator,MPI_IERROR)
+        CALL MPI_ALLREDUCE(localBoundaryArea,globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryNormalStress,globalBoundaryNormalStress,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & worldCommunicator,MPI_IERROR)
+	 & groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryPressure,globalBoundaryPressure,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & worldCommunicator,MPI_IERROR)
+	 & groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(numberOfBoundaries,numberOfGlobalBoundaries,1,MPI_INTEGER,MPI_MAX,  &
-	 & worldCommunicator,MPI_IERROR)
+	 & groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       ELSE
         numberOfGlobalBoundaries = numberOfBoundaries
@@ -12864,7 +12870,6 @@ CONTAINS
       END DO
       DO boundaryID=2,numberOfGlobalBoundaries
         IF(globalBoundaryArea(boundaryID) > ZERO_TOLERANCE) THEN
-          CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,computationNode,err,error,*999)
           IF(computationNode==0) THEN
             CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"3D boundary ",boundaryID,"  flow:  ", &
               & globalBoundaryFlux(boundaryID),err,error,*999)
@@ -13129,10 +13134,10 @@ CONTAINS
     END DO !elementIdx
 
     !allocate array for mpi communication
-    IF(numberOfWorldComputationNodes>1) THEN !use mpi
-      ALLOCATE(globalConverged(numberOfWorldComputationNodes),STAT=ERR) 
+    IF(numberOfGroupComputationNodes>1) THEN !use mpi
+      ALLOCATE(globalConverged(numberOfGroupComputationNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
-      CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,worldCommunicator,MPI_IERROR)
+      CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,groupCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
       IF(ALL(globalConverged)) THEN
         convergedFlag = .TRUE.
@@ -13186,6 +13191,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     TYPE(CONTROL_LOOP_WHILE_TYPE), POINTER :: iterativeLoop
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
@@ -13200,9 +13206,10 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,numberOfLocalNodes1D
     INTEGER(INTG) :: solver1dNavierStokesNumber,solverNumber,MPI_IERROR,timestep,iteration
-    INTEGER(INTG) :: boundaryNumber,numberOfBoundaries,numberOfWorldComputationNodes,worldCommunicator
+    INTEGER(INTG) :: boundaryNumber,numberOfBoundaries,numberOfGroupComputationNodes,groupCommunicator
     INTEGER(INTG) :: dependentDof,boundaryConditionType
     REAL(DP) :: A0_PARAM,E_PARAM,H_PARAM,beta,pCellML,normalWave(2)
     REAL(DP) :: qPrevious,pPrevious,aPrevious,q1d,a1d,qError,aError,couplingTolerance
@@ -13296,7 +13303,9 @@ CONTAINS
     END IF
 
     !Get the number of local nodes
-    domainNodes=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+    domainNodes=>decomposition%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
       & TOPOLOGY%NODES
     IF(ASSOCIATED(domainNodes)) THEN
       numberOfLocalNodes1D=domainNodes%NUMBER_OF_NODES
@@ -13424,13 +13433,15 @@ CONTAINS
         localConverged = .FALSE.
       END IF
       ! Need to check that boundaries have converged globally (on all domains) if this is a parallel problem
-      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
-      CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
-      IF(numberOfWorldComputationNodes>1) THEN !use mpi
+      NULLIFY(workGroup)
+      CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+      CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+      CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+      IF(numberOfGroupComputationNodes>1) THEN !use mpi
         !allocate array for mpi communication
-        ALLOCATE(globalConverged(numberOfWorldComputationNodes),STAT=ERR) 
+        ALLOCATE(globalConverged(numberOfGroupComputationNodes),STAT=ERR) 
         IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
-        CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,worldCommunicator,MPI_IERROR)
+        CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,err,error,*999)
         IF(ALL(globalConverged)) THEN
           !CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"1D/0D coupling converged; # iterations: ", &
@@ -13481,6 +13492,7 @@ CONTAINS
     TYPE(CONTROL_LOOP_WHILE_TYPE), POINTER :: iterativeLoop
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet1D,equationsSet3D
     TYPE(EquationsType), POINTER :: equations1D,equations3D
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping1D,vectorMapping3D
@@ -13491,10 +13503,11 @@ CONTAINS
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,numberOfLocalNodes1D
     INTEGER(INTG) :: solver1dNavierStokesNumber,MPI_IERROR,timestep,iteration
-    INTEGER(INTG) :: boundaryNumber,boundaryType1D,numberOfBoundaries,numberOfWorldComputationNodes
-    INTEGER(INTG) :: solver3dNavierStokesNumber,userNodeNumber,localDof,globalDof,computationNode,worldCommunicator
+    INTEGER(INTG) :: boundaryNumber,boundaryType1D,numberOfBoundaries,numberOfGroupComputationNodes
+    INTEGER(INTG) :: solver3dNavierStokesNumber,userNodeNumber,localDof,globalDof,computationNode,groupCommunicator
     REAL(DP) :: normalWave(2)
     REAL(DP) :: flow1D,stress1D,flow1DPrevious,stress1DPrevious,flow3D,stress3D,flowError,stressError
     REAL(DP) :: maxStressError,maxFlowError,flowTolerance,stressTolerance,absoluteCouplingTolerance
@@ -13587,7 +13600,9 @@ CONTAINS
 
     !Get the number of local nodes
 
-    domainNodes=>dependentField1D%DECOMPOSITION%DOMAIN(dependentField1D%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(dependentField1D,decomposition,err,error,*999)
+    domainNodes=>decomposition%DOMAIN(dependentField1D%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
       & TOPOLOGY%NODES
     IF(ASSOCIATED(domainNodes)) THEN
       numberOfLocalNodes1D=domainNodes%NUMBER_OF_NODES
@@ -13713,20 +13728,20 @@ CONTAINS
       localConverged = .TRUE.
     END IF
     ! Need to check that boundaries have converged globally (on all domains) if this is a MPI problem
-    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
-    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
-    IF(numberOfWorldComputationNodes>1) THEN !use mpi
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,computationNode,err,error,*999)
+    IF(numberOfGroupComputationNodes>1) THEN !use mpi
       !allocate array for mpi communication
 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
-      CALL MPI_ALLREDUCE(localConverged,globalConverged,1,MPI_LOGICAL,MPI_LAND,worldCommunicator,MPI_IERROR)
+      CALL MPI_ALLREDUCE(localConverged,globalConverged,1,MPI_LOGICAL,MPI_LAND,groupCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       IF(globalConverged) THEN
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"3D/1D coupling converged; # iterations: ", &
           & iteration,err,error,*999)
         iterativeLoop%CONTINUE_LOOP=.FALSE.
       ELSE
-        CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,computationNode,err,error,*999)
         CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"Rank ",computationNode," 3D/1D max flow error:  ", &
           & maxFlowError,err,error,*999)
         CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"Rank ",computationNode," 3D/1D max stress error:  ", &
@@ -13785,6 +13800,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     TYPE(CONTROL_LOOP_WHILE_TYPE), POINTER :: iterativeLoop
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField,independentField,materialsField
@@ -13792,10 +13808,11 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
     TYPE(SOLVER_TYPE), POINTER :: solver1DNavierStokes
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,i
     INTEGER(INTG) :: solver1dNavierStokesNumber,solverNumber
-    INTEGER(INTG) :: branchNumber,numberOfBranches,numberOfWorldComputationNodes,numberOfVersions
-    INTEGER(INTG) :: MPI_IERROR,timestep,iteration,outputIteration,worldCommunicator
+    INTEGER(INTG) :: branchNumber,numberOfBranches,numberOfGroupComputationNodes,numberOfVersions
+    INTEGER(INTG) :: MPI_IERROR,timestep,iteration,outputIteration,groupCommunicator
     REAL(DP) :: couplingTolerance,l2ErrorW(30),wPrevious(2,7),wNavierStokes(2,7),wCharacteristic(2,7),wError(2,7)
     REAL(DP) :: l2ErrorQ(100),qCharacteristic(7),qNavierStokes(7),wNext(2,7)
     REAL(DP) :: totalErrorWPrevious,startTime,stopTime,currentTime,timeIncrement
@@ -13866,8 +13883,11 @@ CONTAINS
       CALL FlagError("Control Loop is not associated.",err,error,*999)
     END IF
 
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+
     !Get the number of local nodes
-    domainNodes=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+    domainNodes=>decomposition%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
       & TOPOLOGY%NODES
     branchNumber = 0
     branchConverged = .TRUE.
@@ -14007,13 +14027,15 @@ CONTAINS
       localConverged = .FALSE.
     END IF
     ! Need to check that boundaries have converged globally (on all domains) if this is a parallel problem
-    CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
-    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
-    IF(numberOfWorldComputationNodes>1) THEN !use mpi
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    IF(numberOfGroupComputationNodes>1) THEN !use mpi
       !allocate array for mpi communication
-      ALLOCATE(globalConverged(numberOfWorldComputationNodes),STAT=ERR) 
+      ALLOCATE(globalConverged(numberOfGroupComputationNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
-      CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,worldCommunicator,MPI_IERROR)
+      CALL MPI_ALLGATHER(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,groupCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,err,error,*999)
       IF(ALL(globalConverged)) THEN
         !CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Navier-Stokes/Characteristic converged; # iterations: ", &
@@ -14971,8 +14993,8 @@ CONTAINS
     INTEGER(INTG) :: faceNodeIdx, elementNodeIdx
     INTEGER(INTG) :: faceNodeDerivativeIdx, meshComponentNumber
     INTEGER(INTG) :: boundaryID,numberOfBoundaries,boundaryType,coupledNodeNumber,numberOfGlobalBoundaries
-    INTEGER(INTG) :: MPI_IERROR,numberOfWorldComputationNodes
-    INTEGER(INTG) :: computationNode,xiDirection(3),orientation,worldCommunicator
+    INTEGER(INTG) :: MPI_IERROR,numberOfGroupComputationNodes
+    INTEGER(INTG) :: computationNode,xiDirection(3),orientation,groupCommunicator
     REAL(DP) :: gaussWeight, elementNormal(3)
     REAL(DP) :: normalDifference,normalTolerance
     REAL(DP) :: courant,maxCourant,toleranceCourant,boundaryValueTemp
@@ -14986,6 +15008,7 @@ CONTAINS
     LOGICAL :: convergedFlag !<convergence flag for 3D-0D coupling
     LOGICAL, ALLOCATABLE :: globalConverged(:)
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     ENTERS("NavierStokes_CalculateBoundaryFlux3D0D",err,error,*999)
 
@@ -15204,20 +15227,23 @@ CONTAINS
       globalBoundaryFlux = 0.0_DP
       globalBoundaryArea = 0.0_DP
       globalBoundaryPressure = 0.0_DP
-      CALL ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfWorldComputationNodes,err,error,*999)
-      CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
-      IF(numberOfWorldComputationNodes>1) THEN !use mpi
+      NULLIFY(workGroup)
+      CALL Decomposition_WorkGroupGet(decomposition3D,workGroup,err,error,*999)
+      CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+      CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+      CALL WorkGroup_GroupNodeNumberGet(workGroup,computationNode,err,error,*999)
+      IF(numberOfGroupComputationNodes>1) THEN !use mpi
         CALL MPI_ALLREDUCE(localBoundaryFlux,globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & worldCommunicator,MPI_IERROR)
+	 & groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryArea,globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,   &
-	 & worldCommunicator,MPI_IERROR)
+	 & groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(localBoundaryPressure,globalBoundaryPressure,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & worldCommunicator,MPI_IERROR)
+	 & groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
         CALL MPI_ALLREDUCE(numberOfBoundaries,numberOfGlobalBoundaries,1,MPI_INTEGER,MPI_MAX,  &
-	 & worldCommunicator,MPI_IERROR)
+	 & groupCommunicator,MPI_IERROR)
         CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
       ELSE
         numberOfGlobalBoundaries = numberOfBoundaries
@@ -15233,7 +15259,6 @@ CONTAINS
       END DO
       DO boundaryID=2,numberOfGlobalBoundaries
         IF(globalBoundaryArea(boundaryID) > ZERO_TOLERANCE) THEN
-          CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,computationNode,err,error,*999)
           IF(computationNode==0) THEN
             CALL WriteStringTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"3D boundary ",boundaryID,"  flow:  ", &
               & globalBoundaryFlux(boundaryID),err,error,*999)
@@ -15361,10 +15386,10 @@ CONTAINS
     END DO !elementIdx
 
     !allocate array for mpi communication
-    IF(numberOfWorldComputationNodes>1) THEN !use mpi
-      ALLOCATE(globalConverged(numberOfWorldComputationNodes),STAT=ERR) 
+    IF(numberOfGroupComputationNodes>1) THEN !use mpi
+      ALLOCATE(globalConverged(numberOfGroupComputationNodes),STAT=ERR) 
       IF(ERR/=0) CALL FlagError("Could not allocate global convergence check array.",ERR,ERROR,*999)
-      CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,worldCommunicator,MPI_IERROR)
+      CALL MPI_ALLGATHER(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,groupCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_ALLGATHER",MPI_IERROR,ERR,ERROR,*999)
       IF(ALL(globalConverged)) THEN
         convergedFlag = .TRUE.

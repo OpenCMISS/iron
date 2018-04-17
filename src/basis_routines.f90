@@ -149,13 +149,6 @@ MODULE BasisRoutines
   !>@}
   
   !!Module types
-  ! 
-  !!>Contains information on the defined basis functions
-  !TYPE BASIS_FUNCTIONS_TYPE
-  !  PRIVATE
-  !  INTEGER(INTG) :: numberOfBasisFunctions !<The number of basis functions definegd
-  !  TYPE(BASIS_PTR_TYPE), POINTER :: BASES(:) !<The array of pointers to the defined basis functions
-  !END TYPE BASIS_FUNCTIONS_TYPE
   
   !Module variables
 
@@ -167,15 +160,8 @@ MODULE BasisRoutines
   
   !>Sets/changes the collapsed Xi flags for a basis.
   INTERFACE BASIS_COLLAPSED_XI_SET
-    MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_PTR
+    MODULE PROCEDURE Basis_CollapsedXiSet
   END INTERFACE BASIS_COLLAPSED_XI_SET
-
-  !>Sets/changes the collapsed Xi flags for a basis.
-  INTERFACE Basis_CollapsedXiSet
-    MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_COLLAPSED_XI_SET_PTR
-  END INTERFACE Basis_CollapsedXiSet
 
   INTERFACE BASIS_CREATE_START
     MODULE PROCEDURE Basis_CreateStart
@@ -235,15 +221,8 @@ MODULE BasisRoutines
   
   !>Sets/changes the interpolation type in each Xi direction for a basis
   INTERFACE BASIS_INTERPOLATION_XI_SET
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_PTR
+    MODULE PROCEDURE Basis_InterpolationXiSet
   END INTERFACE BASIS_INTERPOLATION_XI_SET
-
-   !>Sets/changes the interpolation type in each Xi direction for a basis
-  INTERFACE Basis_InterpolationXiSet
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_NUMBER
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_SET_PTR
-  END INTERFACE Basis_InterpolationXiSet
 
   INTERFACE Basis_NumberOfLocalNodesGet
     MODULE PROCEDURE BASIS_NUMBER_OF_LOCAL_NODES_GET
@@ -279,15 +258,8 @@ MODULE BasisRoutines
   
   !>Sets/changes the order of a quadrature for a basis quadrature.
   INTERFACE BASIS_QUADRATURE_ORDER_SET
-    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_NUMBER
-    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_PTR
+    MODULE PROCEDURE Basis_QuadratureOrderSet
   END INTERFACE BASIS_QUADRATURE_ORDER_SET
-
-  !>Sets/changes the order of a quadrature for a basis quadrature.
-  INTERFACE Basis_QuadratureOrderSet
-    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_NUMBER
-    MODULE PROCEDURE BASIS_QUADRATURE_ORDER_SET_PTR
-  END INTERFACE Basis_QuadratureOrderSet
 
   INTERFACE Basis_QuadratureSingleGaussXiGet
     MODULE PROCEDURE BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET
@@ -299,31 +271,17 @@ MODULE BasisRoutines
   
   !>Sets/changes the quadrature type for a basis
   INTERFACE BASIS_QUADRATURE_TYPE_SET
-    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_NUMBER
-    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_PTR
+    MODULE PROCEDURE Basis_QuadratureTypeSet
   END INTERFACE BASIS_QUADRATURE_TYPE_SET
   
-  !>Sets/changes the quadrature type for a basis
-  INTERFACE Basis_QuadratureTypeSet
-    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_NUMBER
-    MODULE PROCEDURE BASIS_QUADRATURE_TYPE_SET_PTR
-  END INTERFACE Basis_QuadratureTypeSet
-
   INTERFACE Basis_TypeGet
     MODULE PROCEDURE BASIS_TYPE_GET
   END INTERFACE Basis_TypeGet
   
   !>Sets/changes the type for a basis.
   INTERFACE BASIS_TYPE_SET
-    MODULE PROCEDURE BASIS_TYPE_SET_NUMBER
-    MODULE PROCEDURE BASIS_TYPE_SET_PTR
+    MODULE PROCEDURE Basis_TypeSet
   END INTERFACE BASIS_TYPE_SET
-
-  !>Sets/changes the type for a basis.
-  INTERFACE Basis_TypeSet
-    MODULE PROCEDURE BASIS_TYPE_SET_NUMBER
-    MODULE PROCEDURE BASIS_TYPE_SET_PTR
-  END INTERFACE Basis_TypeSet
 
   !>Evaluates a linear Simplex basis function
   INTERFACE SIMPLEX_LINEAR_EVALUATE
@@ -422,8 +380,6 @@ MODULE BasisRoutines
 
   PUBLIC Basis_Destroy
 
-  PUBLIC Bases_Finalise,Bases_Initialise
-
   PUBLIC BASIS_COLLAPSED_XI_GET
 
   PUBLIC Basis_CollapsedXiGet
@@ -459,59 +415,9 @@ MODULE BasisRoutines
 
   PUBLIC Basis_XiToAreaCoordinates
 
+  PUBLIC BasisFunctions_Finalise,BasisFunctions_Initialise
+
 CONTAINS
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Finalises the bases and deallocates all memory
-  SUBROUTINE Bases_Finalise(err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("Bases_Finalise",err,error,*999)
-
-    !Destroy any created basis functions
-    DO WHILE(basisFunctions%numberOfBasisFunctions>0)
-      CALL BASIS_DESTROY(basisFunctions%bases(1)%ptr,err,error,*999)
-    ENDDO !nb
-    !Destroy basis functions and deallocated any memory allocated
-    basisFunctions%numberOfBasisFunctions=0
-    IF(ALLOCATED(basisFunctions%bases)) DEALLOCATE(basisFunctions%bases)
-    
-    EXITS("Bases_Finalise")
-    RETURN
-999 ERRORSEXITS("Bases_Finalise",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Bases_Finalise
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises the bases.
-  SUBROUTINE Bases_Initialise(err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("Bases_Initialise",err,error,*999)
-
-    basisFunctions%numberOfBasisFunctions=0    
-    
-    EXITS("Bases_Initialise")
-    RETURN
-999 ERRORSEXITS("Bases_Initialise",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Bases_Initialise
 
   !
   !================================================================================================================================
@@ -803,9 +709,10 @@ CONTAINS
   !>  - TYPE: 1 (BASIS_LAGRANGE_HERMITE_TP_TYPE)
   !>  - NUMBER_OF_GAUSS_XI: (2,2,2)
   !>  - GAUSS_ORDER: 0 
-  SUBROUTINE Basis_CreateStart(userNumber,basis,err,error,*)
+  SUBROUTINE Basis_CreateStart(basisFunctions,userNumber,basis,err,error,*)
 
     !Argument variables
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to create the basis for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to start the creation of
     TYPE(BASIS_TYPE), POINTER :: basis !<On return, A pointer to the created basis. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -818,10 +725,11 @@ CONTAINS
 
     ENTERS("Basis_CreateStart",err,error,*999)
 
+    IF(.NOT.ASSOCIATED(basisFunctions)) CALL FlagError("Basis functions is not associated.",err,error,*999)
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated",err,error,*999)
     
     !See if basis number has already been created
-    CALL Basis_UserNumberFind(userNumber,basis,err,error,*999)
+    CALL Basis_UserNumberFind(basisFunctions,userNumber,basis,err,error,*999)
     IF(ASSOCIATED(basis)) THEN
       localError="A basis with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " already exists."
@@ -833,6 +741,7 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate new bases.",err,error,*999)
     NULLIFY(newBasis)
     CALL Basis_Initialise(newBasis,err,error,*999)
+    newBasis%basisFunctions=>basisFunctions
     DO basisIdx=1,basisFunctions%numberOfBasisFunctions
       newBases(basisIdx)%ptr=>basisFunctions%bases(basisIdx)%ptr
     ENDDO !basisIdx
@@ -860,7 +769,7 @@ CONTAINS
     
     EXITS("Basis_CreateStart")
     RETURN
-999 IF(ASSOCIATED(newBasis)) CALL BASIS_DESTROY(newBasis,err,error,*998)
+999 IF(ASSOCIATED(newBasis)) CALL Basis_Destroy(newBasis,err,error,*998)
 998 IF(ALLOCATED(newBases)) DEALLOCATE(newBases)
     ERRORSEXITS("Basis_CreateStart",err,error)
     RETURN 1
@@ -872,17 +781,18 @@ CONTAINS
   !
 
   !>Destroys a basis identified by its basis user number \see BASIS_ROUTINES::BASIS_DESTROY_FAMILY,OpenCMISS::Iron::cmfe_BasisDestroy
-  RECURSIVE SUBROUTINE BASIS_DESTROY_NUMBER(USER_NUMBER,err,error,*)
+  RECURSIVE SUBROUTINE BASIS_DESTROY_NUMBER(basisFunctions,userNumber,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions for the basis to destroy
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("BASIS_DESTROY_NUMBER",err,error,*999)
 
-    CALL Basis_FamilyDestroy(USER_NUMBER,0,err,error,*999)
+    CALL Basis_FamilyDestroy(basisFunctions,userNumber,0,err,error,*999)
     
     EXITS("BASIS_DESTROY_NUMBER")
     RETURN
@@ -896,31 +806,31 @@ CONTAINS
   !
 
   !>Destroys a basis. \see BASIS_ROUTINES::BASIS_DESTROY_FAMILY,OpenCMISS::Iron::cmfe_BasisDestroy
-  RECURSIVE SUBROUTINE BASIS_DESTROY(BASIS,err,error,*)
+  RECURSIVE SUBROUTINE Basis_Destroy(basis,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: USER_NUMBER
+    INTEGER(INTG) :: userNumber
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions
         
-    ENTERS("BASIS_DESTROY",err,error,*999)
+    ENTERS("Basis_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      USER_NUMBER=BASIS%USER_NUMBER
-      CALL Basis_FamilyDestroy(USER_NUMBER,0,err,error,*999)
-      !NULLIFY(BASIS)
-    ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+
+    NULLIFY(basisFunctions)
+    CALL Basis_BasisFunctionsGet(basis,basisFunctions,err,error,*999)
+    userNumber=basis%USER_NUMBER
+    CALL Basis_FamilyDestroy(basisFunctions,userNumber,0,err,error,*999)
     
-    EXITS("BASIS_DESTROY")
+    EXITS("Basis_Destroy")
     RETURN
-999 ERRORSEXITS("BASIS_DESTROY",err,error)
+999 ERRORSEXITS("Basis_Destroy",err,error)
     RETURN 1
     
-  END SUBROUTINE BASIS_DESTROY
+  END SUBROUTINE Basis_Destroy
 
   !
   !================================================================================================================================
@@ -935,8 +845,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: ELEMENT_PARAMETER_INDEX !<The element parameter index to evaluate i.e., the local basis index within the element basis.
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIV_INDEX !<The partial derivative index to evaluate \see CONSTANTS_PartialDerivativeConstants
     REAL(DP), INTENT(IN) :: XI(:) !<The Xi position to evaluate the basis function at
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: BASIS_EVALUATE_XI_DP
     !Local Variables
@@ -1870,11 +1780,12 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Destroys a basis identified by its basis user number and family number. Called from the library visible routine BASIS_DESTROY
-  !> \see BASIS_ROUTINES::BASIS_DESTROY
-  RECURSIVE SUBROUTINE Basis_FamilyDestroy(userNumber,familyNumber,err,error,*)
+  !>Destroys a basis identified by its basis user number and family number. Called from the library visible routine Basis_Destroy
+  !> \see BASIS_ROUTINES::Basis_Destroy
+  RECURSIVE SUBROUTINE Basis_FamilyDestroy(basisFunctions,userNumber,familyNumber,err,error,*)
 
     !Argument variables
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions with the basis to destroy
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to destroy
     INTEGER(INTG), INTENT(IN) :: familyNumber !<The family number of the basis to destroy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -1888,7 +1799,7 @@ CONTAINS
     ENTERS("Basis_FamilyDestroy",err,error,*999)
 
     NULLIFY(basis)
-    CALL Basis_FamilyNumberFind(userNumber,familyNumber,basis,err,error,*999)
+    CALL Basis_FamilyNumberFind(basisFunctions,userNumber,familyNumber,basis,err,error,*999)
     IF(.NOT.ASSOCIATED(basis)) THEN
       localError="The basis with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " and a family number of "//TRIM(NumberToVString(familyNumber,"*",err,error))//" does not exist."      
@@ -1943,10 +1854,11 @@ CONTAINS
     ELSE
       !Recursively delete sub-bases first
       DO WHILE(basis%numberOfSubBases>0)
-        CALL Basis_FamilyDestroy(basis%subBases(1)%ptr%USER_NUMBER,basis%subBases(1)%ptr%FAMILY_NUMBER,err,error,*999)
+        CALL Basis_FamilyDestroy(basisFunctions,basis%subBases(1)%ptr%USER_NUMBER, &
+          & basis%subBases(1)%ptr%FAMILY_NUMBER,err,error,*999)
       ENDDO
       !Now delete this instance
-      CALL Basis_FamilyDestroy(userNumber,familyNumber,err,error,*999)
+      CALL Basis_FamilyDestroy(basisFunctions,userNumber,familyNumber,err,error,*999)
     ENDIF
     
     EXITS("Basis_FamilyDestroy")
@@ -2041,6 +1953,7 @@ CONTAINS
     basis%USER_NUMBER=0
     basis%GLOBAL_NUMBER=0
     basis%FAMILY_NUMBER=0
+    NULLIFY(basis%basisFunctions)
     basis%BASIS_FINISHED=.FALSE.
     basis%hermite=.FALSE.
     basis%type=0
@@ -2080,8 +1993,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: QUADRATURE_SCHEME !<The quadrature scheme to use \see BASIS_ROUTINE_QuadratureSchemes
     INTEGER(INTG), INTENT(IN) :: GAUSS_POINT_NUMBER !<The Gauss point number in the scheme to interpolte
     REAL(DP), INTENT(IN) :: ELEMENT_PARAMETERS(:) !<The element parameters to interpolate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: BASIS_INTERPOLATE_GAUSS_DP
     !Local Variables
@@ -2146,8 +2059,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: LOCAL_FACE_NUMBER !<The index number of the face to interpolate on
     INTEGER(INTG), INTENT(IN) :: GAUSS_POINT_NUMBER !<The face Gauss point number in the scheme to interpolate
     REAL(DP), INTENT(IN) :: FACE_PARAMETERS(:) !<The face parameters to interpolate (in 3D coordinates)
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: BASIS_INTERPOLATE_LOCAL_FACE_GAUSS_DP
     !Local Variables
@@ -2218,8 +2131,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIV_INDEX !<The partial derivative index to interpolate \see CONSTANTS_PartialDerivativeConstants
     REAL(DP), INTENT(IN) :: XI(:) !<The Xi position to interpolate the basis function at
     REAL(DP), INTENT(IN) :: ELEMENT_PARAMETERS(:) !<The element parameters to interpolate
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: BASIS_INTERPOLATE_XI_DP
     !Local Variables
@@ -2281,8 +2194,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to get the interpolation xi
     INTEGER(INTG), INTENT(OUT) :: INTERPOLATION_XI(:) !<On return, the interpolation xi parameters for each Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
@@ -2316,45 +2229,19 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interpolation type in each xi directions where the basis is identified by user number. \see OpenCMISS::Iron::cmfe_BasisInterpolationXiSet
-  SUBROUTINE BASIS_INTERPOLATION_XI_SET_NUMBER(USER_NUMBER,INTERPOLATION_XI,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to set the interpolation xi
-    INTEGER(INTG), INTENT(IN) :: INTERPOLATION_XI(:) !<The interpolation xi parameters for each Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    
-    ENTERS("BASIS_INTERPOLATION_XI_SET_NUMBER",err,error,*999)
-
-    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
-    CALL BASIS_INTERPOLATION_XI_SET(BASIS,INTERPOLATION_XI,err,error,*999)
-    
-    EXITS("BASIS_INTERPOLATION_XI_SET_NUMBER")
-    RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATION_XI_SET_NUMBER",err,error)
-    RETURN 1
-  END SUBROUTINE BASIS_INTERPOLATION_XI_SET_NUMBER
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisInterpolationXiSet
-  SUBROUTINE BASIS_INTERPOLATION_XI_SET_PTR(BASIS,INTERPOLATION_XI,err,error,*)
+  SUBROUTINE Basis_InterpolationXiSet(BASIS,INTERPOLATION_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to set the interpolation xi
     INTEGER(INTG), INTENT(IN) :: INTERPOLATION_XI(:) !<The interpolation xi parameters for each Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: ni,LAST_INTERP
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_INTERPOLATION_XI_SET_PTR",err,error,*999)
+    ENTERS("Basis_InterpolationXiSet",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -2407,11 +2294,12 @@ CONTAINS
       CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("BASIS_INTERPOLATION_XI_SET_PTR")
+    EXITS("Basis_InterpolationXiSet")
     RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATION_XI_SET_PTR",err,error)
+999 ERRORSEXITS("Basis_InterpolationXiSet",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_INTERPOLATION_XI_SET_PTR
+    
+  END SUBROUTINE Basis_InterpolationXiSet
 
   !
   !================================================================================================================================
@@ -3248,8 +3136,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: DERIVATIVE_NUMBER !<The local derivative number of the tensor product basis to evaluate
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIV_INDEX  !<The partial derivative index to interpolate \see CONSTANTS_PartialDerivativeConstants
     REAL(DP), INTENT(IN) :: XI(:) !<The Xi position to evaluate the basis function at
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: BASIS_LHTP_BASIS_EVALUATE_DP !<On return the evaluated basis funtion.
     !Local variables
@@ -3478,8 +3366,8 @@ CONTAINS
     
     EXITS("Basis_LHTPFamilyCreate")
     RETURN
-999 IF(ASSOCIATED(newSubBasis)) CALL Basis_FamilyDestroy(newSubBasis%USER_NUMBER,newSubBasis%FAMILY_NUMBER, &
-      & dummyErr,dummyError,*998)
+999 IF(ASSOCIATED(newSubBasis)) CALL Basis_FamilyDestroy(newSubBasis%basisFunctions,newSubBasis%USER_NUMBER, &
+      & newSubBasis%FAMILY_NUMBER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("Basis_LHTPFamilyCreate",err,error)
     RETURN 1
     
@@ -3495,8 +3383,8 @@ CONTAINS
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to create
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("BASIS_RADIAL_FAMILY_CREATE",err,error,*999)
@@ -3526,8 +3414,8 @@ CONTAINS
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to calculate the xi for
     INTEGER(INTG), INTENT(IN) :: LOCAL_NODE_NUMBER !<The local node number to calculate the xi for
     REAL(DP), INTENT(OUT) :: XI(:) !<XI(ni). On return, the xi position of the local node in the basis
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: xi_idx
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -3599,8 +3487,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to get the number of nodes
     INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_LOCAL_NODES !<On return, the number of local nodes in the basis
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
     ENTERS("BASIS_NUMBER_OF_LOCAL_NODES_GET",err,error,*999)
@@ -3721,8 +3609,8 @@ CONTAINS
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: scheme_idx,i,j,k,MAX_NUM_GAUSS,ng,ni,nk,nn,ns,nu,NUM_GAUSS_1,NUM_GAUSS_2,NUM_GAUSS_3
     REAL(DP) :: XI(3),GSX(4,20),GSW(20)
@@ -4092,8 +3980,8 @@ CONTAINS
 
     !Argument variables
     TYPE(QUADRATURE_TYPE), POINTER :: QUADRATURE !<A pointer to the quadrature
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("BASIS_QUADRATURE_DESTROY",err,error,*999)
@@ -4119,8 +4007,8 @@ CONTAINS
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: scheme_idx
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: SCHEME
@@ -4167,8 +4055,8 @@ CONTAINS
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: ni
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -4293,8 +4181,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     INTEGER(INTG), INTENT(OUT) :: QUADRATURE_NUMBER_OF_GAUSS_XI(:) !<On return, the number of Gauss in each Xi direction
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
@@ -4339,8 +4227,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     INTEGER(INTG), INTENT(IN) :: NUMBER_OF_GAUSS_XI(:) !<The number of Gauss in each Xi direction
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: ni
     TYPE(VARYING_STRING) :: LOCAL_ERROR,LOCAL_WARNING
@@ -4433,8 +4321,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: SCHEME !<The quadrature scheme to return the Gauss points for
     INTEGER(INTG), INTENT(IN) :: GAUSS_POINT !<The Gauss point to return the element xi position for.
     REAL(DP), INTENT(OUT) :: GAUSS_XI(:) !<On return, GAUSS_XI(xi_direction) the xi position of the specified Gauss point for the specified quadrature scheme.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -4492,8 +4380,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: SCHEME !<The quadrature scheme to return the Gauss points for
     INTEGER(INTG), INTENT(IN) :: GAUSS_POINTS(:) !<The Gauss points to return the element xi positions for.
     REAL(DP), INTENT(OUT) :: GAUSS_XI(:,:) !<On return, GAUSS_XI(xi_direction,Gauss_point) the Gauss xi positions for the specified quadrature scheme.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: Gauss_point
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
@@ -4562,8 +4450,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     INTEGER(INTG), INTENT(OUT) :: QUADRATURE_ORDER !<On return, the quadrature order for the specified basis.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
     ENTERS("BASIS_QUADRATURE_ORDER_GET",err,error,*999)
@@ -4591,45 +4479,19 @@ CONTAINS
   !
   !================================================================================================================================
   !
-  
-  !>Sets/changes the order of a quadrature for a basis quadrature identified by a user number.
-  SUBROUTINE BASIS_QUADRATURE_ORDER_SET_NUMBER(USER_NUMBER,ORDER,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis
-    INTEGER(INTG), INTENT(IN) :: ORDER !<The quadrature order to be set.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    
-    ENTERS("BASIS_QUADRATURE_ORDER_SET_NUMBER",err,error,*999)
-
-    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
-    CALL BASIS_QUADRATURE_ORDER_SET(BASIS,ORDER,err,error,*999)
-    
-    EXITS("BASIS_QUADRATURE_ORDER_SET_NUMBER")
-    RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_SET_NUMBER",err,error)
-    RETURN 1
-  END SUBROUTINE BASIS_QUADRATURE_ORDER_SET_NUMBER
-
-  !
-  !================================================================================================================================
-  !
 
   !>Sets/changes the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisQuadratureOrderSet
-  SUBROUTINE BASIS_QUADRATURE_ORDER_SET_PTR(BASIS,ORDER,err,error,*)
+  SUBROUTINE Basis_QuadratureOrderSet(BASIS,ORDER,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     INTEGER(INTG), INTENT(IN) :: ORDER !<The quadrature order to be set.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_QUADRATURE_ORDER_SET_PTR",err,error,*999)
+    ENTERS("Basis_QuadratureOrderSet",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -4655,11 +4517,12 @@ CONTAINS
       CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
       
-    EXITS("BASIS_QUADRATURE_ORDER_SET_PTR")
+    EXITS("Basis_QuadratureOrderSet")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_SET_PTR",err,error)
+999 ERRORSEXITS("Basis_QuadratureOrderSet",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_QUADRATURE_ORDER_SET_PTR
+    
+  END SUBROUTINE Basis_QuadratureOrderSet
 
   !
   !================================================================================================================================
@@ -4671,8 +4534,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     INTEGER(INTG), INTENT(OUT) :: QUADRATURE_TYPE !<On return, the quadrature type to be get \see BASIS_ROUTINES_QuadratureTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
     ENTERS("BASIS_QUADRATURE_TYPE_GET",err,error,*999)
@@ -4700,45 +4563,19 @@ CONTAINS
   !
   !================================================================================================================================
   !
-
-  !>Sets/changes the quadrature type for a basis quadrature identified by a user number.
-  SUBROUTINE BASIS_QUADRATURE_TYPE_SET_NUMBER(USER_NUMBER,TYPE,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis
-    INTEGER(INTG), INTENT(IN) :: TYPE !<The quadrature type to be set \see BASIS_ROUTINES_QuadratureTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    
-    ENTERS("BASIS_QUADRATURE_TYPE_SET_NUMBER",err,error,*999)
-
-    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
-    CALL BASIS_QUADRATURE_TYPE_SET_PTR(BASIS,TYPE,err,error,*999)
-    
-    EXITS("BASIS_QUADRATURE_TYPE_SET_NUMBER")
-    RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_SET_NUMBER",err,error)
-    RETURN 1
-  END SUBROUTINE BASIS_QUADRATURE_TYPE_SET_NUMBER
-
-  !
-  !================================================================================================================================
-  !
   
   !>Sets/changes the quadrature type on a basis identified by a pointer.
-  SUBROUTINE BASIS_QUADRATURE_TYPE_SET_PTR(BASIS,TYPE,err,error,*)
+  SUBROUTINE Basis_QuadratureTypeSet(BASIS,TYPE,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     INTEGER(INTG), INTENT(IN) :: TYPE !<The quadrature type to be set \see BASIS_ROUTINES_QuadratureTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_QUADRATURE_TYPE_SET_PTR",err,error,*999)
+    ENTERS("Basis_QuadratureTypeSet",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -4766,11 +4603,12 @@ CONTAINS
       CALL FlagError("Basis is not associated.",err,error,*999)
     ENDIF
     
-    EXITS("BASIS_QUADRATURE_TYPE_SET_PTR")
+    EXITS("Basis_QuadratureTypeSet")
     RETURN
-999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_SET_PTR",err,error)
+999 ERRORSEXITS("Basis_QuadratureTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_QUADRATURE_TYPE_SET_PTR
+    
+  END SUBROUTINE Basis_QuadratureTypeSet
 
   !
   !================================================================================================================================
@@ -4782,8 +4620,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     LOGICAL, INTENT(IN) :: FACE_GAUSS_EVALUATE !<face Gauss evaluation flag
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     ENTERS("Basis_QuadratureLocalFaceGaussEvaluateSet",err,error,*999)
     
@@ -4814,8 +4652,8 @@ CONTAINS
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: MAX_NUM_NODES,ni,nn,ns
     INTEGER(INTG), ALLOCATABLE :: NODES_IN_FACE(:)
@@ -5981,8 +5819,8 @@ CONTAINS
     
     EXITS("Basis_SimplexFamilyCreate")
     RETURN
-999 IF(ASSOCIATED(newSubBasis)) CALL Basis_FamilyDestroy(newSubBasis%USER_NUMBER,newSubBasis%FAMILY_NUMBER, &
-      & dummyErr,dummyError,*998)
+999 IF(ASSOCIATED(newSubBasis)) CALL Basis_FamilyDestroy(newSubBasis%basisFunctions,newSubBasis%USER_NUMBER, &
+      & newSubBasis%FAMILY_NUMBER,dummyErr,dummyError,*998)
 998 ERRORSEXITS("Basis_SimplexFamilyCreate",err,error)
     RETURN 1
     
@@ -6045,8 +5883,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_NUMBER !<The node number defines the actual basis function to evaluate.
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIV_INDEX !<The partial derivative index in Xi space of the basis to evaluate.
     REAL(DP), INTENT(IN) :: XL(:) !<XL(nic). The area coordinates to evaluate the basis function at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: BASIS_SIMPLEX_BASIS_EVALUATE !<On return the evaluated basis function
     !Local variables
@@ -6281,8 +6119,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_NUMBER !<The node number defines the actual basis function to evaluate.
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIV_INDEX !<The partial derivative index in area coordinates of the basis to evaluate.
     REAL(DP), INTENT(IN) :: XL(:) !<XL(nic). The area coordinates to evaluate the basis function at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: BASIS_SIMPLEX_BASIS_DERIVATIVE_EVALUATE !<On return the evaluated basis function
     !Local variables
@@ -6363,6 +6201,7 @@ CONTAINS
     newSubBasis%USER_NUMBER=parentBasis%USER_NUMBER
     newSubBasis%GLOBAL_NUMBER=parentBasis%GLOBAL_NUMBER
     newSubBasis%FAMILY_NUMBER=parentBasis%numberOfSubBases+1
+    newSubBasis%basisFunctions=>parentBasis%basisFunctions
     newSubBasis%parentBasis=>parentBasis
     newSubBasis%NUMBER_OF_XI=numberOfXi
     newSubBasis%TYPE=parentBasis%TYPE
@@ -6423,8 +6262,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to get
     INTEGER(INTG), INTENT(OUT) :: TYPE !<On return, the type of the specified basis. \see BASIS_ROUTINES_BasisTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
     ENTERS("BASIS_TYPE_GET",err,error,*999)
@@ -6449,44 +6288,18 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type for a basis is identified by a user number.
-  SUBROUTINE BASIS_TYPE_SET_NUMBER(USER_NUMBER,TYPE,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to set.
-    INTEGER(INTG), INTENT(IN) :: TYPE !<The type of the basis to set \see BASIS_ROUTINES_BasisTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    
-    ENTERS("BASIS_TYPE_SET_NUMBER",err,error,*999)
-
-    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
-    CALL BASIS_TYPE_SET_PTR(BASIS,TYPE,err,error,*999)
-    
-    EXITS("BASIS_TYPE_SET_NUMBER")
-    RETURN
-999 ERRORSEXITS("BASIS_TYPE_SET_NUMBER",err,error)
-    RETURN 1
-  END SUBROUTINE BASIS_TYPE_SET_NUMBER
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisTypeGet
-  SUBROUTINE BASIS_TYPE_SET_PTR(BASIS,TYPE,err,error,*)
+  SUBROUTINE Basis_TypeSet(BASIS,TYPE,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis to set
     INTEGER(INTG), INTENT(IN) :: TYPE !<The type of the basis to be set. \see BASIS_ROUTINES_BasisTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_TYPE_SET_PTR",err,error,*999)
+    ENTERS("Basis_TypeSet",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -6512,11 +6325,12 @@ CONTAINS
       CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
-    EXITS("BASIS_TYPE_SET_PTR")
+    EXITS("Basis_TypeSet")
     RETURN
-999 ERRORSEXITS("BASIS_TYPE_SET_PTR",err,error)
+999 ERRORSEXITS("Basis_TypeSet",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_TYPE_SET_PTR
+    
+  END SUBROUTINE Basis_TypeSet
 
   !
   !================================================================================================================================
@@ -6528,8 +6342,8 @@ CONTAINS
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     INTEGER(INTG), INTENT(OUT) :: COLLAPSED_XI(:) !<COLLAPSED_XI(ni). On return, the collapse parameter for each Xi direction. \see BASIS_ROUTINES_XiCollapse
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
@@ -6562,45 +6376,19 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the collapsed xi flags for a basis is identified by a user number.
-  SUBROUTINE BASIS_COLLAPSED_XI_SET_NUMBER(USER_NUMBER,COLLAPSED_XI,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the basis to be set
-    INTEGER(INTG), INTENT(IN) :: COLLAPSED_XI(:) !<COLLAPSED_XI(ni). The collapse parameter for each Xi direction. \see BASIS_ROUTINES_XiCollapse
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    
-    ENTERS("BASIS_COLLAPSED_XI_SET_NUMBER",err,error,*999)
-
-    CALL Basis_UserNumberFind(USER_NUMBER,BASIS,err,error,*999)
-    CALL BASIS_COLLAPSED_XI_SET_PTR(BASIS,COLLAPSED_XI,err,error,*999)
-    
-    EXITS("BASIS_COLLAPSED_XI_SET_NUMBER")
-    RETURN
-999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_NUMBER",err,error)
-    RETURN 1
-  END SUBROUTINE BASIS_COLLAPSED_XI_SET_NUMBER
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisCollapsedXiSet
-  SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR(BASIS,COLLAPSED_XI,err,error,*)
+  SUBROUTINE Basis_CollapsedXiSet(BASIS,COLLAPSED_XI,err,error,*)
 
     !Argument variables
     TYPE(BASIS_TYPE), POINTER :: BASIS !<A pointer to the basis
     INTEGER(INTG), INTENT(IN) :: COLLAPSED_XI(:) !<COLLAPSED_XI(ni). The collapse parameter for each Xi direction. \see BASIS_ROUTINES_XiCollapse
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: ni1,ni2,ni3,NUMBER_COLLAPSED,COLLAPSED_XI_DIR(3)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("BASIS_COLLAPSED_XI_SET_PTR",err,error,*999)
+    ENTERS("Basis_CollapsedXiSet",err,error,*999)
 
     IF(ASSOCIATED(BASIS)) THEN
       IF(BASIS%BASIS_FINISHED) THEN
@@ -6738,11 +6526,12 @@ CONTAINS
       CALL FlagError("Basis is not associated",err,error,*999)
     ENDIF
     
-    EXITS("BASIS_COLLAPSED_XI_SET_PTR")
+    EXITS("Basis_CollapsedXiSet")
     RETURN
-999 ERRORSEXITS("BASIS_COLLAPSED_XI_SET_PTR",err,error)
+999 ERRORSEXITS("Basis_CollapsedXiSet",err,error)
     RETURN 1
-  END SUBROUTINE BASIS_COLLAPSED_XI_SET_PTR
+    
+  END SUBROUTINE Basis_CollapsedXiSet
 
   !
   !================================================================================================================================
@@ -7611,8 +7400,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_DERIVATIVE_INDEX !<The local derivative number of the basis. Must be between 1 and 2.
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative index to evaluate.
     REAL(DP), INTENT(IN) :: XI !<The Xi location to evaluate the basis at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: HERMITE_CUBIC_EVALUATE !<On exit the evaluated basis function.
     !Local variables
@@ -7723,8 +7512,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative index to evaluate.
     INTEGER(INTG), INTENT(IN) :: SPECIAL_NODE_INDEX !<The local node number with no derivative term.
     REAL(DP), INTENT(IN) :: XI !<The Xi location to evaluate the basis at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: HERMITE_QUADRATIC_EVALUATE
     !Local variables
@@ -7902,8 +7691,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The local node of the basis to evaluate. Must be between 1 and 4.
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative to evaluate.
     REAL(DP), INTENT(IN) :: XI !<The Xi location to evaluate the basis at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: LAGRANGE_CUBIC_EVALUATE !<On exit the evaluated basis function.
     !Local variables
@@ -7972,8 +7761,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The local node of the basis to evaluate. Must be between 1 and 2.
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative to evaluate.
     REAL(DP), INTENT(IN) :: XI !<The Xi location to evaluate the basis at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: LAGRANGE_LINEAR_EVALUATE !<On exit the evaluated basis function.
     !Local variables
@@ -8030,8 +7819,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The local node of the basis to evaluate. Must be between 1 and 3.
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative to evaluate.
     REAL(DP), INTENT(IN) :: XI !<The Xi location to evaluate the basis at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: LAGRANGE_QUADRATIC_EVALUATE !<On exit the evaluated basis function.
     !Local variables
@@ -8095,8 +7884,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The node index to evaluate
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative index wrt area coordinates to evaluate
     REAL(DP), INTENT(IN) :: XL !<The area coordinate to evaluate at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: SIMPLEX_CUBIC_EVALUATE_DP
     !Local variables
@@ -8180,8 +7969,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The node index to evaluate
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative index wrt area coordinates to evaluate
     REAL(DP), INTENT(IN) :: XL !<The area coordinate to evaluate at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: SIMPLEX_LINEAR_EVALUATE_DP
     !Local variables
@@ -8248,8 +8037,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: NODE_INDEX !<The node index to evaluate
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative index wrt area coordinates to evaluate
     REAL(DP), INTENT(IN) :: XL !<The area coordinate to evaluate at.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Function variable
     REAL(DP) :: SIMPLEX_QUADRATIC_EVALUATE_DP
     !Local variables
@@ -8311,6 +8100,72 @@ CONTAINS
 999 ERRORSEXITS("SIMPLEX_QUADRATIC_EVALUATE_DP",err,error)
     RETURN 
   END FUNCTION SIMPLEX_QUADRATIC_EVALUATE_DP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the basis functions for a context and deallocates all memory
+  SUBROUTINE BasisFunctions_Finalise(basisFunctions,err,error,*)
+
+    !Argument variables
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<A pointer to the basis functions to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("BasisFunctions_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(basisFunctions)) THEN
+      !Destroy any created basis functions
+      DO WHILE(basisFunctions%numberOfBasisFunctions>0)
+        CALL Basis_Destroy(basisFunctions%bases(1)%ptr,err,error,*999)
+      ENDDO !nb
+      !Destroy basis functions and deallocated any memory allocated
+      IF(ALLOCATED(basisFunctions%bases)) DEALLOCATE(basisFunctions%bases)
+      DEALLOCATE(basisFunctions)
+    ENDIF
+    
+    EXITS("BasisFunctions_Finalise")
+    RETURN
+999 ERRORSEXITS("BasisFunctions_Finalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BasisFunctions_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the basis functions for a context.
+  SUBROUTINE BasisFunctions_Initialise(context,err,error,*)
+
+    !Argument variables
+    TYPE(ContextType), POINTER :: context !<The context to intialise the basis functions for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("BasisFunctions_Initialise",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*998)
+    IF(ASSOCIATED(context%basisFunctions)) CALL FlagError("Context basis functions is already associated.",err,error,*998)
+
+    ALLOCATE(context%basisFunctions,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate basis functions.",err,error,*999)
+    !Initialise
+    context%basisFunctions%context=>context    
+    context%basisFunctions%numberOfBasisFunctions=0    
+    
+    EXITS("BasisFunctions_Initialise")
+    RETURN
+999 CALL BasisFunctions_Finalise(context%basisFunctions,dummyErr,dummyError,*998)
+998 ERRORSEXITS("BasisFunctions_Initialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BasisFunctions_Initialise
 
   !
   !================================================================================================================================

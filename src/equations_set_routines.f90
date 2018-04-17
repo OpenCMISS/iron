@@ -6271,17 +6271,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local variables
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
+    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE),   POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: DIRICHLET_BOUNDARY_CONDITIONS
     TYPE(BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE), POINTER :: PRESSURE_INCREMENTED_BOUNDARY_CONDITIONS
     INTEGER(INTG) :: variable_idx,variable_type,dirichlet_idx,dirichlet_dof_idx,neumann_point_dof
-    INTEGER(INTG) :: condition_idx, condition_global_dof, condition_local_dof, myWorldComputationNodeNumber
+    INTEGER(INTG) :: condition_idx, condition_global_dof, condition_local_dof, myGroupComputationNodeNumber
     REAL(DP), POINTER :: FULL_LOADS(:),CURRENT_LOADS(:), PREV_LOADS(:)
     REAL(DP) :: FULL_LOAD, CURRENT_LOAD, NEW_LOAD, PREV_LOAD
     TYPE(VARYING_STRING) :: localError
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     ENTERS("EQUATIONS_SET_BOUNDARY_CONDITIONS_INCREMENT",err,error,*999)
 
@@ -6293,7 +6295,6 @@ CONTAINS
     NULLIFY(PREV_LOADS)
     NULLIFY(CURRENT_LOADS)
 
-    CALL ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,myWorldComputationNodeNumber,err,error,*999)
     
     !Take the stored load, scale it down appropriately then apply to the unknown variables    
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -6303,6 +6304,11 @@ CONTAINS
       IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
         dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(dependentField)) THEN
+          NULLIFY(decomposition)
+          CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+          NULLIFY(workGroup)
+          CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+          CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
           IF(ALLOCATED(dependentField%VARIABLES)) THEN
             !Loop over the variables associated with this equations set
             !\todo: Looping over all field variables is not safe when volume-coupled problem is solved. Look at matrix and rhs mapping instead?
@@ -6340,7 +6346,7 @@ CONTAINS
                             & BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED)
                           !Convert dof index to local index
                           IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(dirichlet_dof_idx)%DOMAIN_NUMBER(1)== &
-                            & myWorldComputationNodeNumber) THEN
+                            & myGroupComputationNodeNumber) THEN
                             dirichlet_dof_idx=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(dirichlet_dof_idx)%LOCAL_NUMBER(1)
                             IF(0<dirichlet_dof_idx.AND.dirichlet_dof_idx<DOMAIN_MAPPING%GHOST_START) THEN
                               FULL_LOAD=FULL_LOADS(dirichlet_dof_idx)
@@ -6398,7 +6404,7 @@ CONTAINS
                         IF(BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(condition_global_dof)/= &
                           & BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) CYCLE
                         IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
-                          & myWorldComputationNodeNumber) THEN
+                          & myGroupComputationNodeNumber) THEN
                           condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
                             & LOCAL_NUMBER(1)
                           neumann_point_dof=BOUNDARY_CONDITIONS_VARIABLE%neumannBoundaryConditions%pointDofMapping% &
@@ -6445,7 +6451,7 @@ CONTAINS
                             & (condition_idx)
                           !Must convert into local dof index
                           IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
-                            & myWorldComputationNodeNumber) THEN
+                            & myGroupComputationNodeNumber) THEN
                             condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
                               & LOCAL_NUMBER(1)
                             IF(0<condition_local_dof.AND.condition_local_dof<DOMAIN_MAPPING%GHOST_START) THEN
@@ -6476,7 +6482,7 @@ CONTAINS
                             & (condition_idx)
                           !Must convert into local dof index
                           IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
-                            & myWorldComputationNodeNumber) THEN
+                            & myGroupComputationNodeNumber) THEN
                             condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
                               & LOCAL_NUMBER(1)
                             IF(0<condition_local_dof.AND.condition_local_dof<DOMAIN_MAPPING%GHOST_START) THEN
