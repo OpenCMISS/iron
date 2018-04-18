@@ -6049,7 +6049,7 @@ CONTAINS
       IF(VALUE.LT.0.0_DP) VALUE=0.0_DP
 
       !divide by lambda and multiply by P_max
-      VALUE=VALUE/SQRT(AZL(1,1))*C(5)
+      VALUE=VALUE/SQRT(AZL(1,1))*C(3)
 
       PIOLA_TENSOR(1,1)=PIOLA_TENSOR(1,1)+VALUE
 
