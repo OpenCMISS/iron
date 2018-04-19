@@ -1,0 +1,14 @@
+To generate the bindings do
+
+cd iron/bindings
+
+and
+
+python generate_bindings .. C opencmiss_iron.h opencmiss_iron_c.f90
+
+for C bindings and
+
+python generate_bindings .. Python iron_python .
+
+for python bindings.
+

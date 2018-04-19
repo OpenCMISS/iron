@@ -44,28 +44,34 @@
 !>This module handles all linear elasticity routines.
 MODULE LINEAR_ELASTICITY_ROUTINES
 
-  USE BASE_ROUTINES
-  USE BASIS_ROUTINES
+  USE BaseRoutines
+  USE BasisRoutines
+  USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE CONSTANTS
   USE CONTROL_LOOP_ROUTINES
-  USE DISTRIBUTED_MATRIX_VECTOR
+  USE ControlLoopAccessRoutines
+  USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
-  USE EQUATIONS_ROUTINES
-  USE EQUATIONS_MAPPING_ROUTINES
-  USE EQUATIONS_MATRICES_ROUTINES
-  USE EQUATIONS_SET_CONSTANTS
+  USE EquationsRoutines
+  USE EquationsAccessRoutines
+  USE EquationsMappingRoutines
+  USE EquationsMatricesRoutines
+  USE EquationsSetConstants
+  USE EquationsSetAccessRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATRIX_VECTOR
+  USE Kinds
+  USE Maths
+  USE MatrixVector
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE SOLVER_ROUTINES
-  USE TIMER
-  USE TYPES
-  USE MATHS
+  USE SolverAccessRoutines
+  USE Timer
+  USE Types
 
 #include "macros.h"  
 
@@ -102,7 +108,7 @@ CONTAINS
   !
 
   !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  SUBROUTINE LinearElasticity_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,ERR,ERROR,*)
+  SUBROUTINE LinearElasticity_BoundaryConditionsAnalyticCalculate(EQUATIONS_SET,BOUNDARY_CONDITIONS,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
@@ -118,25 +124,25 @@ CONTAINS
     LOGICAL :: SET_BC
     TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
     TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
+    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,geometricField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR    
+    TYPE(VARYING_STRING) :: localError    
     
-    ENTERS("LinearElasticity_BoundaryConditionsAnalyticCalculate",ERR,ERROR,*999)
+    ENTERS("LinearElasticity_BoundaryConditionsAnalyticCalculate",err,error,*999)
     GEOMETRIC_TOL=1.0E-6_DP
     !!TODO: Use Geometric/Material Field values to prescribe values in analytic solution, currently hardcodded geometry & material properties
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-          GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-          IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-            CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+          geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+          IF(ASSOCIATED(geometricField)) THEN
+            CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
             NULLIFY(GEOMETRIC_VARIABLE)
-            CALL FIELD_VARIABLE_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
+            CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
             NULLIFY(GEOMETRIC_PARAMETERS)
-            CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
-              & ERR,ERROR,*999)
+            CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
+              & err,error,*999)
             !
             ! IDENTIFY BOUNDARY CONDITION NODES
             !
@@ -147,7 +153,7 @@ CONTAINS
             BC_X_FORCE_counter = 0
             DO variable_idx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
               variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
-              FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
+              FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                 DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                   IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
@@ -333,28 +339,28 @@ CONTAINS
                                 END SELECT
 
                               CASE DEFAULT
-                                LOCAL_ERROR="The analytic function type of "// &
-                                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                                localError="The analytic function type of "// &
+                                  & TRIM(NumberToVString(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                                   & " is invalid."
-                                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                CALL FlagError(localError,err,error,*999)
                               END SELECT
                             ENDDO !deriv_idx
                           ENDDO !node_idx
                         ELSE
-                          CALL FlagError("Domain topology nodes is not associated.",ERR,ERROR,*999)
+                          CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
                         ENDIF
                       ELSE
-                        CALL FlagError("Domain topology is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("Domain topology is not associated.",err,error,*999)
                       ENDIF
                     ELSE
-                      CALL FlagError("Domain is not associated.",ERR,ERROR,*999)
+                      CALL FlagError("Domain is not associated.",err,error,*999)
                     ENDIF
                   ELSE
-                    CALL FlagError("Only node based interpolation is implemented.",ERR,ERROR,*999)
+                    CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                   ENDIF
                 ENDDO !component_idx
               ELSE
-                CALL FlagError("Field variable is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Field variable is not associated.",err,error,*999)
               ENDIF
             ENDDO !variable_idx
 
@@ -364,9 +370,9 @@ CONTAINS
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
               DO variable_idx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                 variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
-                FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
+                FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                  CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,ERR,ERROR,*999)
+                  CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                   DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -410,10 +416,10 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1)
                                       ANALYTIC_VALUE=1.0_DP
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                        & ERR,ERROR))//" is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                        & err,error))//" is invalid."
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -430,15 +436,15 @@ CONTAINS
                                     CASE(GLOBAL_DERIV_S1)
                                       ANALYTIC_VALUE=1.0_DP
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                      localError="The global derivative index of "//TRIM(NumberToVString( &
                                         & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                        & ERR,ERROR))//" is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                        & err,error))//" is invalid."
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                    localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                       & " is invalid."
-                                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                    CALL FlagError(localError,err,error,*999)
                                   END SELECT
                                 !
                                 ! TWO DIMENSIONAL LINEAR ELASTICITY
@@ -471,10 +477,10 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2)
                                         ANALYTIC_VALUE=1.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -487,15 +493,15 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2)
                                         ANALYTIC_VALUE=1.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                      localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                         & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(2) !v component
                                   !v=Sigmay*y/E
@@ -515,10 +521,10 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -546,20 +552,20 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                      localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                         & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    LOCAL_ERROR="The component index of "//TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR,ERROR))// &
+                                    localError="The component index of "//TRIM(NumberToVString(component_idx,"*",err,error))// &
                                       & " is invalid."
-                                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                    CALL FlagError(localError,err,error,*999)
                                   END SELECT
 
                                 !
@@ -601,10 +607,10 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                       SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -625,15 +631,15 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                      localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                         & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(2) !v component
                                   !v=
@@ -661,10 +667,10 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                       SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -711,15 +717,15 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                      localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                         & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(3) !w component
                                   !w=
@@ -747,10 +753,10 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                       SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -771,20 +777,20 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                      localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                         & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    LOCAL_ERROR="The component index of "//TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR,ERROR))// &
+                                    localError="The component index of "//TRIM(NumberToVString(component_idx,"*",err,error))// &
                                       & " is invalid."
-                                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                    CALL FlagError(localError,err,error,*999)
                                   END SELECT
 
 
@@ -828,10 +834,10 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                       SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -852,15 +858,15 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                      localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                         & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(2) !v component
                                   !v=
@@ -888,10 +894,10 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                           & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                          & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                          & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                       SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -938,15 +944,15 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                         & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                        & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                        & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                      localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                         & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(3) !w component
                                   !w=
@@ -977,10 +983,10 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                         & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                        & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                        & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
                                       SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
@@ -1006,20 +1012,20 @@ CONTAINS
                                       CASE(GLOBAL_DERIV_S1_S2_S3)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
-                                        LOCAL_ERROR="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
+                                        localError="The global derivative index of "//TRIM(NumberToVString( &
                                         & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
-                                        & ERR,ERROR))//" is invalid."
-                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                        & err,error))//" is invalid."
+                                        CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE DEFAULT
-                                      LOCAL_ERROR="The variable type of "//TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))// &
+                                      localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                                         & " is invalid."
-                                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                      CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE DEFAULT
-                                    LOCAL_ERROR="The component index of "//TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR,ERROR))// &
+                                    localError="The component index of "//TRIM(NumberToVString(component_idx,"*",err,error))// &
                                       & " is invalid."
-                                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                    CALL FlagError(localError,err,error,*999)
                                   END SELECT
 
 
@@ -1028,68 +1034,68 @@ CONTAINS
 
 
                                 CASE DEFAULT
-                                  LOCAL_ERROR="The analytic function type of "// &
-                                    & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                                  localError="The analytic function type of "// &
+                                    & TRIM(NumberToVString(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                                     & " is invalid."
-                                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                                  CALL FlagError(localError,err,error,*999)
                                 END SELECT
                                 !Default to version 1 of each node derivative
                                 local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
                                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
-                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,ANALYTIC_VALUE,ERR,ERROR,*999)
+                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,ANALYTIC_VALUE,err,error,*999)
                                 IF (SET_BC) THEN
                                   !Default to version 1 of each node derivative
                                   local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                     & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
                                   WRITE(*,*) variable_type
                                   CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
-                                    & local_ny,BOUNDARY_CONDITION_FIXED,BC_VALUE,ERR,ERROR,*999)
+                                    & local_ny,BOUNDARY_CONDITION_FIXED,BC_VALUE,err,error,*999)
                                 ENDIF
                               ENDDO !deriv_idx
                             ENDDO !node_idx
                           ELSE
-                            CALL FlagError("Domain topology nodes is not associated.",ERR,ERROR,*999)
+                            CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
                           ENDIF
                         ELSE
-                          CALL FlagError("Domain topology is not associated.",ERR,ERROR,*999)
+                          CALL FlagError("Domain topology is not associated.",err,error,*999)
                         ENDIF
                       ELSE
-                        CALL FlagError("Domain is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("Domain is not associated.",err,error,*999)
                       ENDIF
                     ELSE
-                      CALL FlagError("Only node based interpolation is implemented.",ERR,ERROR,*999)
+                      CALL FlagError("Only node based interpolation is implemented.",err,error,*999)
                     ENDIF
                   ENDDO !component_idx
                   CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-                    & ERR,ERROR,*999)
+                    & err,error,*999)
                   CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-                    & ERR,ERROR,*999)
+                    & err,error,*999)
                 ELSE
-                  CALL FlagError("Field variable is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Field variable is not associated.",err,error,*999)
                 ENDIF
               ENDDO !variable_idx
-              CALL FIELD_PARAMETER_SET_DATA_RESTORE(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
+              CALL FIELD_PARAMETER_SET_DATA_RESTORE(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                & GEOMETRIC_PARAMETERS,err,error,*999)
             ELSE
-              CALL FlagError("Boundary conditions is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Boundary conditions is not associated.",err,error,*999)
             ENDIF
           ELSE
-            CALL FlagError("Equations set geometric field is not associated.",ERR,ERROR,*999)
+            CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
           ENDIF            
         ELSE
-          CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set analytic is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
     
     EXITS("LinearElasticity_BoundaryConditionsAnalyticCalculate")
     RETURN
-999 ERRORS("LinearElasticity_BoundaryConditionsAnalyticCalculate",ERR,ERROR)
+999 ERRORS("LinearElasticity_BoundaryConditionsAnalyticCalculate",err,error)
     EXITS("LinearElasticity_BoundaryConditionsAnalyticCalculate")
     RETURN 1
     
@@ -1100,7 +1106,7 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices and RHS for a linear elasticity finite element equations set.
-  SUBROUTINE LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,ERR,ERROR,*)
+  SUBROUTINE LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to perform the finite element 
@@ -1118,29 +1124,30 @@ CONTAINS
     REAL(DP):: SF(64*3)
 
     !LOGICAL :: SAME_BASIS
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MAPPING_LINEAR_TYPE), POINTER :: LINEAR_MAPPING
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
-    TYPE(EQUATIONS_MATRIX_TYPE), POINTER :: EQUATIONS_MATRIX
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField
     TYPE(BASIS_PTR_TYPE) :: DEPENDENT_BASES(3) !,GEOMETRIC_BASES(:)
     TYPE(QUADRATURE_SCHEME_PTR_TYPE) :: QUADRATURE_SCHEMES(3)
-    TYPE(EQUATIONS_MATRICES_RHS_TYPE), POINTER :: RHS_VECTOR
+    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: DEPENDENT_INTERPOLATION_PARAMETERS
     !TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: FIBRE_INTERPOLATION_PARAMETERS
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: MATERIALS_INTERPOLATION_PARAMETERS
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: MATERIALS_INTERP_POINT
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: GEOMETRIC_INTERP_POINT_METRICS
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: materialsInterpPoint
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     TYPE DPHI_DX_COMP_TYPE !A type to store DPHIDX for each mesh component
     REAL(DP) :: DPHIDX(64,3)
     END TYPE DPHI_DX_COMP_TYPE
     TYPE(DPHI_DX_COMP_TYPE) :: DPHIDX_COMP(3)
 
-    ENTERS("LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE",ERR,ERROR,*999)
+    ENTERS("LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE",err,error,*999)
     !!Have a look at XPES40.f in the old CMISS code.
     !!Q - CPB: Need to think about anisotropic materials with fibre fields.
     !!Q - CPB: why store this DPHIDX(ns,xi) as opposed to just using it directly? A - to minimize operations - Otherwise it would be calculated many more times than
@@ -1157,36 +1164,38 @@ CONTAINS
       END IF
       EQUATIONS=>EQUATIONS_SET%EQUATIONS
       IF(ASSOCIATED(EQUATIONS)) THEN
-        DEPENDENT_FIELD=>EQUATIONS%INTERPOLATION%DEPENDENT_FIELD
-        GEOMETRIC_FIELD=>EQUATIONS%INTERPOLATION%GEOMETRIC_FIELD
-        !FIBRE_FIELD=>EQUATIONS%INTERPOLATION%FIBRE_FIELD
-        EQUATIONS_MATRICES=>EQUATIONS%EQUATIONS_MATRICES
-        EQUATIONS_MATRIX=>EQUATIONS_MATRICES%LINEAR_MATRICES%MATRICES(1)%PTR
-        RHS_VECTOR=>EQUATIONS_MATRICES%RHS_VECTOR
-        EQUATIONS_MAPPING=>EQUATIONS%EQUATIONS_MAPPING
-        LINEAR_MAPPING=>EQUATIONS_MAPPING%LINEAR_MAPPING
-        FIELD_VARIABLE=>LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+        dependentField=>equations%interpolation%dependentField
+        geometricField=>equations%interpolation%geometricField
+        !fibreField=>equations%interpolation%fibreField
+        vectorMatrices=>vectorEquations%vectorMatrices
+        equationsMatrix=>vectorMatrices%linearMatrices%matrices(1)%ptr
+        rhsVector=>vectorMatrices%rhsVector
+        vectorMapping=>vectorEquations%vectorMapping
+        linearMapping=>vectorMapping%linearMapping
+        FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%variable
         FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
         !Note that the dimension/number of components for FIELD_U_VARIABLE_TYPE has to be the same as the FIELD_DELUDELN_VARIABLE_TYPE
         !& Number of Geometric field components = number of dependent field component
-        NUMBER_OF_DEPENDENT_COMPONENTS=GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(1)%ptr%NUMBER_OF_COMPONENTS
-        !NUMBER_OF_GEOMETRIC_COMPONENTS=DEPENDENT_FIELD%VARIABLE_TYPE_MAP(1)%ptr%NUMBER_OF_COMPONENTS
+        NUMBER_OF_DEPENDENT_COMPONENTS=geometricField%VARIABLE_TYPE_MAP(1)%ptr%NUMBER_OF_COMPONENTS
+        !NUMBER_OF_GEOMETRIC_COMPONENTS=dependentField%VARIABLE_TYPE_MAP(1)%ptr%NUMBER_OF_COMPONENTS
         !!TODO:: Use highest interpolation scheme's guass points. Warn if Gauss Points insufficient
         !Create an array of Bases with each component 
         DO ns=1,NUMBER_OF_DEPENDENT_COMPONENTS
-          MESH_COMPONENT=DEPENDENT_FIELD%VARIABLE_TYPE_MAP(1)%ptr%COMPONENTS(ns)%mesh_component_number
-          DEPENDENT_BASES(ns)%PTR=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT)%PTR% &
+          MESH_COMPONENT=dependentField%VARIABLE_TYPE_MAP(1)%ptr%COMPONENTS(ns)%mesh_component_number
+          DEPENDENT_BASES(ns)%ptr=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          DEPENDENT_BASES_EP(ns)=DEPENDENT_BASES(ns)%PTR%NUMBER_OF_ELEMENT_PARAMETERS
-          QUADRATURE_SCHEMES(ns)%PTR=>DEPENDENT_BASES(ns)%PTR%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
+          DEPENDENT_BASES_EP(ns)=DEPENDENT_BASES(ns)%ptr%NUMBER_OF_ELEMENT_PARAMETERS
+          QUADRATURE_SCHEMES(ns)%ptr=>DEPENDENT_BASES(ns)%ptr%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
         ENDDO
-        NUMBER_OF_XI = DEPENDENT_BASES(1)%PTR%NUMBER_OF_XI
+        NUMBER_OF_XI = DEPENDENT_BASES(1)%ptr%NUMBER_OF_XI
         TOTAL_DEPENDENT_BASIS_EP = SUM(DEPENDENT_BASES_EP(1:NUMBER_OF_XI))
         !DO ns=1,NUMBER_OF_GEOMETRIC_COMPONENTS
-        !  MESH_COMPONENT=DEPENDENT_FIELD%VARIABLE_TYPE_MAP(1)%ptr%COMPONENTS(ns)%mesh_component_number
-        !  GEOMETRIC_BASES(ns)%PTR=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT)%PTR% &
+        !  MESH_COMPONENT=dependentField%VARIABLE_TYPE_MAP(1)%ptr%COMPONENTS(ns)%mesh_component_number
+        !  GEOMETRIC_BASES(ns)%ptr=>geometricField%DECOMPOSITION%DOMAIN(MESH_COMPONENT)%ptr% &
         !    & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-        !  GEOMETRIC_BASES_EP(ns)=GEOMETRIC_BASES(ns)%PTR%NUMBER_OF_ELEMENT_PARAMETERS
+        !  GEOMETRIC_BASES_EP(ns)=GEOMETRIC_BASES(ns)%ptr%NUMBER_OF_ELEMENT_PARAMETERS
         !ENDDO
         SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
         !
@@ -1197,68 +1206,68 @@ CONTAINS
           !//
           !Parameters for number of off diagonal stress/strain terms for a given number of xi directions and order of calculation for shear terms
           !These parameters do not change for 1D,2D,3D Linear Elasticity
-          OFF_DIAG_COMP = (/0,1,3/)
-          OFF_DIAG_DEP_VAR(1,1,:) = (/1,1,2/)
-          OFF_DIAG_DEP_VAR(1,2,:) = (/2,3,3/)
+          OFF_DIAG_COMP = [0,1,3]
+          OFF_DIAG_DEP_VAR(1,1,:) = [1,1,2]
+          OFF_DIAG_DEP_VAR(1,2,:) = [2,3,3]
           OFF_DIAG_DEP_VAR(2,1,:) = OFF_DIAG_DEP_VAR(1,2,:)
           OFF_DIAG_DEP_VAR(2,2,:) = OFF_DIAG_DEP_VAR(1,1,:)
           !//
-          DIAG_SUB_MAT_LOC(:) = (/0,DEPENDENT_BASES_EP(1),SUM(DEPENDENT_BASES_EP(1:2))/)
-          OFF_DIAG_SUB_MAT_LOC(1,:) = (/0,0,DEPENDENT_BASES_EP(1)/)
-          OFF_DIAG_SUB_MAT_LOC(2,:) = (/DEPENDENT_BASES_EP(1),DIAG_SUB_MAT_LOC(3),DIAG_SUB_MAT_LOC(3)/)
+          DIAG_SUB_MAT_LOC(:) = [0,DEPENDENT_BASES_EP(1),SUM(DEPENDENT_BASES_EP(1:2))]
+          OFF_DIAG_SUB_MAT_LOC(1,:) = [0,0,DEPENDENT_BASES_EP(1)]
+          OFF_DIAG_SUB_MAT_LOC(2,:) = [DEPENDENT_BASES_EP(1),DIAG_SUB_MAT_LOC(3),DIAG_SUB_MAT_LOC(3)]
 
-          IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
+          IF(equationsMatrix%updateMatrix) THEN
             !Get the geometric, fibre & material field interpolation parameters
-            GEOMETRIC_INTERPOLATION_PARAMETERS=>EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR
-            !FIBRE_INTERPOLATION_PARAMETERS=>EQUATIONS%INTERPOLATION%FIBRE_INTERP_PARAMETERS
-            MATERIALS_INTERPOLATION_PARAMETERS=>EQUATIONS%INTERPOLATION%MATERIALS_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR
+            GEOMETRIC_INTERPOLATION_PARAMETERS=>equations%interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
+            !FIBRE_INTERPOLATION_PARAMETERS=>equations%interpolation%FIBRE_INTERP_PARAMETERS
+            MATERIALS_INTERPOLATION_PARAMETERS=>equations%interpolation%materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
             CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
-              & GEOMETRIC_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
+              & GEOMETRIC_INTERPOLATION_PARAMETERS,err,error,*999)
             !CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
-            !  & FIBRE_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
+            !  & FIBRE_INTERPOLATION_PARAMETERS,err,error,*999)
             CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
-              & MATERIALS_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
-            GEOMETRIC_INTERP_POINT_METRICS=>EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR
-            MATERIALS_INTERP_POINT=>EQUATIONS%INTERPOLATION%MATERIALS_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR
+              & MATERIALS_INTERPOLATION_PARAMETERS,err,error,*999)
+            geometricInterpPointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
+            materialsInterpPoint=>equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
             !Loop over gauss points & integrate upper triangular portion of Stiffness matrix
-            DO ng=1,QUADRATURE_SCHEMES(1)%PTR%NUMBER_OF_GAUSS !Gauss point index
+            DO ng=1,QUADRATURE_SCHEMES(1)%ptr%NUMBER_OF_GAUSS !Gauss point index
               !Interpolate geometric, fibre and material fields at gauss points & calculate geometric field metrics
-              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-                & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-              !CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,EQUATIONS%INTERPOLATION% &
-              !  & FIBRE_INTERP_POINT,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,MATERIALS_INTERP_POINT,ERR,ERROR,*999)
+              CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              !CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+              !  & FIBRE_INTERP_POINT,err,error,*999)
+              CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,materialsInterpPoint,err,error,*999)
               !!TODO:: Add option to only evaluate required metrics
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(NUMBER_OF_XI,GEOMETRIC_INTERP_POINT_METRICS,ERR,ERROR,*999)
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(NUMBER_OF_XI,geometricInterpPointMetrics,err,error,*999)
               !Calculate JRWG.
-              JRWG=QUADRATURE_SCHEMES(1)%PTR%GAUSS_WEIGHTS(ng)*GEOMETRIC_INTERP_POINT_METRICS%JACOBIAN
+              JRWG=QUADRATURE_SCHEMES(1)%ptr%GAUSS_WEIGHTS(ng)*geometricInterpPointMetrics%JACOBIAN
               DO xi=1,NUMBER_OF_XI
                 DPHIDX_COMP(xi)%DPHIDX = 0.0_DP
                 DO ns=1,DEPENDENT_BASES_EP(xi)
                   DO mi=1,NUMBER_OF_XI
                     DO ni=1,NUMBER_OF_XI
-                      DPHIDX_COMP(xi)%DPHIDX(ns,mi) = DPHIDX_COMP(xi)%DPHIDX(ns,mi)+GEOMETRIC_INTERP_POINT_METRICS%DXI_DX(mi,ni)* &
-                        & QUADRATURE_SCHEMES(xi)%PTR%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
+                      DPHIDX_COMP(xi)%DPHIDX(ns,mi) = DPHIDX_COMP(xi)%DPHIDX(ns,mi)+geometricInterpPointMetrics%DXI_DX(mi,ni)* &
+                        & QUADRATURE_SCHEMES(xi)%ptr%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                     ENDDO !ni
                   ENDDO !mi
                 ENDDO !ns
               ENDDO !xi
-              !CALL COORDINATE_MATERIAL_COORDINATE_SYSTEM_CALCULATE(EQUATIONS%INTERPOLATION%GEOMETRIC_INTERP_POINT, &
-              !  EQUATIONS%INTERPOLATION%FIBRE_INTERP_POINT,DXDNU,ERR,ERROR,*999)
+              !CALL COORDINATE_MATERIAL_COORDINATE_SYSTEM_CALCULATE(equations%interpolation%geometricInterpPoint, &
+              !  equations%interpolation%FIBRE_INTERP_POINT,DXDNU,err,error,*999)
               !Create Linear Elasticity Tensor C
-              CALL LINEAR_ELASTICITY_TENSOR(EQUATIONS_SET%SPECIFICATION(3),MATERIALS_INTERP_POINT,C,ERR,ERROR,*999)
+              CALL LINEAR_ELASTICITY_TENSOR(EQUATIONS_SET%SPECIFICATION(3),materialsInterpPoint,C,err,error,*999)
               !Store Elasticity Tensor diagonal & off diagonal stress coefficients
-              JRWG_DIAG_C(3,:) = (/JRWG*C(4,4),JRWG*C(5,5),JRWG*C(3,3)/)
-              JRWG_DIAG_C(2,:) = (/JRWG*C(6,6),JRWG*C(2,2),JRWG_DIAG_C(3,2)/)
-              JRWG_DIAG_C(1,:) = (/JRWG*C(1,1),JRWG_DIAG_C(2,1),JRWG_DIAG_C(3,1)/)
-              JRWG_OFF_DIAG_C(1,:) = (/JRWG*C(1,2),JRWG*C(1,3),JRWG*C(2,3)/)
-              JRWG_OFF_DIAG_C(2,:) = (/JRWG*C(6,6),JRWG*C(4,4),JRWG*C(5,5)/)
+              JRWG_DIAG_C(3,:) = [JRWG*C(4,4),JRWG*C(5,5),JRWG*C(3,3)]
+              JRWG_DIAG_C(2,:) = [JRWG*C(6,6),JRWG*C(2,2),JRWG_DIAG_C(3,2)]
+              JRWG_DIAG_C(1,:) = [JRWG*C(1,1),JRWG_DIAG_C(2,1),JRWG_DIAG_C(3,1)]
+              JRWG_OFF_DIAG_C(1,:) = [JRWG*C(1,2),JRWG*C(1,3),JRWG*C(2,3)]
+              JRWG_OFF_DIAG_C(2,:) = [JRWG*C(6,6),JRWG*C(4,4),JRWG*C(5,5)]
               !Construct Element Matrix Diagonal Terms
               DO xi=1,NUMBER_OF_XI
                 DO ns=1,DEPENDENT_BASES_EP(xi)
                   DO ms=ns,DEPENDENT_BASES_EP(xi)
-                    EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) = &
-                      & EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) + &
+                    equationsMatrix%elementMatrix%matrix(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) = &
+                      & equationsMatrix%elementMatrix%matrix(DIAG_SUB_MAT_LOC(xi)+ns,DIAG_SUB_MAT_LOC(xi)+ms) + &
                       & DOT_PRODUCT(DPHIDX_COMP(xi)%DPHIDX(ns,1:NUMBER_OF_XI)*DPHIDX_COMP(xi)%DPHIDX(ms,1:NUMBER_OF_XI), &
                       & JRWG_DIAG_C(xi,1:NUMBER_OF_XI))
                   ENDDO !ms
@@ -1268,8 +1277,8 @@ CONTAINS
               DO xi=1,OFF_DIAG_COMP(NUMBER_OF_XI)
                 DO ns=1,DEPENDENT_BASES_EP(OFF_DIAG_DEP_VAR(1,1,xi))
                   DO ms=1,DEPENDENT_BASES_EP(OFF_DIAG_DEP_VAR(1,2,xi))
-                    EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms) = &
-                      & EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms)+ &
+                    equationsMatrix%elementMatrix%matrix(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms) = &
+                      & equationsMatrix%elementMatrix%matrix(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms)+ &
                       & DOT_PRODUCT(DPHIDX_COMP(OFF_DIAG_DEP_VAR(1,1,xi))%DPHIDX(ns,OFF_DIAG_DEP_VAR(1,:,xi))* &
                       &  DPHIDX_COMP(OFF_DIAG_DEP_VAR(1,2,xi))%DPHIDX(ms,OFF_DIAG_DEP_VAR(2,:,xi)),JRWG_OFF_DIAG_C(:,xi))
                   ENDDO !ms
@@ -1280,13 +1289,13 @@ CONTAINS
 
              !Expanding the DOT_PRODUCT terms
 
-             !OFF_DIAG_DEP_VAR(1,:) = (/1,1,2/)
-             !OFF_DIAG_DEP_VAR(2,:) = (/2,3,3/)
+             !OFF_DIAG_DEP_VAR(1,:) = [1,1,2]
+             !OFF_DIAG_DEP_VAR(2,:) = [2,3,3]
              ! DO xi=1,OFF_DIAG_COMP(NUMBER_OF_XI)
              !   DO ns=1,DEPENDENT_BASES_EP(OFF_DIAG_DEP_VAR(1,1,xi))
              !     DO ms=1,DEPENDENT_BASES_EP(OFF_DIAG_DEP_VAR(1,2,xi))
-             !       EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms) = &
-             !         & EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms)+ &
+             !       equationsMatrix%elementMatrix%matrix(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms) = &
+             !         & equationsMatrix%elementMatrix%matrix(OFF_DIAG_SUB_MAT_LOC(1,xi)+ns,OFF_DIAG_SUB_MAT_LOC(2,xi)+ms)+ &
              !         & JRWG_OFF_DIAG_C(1,xi)*DPHIDX_COMP(OFF_DIAG_DEP_VAR(1,xi))%DPHIDX(ns,OFF_DIAG_DEP_VAR(1,xi))* &
              !         & DPHIDX_COMP(OFF_DIAG_DEP_VAR(2,xi))%DPHIDX(ms,OFF_DIAG_DEP_VAR(2,xi)) + &
              !         & JRWG_OFF_DIAG_C(2,xi)*DPHIDX_COMP(OFF_DIAG_DEP_VAR(1,xi))%DPHIDX(ns,OFF_DIAG_DEP_VAR(2,xi))* &
@@ -1299,24 +1308,24 @@ CONTAINS
 
 !             DO ns=1,DEPENDENT_BASES_EP(1)
 !               DO ms=1,DEPENDENT_BASES_EP(2)
-!                 EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(ns,ms+DEPENDENT_BASES_EP(1)) = &
-!                   & EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(ns,ms+DEPENDENT_BASES_EP(1)) + &
+!                 equationsMatrix%elementMatrix%matrix(ns,ms+DEPENDENT_BASES_EP(1)) = &
+!                   & equationsMatrix%elementMatrix%matrix(ns,ms+DEPENDENT_BASES_EP(1)) + &
 !                   & JRWG*C(1,2)*DPHIDX_COMP(1)%DPHIDX(ns,1)*DPHIDX_COMP(2)%DPHIDX(ms,2) + &
 !                   & JRWG*C(6,6)*DPHIDX_COMP(1)%DPHIDX(ns,2)*DPHIDX_COMP(2)%DPHIDX(ms,1)
 !               ENDDO !ns
 !             ENDDO !ms
 !             DO ns=1,DEPENDENT_BASES_EP(1)
 !               DO ms=1,DEPENDENT_BASES_EP(3)
-!                 EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(ns,ms+DEPENDENT_BASES_EP(1)+DEPENDENT_BASES_EP(2)) = &
-!                   & EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(ns,ms+DEPENDENT_BASES_EP(1)+DEPENDENT_BASES_EP(2)) + &
+!                 equationsMatrix%elementMatrix%matrix(ns,ms+DEPENDENT_BASES_EP(1)+DEPENDENT_BASES_EP(2)) = &
+!                   & equationsMatrix%elementMatrix%matrix(ns,ms+DEPENDENT_BASES_EP(1)+DEPENDENT_BASES_EP(2)) + &
 !                   & JRWG*C(1,3)*DPHIDX_COMP(1)%DPHIDX(ns,1)*DPHIDX_COMP(3)%DPHIDX(ms,3) + &
 !                   & JRWG*C(4,4)*DPHIDX_COMP(1)%DPHIDX(ns,3)*DPHIDX_COMP(3)%DPHIDX(ms,1)
 !               ENDDO !ns
 !             ENDDO !ms
 !             DO ns=1,DEPENDENT_BASES_EP(2)
 !               DO ms=1,DEPENDENT_BASES_EP(3)
-!                 EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(ns+DEPENDENT_BASES_EP(1),ms+DEPENDENT_BASES_EP(1)+DEPENDENT_BASES_EP(2)) = &
-!                   & EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(ns+DEPENDENT_BASES_EP(1),ms+DEPENDENT_BASES_EP(1)+DEPENDENT_BASES_EP(2)) + &
+!                 equationsMatrix%elementMatrix%matrix(ns+DEPENDENT_BASES_EP(1),ms+DEPENDENT_BASES_EP(1)+DEPENDENT_BASES_EP(2)) = &
+!                   & equationsMatrix%elementMatrix%matrix(ns+DEPENDENT_BASES_EP(1),ms+DEPENDENT_BASES_EP(1)+DEPENDENT_BASES_EP(2)) + &
 !                   & JRWG*C(2,3)*DPHIDX_COMP(2)%DPHIDX(ns,2)*DPHIDX_COMP(3)%DPHIDX(ms,3) + &
 !                   & JRWG*C(5,5)*DPHIDX_COMP(2)%DPHIDX(ns,3)*DPHIDX_COMP(3)%DPHIDX(ms,2)
 !               ENDDO !ns
@@ -1329,67 +1338,67 @@ CONTAINS
               DO mhs=1,TOTAL_DEPENDENT_BASIS_EP
                 DO nhs=mhs,TOTAL_DEPENDENT_BASIS_EP
                   !!TODO::Bring 2D plane stress/strain element thickness in through a field - element constant when it can be exported by field i/o. Currently brought in through material field (Temporary)
-                  EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)* &
-                    & MATERIALS_INTERP_POINT%values(1,1)
+                  equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
+                    & materialsInterpPoint%values(1,1)
                 ENDDO !nhs
               ENDDO !mhs
             ENDIF
           ENDIF
 
           !!TODO:: Is this RHS Vector update required? find out/check - RHS not used - BC are prescribed during assembling eg update RHS only when BC change - stiffness matrix should be the same
-          IF(RHS_VECTOR%UPDATE_VECTOR) THEN
-            RHS_VECTOR%ELEMENT_VECTOR%VECTOR=0.0_DP
+          IF(rhsVector%updateVector) THEN
+            rhsVector%elementVector%vector=0.0_DP
           ENDIF
 
           !Scale factor adjustment, Application of Scale factors is symmetric
-          IF(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-            DEPENDENT_INTERPOLATION_PARAMETERS=>EQUATIONS%INTERPOLATION%DEPENDENT_INTERP_PARAMETERS(FIELD_VAR_TYPE)%PTR
+          IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
+            DEPENDENT_INTERPOLATION_PARAMETERS=>equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,DEPENDENT_INTERPOLATION_PARAMETERS, &
-              & ERR,ERROR,*999)
+              & err,error,*999)
             DO xi=1,NUMBER_OF_XI
               SF(DIAG_SUB_MAT_LOC(xi)+1:SUM(DEPENDENT_BASES_EP(1:xi)))=DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,xi)
             ENDDO !xi
             DO mhs=1,TOTAL_DEPENDENT_BASIS_EP
-              IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
+              IF(equationsMatrix%updateMatrix) THEN
                 DO nhs=mhs,TOTAL_DEPENDENT_BASIS_EP
-                  EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)=EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs)*SF(mhs)*SF(nhs)
+                  equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)*SF(mhs)*SF(nhs)
                 ENDDO !nhs
               ENDIF
               !!TODO:: Check if RHS update required for Linear Elasticity ie is the RHS the force terms but they are set during assembling and not here?
-              IF(RHS_VECTOR%UPDATE_VECTOR) RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)=RHS_VECTOR%ELEMENT_VECTOR%VECTOR(mhs)*SF(mhs)
+              IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)*SF(mhs)
             ENDDO !mhs
           ENDIF
 
-          IF(EQUATIONS_MATRIX%UPDATE_MATRIX) THEN
+          IF(equationsMatrix%updateMatrix) THEN
             !Transpose upper triangular portion of Stiffness matrix to give lower triangular portion. Has to be done after scale factors are applied
             !!TODO:: Use symmetric linear equation solver or alternatively traspose to give full matrix when asemmbling or when creating solver matrices
-            !!TODO:: Better to use SIZE(EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX,1) as apposed to TOTAL_DEPENDENT_BASIS_EP? Is the size re-calculated at end of every loop?
+            !!TODO:: Better to use SIZE(equationsMatrix%elementMatrix%matrix,1) as apposed to TOTAL_DEPENDENT_BASIS_EP? Is the size re-calculated at end of every loop?
             DO mhs=2,TOTAL_DEPENDENT_BASIS_EP
               DO nhs=1,mhs-1
-                EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(mhs,nhs) = EQUATIONS_MATRIX%ELEMENT_MATRIX%MATRIX(nhs,mhs)
+                equationsMatrix%elementMatrix%matrix(mhs,nhs) = equationsMatrix%elementMatrix%matrix(nhs,mhs)
               ENDDO !nhs
             ENDDO !mhs
           ENDIF
 
         CASE(EQUATIONS_SET_PLATE_SUBTYPE)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_SHELL_SUBTYPE)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+          localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
             & " is not valid for a Linear Elasticity equation type of a Elasticty equations set class."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       ELSE
-        CALL FlagError("Equations set equations is not associated.",ERR,ERROR,*999)
+        CALL FlagError("Equations set equations is not associated.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
     EXITS("LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE")
     RETURN
-999 ERRORSEXITS("LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE",ERR,ERROR)
+999 ERRORSEXITS("LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE",err,error)
     RETURN 1
   END SUBROUTINE LINEAR_ELASTICITY_FINITE_ELEMENT_CALCULATE
 
@@ -1398,7 +1407,7 @@ CONTAINS
   !
 
   !>Evaluates the linear elasticity tensor
-  SUBROUTINE LINEAR_ELASTICITY_TENSOR(EQUATIONS_SET_SUBTYPE,MATERIALS_INTERPOLATED_POINT,ELASTICITY_TENSOR,ERR,ERROR,*)
+  SUBROUTINE LINEAR_ELASTICITY_TENSOR(EQUATIONS_SET_SUBTYPE,MATERIALS_INTERPOLATED_POINT,ELASTICITY_TENSOR,err,error,*)
 
     !Argument variables    
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_SUBTYPE !<The subtype of the particular equation set being used
@@ -1410,9 +1419,9 @@ CONTAINS
     !Local Variables
     REAL(DP) :: E1,E2,E3,v13,v23,v12,v31,v32,v21,gama
     REAL(DP) :: C11,C22,C33,C12,C13,C23,C21,C31,C32,C44,C55,C66
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("LINEAR_ELASTICITY_TENSOR",ERR,ERROR,*999)
+    ENTERS("LINEAR_ELASTICITY_TENSOR",err,error,*999)
     ELASTICITY_TENSOR=0.0_DP
     SELECT CASE(EQUATIONS_SET_SUBTYPE)
     !Note: Fortran uses column major format for arrays.
@@ -1440,9 +1449,9 @@ CONTAINS
       C44 = E2/(2.0_DP*(1.0_DP+v23)) != G23
       C55 = E1/(2.0_DP*(1.0_DP+v13)) != G13
       C66 = E3/(2.0_DP*(1.0_DP+v12)) != G12
-      ELASTICITY_TENSOR(1:6,1)=(/C11,C21,C31,0.0_DP,0.0_DP,0.0_DP/)
-      ELASTICITY_TENSOR(1:6,2)=(/C12,C22,C32,0.0_DP,0.0_DP,0.0_DP/)
-      ELASTICITY_TENSOR(1:6,3)=(/C13,C23,C33,0.0_DP,0.0_DP,0.0_DP/)
+      ELASTICITY_TENSOR(1:6,1)=[C11,C21,C31,0.0_DP,0.0_DP,0.0_DP]
+      ELASTICITY_TENSOR(1:6,2)=[C12,C22,C32,0.0_DP,0.0_DP,0.0_DP]
+      ELASTICITY_TENSOR(1:6,3)=[C13,C23,C33,0.0_DP,0.0_DP,0.0_DP]
       ELASTICITY_TENSOR(4,4)=C44
       ELASTICITY_TENSOR(5,5)=C55
       ELASTICITY_TENSOR(6,6)=C66
@@ -1485,18 +1494,18 @@ CONTAINS
       C11 = E1
       ELASTICITY_TENSOR(1,1)=C11
     CASE(EQUATIONS_SET_PLATE_SUBTYPE)
-      CALL FlagError("Not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_SHELL_SUBTYPE)
-      CALL FlagError("Not implemented.",ERR,ERROR,*999)
+      CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SUBTYPE,"*",ERR,ERROR))// &
+      localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
             & " is not valid for a Linear Elasticity equation type of a Elasticty equations set class."
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+      CALL FlagError(localError,err,error,*999)
     END SELECT
 
     EXITS("LINEAR_ELASTICITY_TENSOR")
     RETURN
-999 ERRORSEXITS("LINEAR_ELASTICITY_TENSOR",ERR,ERROR)
+999 ERRORSEXITS("LINEAR_ELASTICITY_TENSOR",err,error)
     RETURN 1
   END SUBROUTINE LINEAR_ELASTICITY_TENSOR
 
@@ -1505,7 +1514,7 @@ CONTAINS
   !
 
   !>Sets up the Linear elasticity equation type of an elasticity equations set class.
-  SUBROUTINE LINEAR_ELASTICITY_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,ERR,ERROR,*)
+  SUBROUTINE LINEAR_ELASTICITY_EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to setup a linear elasticity equation on.
@@ -1516,18 +1525,19 @@ CONTAINS
     INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE, &
       & NUMBER_OF_COMPONENTS,NUMBER_OF_DIMENSIONS
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
-    TYPE(EQUATIONS_TYPE), POINTER :: EQUATIONS
-    TYPE(EQUATIONS_MAPPING_TYPE), POINTER :: EQUATIONS_MAPPING
-    TYPE(EQUATIONS_MATRICES_TYPE), POINTER :: EQUATIONS_MATRICES
+    TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,dependentField,geometricField
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_MATERIALS_TYPE), POINTER :: EQUATIONS_MATERIALS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("LINEAR_ELASTICITY_EQUATIONS_SET_SETUP",ERR,ERROR,*999)
+    ENTERS("LINEAR_ELASTICITY_EQUATIONS_SET_SETUP",err,error,*999)
 
     NULLIFY(EQUATIONS)
-    NULLIFY(EQUATIONS_MAPPING)
-    NULLIFY(EQUATIONS_MATRICES)
+    NULLIFY(vectorMapping)
+    NULLIFY(vectorMatrices)
     NULLIFY(GEOMETRIC_DECOMPOSITION)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
@@ -1550,14 +1560,14 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             !Default to FEM solution
             CALL LinearElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD, &
-              & ERR,ERROR,*999)
+              & err,error,*999)
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!TODO: Check valid setup
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
           !Do nothing???
@@ -1567,118 +1577,118 @@ CONTAINS
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
               CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
-                & DEPENDENT_FIELD,ERR,ERROR,*999)
-              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
-              CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                & DEPENDENT_FIELD,err,error,*999)
+              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
               CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
-                & GEOMETRIC_FIELD,ERR,ERROR,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,ERR,ERROR,*999)
-              CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,(/FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE/),ERR,ERROR,*999)
+                & GEOMETRIC_FIELD,err,error,*999)
+              CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,err,error,*999)
+              CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+                & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
               CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                & NUMBER_OF_DIMENSIONS,err,error,*999)
               NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & NUMBER_OF_COMPONENTS,err,error,*999)
               !Default to the geometric interpolation setup
               DO component_idx=1,NUMBER_OF_DIMENSIONS
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
               ENDDO !component_idx
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 DO component_idx=1,NUMBER_OF_COMPONENTS
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                    & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 ENDDO !component_idx
                 !Default the scaling to the geometric field scaling
-                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(localError,err,error,*999)
               END SELECT
             ELSE
               !Check the user specified field
-              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,2,ERR,ERROR,*999)
-              CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,(/FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE/), &
-                & ERR,ERROR,*999)
+              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
+              CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+                & err,error,*999)
               CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                & ERR,ERROR,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                & err,error,*999)
+              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                & NUMBER_OF_DIMENSIONS,err,error,*999)
               NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(localError,err,error,*999)
               END SELECT
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-              CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+              CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -1689,73 +1699,73 @@ CONTAINS
                 !Default to the general 3D orthotropic material
                 !Create the auto created materials field
                 CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                  & MATERIALS_FIELD,ERR,ERROR,*999)
-                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
-                CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
-                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                  & MATERIALS_FIELD,err,error,*999)
+                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
-                  & GEOMETRIC_FIELD,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,(/FIELD_U_VARIABLE_TYPE/), &
-                  & ERR,ERROR,*999)
+                  & GEOMETRIC_FIELD,err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
+                  & err,error,*999)
                 CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  & FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 6,ERR,ERROR,*999)
+                  & 6,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,ERR,ERROR,*999)                
+                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)                
                 DO component_idx=1,6
                   !Default to to the first geometric component with constant interpolation
                   CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,GEOMETRIC_COMPONENT_NUMBER,ERR,ERROR,*999)
+                    & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
+                    & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 ENDDO !component_idx
                 !Default the field scaling to that of the geometric field
-                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               ELSE
                 !Check the user specified field
-                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
-                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,(/FIELD_U_VARIABLE_TYPE/),ERR,ERROR,*999)
+                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                 CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & ERR,ERROR,*999)
-                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,6,ERR,ERROR,*999)
+                  & err,error,*999)
+                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,6,err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("Equations materials is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations materials is not associated.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Finish creating the materials field
-                CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,ERR,ERROR,*999)
+                CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
                 !Set the default values for the materials field
                 DO component_idx=1,3
                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,component_idx,30.0E6_DP,ERR,ERROR,*999)
+                    & FIELD_VALUES_SET_TYPE,component_idx,30.0E6_DP,err,error,*999)
                 ENDDO !component_idx
                 DO component_idx=4,6
                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,component_idx,0.25_DP,ERR,ERROR,*999)
+                    & FIELD_VALUES_SET_TYPE,component_idx,0.25_DP,err,error,*999)
                 ENDDO !component_idx
               ENDIF
             ELSE
-              CALL FlagError("Equations set materials is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -1765,32 +1775,32 @@ CONTAINS
             !Do nothing
             !? Maybe set finished flag????
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
 
         CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-              DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-              IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+              dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+              IF(ASSOCIATED(dependentField)) THEN
+                geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                IF(ASSOCIATED(geometricField)) THEN
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
                   !List 3 Dimensional Analytic function types currently implemented
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1)
                     !Check that we are in 3D
                     IF(NUMBER_OF_DIMENSIONS/=3) THEN
-                      LOCAL_ERROR="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
+                      localError="The number of geometric dimensions of "// &
+                        & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError(localError,err,error,*999)
                     ENDIF
                     !Create analytic field if required
                     !Set analtyic function type
@@ -1798,47 +1808,47 @@ CONTAINS
                   CASE(EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2)
                     !Check that we are in 3D
                     IF(NUMBER_OF_DIMENSIONS/=3) THEN
-                      LOCAL_ERROR="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
+                      localError="The number of geometric dimensions of "// &
+                        & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError(localError,err,error,*999)
                     ENDIF
                     !Create analytic field if required
                     !Set analtyic function type
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2
                   CASE DEFAULT
-                    LOCAL_ERROR="The specified analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                    localError="The specified analytic function type of "// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                       & " is invalid for a standard Linear Elasticity equation."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(localError,err,error,*999)
                   END SELECT
                 ELSE
-                  CALL FlagError("Equations set geometric field is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
                 ENDIF
              ELSE
-                CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("Equations set dependent field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
               ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
                 IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD_AUTO_CREATED) THEN
-                  CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+                  CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
                 ENDIF
               ENDIF
             ELSE
-              CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a standard Linear Elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
 
         CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
@@ -1846,67 +1856,66 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
               !Create the equations
-              CALL EQUATIONS_CREATE_START(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-              CALL EQUATIONS_LINEARITY_TYPE_SET(EQUATIONS,EQUATIONS_LINEAR,ERR,ERROR,*999)
-              CALL EQUATIONS_TIME_DEPENDENCE_TYPE_SET(EQUATIONS,EQUATIONS_STATIC,ERR,ERROR,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
             ELSE
-              CALL FlagError("Equations set dependent field has not bee finished.",ERR,ERROR,*999)
+              CALL FlagError("Equations set dependent field has not bee finished.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the equations creation
-              CALL EQUATIONS_SET_EQUATIONS_GET(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-              CALL EQUATIONS_CREATE_FINISH(EQUATIONS,ERR,ERROR,*999)
+              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
-              CALL EQUATIONS_MAPPING_CREATE_START(EQUATIONS,EQUATIONS_MAPPING,ERR,ERROR,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(EQUATIONS_MAPPING,1,ERR,ERROR,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(EQUATIONS_MAPPING,(/FIELD_U_VARIABLE_TYPE/), &
-                & ERR,ERROR,*999)
-              CALL EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET(EQUATIONS_MAPPING,FIELD_DELUDELN_VARIABLE_TYPE,ERR,ERROR,*999)
-              CALL EQUATIONS_MAPPING_CREATE_FINISH(EQUATIONS_MAPPING,ERR,ERROR,*999)
+              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+                & err,error,*999)
+              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
-              CALL EQUATIONS_MATRICES_CREATE_START(EQUATIONS,EQUATIONS_MATRICES,ERR,ERROR,*999)
-              SELECT CASE(EQUATIONS%SPARSITY_TYPE)
+              CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+              SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(EQUATIONS_MATRICES,(/MATRIX_BLOCK_STORAGE_TYPE/), &
-                  & ERR,ERROR,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(EQUATIONS_MATRICES,(/MATRIX_COMPRESSED_ROW_STORAGE_TYPE/), &
-                  & ERR,ERROR,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(EQUATIONS_MATRICES,(/EQUATIONS_MATRIX_FEM_STRUCTURE/), &
-                  & ERR,ERROR,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                localError="The equations matrices sparsity type of "// &
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
               END SELECT
-              CALL EQUATIONS_MATRICES_CREATE_FINISH(EQUATIONS_MATRICES,ERR,ERROR,*999)
+              CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+              localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                 & " is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a linear elasticity equation."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
 
       !
@@ -1919,14 +1928,14 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             !Default to FEM solution
             CALL LinearElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD, &
-              & ERR,ERROR,*999)
+              & err,error,*999)
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!TODO: Check valid setup
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
           !Do nothing???
@@ -1936,118 +1945,118 @@ CONTAINS
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
               CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
-                & DEPENDENT_FIELD,ERR,ERROR,*999)
-              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
-              CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                & DEPENDENT_FIELD,err,error,*999)
+              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
               CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
-                & GEOMETRIC_FIELD,ERR,ERROR,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,ERR,ERROR,*999)
-              CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,(/FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE/),ERR,ERROR,*999)
+                & GEOMETRIC_FIELD,err,error,*999)
+              CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,err,error,*999)
+              CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+                & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
               CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                & NUMBER_OF_DIMENSIONS,err,error,*999)
               NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & NUMBER_OF_COMPONENTS,err,error,*999)
               !Default to the geometric interpolation setup
               DO component_idx=1,NUMBER_OF_DIMENSIONS
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
               ENDDO !component_idx
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 DO component_idx=1,NUMBER_OF_COMPONENTS
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                    & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 ENDDO !component_idx
                 !Default the scaling to the geometric field scaling
-                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(localError,err,error,*999)
               END SELECT
             ELSE
               !Check the user specified field
-              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,2,ERR,ERROR,*999)
-              CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,(/FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE/), &
-                & ERR,ERROR,*999)
+              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
+              CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+                & err,error,*999)
               CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                & ERR,ERROR,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                & err,error,*999)
+              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                & NUMBER_OF_DIMENSIONS,err,error,*999)
               NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(localError,err,error,*999)
               END SELECT
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-              CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+              CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -2058,71 +2067,71 @@ CONTAINS
                 !Default to the general 3D orthotropic material
                 !Create the auto created materials field
                 CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                  & MATERIALS_FIELD,ERR,ERROR,*999)
-                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
-                CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
-                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                  & MATERIALS_FIELD,err,error,*999)
+                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
-                  & GEOMETRIC_FIELD,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,(/FIELD_U_VARIABLE_TYPE/), &
-                  & ERR,ERROR,*999)
+                  & GEOMETRIC_FIELD,err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
+                  & err,error,*999)
                 CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  & FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 6,ERR,ERROR,*999)
+                  & 6,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,ERR,ERROR,*999)                
+                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)                
                 DO component_idx=1,6
                   !Default to to the first geometric component with constant interpolation
                   CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,GEOMETRIC_COMPONENT_NUMBER,ERR,ERROR,*999)
+                    & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
+                    & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 ENDDO !component_idx
                 !Default the field scaling to that of the geometric field
-                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               ELSE
                 !Check the user specified field
-                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
-                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,(/FIELD_U_VARIABLE_TYPE/),ERR,ERROR,*999)
+                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                 CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & ERR,ERROR,*999)
-                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                  & err,error,*999)
+                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 !2 Components for 2D Isotropic Linear Elasticity
                 !TODO:: Temporarily set to 3 to allow thickness to passed in. Remove once a thickness, element constant field is defined and can be exported/viewed by cmgui
-                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,3,ERR,ERROR,*999) 
+                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,3,err,error,*999) 
               ENDIF
             ELSE
-              CALL FlagError("Equations materials is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations materials is not associated.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Finish creating the materials field
-                CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,ERR,ERROR,*999)
+                CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
                 !Set the default values for the materials field
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,ERR,ERROR,*999) !Young's Modulus
+                & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,err,error,*999) !Young's Modulus
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,2,0.25_DP,ERR,ERROR,*999) !Poisson's Ratio
+                & FIELD_VALUES_SET_TYPE,2,0.25_DP,err,error,*999) !Poisson's Ratio
               ENDIF
             ELSE
-              CALL FlagError("Equations set materials is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -2132,68 +2141,68 @@ CONTAINS
             !Do nothing
             !? Maybe set finished flag????
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
 
         CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-              DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-              IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+              dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+              IF(ASSOCIATED(dependentField)) THEN
+                geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                IF(ASSOCIATED(geometricField)) THEN
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
                   !List 3 Dimensional Analytic function types currently implemented
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1)
                     !Check that we are in 2D
                     !!TODO:: This check may have been done before
                     IF(NUMBER_OF_DIMENSIONS/=2) THEN
-                      LOCAL_ERROR="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
+                      localError="The number of geometric dimensions of "// &
+                        & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError(localError,err,error,*999)
                     ENDIF
                     !Create analytic field if required
                     !Set analtyic function type
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1
                   CASE DEFAULT
-                    LOCAL_ERROR="The specified analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                    localError="The specified analytic function type of "// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                       & " is invalid for a standard Linear Elasticity equation."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(localError,err,error,*999)
                   END SELECT
                 ELSE
-                  CALL FlagError("Equations set geometric field is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
                 ENDIF
              ELSE
-                CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("Equations set dependent field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
               ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
                 IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD_AUTO_CREATED) THEN
-                  CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+                  CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
                 ENDIF
               ENDIF
             ELSE
-              CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a standard Linear Elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
 
 
@@ -2202,67 +2211,66 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
               !Create the equations
-              CALL EQUATIONS_CREATE_START(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-              CALL EQUATIONS_LINEARITY_TYPE_SET(EQUATIONS,EQUATIONS_LINEAR,ERR,ERROR,*999)
-              CALL EQUATIONS_TIME_DEPENDENCE_TYPE_SET(EQUATIONS,EQUATIONS_STATIC,ERR,ERROR,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
             ELSE
-              CALL FlagError("Equations set dependent field has not bee finished.",ERR,ERROR,*999)
+              CALL FlagError("Equations set dependent field has not bee finished.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the equations creation
-              CALL EQUATIONS_SET_EQUATIONS_GET(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-              CALL EQUATIONS_CREATE_FINISH(EQUATIONS,ERR,ERROR,*999)
+              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
-              CALL EQUATIONS_MAPPING_CREATE_START(EQUATIONS,EQUATIONS_MAPPING,ERR,ERROR,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(EQUATIONS_MAPPING,1,ERR,ERROR,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(EQUATIONS_MAPPING,(/FIELD_U_VARIABLE_TYPE/), &
-                & ERR,ERROR,*999)
-              CALL EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET(EQUATIONS_MAPPING,FIELD_DELUDELN_VARIABLE_TYPE,ERR,ERROR,*999)
-              CALL EQUATIONS_MAPPING_CREATE_FINISH(EQUATIONS_MAPPING,ERR,ERROR,*999)
+              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+                & err,error,*999)
+              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
-              CALL EQUATIONS_MATRICES_CREATE_START(EQUATIONS,EQUATIONS_MATRICES,ERR,ERROR,*999)
-              SELECT CASE(EQUATIONS%SPARSITY_TYPE)
+              CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+              SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(EQUATIONS_MATRICES,(/MATRIX_BLOCK_STORAGE_TYPE/), &
-                  & ERR,ERROR,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(EQUATIONS_MATRICES,(/MATRIX_COMPRESSED_ROW_STORAGE_TYPE/), &
-                  & ERR,ERROR,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(EQUATIONS_MATRICES,(/EQUATIONS_MATRIX_FEM_STRUCTURE/), &
-                  & ERR,ERROR,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                localError="The equations matrices sparsity type of "// &
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
               END SELECT
-              CALL EQUATIONS_MATRICES_CREATE_FINISH(EQUATIONS_MATRICES,ERR,ERROR,*999)
+              CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+              localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                 & " is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a linear elasticity equation."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
 
       !
@@ -2275,14 +2283,14 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             !Default to FEM solution
             CALL LinearElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,EQUATIONS_SET_FEM_SOLUTION_METHOD, &
-              & ERR,ERROR,*999)
+              & err,error,*999)
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
 !!TODO: Check valid setup
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_GEOMETRY_TYPE)
           !Do nothing???
@@ -2292,118 +2300,118 @@ CONTAINS
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
               CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
-                & DEPENDENT_FIELD,ERR,ERROR,*999)
-              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
-              CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                & DEPENDENT_FIELD,err,error,*999)
+              CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
               CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
-                & GEOMETRIC_FIELD,ERR,ERROR,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,ERR,ERROR,*999)
-              CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,(/FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE/),ERR,ERROR,*999)
+                & GEOMETRIC_FIELD,err,error,*999)
+              CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,2,err,error,*999)
+              CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,[FIELD_U_VARIABLE_TYPE, &
+                & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
               CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & FIELD_DP_TYPE,ERR,ERROR,*999)
+                & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                & NUMBER_OF_DIMENSIONS,err,error,*999)
               NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                & NUMBER_OF_COMPONENTS,ERR,ERROR,*999)
+                & NUMBER_OF_COMPONENTS,err,error,*999)
               !Default to the geometric interpolation setup
               DO component_idx=1,NUMBER_OF_DIMENSIONS
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & component_idx,GEOMETRIC_MESH_COMPONENT,ERR,ERROR,*999)
+                  & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
               ENDDO !component_idx
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 DO component_idx=1,NUMBER_OF_COMPONENTS
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                    & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 ENDDO !component_idx
                 !Default the scaling to the geometric field scaling
-                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(localError,err,error,*999)
               END SELECT
             ELSE
               !Check the user specified field
-              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,ERR,ERROR,*999)
-              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,2,ERR,ERROR,*999)
-              CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,(/FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE/), &
-                & ERR,ERROR,*999)
+              CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+              CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
+              CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,2,err,error,*999)
+              CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+                & err,error,*999)
               CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                & ERR,ERROR,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
-              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                & err,error,*999)
+              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                & NUMBER_OF_DIMENSIONS,err,error,*999)
               NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
-                & ERR,ERROR,*999)
+                & err,error,*999)
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1, &
-                  & FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                  & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-                CALL FlagError("Not implemented.",ERR,ERROR,*999)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+                localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                   & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                CALL FlagError(localError,err,error,*999)
               END SELECT
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
-              CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+              CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_MATERIALS_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -2414,70 +2422,70 @@ CONTAINS
                 !Default to the general 3D orthotropic material
                 !Create the auto created materials field
                 CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
-                  & MATERIALS_FIELD,ERR,ERROR,*999)
-                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
-                CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
-                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,ERR,ERROR,*999)
+                  & MATERIALS_FIELD,err,error,*999)
+                CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
-                  & ERR,ERROR,*999)
+                  & err,error,*999)
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
-                  & GEOMETRIC_FIELD,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,(/FIELD_U_VARIABLE_TYPE/), &
-                  & ERR,ERROR,*999)
+                  & GEOMETRIC_FIELD,err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
+                  & err,error,*999)
                 CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VECTOR_DIMENSION_TYPE,ERR,ERROR,*999)
+                  & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_DP_TYPE,ERR,ERROR,*999)
+                  & FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 6,ERR,ERROR,*999)
+                  & 6,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,ERR,ERROR,*999)                
+                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)                
                 DO component_idx=1,6
                   !Default to to the first geometric component with constant interpolation
                   CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,GEOMETRIC_COMPONENT_NUMBER,ERR,ERROR,*999)
+                    & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & component_idx,FIELD_CONSTANT_INTERPOLATION,ERR,ERROR,*999)
+                    & component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                 ENDDO !component_idx
                 !Default the field scaling to that of the geometric field
-                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
-                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,ERR,ERROR,*999)
+                CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
               ELSE
                 !Check the user specified field
-                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,ERR,ERROR,*999)
-                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,ERR,ERROR,*999)
-                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,ERR,ERROR,*999)
-                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,(/FIELD_U_VARIABLE_TYPE/),ERR,ERROR,*999)
+                CALL FIELD_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
+                CALL FIELD_DEPENDENT_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+                CALL FIELD_NUMBER_OF_VARIABLES_CHECK(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
+                CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                 CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
-                  & ERR,ERROR,*999)
-                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,ERR,ERROR,*999)
+                  & err,error,*999)
+                CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 !2 Components for 2D Isotropic Linear Elasticity
-                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,2,ERR,ERROR,*999) 
+                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999) 
               ENDIF
             ELSE
-              CALL FlagError("Equations materials is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations materials is not associated.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             EQUATIONS_MATERIALS=>EQUATIONS_SET%MATERIALS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Finish creating the materials field
-                CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,ERR,ERROR,*999)
+                CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
                 !Set the default values for the materials field
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,ERR,ERROR,*999) !Young's Modulus
+                & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,err,error,*999) !Young's Modulus
                 CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & FIELD_VALUES_SET_TYPE,2,0.25_DP,ERR,ERROR,*999) !Poisson's Ratio
+                & FIELD_VALUES_SET_TYPE,2,0.25_DP,err,error,*999) !Poisson's Ratio
               ENDIF
             ELSE
-              CALL FlagError("Equations set materials is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set materials is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(EQUATIONS_SET_SETUP_SOURCE_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -2487,67 +2495,67 @@ CONTAINS
             !Do nothing
             !? Maybe set finished flag????
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
 
         CASE(EQUATIONS_SET_SETUP_ANALYTIC_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
-              DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-              IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+              dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
+              IF(ASSOCIATED(dependentField)) THEN
+                geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                IF(ASSOCIATED(geometricField)) THEN
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
                   !List 3 Dimensional Analytic function types currently implemented
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1)
                     !Check that we are in 1D
                     IF(NUMBER_OF_DIMENSIONS/=1) THEN
-                      LOCAL_ERROR="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",ERR,ERROR))// &
+                      localError="The number of geometric dimensions of "// &
+                        & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
-                        & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 1 geometric dimension."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError(localError,err,error,*999)
                     ENDIF
                     !Create analytic field if required
                     !Set analtyic function type
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1
                   CASE DEFAULT
-                    LOCAL_ERROR="The specified analytic function type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",ERR,ERROR))// &
+                    localError="The specified analytic function type of "// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                       & " is invalid for a standard Linear Elasticity equation."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                    CALL FlagError(localError,err,error,*999)
                   END SELECT
                 ELSE
-                  CALL FlagError("Equations set geometric field is not associated.",ERR,ERROR,*999)
+                  CALL FlagError("Equations set geometric field is not associated.",err,error,*999)
                 ENDIF
              ELSE
-                CALL FlagError("Equations set dependent field is not associated.",ERR,ERROR,*999)
+                CALL FlagError("Equations set dependent field is not associated.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("Equations set dependent field has not been finished.",ERR,ERROR,*999)
+              CALL FlagError("Equations set dependent field has not been finished.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
               ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
                 IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD_AUTO_CREATED) THEN
-                  CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,ERR,ERROR,*999)
+                  CALL FIELD_CREATE_FINISH(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
                 ENDIF
               ENDIF
             ELSE
-              CALL FlagError("Equations set analytic is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Equations set analytic is not associated.",err,error,*999)
             ENDIF
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a standard Linear Elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
 
         CASE(EQUATIONS_SET_SETUP_EQUATIONS_TYPE)
@@ -2555,84 +2563,83 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
               !Create the equations
-              CALL EQUATIONS_CREATE_START(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-              CALL EQUATIONS_LINEARITY_TYPE_SET(EQUATIONS,EQUATIONS_LINEAR,ERR,ERROR,*999)
-              CALL EQUATIONS_TIME_DEPENDENCE_TYPE_SET(EQUATIONS,EQUATIONS_STATIC,ERR,ERROR,*999)
+              CALL Equations_CreateStart(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_LinearityTypeSet(equations,EQUATIONS_LINEAR,err,error,*999)
+              CALL Equations_TimeDependenceTypeSet(equations,EQUATIONS_STATIC,err,error,*999)
             ELSE
-              CALL FlagError("Equations set dependent field has not bee finished.",ERR,ERROR,*999)
+              CALL FlagError("Equations set dependent field has not bee finished.",err,error,*999)
             ENDIF
           CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
               !Finish the equations creation
-              CALL EQUATIONS_SET_EQUATIONS_GET(EQUATIONS_SET,EQUATIONS,ERR,ERROR,*999)
-              CALL EQUATIONS_CREATE_FINISH(EQUATIONS,ERR,ERROR,*999)
+              CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
+              CALL Equations_CreateFinish(equations,err,error,*999)
+              NULLIFY(vectorEquations)
+              CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
               !Create the equations mapping.
-              CALL EQUATIONS_MAPPING_CREATE_START(EQUATIONS,EQUATIONS_MAPPING,ERR,ERROR,*999)
-              CALL EquationsMapping_LinearMatricesNumberSet(EQUATIONS_MAPPING,1,ERR,ERROR,*999)
-              CALL EquationsMapping_LinearMatricesVariableTypesSet(EQUATIONS_MAPPING,(/FIELD_U_VARIABLE_TYPE/), &
-                & ERR,ERROR,*999)
-              CALL EQUATIONS_MAPPING_RHS_VARIABLE_TYPE_SET(EQUATIONS_MAPPING,FIELD_DELUDELN_VARIABLE_TYPE,ERR,ERROR,*999)
-              CALL EQUATIONS_MAPPING_CREATE_FINISH(EQUATIONS_MAPPING,ERR,ERROR,*999)
+              CALL EquationsMapping_VectorCreateStart(vectorEquations,FIELD_DELUDELN_VARIABLE_TYPE,vectorMapping,err,error,*999)
+              CALL EquationsMapping_LinearMatricesNumberSet(vectorMapping,1,err,error,*999)
+              CALL EquationsMapping_LinearMatricesVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE], &
+                & err,error,*999)
+              CALL EquationsMapping_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
-              CALL EQUATIONS_MATRICES_CREATE_START(EQUATIONS,EQUATIONS_MATRICES,ERR,ERROR,*999)
-              SELECT CASE(EQUATIONS%SPARSITY_TYPE)
+              CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
+              SELECT CASE(equations%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
-                CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(EQUATIONS_MATRICES,(/MATRIX_BLOCK_STORAGE_TYPE/), &
-                  & ERR,ERROR,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               CASE(EQUATIONS_MATRICES_SPARSE_MATRICES)
-                CALL EQUATIONS_MATRICES_LINEAR_STORAGE_TYPE_SET(EQUATIONS_MATRICES,(/MATRIX_COMPRESSED_ROW_STORAGE_TYPE/), &
-                  & ERR,ERROR,*999)
-                CALL EquationsMatrices_LinearStructureTypeSet(EQUATIONS_MATRICES,(/EQUATIONS_MATRIX_FEM_STRUCTURE/), &
-                  & ERR,ERROR,*999)
+                CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                CALL EquationsMatrices_LinearStructureTypeSet(vectorMatrices,[EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
               CASE DEFAULT
-                LOCAL_ERROR="The equations matrices sparsity type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS%SPARSITY_TYPE,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                localError="The equations matrices sparsity type of "// &
+                  & TRIM(NumberToVString(equations%sparsityType,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
               END SELECT
-              CALL EQUATIONS_MATRICES_CREATE_FINISH(EQUATIONS_MATRICES,ERR,ERROR,*999)
+              CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-              CALL FlagError("Not implemented.",ERR,ERROR,*999)
+              CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The solution method of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SOLUTION_METHOD,"*",ERR,ERROR))// &
+              localError="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
                 & " is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity equation."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          localError="The setup type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a linear elasticity equation."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_PLATE_SUBTYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_SHELL_SUBTYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+        localError="Equations set subtype "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a linear elasticity equation type of an elasticity equation set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(localError,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
     EXITS("LINEAR_ELASTICITY_EQUATIONS_SET_SETUP")
     RETURN
-999 ERRORSEXITS("LINEAR_ELASTICITY_EQUATIONS_SET_SETUP",ERR,ERROR)
+999 ERRORSEXITS("LINEAR_ELASTICITY_EQUATIONS_SET_SETUP",err,error)
     RETURN 1
   END SUBROUTINE LINEAR_ELASTICITY_EQUATIONS_SET_SETUP
 
@@ -2641,7 +2648,7 @@ CONTAINS
   !
 
   !>Sets/changes the solution method for a linear elasticity equation type of an elasticity equations set class.
-  SUBROUTINE LinearElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,ERR,ERROR,*)
+  SUBROUTINE LinearElasticity_EquationsSetSolutionMethodSet(EQUATIONS_SET,SOLUTION_METHOD,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to set the solution method for
@@ -2649,9 +2656,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("LinearElasticity_EquationsSetSolutionMethodSet",ERR,ERROR,*999)
+    ENTERS("LinearElasticity_EquationsSetSolutionMethodSet",err,error,*999)
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -2666,89 +2673,89 @@ CONTAINS
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
         CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          LOCAL_ERROR="The specified solution method of "//TRIM(NUMBER_TO_VSTRING(SOLUTION_METHOD,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          localError="The specified solution method of "//TRIM(NumberToVString(SOLUTION_METHOD,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(EQUATIONS_SET_PLATE_SUBTYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_SHELL_SUBTYPE)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        LOCAL_ERROR="Equations set subtype of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET%SPECIFICATION(3),"*",ERR,ERROR))// &
+        localError="Equations set subtype of "//TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a linear elasticity equation type of an elasticity equations set class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(localError,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
     
     EXITS("LinearElasticity_EquationsSetSolutionMethodSet")
     RETURN
-999 ERRORS("LinearElasticity_EquationsSetSolutionMethodSet",ERR,ERROR)
+999 ERRORS("LinearElasticity_EquationsSetSolutionMethodSet",err,error)
     EXITS("LinearElasticity_EquationsSetSolutionMethodSet")
     RETURN 1
     
@@ -2816,7 +2823,7 @@ CONTAINS
   !
 
   !>Sets up the linear elasticity problem.
-  SUBROUTINE LINEAR_ELASTICITY_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
+  SUBROUTINE LINEAR_ELASTICITY_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem set to setup a linear elasticity equation on.
@@ -2828,9 +2835,9 @@ CONTAINS
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("LINEAR_ELASTICITY_PROBLEM_SETUP",ERR,ERROR,*999)
+    ENTERS("LINEAR_ELASTICITY_PROBLEM_SETUP",err,error,*999)
 
     NULLIFY(CONTROL_LOOP)
     NULLIFY(SOLVER)
@@ -2852,99 +2859,99 @@ CONTAINS
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Do nothing????
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity problem."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_CONTROL_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a simple control loop
-            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
+            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
+            CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity problem."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
           CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+          CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Start the solvers creation
-            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_NUMBER_SET(SOLVERS,1,ERR,ERROR,*999)
+            CALL SOLVERS_CREATE_START(CONTROL_LOOP,SOLVERS,err,error,*999)
+            CALL SOLVERS_NUMBER_SET(SOLVERS,1,err,error,*999)
             !Set the solver to be a linear solver
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,ERR,ERROR,*999)
+            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
+            CALL SOLVER_TYPE_SET(SOLVER,SOLVER_LINEAR_TYPE,err,error,*999)
             !Set solver defaults
-            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
+            CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the solvers
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             !Finish the solvers creation
-            CALL SOLVERS_CREATE_FINISH(SOLVERS,ERR,ERROR,*999)
+            CALL SOLVERS_CREATE_FINISH(SOLVERS,err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity problem."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
+            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
             !Create the solver equations
-            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,ERR,ERROR,*999)
-            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
+            CALL SOLVER_EQUATIONS_CREATE_START(SOLVER,SOLVER_EQUATIONS,err,error,*999)
+            CALL SOLVER_EQUATIONS_LINEARITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_LINEAR,err,error,*999)
+            CALL SOLVER_EQUATIONS_TIME_DEPENDENCE_TYPE_SET(SOLVER_EQUATIONS,SOLVER_EQUATIONS_STATIC,err,error,*999)
+            CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
             CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
-            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
-            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
-            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
-            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
+            CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,err,error,*999)
+            CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,err,error,*999)
             !Finish the solver equations creation
-            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
+            CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,err,error,*999)             
           CASE DEFAULT
-            LOCAL_ERROR="The action type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%ACTION_TYPE,"*",ERR,ERROR))// &
-              & " for a setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+            localError="The action type of "//TRIM(NumberToVString(PROBLEM_SETUP%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
               & " is invalid for a linear elasticity problem."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE DEFAULT
-          LOCAL_ERROR="The setup type of "//TRIM(NUMBER_TO_VSTRING(PROBLEM_SETUP%SETUP_TYPE,"*",ERR,ERROR))// &
+          localError="The setup type of "//TRIM(NumberToVString(PROBLEM_SETUP%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a linear elasticity problem."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+          CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE DEFAULT
-        LOCAL_ERROR="Problem subtype "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(3),"*",ERR,ERROR))// &
+        localError="Problem subtype "//TRIM(NumberToVString(PROBLEM%SPECIFICATION(3),"*",err,error))// &
           & " is not valid for a linear elasticity type of an elasticity problem class."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+        CALL FlagError(localError,err,error,*999)
       END SELECT
     ELSE
-      CALL FlagError("Problem is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Problem is not associated.",err,error,*999)
     ENDIF
 
     EXITS("LINEAR_ELASTICITY_PROBLEM_SETUP")
     RETURN
-999 ERRORSEXITS("LINEAR_ELASTICITY_PROBLEM_SETUP",ERR,ERROR)
+999 ERRORSEXITS("LINEAR_ELASTICITY_PROBLEM_SETUP",err,error)
     RETURN 1
   END SUBROUTINE LINEAR_ELASTICITY_PROBLEM_SETUP
 

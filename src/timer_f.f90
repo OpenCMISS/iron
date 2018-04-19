@@ -42,11 +42,10 @@
 !>
 
 !> This module contains routines for timing the program.
-MODULE TIMER
+MODULE Timer
 
-  USE BASE_ROUTINES
-  USE CONSTANTS
-  USE BASE_ROUTINES
+  USE BaseRoutines
+  USE Constants
   USE ISO_C_BINDING
   USE ISO_VARYING_STRING
 
@@ -74,19 +73,27 @@ MODULE TIMER
 
   !Interfaces
 
+  INTERFACE CPU_TIMER
+    MODULE PROCEDURE CPUTimer
+  END INTERFACE CPU_TIMER
+  
   INTERFACE
 
-    SUBROUTINE CPUTIMER(RETURN_TIME, TIME_TYPE, ERR, CERROR) BIND(C,NAME="CPUTimer")
+    SUBROUTINE CPUTimer_(returnTime, timeType, err, cError) BIND(C,NAME="CPUTimer")
       USE ISO_C_BINDING
-      REAL(C_DOUBLE), INTENT(OUT) :: RETURN_TIME
-      INTEGER(C_INT), INTENT(IN) :: TIME_TYPE
-      INTEGER(C_INT), INTENT(OUT) :: ERR
-      CHARACTER(C_CHAR), INTENT(OUT) :: CERROR(*)
-    END SUBROUTINE CPUTIMER
+      REAL(C_DOUBLE), INTENT(OUT) :: returnTime
+      INTEGER(C_INT), INTENT(IN) :: timeType
+      INTEGER(C_INT), INTENT(OUT) :: err
+      CHARACTER(C_CHAR), INTENT(OUT) :: cerror(*)
+    END SUBROUTINE CPUTIMER_
 
   END INTERFACE
 
-  PUBLIC USER_CPU,SYSTEM_CPU,TOTAL_CPU,CPU_TIMER
+  PUBLIC USER_CPU,SYSTEM_CPU,TOTAL_CPU
+
+  PUBLIC CPU_TIMER
+
+  PUBLIC CPUTimer
 
 CONTAINS
 
@@ -94,32 +101,33 @@ CONTAINS
   !============================================================================
   !
 
-  !>CPU_TIMER returns the CPU time in TIME(1). TIME_TYPE indicates the type of time required.
-  SUBROUTINE CPU_TIMER(TIME_TYPE,TIME,ERR,ERROR,*)
+  !>CPUTimer returns the CPU time in time(1). timeType indicates the type of time required.
+  SUBROUTINE CPUTimer(timeType,time,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: TIME_TYPE !<The required time type \see TIMER_TimerType,TIMER
-    REAL(SP), INTENT(OUT) :: TIME(*) !<On return, the requested time.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: timeType !<The required time type \see Timer_TimerType,Timer
+    REAL(SP), INTENT(OUT) :: time(*) !<On return, the requested time.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    REAL(DP) :: RETURN_TIME
-    CHARACTER(KIND=C_CHAR,LEN=MAXSTRLEN) :: CERROR
+    REAL(DP) :: returnTime
+    CHARACTER(KIND=C_CHAR,LEN=MAXSTRLEN) :: cError
 
-    ENTERS("CPU_TIMER",ERR, ERROR,*999)
+    ENTERS("CPUTimer",err,error,*999)
     
-    CALL CPUTIMER(RETURN_TIME,TIME_TYPE,ERR,CERROR)
-    TIME(1)=REAL(RETURN_TIME,SP)
-    IF(ERR/=0) CALL FlagError(CERROR,ERR,ERROR,*999)
+    CALL CPUTimer_(returnTime,timeType,err,cError)
+    time(1)=REAL(returnTime,SP)
+    IF(err/=0) CALL FlagError(cError,err,error,*999)
     
-    EXITS("CPU_TIMER")
+    EXITS("CPUTimer")
     RETURN
-999 ERRORSEXITS("CPU_TIMER",ERR,ERROR)
+999 ERRORSEXITS("CPUTimer",err,error)
     RETURN 1
-  END SUBROUTINE CPU_TIMER
+    
+  END SUBROUTINE CPUTimer
 
   !
   !============================================================================
   !
 
-END MODULE TIMER
+END MODULE Timer

@@ -1,7 +1,7 @@
 !> \file
 !> \author Sebastian Krittian
 !> \brief This module handles some mesh/parameter input routines and cmgui output routines for fluid mechanics
-!> routines and should be eventually replaces by field_IO_routines.f90 
+!> routines and should be eventually replaces by field_IO_routines.f90
 !>
 !> \section LICENSE
 !>
@@ -46,12 +46,13 @@
 
 MODULE FLUID_MECHANICS_IO_ROUTINES
 
- USE BASE_ROUTINES
- USE EQUATIONS_SET_CONSTANTS
+ USE BaseRoutines
+ USE EquationsSetConstants
  USE FIELD_ROUTINES
+ USE FieldAccessRoutines
  USE TYPES
- USE INPUT_OUTPUT 
- USE KINDS   
+ USE INPUT_OUTPUT
+ USE KINDS
 
 #include "macros.h"
 #include "dllexport.h"
@@ -140,10 +141,10 @@ MODULE FLUID_MECHANICS_IO_ROUTINES
     INTEGER, POINTER:: INTERFACE_ELEMENT_NUMBER(:)
     INTEGER, POINTER:: INTERFACE_ELEMENT_LOCAL_NODE(:)
     INTEGER:: MESH1_ID
-    INTEGER, POINTER:: MESH1_ELEMENT_NUMBER(:)  
+    INTEGER, POINTER:: MESH1_ELEMENT_NUMBER(:)
     REAL(DP), POINTER:: MESH1_ELEMENT_XI(:,:)
     INTEGER:: MESH2_ID
-    INTEGER, POINTER:: MESH2_ELEMENT_NUMBER(:)  
+    INTEGER, POINTER:: MESH2_ELEMENT_NUMBER(:)
     REAL(DP), POINTER:: MESH2_ELEMENT_XI(:,:)
   END TYPE COUPLING_PARAMETERS
 
@@ -166,7 +167,7 @@ MODULE FLUID_MECHANICS_IO_ROUTINES
 
   TYPE (ARRAY_PROBLEM_BASE) BASE_INFO
   TYPE (ARRAY_MESH) MESH_INFO(3)
-  TYPE (EXPORT_CONTAINER), SAVE :: TMP, TMP1
+  TYPE (EXPORT_CONTAINER), SAVE :: TMP
   !DLLEXPORT(TMP)
   TYPE (BOUNDARY_PARAMETERS) BC_TMP
   TYPE (COUPLING_PARAMETERS) CONNECT_TMP
@@ -188,10 +189,8 @@ MODULE FLUID_MECHANICS_IO_ROUTINES
   INTEGER(INTG):: NumberOfMeshComponents
   INTEGER(INTG):: NumberOfMaterialComponents
   INTEGER(INTG):: NumberOfSourceComponents
-  INTEGER(INTG):: NumberOfNodesDefined
   INTEGER(INTG):: NumberOfFieldComponent(4) !(3)
   INTEGER(INTG):: NumberOfElements
-  INTEGER(INTG):: GlobalElementNumber(10)
   INTEGER(INTG):: MaxNodesPerElement
   INTEGER(INTG):: MaxNodesPerMeshComponent
   INTEGER(INTG):: ELEMENT_NUMBER
@@ -199,10 +198,9 @@ MODULE FLUID_MECHANICS_IO_ROUTINES
   INTEGER(INTG), DIMENSION(:), ALLOCATABLE:: NodesPerMeshComponent
   INTEGER(INTG), DIMENSION(:), ALLOCATABLE:: DofsPerMeshComponent
   INTEGER(INTG), DIMENSION(:), ALLOCATABLE::SimplexOutputHelp,HexOutputHelp
-  INTEGER(INTG) FLD, DIMEN, OPENCMISS_INTERPOLATION(3),a,b
+  INTEGER(INTG) DIMEN, OPENCMISS_INTERPOLATION(3)
   INTEGER(INTG) NumberOfNodesPerElement(3), ArrayOfNodesDefined(3), NumberOfElementsDefined(3), TotalNumberOfNodes
   INTEGER(INTG), DIMENSION(:,:), ALLOCATABLE::OPENCMISS_ELEM_M,OPENCMISS_ELEM_V,OPENCMISS_ELEM_P
-  INTEGER(INTG):: TRI_BASIS, TET_BASIS, QUAD_BASIS, HEX_BASIS
   INTEGER(INTG):: ALLOC_ERROR
   INTEGER(INTG):: FIELD_VAR_TYPE, var_idx
 
@@ -217,48 +215,47 @@ MODULE FLUID_MECHANICS_IO_ROUTINES
 !  REAL(DP):: test
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeXValue
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeYValue
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeZValue 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeUValue 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeVValue 
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeZValue
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeUValue
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeVValue
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeWValue
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeUValueORG  
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeUValueORG
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeVValueORG
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeWValueORG
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePValue
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePValue2  
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePValue2
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeMIValue ! Mass increase for coupled elasticity Darcy INRIA model
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeMUValue
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeLabelValue
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeRHOValue  
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeRHOValue
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeA0Value
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeA1Value 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeA2Value   
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeA1Value
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeA2Value
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeH0Value
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeEValue
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeKappaValue  
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeKappaValue
 
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeUValue_analytic
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeVValue_analytic 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeWValue_analytic 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePValue_analytic 
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeVValue_analytic
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeWValue_analytic
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePValue_analytic
 
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeUValue_error
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeVValue_error
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeWValue_error
   REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePValue_error
 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm2Value 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm3Value 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm4Value 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm5Value 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm6Value 
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm2Value
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm3Value
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm4Value
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm5Value
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodePerm6Value
 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeSourceValue1 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeSourceValue2 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeSourceValue3 
-  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeSourceValue4 
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeSourceValue1
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeSourceValue2
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeSourceValue3
+  REAL(DP), DIMENSION(:), ALLOCATABLE:: NodeSourceValue4
 
-  REAL(DP):: ScaleFactorsPerElementNodes(10,10)
   REAL(DP), DIMENSION(:,:), ALLOCATABLE::OPENCMISS_NODE_COORD
 
   CHARACTER*2 NMs(99),KNOT
@@ -353,16 +350,16 @@ CONTAINS
     IF (ALLOCATED(ElementNodesScales)) DEALLOCATE(ElementNodesScales)
     IF (ALLOCATED(ElementNodes)) DEALLOCATE(ElementNodes)
 
-    IF (ALLOCATED(NodePerm2Value)) DEALLOCATE(NodePerm2Value) 
-    IF (ALLOCATED(NodePerm3Value)) DEALLOCATE(NodePerm3Value) 
-    IF (ALLOCATED(NodePerm4Value)) DEALLOCATE(NodePerm4Value) 
-    IF (ALLOCATED(NodePerm5Value)) DEALLOCATE(NodePerm5Value) 
-    IF (ALLOCATED(NodePerm6Value)) DEALLOCATE(NodePerm6Value) 
+    IF (ALLOCATED(NodePerm2Value)) DEALLOCATE(NodePerm2Value)
+    IF (ALLOCATED(NodePerm3Value)) DEALLOCATE(NodePerm3Value)
+    IF (ALLOCATED(NodePerm4Value)) DEALLOCATE(NodePerm4Value)
+    IF (ALLOCATED(NodePerm5Value)) DEALLOCATE(NodePerm5Value)
+    IF (ALLOCATED(NodePerm6Value)) DEALLOCATE(NodePerm6Value)
 
-    IF (ALLOCATED(NodeSourceValue1)) DEALLOCATE(NodeSourceValue1) 
-    IF (ALLOCATED(NodeSourceValue2)) DEALLOCATE(NodeSourceValue2) 
-    IF (ALLOCATED(NodeSourceValue3)) DEALLOCATE(NodeSourceValue3) 
-    IF (ALLOCATED(NodeSourceValue4)) DEALLOCATE(NodeSourceValue4) 
+    IF (ALLOCATED(NodeSourceValue1)) DEALLOCATE(NodeSourceValue1)
+    IF (ALLOCATED(NodeSourceValue2)) DEALLOCATE(NodeSourceValue2)
+    IF (ALLOCATED(NodeSourceValue3)) DEALLOCATE(NodeSourceValue3)
+    IF (ALLOCATED(NodeSourceValue4)) DEALLOCATE(NodeSourceValue4)
 
     !chrm, 20.08.09
     IF (ALLOCATED(NodeUValue_analytic)) DEALLOCATE(NodeUValue_analytic)
@@ -399,7 +396,7 @@ CONTAINS
     EQUATIONS_SET => REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr
 
 !---tob
-!     FIELD_VAR_TYPE=EQUATIONS_SET%EQUATIONS%EQUATIONS_MAPPING%LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE%VARIABLE_TYPE
+!     FIELD_VAR_TYPE=EQUATIONS_SET%EQUATIONS%equationsMapping%LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE%VARIABLE_TYPE
 !     ! '1' associated with linear matrix
 
     var_idx = 1
@@ -424,7 +421,7 @@ CONTAINS
       END SELECT
     END SELECT
 
-   
+
 
 
     parameter_set_idx = 1
@@ -545,17 +542,17 @@ CONTAINS
 
     !material field
     OUTPUT_MATERIAL = ASSOCIATED(MATERIAL_FIELD)
-    
+
     !source field
     OUTPUT_SOURCE = .FALSE.
-    IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+    IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
       & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) )THEN
           SOURCE_FIELD=>REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field
           IF( ASSOCIATED(SOURCE_FIELD) ) OUTPUT_SOURCE = .TRUE.
     END IF
 
-    NULLIFY(INTERPOLATION_PARAMETERS,MATERIAL_INTERPOLATION_PARAMETERS,SOURCE_INTERPOLATION_PARAMETERS, & 
+    NULLIFY(INTERPOLATION_PARAMETERS,MATERIAL_INTERPOLATION_PARAMETERS,SOURCE_INTERPOLATION_PARAMETERS, &
       & ANALYTIC_INTERPOLATION_PARAMETERS)
     NULLIFY(INTERPOLATED_POINT,MATERIAL_INTERPOLATED_POINT,SOURCE_INTERPOLATED_POINT,ANALYTIC_INTERPOLATED_POINT)
 
@@ -567,7 +564,7 @@ CONTAINS
       CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(MATERIAL_FIELD,MATERIAL_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
       CALL FIELD_INTERPOLATED_POINTS_INITIALISE(MATERIAL_INTERPOLATION_PARAMETERS,MATERIAL_INTERPOLATED_POINT,ERR,ERROR,*999)
     ENDIF
-    
+
     !source field
     IF( OUTPUT_SOURCE ) THEN
       CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(SOURCE_FIELD,SOURCE_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
@@ -579,9 +576,9 @@ CONTAINS
     END IF
 
     !analytic field
-    ANALYTIC=.FALSE.         
+    ANALYTIC=.FALSE.
     IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
-      ANALYTIC=.TRUE.         
+      ANALYTIC=.TRUE.
       CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(FIELD,ANALYTIC_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
       CALL FIELD_INTERPOLATED_POINTS_INITIALISE(ANALYTIC_INTERPOLATION_PARAMETERS,ANALYTIC_INTERPOLATED_POINT,ERR,ERROR,*999)
       CALL FIELD_PARAMETER_SET_DATA_GET(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_ANALYTIC_VALUES_SET_TYPE,ANALYTIC_VALUES, &
@@ -609,26 +606,26 @@ CONTAINS
         IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE.OR. &
           & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_Coupled1D0D_NAVIER_STOKES_SUBTYPE)THEN
            XI_COORDINATES(1)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-             & geometric_field%variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(J))
+             & geometricField%variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(J))
         ELSE
           XI_COORDINATES(1)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-            & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,1)-1.0)/(REGION% &
+            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,1)-1.0)/(REGION% &
             & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-            & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(1)-1.0)
+            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(1)-1.0)
         ENDIF
         IF(NumberOfDimensions==2 .OR. NumberOfDimensions==3)THEN
           XI_COORDINATES(2)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-            & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,2)-1.0)/(REGION% &
+            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,2)-1.0)/(REGION% &
             & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-            & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(2)-1.0)
+            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(2)-1.0)
           ! XI_COORDINATES(2)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-          ! & geometric_field%variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(J))
+          ! & geometric_field%variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(J))
         END IF
         IF(NumberOfDimensions==3)THEN
           XI_COORDINATES(3)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-            & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,3)-1.0)/(REGION% &
+            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,3)-1.0)/(REGION% &
             & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-            & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(3)-1.0)
+            & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(3)-1.0)
         END IF
 
 !Start: This is a hack for 3D simplex elements
@@ -719,7 +716,7 @@ CONTAINS
           CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI_COORDINATES,ANALYTIC_INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr, &
             & ERR,ERROR,*999)
         END IF
-        
+
         !material
         IF( OUTPUT_MATERIAL ) THEN
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
@@ -738,22 +735,22 @@ CONTAINS
 
 
         NodeXValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K)
+          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K)
 !        NodeYValue(K)=REGION%equations_sets%equations_sets(1)%ptr%geometry%geometric_field%variables(1) &
-!          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+NodesPerMeshComponent(1))
+!          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+NodesPerMeshComponent(1))
         IF(NumberOfDimensions==2 .OR. NumberOfDimensions==3)THEN
           NodeYValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+NodesPerMeshComponent(1))
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+NodesPerMeshComponent(1))
         END IF
         IF(NumberOfDimensions==3)THEN
           NodeZValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+2*NodesPerMeshComponent(1))
         END IF
 
         !chrm, 19.12.2010
         !If geometry uses a quadratic mesh, but Darcy velocity and mass increase only a linear one,
         !   then we do need to interpolate the velocities and mass increase on the geometric mesh
-        IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+        IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
           & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) ) THEN
           IF ((EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) .OR. &
           & (EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)) THEN
@@ -767,17 +764,17 @@ CONTAINS
           ENDIF
         ELSE
           NodeUValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-            & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K)
+            & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K)
           IF(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS .OR. &
-            & EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) THEN  
+            & EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) THEN
             NodeVValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
              & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters% &
-             & cmiss%data_dp(K+NodesPerMeshComponent(1))
+             & cmiss%dataDP(K+NodesPerMeshComponent(1))
 
             IF(NumberOfDimensions==3)THEN
               NodeWValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
                 & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters% &
-                & cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+                & cmiss%dataDP(K+2*NodesPerMeshComponent(1))
             END IF
           END IF
         END IF
@@ -786,8 +783,8 @@ CONTAINS
 ! ! !       NodeVValue(K)=INTERPOLATED_POINT(FIELD_VAR_TYPE)%ptr%VALUES(2,1)
 ! ! !       NodeWValue(K)=INTERPOLATED_POINT(FIELD_VAR_TYPE)%ptr%VALUES(3,1)
 
-        IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
-          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) & 
+        IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
+          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) &
@@ -799,12 +796,12 @@ CONTAINS
           END IF
         END IF
 
-        IF(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) THEN         
-          IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN         
+        IF(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) THEN
+          IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
             NodeUValue_analytic(K)=ANALYTIC_VALUES(K)
             IF(NumberOfDimensions==2 .OR. NumberOfDimensions==3)THEN
               NodeVValue_analytic(K)=ANALYTIC_VALUES(K+NodesPerMeshComponent(1))
-              IF(NumberOfDimensions==3)THEN           
+              IF(NumberOfDimensions==3)THEN
                 NodeWValue_analytic(K)=ANALYTIC_VALUES(K+2*NodesPerMeshComponent(1))
               ENDIF
             ENDIF
@@ -821,7 +818,7 @@ CONTAINS
 
 
 !---tob: Mass increase for coupled elasticity Darcy INRIA model
-        IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+        IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
           & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) &
             & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) )THEN
               IF(NumberOfDimensions==3)THEN
@@ -829,13 +826,13 @@ CONTAINS
               END IF
         END IF
 !---toe
-        
+
         IF(OUTPUT_MATERIAL) THEN
-          MATERIAL_INTERPOLATION_TYPE=MATERIAL_FIELD%variables(1)%COMPONENTS(1)%INTERPOLATION_TYPE 
-          
+          MATERIAL_INTERPOLATION_TYPE=MATERIAL_FIELD%variables(1)%COMPONENTS(1)%INTERPOLATION_TYPE
+
           IF(MATERIAL_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION)THEN
-            
-            IF( (EQUATIONS_SET%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+
+            IF( (EQUATIONS_SET%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
               & .AND.(EQUATIONS_SET%specification(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) &
               & .AND.(EQUATIONS_SET%specification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) )THEN
               NodeMUValue(K)   =MATERIAL_INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,1)
@@ -848,11 +845,11 @@ CONTAINS
               NodePerm6Value(K)=MATERIAL_INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(7,1)
             ELSE
               NodeMUValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K)
+                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K)
               NodeRHOValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+NodesPerMeshComponent(1))
+                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+NodesPerMeshComponent(1))
             END IF
-            
+
             IF(EQUATIONS_SET%specification(1)==EQUATIONS_SET_ELASTICITY_CLASS)THEN
               IF(EQUATIONS_SET%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE)THEN
                 IF( (EQUATIONS_SET%specification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
@@ -860,30 +857,30 @@ CONTAINS
                   & .OR.(EQUATIONS_SET%specification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) &
                   & .OR. (EQUATIONS_SET%specification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) )THEN
                   NodeKappaValue(K)=MATERIAL_FIELD%variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters% &
-                    & cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+                    & cmiss%dataDP(K+2*NodesPerMeshComponent(1))
                 END IF
               END IF
-            END IF          
-          
+            END IF
+
           ELSE !default to FIELD_CONSTANT_INTERPOLATION
             NodeMUValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-              & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(1)
+              & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(1)
             NodeRHOValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-              & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(2)
-            
+              & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(2)
+
             IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE) THEN
               NodeEValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(3)
+                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(3)
               NodeH0Value=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(6)
+                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(6)
               NodeA0Value=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(9)
+                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(9)
               NodeA1Value=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(12)!39
+                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(12)!39
               NodeA2Value=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(15)!51
+                & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(15)!51
             END IF
-            
+
             IF(EQUATIONS_SET%specification(1)==EQUATIONS_SET_ELASTICITY_CLASS)THEN
               IF(EQUATIONS_SET%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE)THEN
                 IF( (EQUATIONS_SET%specification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
@@ -891,7 +888,7 @@ CONTAINS
                   & .OR.(EQUATIONS_SET%specification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) &
                   & .OR. (EQUATIONS_SET%specification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) )THEN
                   NodeKappaValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                    & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(3)
+                    & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(3)
                 END IF
               END IF
             END IF
@@ -899,7 +896,7 @@ CONTAINS
         ENDIF !oUTPUT MATERIAL
         !source field
         IF( OUTPUT_SOURCE ) THEN
-          IF( (EQUATIONS_SET%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+          IF( (EQUATIONS_SET%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
             & .AND.(EQUATIONS_SET%specification(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) &
             & .AND.(EQUATIONS_SET%specification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) )THEN
             IF(SOURCE_FIELD%variables(1)%COMPONENTS(1)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION)THEN
@@ -908,18 +905,21 @@ CONTAINS
               NodeSourceValue3(K)=SOURCE_INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,1)
               NodeSourceValue4(K)=SOURCE_INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(4,1)
             END IF
-          END IF          
+          END IF
         ENDIF
-      END DO 
+      END DO
     END DO
 
-    DN=.TRUE.
-    IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+    DN=.FALSE.
+    IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
       & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) &
         & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) )THEN
       DN=.FALSE.
     END IF
     IF(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_CLASSICAL_FIELD_CLASS)THEN
+      DN=.FALSE.
+    END IF
+    IF(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_STOKES_EQUATION_TYPE)THEN
       DN=.FALSE.
     END IF
 
@@ -929,10 +929,10 @@ CONTAINS
         DO K=1,NodesPerMeshComponent(2)
           IF(NumberOfDimensions==2)THEN
             NodePValue2(K)=REGION%equations_sets%equations_sets(1)%ptr%dependent%dependent_field%variables(1) &
-             & %parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(2*NodesPerMeshComponent(1)+K)
+             & %parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(2*NodesPerMeshComponent(1)+K)
           ELSE IF(NumberOfDimensions==3)THEN
             NodePValue2(K)=REGION%equations_sets%equations_sets(1)%ptr%dependent%dependent_field%variables(1) &
-              & %parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(3*NodesPerMeshComponent(1)+K)
+              & %parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(3*NodesPerMeshComponent(1)+K)
           ENDIF
         ENDDO
       ENDIF
@@ -941,7 +941,7 @@ CONTAINS
     IF( NumberOfDimensions==3 )THEN
       !For 3D, the following call works ...
       lagrange_simplex=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations% &
-        & interpolation%geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%type
+        & interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%type
 !         lagrange_simplex=2
 
     ELSE IF (NumberOfDimensions==1) THEN
@@ -966,7 +966,7 @@ CONTAINS
     ENDIF
 
     IF( OUTPUT_SOURCE ) THEN
-      IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+      IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) )THEN
        FIELD_COMPONENT=FIELD_COMPONENT+1
@@ -983,12 +983,12 @@ CONTAINS
       END DO
     END DO
 
-    CALL FLUID_MECHANICS_IO_WRITE_NODES_CMGUI(NAME,EQUATIONS_SET)
-    CALL FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI(NAME)
+    CALL FLUID_MECHANICS_IO_WRITE_NODES_CMGUI(NAME,EQUATIONS_SET,ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI(NAME,ERR,ERROR,*999)
 
     EXITS("FLUID_MECHANICS_IO_WRITE_CMGUI")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_CMGUI",ERR,ERROR)    
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_CMGUI",ERR,ERROR)
     RETURN
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_CMGUI
@@ -996,7 +996,7 @@ CONTAINS
 
   ! OK
   !================================================================================================================================
-  !  
+  !
 
   !> Writes solution into encas
 !   SUBROUTINE FLUID_MECHANICS_IO_WRITE_ENCAS(REGION, NAME, ERR, ERROR,*)
@@ -1083,7 +1083,7 @@ CONTAINS
     EQUATIONS_SET => REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr
 
 !---tob
-!     FIELD_VAR_TYPE=EQUATIONS_SET%EQUATIONS%EQUATIONS_MAPPING%LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE%VARIABLE_TYPE
+!     FIELD_VAR_TYPE=EQUATIONS_SET%EQUATIONS%equationsMapping%LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE%VARIABLE_TYPE
 !     ! '1' associated with linear matrix
 
     var_idx = 1
@@ -1108,7 +1108,7 @@ CONTAINS
       END SELECT
     END SELECT
 
-    parameter_set_idx = 1 
+    parameter_set_idx = 1
     SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
     CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
       SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
@@ -1205,7 +1205,7 @@ CONTAINS
 
     NULLIFY(INTERPOLATION_PARAMETERS)
     NULLIFY(INTERPOLATED_POINT)
-    
+
     CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(FIELD,INTERPOLATION_PARAMETERS &
     & ,ERR,ERROR,*999)
     CALL FIELD_INTERPOLATED_POINTS_INITIALISE(INTERPOLATION_PARAMETERS,INTERPOLATED_POINT,ERR,ERROR,*999)
@@ -1220,17 +1220,17 @@ CONTAINS
 
         ELEMENT_NUMBER=I
         XI_COORDINATES(1)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-          & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,1)-1.0)/(REGION% &
+          & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,1)-1.0)/(REGION% &
           & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-          & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(1)-1.0)
+          & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(1)-1.0)
         XI_COORDINATES(2)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-          & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,2)-1.0)/(REGION% &
+          & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,2)-1.0)/(REGION% &
           & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-          & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(2)-1.0)
+          & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(2)-1.0)
         XI_COORDINATES(3)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-          & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,3)-1.0)/(REGION% &
+          & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,3)-1.0)/(REGION% &
           & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-          & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(3)-1.0)
+          & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xic(3)-1.0)
         IF(NumberOfDimensions==2)THEN
           STOP 'Encas format only available for 3D hex and tets'
         END IF
@@ -1244,28 +1244,28 @@ CONTAINS
           & INTERPOLATION_PARAMETERS(FIELD_VAR_TYPE)%ptr,ERR,ERROR,*999)
         CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI_COORDINATES,INTERPOLATED_POINT(FIELD_VAR_TYPE)%ptr,ERR,ERROR,*999)
         NodeXValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K)
+          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K)
         NodeYValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+NodesPerMeshComponent(1))
+          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+NodesPerMeshComponent(1))
 
         IF(NumberOfDimensions==3)THEN
           NodeZValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+2*NodesPerMeshComponent(1))
         END IF
 
 !         NodeUValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field%variables(1) &
         NodeUValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-          & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K)
+          & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K)
 !         NodeVValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field%variables(1) &
         NodeVValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
           & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters% &
-          & cmiss%data_dp(K+NodesPerMeshComponent(1))
+          & cmiss%dataDP(K+NodesPerMeshComponent(1))
 
         IF(NumberOfDimensions==3)THEN
           NodeWValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-!             & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+!             & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K+2*NodesPerMeshComponent(1))
             & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters% &
-            & cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+            & cmiss%dataDP(K+2*NodesPerMeshComponent(1))
         END IF
 
 ! ! !       NodeUValue(K)=INTERPOLATED_POINT%VALUES(1,1)
@@ -1273,7 +1273,7 @@ CONTAINS
 ! ! !       NodeWValue(K)=INTERPOLATED_POINT%VALUES(3,1)
 
         IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
-          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) & 
+          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) )THEN
@@ -1285,13 +1285,13 @@ CONTAINS
         END IF
 
         MATERIAL_INTERPOLATION_TYPE=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr% &
-          & materials%materials_field%variables(1)%COMPONENTS(1)%INTERPOLATION_TYPE 
+          & materials%materials_field%variables(1)%COMPONENTS(1)%INTERPOLATION_TYPE
 
         IF(MATERIAL_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION)THEN
           NodeMUValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K)
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K)
           NodeRHOValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+NodesPerMeshComponent(1))
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+NodesPerMeshComponent(1))
 
           IF(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS)THEN
             IF(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE)THEN
@@ -1300,34 +1300,34 @@ CONTAINS
               & .OR.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) &
               & .OR. (EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) )THEN
                 NodeKappaValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                  & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+                  & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+2*NodesPerMeshComponent(1))
               END IF
             END IF
           END IF
         ELSE !default to FIELD_CONSTANT_INTERPOLATION
           NodeMUValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(1)
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(1)
           NodeRHOValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(2)
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(2)
           IF(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS)THEN
             IF(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE)THEN
               IF( (EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
               & .OR.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) &
               & .OR.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) )THEN
                 NodeKappaValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-                  & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(3)
+                  & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(3)
               END IF
             END IF
           END IF
         END IF
 
-      END DO 
+      END DO
     END DO
 
     IF( NumberOfDimensions==3 )THEN
       !For 3D, the following call works ...
       lagrange_simplex=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations% &
-        & interpolation%geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%type
+        & interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%type
 !         lagrange_simplex=2
     ELSE IF ( NumberOfDimensions==1 )THEN
       lagrange_simplex=1
@@ -1355,12 +1355,12 @@ CONTAINS
       END DO
     END DO
 
-    CALL FLUID_MECHANICS_IO_WRITE_DATA_ENCAS(NAME,EQUATIONS_SET)
+    CALL FLUID_MECHANICS_IO_WRITE_DATA_ENCAS(NAME,EQUATIONS_SET,ERR,ERROR,*999)
 
 
     EXITS("FLUID_MECHANICS_IO_WRITE_ENCAS")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_ENCAS",ERR,ERROR)    
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_ENCAS",ERR,ERROR)
     RETURN
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_ENCAS
@@ -1369,10 +1369,10 @@ CONTAINS
 
   ! OK
   !================================================================================================================================
-  !  
+  !
 
   !> Executes nodes writing process.
-  SUBROUTINE FLUID_MECHANICS_IO_WRITE_DATA_ENCAS(NAME,EQUATIONS_SET)
+  SUBROUTINE FLUID_MECHANICS_IO_WRITE_DATA_ENCAS(NAME,EQUATIONS_SET,ERR,ERROR,*)
 
     IMPLICIT NONE
     CHARACTER(14), INTENT(IN) :: NAME !<the prefix name of file.
@@ -1381,15 +1381,17 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     INTEGER:: I,K
     INTEGER(INTG) :: ERR
-    TYPE(VARYING_STRING):: ERROR 
+    TYPE(VARYING_STRING):: ERROR
     DOUBLE PRECISION:: velocity_magnitude
 !     CHARACTER(80):: OUTPUT_FILE
+
+    ENTERS("FLUID_MECHANICS_IO_WRITE_ENCAS",ERR,ERROR,*999)
 
   !==================
     FILENAME="./output/"//NAME//".geo"
     OPEN(UNIT=80, FILE=CHAR(FILENAME),STATUS='unknown')
-    WRITE(80,*)'OpenCMISS Exported Encas Model Geometry File' 
-    WRITE(80,*)'' 
+    WRITE(80,*)'OpenCMISS Exported Encas Model Geometry File'
+    WRITE(80,*)''
     WRITE(80,*)'node id assign'
     WRITE(80,*)'element id assign'
     WRITE(80,*)'part'
@@ -1538,13 +1540,13 @@ CONTAINS
     CLOSE(80)
   !==================
     IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
-      & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) & 
+      & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) &
           & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) &
             & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
             & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) )THEN
       FILENAME="./output/"//NAME//".scl1"
       OPEN(UNIT=81, FILE=CHAR(FILENAME),STATUS='unknown')
-      WRITE(81,*)'Absolute Pressure' 
+      WRITE(81,*)'Absolute Pressure'
       WRITE(81,*)'part'
       WRITE(81,*)'        1'
       WRITE(81,*)'coordinates'
@@ -1553,25 +1555,25 @@ CONTAINS
       ENDDO
       CLOSE(81)
     ENDIF
- 
+
   !==================
     FILENAME="./output/"//NAME//".scl2"
     OPEN(UNIT=82, FILE=CHAR(FILENAME),STATUS='unknown')
-    WRITE(82,*)'Velocity Magnitude' 
+    WRITE(82,*)'Velocity Magnitude'
     WRITE(82,*)'part'
     WRITE(82,*)'        1'
     WRITE(82,*)'coordinates'
     DO I = 1,NodesPerMeshComponent(1)
-      velocity_magnitude=sqrt(NodeUValue(I)*NodeUValue(I)+ & 
+      velocity_magnitude=sqrt(NodeUValue(I)*NodeUValue(I)+ &
         & NodeVValue(I)*NodeVValue(I)+NodeWValue(I)*NodeWValue(I))
       WRITE(82,'(e12.5)')velocity_magnitude
     ENDDO
     CLOSE(82)
-  
+
   !==================
     FILENAME="./output/"//NAME//".scl3"
     OPEN(UNIT=83, FILE=CHAR(FILENAME),STATUS='unknown')
-    WRITE(83,*)'X Velocity' 
+    WRITE(83,*)'X Velocity'
     WRITE(83,*)'part'
     WRITE(83,*)'        1'
     WRITE(83,*)'coordinates'
@@ -1579,11 +1581,11 @@ CONTAINS
       WRITE(83,'(e12.5)')NodeUValue(I)
     ENDDO
     CLOSE(83)
-  
+
   !==================
     FILENAME="./output/"//NAME//".scl4"
     OPEN(UNIT=84, FILE=CHAR(FILENAME),STATUS='unknown')
-    WRITE(84,*)'Y Velocity' 
+    WRITE(84,*)'Y Velocity'
     WRITE(84,*)'part'
     WRITE(84,*)'        1'
     WRITE(84,*)'coordinates'
@@ -1595,7 +1597,7 @@ CONTAINS
   !==================
     FILENAME="./output/"//NAME//".scl5"
     OPEN(UNIT=85, FILE=CHAR(FILENAME),STATUS='unknown')
-    WRITE(85,*)'Z Velocity' 
+    WRITE(85,*)'Z Velocity'
     WRITE(85,*)'part'
     WRITE(85,*)'        1'
     WRITE(85,*)'coordinates'
@@ -1606,7 +1608,7 @@ CONTAINS
   !==================
     FILENAME="./output/"//NAME//".vel"
     OPEN(UNIT=86, FILE=CHAR(FILENAME),STATUS='unknown')
-    WRITE(86,*)'Velocity' 
+    WRITE(86,*)'Velocity'
     WRITE(86,*)'part'
     WRITE(86,*)'        1'
     WRITE(86,*)'coordinates'
@@ -1622,9 +1624,12 @@ CONTAINS
     CLOSE(86)
   !==================
     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Encas data...",ERR,ERROR,*999)
+
+
+    EXITS("FLUID_MECHANICS_IO_WRITE_DATA_ENCAS")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_DATA_ENCAS",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_DATA_ENCAS",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_DATA_ENCAS
 
@@ -1634,7 +1639,7 @@ CONTAINS
 
 
   !> Executes nodes writing process.
-  SUBROUTINE FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS_PPE(NAME,start_time_step,number_of_timesteps,time_increment)
+  SUBROUTINE FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS_PPE(NAME,start_time_step,number_of_timesteps,time_increment,ERR,ERROR,*)
 
     IMPLICIT NONE
 
@@ -1645,13 +1650,14 @@ CONTAINS
     TYPE(VARYING_STRING) :: FILENAME !<the prefix name of file.
 !     CHARACTER :: FILENAME !<the prefix name of file.
     INTEGER(INTG) :: ERR
-    TYPE(VARYING_STRING):: ERROR 
+    TYPE(VARYING_STRING):: ERROR
 
+    ENTERS("FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS_PPE",ERR,ERROR,*999)
 
     FILENAME="./output/"//NAME//".case"
     OPEN(UNIT=87, FILE=CHAR(FILENAME),STATUS='unknown')
 
-    WRITE(87,*)'FORMAT' 
+    WRITE(87,*)'FORMAT'
     WRITE(87,*)'type:  ensight gold'
     WRITE(87,*)''
     WRITE(87,*)'GEOMETRY'
@@ -1662,7 +1668,7 @@ CONTAINS
     WRITE(87,*)'scalar per node:  1  Magnitude OpenCMISS.Magnitude_**'
     WRITE(87,*)'scalar per node:  1  Speed_SumSquares OpenCMISS.Speed_SumSquares_**'
     WRITE(87,*)'scalar per node:  1  Pressure OpenCMISS.Pressure_**'
-    WRITE(87,*)'vector per node:  1  Velocity OpenCMISS.Velocity_**'  
+    WRITE(87,*)'vector per node:  1  Velocity OpenCMISS.Velocity_**'
     WRITE(87,*)''
     WRITE(87,*)'TIME'
     WRITE(87,*)'time set: 1 Model'
@@ -1680,14 +1686,17 @@ CONTAINS
         J=0
       ENDIF
     ENDDO
-  
+
   CLOSE(87)
-  
+
 
     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Encas PPE master...",ERR,ERROR,*999)
+
+
+    EXITS("FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS_PPE")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS_PPE",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS_PPE",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS_PPE
 
@@ -1698,7 +1707,7 @@ CONTAINS
 
 
   !> Executes nodes writing process.
-  SUBROUTINE FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS(NAME,start_time_step,number_of_timesteps,time_increment)
+  SUBROUTINE FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS(NAME,start_time_step,number_of_timesteps,time_increment,ERR,ERROR,*)
 
     IMPLICIT NONE
 
@@ -1709,13 +1718,14 @@ CONTAINS
     TYPE(VARYING_STRING) :: FILENAME !<the prefix name of file.
 !     CHARACTER :: FILENAME !<the prefix name of file.
     INTEGER(INTG) :: ERR
-    TYPE(VARYING_STRING):: ERROR 
+    TYPE(VARYING_STRING):: ERROR
 
+    ENTERS("FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS",ERR,ERROR,*999)
 
     FILENAME="./output/"//NAME//".encas"
     OPEN(UNIT=87, FILE=CHAR(FILENAME),STATUS='unknown')
 
-    WRITE(87,*)'FORMAT' 
+    WRITE(87,*)'FORMAT'
     WRITE(87,*)'type:  ensight gold'
     WRITE(87,*)''
     WRITE(87,*)'GEOMETRY'
@@ -1727,7 +1737,7 @@ CONTAINS
     WRITE(87,*)'scalar per node:  1  velocity-u                ./TIME_STEP_****.scl3'
     WRITE(87,*)'scalar per node:  1  velocity-v                ./TIME_STEP_****.scl4'
     WRITE(87,*)'scalar per node:  1  velocity-w                ./TIME_STEP_****.scl5'
-    WRITE(87,*)'vector per node:  1  velocity                  ./TIME_STEP_****.vel'  
+    WRITE(87,*)'vector per node:  1  velocity                  ./TIME_STEP_****.vel'
     WRITE(87,*)''
     WRITE(87,*)'TIME'
     WRITE(87,*)'time set: 1 Model'
@@ -1745,20 +1755,23 @@ CONTAINS
         J=0
       ENDIF
     ENDDO
-  
+
   CLOSE(87)
-  
+
 
     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Encas master...",ERR,ERROR,*999)
+
+
+    EXITS("FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_MASTER_ENCAS
 
   ! OK
   !================================================================================================================================
-  !  
+  !
 
   !> Writes solution into encas --- BUT FOR PRESSURE POISSON ONLY --- not for general use!
   SUBROUTINE FLUID_MECHANICS_IO_WRITE_ENCAS_BLOCK(REGION, EQUATIONS_SET_GLOBAL_NUMBER, NAME, ERR, ERROR,*)
@@ -1824,7 +1837,7 @@ CONTAINS
     EQUATIONS_SET => REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr
 
 !---tob
-!     FIELD_VAR_TYPE=EQUATIONS_SET%EQUATIONS%EQUATIONS_MAPPING%LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE%VARIABLE_TYPE
+!     FIELD_VAR_TYPE=EQUATIONS_SET%EQUATIONS%equationsMapping%LINEAR_MAPPING%EQUATIONS_MATRIX_TO_VAR_MAPS(1)%VARIABLE%VARIABLE_TYPE
 !     ! '1' associated with linear matrix
 
     var_idx = 1
@@ -1842,7 +1855,7 @@ CONTAINS
       END SELECT
     END SELECT
 
-    parameter_set_idx = 1 
+    parameter_set_idx = 1
     SELECT CASE(EQUATIONS_SET%SPECIFICATION(1))
     CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
       SELECT CASE(EQUATIONS_SET%SPECIFICATION(2))
@@ -1919,7 +1932,7 @@ CONTAINS
 
     NULLIFY(INTERPOLATION_PARAMETERS)
     NULLIFY(INTERPOLATED_POINT)
-    
+
     CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(FIELD,INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
     CALL FIELD_INTERPOLATED_POINTS_INITIALISE(INTERPOLATION_PARAMETERS,INTERPOLATED_POINT,ERR,ERROR,*999)
 
@@ -1933,73 +1946,73 @@ CONTAINS
 
         ELEMENT_NUMBER=I
 ! ! !         XI_COORDINATES(1)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-! ! !           & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,1)-1.0)/(REGION% &
+! ! !           & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,1)-1.0)/(REGION% &
 ! ! !           & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-! ! !           & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xi(1)-1.0)
+! ! !           & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xi(1)-1.0)
 ! ! !         XI_COORDINATES(2)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-! ! !           & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,2)-1.0)/(REGION% &
+! ! !           & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,2)-1.0)/(REGION% &
 ! ! !           & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-! ! !           & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xi(2)-1.0)
+! ! !           & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xi(2)-1.0)
 ! ! !         XI_COORDINATES(3)=(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-! ! !           & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,3)-1.0)/(REGION% &
+! ! !           & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%node_position_index(J,3)-1.0)/(REGION% &
 ! ! !           & equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations%interpolation% &
-! ! !           & geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xi(3)-1.0)
+! ! !           & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%number_of_nodes_xi(3)-1.0)
 ! ! !         IF(NumberOfDimensions==2)THEN
 ! ! !           STOP 'Encas format only available for 3D hex and tets'
 ! ! !         END IF
-! ! ! 
+! ! !
         !K is global node number
         K=REGION%meshes%meshes(1)%ptr%topology(1)%ptr%elements%elements(I)%global_element_nodes(J)
 
         COORDINATES(1:3)=[1,1,1]
-! ! ! 
+! ! !
 ! ! !         CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER, &
 ! ! !           & INTERPOLATION_PARAMETERS(FIELD_VAR_TYPE)%ptr,ERR,ERROR,*999)
 ! ! !         CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,XI_COORDINATES,INTERPOLATED_POINT(FIELD_VAR_TYPE)%ptr,ERR,ERROR,*999)
         NodeXValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K)
+          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K)
         NodeYValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+NodesPerMeshComponent(1))
+          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+NodesPerMeshComponent(1))
 
         IF(NumberOfDimensions==3)THEN
           NodeZValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(K+2*NodesPerMeshComponent(1))
         END IF
 
         IF((EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_CLASSICAL_FIELD_CLASS) &
           & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_POISSON_EQUATION_TYPE) &
-          & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE))THEN 
+          & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE))THEN
           NodeUValue(K)=0.0_DP
           NodeVValue(K)=0.0_DP
         ELSE
 !         NodeUValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field%variables(1) &
           NodeUValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field% &
-            & variables(var_idx)%parameter_sets%parameter_sets(2)%ptr%parameters%cmiss%data_dp(K)
+            & variables(var_idx)%parameter_sets%parameter_sets(2)%ptr%parameters%cmiss%dataDP(K)
 ! !         NodeVValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field%variables(1) &
           NodeVValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field% &
-            & variables(var_idx)%parameter_sets%parameter_sets(2)%ptr%parameters%cmiss%data_dp(K+NodesPerMeshComponent(1))
+            & variables(var_idx)%parameter_sets%parameter_sets(2)%ptr%parameters%cmiss%dataDP(K+NodesPerMeshComponent(1))
         ENDIF
 
         parameter_set_idx = 2
         NodeUValueORG(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-          & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K)
+          & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K)
         parameter_set_idx = 3
         NodeVValueORG(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-          & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K)
+          & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K)
 
         IF(NumberOfDimensions==3)THEN
           parameter_set_idx = 4
           NodeWValueORG(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-            & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K)
+            & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K)
 
           IF((EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_CLASSICAL_FIELD_CLASS) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_POISSON_EQUATION_TYPE) &
-              & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE))THEN 
+              & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE))THEN
             NodeWValue(K)=0.0_DP
-          ELSE! 
+          ELSE!
 ! !           NodeWValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field%variables(1) &
             NodeWValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field% &
-              & variables(var_idx)%parameter_sets%parameter_sets(2)%ptr%parameters%cmiss%data_dp(K+2*NodesPerMeshComponent(1))
+              & variables(var_idx)%parameter_sets%parameter_sets(2)%ptr%parameters%cmiss%dataDP(K+2*NodesPerMeshComponent(1))
           END IF
         END IF
 
@@ -2009,7 +2022,7 @@ CONTAINS
 ! ! !       NodeWValue(K)=INTERPOLATED_POINT%VALUES(3,1)
 
         IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
-          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) & 
+          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE)   &
@@ -2019,22 +2032,22 @@ CONTAINS
               & .OR.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE) &
               & .OR.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE) &
                 & .OR.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE))) THEN
-          parameter_set_idx = 1 
+          parameter_set_idx = 1
           NodePValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-!             & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K)
-            & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K)
+!             & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K)
+            & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K)
         END IF
 
           NodeMUValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(1)
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(1)
           NodeRHOValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%data_dp(2)
+            & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(2)
 
           parameter_set_idx = 5
           NodeLabelValue(K)=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-            & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(K)
+            & variables(var_idx)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(K)
 
-      END DO 
+      END DO
     END DO
 
 !     NodeMUValue=0.0_DP
@@ -2043,7 +2056,7 @@ CONTAINS
     IF( NumberOfDimensions==3 )THEN
       !For 3D, the following call works ...
       lagrange_simplex=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%equations% &
-        & interpolation%geometric_interp_parameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%type
+        & interpolation%geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr%bases(1)%ptr%type
 !         lagrange_simplex=2
     ELSE
       !chrm, 20.08.09:
@@ -2064,7 +2077,7 @@ CONTAINS
       & .AND.EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_POISSON_EQUATION_TYPE &
       & .AND.EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE) THEN
          NumberOfVariableComponents=NumberOfVariableComponents+NumberOfDimensions
-    ENDIF 
+    ENDIF
 
 
     NumberOfFieldComponent(1)=NumberOfDimensions
@@ -2081,22 +2094,22 @@ CONTAINS
       END DO
     END DO
 
-    CALL FLUID_MECHANICS_IO_WRITE_NODES_CMGUI(NAME,EQUATIONS_SET)
-    CALL FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI(NAME)
-    CALL FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK(NAME)
+    CALL FLUID_MECHANICS_IO_WRITE_NODES_CMGUI(NAME,EQUATIONS_SET,ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI(NAME,ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK(NAME,ERR,ERROR,*999)
 
 
     EXITS("FLUID_MECHANICS_IO_WRITE_ENCAS_BLOCK")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_ENCAS_BLOCK",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_ENCAS_BLOCK",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_ENCAS_BLOCK
 
 
   ! OK
   !================================================================================================================================
-  !  
+  !
 
   SUBROUTINE FLUID_MECHANICS_IO_WRITE_FITTED_FIELD(REGION, EQUATIONS_SET_GLOBAL_NUMBER, NAME, ERR, ERROR,*)
 
@@ -2127,7 +2140,7 @@ CONTAINS
     parameter_set_idx = 1
     DO I = 1,NODES_PER_COMPONENT*3
       fit=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(I)
+          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(I)
       WRITE(81,'(e12.5)') fit
     ENDDO
     CLOSE(81)
@@ -2138,7 +2151,7 @@ CONTAINS
     parameter_set_idx = 1
     DO I = NODES_PER_COMPONENT*3+1,NODES_PER_COMPONENT*4
       fit=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(I)
+          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(I)
       WRITE(81,'(e12.5)') fit
     ENDDO
     CLOSE(81)
@@ -2149,7 +2162,7 @@ CONTAINS
     parameter_set_idx = 1
     DO I = 1,NODES_PER_COMPONENT
       fit=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(I)
+          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(I)
       WRITE(81,'(e12.5)') fit
     ENDDO
     CLOSE(81)
@@ -2160,7 +2173,7 @@ CONTAINS
     parameter_set_idx = 1
     DO I = NODES_PER_COMPONENT+1,NODES_PER_COMPONENT*2
       fit=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(I)
+          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(I)
       WRITE(81,'(e12.5)') fit
     ENDDO
     CLOSE(81)
@@ -2171,24 +2184,24 @@ CONTAINS
     parameter_set_idx = 1
     DO I = NODES_PER_COMPONENT*2+1,NODES_PER_COMPONENT*3
       WRITE(81,'(e12.5)') REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%data_dp(I)
+          & variables(1)%parameter_sets%parameter_sets(parameter_set_idx)%ptr%parameters%cmiss%dataDP(I)
     ENDDO
     CLOSE(81)
 
     EXITS("FLUID_MECHANICS_IO_WRITE_FITTED_FIELD")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_FITTED_FIELD",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_FITTED_FIELD",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_FITTED_FIELD
 
 
   ! OK
   !================================================================================================================================
-  !  
+  !
 
   !> Executes nodes writing process.
-  SUBROUTINE FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK(NAME)
+  SUBROUTINE FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK(NAME,ERR,ERROR,*)
 
     IMPLICIT NONE
     CHARACTER(14), INTENT(IN) :: NAME !<the prefix name of file.
@@ -2196,15 +2209,17 @@ CONTAINS
 !     CHARACTER :: FILENAME !<the prefix name of file.
     INTEGER:: I
     INTEGER(INTG) :: ERR
-    TYPE(VARYING_STRING):: ERROR 
+    TYPE(VARYING_STRING):: ERROR
 !     DOUBLE PRECISION:: velocity_magnitude
 !     CHARACTER(80):: OUTPUT_FILE
 
-  !==================
+    !==================
+
+    ENTERS("FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK",ERR,ERROR,*999)
 
     FILENAME="./output/"//NAME//".scl1"
     OPEN(UNIT=81, FILE=CHAR(FILENAME),STATUS='unknown')
-    WRITE(81,*)'Absolute Pressure' 
+    WRITE(81,*)'Absolute Pressure'
     WRITE(81,*)'part'
     WRITE(81,*)'        1'
     WRITE(81,*)'block'
@@ -2212,11 +2227,13 @@ CONTAINS
       WRITE(81,'(e12.5)')NodePValue(I)
     ENDDO
     CLOSE(81)
- 
+
     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Encas data...",ERR,ERROR,*999)
+
+    EXITS("FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_DATA_ENCAS_BLOCK
 
@@ -2227,7 +2244,7 @@ CONTAINS
   !
 
   !> Executes nodes writing process.
-  SUBROUTINE FLUID_MECHANICS_IO_WRITE_NODES_CMGUI(NAME,EQUATIONS_SET)
+  SUBROUTINE FLUID_MECHANICS_IO_WRITE_NODES_CMGUI(NAME,EQUATIONS_SET,ERR,ERROR,*)
 
     IMPLICIT NONE
 
@@ -2236,17 +2253,19 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     INTEGER(INTG):: I
     INTEGER(INTG) :: ERR, ierror
-    TYPE(VARYING_STRING):: ERROR 
+    TYPE(VARYING_STRING):: ERROR
     LOGICAL:: ANALYTIC
+
+    ENTERS("FLUID_MECHANICS_IO_WRITE_NODES_CMGUI",ERR,ERROR,*999)
 
     ANALYTIC=.FALSE.
     IF( DARCY%ANALYTIC ) ANALYTIC=.TRUE.
- 
+
     IF( DARCY%ANALYTIC ) THEN
       CALL FLUID_MECHANICS_IO_DARCY_GET_ANALYTIC
       CALL FLUID_MECHANICS_IO_DARCY_EVAL_ERROR
     END IF
- 
+
     IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) ANALYTIC=.TRUE.
 
     FILENAME="./output/"//NAME//".exnode"
@@ -2279,15 +2298,15 @@ CONTAINS
     WRITE(14,*) ' 2) general,  field,  rectangular cartesian, #Components=',TRIM(NMs(NumberOfVariableComponents))
 
     DO I=1,NumberOfVariableComponents
-      WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0' 
+      WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0'
       ValueIndex=ValueIndex+1
     END DO
 
     IF( OUTPUT_MATERIAL) THEN
       WRITE(14,*) ' 3) material,  field,  rectangular cartesian, #Components=',TRIM(NMs(NumberOfMaterialComponents))
-      
+
       DO I=1,NumberOfMaterialComponents
-        WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0' 
+        WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0'
         ValueIndex=ValueIndex+1
       END DO
     ENDIF
@@ -2296,7 +2315,7 @@ CONTAINS
       WRITE(14,*) ' 4) source,  field,  rectangular cartesian, #Components=',TRIM(NMs(NumberOfSourceComponents))
 
       DO I=1,NumberOfSourceComponents
-        WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0' 
+        WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0'
         ValueIndex=ValueIndex+1
       END DO
     END IF
@@ -2305,13 +2324,13 @@ CONTAINS
     IF( ANALYTIC ) THEN
       WRITE(14,*) ' 4) exact,  field,  rectangular cartesian, #Components=',TRIM(NMs(NumberOfVariableComponents))
       DO I=1,NumberOfVariableComponents
-        WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0' 
+        WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0'
         ValueIndex=ValueIndex+1
       END DO
 
       WRITE(14,*) ' 5) error,  field,  rectangular cartesian, #Components=',TRIM(NMs(NumberOfVariableComponents))
       DO I=1,NumberOfVariableComponents
-        WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0' 
+        WRITE(14,*)  '   ',TRIM(NMs(I)),'.  Value index= ',TRIM(NMs(ValueIndex)),',     #Derivatives= 0'
         ValueIndex=ValueIndex+1
       END DO
     END IF
@@ -2345,7 +2364,7 @@ CONTAINS
 
       IF(NumberOfDimensions/=1) THEN
         IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
-          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) & 
+          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) &
                 & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
                 & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE))THEN
@@ -2368,9 +2387,9 @@ CONTAINS
           WRITE(14,'("    ", es25.16 )')NodeLabelValue(I)
         END IF
       END IF
-      
+
       !---tob: Mass increase for coupled elasticity Darcy INRIA model
-      IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+      IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) )THEN
         IF(NumberOfDimensions==3)THEN
@@ -2378,12 +2397,12 @@ CONTAINS
         END IF
       END IF
       !---toe
-      
-      IF(OUTPUT_MATERIAL) THEN  
+
+      IF(OUTPUT_MATERIAL) THEN
         WRITE(14,'("    ", es25.16 )')NodeMUValue(I)
         WRITE(14,'("    ", es25.16 )')NodeRHOValue(I)
 
-        IF( (EQUATIONS_SET%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+        IF( (EQUATIONS_SET%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
           & .AND.(EQUATIONS_SET%specification(2)==EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE)) THEN
           WRITE(14,'("    ", es25.16 )')NodeEValue(I)
           WRITE(14,'("    ", es25.16 )')NodeH0Value(I)
@@ -2403,7 +2422,7 @@ CONTAINS
           END IF
         END IF
 
-      IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) & 
+      IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
         & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE) &
           & .AND.(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) )THEN
           !--- Remaining tensor material data of permeability tensor
@@ -2433,7 +2452,7 @@ CONTAINS
           WRITE(14,'("    ", es25.16 )')NodeWValue_analytic(I)
         END IF
         IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
-          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) & 
+          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) )THEN
@@ -2454,7 +2473,7 @@ CONTAINS
           WRITE(14,'("    ", es25.16 )')NodeWValue_error(I)
         END IF
         IF( (EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS) &
-          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) & 
+          & .OR.(EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
               & .AND.(EQUATIONS_SET%SPECIFICATION(3).NE.EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) )THEN
@@ -2463,7 +2482,7 @@ CONTAINS
       END IF
 
     END DO
- 
+
     WRITE(14,*) ' '
     CLOSE(UNIT=14)
 
@@ -2477,10 +2496,10 @@ CONTAINS
 !         FILENAME="./output/"//NAME//".davidn"
 !         OPEN(UNIT=14, FILE=CHAR(FILENAME),STATUS='unknown')
 !         WRITE(14,*) NodesPerMeshComponent(1),NodesPerMeshComponent(1),NodesPerMeshComponent(2)
-!         DO I=1,NodesPerMeshComponent(1) 
+!         DO I=1,NodesPerMeshComponent(1)
 !           WRITE(14,'(3("    ", es25.16 ))')NodeXValue(I),NodeYValue(I),NodeZValue(I)
 !         ENDDO
-!         DO I=1,NodesPerMeshComponent(1) 
+!         DO I=1,NodesPerMeshComponent(1)
 !           WRITE(14,'(6("    ", es25.16 ))')NodeXValue(I),NodeYValue(I),NodeZValue(I),NodeUValue(I),NodeVValue(I),NodeWValue(I)
 !         ENDDO
 !         DO I=1,NodesPerMeshComponent(2)
@@ -2495,10 +2514,10 @@ CONTAINS
 !         FILENAME="./output/"//NAME//".davidn"
 !         OPEN(UNIT=14, FILE=CHAR(FILENAME),STATUS='unknown')
 !         WRITE(14,*) NodesPerMeshComponent(1),NodesPerMeshComponent(1)
-!         DO I=1,NodesPerMeshComponent(1) 
+!         DO I=1,NodesPerMeshComponent(1)
 !           WRITE(14,'(3("    ", es25.16 ))')NodeXValue(I),NodeYValue(I),NodeZValue(I)
 !         ENDDO
-!         DO I=1,NodesPerMeshComponent(1) 
+!         DO I=1,NodesPerMeshComponent(1)
 !           WRITE(14,'(6("    ", es25.16 ))')NodeXValue(I),NodeYValue(I),NodeZValue(I),NodeUValue(I),NodeVValue(I),NodeWValue(I)
 !         ENDDO
 !         CLOSE(14)
@@ -2506,9 +2525,11 @@ CONTAINS
 !     END IF
 
     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Nodes...",ERR,ERROR,*999)
+
+    EXITS("FLUID_MECHANICS_IO_WRITE_NODES_CMGUI")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_NODES_CMGUI",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_NODES_CMGUI",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_NODES_CMGUI
 
@@ -2517,7 +2538,7 @@ CONTAINS
   !
 
   !> Executes element writing process.
-  SUBROUTINE FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI(NAME)
+  SUBROUTINE FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI(NAME,ERR,ERROR,*)
 
 !     TYPE(VARYING_STRING), INTENT(IN) :: NAME !<the prefix name of file.
     CHARACTER(len=14), INTENT(IN) :: NAME !<the prefix name of file.
@@ -2528,6 +2549,8 @@ CONTAINS
     INTEGER(INTG) :: ERR,ierror
     TYPE(VARYING_STRING):: ERROR
     LOGICAL:: OUTPUT_FLAG
+
+    ENTERS("FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI",ERR,ERROR,*999)
 
     FILENAME="./output/"//NAME//".exelem"
     OPEN(UNIT=5, FILE=CHAR(FILENAME),STATUS='unknown', IOSTAT=ierror)
@@ -2541,12 +2564,12 @@ CONTAINS
       OUTPUT_FLAG = .TRUE.
     ELSE IF( KK > 1 .AND. NodesPerElement(KK).NE.NodesPerElement(KK-1) ) THEN
       OUTPUT_FLAG = .TRUE.
-    ELSE 
+    ELSE
       OUTPUT_FLAG = .FALSE.
     END IF
 
     IF( OUTPUT_FLAG ) THEN
- 
+
     IF(lagrange_simplex==2) THEN
       IF(NumberOfDimensions==2) THEN
         WRITE(5,*) 'Shape.  Dimension=',TRIM(NMs(NumberOfDimensions)),', simplex(2)*simplex'
@@ -2577,7 +2600,7 @@ CONTAINS
           WRITE(5,*) '#Scale factor sets= 1'
 !           WRITE(5,*) ' q.simplex(2;3)*q.simplex*q.simplex, #Scale factors= ', NodesPerElement(1)
           WRITE(5,*) ' q.simplex(2;3)*q.simplex*q.simplex, #Scale factors= ', NodesPerElement(KK)
-        ENDIF      
+        ENDIF
       ELSE
         WRITE(5,*) '#Scale factor sets= 0'
       END IF
@@ -2656,7 +2679,7 @@ CONTAINS
                 WRITE(5,*)'   x.  q.simplex(2)*q.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==10)  THEN
                 WRITE(5,*)'   x.  c.simplex(2)*c.simplex, no modify, standard node based.'
-              END IF 
+              END IF
             ELSE IF(J==2) THEN
               IF(MaxNodesPerElement==4) THEN
                 WRITE(5,*)'   y.   l.Lagrange*l.Lagrange, no modify, standard node based.'
@@ -2716,7 +2739,7 @@ CONTAINS
                 WRITE(5,*)'   x.  q.simplex(2;3)*q.simplex*q.simplex, no modify, standard node based.'
               ELSE IF(MaxNodesPerElement==20)  THEN
                 WRITE(5,*)'   x.  c.simplex(2;3)*c.simplex*c.simplex, no modify, standard node based.'
-              END IF 
+              END IF
             ELSE IF(J==2) THEN
               IF(MaxNodesPerElement==8) THEN
                 WRITE(5,*)'   y.   l.Lagrange*l.Lagrange*l.Lagrange, no modify, standard node based.'
@@ -2764,7 +2787,7 @@ CONTAINS
         END IF
 
         WRITE(5,*) '   #Nodes= ',TRIM(NMs(MaxNodesPerElement))
- 
+
         DO K = 1,MaxNodesPerElement
           WRITE(5,*) '    ',TRIM(NMs(K)),'.  #Values=1'
           WRITE(5,*) '     Value indices:     1'
@@ -2834,9 +2857,11 @@ CONTAINS
     WRITE(5,*) ' '
     CLOSE(UNIT=5)
     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Writing Elements...",ERR,ERROR,*999)
+
+    EXITS("FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_WRITE_ELEMENTS_CMGUI
 
@@ -2847,16 +2872,17 @@ CONTAINS
   !> Reads in information defined by cmheart input file format.
   SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART1(EXPORT,ERR)
     !DLLEXPORT(FLUID_MECHANICS_IO_READ_CMHEART1)
-  
+
     !Argument variables
-    TYPE (EXPORT_CONTAINER):: EXPORT  
+    TYPE (EXPORT_CONTAINER):: EXPORT
     INTEGER(INTG) :: ERR !<The error code
     TYPE(VARYING_STRING):: ERROR !<The error string
     !Local Variables
-!     TYPE (EXPORT_CONTAINER):: TMP  
-    ! INTEGER(INTG):: test 
+!     TYPE (EXPORT_CONTAINER):: TMP
+    ! INTEGER(INTG):: test
 
     ENTERS("FLUID_MECHANICS_IO_READ_CMHEART1",ERR,ERROR,*999)
+
     WRITE(*,*)' '
     WRITE(*,*)'Importing CMHEART information...'
     WRITE(*,*)' '
@@ -2871,26 +2897,26 @@ CONTAINS
 !     READ(*,*)
     OPEN(UNIT=42, FILE='./input/CMHEART.inp',STATUS='old')
 
-    CALL FLUID_MECHANICS_IO_READ_AUX
-    CALL FLUID_MECHANICS_IO_READ_NODES
-    CALL FLUID_MECHANICS_IO_READ_ELEMENTS
+    CALL FLUID_MECHANICS_IO_READ_AUX(ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_READ_NODES(ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_READ_ELEMENTS(ERR,ERROR,*999)
 
     CLOSE(42)
 
-    IF(.NOT.ALLOCATED(OPENCMISS_ELEM_M)) ALLOCATE(OPENCMISS_ELEM_M(NumberOfElementsDefined(1),NumberOfNodesPerElement(1)), & 
+    IF(.NOT.ALLOCATED(OPENCMISS_ELEM_M)) ALLOCATE(OPENCMISS_ELEM_M(NumberOfElementsDefined(1),NumberOfNodesPerElement(1)), &
       & STAT=ALLOC_ERROR)
     IF(.NOT.ALLOCATED(OPENCMISS_ELEM_V))ALLOCATE(OPENCMISS_ELEM_V(NumberOfElementsDefined(2),NumberOfNodesPerElement(2)), &
       & STAT=ALLOC_ERROR)
     IF(.NOT.ALLOCATED(OPENCMISS_ELEM_P))ALLOCATE(OPENCMISS_ELEM_P(NumberOfElementsDefined(3),NumberOfNodesPerElement(3)), &
       & STAT=ALLOC_ERROR)
 
-    CALL FLUID_MECHANICS_IO_MAKE_UNIQUE
-    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_M,MESH_INFO(1)%T,NumberOfElementsDefined(1), & 
-      & NumberOfNodesPerElement(1),1)
-    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_V,MESH_INFO(2)%T,NumberOfElementsDefined(2), & 
-      & NumberOfNodesPerElement(2),2)
-    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_P,MESH_INFO(3)%T,NumberOfElementsDefined(3), & 
-      & NumberOfNodesPerElement(3),3)
+    CALL FLUID_MECHANICS_IO_MAKE_UNIQUE(ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_M,MESH_INFO(1)%T,NumberOfElementsDefined(1), &
+      & NumberOfNodesPerElement(1),1,ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_V,MESH_INFO(2)%T,NumberOfElementsDefined(2), &
+      & NumberOfNodesPerElement(2),2,ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_P,MESH_INFO(3)%T,NumberOfElementsDefined(3), &
+      & NumberOfNodesPerElement(3),3,ERR,ERROR,*999)
     WRITE(*,*)' '
     WRITE(*,*)'Import finished successfully...'
     WRITE(*,*)' '
@@ -2918,11 +2944,11 @@ CONTAINS
     TMP%IT_M=OPENCMISS_INTERPOLATION(1)
     TMP%IT_V=OPENCMISS_INTERPOLATION(2)
     TMP%IT_P=OPENCMISS_INTERPOLATION(3)
-  
+
     IF (BASE_INFO%HEXA==1) THEN
     !LAGRANGIAN BASIS
       TMP%IT_T=1
-    ELSE 
+    ELSE
     ! SIMPLEX BASIS
       TMP%IT_T=2
     END IF
@@ -2948,7 +2974,7 @@ CONTAINS
 
     EXITS("FLUID_MECHANICS_IO_READ_CMHEART1")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_CMHEART1",ERR,ERROR)    
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_CMHEART1",ERR,ERROR)
     RETURN
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART1
@@ -2960,17 +2986,17 @@ CONTAINS
 
 
   !> Reads in information defined by cmheart input file format.
-  SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART2(EXPORT,BC,ERR)
+  SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART2(EXPORT,BC,ERR,ERROR,*)
     !DLLEXPORT(FLUID_MECHANICS_IO_READ_CMHEART2)
-  
+
     !Argument variables
-    TYPE (EXPORT_CONTAINER):: EXPORT  
+    TYPE (EXPORT_CONTAINER):: EXPORT
     TYPE (BOUNDARY_PARAMETERS):: BC
     INTEGER(INTG) :: ERR !<The error code
     TYPE(VARYING_STRING):: ERROR !<The error string
     !Local Variables
-!     TYPE (EXPORT_CONTAINER):: TMP  
-    ! INTEGER(INTG):: test 
+!     TYPE (EXPORT_CONTAINER):: TMP
+    ! INTEGER(INTG):: test
 
     ENTERS("FLUID_MECHANICS_IO_READ_CMHEART2",ERR,ERROR,*999)
     WRITE(*,*)' '
@@ -2987,26 +3013,26 @@ CONTAINS
 !     READ(*,*)
     OPEN(UNIT=42, FILE='./input/CMHEART_MESH1.inp',STATUS='old')
 
-    CALL FLUID_MECHANICS_IO_READ_AUX
-    CALL FLUID_MECHANICS_IO_READ_NODES
-    CALL FLUID_MECHANICS_IO_READ_ELEMENTS
+    CALL FLUID_MECHANICS_IO_READ_AUX(ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_READ_NODES(ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_READ_ELEMENTS(ERR,ERROR,*999)
 
     CLOSE(42)
 
-    IF(.NOT.ALLOCATED(OPENCMISS_ELEM_M)) ALLOCATE(OPENCMISS_ELEM_M(NumberOfElementsDefined(1),NumberOfNodesPerElement(1)), & 
+    IF(.NOT.ALLOCATED(OPENCMISS_ELEM_M)) ALLOCATE(OPENCMISS_ELEM_M(NumberOfElementsDefined(1),NumberOfNodesPerElement(1)), &
       & STAT=ALLOC_ERROR)
     IF(.NOT.ALLOCATED(OPENCMISS_ELEM_V))ALLOCATE(OPENCMISS_ELEM_V(NumberOfElementsDefined(2),NumberOfNodesPerElement(2)), &
       & STAT=ALLOC_ERROR)
     IF(.NOT.ALLOCATED(OPENCMISS_ELEM_P))ALLOCATE(OPENCMISS_ELEM_P(NumberOfElementsDefined(3),NumberOfNodesPerElement(3)), &
       & STAT=ALLOC_ERROR)
 
-    CALL FLUID_MECHANICS_IO_MAKE_UNIQUE
-    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_M,MESH_INFO(1)%T,NumberOfElementsDefined(1), & 
-      & NumberOfNodesPerElement(1),1)
-    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_V,MESH_INFO(2)%T,NumberOfElementsDefined(2), & 
-      & NumberOfNodesPerElement(2),2)
-    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_P,MESH_INFO(3)%T,NumberOfElementsDefined(3), & 
-      & NumberOfNodesPerElement(3),3)
+    CALL FLUID_MECHANICS_IO_MAKE_UNIQUE(ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_M,MESH_INFO(1)%T,NumberOfElementsDefined(1), &
+      & NumberOfNodesPerElement(1),1,ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_V,MESH_INFO(2)%T,NumberOfElementsDefined(2), &
+      & NumberOfNodesPerElement(2),2,ERR,ERROR,*999)
+    CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_P,MESH_INFO(3)%T,NumberOfElementsDefined(3), &
+      & NumberOfNodesPerElement(3),3,ERR,ERROR,*999)
     WRITE(*,*)' '
     WRITE(*,*)'Import finished successfully...'
     WRITE(*,*)' '
@@ -3034,11 +3060,11 @@ CONTAINS
     TMP%IT_M=OPENCMISS_INTERPOLATION(1)
     TMP%IT_V=OPENCMISS_INTERPOLATION(2)
     TMP%IT_P=OPENCMISS_INTERPOLATION(3)
-  
+
     IF (BASE_INFO%HEXA==1) THEN
     !LAGRANGIAN BASIS
       TMP%IT_T=1
-    ELSE 
+    ELSE
     ! SIMPLEX BASIS
       TMP%IT_T=2
     END IF
@@ -3064,13 +3090,13 @@ CONTAINS
 
     !Now read boundary information from CMHEART
     OPEN(UNIT=42, FILE='./input/CMHEART_BC.inp',STATUS='old')
-      CALL FLUID_MECHANICS_IO_READ_BC
+      CALL FLUID_MECHANICS_IO_READ_BC(ERR,ERROR,*999)
       BC=BC_TMP
     CLOSE(42)
 
     EXITS("FLUID_MECHANICS_IO_READ_CMHEART2")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_CMHEART2",ERR,ERROR)    
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_CMHEART2",ERR,ERROR)
     RETURN
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART2
@@ -3082,9 +3108,9 @@ CONTAINS
 
 
   !> Reads in information defined by cmheart input file format.
-  SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART3(EXPORT1,EXPORT2,EXPORT3,CONNECT,BC,ERR)
+  SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART3(EXPORT1,EXPORT2,EXPORT3,CONNECT,BC,ERR,ERROR,*)
     !DLLEXPORT(FLUID_MECHANICS_IO_READ_CMHEART3)
-  
+
     !Argument variables
     TYPE (EXPORT_CONTAINER):: EXPORT1,EXPORT2,EXPORT3
     TYPE (COUPLING_PARAMETERS):: CONNECT
@@ -3092,7 +3118,7 @@ CONTAINS
     INTEGER(INTG) :: ERR !<The error code
     TYPE(VARYING_STRING):: ERROR !<The error string
     !Local Variables
-!     TYPE (EXPORT_CONTAINER):: TMP1  
+!     TYPE (EXPORT_CONTAINER):: TMP1
     INTEGER(INTG):: I
 
     ENTERS("FLUID_MECHANICS_IO_READ_CMHEART3",ERR,ERROR,*999)
@@ -3118,9 +3144,9 @@ CONTAINS
         OPEN(UNIT=42, FILE='./input/CMHEART_INTERFACE.inp',STATUS='old')
       ENDIF
 
-      CALL FLUID_MECHANICS_IO_READ_AUX
-      CALL FLUID_MECHANICS_IO_READ_NODES
-      CALL FLUID_MECHANICS_IO_READ_ELEMENTS
+      CALL FLUID_MECHANICS_IO_READ_AUX(ERR,ERROR,*999)
+      CALL FLUID_MECHANICS_IO_READ_NODES(ERR,ERROR,*999)
+      CALL FLUID_MECHANICS_IO_READ_ELEMENTS(ERR,ERROR,*999)
 
       CLOSE(42)
 
@@ -3128,20 +3154,20 @@ CONTAINS
       IF(ALLOCATED(OPENCMISS_ELEM_V)) DEALLOCATE(OPENCMISS_ELEM_V)
       IF(ALLOCATED(OPENCMISS_ELEM_P)) DEALLOCATE(OPENCMISS_ELEM_P)
 
-      IF(.NOT.ALLOCATED(OPENCMISS_ELEM_M)) ALLOCATE(OPENCMISS_ELEM_M(NumberOfElementsDefined(1),NumberOfNodesPerElement(1)), & 
+      IF(.NOT.ALLOCATED(OPENCMISS_ELEM_M)) ALLOCATE(OPENCMISS_ELEM_M(NumberOfElementsDefined(1),NumberOfNodesPerElement(1)), &
         & STAT=ALLOC_ERROR)
       IF(.NOT.ALLOCATED(OPENCMISS_ELEM_V))ALLOCATE(OPENCMISS_ELEM_V(NumberOfElementsDefined(2),NumberOfNodesPerElement(2)), &
         & STAT=ALLOC_ERROR)
       IF(.NOT.ALLOCATED(OPENCMISS_ELEM_P))ALLOCATE(OPENCMISS_ELEM_P(NumberOfElementsDefined(3),NumberOfNodesPerElement(3)), &
         & STAT=ALLOC_ERROR)
 
-      CALL FLUID_MECHANICS_IO_MAKE_UNIQUE
-      CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_M,MESH_INFO(1)%T,NumberOfElementsDefined(1), & 
-        & NumberOfNodesPerElement(1),1)
-      CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_V,MESH_INFO(2)%T,NumberOfElementsDefined(2), & 
-        & NumberOfNodesPerElement(2),2)
-      CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_P,MESH_INFO(3)%T,NumberOfElementsDefined(3), & 
-        & NumberOfNodesPerElement(3),3)
+      CALL FLUID_MECHANICS_IO_MAKE_UNIQUE(ERR,ERROR,*999)
+      CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_M,MESH_INFO(1)%T,NumberOfElementsDefined(1), &
+        & NumberOfNodesPerElement(1),1,ERR,ERROR,*999)
+      CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_V,MESH_INFO(2)%T,NumberOfElementsDefined(2), &
+        & NumberOfNodesPerElement(2),2,ERR,ERROR,*999)
+      CALL FLUID_MECHANICS_IO_ORDER_NUMBERING(OPENCMISS_ELEM_P,MESH_INFO(3)%T,NumberOfElementsDefined(3), &
+        & NumberOfNodesPerElement(3),3,ERR,ERROR,*999)
       WRITE(*,*)' '
       WRITE(*,*)'Import finished successfully...', I
       WRITE(*,*)' '
@@ -3169,11 +3195,11 @@ CONTAINS
       TMP%IT_M=OPENCMISS_INTERPOLATION(1)
       TMP%IT_V=OPENCMISS_INTERPOLATION(2)
       TMP%IT_P=OPENCMISS_INTERPOLATION(3)
-  
+
       IF (BASE_INFO%HEXA==1) THEN
       !LAGRANGIAN BASIS
         TMP%IT_T=1
-      ELSE 
+      ELSE
       ! SIMPLEX BASIS
         TMP%IT_T=2
       END IF
@@ -3207,7 +3233,7 @@ CONTAINS
 
     !Now read connectivity information from CMHEART
     OPEN(UNIT=42, FILE='./input/CMHEART_CONNECT.inp',STATUS='old')
-      CALL FLUID_MECHANICS_IO_READ_CONNECT
+      CALL FLUID_MECHANICS_IO_READ_CONNECT(ERR,ERROR,*999)
       CONNECT=CONNECT_TMP
     CLOSE(42)
 
@@ -3215,15 +3241,15 @@ CONTAINS
 
     !Now read boundary information from CMHEART
     OPEN(UNIT=42, FILE='./input/CMHEART_BC.inp',STATUS='old')
-      CALL FLUID_MECHANICS_IO_READ_BC
+      CALL FLUID_MECHANICS_IO_READ_BC(ERR,ERROR,*999)
       BC=BC_TMP
     CLOSE(42)
 
 
     EXITS("FLUID_MECHANICS_IO_READ_CMHEART3")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_CMHEART3",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_CMHEART3",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART3
 
@@ -3232,13 +3258,17 @@ CONTAINS
   !
 
   !> Free memory
-  SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART_FINISH
+  SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART_FINISH(ERR,ERROR,*)
 
     !Argument variables
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING) :: ERROR
 
     !Local Variables
 
-    ! INTEGER(INTG):: test 
+    ! INTEGER(INTG):: test
+
+    ENTERS("FLUID_MECHANICS_IO_READ_CMHEART_FINISH",ERR,ERROR,*999)
 
     WRITE(*,*)' '
     WRITE(*,*)'Free all CMHEART information memory...'
@@ -3263,6 +3293,9 @@ CONTAINS
     DEALLOCATE(MESH_INFO(3)%T)
 
     EXITS("FLUID_MECHANICS_IO_READ_CMHEART_FINISH")
+    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_CMHEART_FINISH",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_CMHEART_FINISH
 
@@ -3271,9 +3304,11 @@ CONTAINS
   !
 
   !> Free memory
-  SUBROUTINE FLUID_MECHANICS_IO_PPE_MASKING(BC_MASKING)
+  SUBROUTINE FLUID_MECHANICS_IO_PPE_MASKING(BC_MASKING,ERR,ERROR,*)
 
     !Argument variables
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING) :: ERROR
     INTEGER, DIMENSION(TMP%E_T):: ELEMENT_MASKING
     REAL, DIMENSION(TMP%N_V):: NODE_MASKING
     INTEGER, POINTER:: BC_MASKING(:)
@@ -3283,7 +3318,9 @@ CONTAINS
 
     !Local Variables
 
-    ! INTEGER(INTG):: test 
+    ! INTEGER(INTG):: test
+
+    ENTERS("FLUID_MECHANICS_IO_PPE_MASKING",ERR,ERROR,*999)
 
     WRITE(*,*)' '
     WRITE(*,*)'Perform enhanced PPE masking...'
@@ -3301,7 +3338,7 @@ CONTAINS
     CLOSE(42)
     DO I=1,TMP%E_T !TOTAL_NUMBER_OF_ELEMENTS
       DO J=1, TMP%EN_V !NUMBER_OF_ELEMENT_NODES_PRESSURE
-        IF(NODE_MASKING(TMP%M(I,J))<0.5_DP) THEN 
+        IF(NODE_MASKING(TMP%M(I,J))<0.5_DP) THEN
           ELEMENT_MASKING(I)=0
         ENDIF
       ENDDO
@@ -3309,7 +3346,7 @@ CONTAINS
     DO I=1,TMP%E_T !TOTAL_NUMBER_OF_ELEMENTS
       IF(ELEMENT_MASKING(I)==0) THEN
         DO J=1, TMP%EN_V !NUMBER_OF_ELEMENT_NODES_PRESSURE
-          IF(NODE_MASKING(TMP%M(I,J))>0.5_DP) THEN 
+          IF(NODE_MASKING(TMP%M(I,J))>0.5_DP) THEN
             ELEMENT_MASKING(I)=2
           ENDIF
         ENDDO
@@ -3335,7 +3372,7 @@ CONTAINS
     DO I=1,TMP%E_T !TOTAL_NUMBER_OF_ELEMENTS
       IF(ELEMENT_MASKING(I)==0) THEN
         DO J=1, TMP%EN_V
-          BC_MASKING(TMP%M(I,J))=0      
+          BC_MASKING(TMP%M(I,J))=0
         ENDDO
       ENDIF
     ENDDO
@@ -3343,7 +3380,7 @@ CONTAINS
     DO I=1,TMP%E_T !TOTAL_NUMBER_OF_ELEMENTS
       IF(ELEMENT_MASKING(I)==2) THEN
         DO J=1, TMP%EN_V
-          BC_MASKING(TMP%M(I,J))=2      
+          BC_MASKING(TMP%M(I,J))=2
         ENDDO
       ENDIF
     ENDDO
@@ -3351,12 +3388,15 @@ CONTAINS
     DO I=1,TMP%E_T !TOTAL_NUMBER_OF_ELEMENTS
       IF(ELEMENT_MASKING(I)==1) THEN
         DO J=1, TMP%EN_V
-          BC_MASKING(TMP%M(I,J))=1      
+          BC_MASKING(TMP%M(I,J))=1
         ENDDO
       ENDIF
     ENDDO
 
     EXITS("FLUID_MECHANICS_IO_PPE_MASKING")
+    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_PPE_MASKING",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_PPE_MASKING
 
@@ -3366,11 +3406,13 @@ CONTAINS
   !
 
   !> Executes cmheart parameter reading process.
-  SUBROUTINE FLUID_MECHANICS_IO_READ_AUX
+  SUBROUTINE FLUID_MECHANICS_IO_READ_AUX(ERR,ERROR,*)
 
     INTEGER(INTG):: I
     INTEGER(INTG) :: ERR
     TYPE(VARYING_STRING):: ERROR
+
+    ENTERS("FLUID_MECHANICS_IO_READ_AUX",ERR,ERROR,*999)
 
     READ(42,*) NIMZ
     NIMZ = TRIM(NIMZ); BASE_INFO%n_B = 0; BASE_INFO%HEXA = 0; BASE_INFO%DM = 3
@@ -3428,7 +3470,7 @@ CONTAINS
     IF (BASE_INFO%QUAD_BASIS/= 1.AND.BASE_INFO%HEX_BASIS /= 1.AND.BASE_INFO%TRI_BASIS/= 1.AND.BASE_INFO%TET_BASIS /= 1)THEN
       CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Cubic Hermite not implemented yet...",ERR,ERROR,*999)
     ELSE
- 
+
       DO I=1,3
         IF (BASE_INFO%TRI_BASIS== 1.OR.BASE_INFO%TET_BASIS == 1)THEN
           IF(DIMEN==2) THEN
@@ -3457,11 +3499,11 @@ CONTAINS
             ELSE
               STOP
             END IF
-          ELSE 
+          ELSE
             STOP
           END IF
         END IF
- 
+
         IF (BASE_INFO%QUAD_BASIS== 1.OR.BASE_INFO%HEX_BASIS == 1)THEN
           IF(BASE_INFO%B(I)%n==2) THEN
             !2D/3D LINEAR LAGRANGE
@@ -3470,7 +3512,7 @@ CONTAINS
               NumberOfNodesPerElement(I)=4
             ELSE IF(DIMEN==3) THEN
               NumberOfNodesPerElement(I)=8
-            ELSE 
+            ELSE
               STOP
             END IF
           ELSE IF(BASE_INFO%B(I)%n==3) THEN
@@ -3480,7 +3522,7 @@ CONTAINS
               NumberOfNodesPerElement(I)=9
             ELSE IF(DIMEN==3) THEN
               NumberOfNodesPerElement(I)=27
-            ELSE 
+            ELSE
               STOP
             END IF
           ELSE IF(BASE_INFO%B(I)%n==4) THEN
@@ -3490,7 +3532,7 @@ CONTAINS
               NumberOfNodesPerElement(I)=16
             ELSE IF(DIMEN==3) THEN
               NumberOfNodesPerElement(I)=64
-            ELSE 
+            ELSE
               STOP
             END IF
           ELSE
@@ -3503,9 +3545,11 @@ CONTAINS
     IF(ALLOC_ERROR.NE.0) THEN
       STOP 'Error during allocation'
     END IF
+
+    EXITS("FLUID_MECHANICS_IO_READ_AUX")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_AUX",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_AUX",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_AUX
 
@@ -3514,14 +3558,16 @@ CONTAINS
   !
 
   !> Reorders the element node definition as needed by OpenCMISS.
-  SUBROUTINE FLUID_MECHANICS_IO_ORDER_NUMBERING(NEW,OLD,n,m,I)
+  SUBROUTINE FLUID_MECHANICS_IO_ORDER_NUMBERING(NEW,OLD,n,m,I,ERR,ERROR,*)
 
     INTEGER(INTG):: I,J,M,N
     INTEGER(INTG)::NEW(n,m),OLD(n,m)
-!     INTEGER(INTG) :: ERR
-!     TYPE(VARYING_STRING):: ERROR
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING):: ERROR
 
-!  NEW=OLD
+    ENTERS("FLUID_MECHANICS_IO_ORDER_NUMBERING",ERR,ERROR,*999)
+
+    !  NEW=OLD
     DO J=1,n
       IF (BASE_INFO%QUAD_BASIS == 1) THEN
         IF(BASE_INFO%B(I)%n==2) THEN
@@ -3667,7 +3713,7 @@ CONTAINS
           NEW(J,61)=OLD(J,7)
           NEW(J,62)=OLD(J,63)
           NEW(J,63)=OLD(J,64)
-          NEW(J,64)=OLD(J,8)        
+          NEW(J,64)=OLD(J,8)
         ELSE
           STOP
         END IF
@@ -3748,9 +3794,12 @@ CONTAINS
         STOP
       END IF
     END DO
-!     RETURN
-! 999 ERRORSEXITS("FLUID_MECHANICS_IO_ORDER_NUMBERING",ERR,ERROR)    
-!     RETURN
+
+    EXITS("FLUID_MECHANICS_IO_ORDER_NUMBERING")
+    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_ORDER_NUMBERING",ERR,ERROR)
+    RETURN 1
+
   END SUBROUTINE FLUID_MECHANICS_IO_ORDER_NUMBERING
 
   ! OK
@@ -3758,15 +3807,17 @@ CONTAINS
   !
 
   !> Combines nodes defined separately in cmheart.
-  SUBROUTINE FLUID_MECHANICS_IO_MAKE_UNIQUE
+  SUBROUTINE FLUID_MECHANICS_IO_MAKE_UNIQUE(ERR,ERROR,*)
 
-!     INTEGER(INTG) :: ERR
-!     TYPE(VARYING_STRING):: ERROR
-  
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING):: ERROR
+
+    ENTERS("FLUID_MECHANICS_IO_MAKE_UNIQUE",ERR,ERROR,*999)
+
     MESH_INFO(1)%T=MESH_INFO(1)%T
     MESH_INFO(2)%T=MESH_INFO(2)%T+ArrayOfNodesDefined(1)
     MESH_INFO(3)%T=MESH_INFO(3)%T+ArrayOfNodesDefined(1)+ArrayOfNodesDefined(2)
-    
+
     IF(ArrayOfNodesDefined(1)==ArrayOfNodesDefined(2)) THEN
       ! copy all node numbers from 2 -> 1
       MESH_INFO(2)%T(:,:)= MESH_INFO(1)%T(:,:)
@@ -3783,7 +3834,7 @@ CONTAINS
         STOP
       END IF
     END IF
-    
+
     IF(ArrayOfNodesDefined(1)==ArrayOfNodesDefined(3)) THEN
       ! copy all node numbers from 2 -> 1
       MESH_INFO(3)%T(:,:)=MESH_INFO(1)%T(:,:)
@@ -3803,26 +3854,29 @@ CONTAINS
       END IF
     END IF
 
-!     RETURN
-! 999 ERRORSEXITS("FLUID_MECHANICS_IO_MAKE_UNIQUE",ERR,ERROR)    
-!     RETURN
+    EXITS("FLUID_MECHANICS_IO_MAKE_UNIQUE")
+    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_MAKE_UNIQUE",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_MAKE_UNIQUE
-    
+
   !   OK
   !================================================================================================================================
   !
 
   !> Executes cmheart node reading process.
-  SUBROUTINE FLUID_MECHANICS_IO_READ_NODES
+  SUBROUTINE FLUID_MECHANICS_IO_READ_NODES(ERR,ERROR,*)
 
     INTEGER(INTG):: I,J
     INTEGER(INTG):: a,b
-!     INTEGER(INTG) :: ERR
-!     TYPE(VARYING_STRING):: ERROR
+     INTEGER(INTG) :: ERR
+     TYPE(VARYING_STRING):: ERROR
     REAL(DP) :: TEMP(3)
 !   REAL(DP),DIMENSION(832,3):: sebo_test_array
 !   sebo_test_array=0.0
+
+    ENTERS("FLUID_MECHANICS_IO_READ_NODES",ERR,ERROR,*999)
 
     READ(42,*) NAMz
     OPEN(UNIT = 1, FILE=NAMz,STATUS='old')
@@ -3854,17 +3908,17 @@ CONTAINS
       b=b+ArrayOfNodesDefined(I)
       OPENCMISS_NODE_COORD(a:b,1:3)=MESH_INFO(I)%X(1:ArrayOfNodesDefined(I),1:3)
     END DO
-    RETURN
 
+
+    EXITS("FLUID_MECHANICS_IO_READ_NODES")
+    RETURN
 35  PRINT *, 'FAILS'
     STOP
     IF(ALLOC_ERROR.NE.0) THEN
       STOP 'Error during allocation'
     END IF
-
-    RETURN
-! 999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_NODES",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_NODES",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_NODES
 
@@ -3873,9 +3927,13 @@ CONTAINS
   !
 
   !> Executes cmheart connectivity reading process.
-  SUBROUTINE FLUID_MECHANICS_IO_READ_CONNECT
+  SUBROUTINE FLUID_MECHANICS_IO_READ_CONNECT(ERR,ERROR,*)
 
     INTEGER(INTG):: I
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING) :: ERROR
+
+    ENTERS("FLUID_MECHANICS_IO_READ_CONNECT",ERR,ERROR,*999)
 
     !Read in the interface connectivity mapping
 
@@ -3902,6 +3960,11 @@ CONTAINS
     WRITE(*,*)' '
     CLOSE(79)
 
+    EXITS("FLUID_MECHANICS_IO_READ_CONNECT")
+    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_CONNECT",ERR,ERROR)
+    RETURN 1
+
   END SUBROUTINE FLUID_MECHANICS_IO_READ_CONNECT
 
 
@@ -3912,13 +3975,17 @@ CONTAINS
 
 
   !> Executes cmheart bc reading process.
-  SUBROUTINE FLUID_MECHANICS_IO_READ_BC
+  SUBROUTINE FLUID_MECHANICS_IO_READ_BC(ERR,ERROR,*)
 
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING) :: ERROR
     INTEGER(INTG):: NumberOfFaces, NumberOfNodes, HighestNodeNumber
     INTEGER(INTG):: FLAG,I1,I2,I3,I4,I5,I,J
     LOGICAL :: TEST
 
     INTEGER(INTG), DIMENSION(:), ALLOCATABLE:: DUMMY,TMP1,TMP2,TMP3,TMP4,TMP5
+
+    ENTERS("FLUID_MECHANICS_IO_READ_BC",ERR,ERROR,*999)
 
     READ(42,*) NAMz
     OPEN(UNIT = 79, FILE=NAMz,STATUS='old')
@@ -4049,8 +4116,8 @@ CONTAINS
         BC_TMP%BC_NODE_NUMBER5(I5)=I
         BC_TMP%NUMBER_OF_BC=BC_TMP%NUMBER_OF_BC+1
       ENDIF
-    ENDDO  
-      
+    ENDDO
+
     CLOSE(79)
 
     WRITE(*,*)' '
@@ -4065,7 +4132,10 @@ CONTAINS
     DEALLOCATE(TMP5)
 
 
+    EXITS("FLUID_MECHANICS_IO_READ_BC")
     RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_BC",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_BC
 
@@ -4075,7 +4145,9 @@ CONTAINS
   !
   !> Reads boundary conditions from a file
   SUBROUTINE FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS_ITERATION(SOLVER_TYPE,BOUNDARY_VALUES,BOUNDARY_NODES, &
-    & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION,OPTION,ITERATION)
+    & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION,OPTION,ITERATION,ERR,ERROR,*)
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING) :: ERROR
     INTEGER(INTG):: SOLVER_TYPE,I,NUMBER_OF_TIME_STEPS,OPTION
     REAL(DP), POINTER :: BOUNDARY_VALUES(:)
     INTEGER(INTG), POINTER :: BOUNDARY_NODES(:)
@@ -4085,14 +4157,16 @@ CONTAINS
 
     INTEGER(INTG):: ENDI
 
+    ENTERS("FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS_ITERATION",ERR,ERROR,*999)
+
     OPTION=1
     ENDI=1
     NUMBER_OF_TIME_STEPS=1
     NUMBER_OF_DIMENSIONS=42
 
     IF(SOLVER_TYPE==1) THEN !LINEAR
-      IF(BOUNDARY_CONDITION==1)THEN !SCALAR BOUNDARY CONDITION - SET THE NUMBER OF DIMENSIONS TO BE NUMBER OF DEPENDENT FIELD COMPONENTS (this will usually be one)!  
-       !ENDI=SIZE(BOUNDARY_VALUES)/NUMBER_OF_DIMENSIONS 
+      IF(BOUNDARY_CONDITION==1)THEN !SCALAR BOUNDARY CONDITION - SET THE NUMBER OF DIMENSIONS TO BE NUMBER OF DEPENDENT FIELD COMPONENTS (this will usually be one)!
+       !ENDI=SIZE(BOUNDARY_VALUES)/NUMBER_OF_DIMENSIONS
 !       IF(J<10) THEN
           WRITE(INPUT_FILE,'("./input/BC/BC_VALUES_",I0,".dat")') ITERATION
           !WRITE (*,*) INPUT_FILE
@@ -4116,20 +4190,27 @@ CONTAINS
       END IF
     ENDIF
 
+    EXITS("FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS_ITERATION")
     RETURN
+999 ERRORS("FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS_ITERATION",ERR,ERROR)
+    EXITS("FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS_ITERATION")
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS_ITERATION
   !
   !================================================================================================================================
   !
   !> Reads boundary conditions from a file
-  SUBROUTINE FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_TYPE,BOUNDARY_VALUES,NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION, & 
-    & OPTION,TIME_STEP,TIME,LENGTH_SCALE)
+  SUBROUTINE FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_TYPE,BOUNDARY_VALUES,NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION, &
+    & OPTION,TIME_STEP,TIME,LENGTH_SCALE,ERR,ERROR,*)
 
     INTEGER(INTG):: SOLVER_TYPE,I,OPTION, TIME_STEP
     REAL(DP), POINTER :: BOUNDARY_VALUES(:)
     INTEGER(INTG):: NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION,NUM_BC_NODES
     REAL(DP):: LENGTH_SCALE,TIME
+
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING) :: ERROR
 
     CHARACTER(34) :: INPUT_FILE
 
@@ -4138,13 +4219,15 @@ CONTAINS
 
     INTEGER(INTG):: ENDI
 
+    ENTERS("FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS",ERR,ERROR,*999)
+
     ENDI=42
 
 
     IF(SOLVER_TYPE==1) THEN !LINEAR
       IF(BOUNDARY_CONDITION==5)THEN !MOVED WALL
         IF(OPTION==0) THEN
-          !do nothing (default)    
+          !do nothing (default)
         ELSE IF(OPTION==1) THEN
           ENDI=SIZE(BOUNDARY_VALUES)
           IF(TIME_STEP<10) THEN
@@ -4152,7 +4235,7 @@ CONTAINS
           ELSE IF(TIME_STEP<100) THEN
             WRITE(INPUT_FILE,'("./input/motion/DISPLACEMENT_",I0,".dat")') TIME_STEP
           ENDIF
-          OPEN(UNIT=TIME_STEP,FILE=INPUT_FILE,STATUS='unknown') 
+          OPEN(UNIT=TIME_STEP,FILE=INPUT_FILE,STATUS='unknown')
           DO I=1,ENDI
             READ(TIME_STEP,*) BOUNDARY_VALUES(I)
           ENDDO
@@ -4162,7 +4245,7 @@ CONTAINS
         ELSEIF(OPTION==2) THEN
           ENDI=SIZE(BOUNDARY_VALUES)/NUMBER_OF_DIMENSIONS
           !U,X COMPONENT
-          BOUNDARY_VALUES(1:ENDI)=0.0_DP                                       
+          BOUNDARY_VALUES(1:ENDI)=0.0_DP
           !V,Y COMPONENT
           BOUNDARY_VALUES(ENDI+1:ENDI+ENDI)=-0.05_DP*COS(2.0_DP*PI*1.0_DP/40.0_DP*TIME)
           !W,Z COMPONENT
@@ -4178,7 +4261,7 @@ CONTAINS
         ELSEIF(OPTION==4) THEN
           ENDI=SIZE(BOUNDARY_VALUES)/NUMBER_OF_DIMENSIONS
           !U,X COMPONENT
-          BOUNDARY_VALUES(1:ENDI)=0.0_DP                                       
+          BOUNDARY_VALUES(1:ENDI)=0.0_DP
           !V,Y COMPONENT
           BOUNDARY_VALUES(ENDI+1:ENDI+ENDI)=0.0_DP
           !W,Z COMPONENT
@@ -4186,7 +4269,7 @@ CONTAINS
         ELSEIF(OPTION==69) THEN
           ENDI=SIZE(BOUNDARY_VALUES)/NUMBER_OF_DIMENSIONS
           !U,X COMPONENT
-          BOUNDARY_VALUES(1:ENDI)=0.0_DP                                       
+          BOUNDARY_VALUES(1:ENDI)=0.0_DP
           !V,Y COMPONENT
           BOUNDARY_VALUES(ENDI+1:ENDI+ENDI)=0.0_DP
           !W,Z COMPONENT
@@ -4194,8 +4277,8 @@ CONTAINS
         ELSE
           STOP 'Error during boundary input'
         ENDIF
-      ELSEIF(BOUNDARY_CONDITION==1)THEN !SCALAR BOUNDARY CONDITION - SET THE NUMBER OF DIMENSIONS TO BE NUMBER OF DEPENDENT FIELD COMPONENTS (this will usually be one)!  
-       !ENDI=SIZE(BOUNDARY_VALUES)/NUMBER_OF_DIMENSIONS 
+      ELSEIF(BOUNDARY_CONDITION==1)THEN !SCALAR BOUNDARY CONDITION - SET THE NUMBER OF DIMENSIONS TO BE NUMBER OF DEPENDENT FIELD COMPONENTS (this will usually be one)!
+       !ENDI=SIZE(BOUNDARY_VALUES)/NUMBER_OF_DIMENSIONS
 !       IF(J<10) THEN
           WRITE(INPUT_FILE,'("./input/BC/BC_VALUES_",F10.7,".dat")') TIME
           !WRITE (*,*) INPUT_FILE
@@ -4217,7 +4300,7 @@ CONTAINS
         IF(OPTION==69) THEN
           ENDI=SIZE(BOUNDARY_VALUES)/NUMBER_OF_DIMENSIONS
           !U,X COMPONENT
-          BOUNDARY_VALUES(1:ENDI)=0.0_DP                                       
+          BOUNDARY_VALUES(1:ENDI)=0.0_DP
           !V,Y COMPONENT
           BOUNDARY_VALUES(ENDI+1:ENDI+ENDI)=0.0_DP
           !W,Z COMPONENT
@@ -4232,17 +4315,22 @@ CONTAINS
       END IF
     ENDIF
 !         WRITE(*,*)'TEST_OUTPUT',BOUNDARY_VALUES(ENDI+1),PI,TIME
+
+    EXITS("FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS")
     RETURN
+999 ERRORS("FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS",ERR,ERROR)
+    EXITS("FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS")
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS
   !
   !================================================================================================================================
   !
   !> Updates the boundary condition for a given node and component
-  
+
   SUBROUTINE FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes(GeometricField,SolverType,InletNodes, &
-    & BoundaryValues,BoundaryCondition,Option,Time,StopTime)
-    
+    & BoundaryValues,BoundaryCondition,Option,Time,StopTime,err,ERROR,*)
+
     INTEGER(INTG) :: Err
     TYPE(VARYING_STRING) :: Error
     TYPE(FIELD_TYPE), POINTER :: GeometricField
@@ -4255,9 +4343,11 @@ CONTAINS
     INTEGER(INTG),PARAMETER :: Plate3D=3
     INTEGER(Intg), ALLOCATABLE, INTENT(OUT) :: InletNodes(:)
     REAL(DP) :: Time,StopTime,Y
-    
+
+    ENTERS("FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes",ERR,ERROR,*999)
+
     MaterialSpecification=Option
-    
+
     IF(SolverType==3) THEN
       SELECT CASE(MaterialSpecification)
       CASE(Blood)
@@ -4304,18 +4394,22 @@ CONTAINS
     ELSE
       STOP "Not implemented."
     ENDIF
-    
-    RETURN 
-999 RETURN 
+
+    EXITS("FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes")
+    RETURN
+999 ERRORS("FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes",ERR,ERROR)
+    EXITS("FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes")
+    RETURN 1
+
   END SUBROUTINE FluidMechanics_IO_UpdateBoundaryConditionUpdateNodes
-   
+
   !
   !================================================================================================================================
   !
 
   !> Reads input data from a file
-  SUBROUTINE FLUID_MECHANICS_IO_READ_DATA(SOLVER_TYPE,INPUT_VALUES,NUMBER_OF_DIMENSIONS,INPUT_TYPE, & 
-    & INPUT_OPTION,TIME_STEP,LENGTH_SCALE)
+  SUBROUTINE FLUID_MECHANICS_IO_READ_DATA(SOLVER_TYPE,INPUT_VALUES,NUMBER_OF_DIMENSIONS,INPUT_TYPE, &
+    & INPUT_OPTION,TIME_STEP,LENGTH_SCALE,ERR,ERROR,*)
 
     INTEGER(INTG):: SOLVER_TYPE,I,INPUT_OPTION,CHECK
     INTEGER(INTG) :: ERR
@@ -4329,11 +4423,13 @@ CONTAINS
     CHARACTER(35) :: INPUT_FILE
     CHARACTER(29) :: UVEL_FILE
 
+    ENTERS("FLUID_MECHANICS_IO_READ_DATA",ERR,ERROR,*999)
+
     I=SOLVER_TYPE
-    NUMBER_OF_DIMENSIONS=42  
+    NUMBER_OF_DIMENSIONS=42
     ENDI=42
 
-  
+
 !     IF(SOLVER_TYPE==1) THEN !LINEAR
       IF(INPUT_TYPE==1)THEN !POISSON VECTOR SOURCE TEMPORARY
         ENDI=SIZE(INPUT_VALUES)
@@ -4378,7 +4474,7 @@ CONTAINS
           ENDIF
         ENDIF
           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,UVEL_FILE,ERR,ERROR,*999)
-          OPEN(UNIT=42, FILE=UVEL_FILE,STATUS='unknown') 
+          OPEN(UNIT=42, FILE=UVEL_FILE,STATUS='unknown')
           READ(42,*) CHECK
           IF(CHECK/=ENDI) THEN
             STOP 'Error during data input - probably wrong Lagrangian/Hermite input file!'
@@ -4391,7 +4487,7 @@ CONTAINS
       ELSE IF(INPUT_TYPE==42) THEN
 ! do nothing for now
         IF(INPUT_OPTION==0) THEN
-          !do nothing (default)    
+          !do nothing (default)
         ELSE IF(INPUT_OPTION==1) THEN
           ENDI=SIZE(INPUT_VALUES)
           IF(TIME_STEP<=10) THEN
@@ -4401,7 +4497,7 @@ CONTAINS
           ELSE IF(TIME_STEP<1000) THEN
             WRITE(INPUT_FILE,'("./input/motion/DISPLACEMENT_",I0,".dat")') TIME_STEP
           ENDIF
-          OPEN(UNIT=TIME_STEP, FILE=INPUT_FILE,STATUS='unknown') 
+          OPEN(UNIT=TIME_STEP, FILE=INPUT_FILE,STATUS='unknown')
           READ(TIME_STEP,*) CHECK
           IF(CHECK/=ENDI) THEN
             STOP 'Error during data input - probably wrong Lagrangian/Hermite input file!'
@@ -4422,7 +4518,7 @@ CONTAINS
           ELSE IF(TIME_STEP<1000) THEN
             WRITE(INPUT_FILE,'("./input/motion/DISPLACEMENT_",I0,".dat")') TIME_STEP
           ENDIF
-          OPEN(UNIT=TIME_STEP, FILE=INPUT_FILE,STATUS='unknown') 
+          OPEN(UNIT=TIME_STEP, FILE=INPUT_FILE,STATUS='unknown')
           DO I=1,ENDI
             READ(TIME_STEP,*) INPUT_VALUES(I)
             INPUT_VALUES(I) = LENGTH_SCALE * INPUT_VALUES(I)
@@ -4439,7 +4535,7 @@ CONTAINS
           ELSE IF(TIME_STEP<1000) THEN
             WRITE(INPUT_FILE,'("./input/motion/DISPLACEMENT_",I0,".dat")') 1000-TIME_STEP
           ENDIF
-          OPEN(UNIT=TIME_STEP, FILE=INPUT_FILE,STATUS='unknown') 
+          OPEN(UNIT=TIME_STEP, FILE=INPUT_FILE,STATUS='unknown')
           DO I=1,ENDI
             READ(TIME_STEP,*) INPUT_VALUES(I)
             INPUT_VALUES(I) = LENGTH_SCALE * INPUT_VALUES(I)
@@ -4449,9 +4545,12 @@ CONTAINS
           STOP 'Error during data input'
         ENDIF
       ENDIF
+
+    EXITS("FLUID_MECHANICS_IO_READ_DATA")
     RETURN
-999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_DATA",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_DATA",ERR,ERROR)
+    RETURN 1
+
   END SUBROUTINE FLUID_MECHANICS_IO_READ_DATA
 
   ! OK
@@ -4459,12 +4558,14 @@ CONTAINS
   !
 
   !> Execute cmheart element reading process.
-  SUBROUTINE FLUID_MECHANICS_IO_READ_ELEMENTS
-   
+  SUBROUTINE FLUID_MECHANICS_IO_READ_ELEMENTS(ERR,ERROR,*)
+
     INTEGER(INTG):: I,J
-!     INTEGER(INTG) :: ERR
-!     TYPE(VARYING_STRING):: ERROR
+     INTEGER(INTG) :: ERR
+     TYPE(VARYING_STRING):: ERROR
     INTEGER(INTG) :: TEMP(200)
+
+    ENTERS("FLUID_MECHANICS_IO_READ_ELEMENTS",ERR,ERROR,*999)
 
     READ(42,*) NAMz
 
@@ -4474,7 +4575,7 @@ CONTAINS
 ! ALLOCATE AND READ MESH ELEMENT INFORMATION
     TotalNumberOfNodes=ArrayOfNodesDefined(1)+ArrayOfNodesDefined(2)+ArrayOfNodesDefined(3)
 ! ! !     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Reading Elements...",ERR,ERROR,*999)
-    WRITE(*,*)'Reading Elements...'            
+    WRITE(*,*)'Reading Elements...'
     DO I=1,3
       MESH_INFO(I)%Lt=NumberOfElementsDefined(I)
       ALLOCATE(MESH_INFO(I)%T(MESH_INFO(I)%Lt,NumberOfNodesPerElement(I)),STAT=ALLOC_ERROR)
@@ -4484,18 +4585,17 @@ CONTAINS
         END DO
     END DO
     CLOSE(1)
-    RETURN
 
+
+    EXITS("FLUID_MECHANICS_IO_READ_ELEMENTS")
+    RETURN
  30 PRINT *, 'FAILS'
     STOP
-
     IF(ALLOC_ERROR.NE.0) THEN
       STOP 'Error during allocation'
     END IF
-
-    RETURN
-! 999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_ELEMENTS",ERR,ERROR)    
-    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_ELEMENTS",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_READ_ELEMENTS
 
@@ -4504,13 +4604,15 @@ CONTAINS
   !
 
   !> Writes nice information on screen.
-  SUBROUTINE FLUID_MECHANICS_IO_PRINT_ON_SCREEN
+  SUBROUTINE FLUID_MECHANICS_IO_PRINT_ON_SCREEN(ERR,ERROR,*)
 
     INTEGER(INTG):: I
-!     INTEGER(INTG) :: ERR
-!     TYPE(VARYING_STRING):: ERROR
+     INTEGER(INTG) :: ERR
+     TYPE(VARYING_STRING):: ERROR
 
-    DO I = 1,TotalNumberOfNodes
+     ENTERS("FLUID_MECHANICS_IO_PRINT_ON_SCREEN",ERR,ERROR,*999)
+
+     DO I = 1,TotalNumberOfNodes
       WRITE(*,'("Node ",(I0,4x),1000( F6.3,2x ))')I,OPENCMISS_NODE_COORD(I,1:3)
     END DO
 
@@ -4536,8 +4638,10 @@ CONTAINS
     WRITE(*,*)
     WRITE(*,*)
 
-!     RETURN
-! 999 ERRORSEXITS("FLUID_MECHANICS_IO_PRINT_ON_SCREEN",ERR,ERROR)    
+    EXITS("FLUID_MECHANICS_IO_PRINT_ON_SCREEN")
+    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_PRINT_ON_SCREEN",ERR,ERROR)
+    RETURN 1
 
   END SUBROUTINE FLUID_MECHANICS_IO_PRINT_ON_SCREEN
 
@@ -4546,7 +4650,7 @@ CONTAINS
   !
 
   !================================================================================================================================
-  ! 
+  !
   ! Below are the Darcy routines
   ! chrm, 20.08.09
   !
@@ -4557,11 +4661,15 @@ CONTAINS
   !
 
   !> Read parameters for Darcy problem
-  SUBROUTINE FLUID_MECHANICS_IO_READ_DARCY_PARAMS
+  SUBROUTINE FLUID_MECHANICS_IO_READ_DARCY_PARAMS(ERR,ERROR,*)
 
     IMPLICIT NONE
+    INTEGER(INTG) :: ERR
+    TYPE(VARYING_STRING) :: ERROR
 
     CHARACTER*90 DARCY_PARAM_FILE
+
+    ENTERS("FLUID_MECHANICS_IO_READ_DARCY_PARAMS",ERR,ERROR,*999)
 
     DARCY_PARAM_FILE='./input/Darcy_parameters.inp'
 
@@ -4613,6 +4721,11 @@ CONTAINS
 
     DARCY%max_node_spacing = 0.05_DP
 
+    EXITS("FLUID_MECHANICS_IO_READ_DARCY_PARAMS")
+    RETURN
+999 ERRORSEXITS("FLUID_MECHANICS_IO_READ_DARCY_PARAMS",ERR,ERROR)
+    RETURN 1
+
   END SUBROUTINE FLUID_MECHANICS_IO_READ_DARCY_PARAMS
 
   ! OK
@@ -4647,8 +4760,8 @@ CONTAINS
         ELSE IF( DARCY%TESTCASE == 2 ) THEN
           ARG_X = 2.0_DP * PI * COORD_X / DARCY%LENGTH
           ARG_Y = 2.0_DP * PI * COORD_Y / DARCY%LENGTH
-          NodeUValue_analytic(I) = - FACT * COS( ARG_X ) * SIN( ARG_Y ) 
-          NodeVValue_analytic(I) = - FACT * SIN( ARG_X ) * COS( ARG_Y ) 
+          NodeUValue_analytic(I) = - FACT * COS( ARG_X ) * SIN( ARG_Y )
+          NodeVValue_analytic(I) = - FACT * SIN( ARG_X ) * COS( ARG_Y )
           NodePValue_analytic(I) =          SIN( ARG_X ) * SIN( ARG_Y )
         ELSE IF( DARCY%TESTCASE == 3 ) THEN
           ARG_X = 2.0_DP * PI * COORD_X / DARCY%LENGTH
@@ -4669,15 +4782,15 @@ CONTAINS
           NodeVValue_analytic(I) = - FACT * ( 2.0_DP * COORD_X - 2.0_DP * COORD_Y + COORD_Z )
           NodeWValue_analytic(I) = - FACT * ( 3.0_DP + COORD_X + COORD_Y )
           NodePValue_analytic(I) = COORD_X * COORD_X + 2.0_DP * COORD_X * COORD_Y - COORD_Y * COORD_Y + &
-            & 3.0_DP * COORD_Z + COORD_Z * COORD_X  + COORD_Z * COORD_Y 
+            & 3.0_DP * COORD_Z + COORD_Z * COORD_X  + COORD_Z * COORD_Y
         ELSE IF( DARCY%TESTCASE == 2 ) THEN
           ARG_X = 2.0_DP * PI * COORD_X / DARCY%LENGTH
           ARG_Y = 2.0_DP * PI * COORD_Y / DARCY%LENGTH
           ARG_Z = 2.0_DP * PI * COORD_Z / DARCY%LENGTH
-          NodeUValue_analytic(I) = - FACT * COS( ARG_X ) * SIN( ARG_Y )  * SIN( ARG_Z ) 
-          NodeVValue_analytic(I) = - FACT * SIN( ARG_X ) * COS( ARG_Y )  * SIN( ARG_Z )  
-          NodeWValue_analytic(I) = - FACT * SIN( ARG_X ) * SIN( ARG_Y )  * COS( ARG_Z )  
-          NodePValue_analytic(I) =          SIN( ARG_X ) * SIN( ARG_Y )  * SIN( ARG_Z )  
+          NodeUValue_analytic(I) = - FACT * COS( ARG_X ) * SIN( ARG_Y )  * SIN( ARG_Z )
+          NodeVValue_analytic(I) = - FACT * SIN( ARG_X ) * COS( ARG_Y )  * SIN( ARG_Z )
+          NodeWValue_analytic(I) = - FACT * SIN( ARG_X ) * SIN( ARG_Y )  * COS( ARG_Z )
+          NodePValue_analytic(I) =          SIN( ARG_X ) * SIN( ARG_Y )  * SIN( ARG_Z )
         ELSE IF( DARCY%TESTCASE == 3 ) THEN
           ARG_X = 2.0_DP * PI * COORD_X / DARCY%LENGTH
           ARG_Y = 2.0_DP * PI * COORD_Y / DARCY%LENGTH
@@ -4802,6 +4915,6 @@ CONTAINS
 
   ! OK
   !================================================================================================================================
-  ! 
+  !
 
 END MODULE FLUID_MECHANICS_IO_ROUTINES

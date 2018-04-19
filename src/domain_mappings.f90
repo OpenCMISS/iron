@@ -44,8 +44,8 @@
 !> This module handles all domain mappings routines.
 MODULE DOMAIN_MAPPINGS
 
-  USE BASE_ROUTINES
-  USE COMP_ENVIRONMENT
+  USE BaseRoutines
+  USE ComputationEnvironment
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -159,7 +159,7 @@ CONTAINS
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
       IF(GLOBAL_NUMBER>=1.AND.GLOBAL_NUMBER<=DOMAIN_MAPPING%NUMBER_OF_GLOBAL) THEN
         IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_NUMBER)%DOMAIN_NUMBER(1)== &
-          & COMPUTATIONAL_ENVIRONMENT%MY_COMPUTATIONAL_NODE_NUMBER) THEN
+          & computationalEnvironment%myComputationalNodeNumber) THEN
           LOCAL_NUMBER=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(GLOBAL_NUMBER)%LOCAL_NUMBER(1)
           LOCAL_EXISTS=.TRUE.
         ENDIF
@@ -192,7 +192,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: domain_idx,domain_idx2,domain_no,domain_no2,global_number,idx,local_number,local_number2,NUMBER_INTERNAL, &
-      & NUMBER_BOUNDARY,NUMBER_GHOST,my_computational_node_number,MY_DOMAIN_INDEX,TEMP,NUMBER_OF_ADJACENT_DOMAINS, &
+      & NUMBER_BOUNDARY,NUMBER_GHOST,myComputationalNodeNumber,MY_DOMAIN_INDEX,TEMP,NUMBER_OF_ADJACENT_DOMAINS, &
       & RECEIVE_FROM_DOMAIN,DUMMY_ERR,NUMBER_OF_GHOST_RECEIVE,NUMBER_OF_GHOST_SEND,local_type,COUNT, &
       & TOTAL_NUMBER_OF_ADJACENT_DOMAINS
     INTEGER(INTG), ALLOCATABLE :: ADJACENT_DOMAIN_MAP(:),ADJACENT_DOMAINS(:,:),SEND_LIST(:),RECEIVE_LIST(:)
@@ -203,7 +203,7 @@ CONTAINS
     ENTERS("DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE",ERR,ERROR,*999)
 
     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
-      my_computational_node_number=COMPUTATIONAL_NODE_NUMBER_GET(ERR,ERROR)
+      myComputationalNodeNumber=ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
       IF(ERR/=0) GOTO 999        
       
       !Calculate local to global maps from global to local map
@@ -230,7 +230,7 @@ CONTAINS
         MY_DOMAIN_INDEX=1
         DO domain_idx=2,DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%NUMBER_OF_DOMAINS
           domain_no=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%DOMAIN_NUMBER(domain_idx)
-          IF(domain_no==my_computational_node_number) THEN
+          IF(domain_no==myComputationalNodeNumber) THEN
             MY_DOMAIN_INDEX=domain_idx
             EXIT
           ENDIF
@@ -276,7 +276,7 @@ CONTAINS
           ENDIF
           
           !increment counter of internal, boundary and ghost elements on my domain
-          IF(domain_no==my_computational_node_number) THEN
+          IF(domain_no==myComputationalNodeNumber) THEN
             SELECT CASE(local_type)
             CASE(DOMAIN_LOCAL_INTERNAL)
               NUMBER_INTERNAL=NUMBER_INTERNAL+1
@@ -302,7 +302,7 @@ CONTAINS
           IF(domain_no/=domain_no2) THEN 
             IF(ADJACENT_DOMAINS(domain_no,domain_no2)>0) THEN
               TOTAL_NUMBER_OF_ADJACENT_DOMAINS=TOTAL_NUMBER_OF_ADJACENT_DOMAINS+1
-              IF(domain_no==my_computational_node_number) NUMBER_OF_ADJACENT_DOMAINS=NUMBER_OF_ADJACENT_DOMAINS+1
+              IF(domain_no==myComputationalNodeNumber) NUMBER_OF_ADJACENT_DOMAINS=NUMBER_OF_ADJACENT_DOMAINS+1
             ENDIF
           ENDIF
         ENDDO !domain_no2
@@ -375,8 +375,8 @@ CONTAINS
         
         ! get number of current adjacent domain
         domain_no= &
-          & DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST(DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(my_computational_node_number)+domain_idx-1)
-          
+          & DOMAIN_MAPPING%ADJACENT_DOMAINS_LIST(DOMAIN_MAPPING%ADJACENT_DOMAINS_PTR(myComputationalNodeNumber)+domain_idx-1)
+           
         ! set number in adjacent_domains and adjacent_domain_map
         DOMAIN_MAPPING%ADJACENT_DOMAINS(domain_idx)%DOMAIN_NUMBER=domain_no
         ADJACENT_DOMAIN_MAP(domain_no)=domain_idx
@@ -430,7 +430,7 @@ CONTAINS
               local_type=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%LOCAL_TYPE(domain_idx)
               
               IF(local_type/=DOMAIN_LOCAL_GHOST) THEN
-                IF(domain_no==my_computational_node_number) SEND_GLOBAL=.TRUE.
+                IF(domain_no==myComputationalNodeNumber) SEND_GLOBAL=.TRUE.
                 IF(RECEIVE_FROM_DOMAIN==-1) THEN
                   RECEIVE_FROM_DOMAIN=domain_no
                 ELSE
@@ -456,7 +456,7 @@ CONTAINS
           local_number=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%LOCAL_NUMBER(domain_idx)
           local_type=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(global_number)%LOCAL_TYPE(domain_idx)
           
-          IF(domain_no==my_computational_node_number) THEN
+          IF(domain_no==myComputationalNodeNumber) THEN
             ! set local number
             DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_number)=global_number
             

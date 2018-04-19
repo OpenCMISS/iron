@@ -44,14 +44,15 @@
 !> This module contains all coordinate transformation and support routines.
 MODULE COORDINATE_ROUTINES
 
-  USE BASE_ROUTINES
-  USE CONSTANTS
+  USE BaseRoutines
+  USE Constants
+  USE CoordinateSystemAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE MATHS
-  USE STRINGS
-  USE TYPES
+  USE Kinds
+  USE Maths
+  USE Strings
+  USE Types
   
 #include "macros.h"
 
@@ -95,11 +96,6 @@ MODULE COORDINATE_ROUTINES
   !>@}
   
   !Module types
-
-  TYPE COORDINATE_SYSTEMS_TYPE
-    INTEGER(INTG) :: NUMBER_OF_COORDINATE_SYSTEMS
-    TYPE(COORDINATE_SYSTEM_PTR_TYPE), POINTER :: COORDINATE_SYSTEMS(:)
-  END TYPE COORDINATE_SYSTEMS_TYPE
   
   !Module variables
 
@@ -110,8 +106,6 @@ MODULE COORDINATE_ROUTINES
     &    "Prolate Spheroidal   ", &
     &    "Oblate Spheroidal    " /)
 
-  TYPE(COORDINATE_SYSTEMS_TYPE) :: COORDINATE_SYSTEMS
-  
   !Interfaces
 
   !>COORDINATE_CONVERT_FROM_RC performs a coordinate transformation from a rectangular cartesian coordinate at the point with
@@ -188,8 +182,6 @@ MODULE COORDINATE_ROUTINES
   PUBLIC COORDINATE_SYSTEM_DESTROY
 
   PUBLIC COORDINATE_DERIVATIVE_CONVERT_TO_RC
-
-  PUBLIC COORDINATE_SYSTEM_USER_NUMBER_FIND
   
   PUBLIC COORDINATE_SYSTEMS_INITIALISE,COORDINATE_SYSTEMS_FINALISE
 
@@ -849,8 +841,7 @@ CONTAINS
                     !We have curvature information. Form the frenet vector frame.
                     !Calculate the normal vector from the normalised second derivative of the position vector.
                     nu=PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(1)
-                    DX_DXI2=NORMALISE(INTERPOLATED_POINT%VALUES(1:2,nu),ERR,ERROR)
-                    IF(ERR/=0) GOTO 999
+                    CALL Normalise(INTERPOLATED_POINT%VALUES(1:2,nu),DX_DXI2,ERR,ERROR,*999)
                   ELSE
                     !No curvature information but obtain other normal frenet vector by rotating tangent vector 90 deg.
                     DX_DXI2(1)=-1.0_DP*METRICS%DX_DXI(2,1)
@@ -861,7 +852,7 @@ CONTAINS
                     METRICS%DXI_DX(1,1)=DX_DXI2(2)/DET_DX_DXI
                     METRICS%DXI_DX(1,2)=-1.0_DP*DX_DXI2(1)/DET_DX_DXI
                     !Normalise to ensure that g^11=g^1.g^1
-                    LENGTH=L2NORM(METRICS%DXI_DX(1,1:2))
+                    CALL L2Norm(METRICS%DXI_DX(1,1:2),LENGTH,err,error,*999)
                     SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
                     METRICS%DXI_DX(1,1:2)=SCALE*METRICS%DXI_DX(1,1:2)
                   ELSE
@@ -873,10 +864,9 @@ CONTAINS
                     !We have curvature information. Form the frenet vector frame.
                     !Calculate the normal vector from the normalised second derivative of the position vector.
                     nu=PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(1)
-                    DX_DXI2=NORMALISE(INTERPOLATED_POINT%VALUES(1:3,nu),ERR,ERROR)
-                    IF(ERR/=0) GOTO 999
+                    CALL Normalise(INTERPOLATED_POINT%VALUES(1:3,nu),DX_DXI2,ERR,ERROR,*999)
                     !Calculate the bi-normal vector from the normalised cross product of the tangent and normal vectors
-                    CALL NORM_CROSS_PRODUCT(METRICS%DX_DXI(1:3,1),DX_DXI2,DX_DXI3,ERR,ERROR,*999)
+                    CALL NormaliseCrossProduct(METRICS%DX_DXI(1:3,1),DX_DXI2,DX_DXI3,ERR,ERROR,*999)
                     DET_DX_DXI=METRICS%DX_DXI(1,1)*(DX_DXI2(2)*DX_DXI3(3)-DX_DXI2(3)*DX_DXI3(2))+ &
                       & DX_DXI2(1)*(METRICS%DX_DXI(3,1)*DX_DXI3(2)-DX_DXI3(3)*METRICS%DX_DXI(2,1))+ &
                       & DX_DXI3(1)*(METRICS%DX_DXI(2,1)*DX_DXI2(3)-METRICS%DX_DXI(3,1)*DX_DXI2(2))
@@ -885,7 +875,7 @@ CONTAINS
                       METRICS%DXI_DX(1,2)=-1.0_DP*(DX_DXI3(3)*DX_DXI2(1)-DX_DXI2(3)*DX_DXI3(1))/DET_DX_DXI
                       METRICS%DXI_DX(1,3)=(DX_DXI3(2)*DX_DXI2(1)-DX_DXI2(2)*DX_DXI3(1))/DET_DX_DXI
                       !Normalise to ensure that g^11=g^1.g^1
-                      LENGTH=L2NORM(METRICS%DXI_DX(1,1:3))
+                      CALL L2Norm(METRICS%DXI_DX(1,1:3),LENGTH,err,error,*999)
                       SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
                       METRICS%DXI_DX(1,1:3)=SCALE*METRICS%DX_DXI(1,1:3)
                     ELSE
@@ -897,7 +887,7 @@ CONTAINS
                     METRICS%DXI_DX(1,2)=METRICS%DX_DXI(2,1)
                     METRICS%DXI_DX(1,3)=METRICS%DX_DXI(3,1)
                     !Normalise to ensure that g^11=g^1.g^1
-                    LENGTH=L2NORM(METRICS%DXI_DX(1,1:3))
+                    CALL L2Norm(METRICS%DXI_DX(1,1:3),LENGTH,err,error,*999)
                     SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
                     METRICS%DXI_DX(1,1:3)=SCALE*METRICS%DXI_DX(1,1:3)
                   ENDIF
@@ -1178,40 +1168,7 @@ CONTAINS
     RETURN 1
   END SUBROUTINE COORDINATE_SYSTEM_NORMAL_CALCULATE
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the coordinate system dimension. 
-  SUBROUTINE COORDINATE_SYSTEM_DIMENSION_GET(COORDINATE_SYSTEM,NUMBER_OF_DIMENSIONS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the dimension for
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_DIMENSIONS !<On return, the number of dimensions in the coordinate system.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("COORDINATE_SYSTEM_DIMENSION_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
-        NUMBER_OF_DIMENSIONS=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
-      ELSE
-        CALL FlagError("Coordinate system has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Coordinate system is not associated.",ERR,ERROR,*999)
-    ENDIF
-   
-    EXITS("COORDINATE_SYSTEM_DIMENSION_GET")
-    RETURN
-999 ERRORSEXITS("COORDINATE_SYSTEM_DIMENSION_GET",ERR,ERROR)
-    RETURN 1
-
-  END SUBROUTINE COORDINATE_SYSTEM_DIMENSION_GET
-
-  !
+   !
   !================================================================================================================================
   !
 
@@ -1778,15 +1735,15 @@ CONTAINS
           &   0.0_DP,0.0_DP,1.0_DP/), &
           & (/3,3/))
         
-        ALLOCATE(NEW_COORDINATE_SYSTEMS(COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS+1),STAT=ERR)
+        ALLOCATE(NEW_COORDINATE_SYSTEMS(coordinateSystems%numberOfCoordinateSystems+1),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate new coordinate systems.",ERR,ERROR,*999)
-        DO coord_system_idx=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
-          NEW_COORDINATE_SYSTEMS(coord_system_idx)%PTR=>COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR
+        DO coord_system_idx=1,coordinateSystems%numberOfCoordinateSystems
+          NEW_COORDINATE_SYSTEMS(coord_system_idx)%ptr=>coordinateSystems%coordinateSystems(coord_system_idx)%ptr
         ENDDO !coord_system_idx
-        NEW_COORDINATE_SYSTEMS(COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS+1)%PTR=>NEW_COORDINATE_SYSTEM
-        DEALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS)
-        COORDINATE_SYSTEMS%COORDINATE_SYSTEMS=>NEW_COORDINATE_SYSTEMS
-        COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS+1
+        NEW_COORDINATE_SYSTEMS(coordinateSystems%numberOfCoordinateSystems+1)%ptr=>NEW_COORDINATE_SYSTEM
+        DEALLOCATE(coordinateSystems%coordinateSystems)
+        coordinateSystems%coordinateSystems=>NEW_COORDINATE_SYSTEMS
+        coordinateSystems%numberOfCoordinateSystems=coordinateSystems%numberOfCoordinateSystems+1
         
         COORDINATE_SYSTEM=>NEW_COORDINATE_SYSTEM
       ENDIF
@@ -1825,15 +1782,15 @@ CONTAINS
     
     IF(DIAGNOSTICS1) THEN
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Number of coordinate systems = ", &
-        & COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS,ERR,ERROR,*999)
-      DO coord_system_idx=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
+        & coordinateSystems%numberOfCoordinateSystems,ERR,ERROR,*999)
+      DO coord_system_idx=1,coordinateSystems%numberOfCoordinateSystems
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Coordinate system : ",coord_system_idx,ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number = ", &
-          & COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR%USER_NUMBER,ERR,ERROR,*999)
+          & coordinateSystems%coordinateSystems(coord_system_idx)%ptr%USER_NUMBER,ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Type = ", &
-          & COORDINATE_SYSTEM_TYPE_STRING(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR%TYPE),ERR,ERROR,*999)
+          & COORDINATE_SYSTEM_TYPE_STRING(coordinateSystems%coordinateSystems(coord_system_idx)%ptr%TYPE),ERR,ERROR,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of dimensions = ", &
-          & COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR%NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+          & coordinateSystems%coordinateSystems(coord_system_idx)%ptr%NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
       ENDDO !coord_system_idx
     ENDIF
     
@@ -1867,21 +1824,21 @@ CONTAINS
       ELSE
         FOUND=.FALSE.
         new_coord_system_no=0
-        ALLOCATE(NEW_COORDINATE_SYSTEMS(COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS-1),STAT=ERR)
+        ALLOCATE(NEW_COORDINATE_SYSTEMS(coordinateSystems%numberOfCoordinateSystems-1),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate new coordianate systems.",ERR,ERROR,*999)
-        DO coord_system_no=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
-          IF(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_no)%PTR%USER_NUMBER==COORDINATE_SYSTEM%USER_NUMBER) THEN
+        DO coord_system_no=1,coordinateSystems%numberOfCoordinateSystems
+          IF(coordinateSystems%coordinateSystems(coord_system_no)%ptr%USER_NUMBER==COORDINATE_SYSTEM%USER_NUMBER) THEN
             FOUND=.TRUE.
           ELSE
             new_coord_system_no=new_coord_system_no+1
-            NEW_COORDINATE_SYSTEMS(new_coord_system_no)%PTR=>COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_no)%PTR
+            NEW_COORDINATE_SYSTEMS(new_coord_system_no)%ptr=>coordinateSystems%coordinateSystems(coord_system_no)%ptr
           ENDIF
         ENDDO !coord_system_no
         IF(FOUND) THEN
           CALL COORDINATE_SYSTEM_FINALISE(COORDINATE_SYSTEM,ERR,ERROR,*999)
-          DEALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS)
-          COORDINATE_SYSTEMS%COORDINATE_SYSTEMS=>NEW_COORDINATE_SYSTEMS
-          COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS-1
+          DEALLOCATE(coordinateSystems%coordinateSystems)
+          coordinateSystems%coordinateSystems=>NEW_COORDINATE_SYSTEMS
+          coordinateSystems%numberOfCoordinateSystems=coordinateSystems%numberOfCoordinateSystems-1
         ELSE
           DEALLOCATE(NEW_COORDINATE_SYSTEMS)
           CALL FlagError("Coordinate system number to destroy does not exist.",ERR,ERROR,*999)
@@ -3894,7 +3851,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
     !Local variables
     INTEGER(INTG) :: numberOfXDimensions,numberOfXiDimensions,numberOfNuDimensions,xiIdx
-    REAL(DP) :: dNudXiTemp(3,3),Jnuxi
+    REAL(DP) :: dNudXiTemp(3,3),Jnuxi,JNuX
     TYPE(VARYING_STRING) :: localError 
      
     ENTERS("Coordinates_MaterialSystemCalculate",err,error,*999)
@@ -3930,7 +3887,7 @@ CONTAINS
         numberOfNuDimensions=0
         DO xiIdx=1,numberOfXiDimensions
           dNudXiTemp(1:numberOfXDimensions,xiIdx)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,xiIdx)
-          dXdNu(1:numberOfXDimensions,xiIdx)=Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),err,error)
+          CALL Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),dXdNu(1:numberOfXDimensions,xiIdx),err,error,*999)
         ENDDO !xiIdx
       ENDIF
       !Calculate dNu/dX the inverse of dX/dNu (same as transpose due to orthogonality)
@@ -3965,8 +3922,8 @@ CONTAINS
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXDimensions, &
           & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
           & '("    dNu_dX','(",I1,",:)','  :",3(X,E13.6))','(18X,3(X,E13.6))',err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dX, JNuX = ", &
-          & Determinant(dNudX(1:numberOfXDimensions,1:numberOfXDimensions),err,error),err,error,*999)
+        CALL Determinant(dNudX(1:numberOfXDimensions,1:numberOfXDimensions),JNuX,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Determinant dNu_dX, JNuX = ", JNuX,err,error,*999)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt Xi:",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfXiDimensions, &
           & numberOfXiDimensions,numberOfXiDimensions,dNudXi,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
@@ -4017,10 +3974,8 @@ CONTAINS
       !Compute (normalised) vector orthogonal to material direction 1 to form material direction 2
       g(1:2) = [ -1.0_DP*f(2),f(1) ]
       
-      dXdNuR(1:2,1) = Normalise(f(1:2),err,error)
-      IF(err/=0) GOTO 999
-      dXdNuR(1:2,2) = Normalise(g(1:2),err,error)
-      IF(err/=0) GOTO 999
+      CALL Normalise(f(1:2),dXdNuR(1:2,1),err,error,*999)
+      CALL Normalise(g(1:2),dXdNuR(1:2,2),err,error,*999)
       
       !Rotate by multiply with rotation matrix
       R(:,1) = [ COS(angle(1)),-1.0_DP*SIN(angle(1)) ]
@@ -4028,10 +3983,8 @@ CONTAINS
       
       CALL MatrixProduct(R,dXdNuR,dXdNu,err,error,*999)
       
-      dXdNu(1:2,1) = Normalise(dXdNu(1:2,1),err,error)
-      IF(ERR/=0) GOTO 999
-      dXdNu(1:2,2) = Normalise(dXdNu(1:2,2),err,error)
-      IF(err/=0) GOTO 999
+      CALL Normalise(dXdNu(1:2,1),dXdNu(1:2,1),err,error,*999)
+      CALL Normalise(dXdNu(1:2,2),dXdNu(1:2,2),err,error,*999)
 
       IF(diagnostics1) THEN
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -4054,7 +4007,7 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (material):",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2,2,2,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
           & '("      dX_dNu','(",I1,",:)','   :",2(X,E13.6))','(20X,2(X,E13.6))',err,error,*999)
-        det=Determinant(dXdNu,err,error)
+        CALL Determinant(dXdNu,det,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Determinant dX_dNu = ",det,err,error,*999)
       ENDIF
       
@@ -4099,12 +4052,9 @@ CONTAINS
       CALL CrossProduct(geometricInterpPointMetrics%DX_DXI(1:3,1),geometricInterpPointMetrics%DX_DXI(1:3,2),h,err,error,*999) !reference material direction 3.    
       CALL CrossProduct(h,f,g,err,error,*999) !reference material direction 2.      
 
-      dXdNuR(1:3,1)=Normalise(f,err,error)
-      IF(err/=0) GOTO 999
-      dXdNuR(1:3,2)=Normalise(g,err,error)
-      IF(err/=0) GOTO 999
-      dXdNuR(1:3,3)=Normalise(h,err,error)
-      IF(err/=0) GOTO 999
+      CALL Normalise(f,dXdNuR(1:3,1),err,error,*999)
+      CALL Normalise(g,dXdNuR(1:3,2),err,error,*999)
+      CALL Normalise(h,dXdNuR(1:3,3),err,error,*999)
       
       IF(diagnostics1) THEN
       ENDIF
@@ -4228,7 +4178,7 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Derivative of X wrt Nu (material):",err,error,*999)
         CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3,3,3,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
           & '("      dX_dNu','(",I1,",:)','  :",3(X,E13.6))','(20X,3(X,E13.6))',err,error,*999)
-        det=Determinant(dXdNu,err,error)
+        CALL Determinant(dXdNu,det,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Determinant dX_dNu = ",det,err,error,*999)
       ENDIF
             
@@ -4247,44 +4197,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the coordinate system identified by USER_NUMBER. If a coordinate system with that number is not
-  !>found then COORDINATE_SYSTEM is set to NULL.
-  SUBROUTINE COORDINATE_SYSTEM_USER_NUMBER_FIND(USER_NUMBER,COORDINATE_SYSTEM,ERR,ERROR,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the coordinate system to find.
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<On exit, a pointer to the coordinate system with the specified user number if it exists. If no coordinate system has the specified user number the pointer is returned as NULL. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    INTEGER(INTG) :: coord_system_idx
-    
-    ENTERS("COORDINATE_SYSTEM_USER_NUMBER_FIND",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      CALL FlagError("Coordinate_system is already associated.",ERR,ERROR,*999)
-    ELSE
-      NULLIFY(COORDINATE_SYSTEM)
-      coord_system_idx=1
-      DO WHILE(coord_system_idx<=COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS.AND..NOT.ASSOCIATED(COORDINATE_SYSTEM))
-        IF(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR%USER_NUMBER==USER_NUMBER) THEN
-          COORDINATE_SYSTEM=>COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR
-        ELSE
-          coord_system_idx=coord_system_idx+1
-        ENDIF
-      ENDDO
-    ENDIF
-    
-    EXITS("COORDINATE_SYSTEM_USER_NUMBER_FIND")
-    RETURN
-999 ERRORSEXITS("COORDINATE_SYSTEM_USER_NUMBER_FIND",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE COORDINATE_SYSTEM_USER_NUMBER_FIND
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises the coordinate systems and destroys all coordinate systems.
   SUBROUTINE COORDINATE_SYSTEMS_FINALISE(ERR,ERROR,*)
 
@@ -4296,11 +4208,11 @@ CONTAINS
     
     ENTERS("COORDINATE_SYSTEMS_FINALISE",ERR,ERROR,*999)
 
-    DO coord_system_idx=1,COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS
-      CALL COORDINATE_SYSTEM_FINALISE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(coord_system_idx)%PTR,ERR,ERROR,*999)
+    DO coord_system_idx=1,coordinateSystems%numberOfCoordinateSystems
+      CALL COORDINATE_SYSTEM_FINALISE(coordinateSystems%coordinateSystems(coord_system_idx)%ptr,ERR,ERROR,*999)
     ENDDO !coord_system_idx
-    DEALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS)
-    COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=0
+    DEALLOCATE(coordinateSystems%coordinateSystems)
+    coordinateSystems%numberOfCoordinateSystems=0
     
     EXITS("COORDINATE_SYSTEMS_FINALISE")
     RETURN
@@ -4323,23 +4235,23 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEMS_INITIALISE",ERR,ERROR,*999)
 
     !Allocate the coordinate systems
-    ALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1),STAT=ERR)
+    ALLOCATE(coordinateSystems%coordinateSystems(1),STAT=ERR)
     IF(ERR/=0) CALL FlagError("Could not allocate coordinate systems.",ERR,ERROR,*999)
     !Create the default RC World cooordinate system
-    ALLOCATE(COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR,STAT=ERR)
+    ALLOCATE(coordinateSystems%coordinateSystems(1)%ptr,STAT=ERR)
     IF(ERR/=0) CALL FlagError("Could not allocate world coordinate system.",ERR,ERROR,*999)
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%USER_NUMBER=0
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%TYPE=COORDINATE_RECTANGULAR_CARTESIAN_TYPE
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%NUMBER_OF_DIMENSIONS=3
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%FOCUS=1.0_DP    
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%ORIGIN=(/0.0_DP,0.0_DP,0.0_DP/)
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%ORIENTATION=RESHAPE(&
+    coordinateSystems%coordinateSystems(1)%ptr%USER_NUMBER=0
+    coordinateSystems%coordinateSystems(1)%ptr%TYPE=COORDINATE_RECTANGULAR_CARTESIAN_TYPE
+    coordinateSystems%coordinateSystems(1)%ptr%NUMBER_OF_DIMENSIONS=3
+    coordinateSystems%coordinateSystems(1)%ptr%FOCUS=1.0_DP    
+    coordinateSystems%coordinateSystems(1)%ptr%ORIGIN=(/0.0_DP,0.0_DP,0.0_DP/)
+    coordinateSystems%coordinateSystems(1)%ptr%ORIENTATION=RESHAPE(&
       & (/1.0_DP,0.0_DP,0.0_DP, &
       &   0.0_DP,1.0_DP,0.0_DP, &
       &   0.0_DP,0.0_DP,1.0_DP/), &
       & (/3,3/))    
-    COORDINATE_SYSTEMS%COORDINATE_SYSTEMS(1)%PTR%COORDINATE_SYSTEM_FINISHED=.TRUE.
-    COORDINATE_SYSTEMS%NUMBER_OF_COORDINATE_SYSTEMS=1
+    coordinateSystems%coordinateSystems(1)%ptr%COORDINATE_SYSTEM_FINISHED=.TRUE.
+    coordinateSystems%numberOfCoordinateSystems=1
    
     EXITS("COORDINATE_SYSTEMS_INITIALISE")
     RETURN

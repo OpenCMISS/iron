@@ -42,9 +42,9 @@
 !>
 
 !> This module defines all constants shared across equations set routines.
-MODULE EQUATIONS_SET_CONSTANTS
+MODULE EquationsSetConstants
 
-  USE KINDS
+  USE Kinds
 
   IMPLICIT NONE
 
@@ -90,16 +90,20 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE=7
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE=8
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE=9
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE=10
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_HJ_EQUATION_TYPE=5
 
- !Bioelectrics class
+  !Bioelectrics class
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE=1
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE=2
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE=3
 
   !Modal class
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE=1
+
+  !Fitting class
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE=1
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE=2
+
   !Multi physics class
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE=1
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE=2
@@ -151,10 +155,17 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE=31
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE=32
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE=33
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE=34
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE=35
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE=36
-
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE=34
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE=35
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE=36
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE=37
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE=38
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE=39
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE=40
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE=41
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE=42
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE=43
+  
   !Fluid mechanics class
   !  Stokes equations
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STATIC_STOKES_SUBTYPE=1
@@ -182,6 +193,7 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STREE1D0D_SUBTYPE=16
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE=17
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE=18
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE=19
   !  Characteristics equations
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CHARACTERISTIC_SUBTYPE=1
   !  Darcy equation
@@ -291,17 +303,6 @@ MODULE EQUATIONS_SET_CONSTANTS
   !  Bidomain equation
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE=1
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE=2
-  !  Galerkin projection
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STANDARD_DATA_FITTING_SUBTYPE=1
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE=2
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE=3
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MAT_PROPERTIES_INRIA_MODEL_DATA_FITTING_SUBTYPE=4
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE=5
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE=6
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE=7
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE=8
-  INTEGER(INTG), PARAMETER :: EquationsSet_DataPointVectorStaticFittingSubtype=9
-  INTEGER(INTG), PARAMETER :: EquationsSet_DataPointVectorQuasistaticFittingSubtype=10
   !Modal class
   !Multi physics (subtype numbers must be different from Darcy ones)
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE=101
@@ -313,109 +314,129 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE=145
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE=151
 
+  !Fitting class
+  !Data fitting
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE=1
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE=2
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE=3
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MAT_PROPERTIES_INRIA_MODEL_DATA_FITTING_SUBTYPE=4
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE=5
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE=6
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE=7
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE=8
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE=9
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE=10
+  !Gauss fitting
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE=1
+  !Fitting smoothing parameters
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FITTING_NO_SMOOTHING=0
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING=1
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING=2
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING=3
 
   !Module parameters
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_SetupTypes EQUATIONS_SET_CONSTANTS::SetupTypes
+  !> \addtogroup EquationsSetConstants_SetupTypes EquationsSetConstants::SetupTypes
   !> \brief Setup type parameters
-  !> \see EQUATIONS_SET_CONSTANTS
+  !> \see EquationsSetConstants
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_INITIAL_TYPE=1 !<Initial setup. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_GEOMETRY_TYPE=2 !<Geometry setup. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_DEPENDENT_TYPE=3 !<Dependent variables. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_INDEPENDENT_TYPE=4 !<Independent variables. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_MATERIALS_TYPE=5 !<Materials setup. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_SOURCE_TYPE=6 !<Source setup. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_SOURCE_MATERIALS_TYPE=7 !<Source materials setup. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_ANALYTIC_TYPE=8 !<Analytic setup. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_EQUATIONS_TYPE=9 !<Equations setup. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_DERIVED_TYPE=10 !<Derived field setup. \see EQUATIONS_SET_CONSTANTS_SetupTypes,EQUATIONS_SET_CONSTANTS
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_INITIAL_TYPE=1 !<Initial setup. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_GEOMETRY_TYPE=2 !<Geometry setup. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_DEPENDENT_TYPE=3 !<Dependent variables. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_INDEPENDENT_TYPE=4 !<Independent variables. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_MATERIALS_TYPE=5 !<Materials setup. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_SOURCE_TYPE=6 !<Source setup. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_SOURCE_MATERIALS_TYPE=7 !<Source materials setup. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_ANALYTIC_TYPE=8 !<Analytic setup. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_EQUATIONS_TYPE=9 !<Equations setup. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_DERIVED_TYPE=10 !<Derived field setup. \see EquationsSetConstants_SetupTypes,EquationsSetConstants
   !>@}
   
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_SetupActionTypes EQUATIONS_SET_CONSTANTS::SetupActionTypes
+  !> \addtogroup EquationsSetConstants_SetupActionTypes EquationsSetConstants::SetupActionTypes
   !> \brief Setup action type parameters
-  !> \see EQUATIONS_SET_CONSTANTS
+  !> \see EquationsSetConstants
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_START_ACTION=1 !<Start setup action. \see EQUATIONS_SET_CONSTANTS_SetupActionTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_FINISH_ACTION=2 !<Finish setup action. \see EQUATIONS_SET_CONSTANTS_SetupActionTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_GENERATE_ACTION=3 !<Generate setup action. \see EQUATIONS_SET_CONSTANTS_SetupActionTypes,EQUATIONS_SET_CONSTANTS
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_START_ACTION=1 !<Start setup action. \see EquationsSetConstants_SetupActionTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_FINISH_ACTION=2 !<Finish setup action. \see EquationsSetConstants_SetupActionTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SETUP_GENERATE_ACTION=3 !<Generate setup action. \see EquationsSetConstants_SetupActionTypes,EquationsSetConstants
   !>@}
 
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_SolutionMethods EQUATIONS_SET_CONSTANTS::SolutionMethods
+  !> \addtogroup EquationsSetConstants_SolutionMethods EquationsSetConstants::SolutionMethods
   !> \brief The solution method parameters
-  !> \see EQUATIONS_SET_CONSTANTS
+  !> \see EquationsSetConstants
   !>@{
-  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_SET_SOLUTION_METHODS=7 !<The number of solution methods defined. \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FEM_SOLUTION_METHOD=1 !<Finite Element Method solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_BEM_SOLUTION_METHOD=2 !<Boundary Element Method solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FD_SOLUTION_METHOD=3 !<Finite Difference solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FV_SOLUTION_METHOD=4 !<Finite Volume solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GFEM_SOLUTION_METHOD=5 !<Grid-based Finite Element Method solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GFD_SOLUTION_METHOD=6 !<Grid-based Finite Difference Method solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GFV_SOLUTION_METHOD=7 !<Grid-based Finite Volume solution method \see EQUATIONS_SET_CONSTANTS_SolutionMethods,EQUATIONS_SET_CONSTANTS
+  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_SET_SOLUTION_METHODS=7 !<The number of solution methods defined. \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FEM_SOLUTION_METHOD=1 !<Finite Element Method solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_BEM_SOLUTION_METHOD=2 !<Boundary Element Method solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FD_SOLUTION_METHOD=3 !<Finite Difference solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FV_SOLUTION_METHOD=4 !<Finite Volume solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GFEM_SOLUTION_METHOD=5 !<Grid-based Finite Element Method solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GFD_SOLUTION_METHOD=6 !<Grid-based Finite Difference Method solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GFV_SOLUTION_METHOD=7 !<Grid-based Finite Volume solution method \see EquationsSetConstants_SolutionMethods,EquationsSetConstants
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NODAL_SOLUTION_METHOD=8 !<Similar to Finite Element Method with looping over nodes instead of elements 
   !>@}
 
   !Module parameters
 
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_LinearityTypes EQUATIONS_SET_CONSTANTS::LinearityTypes
+  !> \addtogroup EquationsSetConstants_LinearityTypes EquationsSetConstants::LinearityTypes
   !> \brief The equations linearity types
-  !> \see EQUATIONS_SET_CONSTANTS,OPENCMISS_EquationsLinearityTypes
+  !> \see EquationsSetConstants,OPENCMISS_EquationsLinearityTypes
   !>@{
-  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_LINEARITY_TYPES=3 !<The number of equations linearity types defined. \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_LINEAR=1 !<The equations are linear. \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_NONLINEAR=2 !<The equations are non-linear. \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_NONLINEAR_BCS=3 !<The equations have non-linear boundary conditions. \see EQUATIONS_SET_CONSTANTS_LinearityTypes,EQUATIONS_SET_CONSTANTS
+  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_LINEARITY_TYPES=3 !<The number of equations linearity types defined. \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_LINEAR=1 !<The equations are linear. \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_NONLINEAR=2 !<The equations are non-linear. \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_NONLINEAR_BCS=3 !<The equations have non-linear boundary conditions. \see EquationsSetConstants_LinearityTypes,EquationsSetConstants
   !>@}
 
  
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_TimeDependenceTypes EQUATIONS_SET_CONSTANTS::TimeDependenceTypes
+  !> \addtogroup EquationsSetConstants_TimeDependenceTypes EquationsSetConstants::TimeDependenceTypes
   !> \brief The equations time dependence type parameters
-  !> \see EQUATIONS_SET_CONSTANTS,OPENCMISS_EquationsTimeDependenceTypes
+  !> \see EquationsSetConstants,OPENCMISS_EquationsTimeDependenceTypes
   !>@{
-  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_TIME_TYPES=5 !<The number of equations time dependence types defined. \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_STATIC=1 !<The equations are static and have no time dependence. \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_QUASISTATIC=2 !<The equations are quasi-static. \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_FIRST_ORDER_DYNAMIC=3 !<The equations are first order dynamic. \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SECOND_ORDER_DYNAMIC=4 !<The equations are a second order dynamic. \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: EQUATIONS_TIME_STEPPING=5 !<The equations are for time stepping. \see EQUATIONS_SET_CONSTANTS_TimeDependenceTypes,EQUATIONS_ROUTINES
+  INTEGER(INTG), PARAMETER :: NUMBER_OF_EQUATIONS_TIME_TYPES=5 !<The number of equations time dependence types defined. \see EquationsSetConstants_TimeDependenceTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_STATIC=1 !<The equations are static and have no time dependence. \see EquationsSetConstants_TimeDependenceTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_QUASISTATIC=2 !<The equations are quasi-static. \see EquationsSetConstants_TimeDependenceTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_FIRST_ORDER_DYNAMIC=3 !<The equations are first order dynamic. \see EquationsSetConstants_TimeDependenceTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SECOND_ORDER_DYNAMIC=4 !<The equations are a second order dynamic. \see EquationsSetConstants_TimeDependenceTypes,EquationsRoutines
+  INTEGER(INTG), PARAMETER :: EQUATIONS_TIME_STEPPING=5 !<The equations are for time stepping. \see EquationsSetConstants_TimeDependenceTypes,EquationsRoutines
   !>@}
 
   !Module parameters
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_DerivedTypes EQUATIONS_SET_CONSTANTS::DerivedTypes
-  !> \brief Derived field values to calculate
-  !> \see EQUATIONS_SET_CONSTANTS
+  !> \addtogroup EquationsSetConstants_TensorTypes EquationsSetConstants::TensorTypes
+  !> \brief Type of tensor for an EquationsSet
+  !> \see EquationsSetConstants
   !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DERIVED_STRAIN=1 !<Strain tensor field. \see EQUATIONS_SET_CONSTANTS_DerivedTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DERIVED_STRESS=2 !<Stress tensor field. \see EQUATIONS_SET_CONSTANTS_DerivedTypes,EQUATIONS_SET_CONSTANTS
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR=1 !<Deformation gradient tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR=2 !<Right Cauchy-Green deformation field \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR=3 !<Right Cauchy-Green deformation field \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR=4 !<Green-Lagrange strain tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_CAUCHY_STRESS_TENSOR=5 !<Cauchy stress tensor \see EquationsSetConstants_TensorTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FIRST_PK_STRESS_TENSOR=6 !<First Piola Kirchhoff stress tensor \see EquationsSetConstants_TensorEvaluateTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SECOND_PK_STRESS_TENSOR=7 !<Second Piola Kirchhoff stress tensor \see EquationsSetConstants_TensorEvaluateTypes,EquationsSetConstants
   !>@}
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NUMBER_OF_DERIVED_TYPES=2
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NUMBER_OF_TENSOR_TYPES=7
 
-  !Module parameters
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_TensorEvaluateTypes EQUATIONS_SET_CONSTANTS::TensorEvaluateTypes
-  !> \brief Type of tensor to evaluate from an EquationsSet
-  !> \see EQUATIONS_SET_CONSTANTS
-  !>@{
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_EVALUATE_DEFORMATION_GRADIENT_TENSOR=1 !<Deformation gradient tensor \see EQUATIONS_SET_CONSTANTS_TensorEvaluateTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_EVALUATE_R_CAUCHY_GREEN_DEFORMATION_TENSOR=2 !<Right Cauchy-Green deformation field \see EQUATIONS_SET_CONSTANTS_TensorEvaluateTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_EVALUATE_GREEN_LAGRANGE_STRAIN_TENSOR=3 !<Green-Lagrange strain tensor \see EQUATIONS_SET_CONSTANTS_TensorEvaluateTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_EVALUATE_CAUCHY_STRESS_TENSOR=4 !<Cauchy stress tensor \see EQUATIONS_SET_CONSTANTS_TensorEvaluateTypes,EQUATIONS_SET_CONSTANTS
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_EVALUATE_SECOND_PK_STRESS_TENSOR=5 !<Second Piola Kirchhoff stress tensor \see EQUATIONS_SET_CONSTANTS_TensorEvaluateTypes,EQUATIONS_SET_CONSTANTS
-  !>@}
-  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NUMBER_OF_TENSOR_EVALUATE_TYPES=5
-
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_DynamicMatrixTypes EQUATIONS_SET_CONSTANTS:DynamicMatrixTypes
+  !> \addtogroup EquationsSetConstants_DynamicMatrixTypes EquationsSetConstants::DynamicMatrixTypes
   !> \brief Type of matrix in a dynamic equations set
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_STIFFNESS=1 !<A stiffness matrix (multiplies displacement values)
   INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_DAMPING=2 !<A damping matrix (multiplies velocity values)
   INTEGER(INTG), PARAMETER :: EQUATIONS_MATRIX_MASS=3 !<A mass matrix (multiplies acceleration values)
   !>@}
+  
+  !> \addtogroup EquationsSetConstants_OutputTypes EquationsSetConstants::OutputTypes
+  !> \brief The equations set output types
+  !> \see EquationsSetConstants,OPENCMISS_EquationsConstants
+  !>@{
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NO_OUTPUT=0 !<No output. \see EquationsSetConstants_OutputTypes,EquationsSetConstants
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_PROGRESS_OUTPUT=1 !<Progress information output. \see EquationsSetConstants_OutputTypes,EquationsSetConstants
+  !>@}
 
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_AnalyticFunctionTypes EQUATIONS_SET_CONSTANTS::AnalyticFunctionTypes
+
+  !> \addtogroup EquationsSetConstants_AnalyticFunctionTypes EquationsSetConstants::AnalyticFunctionTypes
   !> \brief The analytic function types
   !> \see 
   !>@{
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_LaplaceAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:LaplaceAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_LaplaceAnalyticFunctionTypes EquationsSetConstants::LaplaceAnalyticFunctionTypes
   !> \brief The analytic function types for a Laplace equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1=1 !<u=x**2+2*x*y-y**2 
@@ -423,7 +444,7 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1=3 !<u=x**2-2*y**2+z**2
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2=4 !<u=cos(x)*cosh(y)*z
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_HamiltonJacobiAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:HamiltonJacobiAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_HamiltonJacobiAnalyticFunctionTypes EquationsSetConstants::HamiltonJacobiAnalyticFunctionTypes
   !> \brief The analytic function types for a Hamilton-Jacobi equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_HJ_EQUATION_TWO_DIM_1=1 !<u=x**2+y**2 
@@ -431,12 +452,12 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_HJ_EQUATION_THREE_DIM_1=3 !<u=x**2-2*y**2+z**2
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_HJ_EQUATION_THREE_DIM_2=4 !<u=cos(x)*cosh(y)*z
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_HelmholtzAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:HelmholtzAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_HelmholtzAnalyticFunctionTypes EquationsSetConstants::HelmholtzAnalyticFunctionTypes
   !> \brief The analytic function types for a Laplace equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1=1 !<u=cos(sqrt(2)*k*x)*sin(sqrt(2)*k*y)
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_PoissonAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:PoissonAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_PoissonAnalyticFunctionTypes EquationsSetConstants::PoissonAnalyticFunctionTypes
   !> \brief The analytic function types for a Poisson equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1=1 !<u=ln(4/(x+y+1^2))
@@ -449,7 +470,7 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2=19 !<u=tbd, Pressure Poisson Equation (PPE) without input data
 
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_DiffusionAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:DiffusionAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_DiffusionAnalyticFunctionTypes EquationsSetConstants::DiffusionAnalyticFunctionTypes
   !> \brief The analytic function types for a diffusion equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1=1
@@ -463,12 +484,12 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM=6 !<Prescribed solution, using a source term to correct for error - 3D with 3 compartments
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM=7 !<Prescribed solution, using a source term to correct for error - 3D with 4 compartments
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_AdvectionDiffusionAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:AdvectionDiffusionAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_AdvectionDiffusionAnalyticFunctionTypes EquationsSetConstants::AdvectionDiffusionAnalyticFunctionTypes
   !> \brief The analytic function types for an advection-diffusion equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1=1 !<u(x,y)=tanh(1 - alpha.(x.tan(Phi) - y)),this is a steady-state solution
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_LinearElasticityAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:LinearElasticityAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_LinearElasticityAnalyticFunctionTypes EquationsSetConstants::LinearElasticityAnalyticFunctionTypes
   !> \brief The analytic function types for a Linear Elasticity equation
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1=1
@@ -477,12 +498,12 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1=4
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2=5
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_FiniteElasticityAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:FiniteElasticityAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_FiniteElasticityAnalyticFunctionTypes EquationsSetConstants::FiniteElasticityAnalyticFunctionTypes
   !> \brief The analytic function types for a Finite Elasticity equation
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER=1
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_StokesAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:StokesAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_StokesAnalyticFunctionTypes EquationsSetConstants::StokesAnalyticFunctionTypes
   !> \brief The analytic function types for a Stokes equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1=1 !<u=tbd
@@ -496,7 +517,7 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4=9 !<u=tbd
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5=10 !<u=tbd
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_NavierStokesAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:NavierStokesAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_NavierStokesAnalyticFunctionTypes EquationsSetConstants::NavierStokesAnalyticFunctionTypes
   !> \brief The analytic function types for a Navier-Stokes equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1=1 !<u=tbd
@@ -519,7 +540,7 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_OLUFSEN=18 !< A fourier decomposed flow waveform for boundary conditions
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_HEART=19 !< A fourier decomposed flow waveform for boundary conditions
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_DarcyAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:DarcyAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_DarcyAnalyticFunctionTypes EquationsSetConstants::DarcyAnalyticFunctionTypes
   !> \brief The analytic function types for a Darcy equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1=1 !<u=tbd
@@ -530,12 +551,12 @@ MODULE EQUATIONS_SET_CONSTANTS
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3=6 !<u=tbd
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY=7 !<this is a solution where the finite elasticity solve is skipped to allow easy analytic testing of the mass increase & velocity solve step of incompressible poromechanical model
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_PoiseuilleAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:PoiseuilleAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_PoiseuilleAnalyticFunctionTypes EquationsSetConstants::PoiseuilleAnalyticFunctionTypes
   !> \brief The analytic function types for a Poiseuille equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1=1 !<u=tbd
   !>@}
-  !> \addtogroup EQUATIONS_SET_CONSTANTS_BurgersAnalyticFunctionTypes EQUATIONS_SET_CONSTANTS:BurgersAnalyticFunctionTypes
+  !> \addtogroup EquationsSetConstants_BurgersAnalyticFunctionTypes EquationsSetConstants::BurgersAnalyticFunctionTypes
   !> \brief The analytic function types for a Burgers equation
   !>@{  
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1=1 !<Solution to Burgers equation
@@ -546,5 +567,5 @@ MODULE EQUATIONS_SET_CONSTANTS
   !>@}
 
   
-END MODULE EQUATIONS_SET_CONSTANTS
+END MODULE EquationsSetConstants
 
