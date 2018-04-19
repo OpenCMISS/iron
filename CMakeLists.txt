@@ -5,8 +5,11 @@ include(CMakeDependentOption)
 set(_CORRECT_CMAKE_MODULE_PATH FALSE)
 # First check if the CMAKE_MODULE_PATH is already set properly.
 foreach(_PATH ${CMAKE_MODULE_PATH})
-    if (EXISTS "${_PATH}/OCMiscFunctions.cmake")
+    if (EXISTS "${_PATH}/OpenCMISS/OCMiscFunctions.cmake")
         set(_CORRECT_CMAKE_MODULE_PATH TRUE)
+		if (NOT DEFINED IRON_CMAKE_MODULE_PATH)
+			set(IRON_CMAKE_MODULE_PATH "${_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
+		endif ()
         break()
     endif ()
 endforeach()
@@ -274,7 +277,7 @@ endif()
 add_subdirectory(bindings)
 
 # Install steps
-install(TARGETS iron
+install(TARGETS ${IRON_TARGETS}
     EXPORT iron-config
     RUNTIME DESTINATION bin
     COMPONENT Runtime
