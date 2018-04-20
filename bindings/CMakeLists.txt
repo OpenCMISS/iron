@@ -67,7 +67,7 @@ endif()
 # Python-Bindings extra target
 if (WITH_Python_BINDINGS)
     message(STATUS "Creating Python bindings")
-    find_package(Python COMPONENTS Development)
+    find_package(Python COMPONENTS Interpreter Development)
     if(NOT Python_Development_FOUND)
         message(FATAL_ERROR "No Python development libraries found. Unable to generate Python bindings for Iron.")
     endif()
@@ -130,7 +130,7 @@ if (WITH_Python_BINDINGS)
     #Generate wrapper object
     # MODULE: See http://www.cmake.org/cmake/help/v3.3/command/add_library.html
     add_library(${IRON_PYTHON_MODULE} MODULE ${PYTHON_WRAPPER} ${OPENCMISS_H} ${OPENCMISS_C_F90})
-    target_link_libraries(${IRON_PYTHON_MODULE} PUBLIC iron_c ${PYTHON_LIBRARIES})
+    target_link_libraries(${IRON_PYTHON_MODULE} PUBLIC iron_c Python::Python)
     target_include_directories(${IRON_PYTHON_MODULE} PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         ${PYTHON_INCLUDE_DIRS}
