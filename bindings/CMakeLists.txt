@@ -8,8 +8,8 @@ if (WITH_Python_BINDINGS)
 endif()
 # Run checks
 if (WITH_C_BINDINGS)
-    find_package(PythonInterp QUIET)
-    if (NOT PYTHONINTERP_FOUND)
+    find_package(Python COMPONENTS Interpreter)
+    if (NOT Python_Interpreter_FOUND)
         message(FATAL_ERROR "No Python found. A working Python interpreter is required to generate any Iron bindings")
     endif()
 endif()
@@ -67,11 +67,10 @@ endif()
 # Python-Bindings extra target
 if (WITH_Python_BINDINGS)
     message(STATUS "Creating Python bindings")
-    find_package(PythonLibs QUIET)
-    if(NOT PYTHONLIBS_FOUND)
+    find_package(Python COMPONENTS Development)
+    if(NOT Python_Development_FOUND)
         message(FATAL_ERROR "No Python development libraries found. Unable to generate Python bindings for Iron.")
     endif()
-    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
     # I know there's also a UseSWIG.cmake file (http://www.cmake.org/cmake/help/v3.3/module/UseSWIG.html)
     # This did not seem to be very flexible at the time of writing this.
     find_package(SWIG QUIET)
@@ -107,12 +106,11 @@ if (WITH_Python_BINDINGS)
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
 
-    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
-    if(${PYTHONLIBS_MAJOR_VERSION} STREQUAL "3")
+    if(Python_VERSION_MAJOR STREQUAL "3")
         set(PYTHONLIBS_SWIG_FLAGS -py3)
     endif()
 
-    set(_PYTHON_DESTINATION_PREFIX lib/python${PYTHONLIBS_MAJOR_VERSION}.${PYTHONLIBS_MINOR_VERSION})
+    set(_PYTHON_DESTINATION_PREFIX lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR})
     set(IRON_PYTHON_PACKAGE_DESTINATION_PREFIX ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron/opencmiss/iron)
     file(RELATIVE_PATH _REL_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${IRON_PYTHON_PACKAGE_DESTINATION_PREFIX} ${CMAKE_INSTALL_PREFIX}/lib)
 
@@ -145,10 +143,10 @@ if (WITH_Python_BINDINGS)
     )
     if (APPLE)
         set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
-            INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH}")
+            INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH};@loader_path/")
     elseif (UNIX)
         set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
-            INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH}")
+            INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH};\$ORIGIN/")
     endif ()
 
     # "Bugfix": If we use the same source file name, there will be two processes messing with
