@@ -44,12 +44,12 @@
 !> This module is a CMISS buffer module to the PETSc library.
 MODULE CmissPetsc
   
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE CmissPetscTypes
   USE Kinds
   USE ISO_VARYING_STRING
-  USE STRINGS
-  USE TYPES
+  USE Strings
+  USE Types
   
 #include "macros.h"
 
@@ -351,8 +351,48 @@ MODULE CmissPetsc
   SNESQNScaleType, PARAMETER :: PETSC_SNES_QN_SCALE_NONE = SNES_QN_SCALE_NONE 
   SNESQNScaleType, PARAMETER :: PETSC_SNES_QN_SCALE_SHANNO = SNES_QN_SCALE_SHANNO 
   SNESQNScaleType, PARAMETER :: PETSC_SNES_QN_SCALE_LINESEARCH = SNES_QN_SCALE_LINESEARCH  
-  SNESQNScaleType, PARAMETER :: PETSC_SNES_QN_SCALE_JACOBIAN = SNES_QN_SCALE_JACOBIAN   
+  SNESQNScaleType, PARAMETER :: PETSC_SNES_QN_SCALE_JACOBIAN = SNES_QN_SCALE_JACOBIAN
 
+!Temporary until we have a bug fix in PETSc  
+#define TaoType character*(80)
+  
+  !TAO types
+  TaoType, PARAMETER :: PETSC_TAO_LMVM = TAOLMVM !Limited Memory Variable Metric (quasi-Newton method)
+  TaoType, PARAMETER :: PETSC_TAO_NLS = TAONLS !Newton's method with linesearch
+  TaoType, PARAMETER :: PETSC_TAO_NTR = TAONTR !Newton's method with trust region
+  TaoType, PARAMETER :: PETSC_TAO_NTL = TAONTL
+  TaoType, PARAMETER :: PETSC_TAO_CG = TAOCG !Nonlinear conjugate gradient
+  TaoType, PARAMETER :: PETSC_TAO_TRON = TAOTRON !TRON active-set Newton trust region algorithm
+  TaoType, PARAMETER :: PETSC_TAO_OWLQN = TAOOWLQN !Orthant-wise Limited Memory (quasi-Newton method)
+  TaoType, PARAMETER :: PETSC_TAO_BMRM = TAOBMRM !Bundle method for regularized risk minimisation
+  TaoType, PARAMETER :: PETSC_TAO_BLMVM = TAOBLMVM !Bounded limited memory variable metric (quasi-Newton method)
+  TaoType, PARAMETER :: PETSC_TAO_BQPIP = TAOBQPIP !Bounded quadratic interior point alofrith for quadratic optimisation
+  TaoType, PARAMETER :: PETSC_TAO_GPCG = TAOGPCG !Gradient projected conjugate gradient algorithm
+  TaoType, PARAMETER :: PETSC_TAO_NM = TAONM !Nelder-Mead solver
+  TaoType, PARAMETER :: PETSC_TAO_POUNDERS = TAOPOUNDERS !POUNDERS algorithm for nonlinear least squares
+  TaoType, PARAMETER :: PETSC_TAO_LCL = TAOLCL !Linearly constrained Lagrangian method for PDE-constrained optimisation
+  TaoType, PARAMETER :: PETSC_TAO_SSILS = TAOSSILS !Semi-smooth infeasible linesearch algorithm
+  TaoType, PARAMETER :: PETSC_TAO_SSFLS = TAOSSFLS !Semi-smooth feasible linesearch algorithm
+  TaoType, PARAMETER :: PETSC_TAO_ASILS = TAOASILS !Active-set infeasible linesearch algorithm
+  TaoType, PARAMETER :: PETSC_TAO_ASFLS = TAOASFLS !Active-set feasible linesearch algorithm
+  TaoType, PARAMETER :: PETSC_TAO_IPM = TAOIPM !Interior point algorithm
+
+  !TAO converged reasons
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_FATOL = TAO_CONVERGED_FATOL !f(X)-f(X*) <= fatol 
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_FRTOL = TAO_CONVERGED_FRTOL !|F(X) - f(X*)|/|f(X)| < frtol
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GATOL = TAO_CONVERGED_GATOL !||g(X)|| < gatol
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GRTOL = TAO_CONVERGED_GRTOL !||g(X)|| / f(X)  < grtol 
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GTTOL = TAO_CONVERGED_GTTOL !||g(X)|| / ||g(X0)|| < gttol 
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_STEPTOL = TAO_CONVERGED_STEPTOL  !step size small
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_MINF = TAO_CONVERGED_MINF !F < F_min
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_USER = TAO_CONVERGED_USER !User defined
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_MAXITS = TAO_DIVERGED_MAXITS
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_MAXFCN = TAO_DIVERGED_MAXFCN
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_LS_FAILURE = TAO_DIVERGED_LS_FAILURE
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_TR_REDUCTION = TAO_DIVERGED_TR_REDUCTION
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_USER = TAO_DIVERGED_USER !User defined
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONTINUE_ITERATING = TAO_CONTINUE_ITERATING
+  
   !TS types
   TSType, PARAMETER :: PETSC_TS_EULER = TSEULER
   TSType, PARAMETER :: PETSC_TS_BEULER = TSBEULER
@@ -417,6 +457,12 @@ MODULE CmissPetsc
       PetscViewer viewer
       PetscInt ierr
     END SUBROUTINE PetscLogView
+
+    SUBROUTINE PetscOptionSetValue(name,value,ierr)
+      CHARACTER(LEN=*) name
+      CHARACTER(LEN=*) value
+      PetscInt ierr
+    END SUBROUTINE PetscOptionSetValue
 
     !IS routines
     
@@ -843,7 +889,7 @@ MODULE CmissPetsc
     END SUBROUTINE MatFDColoringSetFromOptions
 
     SUBROUTINE MatFDColoringSetFunction(fdcoloring,ffunction,ctx,ierr)
-      USE TYPES
+      USE Types
       MatFDColoring fdcoloring
       EXTERNAL ffunction
       TYPE(SOLVER_TYPE), POINTER :: ctx
@@ -914,7 +960,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESDestroy
 
     SUBROUTINE SNESGetApplicationContext(snes,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       TYPE(SOLVER_TYPE), POINTER :: ctx
       PetscInt ierr
@@ -927,7 +973,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESGetConvergedReason
     
     SUBROUTINE SNESGetFunction(snes,f,ffunction,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       Vec f
       EXTERNAL ffunction
@@ -942,7 +988,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESGetIterationNumber
 
     SUBROUTINE SNESGetJacobian(snes,A,B,Jfunction,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       Mat A
       Mat B      
@@ -970,7 +1016,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESGetSolutionUpdate
 
     SUBROUTINE SNESMonitorSet(snes,mfunction,mctx,monitordestroy,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       EXTERNAL mfunction
       TYPE(SOLVER_TYPE), POINTER :: mctx
@@ -997,14 +1043,14 @@ MODULE CmissPetsc
     END SUBROUTINE SNESQNSetType
 
     SUBROUTINE SNESSetApplicationContext(snes,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       TYPE(SOLVER_TYPE), POINTER :: ctx
       PetscInt ierr
     END SUBROUTINE SNESSetApplicationContext
 
     SUBROUTINE SNESSetConvergenceTest(snes,cfunction,ctx,destroyFunction,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       EXTERNAL cfunction
       TYPE(SOLVER_TYPE), POINTER :: ctx
@@ -1018,7 +1064,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESSetFromOptions
 
     SUBROUTINE SNESSetFunction(snes,f,ffunction,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       Vec f
       EXTERNAL ffunction
@@ -1027,7 +1073,7 @@ MODULE CmissPetsc
     END SUBROUTINE SNESSetFunction
 
     SUBROUTINE SNESSetJacobian(snes,A,B,Jfunction,ctx,ierr)
-      USE TYPES
+      USE Types
       SNES snes
       Mat A
       Mat B      
@@ -1150,6 +1196,121 @@ MODULE CmissPetsc
       SNESLineSearchType linesearchtype
       PetscInt ierr
     END SUBROUTINE SNESLineSearchSetType
+
+    !Tao routines
+
+    SUBROUTINE TaoCreate(comm,tao,ierr)
+      MPI_Comm comm
+      Tao tao
+      PetscInt ierr
+    END SUBROUTINE TaoCreate
+
+    SUBROUTINE TaoDestroy(tao,ierr)
+      Tao tao
+      PetscInt ierr
+    END SUBROUTINE TaoDestroy
+
+    SUBROUTINE TaoGetConvergedReason(tao,convergedreason,ierr)
+      Tao tao
+      TaoConvergedReason convergedreason
+      PetscInt ierr
+    END SUBROUTINE TaoGetConvergedReason
+
+    SUBROUTINE TaoGetTolerances(tao,gatol,grtol,gttol,ierr)
+      Tao tao
+      PetscReal gatol
+      PetscReal grtol
+      PetscReal gttol
+      PetscInt ierr
+    END SUBROUTINE TaoGetTolerances
+
+    SUBROUTINE TaoSetFromOptions(tao,ierr)
+      Tao tao
+      PetscInt ierr
+    END SUBROUTINE TaoSetFromOptions
+
+    SUBROUTINE TaoSetInequalityBounds(tao,lb,ub,ierr)
+      Tao tao
+      Vec lb
+      Vec ub
+      PetscInt ierr
+    END SUBROUTINE TaoSetInequalityBounds
+
+    SUBROUTINE TaoSetInitialVector(tao,x,ierr)
+      Tao tao
+      Vec x
+      PetscInt ierr
+    END SUBROUTINE TaoSetInitialVector
+
+    SUBROUTINE TaoSetGradientRoutine(tao,GFunction,ctx,ierr)
+      USE Types
+      Tao tao
+      EXTERNAL GFunction
+      TYPE(SOLVER_TYPE), POINTER :: ctx
+      PetscInt ierr
+    END SUBROUTINE TaoSetGradientRoutine
+
+    SUBROUTINE TaoSetHessianRoutine(tao,H,Hpre,HFunction,ctx,ierr)
+      USE Types
+      Tao tao
+      Mat H
+      Mat Hpre
+      EXTERNAL HFunction
+      TYPE(SOLVER_TYPE), POINTER :: ctx
+      PetscInt ierr
+    END SUBROUTINE TaoSetHessianRoutine
+    
+    SUBROUTINE TaoSetMonitor(tao,mFunction,mctx,ierr)
+      USE Types
+      Tao tao
+      EXTERNAL mFunction
+      TYPE(SOLVER_TYPE), POINTER :: mctx
+      PetscInt ierr
+    END SUBROUTINE TaoSetMonitor
+    
+    SUBROUTINE TaoSetObjectiveRoutine(tao,OFunction,ctx,ierr)
+      USE Types
+      Tao tao
+      EXTERNAL OFunction
+      TYPE(SOLVER_TYPE), POINTER :: ctx
+      PetscInt ierr
+    END SUBROUTINE TaoSetObjectiveRoutine
+
+    SUBROUTINE TaoSetObjectiveAndGradientRoutine(tao,ogFunction,ctx,ierr)
+      USE Types
+      Tao tao
+      EXTERNAL ogFunction
+      TYPE(SOLVER_TYPE), POINTER :: ctx
+      PetscInt ierr
+    END SUBROUTINE TaoSetObjectiveAndGradientRoutine
+
+    SUBROUTINE TaoSetSeparableObjectiveRoutine(tao,oFunction,ctx,ierr)
+      USE Types
+      Tao tao
+      EXTERNAL oFunction
+      TYPE(SOLVER_TYPE), POINTER :: ctx
+      PetscInt ierr
+    END SUBROUTINE TaoSetSeparableObjectiveRoutine
+    
+    SUBROUTINE TaoSetTolerances(tao,gatol,grtol,gttol,ierr)
+      Tao tao
+      PetscReal gatol
+      PetscReal grtol
+      PetscReal gttol
+      PetscInt ierr
+    END SUBROUTINE TaoSetTolerances
+
+    SUBROUTINE TaoSetVariableBounds(tao,lb,ub,ierr)
+      Tao tao
+      Vec lb
+      Vec ub
+      PetscInt ierr
+    END SUBROUTINE TaoSetVariableBounds
+
+    SUBROUTINE TaoSolve(tao,ierr)
+      Tao tao
+      PetscInt ierr
+    END SUBROUTINE TaoSolve
     
     !Time stepping routines
     
@@ -1171,7 +1332,7 @@ MODULE CmissPetsc
     END SUBROUTINE TSGetSolution
     
     SUBROUTINE TSMonitorSet(ts,mfunction,mctx,monitordestroy,ierr)
-      USE TYPES
+      USE Types
       TS ts
       EXTERNAL mfunction
       TYPE(SOLVER_TYPE), POINTER :: mctx
@@ -1211,7 +1372,7 @@ MODULE CmissPetsc
     END SUBROUTINE TSSetProblemType
     
     SUBROUTINE TSSetRHSFunction(ts,r,rhsfunc,ctx,ierr)
-      USE TYPES
+      USE Types
       TS ts
       Vec r
       EXTERNAL rhsfunc
@@ -1527,6 +1688,8 @@ MODULE CmissPetsc
 
   PUBLIC Petsc_LogView
   
+  PUBLIC Petsc_OptionsSetValue
+  
   !Value insert constants
 
   PUBLIC PETSC_ADD_VALUES,PETSC_INSERT_VALUES
@@ -1689,6 +1852,17 @@ MODULE CmissPetsc
   PUBLIC Petsc_SnesLineSearchBTSetAlpha,Petsc_SnesLineSearchComputeNorms,Petsc_SnesLineSearchGetNorms,Petsc_SnesLineSearchGetVecs, &
     & Petsc_SnesLineSearchSetComputeNorms,Petsc_SnesLineSearchSetMonitor,Petsc_SnesLineSearchSetNorms, &
     & Petsc_SnesLineSearchSetOrder,Petsc_SnesLineSearchSetTolerances,Petsc_SnesLineSearchSetType
+
+  !TAO routines and constants
+
+  PUBLIC PETSC_TAO_LMVM,PETSC_TAO_NLS,PETSC_TAO_NTR,PETSC_TAO_NTL,PETSC_TAO_CG,PETSC_TAO_TRON,PETSC_TAO_OWLQN,PETSC_TAO_BMRM, &
+    & PETSC_TAO_BLMVM,PETSC_TAO_BQPIP,PETSC_TAO_GPCG,PETSC_TAO_NM,PETSC_TAO_POUNDERS,PETSC_TAO_LCL,PETSC_TAO_SSILS, &
+    & PETSC_TAO_SSFLS,PETSC_TAO_ASILS,PETSC_TAO_ASFLS,PETSC_TAO_IPM
+
+  PUBLIC PETSC_TAO_CONVERGED_FATOL,PETSC_TAO_CONVERGED_FRTOL,PETSC_TAO_CONVERGED_GATOL,PETSC_TAO_CONVERGED_GRTOL, &
+    & PETSC_TAO_CONVERGED_GTTOL,PETSC_TAO_CONVERGED_STEPTOL,PETSC_TAO_CONVERGED_MINF,PETSC_TAO_CONVERGED_USER, &
+    & PETSC_TAO_DIVERGED_MAXITS,PETSC_TAO_DIVERGED_MAXFCN,PETSC_TAO_DIVERGED_LS_FAILURE,PETSC_TAO_DIVERGED_TR_REDUCTION, &
+    & PETSC_TAO_DIVERGED_USER,PETSC_TAO_CONTINUE_ITERATING
   
   !TS routines and constants
   
@@ -1865,6 +2039,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Petsc_LogView
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Buffer routine to the PETSc PetscOptionsSetValue routine.
+  SUBROUTINE Petsc_OptionsSetValue(name,VALUE,err,error,*)
+
+    !Argument Variables
+    CHARACTER(LEN=*), INTENT(IN) :: name !<The name of the option to set
+    CHARACTER(LEN=*), INTENT(IN) :: value !<The value of the option to set    
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_OptionSetValue",err,error,*999)
+
+    CALL PetscOptionsSetValue(name,value,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in PetscOptionsSetValue.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_OptionsSetValue")
+    RETURN
+999 ERRORSEXITS("Petsc_OptionsSetValue",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_OptionsSetValue
   
   !
   !================================================================================================================================
@@ -3435,7 +3640,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("MatSeqAIJRestoreArrayF90",err,error,*999)
+    ENTERS("Petsc_MatSeqAIJRestoreArrayF90",err,error,*999)
 
     CALL MatSeqAIJRestoreArrayF90(a%mat,array,err)
     IF(err/=0) THEN
@@ -3445,9 +3650,9 @@ CONTAINS
       CALL FlagError("PETSc error in MatSeqAIJRestoreArrayF90.",err,error,*999)
     ENDIF
     
-    EXITS("MatSeqAIJRestoreArrayF90")
+    EXITS("Petsc_MatSeqAIJRestoreArrayF90")
     RETURN
-999 ERRORSEXITS("MatSeqAIJRestoreArrayF90",err,error)
+999 ERRORSEXITS("Petsc_MatSeqAIJRestoreArrayF90",err,error)
     RETURN 1
     
   END SUBROUTINE Petsc_MatSeqAIJRestoreArrayF90
@@ -3921,7 +4126,6 @@ CONTAINS
     EXITS("Petsc_MatColoringDestroy")
     RETURN
 999 ERRORSEXITS("Petsc_MatColoringDestroy",err,error)
-    EXITS("Petsc_MatColoringDestroy")
     RETURN 1
     
   END SUBROUTINE Petsc_MatColoringDestroy
@@ -5823,6 +6027,562 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !Finalise the PETSc TAO structure and destroy the TAO
+  SUBROUTINE Petsc_TaoFinalise(tao,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The Tao to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoFinalise",err,error,*999)
+
+    IF(tao%tao/=PETSC_NULL_OBJECT) THEN
+      CALL Petsc_TaoDestroy(tao,err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoFinalise")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoFinalise
+    
+  !
+  !================================================================================================================================
+  !
+
+  !Initialise the PETSc Tao structure
+  SUBROUTINE Petsc_TaoInitialise(tao,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The Tao to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoInitialise",err,error,*999)
+
+    tao%tao=PETSC_NULL_OBJECT
+     
+    EXITS("Petsc_TaoInitialise")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoInitialise
+    
+  !
+  !================================================================================================================================
+  !
+    
+  !>Buffer routine to the PETSc TaoCreate routine.
+  SUBROUTINE Petsc_TaoCreate(communicator,tao,err,error,*)
+
+    !Argument Variables
+    MPI_Comm, INTENT(INOUT) :: communicator !<The MPI communicator for the Tao creation
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<On exit, the Tao information
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoCreate",err,error,*999)
+
+    CALL TaoCreate(communicator,tao%tao,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoCreate.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoCreate")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoCreate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoCreate
+    
+  !
+  !================================================================================================================================
+  !
+
+  !>Buffer routine to the PETSc TaoDestroy routine.
+  SUBROUTINE Petsc_TaoDestroy(tao,err,error,*)
+
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The Tao to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoDestroy",err,error,*999)
+
+    CALL TaoDestroy(tao%tao,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoDestroy.",err,error,*999)
+    ENDIF
+    tao%tao=PETSC_NULL_OBJECT
+    
+    EXITS("Petsc_TaoDestroy")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoDestroy",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoDestroy
+    
+  !
+  !================================================================================================================================
+  !
+
+  !>Buffer routine to the PETSc TaoGetConvergedReason routine
+  SUBROUTINE Petsc_TaoGetConvergedReason(tao,reason,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The Tao information
+    INTEGER(INTG), INTENT(OUT) :: reason !<On exit, the converged reason
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoGetConvergedReason",err,error,*999)
+
+    CALL TaoGetConvergedReason(tao%tao,reason,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoGetConvergedReason.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoGetConvergedReason")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoGetConvergedReason",err,error)
+    RETURN 1
+  END SUBROUTINE Petsc_TaoGetConvergedReason
+    
+  !
+  !================================================================================================================================
+  !
+
+  !>Buffer routine to the PETSc TaoGetTolerances routine
+  SUBROUTINE Petsc_TaoGetTolerances(tao,gaTol,grTol,gtTol,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The Tao to get the tolerances for
+    REAL(DP), INTENT(OUT) :: gaTol !<On exit, the absolute tolerance of the gradient norm
+    REAL(DP), INTENT(OUT) :: grTol !<On exit, the relative tolerance of the gradient norm
+    REAL(DP), INTENT(OUT) :: gtTol !<On exit, the factor tolerance of the gradient norm
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoGetTolerances",err,error,*999)
+
+    CALL TaoGetTolerances(tao%tao,gaTol,grTol,gtTol,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoGetTolerances.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoGetTolerances")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoGetTolerances",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoGetTolerances
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetFromOptions routine.
+  SUBROUTINE Petsc_TaoSetFromOptions(tao,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the options for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetFromOptions",err,error,*999)
+
+    CALL TaoSetFromOptions(tao%tao,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetFromOptions.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetFromOptions")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetFromOptions",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetFromOptions
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetInequalityBounds routine.
+  SUBROUTINE Petsc_TaoSetInequalityBounds(tao,lowerBounds,upperBounds,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the inequality bounds for
+    TYPE(PetscVecType), INTENT(INOUT) :: lowerBounds !<The vector of lower bounds
+    TYPE(PetscVecType), INTENT(INOUT) :: upperBounds !<The vector of upper bounds    
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetInequalityBounds",err,error,*999)
+
+    CALL TaoSetInequalityBounds(tao%tao,lowerBounds%vec,upperBounds%vec,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetInequalityBounds.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetInequalityBounds")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetInequalityBounds",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetInequalityBounds
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetInitialVector routine.
+  SUBROUTINE Petsc_TaoSetInitialVector(tao,x0,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the initial vector for
+    TYPE(PetscVecType), INTENT(INOUT) :: x0 !<The initial vector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetInitialVector",err,error,*999)
+
+    CALL TaoSetInitialVector(tao%tao,x0%vec,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetInitialVector.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetInitialVector")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetInitialVector",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetInitialVector
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetGradientRoutine routine.
+  SUBROUTINE Petsc_TaoSetGradientRoutine(tao,gFunction,ctx,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the gradient function for
+    EXTERNAL gFunction !<The external function to call
+    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetGradientRoutine",err,error,*999)
+
+    CALL TaoSetGradientRoutine(tao%tao,gFunction,ctx,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetGradientRoutine.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetGradientRoutine")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetGradientRoutine",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetGradientRoutine
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetHessianRoutine routine.
+  SUBROUTINE Petsc_TaoSetHessianRoutine(tao,H,Hpre,hFunction,ctx,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the Hessian function for
+    TYPE(PetscMatType), INTENT(INOUT) :: H !<The matrix used for the Hessian
+    TYPE(PetscMatType), INTENT(INOUT) :: Hpre !<The matrix used for the Hessian preconditioner
+    EXTERNAL hFunction !<The external Hessian function to call
+    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetHessianRoutine",err,error,*999)
+
+    CALL TaoSetHessianRoutine(tao%tao,H%mat,Hpre%mat,hFunction,ctx,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetHessianRoutine.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetHessianRoutine")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetHessianRoutine",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetHessianRoutine
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetMonitor routine.
+  SUBROUTINE Petsc_TaoSetMonitor(tao,mFunction,ctx,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the monitor function for
+    EXTERNAL mFunction !<The external monitor function to call
+    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetMonitor",err,error,*999)
+
+    CALL TaoSetMonitor(tao%tao,mFunction,ctx,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetMonitor.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetMonitor")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetMonitor",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetMonitor
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetObjectiveRoutine routine.
+  SUBROUTINE Petsc_TaoSetObjectiveRoutine(tao,oFunction,ctx,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the objective function for
+    EXTERNAL oFunction !<The external objective function to call
+    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetObjectiveRoutine",err,error,*999)
+
+    CALL TaoSetObjectiveRoutine(tao%tao,oFunction,ctx,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetObjectiveRoutine.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetObjectiveRoutine")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetObjectiveRoutine",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetObjectiveRoutine
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetObjectiveAndGradientRoutine routine.
+  SUBROUTINE Petsc_TaoSetObjectiveAndGradientRoutine(tao,ogFunction,ctx,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the objective and gradient function for
+    EXTERNAL ogFunction !<The external objective and gradient function to call
+    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetObjectiveAndGradientRoutine",err,error,*999)
+
+    CALL TaoSetObjectiveAndGradientRoutine(tao%tao,ogFunction,ctx,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetObjectiveAndGradientRoutine.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetObjectiveAndGradientRoutine")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetObjectiveAndGradientRoutine",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetObjectiveAndGradientRoutine
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetSeparableObjectiveRoutine routine.
+  SUBROUTINE Petsc_TaoSetSeparableObjectiveRoutine(tao,oFunction,ctx,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the separable objective function for
+    EXTERNAL oFunction !<The external separable objective function to call
+    TYPE(SOLVER_TYPE), POINTER :: ctx !<The solver data to pass to the function
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetSeparableObjectiveRoutine",err,error,*999)
+
+    CALL TaoSetSeparableObjectiveRoutine(tao%tao,oFunction,ctx,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetSeparableObjectiveRoutine.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetSeparableObjectiveRoutine")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetSeparableObjectiveRoutine",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetSeparableObjectiveRoutine
+    
+  !
+  !================================================================================================================================
+  !
+
+  !>Buffer routine to the PETSc TaoSetTolerances routine
+  SUBROUTINE Petsc_TaoSetTolerances(tao,gaTol,grTol,gtTol,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The Tao to set the tolerances for
+    REAL(DP), INTENT(IN) :: gaTol !<The absolute tolerance of the gradient norm to set
+    REAL(DP), INTENT(IN) :: grTol !<The relative tolerance of the gradient norm to set
+    REAL(DP), INTENT(IN) :: gtTol !<The factor tolerance of the gradient norm to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetTolerances",err,error,*999)
+
+    CALL TaoSetTolerances(tao%tao,gaTol,grTol,gtTol,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetTolerances.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetTolerances")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetTolerances",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetTolerances
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSetVariableBounds routine.
+  SUBROUTINE Petsc_TaoSetVariableBounds(tao,lowerBounds,upperBounds,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the variable bounds for
+    TYPE(PetscVecType), INTENT(INOUT) :: lowerBounds !<The vector of lower bounds
+    TYPE(PetscVecType), INTENT(INOUT) :: upperBounds !<The vector of upper bounds    
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSetVariableBounds",err,error,*999)
+
+    CALL TaoSetVariableBounds(tao%tao,lowerBounds%vec,upperBounds%vec,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSetVariableBounds.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSetVariableBounds")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSetVariableBounds",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSetVariableBounds
+    
+  !
+  !================================================================================================================================
+  !
+  
+  !>Buffer routine to the PETSc TaoSolve routine.
+  SUBROUTINE Petsc_TaoSolve(tao,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to solve
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TaoSolve",err,error,*999)
+
+    CALL TaoSolve(tao%tao,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TaoSolve.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TaoSolve")
+    RETURN
+999 ERRORSEXITS("Petsc_TaoSolve",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TaoSolve
+    
+  !
+  !================================================================================================================================
+  !
+    
   !Finalise the PETSc TS structure and destroy the TS
   SUBROUTINE Petsc_TSFinalise(ts,err,error,*)
 

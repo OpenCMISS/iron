@@ -41,7 +41,7 @@
 
 !> Implements various dynamic array routines
 MODULE UTIL_ARRAY
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE TYPES
 
 #include "macros.h"  
@@ -88,6 +88,8 @@ CONTAINS
     EXITS("REALLOCATE_INT")
     RETURN
 999 ERRORSEXITS("REALLOCATE_INT",ERR,ERROR)
+    RETURN 1
+    
   END SUBROUTINE REALLOCATE_INT
 
   !
@@ -115,6 +117,8 @@ CONTAINS
     EXITS("REALLOCATE_REAL")
     RETURN
 999 ERRORSEXITS("REALLOCATE_REAL",ERR,ERROR)
+    RETURN 1
+    
   END SUBROUTINE REALLOCATE_REAL
 
   !
@@ -145,6 +149,8 @@ CONTAINS
     EXITS("REALLOCATE_STRING")
     RETURN
 999 ERRORSEXITS("REALLOCATE_STRING",ERR,ERROR)
+    RETURN 1
+    
   END SUBROUTINE REALLOCATE_STRING
   
   !
@@ -173,6 +179,8 @@ CONTAINS
     EXITS("REALLOCATE_2D")
     RETURN
 999 ERRORSEXITS("REALLOCATE_2D",ERR,ERROR)
+    RETURN 1
+    
   END SUBROUTINE REALLOCATE_2D
 
   !
@@ -193,24 +201,26 @@ CONTAINS
 
     IF( .NOT.ALLOCATED( array ) ) THEN
       CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )
-      RETURN
+    ELSE
+    
+      oldSize = SIZE( array )
+      
+      CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
+      
+      tempArray(:) = array(:)
+      
+      CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
+      
+      array(1:oldSize) = tempArray(:)
+      
+      DEALLOCATE( tempArray )
     ENDIF
-    
-    oldSize = SIZE( array )
-    
-    CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
-    
-    tempArray(:) = array(:)
-    
-    CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
-    
-    array(1:oldSize) = tempArray(:)
-
-    DEALLOCATE( tempArray )
 
     EXITS("GROW_ARRAY_INT")
     RETURN
 999 ERRORSEXITS("GROW_ARRAY_INT",ERR,ERROR)
+    RETURN 1
+    
   END SUBROUTINE GROW_ARRAY_INT
   
   !
@@ -231,24 +241,27 @@ CONTAINS
 
     IF( .NOT.ALLOCATED( array ) ) THEN
       CALL REALLOCATE( array, delta, errorMessage, ERR, ERROR, *999 )
-      RETURN
+ 
+    ELSE
+    
+      oldSize = SIZE( array )
+    
+      CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
+      
+      tempArray(:) = array(:)
+      
+      CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
+      
+      array(1:oldSize) = tempArray(:)
+      
+      DEALLOCATE( tempArray )
     ENDIF
-    
-    oldSize = SIZE( array )
-    
-    CALL REALLOCATE( tempArray, oldSize, errorMessage, ERR, ERROR, *999 )
-    
-    tempArray(:) = array(:)
-    
-    CALL REALLOCATE( array, oldSize + delta, errorMessage, ERR, ERROR, *999 )
-    
-    array(1:oldSize) = tempArray(:)
-
-    DEALLOCATE( tempArray )
 
     EXITS("GROW_ARRAY_REAL")
     RETURN
 999 ERRORSEXITS("GROW_ARRAY_REAL",ERR,ERROR)
+    RETURN 1
+    
   END SUBROUTINE GROW_ARRAY_REAL
   
   !

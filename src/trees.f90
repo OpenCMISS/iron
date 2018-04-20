@@ -44,7 +44,7 @@
 !> Implements trees of base types.
 MODULE TREES
 
-  USE BASE_ROUTINES
+  USE BaseRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE KINDS
@@ -1353,6 +1353,7 @@ CONTAINS
             Y=>Y%LEFT
           ENDDO
           TREE_SUCCESSOR=>Y
+          EXITS("TREE_SUCCESSOR")
           RETURN
         ELSE
           Y=>X%PARENT
