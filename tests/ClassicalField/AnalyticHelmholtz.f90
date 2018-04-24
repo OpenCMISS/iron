@@ -79,8 +79,8 @@ PROGRAM ANALYTICHELMHOLTZEXAMPLE
 
   !Program variables
 
-  TYPE(cmfe_RegionType) :: WORLD_REGION
-  TYPE(cmfe_CoordinateSystemType) :: WorldCoordinateSystem
+  TYPE(cmfe_ContextType) :: context
+  TYPE(cmfe_RegionType) :: worldRegion
   
 #ifdef WIN32
   !Quickwin type
@@ -103,13 +103,17 @@ PROGRAM ANALYTICHELMHOLTZEXAMPLE
 #endif
   
   !Intialise cmiss
-  CALL cmfe_Initialise(WorldCoordinateSystem,WORLD_REGION,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)
+  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
   CALL ANALYTICHELMHOLTZ_TESTCASE_BILINEAR_LAGRANGE_CONVERGENCE(2,10,2)
   CALL ANALYTICHELMHOLTZ_TESTCASE_BICUBIC_HERMITE_CONVERGENCE(2,10,2)
   CALL ANALYTICHELMHOLTZ_TESTCASE_BILINEAR_LAGRANGE_EXPORT(2,6,0)
 
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   
@@ -238,7 +242,7 @@ CONTAINS
     
   SUBROUTINE ANALYTICHELMHOLTZ_GENERIC(NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS, &
     & INTERPOLATION_SPECIFICATIONS,DEPENDENT_FIELD)
-    !Argument variables 
+    !Argument variables
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<number of elements on x axis
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<number of elements on y axis
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<number of elements on z axis
@@ -290,7 +294,7 @@ CONTAINS
 
     !Start the creation of a new RC coordinate system
     CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-    CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+    CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
     IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
       !Set the coordinate system to be 2D
       CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,2,Err)
@@ -303,7 +307,7 @@ CONTAINS
 
     !Start the creation of the region
     CALL cmfe_Region_Initialise(Region,Err)
-    CALL cmfe_Region_CreateStart(RegionUserNumber,WORLD_REGION,Region,Err)
+    CALL cmfe_Region_CreateStart(RegionUserNumber,worldRegion,Region,Err)
     !Set the regions coordinate system to the 2D RC coordinate system that we have created
     CALL cmfe_Region_CoordinateSystemSet(Region,CoordinateSystem,Err)
     !Finish the creation of the region
@@ -311,7 +315,7 @@ CONTAINS
   
     !Start the creation of a basis (default is trilinear lagrange)
     CALL cmfe_Basis_Initialise(Basis,Err)
-    CALL cmfe_Basis_CreateStart(BasisUserNumber,Basis,Err)
+    CALL cmfe_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
     IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
       !Set the basis to be a bilinear basis
       CALL cmfe_Basis_NumberOfXiSet(Basis,2,Err)
@@ -411,8 +415,8 @@ CONTAINS
   
     !Create the problem
     CALL cmfe_Problem_Initialise(Problem,Err)
-    CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS,CMFE_PROBLEM_HELMHOLTZ_EQUATION_TYPE, &
-      & CMFE_PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE],Problem,Err)
+    CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS, &
+      & CMFE_PROBLEM_HELMHOLTZ_EQUATION_TYPE,CMFE_PROBLEM_STANDARD_HELMHOLTZ_SUBTYPE],Problem,Err)
     !Finish creating the problem
     CALL cmfe_Problem_CreateFinish(Problem,Err)
 
@@ -457,18 +461,22 @@ CONTAINS
   SUBROUTINE ANALYTICHELMHOLTZ_GENERIC_CLEAN(CoordinateSystemUserNumber,RegionUserNumber,BasisUserNumber,GeneratedMeshUserNumber, &
     & ProblemUserNumber)
 
-    !Argument variables
+    !Argument variables    
     INTEGER(CMISSIntg), INTENT(IN) :: CoordinateSystemUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: RegionUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: BasisUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: GeneratedMeshUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: ProblemUserNumber
 
-    CALL cmfe_Problem_Destroy(ProblemUserNumber,Err)
-    CALL cmfe_GeneratedMesh_Destroy(RegionUserNumber,GeneratedMeshUserNumber,Err)
-    CALL cmfe_Basis_Destroy(BasisUserNumber,Err)
-    CALL cmfe_Region_Destroy(RegionUserNumber,Err)
-    CALL cmfe_CoordinateSystem_Destroy(CoordinateSystemUserNumber,Err)
+    INTEGER(CMISSIntg) :: contextUserNumber
+
+    CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
+
+    CALL cmfe_Problem_Destroy(contextUserNumber,ProblemUserNumber,Err)
+    CALL cmfe_GeneratedMesh_Destroy(contextUserNumber,RegionUserNumber,GeneratedMeshUserNumber,Err)
+    CALL cmfe_Basis_Destroy(contextUserNumber,BasisUserNumber,Err)
+    CALL cmfe_Region_Destroy(contextUserNumber,RegionUserNumber,Err)
+    CALL cmfe_CoordinateSystem_Destroy(contextUserNumber,CoordinateSystemUserNumber,Err)
 
   END SUBROUTINE ANALYTICHELMHOLTZ_GENERIC_CLEAN
 

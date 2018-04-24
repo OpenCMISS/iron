@@ -120,6 +120,8 @@ MODULE Cmiss
 
   PUBLIC CMFE_RETURN_ERROR_CODE,CMFE_OUTPUT_ERROR,CMFE_TRAP_ERROR
 
+  PUBLIC contexts
+
   PUBLIC cmfe_ErrorHandlingModeGet_,cmfe_ErrorHandlingModeSet_
   
   PUBLIC cmfe_HandleError

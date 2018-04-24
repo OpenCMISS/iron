@@ -91,12 +91,12 @@ int main()
   cmfe_BasisType Basis = (cmfe_BasisType)NULL;
   cmfe_BoundaryConditionsType BoundaryConditions=(cmfe_BoundaryConditionsType)NULL;
   cmfe_ComputationEnvironmentType ComputationEnvironment = (cmfe_ComputationEnvironmentType)NULL;
-  cmfe_CoordinateSystemType CoordinateSystem=(cmfe_CoordinateSystemType)NULL,WorldCoordinateSystem=(cmfe_CoordinateSystemType)NULL;
+  cmfe_ContextType Context = (cmfe_ContextType)NULL;
+  cmfe_CoordinateSystemType CoordinateSystem=(cmfe_CoordinateSystemType)NULL;
   cmfe_DecompositionType Decomposition=(cmfe_DecompositionType)NULL;
   cmfe_EquationsType Equations=(cmfe_EquationsType)NULL;
   cmfe_EquationsSetType EquationsSet=(cmfe_EquationsSetType)NULL;
   cmfe_FieldType GeometricField=(cmfe_FieldType)NULL,DependentField=(cmfe_FieldType)NULL,EquationsSetField=(cmfe_FieldType)NULL;
-  cmfe_FieldsType Fields=(cmfe_FieldsType)NULL;
   cmfe_GeneratedMeshType GeneratedMesh=(cmfe_GeneratedMeshType)NULL;
   cmfe_MeshType Mesh=(cmfe_MeshType)NULL;
   cmfe_ProblemType Problem=(cmfe_ProblemType)NULL;
@@ -120,21 +120,24 @@ int main()
 
   ControlLoopIdentifier[0]=CMFE_CONTROL_LOOP_NODE;
 
-  Err = cmfe_CoordinateSystem_Initialise(&WorldCoordinateSystem);
-  CHECK_ERROR("Initialising world coordinate system");
+  Err = cmfe_Context_Initialise(&Context);
+  CHECK_ERROR("Initialising context");
+  Err = cmfe_Initialise(Context);
+  CHECK_ERROR("Initialising OpenCMISS-Iron");
   Err = cmfe_Region_Initialise(&WorldRegion);
   CHECK_ERROR("Initialising world region");
-  Err = cmfe_Initialise(WorldCoordinateSystem,WorldRegion);
-  CHECK_ERROR("Initialising OpenCMISS-Iron");
+  Err = cmfe_Context_WorldRegionGet(Context,WorldRegion);
+  CHECK_ERROR("Get world region");
   Err = cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR);
 
   Err = cmfe_ComputationEnvironment_Initialise(&ComputationEnvironment);
+  Err = cmfe_Context_ComputationEnvironmentGet(Context,ComputationEnvironment);
   Err = cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,&NumberOfComputationNodes);
   Err = cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,&ComputationNodeNumber);
 
   /* Start the creation of a new RC coordinate system */
   Err = cmfe_CoordinateSystem_Initialise(&CoordinateSystem);
-  Err = cmfe_CoordinateSystem_CreateStart(COORDINATE_SYSTEM_USER_NUMBER,CoordinateSystem);
+  Err = cmfe_CoordinateSystem_CreateStart(COORDINATE_SYSTEM_USER_NUMBER,Context,CoordinateSystem);
   if(NUMBER_GLOBAL_Z_ELEMENTS==0)
     {
       /* Set the coordinate system to be 2D */
@@ -158,7 +161,7 @@ int main()
 
   /* Start the creation of a basis (default is trilinear lagrange) */
   Err = cmfe_Basis_Initialise(&Basis);
-  Err = cmfe_Basis_CreateStart(BASIS_USER_NUMBER,Basis);
+  Err = cmfe_Basis_CreateStart(BASIS_USER_NUMBER,Context,Basis);
   if(NUMBER_GLOBAL_Z_ELEMENTS==0)
     {
       /* Set the basis to be a bilinear Lagrange basis */
@@ -261,7 +264,7 @@ int main()
   ProblemSpecification[0] = CMFE_PROBLEM_CLASSICAL_FIELD_CLASS;
   ProblemSpecification[1] = CMFE_PROBLEM_LAPLACE_EQUATION_TYPE;
   ProblemSpecification[2] = CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE;
-  Err = cmfe_Problem_CreateStart(PROBLEM_USER_NUMBER,3,ProblemSpecification,Problem);
+  Err = cmfe_Problem_CreateStart(PROBLEM_USER_NUMBER,Context,3,ProblemSpecification,Problem);
   /* Finish the creation of a problem. */
   Err = cmfe_Problem_CreateFinish(Problem);
 
@@ -331,7 +334,7 @@ int main()
   /* Solve the problem */
   Err = cmfe_Problem_Solve(Problem);
 
-  Err = cmfe_Finalise();
+  Err = cmfe_Finalise(Context);
 
   return Err;
 }

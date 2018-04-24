@@ -56,6 +56,7 @@ MODULE ANALYTIC_ANALYSIS_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
+  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif

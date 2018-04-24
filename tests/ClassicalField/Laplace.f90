@@ -46,7 +46,7 @@
 !<
 
 !> Main program
-PROGRAM LAPLACEEXAMPLE
+PROGRAM LaplaceExample
 
   USE OpenCMISS
   USE OpenCMISS_Iron
@@ -98,7 +98,8 @@ PROGRAM LAPLACEEXAMPLE
   TYPE(cmfe_BasisType) :: Basis
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
   TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
-  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem,WorldCoordinateSystem
+  TYPE(cmfe_ContextType) :: context
+  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
   TYPE(cmfe_DecompositionType) :: Decomposition
   TYPE(cmfe_EquationsType) :: Equations
   TYPE(cmfe_EquationsSetType) :: EquationsSet
@@ -142,21 +143,21 @@ PROGRAM LAPLACEEXAMPLE
     !If we have enough arguments then use the first four for setting up the problem. The subsequent arguments may be used to
     !pass flags to, say, PETSc.
     CALL GET_COMMAND_ARGUMENT(1,COMMAND_ARGUMENT,ARGUMENT_LENGTH,STATUS)
-    IF(STATUS>0) CALL HANDLE_ERROR("Error for command argument 1.")
+    IF(STATUS>0) CALL HandleError("Error for command argument 1.")
     READ(COMMAND_ARGUMENT(1:ARGUMENT_LENGTH),*) NUMBER_GLOBAL_X_ELEMENTS
-    IF(NUMBER_GLOBAL_X_ELEMENTS<=0) CALL HANDLE_ERROR("Invalid number of X elements.")
+    IF(NUMBER_GLOBAL_X_ELEMENTS<=0) CALL HandleError("Invalid number of X elements.")
     CALL GET_COMMAND_ARGUMENT(2,COMMAND_ARGUMENT,ARGUMENT_LENGTH,STATUS)
-    IF(STATUS>0) CALL HANDLE_ERROR("Error for command argument 2.")
+    IF(STATUS>0) CALL HandleError("Error for command argument 2.")
     READ(COMMAND_ARGUMENT(1:ARGUMENT_LENGTH),*) NUMBER_GLOBAL_Y_ELEMENTS
-    IF(NUMBER_GLOBAL_Y_ELEMENTS<=0) CALL HANDLE_ERROR("Invalid number of Y elements.")
+    IF(NUMBER_GLOBAL_Y_ELEMENTS<=0) CALL HandleError("Invalid number of Y elements.")
     CALL GET_COMMAND_ARGUMENT(3,COMMAND_ARGUMENT,ARGUMENT_LENGTH,STATUS)
-    IF(STATUS>0) CALL HANDLE_ERROR("Error for command argument 3.")
+    IF(STATUS>0) CALL HandleError("Error for command argument 3.")
     READ(COMMAND_ARGUMENT(1:ARGUMENT_LENGTH),*) NUMBER_GLOBAL_Z_ELEMENTS
-    IF(NUMBER_GLOBAL_Z_ELEMENTS<0) CALL HANDLE_ERROR("Invalid number of Z elements.")
+    IF(NUMBER_GLOBAL_Z_ELEMENTS<0) CALL HandleError("Invalid number of Z elements.")
     CALL GET_COMMAND_ARGUMENT(4,COMMAND_ARGUMENT,ARGUMENT_LENGTH,STATUS)
-    IF(STATUS>0) CALL HANDLE_ERROR("Error for command argument 4.")
+    IF(STATUS>0) CALL HandleError("Error for command argument 4.")
     READ(COMMAND_ARGUMENT(1:ARGUMENT_LENGTH),*) INTERPOLATION_TYPE
-    IF(INTERPOLATION_TYPE<=0) CALL HANDLE_ERROR("Invalid Interpolation specification.")
+    IF(INTERPOLATION_TYPE<=0) CALL HandleError("Invalid Interpolation specification.")
   ELSE
     !If there are not enough arguments default the problem specification 
     NUMBER_GLOBAL_X_ELEMENTS=1
@@ -171,11 +172,15 @@ PROGRAM LAPLACEEXAMPLE
   ENDIF
   
   !Intialise OpenCMISS
-  CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
-
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)
+  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
+  
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
-  CALL cmfe_RandomSeedsSet(9999,Err)
+  CALL cmfe_Context_RandomSeedsSet(context,9999,Err)
   
   CALL cmfe_DiagnosticsSetOn(CMFE_IN_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"],Err)
 
@@ -186,12 +191,13 @@ PROGRAM LAPLACEEXAMPLE
 
   !Get the computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+  CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
   CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
   CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
     
   !Start the creation of a new RC coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
   IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
     !Set the coordinate system to be 2D
     CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,2,Err)
@@ -213,14 +219,14 @@ PROGRAM LAPLACEEXAMPLE
 
   !Start the creation of a basis (default is trilinear lagrange)
   CALL cmfe_Basis_Initialise(Basis,Err)
-  CALL cmfe_Basis_CreateStart(BasisUserNumber,Basis,Err)
+  CALL cmfe_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
   SELECT CASE(INTERPOLATION_TYPE)
   CASE(1,2,3,4)
     CALL cmfe_Basis_TypeSet(Basis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
   CASE(7,8,9)
     CALL cmfe_Basis_TypeSet(Basis,CMFE_BASIS_SIMPLEX_TYPE,Err)
   CASE DEFAULT
-    CALL HANDLE_ERROR("Invalid interpolation type.")
+    CALL HandleError("Invalid interpolation type.")
   END SELECT
   SELECT CASE(INTERPOLATION_TYPE)
   CASE(1)
@@ -337,7 +343,7 @@ PROGRAM LAPLACEEXAMPLE
   
   !Start the creation of a problem.
   CALL cmfe_Problem_Initialise(Problem,Err)
-  CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS,CMFE_PROBLEM_LAPLACE_EQUATION_TYPE, &
+  CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS,CMFE_PROBLEM_LAPLACE_EQUATION_TYPE, &
     & CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE],Problem,Err)
   !Finish the creation of a problem.
   CALL cmfe_Problem_CreateFinish(Problem,Err)
@@ -418,7 +424,7 @@ PROGRAM LAPLACEEXAMPLE
   CALL cmfe_Fields_Finalise(Fields,Err)
   
   !Finialise CMISS
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   
@@ -426,13 +432,13 @@ PROGRAM LAPLACEEXAMPLE
   
 CONTAINS
 
-  SUBROUTINE HANDLE_ERROR(ERROR_STRING)
+  SUBROUTINE HandleError(ERROR_STRING)
 
     CHARACTER(LEN=*), INTENT(IN) :: ERROR_STRING
 
     WRITE(*,'(">>ERROR: ",A)') ERROR_STRING(1:LEN_TRIM(ERROR_STRING))
     STOP
 
-  END SUBROUTINE HANDLE_ERROR
+  END SUBROUTINE HandleError
     
-END PROGRAM LAPLACEEXAMPLE
+END PROGRAM LaplaceExample

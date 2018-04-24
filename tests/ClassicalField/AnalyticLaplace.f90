@@ -46,7 +46,7 @@
 !< 
 
 !> Main program
-PROGRAM ANALYTICLAPLACEEXAMPLE
+PROGRAM AnalyticLaplaceExample
 #ifndef NOMPIMOD
   USE MPI
 #endif
@@ -78,8 +78,8 @@ PROGRAM ANALYTICLAPLACEEXAMPLE
 
   !Program variables
 
-  TYPE(cmfe_RegionType) :: WORLD_REGION
-  TYPE(cmfe_CoordinateSystemType) :: WorldCoordinateSystem
+  TYPE(cmfe_ContextType) :: context
+  TYPE(cmfe_RegionType) :: worldRegion
 
   INTEGER(CMISSIntg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS,INTERPOLATION
   CHARACTER(LEN=255) :: COMMAND_ARGUMENT
@@ -105,11 +105,15 @@ PROGRAM ANALYTICLAPLACEEXAMPLE
 #endif
   
   !Intialise cmiss
-  CALL cmfe_Initialise(WorldCoordinateSystem,WORLD_REGION,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)
 
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
-  CALL cmfe_RandomSeedsSet(9999,Err)
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
+
+  CALL cmfe_Context_RandomSeedsSet(context,9999,err)
   
   !CALL cmfe_DiagnosticsSetOn(CMFE_ALL_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",[""],Err)
 
@@ -142,7 +146,7 @@ PROGRAM ANALYTICLAPLACEEXAMPLE
     CALL ANALYTICLAPLACE_TESTCASE_CUBIC_HERMITE_EXPORT(2,2,0)
   ENDIF
 
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   
@@ -163,15 +167,17 @@ CONTAINS
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
     !Local Variables
+    INTEGER(CMISSIntg) :: contextUserNumber
     TYPE(cmfe_FieldType) :: FIELD
 
+    CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
     CALL cmfe_Field_Initialise(FIELD,Err)
     CALL ANALYTICLAPLACE_GENERIC(NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS,4, &
       & FIELD)
 
     CALL cmfe_AnalyticAnalysis_Output(FIELD,"AnalyticLaplaceCubicHermite",Err)
     
-    CALL ANALYTICLAPLACE_GENERIC_CLEAN(1,1,1,1,1)
+    CALL ANALYTICLAPLACE_GENERIC_CLEAN(contextUserNumber,1,1,1,1,1)
 
   END SUBROUTINE ANALYTICLAPLACE_TESTCASE_CUBIC_HERMITE_EXPORT
   
@@ -188,15 +194,17 @@ CONTAINS
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
     !Local Variables
+    INTEGER(CMISSIntg) :: contextUserNumber
     TYPE(cmfe_FieldType) :: FIELD
 
+    CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
     CALL cmfe_Field_Initialise(FIELD,Err)
     CALL ANALYTICLAPLACE_GENERIC(NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS,1, &
       & FIELD)
 
     CALL cmfe_AnalyticAnalysis_Output(FIELD,"AnalyticLaplaceLinearLagrange",Err)
     
-    CALL ANALYTICLAPLACE_GENERIC_CLEAN(1,1,1,1,1)
+    CALL ANALYTICLAPLACE_GENERIC_CLEAN(contextUserNumber,1,1,1,1,1)
 
   END SUBROUTINE ANALYTICLAPLACE_TESTCASE_LINEAR_LAGRANGE_EXPORT
   
@@ -213,15 +221,17 @@ CONTAINS
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
     INTEGER(CMISSIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
     !Local Variables
+    INTEGER(CMISSIntg) :: contextUserNumber
     TYPE(cmfe_FieldType) :: FIELD
 
+    CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
     CALL cmfe_Field_Initialise(FIELD,Err)
     CALL ANALYTICLAPLACE_GENERIC(NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS,7, &
       & FIELD)
 
     CALL cmfe_AnalyticAnalysis_Output(FIELD,"AnalyticLaplaceLinearSimplex",Err)
     
-    CALL ANALYTICLAPLACE_GENERIC_CLEAN(1,1,1,1,1)
+    CALL ANALYTICLAPLACE_GENERIC_CLEAN(contextUserNumber,1,1,1,1,1)
 
   END SUBROUTINE ANALYTICLAPLACE_TESTCASE_LINEAR_SIMPLEX_EXPORT
   
@@ -327,9 +337,11 @@ CONTAINS
     !Local Variables
     REAL(CMISSRP) :: VALUE
     
-    INTEGER(CMISSIntg) :: i
+    INTEGER(CMISSIntg) :: i,contextUserNumber
     TYPE(cmfe_FieldType) :: FIELD
-    
+
+
+    CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
     ALLOCATE(X_VALUES((NUMBER_OF_ELEMENTS_XI_END-NUMBER_OF_ELEMENTS_XI_START)/NUMBER_OF_ELEMENTS_XI_INTERVAL+1),STAT=ERR)
     ALLOCATE(Y_VALUES((NUMBER_OF_ELEMENTS_XI_END-NUMBER_OF_ELEMENTS_XI_START)/NUMBER_OF_ELEMENTS_XI_INTERVAL+1),STAT=ERR)
 
@@ -341,7 +353,7 @@ CONTAINS
 
       Y_VALUES((i-NUMBER_OF_ELEMENTS_XI_START)/NUMBER_OF_ELEMENTS_XI_INTERVAL+1)=log10(VALUE)
       X_VALUES((i-NUMBER_OF_ELEMENTS_XI_START)/NUMBER_OF_ELEMENTS_XI_INTERVAL+1)=log10(HEIGHT/i)
-      CALL ANALYTICLAPLACE_GENERIC_CLEAN(1,1,1,1,1)
+      CALL ANALYTICLAPLACE_GENERIC_CLEAN(contextUserNumber,1,1,1,1,1)
    
     ENDDO
   END SUBROUTINE ANALYTICLAPLACE_GENERIC_CONVERGENCE
@@ -366,6 +378,7 @@ CONTAINS
     INTEGER(CMISSIntg) :: EquationsSetIndex
 
     TYPE(cmfe_BasisType) :: Basis
+    TYPE(cmfe_ContextType) :: context
     TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
     TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
     TYPE(cmfe_GeneratedMeshType) :: GENERATED_MESH
@@ -390,7 +403,7 @@ CONTAINS
 
     !Start the creation of a new RC coordinate system
     CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-    CALL cmfe_CoordinateSystem_CreateStart(1,CoordinateSystem,Err)
+    CALL cmfe_CoordinateSystem_CreateStart(1,context,CoordinateSystem,Err)
     IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
       !Set the coordinate system to be 2D
       CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,2,Err)
@@ -403,7 +416,7 @@ CONTAINS
 
     !Start the creation of the region
     CALL cmfe_Region_Initialise(REGION,Err)
-    CALL cmfe_Region_CreateStart(1,WORLD_REGION,REGION,Err)
+    CALL cmfe_Region_CreateStart(1,worldRegion,REGION,Err)
     !Set the regions coordinate system to the 2D RC coordinate system that we have created
     CALL cmfe_Region_CoordinateSystemSet(REGION,CoordinateSystem,Err)
     !Finish the creation of the region
@@ -412,7 +425,7 @@ CONTAINS
   
     !Start the creation of a basis (default is trilinear lagrange)
     CALL cmfe_Basis_Initialise(Basis,Err)
-    CALL cmfe_Basis_CreateStart(1,Basis,Err)
+    CALL cmfe_Basis_CreateStart(1,context,Basis,Err)
     SELECT CASE(INTERPOLATION_SPECIFICATIONS)
     CASE(CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION,CMFE_BASIS_QUADRATIC_LAGRANGE_INTERPOLATION, &
       & CMFE_BASIS_CUBIC_LAGRANGE_INTERPOLATION, &
@@ -529,7 +542,7 @@ CONTAINS
 
     !Create the problem
     CALL cmfe_Problem_Initialise(PROBLEM,Err)
-    CALL cmfe_Problem_CreateStart(1,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS,CMFE_PROBLEM_LAPLACE_EQUATION_TYPE, &
+    CALL cmfe_Problem_CreateStart(1,context,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS,CMFE_PROBLEM_LAPLACE_EQUATION_TYPE, &
       & CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE],PROBLEM,Err)
     !Finish creating the problem
     CALL cmfe_Problem_CreateFinish(PROBLEM,Err)
@@ -578,21 +591,22 @@ CONTAINS
 
   END SUBROUTINE ANALYTICLAPLACE_GENERIC
 
-  SUBROUTINE ANALYTICLAPLACE_GENERIC_CLEAN(CoordinateSystemUserNumber,RegionUserNumber,BasisUserNumber,GeneratedMeshUserNumber, &
-    & ProblemUserNumber)
+  SUBROUTINE ANALYTICLAPLACE_GENERIC_CLEAN(contextUserNumber,CoordinateSystemUserNumber,RegionUserNumber, &
+    & BasisUserNumber,GeneratedMeshUserNumber,ProblemUserNumber)
 
     !Argument variables
+    INTEGER(CMISSIntg), INTENT(IN) :: contextUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: CoordinateSystemUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: RegionUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: BasisUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: GeneratedMeshUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: ProblemUserNumber
 
-    CALL cmfe_Problem_Destroy(ProblemUserNumber,Err)
-    CALL cmfe_GeneratedMesh_Destroy(RegionUserNumber,GeneratedMeshUserNumber,Err)
-    CALL cmfe_Basis_Destroy(BasisUserNumber,Err)
-    CALL cmfe_Region_Destroy(RegionUserNumber,Err)
-    CALL cmfe_CoordinateSystem_Destroy(CoordinateSystemUserNumber,Err)
+    CALL cmfe_Problem_Destroy(contextUserNumber,ProblemUserNumber,Err)
+    CALL cmfe_GeneratedMesh_Destroy(contextUserNumber,RegionUserNumber,GeneratedMeshUserNumber,Err)
+    CALL cmfe_Basis_Destroy(contextUserNumber,BasisUserNumber,Err)
+    CALL cmfe_Region_Destroy(contextUserNumber,RegionUserNumber,Err)
+    CALL cmfe_CoordinateSystem_Destroy(contextUserNumber,CoordinateSystemUserNumber,Err)
 
   END SUBROUTINE ANALYTICLAPLACE_GENERIC_CLEAN
 
@@ -605,4 +619,4 @@ CONTAINS
 
   END SUBROUTINE HANDLE_ERROR
 
-END PROGRAM ANALYTICLAPLACEEXAMPLE 
+END PROGRAM AnalyticLaplaceExample 

@@ -48,7 +48,7 @@
 !<
 
 !> Main program
-PROGRAM MONODOMAINEXAMPLE
+PROGRAM MonodomainExample
 
   USE OpenCMISS
   USE OpenCMISS_Iron
@@ -123,8 +123,9 @@ PROGRAM MONODOMAINEXAMPLE
   TYPE(cmfe_CellMLType) :: CellML
   TYPE(cmfe_CellMLEquationsType) :: CellMLEquations
   TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
+  TYPE(cmfe_ContextType) :: context
   TYPE(cmfe_ControlLoopType) :: ControlLoop
-  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem,WorldCoordinateSystem
+  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
   TYPE(cmfe_DecompositionType) :: Decomposition
   TYPE(cmfe_EquationsType) :: Equations
   TYPE(cmfe_EquationsSetType) :: EquationsSet
@@ -176,13 +177,17 @@ PROGRAM MONODOMAINEXAMPLE
   ENDIF
 
   !Intialise OpenCMISS
-  CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
   !Trap errors
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
   
   !Get the computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+  CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
   CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
   CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
@@ -194,7 +199,7 @@ PROGRAM MONODOMAINEXAMPLE
   
   !Start the creation of a new RC coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
   IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
     !Set the coordinate system to be 2D
     CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,2,Err)
@@ -217,7 +222,7 @@ PROGRAM MONODOMAINEXAMPLE
 
   !Start the creation of a basis (default is trilinear lagrange)
   CALL cmfe_Basis_Initialise(Basis,Err)
-  CALL cmfe_Basis_CreateStart(BasisUserNumber,Basis,Err)
+  CALL cmfe_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
   IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
     !Set the basis to be a bilinear Lagrange basis
     CALL cmfe_Basis_NumberOfXiSet(Basis,2,Err)
@@ -425,7 +430,7 @@ PROGRAM MONODOMAINEXAMPLE
   
   !Start the creation of a problem.
   CALL cmfe_Problem_Initialise(Problem,Err)
-  CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_BIOELECTRICS_CLASS,CMFE_PROBLEM_MONODOMAIN_EQUATION_TYPE, &
+  CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_BIOELECTRICS_CLASS,CMFE_PROBLEM_MONODOMAIN_EQUATION_TYPE, &
     & CMFE_PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE],Problem,Err)
   !Finish the creation of a problem.
   CALL cmfe_Problem_CreateFinish(Problem,Err)
@@ -542,10 +547,10 @@ PROGRAM MONODOMAINEXAMPLE
   ENDIF
   
   !Finialise CMISS
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   
   STOP
   
-END PROGRAM MONODOMAINEXAMPLE
+END PROGRAM MonodomainExample

@@ -47,6 +47,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
+  USE BoundaryConditionAccessRoutines
   USE CmissMPI
   USE ComputationRoutines
   USE ComputationAccessRoutines
@@ -63,10 +64,12 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
+  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
   USE NODE_ROUTINES
+  USE SolverAccessRoutines
   USE Strings
   USE Timer
   USE Types
@@ -320,8 +323,8 @@ CONTAINS
         IF(ALLOCATED(BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES)) THEN
           CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
           CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
-          CALL WorkGroup_NumberOfWorldNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
-          CALL WorkGroup_WorldNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+          CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+          CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
           IF(numberOfGroupComputationNodes>0) THEN
             !Transfer all the boundary conditions to all the computation nodes.
             !\todo Look at this.

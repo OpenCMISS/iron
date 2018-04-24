@@ -261,7 +261,7 @@ CONTAINS
           A8=ASIN(A7)
         ELSE
           A8=0.0_DP
-          CALL FLAG_WARNING("Put A8=0 since ABS(A8)>1.",err,error,*999)
+          CALL FlagWarning("Put A8=0 since ABS(A8)>1.",err,error,*999)
         ENDIF
         IF((ABS(Z(3))<ZERO_TOLERANCE).OR.(ABS(A6)<ZERO_TOLERANCE).OR.(ABS(A7)<ZERO_TOLERANCE)) THEN
           A9=0.0_DP
@@ -270,7 +270,7 @@ CONTAINS
             A9=Z(3)/(FOCUS*A6*A7)
           ELSE
             A9=0.0_DP
-            CALL FLAG_WARNING("Put A9=0 since A6*A7=0.",err,error,*999)
+            CALL FlagWarning("Put A9=0 since A6*A7=0.",err,error,*999)
           ENDIF
           IF(A9>=1.0_DP) THEN
             A9=PI/2.0_DP
@@ -380,7 +380,7 @@ CONTAINS
           A8=ASIN(A7)
         ELSE
           A8=0.0_SP
-          CALL FLAG_WARNING("Put A8=0 since ABS(A8)>1.",err,error,*999)
+          CALL FlagWarning("Put A8=0 since ABS(A8)>1.",err,error,*999)
         ENDIF
         IF((ABS(Z(3))<ZERO_TOLERANCE_SP).OR.(ABS(A6)<ZERO_TOLERANCE_SP).OR.(ABS(A7)<ZERO_TOLERANCE_SP)) THEN
           A9=0.0_SP
@@ -389,7 +389,7 @@ CONTAINS
             A9=Z(3)/(FOCUS*A6*A7)
           ELSE
             A9=0.0_SP
-            CALL FLAG_WARNING("Put A9=0 since A6*A7=0.",err,error,*999)
+            CALL FlagWarning("Put A9=0 since A6*A7=0.",err,error,*999)
           ENDIF
           IF(A9>=1.0_SP) THEN
             A9=REAL(PI,SP)/2.0_SP
@@ -764,7 +764,7 @@ CONTAINS
               ENDDO !mi
             CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
               IF(ABS(INTERPOLATED_POINT%VALUES(2,1))<ZERO_TOLERANCE) THEN
-                CALL FLAG_WARNING("Mu is zero.",err,error,*999)
+                CALL FlagWarning("Mu is zero.",err,error,*999)
               ELSE
                 FF=COORDINATE_SYSTEM%FOCUS*COORDINATE_SYSTEM%FOCUS
                 R=INTERPOLATED_POINT%VALUES(1,1)
@@ -856,7 +856,7 @@ CONTAINS
                     SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
                     METRICS%DXI_DX(1,1:2)=SCALE*METRICS%DXI_DX(1,1:2)
                   ELSE
-                    CALL FLAG_WARNING("Zero determinant. Unable to obtain dxi/dx.",err,error,*999)
+                    CALL FlagWarning("Zero determinant. Unable to obtain dxi/dx.",err,error,*999)
                     METRICS%DXI_DX=0.0_DP                    
                   ENDIF
                 CASE(3)
@@ -879,7 +879,7 @@ CONTAINS
                       SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
                       METRICS%DXI_DX(1,1:3)=SCALE*METRICS%DX_DXI(1,1:3)
                     ELSE
-                      CALL FLAG_WARNING("Zero determinant. Unable to obtain dxi/dx.",err,error,*999)
+                      CALL FlagWarning("Zero determinant. Unable to obtain dxi/dx.",err,error,*999)
                       METRICS%DXI_DX=0.0_DP                    
                     ENDIF
                   ELSE
@@ -920,7 +920,7 @@ CONTAINS
                     METRICS%DXI_DX(1:2,3)=METRICS%DXI_DX(1:2,3)*RR
                   CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
                     IF(ABS(INTERPOLATED_POINT%VALUES(2,1))<ZERO_TOLERANCE) THEN
-                      CALL FLAG_WARNING("Mu is zero.",err,error,*999)
+                      CALL FlagWarning("Mu is zero.",err,error,*999)
                     ELSE
                       FF=COORDINATE_SYSTEM%FOCUS*COORDINATE_SYSTEM%FOCUS
                       R=INTERPOLATED_POINT%VALUES(1,1)
@@ -1690,11 +1690,11 @@ CONTAINS
   !>- Focus: 1.0
   !>- Origin: (0.0,0.0,0.0)
   !>- Oritention: ((1.0,0.0,0.0),(0.0,1.0,0.0),(0.0,0.0,1.0))
-  SUBROUTINE COORDINATE_SYSTEM_CREATE_START(coordinateSystems,USER_NUMBER,COORDINATE_SYSTEM,err,error,*)
+  SUBROUTINE COORDINATE_SYSTEM_CREATE_START(USER_NUMBER,coordinateSystems,COORDINATE_SYSTEM,err,error,*)
 
     !Argument variables
-    TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the coordinate systems to create the coordinate system for.
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number for the created coordinate system
+    TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the coordinate systems to create the coordinate system for.
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<On exit, a pointer to the created coordinate system. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string

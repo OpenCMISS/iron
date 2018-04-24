@@ -45,6 +45,7 @@
 MODULE BoundaryConditionAccessRoutines
   
   USE BaseRoutines
+  USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
   USE Types
@@ -63,8 +64,41 @@ MODULE BoundaryConditionAccessRoutines
 
   !Interfaces
 
+  PUBLIC BoundaryConditions_SolverEquationsGet
+
  
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the solver equations for boundary conditions.
+  SUBROUTINE BoundaryConditions_SolverEquationsGet(boundaryConditions,solverEquations,err,error,*)
+
+    !Argument variables
+    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary conditions to get the solver equations for
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<On exit, a pointer to the solver equations in the specified boundary conditions. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("BoundaryConditions_SolverEquationsGet",err,error,*998)
+
+    IF(ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+
+    solverEquations=>boundaryConditions%SOLVER_EQUATIONS
+    IF(.NOT.ASSOCIATED(solverEquations)) &
+      & CALL FlagError("Solver equations is not associated for the boundary conditions.",err,error,*999)
+       
+    EXITS("BoundaryConditions_SolverEquationsGet")
+    RETURN
+999 NULLIFY(solverEquations)
+998 ERRORSEXITS("BoundaryConditions_SolverEquationsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE BoundaryConditions_SolverEquationsGet
 
   !
   !================================================================================================================================

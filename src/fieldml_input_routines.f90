@@ -49,9 +49,10 @@ MODULE FIELDML_INPUT_ROUTINES
   USE BasisRoutines
   USE BasisAccessRoutines
   USE CMISS
-  USE CONSTANTS
   USE ComputationRoutines
   USE ComputationAccessRoutines
+  USE Constants
+  USE ContextAccessRoutines
   USE COORDINATE_ROUTINES
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
@@ -60,12 +61,13 @@ MODULE FIELDML_INPUT_ROUTINES
   USE FIELDML_UTIL_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE LISTS
+  USE Lists
   USE MESH_ROUTINES
+  USE MeshAccessRoutines
   USE NODE_ROUTINES
   USE REGION_ROUTINES
   USE RegionAccessRoutines
-  USE STRINGS
+  USE Strings
 
 #include "macros.h"  
 
@@ -607,7 +609,7 @@ CONTAINS
       CALL FlagError( "Coordinate system "//NAME(1:LENGTH)//" not yet supported.", ERR, ERROR, *999 )
     ENDIF
 
-    CALL COORDINATE_SYSTEM_CREATE_START( coordinateSystems, USER_NUMBER, COORDINATE_SYSTEM, ERR, ERROR, *999 )
+    CALL COORDINATE_SYSTEM_CREATE_START( USER_NUMBER, coordinateSystems, COORDINATE_SYSTEM, ERR, ERROR, *999 )
     !Set the coordinate system dimension and type
     CALL COORDINATE_SYSTEM_DIMENSION_SET( COORDINATE_SYSTEM, COORDINATE_COUNT, ERR, ERROR, *999 )
     CALL COORDINATE_SYSTEM_TYPE_SET( COORDINATE_SYSTEM, COORDINATE_TYPE, ERR, ERROR, *999 )
@@ -736,12 +738,12 @@ CONTAINS
   !
   
   !>Creates an OpenCMISS basis object using relevant parameters from FieldML. Does not call CreateFinish.
-  SUBROUTINE FIELDML_INPUT_BASIS_CREATE_START( FIELDML_INFO, EVALUATOR_NAME, basisFunctions, USER_NUMBER, BASIS, ERR, ERROR, * )
+  SUBROUTINE FIELDML_INPUT_BASIS_CREATE_START( FIELDML_INFO, EVALUATOR_NAME, USER_NUMBER, basisFunctions, BASIS, ERR, ERROR, * )
     !Arguments
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: EVALUATOR_NAME !<The name of the basis evaluator.
-    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<A pointer to the basis functions to create the basis for
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to assign to the basis.
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<A pointer to the basis functions to create the basis for
     TYPE(BASIS_TYPE), POINTER, INTENT(INOUT) :: BASIS !<The OpenCMISS basis object to create.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
@@ -776,7 +778,7 @@ CONTAINS
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
   
     NULLIFY(BASIS)
-    CALL BASIS_CREATE_START(basisFunctions, USER_NUMBER, BASIS, ERR, ERROR, *999 )
+    CALL BASIS_CREATE_START(USER_NUMBER, basisFunctions, BASIS, ERR, ERROR, *999 )
     CALL BASIS_TYPE_SET( BASIS, BASISTYPE, ERR, ERROR, *999 )
     CALL BASIS_NUMBER_OF_XI_SET( BASIS, size( BASIS_INTERPOLATIONS ), ERR, ERROR, *999 )
     CALL BASIS_INTERPOLATION_XI_SET( BASIS, BASIS_INTERPOLATIONS, ERR, ERROR, *999 )

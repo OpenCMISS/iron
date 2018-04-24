@@ -2484,7 +2484,7 @@ CONTAINS
     CALL DistributedMatrix_RowMappingGet(distributedMatrix,rowDomainMapping,err,error,*999)
     NULLIFY(columnDomainMapping)
     CALL DistributedMatrix_ColumnMappingGet(distributedMatrix,columnDomainMapping,err,error,*999)
-    CALL WorkGroup_CommunicatorGet(rowDomainMapping%workGroup,groupCommunicator,err,error,*999)
+    CALL WorkGroup_GroupCommunicatorGet(rowDomainMapping%workGroup,groupCommunicator,err,error,*999)
     
     SELECT CASE(petscMatrix%storageType)
     CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)

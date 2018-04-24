@@ -3918,19 +3918,19 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: USER_NUMBER !<The user defined identifier for the region. The user number must be unique.
     TYPE(RegionsType), POINTER :: regions !<A pointer back to the regions for this region.
     LOGICAL :: REGION_FINISHED !<Is .TRUE. if the region has finished being created, .FALSE. if not.
-    TYPE(VARYING_STRING) :: LABEL !<A user defined label for the region.
+    TYPE(VARYING_STRING) :: label !<A user defined label for the region.
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system used by the region.
     TYPE(DataPointSetsType), POINTER :: dataPointSets !<A pointer to the data point sets defined on the region.          
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the nodes defined on the region.
-    TYPE(MESHES_TYPE), POINTER :: MESHES !<A pointer to the meshes defined on the region.
+    TYPE(NODES_TYPE), POINTER :: nodes !<A pointer to the nodes defined on the region.
+    TYPE(MESHES_TYPE), POINTER :: meshes !<A pointer to the meshes defined on the region.
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes defined on the region.
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields defined on the region.
+    TYPE(FIELDS_TYPE), POINTER :: fields !<A pointer to the fields defined on the region.
     TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer to the equation sets defined on the region.
     TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: CELLML_ENVIRONMENTS !<A pointer to the CellML environments for the region.
     TYPE(REGION_TYPE), POINTER :: PARENT_REGION !<A pointer to the parent region for the region. If the region has no parent region then it is the global (world) region and PARENT_REGION is NULL.
     INTEGER(INTG) :: NUMBER_OF_SUB_REGIONS !<The number of sub-regions defined for the region.
     TYPE(REGION_PTR_TYPE), POINTER :: SUB_REGIONS(:) !<An array of pointers to the sub-regions defined on the region. \todo make this allocatable
-    TYPE(INTERFACES_TYPE), POINTER :: INTERFACES !<A pointer to the interfaces defined on the region.
+    TYPE(INTERFACES_TYPE), POINTER :: interfaces !<A pointer to the interfaces defined on the region.
   END TYPE REGION_TYPE
 
   !>Contains information about the regions

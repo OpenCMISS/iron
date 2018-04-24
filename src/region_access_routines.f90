@@ -109,11 +109,15 @@ MODULE RegionAccessRoutines
 
   PUBLIC REGION_NODES_GET
 
+  PUBLIC Region_RegionsGet
+
   PUBLIC Region_UserNumberFind
 
   PUBLIC REGION_USER_NUMBER_FIND
 
   PUBLIC Region_UserNumberGet
+
+  PUBLIC Regions_WorldRegionGet
 
 CONTAINS
 
@@ -135,9 +139,13 @@ CONTAINS
  
     ENTERS("Region_CellMLGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
     IF(ASSOCIATED(cellml)) CALL FlagError("CellML is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     NULLIFY(cellml)
     CALL CellML_UserNumberFind(userNumber,region,cellml,err,error,*999)
@@ -210,12 +218,16 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("Region_CoordinateSystemGet",ERR,ERROR,*999)
+    ENTERS("Region_CoordinateSystemGet",ERR,ERROR,*998)
 
     !Check input arguments
+    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*999)
-    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
 
     coordinateSystem=>region%COORDINATE_SYSTEM
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
@@ -226,7 +238,8 @@ CONTAINS
     
     EXITS("Region_CoordinateSystemGet")
     RETURN
-999 ERRORSEXITS("Region_CoordinateSystemGet",err,error)
+999 NULLIFY(coordinateSystem)
+998 ERRORSEXITS("Region_CoordinateSystemGet",err,error)    
     RETURN 1
     
   END SUBROUTINE Region_CoordinateSystemGet
@@ -249,10 +262,18 @@ CONTAINS
  
     ENTERS("Region_DataPointsGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region data point sets is not associated.",err,error,*998)
     IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region%dataPointSets)) CALL FlagError("Region data point sets is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ASSOCIATED(region%dataPointSets)) THEN
+      localError="Region data point sets is not associated for region number "// &
+        & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     NULLIFY(dataPoints)
     CALL DataPointSets_UserNumberFind(region%dataPointSets,userNumber,dataPoints,err,error,*999)
@@ -288,9 +309,13 @@ CONTAINS
  
     ENTERS("Region_EquationsSetGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     NULLIFY(equationsSet)
     CALL EquationsSet_UserNumberFind(userNumber,region,equationsSet,err,error,*999)
@@ -326,9 +351,13 @@ CONTAINS
  
     ENTERS("Region_FieldGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
     IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     NULLIFY(field)
     CALL Field_UserNumberFind(userNumber,region,field,err,error,*999)
@@ -364,9 +393,13 @@ CONTAINS
  
     ENTERS("Region_GeneratedMeshGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
     IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     NULLIFY(generatedMesh)
     CALL GeneratedMesh_UserNumberFind(userNumber,region,generatedMesh,err,error,*999)
@@ -433,9 +466,13 @@ CONTAINS
  
     ENTERS("Region_InterfaceGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
     IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     NULLIFY(interface)
     CALL Interface_UserNumberFind(userNumber,region,interface,err,error,*999)
@@ -471,9 +508,13 @@ CONTAINS
  
     ENTERS("Region_MeshGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     NULLIFY(mesh)
     CALL Mesh_UserNumberFind(userNumber,region,mesh,err,error,*999)
@@ -504,15 +545,24 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
  
     ENTERS("Region_NodesGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*998)
-    IF(.NOT.region%REGION_FINISHED) CALL FlagError("Region has not been finished.",err,error,*998)
-    IF(ASSOCIATED(NODES)) CALL FlagError("Nodes is already associated.",err,error,*998)
+    IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    IF(.NOT.region%REGION_FINISHED) THEN
+      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
 
     nodes=>region%nodes
-    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Region nodes is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(nodes)) THEN
+      localError="The nodes for region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
        
     EXITS("Region_NodesGet")
     RETURN
@@ -521,6 +571,41 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Region_NodesGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the regions for a region. 
+  SUBROUTINE Region_RegionsGet(region,regions,err,error,*)
+
+    !Argument variables
+    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the regions for
+    TYPE(RegionsType), POINTER :: regions !<On exit, a pointer to the regions for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_RegionsGet",err,error,*998)
+
+    IF(ASSOCIATED(regions)) CALL FlagError("Regions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+    
+    regions=>region%regions   
+    IF(.NOT.ASSOCIATED(regions)) THEN
+      localError="Regions is not associated for region number "// &
+        & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("Region_RegionsGet")
+    RETURN
+999 NULLIFY(regions)
+998 ERRORSEXITS("Region_RegionsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_RegionsGet
   
   !
   !================================================================================================================================
@@ -633,6 +718,36 @@ CONTAINS
     
   END SUBROUTINE Region_UserNumberGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the world region for a regions.
+  SUBROUTINE Regions_WorldRegionGet(regions,worldRegion,err,error,*)
+
+    !Argument variables
+    TYPE(RegionsType), POINTER :: regions !<A pointer to the regions to get the world region for
+    TYPE(REGION_TYPE), POINTER :: worldRegion !<On exit, a pointer to the world region for the regions. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Regions_WorldRegionGet",err,error,*998)
+
+    IF(ASSOCIATED(worldRegion)) CALL FlagError("World region is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(regions)) CALL FlagError("Regions is not associated.",err,error,*998)
+
+    worldRegion=>regions%worldREgion
+    IF(.NOT.ASSOCIATED(worldRegion)) CALL FlagError("Regions world region is not associated.",err,error,*999)
+       
+    EXITS("Regions_WorldRegionGet")
+    RETURN
+999 NULLIFY(worldRegion)
+998 ERRORSEXITS("Regions_WorldRegionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Regions_WorldRegionGet
+  
   !
   !================================================================================================================================
   !

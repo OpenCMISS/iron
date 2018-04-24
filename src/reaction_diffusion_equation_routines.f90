@@ -1546,7 +1546,7 @@ CONTAINS
                     CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
                     OUTPUT_FREQUENCY=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
                     NULLIFY(workGroup)
-                    CALL Solver_WorkGroup(solver,workGroup,err,error,*999)
+                    CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
                     CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
                     MAX_DIGITS=FLOOR(LOG10((CONTROL_LOOP%TIME_LOOP%STOP_TIME-CONTROL_LOOP%TIME_LOOP%START_TIME)/ &
                       & CONTROL_LOOP%TIME_LOOP%TIME_INCREMENT))+1

@@ -52,18 +52,18 @@ MODULE IRON_TEST_FIELDML_ARGUMENTS
 
 CONTAINS
 
-  SUBROUTINE TestFieldMLArguments(worldRegion)
-    TYPE(cmfe_RegionType), INTENT(IN) :: worldRegion
+  SUBROUTINE TestFieldMLArguments(context)
+    TYPE(cmfe_ContextType), INTENT(IN) :: context
 
-  CALL TestFieldMLInvalidInfo(worldRegion)
+    CALL TestFieldMLInvalidInfo(context)
+    
   END SUBROUTINE TestFieldMLArguments
 
   ! Call FieldML routines with initialised but not created fieldmlInfo
-  SUBROUTINE TestFieldMLInvalidInfo(worldRegion)
-    TYPE(cmfe_RegionType), INTENT(IN) :: worldRegion
+  SUBROUTINE TestFieldMLInvalidInfo(context)
+    TYPE(cmfe_ContextType), INTENT(IN) :: context
     ! local variables
-    TYPE(cmfe_RegionType) :: region
-    ! local variables
+    TYPE(cmfe_RegionType) :: region,worldRegion
     TYPE(cmfe_CoordinateSystemType) :: coordinateSystem
     TYPE(cmfe_FieldType) :: geometricField
     TYPE(cmfe_NodesType) :: nodes
@@ -74,6 +74,9 @@ CONTAINS
     err = 0
     CALL BEGIN_TEST("invalid info")
 
+    CALL cmfe_Region_Initialise(worldRegion,err)
+    CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
+    
     ! Don't want to trap errors; this tests that they fail gracefully
     CALL cmfe_ErrorHandlingModeGet(originalErrorHandlingMode, err)
     CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_OUTPUT_ERROR, err)
@@ -81,8 +84,8 @@ CONTAINS
     CALL cmfe_FieldMLIO_Initialise(fieldmlInfo, err) 
 
     CALL cmfe_CoordinateSystem_Initialise(coordinateSystem, err)
-    CALL cmfe_FieldML_InputCoordinateSystemCreateStart( fieldmlInfo, "dummy field name", coordinateSystem, &
-      & AUTO_USER_NUMBER(), err )
+    CALL cmfe_FieldML_InputCoordinateSystemCreateStart( fieldmlInfo, "dummy field name",  &
+      & AUTO_USER_NUMBER(), context, coordinateSystem, err )
     CALL EXPECT_EQ("cmfe_FieldML_InputCoordinateSystemCreateStart result with null FieldML info argument", 1, err)
 
     CALL cmfe_Region_Initialise(region, err)

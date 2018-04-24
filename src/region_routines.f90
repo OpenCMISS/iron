@@ -45,6 +45,7 @@
 MODULE REGION_ROUTINES
 
   USE BaseRoutines
+  USE ContextAccessRoutines
   USE COORDINATE_ROUTINES
   USE CoordinateSystemAccessRoutines
   USE CMISS_CELLML

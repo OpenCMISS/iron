@@ -52,6 +52,7 @@ MODULE FIELD_IO_ROUTINES
   USE NODE_ROUTINES
   USE ComputationRoutines
   USE ComputationAccessRoutines
+  USE ContextAccessRoutines
   USE COORDINATE_ROUTINES
   USE ISO_VARYING_STRING
   USE MACHINE_CONSTANTS
@@ -60,6 +61,7 @@ MODULE FIELD_IO_ROUTINES
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   !USE, INTRINSIC :: ISO_C_BINDING
+  USE RegionAccessRoutines
   USE Strings
   USE Types
   USE Constants
@@ -1700,7 +1702,7 @@ CONTAINS
     NULLIFY(basisFunctions)
     CALL Context_BasisFunctionsGet(context,basisFunctions,err,error,*999)
     NULLIFY(computationEnvironment)
-    CALL Context_ComputationEnvironment(context,computationEnvironment,err,error,*999)
+    CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
 
     CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
     
@@ -2066,7 +2068,7 @@ CONTAINS
       & "can not allocate list of mesh element pointers", ERR, ERROR, *999 )
 
     IF(basisFunctions%numberOfBasisFunctions<=0)  THEN
-      CALL BASIS_CREATE_START(basisFunctions,1,BASIS,ERR,ERROR,*999)
+      CALL BASIS_CREATE_START(1,basisFunctions,BASIS,ERR,ERROR,*999)
       CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
       CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)
     ENDIF
@@ -2366,7 +2368,7 @@ CONTAINS
 
           IF(pos==0) THEN
             IF(ASSOCIATED(BASIS)) NULLIFY(BASIS)
-            CALL BASIS_CREATE_START(basisFunctions,basisFunctions%numberOfBasisFunctions+1,BASIS,ERR,ERROR,*999)
+            CALL BASIS_CREATE_START(basisFunctions%numberOfBasisFunctions+1,basisFunctions,BASIS,ERR,ERROR,*999)
             CALL BASIS_NUMBER_OF_XI_SET(BASIS,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
             CALL BASIS_INTERPOLATION_XI_SET(BASIS,INTERPOLATION_XI(idx_comp,:),ERR,ERROR,*999)
             CALL BASIS_CREATE_FINISH(BASIS,ERR,ERROR,*999)

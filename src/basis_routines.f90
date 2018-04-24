@@ -709,11 +709,11 @@ CONTAINS
   !>  - TYPE: 1 (BASIS_LAGRANGE_HERMITE_TP_TYPE)
   !>  - NUMBER_OF_GAUSS_XI: (2,2,2)
   !>  - GAUSS_ORDER: 0 
-  SUBROUTINE Basis_CreateStart(basisFunctions,userNumber,basis,err,error,*)
+  SUBROUTINE Basis_CreateStart(userNumber,basisFunctions,basis,err,error,*)
 
     !Argument variables
-    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to create the basis for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to start the creation of
+    TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to create the basis for.
     TYPE(BASIS_TYPE), POINTER :: basis !<On return, A pointer to the created basis. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string

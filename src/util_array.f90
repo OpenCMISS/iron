@@ -42,7 +42,9 @@
 !> Implements various dynamic array routines
 MODULE UTIL_ARRAY
   USE BaseRoutines
-  USE TYPES
+  USE ISO_VARYING_STRING
+  USE Kinds
+  USE Types
 
 #include "macros.h"  
 

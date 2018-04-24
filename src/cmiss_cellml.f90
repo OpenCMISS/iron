@@ -68,7 +68,8 @@ MODULE CMISS_CELLML
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
   USE INPUT_OUTPUT
-  USE KINDS
+  USE Kinds
+  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif

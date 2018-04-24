@@ -58,6 +58,7 @@ MODULE GENERATED_MESH_ROUTINES
   USE Kinds
   USE Maths
   USE MESH_ROUTINES
+  USE MeshAccessRoutines
   USE NODE_ROUTINES
   USE Strings
   USE Types

@@ -96,6 +96,8 @@ MODULE MeshAccessRoutines
 
   PUBLIC DECOMPOSITION_USER_NUMBER_FIND
 
+  PUBLIC Decomposition_WorkGroupGet
+
   PUBLIC DecompositionTopology_DataPointsGet
 
   PUBLIC DecompositionTopology_ElementsGet
@@ -458,6 +460,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Decomposition_UserNumberFind
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the work group for a decomposition. 
+  SUBROUTINE Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*)
+
+    !Argument variables
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<A pointer to the decomposition to get the work group for.
+    TYPE(WorkGroupType), POINTER :: workGroup !<On exit, A pointer to the work group for the decomposition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Decomposition_WorkGroupGet",err,error,*998)
+
+    IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+      
+    workGroup=>decomposition%workGroup
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("The decomposition work group is not associated.",err,error,*999)
+       
+    EXITS("Decomposition_WorkGroupGet")
+    RETURN
+999 NULLIFY(workGroup)
+998 ERRORSEXITS("Decomposition_WorkGroupGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_WorkGroupGet
 
   !
   !================================================================================================================================

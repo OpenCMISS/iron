@@ -47,7 +47,7 @@
 !<
 
 !> Main program
-PROGRAM SIMPLESHEAREXAMPLE
+PROGRAM SimpleShearExample
 
   USE OpenCMISS
   USE OpenCMISS_Iron
@@ -116,7 +116,8 @@ PROGRAM SIMPLESHEAREXAMPLE
   TYPE(cmfe_BasisType) :: Basis, PressureBasis
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
   TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
-  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem, WorldCoordinateSystem
+  TYPE(cmfe_ContextType) :: context
+  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
   TYPE(cmfe_MeshType) :: Mesh
   TYPE(cmfe_DecompositionType) :: Decomposition
   TYPE(cmfe_EquationsType) :: Equations
@@ -150,7 +151,10 @@ PROGRAM SIMPLESHEAREXAMPLE
 #endif
 
   !Intialise cmiss
-  CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
@@ -161,6 +165,7 @@ PROGRAM SIMPLESHEAREXAMPLE
   
   !Get the number of computation nodes and this computation node number
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+  CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
   CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
   CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
@@ -171,7 +176,7 @@ PROGRAM SIMPLESHEAREXAMPLE
 
   !Create a 3D rectangular cartesian coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
   CALL cmfe_CoordinateSystem_CreateFinish(CoordinateSystem,Err)
 
   !Create a region and assign the coordinate system to the region
@@ -183,7 +188,7 @@ PROGRAM SIMPLESHEAREXAMPLE
 
   !Define geometric basis
   CALL cmfe_Basis_Initialise(Basis,Err)
-  CALL cmfe_Basis_CreateStart(BasisUserNumber,Basis,Err)
+  CALL cmfe_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
   SELECT CASE(InterpolationType)
   CASE(1,2,3,4)
     CALL cmfe_Basis_TypeSet(Basis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
@@ -208,7 +213,7 @@ PROGRAM SIMPLESHEAREXAMPLE
   !Define pressure basis
   IF(UsePressureBasis) THEN
     CALL cmfe_Basis_Initialise(PressureBasis,Err)
-    CALL cmfe_Basis_CreateStart(PressureBasisUserNumber,PressureBasis,Err)
+    CALL cmfe_Basis_CreateStart(PressureBasisUserNumber,context,PressureBasis,Err)
     SELECT CASE(PressureInterpolationType)
     CASE(1,2,3,4)
       CALL cmfe_Basis_TypeSet(PressureBasis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
@@ -354,7 +359,7 @@ PROGRAM SIMPLESHEAREXAMPLE
 
   !Define the problem
   CALL cmfe_Problem_Initialise(Problem,Err)
-  CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_ELASTICITY_CLASS,CMFE_PROBLEM_FINITE_ELASTICITY_TYPE, &
+  CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_ELASTICITY_CLASS,CMFE_PROBLEM_FINITE_ELASTICITY_TYPE, &
     & CMFE_PROBLEM_NO_SUBTYPE],Problem,Err)
   CALL cmfe_Problem_CreateFinish(Problem,Err)
 
@@ -452,11 +457,11 @@ PROGRAM SIMPLESHEAREXAMPLE
   CALL cmfe_Fields_ElementsExport(Fields,"SimpleShear","FORTRAN",Err)
   CALL cmfe_Fields_Finalise(Fields,Err)
 
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
 
   STOP
 
-END PROGRAM SIMPLESHEAREXAMPLE
+END PROGRAM SimpleShearExample
 

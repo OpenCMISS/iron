@@ -47,7 +47,7 @@
 !<
 
 !> Main program
-PROGRAM CANTILEVEREXAMPLE
+PROGRAM CantileverExample
 
   USE OpenCMISS
   USE OpenCMISS_Iron
@@ -109,7 +109,8 @@ PROGRAM CANTILEVEREXAMPLE
   TYPE(cmfe_BasisType) :: DisplacementBasis,PressureBasis
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
   TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
-  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem, WorldCoordinateSystem
+  TYPE(cmfe_ContextType) :: context
+  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
   TYPE(cmfe_MeshType) :: Mesh
   TYPE(cmfe_DecompositionType) :: Decomposition
   TYPE(cmfe_EquationsType) :: Equations
@@ -141,7 +142,10 @@ PROGRAM CANTILEVEREXAMPLE
 #endif
 
   !Intialise cmiss
-  CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
   CALL cmfe_OutputSetOn("Cantilever",Err)
 
@@ -157,33 +161,33 @@ PROGRAM CANTILEVEREXAMPLE
   NumberOfArguments = COMMAND_ARGUMENT_COUNT()
   IF(NumberOfArguments >= 1) THEN
     CALL GET_COMMAND_ARGUMENT(1,CommandArgument,ArgumentLength,ArgStatus)
-    IF(ArgStatus>0) CALL HANDLE_ERROR("Error for command argument 1.")
+    IF(ArgStatus>0) CALL HandleError("Error for command argument 1.")
     READ(CommandArgument(1:ArgumentLength),*) DisplacementInterpolationType
   ENDIF
   IF(NumberOfArguments >= 2) THEN
     CALL GET_COMMAND_ARGUMENT(2,CommandArgument,ArgumentLength,ArgStatus)
-    IF(ArgStatus>0) CALL HANDLE_ERROR("Error for command argument 2.")
+    IF(ArgStatus>0) CALL HandleError("Error for command argument 2.")
     READ(CommandArgument(1:ArgumentLength),*) NumberGlobalXElements
-    IF(NumberGlobalXElements<1) CALL HANDLE_ERROR("Invalid number of X elements.")
+    IF(NumberGlobalXElements<1) CALL HandleError("Invalid number of X elements.")
   ENDIF
   IF(NumberOfArguments >= 3) THEN
     CALL GET_COMMAND_ARGUMENT(3,CommandArgument,ArgumentLength,ArgStatus)
-    IF(ArgStatus>0) CALL HANDLE_ERROR("Error for command argument 3.")
+    IF(ArgStatus>0) CALL HandleError("Error for command argument 3.")
     READ(CommandArgument(1:ArgumentLength),*) NumberGlobalYElements
-    IF(NumberGlobalYElements<1) CALL HANDLE_ERROR("Invalid number of Y elements.")
+    IF(NumberGlobalYElements<1) CALL HandleError("Invalid number of Y elements.")
   ENDIF
   IF(NumberOfArguments >= 4) THEN
     CALL GET_COMMAND_ARGUMENT(4,CommandArgument,ArgumentLength,ArgStatus)
-    IF(ArgStatus>0) CALL HANDLE_ERROR("Error for command argument 4.")
+    IF(ArgStatus>0) CALL HandleError("Error for command argument 4.")
     READ(CommandArgument(1:ArgumentLength),*) NumberGlobalZElements
-    IF(NumberGlobalZElements<1) CALL HANDLE_ERROR("Invalid number of Z elements.")
+    IF(NumberGlobalZElements<1) CALL HandleError("Invalid number of Z elements.")
   ENDIF
   IF(DisplacementInterpolationType==CMFE_BASIS_CUBIC_HERMITE_INTERPOLATION) THEN
     IF(NumberOfArguments >= 5) THEN
       CALL GET_COMMAND_ARGUMENT(5,CommandArgument,ArgumentLength,ArgStatus)
-      IF(ArgStatus>0) CALL HANDLE_ERROR("Error for command argument 5.")
+      IF(ArgStatus>0) CALL HandleError("Error for command argument 5.")
       READ(CommandArgument(1:ArgumentLength),*) ScalingType
-      IF(ScalingType<0.OR.ScalingType>5) CALL HANDLE_ERROR("Invalid scaling type.")
+      IF(ScalingType<0.OR.ScalingType>5) CALL HandleError("Invalid scaling type.")
     ENDIF
   ELSE
     ScalingType=CMFE_FIELD_NO_SCALING
@@ -211,6 +215,7 @@ PROGRAM CANTILEVEREXAMPLE
 
   !Get the number of computation nodes and this computation node number
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+  CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
   CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
   CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
@@ -218,7 +223,7 @@ PROGRAM CANTILEVEREXAMPLE
 
   !Create a 3D rectangular cartesian coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
   CALL cmfe_CoordinateSystem_CreateFinish(CoordinateSystem,Err)
 
   !Create a region and assign the coordinate system to the region
@@ -230,7 +235,7 @@ PROGRAM CANTILEVEREXAMPLE
 
   !Define basis function for displacement
   CALL cmfe_Basis_Initialise(DisplacementBasis,Err)
-  CALL cmfe_Basis_CreateStart(DisplacementBasisUserNumber,DisplacementBasis,Err)
+  CALL cmfe_Basis_CreateStart(DisplacementBasisUserNumber,context,DisplacementBasis,Err)
   SELECT CASE(DisplacementInterpolationType)
   CASE(1,2,3,4)
     CALL cmfe_Basis_TypeSet(DisplacementBasis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
@@ -248,7 +253,7 @@ PROGRAM CANTILEVEREXAMPLE
   IF(PressureMeshComponent/=1) THEN
     !Basis for pressure
     CALL cmfe_Basis_Initialise(PressureBasis,Err)
-    CALL cmfe_Basis_CreateStart(PressureBasisUserNumber,PressureBasis,Err)
+    CALL cmfe_Basis_CreateStart(PressureBasisUserNumber,context,PressureBasis,Err)
     SELECT CASE(PressureInterpolationType)
     CASE(1,2,3,4)
       CALL cmfe_Basis_TypeSet(PressureBasis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
@@ -390,7 +395,7 @@ PROGRAM CANTILEVEREXAMPLE
 
   !Define the problem
   CALL cmfe_Problem_Initialise(Problem,Err)
-  CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_ELASTICITY_CLASS,CMFE_PROBLEM_FINITE_ELASTICITY_TYPE, &
+  CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_ELASTICITY_CLASS,CMFE_PROBLEM_FINITE_ELASTICITY_TYPE, &
     & CMFE_PROBLEM_NO_SUBTYPE],Problem,Err)
   CALL cmfe_Problem_CreateFinish(Problem,Err)
 
@@ -459,7 +464,7 @@ PROGRAM CANTILEVEREXAMPLE
   CALL cmfe_Fields_ElementsExport(Fields,"Cantilever","FORTRAN",Err)
   CALL cmfe_Fields_Finalise(Fields,Err)
 
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
 
@@ -467,12 +472,13 @@ PROGRAM CANTILEVEREXAMPLE
 
 CONTAINS
 
-  SUBROUTINE HANDLE_ERROR(ERROR_STRING)
+  SUBROUTINE HandleError(ERROR_STRING)
     CHARACTER(LEN=*), INTENT(IN) :: ERROR_STRING
 
     WRITE(*,'(">>ERROR: ",A)') ERROR_STRING(1:LEN_TRIM(ERROR_STRING))
     STOP
-  END SUBROUTINE HANDLE_ERROR
+  END SUBROUTINE HandleError
 
-END PROGRAM CANTILEVEREXAMPLE
+END PROGRAM CantileverExample
+
 

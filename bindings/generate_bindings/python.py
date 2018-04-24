@@ -27,10 +27,9 @@ http://www.opencmiss.org
 #ErrorHandlingModeSet(ErrorHandlingModes.RETURN_ERROR_CODE)
 #"""
 
-INITIALISE = """WorldCoordinateSystem = CoordinateSystem()
-WorldRegion = Region()
-Initialise(WorldCoordinateSystem, WorldRegion)
-# Don't output errors, we'll include trace in exception
+INITIALISE = """Context = Context()
+Initialise(Context)
+# Output errors
 ErrorHandlingModeSet(ErrorHandlingModes.OUTPUT_ERROR)
 """
 

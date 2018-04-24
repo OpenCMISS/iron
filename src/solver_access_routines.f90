@@ -94,6 +94,8 @@ MODULE SolverAccessRoutines
 
   PUBLIC Solver_SolversGet
 
+  PUBLIC Solver_WorkGroupGet
+
   PUBLIC Solvers_ControlLoopGet
 
   PUBLIC Solvers_SolverGet
@@ -267,6 +269,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Solver_SolversGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the work group for a solver. FOR NOW JUST RETURN THE PROBLEM WORK GROUP.
+  SUBROUTINE Solver_WorkGroupGet(solver,workGroup,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to get the work group for.
+    TYPE(WorkGroupType), POINTER :: workGroup !<On exit, A pointer to the work group for the solver. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_WorkGroupGet",err,error,*998)
+
+    IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+      
+    IF(.NOT.ASSOCIATED(solver%solvers)) CALL FlagError("Solver solvers is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solver%solvers%CONTROL_LOOP)) &
+      & CALL FlagError("Solver solvers control loop is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solver%solvers%CONTROL_LOOP%problem)) &
+      & CALL FlagError("Solver solvers control loop problem is not associated.",err,error,*999)
+
+    workGroup=>solver%solvers%CONTROL_LOOP%problem%workGroup
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("The solver work group is not associated.",err,error,*999)
+       
+    EXITS("Solver_WorkGroupGet")
+    RETURN
+999 NULLIFY(workGroup)
+998 ERRORSEXITS("Solver_WorkGroupGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_WorkGroupGet
 
   !
   !================================================================================================================================

@@ -47,6 +47,8 @@ MODULE PROBLEM_ROUTINES
   USE BaseRoutines
   USE BIOELECTRIC_ROUTINES
   USE CLASSICAL_FIELD_ROUTINES
+  USE ComputationAccessRoutines
+  USE ContextAccessRoutines
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
   USE DistributedMatrixVector
@@ -717,11 +719,11 @@ CONTAINS
   !
 
   !>Starts the process of creating a problem defined by USER_NUMBER. \see OpenCMISS::cmfe_Problem_CreateStart
-  SUBROUTINE PROBLEM_CREATE_START(problems,USER_NUMBER,PROBLEM_SPECIFICATION,PROBLEM,err,error,*)
+  SUBROUTINE PROBLEM_CREATE_START(USER_NUMBER,problems,PROBLEM_SPECIFICATION,PROBLEM,err,error,*)
 
     !Argument variables
-    TYPE(ProblemsType), POINTER :: problems !<The problems to create the problem for. 
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the problem to create
+    TYPE(ProblemsType), POINTER :: problems !<The problems to create the problem for. 
     INTEGER(INTG), INTENT(IN) :: PROBLEM_SPECIFICATION(:) !<The problem specification array, eg. [problem_class, problem_type, problem_subtype]
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<On return, a pointer to the created problem. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -762,7 +764,7 @@ CONTAINS
         NULLIFY(context)
         CALL Problems_ContextGet(problems,context,err,error,*999)
         NULLIFY(computationEnvironment)
-        CALL Context_ComputationEnvironment(context,computationEnvironment,err,error,*999)
+        CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
         NULLIFY(worldWorkGroup)
         CALL ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err,error,*999)
         NEW_PROBLEM%workGroup=>worldWorkGroup

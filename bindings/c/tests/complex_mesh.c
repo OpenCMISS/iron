@@ -68,20 +68,22 @@
 
 int main() 
 {
-  /* int WorldCoordinateSystemUserNumber;
+  /* int ContextUserNumber;
      int WorldRegionUserNumber; */
-  cmfe_CoordinateSystemType WorldCoordinateSystem=(cmfe_CoordinateSystemType)NULL;
+  cmfe_ContextType Context=(cmfe_ContextType)NULL;
   cmfe_RegionType WorldRegion=(cmfe_RegionType)NULL,Region=(cmfe_RegionType)NULL;
   char Label[STRING_SIZE];
   int Err;
 
-  Err = cmfe_CoordinateSystem_Initialise(&WorldCoordinateSystem);
-  CHECK_ERROR("Initialising world coordinate system");
-  Err = cmfe_Region_Initialise(&WorldRegion);
-  CHECK_ERROR("Initialising world region");
-  if(cmfe_Initialise(WorldCoordinateSystem,WorldRegion) == CMFE_NO_ERROR)
+  Err = cmfe_Context_Initialise(&Context);
+  CHECK_ERROR("Initialising context");
+  if(cmfe_Initialise(Context) == CMFE_NO_ERROR)
     {
 
+      Err = cmfe_Region_Initialise(&WorldRegion);
+      CHECK_ERROR("Initialising world region");
+      Err = cmfe_Context_WorldRegionGet(Context,WorldRegion);
+      CHECK_ERROR("Get world region");
       Err = cmfe_Region_LabelGet(WorldRegion,STRING_SIZE,Label);
       printf("The world region label is '%s'.\n",Label);
 
@@ -95,7 +97,7 @@ int main()
 
       Err = cmfe_Region_Finalise(&Region);
 
-      Err = cmfe_Finalise();
+      Err = cmfe_Finalise(Context);
     }
 
   return Err;

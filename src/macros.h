@@ -58,3 +58,18 @@
 #  define ERRORSEXITS(routinename,err,error) \
 	  CALL Errors(routinename,err,error)
 #endif
+
+#ifdef WITH_CELLML
+#  define ASSERT_WITH_CELLML() !Do nothing
+#else
+#  define ASSERT_WITH_CELLML() \
+   CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",err,error,*999)
+#endif
+
+#ifdef WITH_FIELDML
+#  define ASSERT_WITH_FIELDML() !Do nothing
+#else
+#  define ASSERT_WITH_FIELDML() \
+   CALL FlagError("Must compile with WITH_FIELDML ON to use FieldML functionality.",err,error,*999)
+#endif
+

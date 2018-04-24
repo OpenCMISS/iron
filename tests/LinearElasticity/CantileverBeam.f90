@@ -46,7 +46,7 @@
 !< 
 
 !> Main program
-PROGRAM ANALYTIC_LINEAR_ELASTICITYEXAMPLE
+PROGRAM CantileverBeamExample
 #ifndef NOMPIMOD
   USE MPI
 #endif
@@ -97,8 +97,8 @@ PROGRAM ANALYTIC_LINEAR_ELASTICITYEXAMPLE
 
   !Program types
 
+  TYPE(cmfe_ContextType) :: context
   TYPE(cmfe_RegionType) :: WorldRegion
-  TYPE(cmfe_CoordinateSystemType) :: WorldCoordinateSystem
 
 #ifdef WIN32
   !Quickwin type
@@ -121,7 +121,10 @@ PROGRAM ANALYTIC_LINEAR_ELASTICITYEXAMPLE
 #endif
 
   !Intialise cmiss
-  CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
@@ -132,7 +135,7 @@ PROGRAM ANALYTIC_LINEAR_ELASTICITYEXAMPLE
 
   CALL ANALYTIC_LINEAR_ELASTICITY_TESTCASE_LINEAR_LAGRANGE_EXPORT(2,2,2,"TriLinearLagrange")
 
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   
@@ -235,6 +238,7 @@ CONTAINS
 
     !Get the number of computation nodes and this computation node number
     CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+    CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
     CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
     CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
 
@@ -246,7 +250,7 @@ CONTAINS
 
     !Create a CS - default is 3D rectangular cartesian CS with 0,0,0 as origin
     CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-    CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+    CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
     CALL cmfe_CoordinateSystem_TypeSet(CoordinateSystem,CMFE_COORDINATE_RECTANGULAR_CARTESIAN_TYPE,Err)
     CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,NumberOfXi,Err)
     CALL cmfe_CoordinateSystem_OriginSet(CoordinateSystem,ORIGIN,Err)
@@ -259,7 +263,7 @@ CONTAINS
     CALL cmfe_Region_CreateFinish(Region,Err)
 
     CALL cmfe_Basis_Initialise(Basis,Err)
-    CALL cmfe_Basis_CreateStart(BasisUserNumber,Basis,Err)
+    CALL cmfe_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
     CALL cmfe_Basis_TypeSet(Basis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
     CALL cmfe_Basis_NumberOfXiSet(Basis,NumberOfXi,Err)
     CALL cmfe_Basis_InterpolationXiSet(Basis,Interpolation(1:NumberOfXi),Err)
@@ -371,7 +375,7 @@ CALL cmfe_EquationsSet_CreateStart(EquationSetUserNumber,Region,GeometricField,[
     
     !Define the problem
     CALL cmfe_Problem_Initialise(Problem,Err)
-    CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_ELASTICITY_CLASS,CMFE_PROBLEM_LINEAR_ELASTICITY_TYPE, &
+    CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_ELASTICITY_CLASS,CMFE_PROBLEM_LINEAR_ELASTICITY_TYPE, &
       & CMFE_PROBLEM_NO_SUBTYPE],Problem,Err)
     CALL cmfe_Problem_CreateFinish(Problem,Err)
 
@@ -441,13 +445,17 @@ CALL cmfe_EquationsSet_CreateStart(EquationSetUserNumber,Region,GeometricField,[
     INTEGER(CMISSIntg), INTENT(IN) :: GeneratedMeshUserNumber
     INTEGER(CMISSIntg), INTENT(IN) :: ProblemUserNumber
 
-    CALL cmfe_Problem_Destroy(ProblemUserNumber,Err)
-    CALL cmfe_GeneratedMesh_Destroy(RegionUserNumber,GeneratedMeshUserNumber,Err)
-    CALL cmfe_Basis_Destroy(BasisUserNumber,Err)
-    CALL cmfe_Region_Destroy(RegionUserNumber,Err)
-    CALL cmfe_CoordinateSystem_Destroy(CoordinateSystemUserNumber,Err)
+    INTEGER(CMISSIntg) :: contextUserNumber
+
+    CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
+
+    CALL cmfe_Problem_Destroy(contextUserNumber,ProblemUserNumber,Err)
+    CALL cmfe_GeneratedMesh_Destroy(contextUserNumber,RegionUserNumber,GeneratedMeshUserNumber,Err)
+    CALL cmfe_Basis_Destroy(contextUserNumber,BasisUserNumber,Err)
+    CALL cmfe_Region_Destroy(contextUserNumber,RegionUserNumber,Err)
+    CALL cmfe_CoordinateSystem_Destroy(contextUserNumber,CoordinateSystemUserNumber,Err)
 
   END SUBROUTINE ANALYTIC_LINEAR_ELASTICITY_GENERIC_CLEAN
 
-END PROGRAM ANALYTIC_LINEAR_ELASTICITYEXAMPLE 
+END PROGRAM CantileverBeamExample 
 

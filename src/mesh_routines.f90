@@ -52,6 +52,7 @@ MODULE MESH_ROUTINES
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
+  USE ContextAccessRoutines
   USE COORDINATE_ROUTINES
   USE DataProjectionAccessRoutines
   USE DOMAIN_MAPPINGS

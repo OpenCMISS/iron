@@ -51,7 +51,7 @@
 
 !> Main program
 
-PROGRAM DARCYANALYTICEXAMPLE
+PROGRAM DarcyAnalyticExample
 
   !
   !================================================================================================================================
@@ -165,12 +165,13 @@ PROGRAM DARCYANALYTICEXAMPLE
 
   !CMISS variables
 
-  !Regions
+  !Context
+  TYPE(cmfe_ContextType) :: context
+  !Regions  
   TYPE(cmfe_RegionType) :: Region
   TYPE(cmfe_RegionType) :: WorldRegion
   !Coordinate systems
   TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
-  TYPE(cmfe_CoordinateSystemType) :: WorldCoordinateSystem
   !Basis
   TYPE(cmfe_BasisType) :: BasisGeometry
   TYPE(cmfe_BasisType) :: BasisVelocity
@@ -242,7 +243,10 @@ PROGRAM DARCYANALYTICEXAMPLE
 
   !INITIALISE OPENCMISS
 
-  CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
@@ -368,7 +372,7 @@ PROGRAM DARCYANALYTICEXAMPLE
 
   !Start the creation of a new RC coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
   !Set the coordinate system dimension
   CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,NUMBER_OF_DIMENSIONS,Err)
   !Finish the creation of the coordinate system
@@ -397,7 +401,7 @@ PROGRAM DARCYANALYTICEXAMPLE
   !Start the creation of new bases
   MESH_NUMBER_OF_COMPONENTS=1
   CALL cmfe_Basis_Initialise(BasisGeometry,Err)
-  CALL cmfe_Basis_CreateStart(BASIS_NUMBER_GEOMETRY,BasisGeometry,Err)
+  CALL cmfe_Basis_CreateStart(BASIS_NUMBER_GEOMETRY,context,BasisGeometry,Err)
   !Set the basis type (Lagrange/Simplex)
   CALL cmfe_Basis_TypeSet(BasisGeometry,BASIS_TYPE,Err)
   !Set the basis xi number
@@ -423,7 +427,7 @@ PROGRAM DARCYANALYTICEXAMPLE
     !Initialise a new velocity basis
     CALL cmfe_Basis_Initialise(BasisVelocity,Err)
     !Start the creation of a basis
-    CALL cmfe_Basis_CreateStart(BASIS_NUMBER_VELOCITY,BasisVelocity,Err)
+    CALL cmfe_Basis_CreateStart(BASIS_NUMBER_VELOCITY,context,BasisVelocity,Err)
     !Set the basis type (Lagrange/Simplex)
     CALL cmfe_Basis_TypeSet(BasisVelocity,BASIS_TYPE,Err)
     !Set the basis xi number
@@ -452,7 +456,7 @@ PROGRAM DARCYANALYTICEXAMPLE
     !Initialise a new pressure basis
     CALL cmfe_Basis_Initialise(BasisPressure,Err)
     !Start the creation of a basis
-    CALL cmfe_Basis_CreateStart(BASIS_NUMBER_PRESSURE,BasisPressure,Err)
+    CALL cmfe_Basis_CreateStart(BASIS_NUMBER_PRESSURE,context,BasisPressure,Err)
     !Set the basis type (Lagrange/Simplex)
     CALL cmfe_Basis_TypeSet(BasisPressure,BASIS_TYPE,Err)
     !Set the basis xi number
@@ -682,7 +686,7 @@ PROGRAM DARCYANALYTICEXAMPLE
   !Start the creation of a problem.
   CALL cmfe_Problem_Initialise(Problem,Err)
   CALL cmfe_ControlLoop_Initialise(ControlLoop,Err)
-  CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_FLUID_MECHANICS_CLASS,CMFE_PROBLEM_DARCY_EQUATION_TYPE, &
+  CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_FLUID_MECHANICS_CLASS,CMFE_PROBLEM_DARCY_EQUATION_TYPE, &
     & CMFE_PROBLEM_STANDARD_DARCY_SUBTYPE],Problem,Err)
   !Finish the creation of a problem.
   CALL cmfe_Problem_CreateFinish(Problem,Err)
@@ -788,10 +792,10 @@ PROGRAM DARCYANALYTICEXAMPLE
   ENDIF
 
   !Finialise CMISS
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   WRITE(*,'(A)') "Program successfully completed."
 
   STOP
 
-END PROGRAM DARCYANALYTICEXAMPLE
+END PROGRAM DarcyAnalyticExample

@@ -46,7 +46,7 @@
 !<
 
 !> Main program
-PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
+PROGRAM StaticAdvectionDiffusionExample
 
   USE OpenCMISS
   USE OpenCMISS_Iron
@@ -105,7 +105,8 @@ PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
 
   TYPE(cmfe_BasisType) :: Basis
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
-  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem,WorldCoordinateSystem
+  TYPE(cmfe_ContextType) :: context
+  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
   TYPE(cmfe_DecompositionType) :: Decomposition
   TYPE(cmfe_EquationsType) :: Equations
   TYPE(cmfe_EquationsSetType) :: EquationsSet
@@ -156,7 +157,10 @@ PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
 #endif
 
   !Intialise OpenCMISS
-  CALL cmfe_Initialise(WorldCoordinateSystem,WorldRegion,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,Err)  
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
@@ -179,7 +183,7 @@ PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
 
   !Start the creation of a new RC coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,CoordinateSystem,Err)
+  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
   CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,dimensions,Err)
   !Finish the creation of the coordinate system
   CALL cmfe_CoordinateSystem_CreateFinish(CoordinateSystem,Err)
@@ -194,7 +198,7 @@ PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
   
   !Start the creation of a basis (default is trilinear lagrange)
   CALL cmfe_Basis_Initialise(Basis,Err)
-  CALL cmfe_Basis_CreateStart(BasisUserNumber,Basis,Err)
+  CALL cmfe_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
   CALL cmfe_Basis_NumberOfXiSet(Basis,dimensions,Err)
   !Finish the creation of the basis
   CALL cmfe_Basis_CreateFinish(BASIS,Err)
@@ -350,7 +354,7 @@ PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
 
   !Create the problem
   CALL cmfe_Problem_Initialise(Problem,Err)
-  CALL cmfe_Problem_CreateStart(ProblemUserNumber,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS, &
+  CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS, &
     & CMFE_PROBLEM_ADVECTION_DIFFUSION_EQUATION_TYPE,CMFE_PROBLEM_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE],Problem,Err)
   !Finish the creation of a problem.
   CALL cmfe_Problem_CreateFinish(Problem,Err)
@@ -447,9 +451,9 @@ PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
 
   ENDIF
 
-  !CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
   WRITE(*,'(A)') "Program successfully completed."
   
   STOP
 
-END PROGRAM STATICADVECTIONDIFFUSIONEXAMPLE
+END PROGRAM StaticAdvectionDiffusionExample

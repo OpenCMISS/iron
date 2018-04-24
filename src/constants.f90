@@ -195,12 +195,9 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S2_S4=17 !<Cross derivative in the s1, s2 and s4 direction i.e., d^3u/ds1ds2ds4 \see Constants_PartialDerivativeConstants,Constants
   INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S3_S4=18 !<Cross derivative in the s1, s3 and s4 direction i.e., d^3u/ds1ds3ds4 \see Constants_PartialDerivativeConstants,Constants
   INTEGER(INTG), PARAMETER :: PART_DERIV_S2_S3_S4=19 !<Cross derivative in the s2, s3 and s4 direction i.e., d^3u/ds2ds3ds4 \see Constants_PartialDerivativeConstants,Constants
-  INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S4_S4=20 !<Cross derivative in the s2, s4 and s4 direction i.e., d^3u/ds1ds4^2 \see Constants_PartialDerivativeConstants,Constants
-  
-  INTEGER(INTG), PARAMETER :: PART_DERIV_S2_S4_S4=21 !<Cross derivative in the s2, s4 and s4 direction i.e., d^3u/ds2ds4^2 \see Constants_PartialDerivativeConstants,Constants
-  
-  INTEGER(INTG), PARAMETER :: PART_DERIV_S3_S4_S4=22 !<Cross derivative in the s3, s4 and s4 direction i.e., d^3u/ds3ds4^2 \see Constants_PartialDerivativeConstants,Constants
-  
+  INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S4_S4=20 !<Cross derivative in the s2, s4 and s4 direction i.e., d^3u/ds1ds4^2 \see Constants_PartialDerivativeConstants,Constants  
+  INTEGER(INTG), PARAMETER :: PART_DERIV_S2_S4_S4=21 !<Cross derivative in the s2, s4 and s4 direction i.e., d^3u/ds2ds4^2 \see Constants_PartialDerivativeConstants,Constants  
+  INTEGER(INTG), PARAMETER :: PART_DERIV_S3_S4_S4=22 !<Cross derivative in the s3, s4 and s4 direction i.e., d^3u/ds3ds4^2 \see Constants_PartialDerivativeConstants,Constants  
   INTEGER(INTG), PARAMETER :: PART_DERIV_S4_S4_S4=23 !<Third partial derivative in the s4 direction i.e., d^3u/ds4^3 \see Constants_PartialDerivativeConstants,Constants
   !>@}
   

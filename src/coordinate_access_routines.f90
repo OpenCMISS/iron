@@ -84,7 +84,8 @@ MODULE CoordinateSystemAccessRoutines
 
   PUBLIC COORDINATE_SYSTEM_USER_NUMBER_FIND
 
-
+  PUBLIC CoordinateSystems_WorldCoordinateSystemGet
+  
 CONTAINS
 
   !
@@ -229,6 +230,37 @@ CONTAINS
     
   END SUBROUTINE CoordinateSystem_UserNumberFind
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the world coordinate system for a coordinate systems.
+  SUBROUTINE CoordinateSystems_WorldCoordinateSystemGet(coordinateSystems,worldCoordinateSystem,err,error,*)
+
+    !Argument variables
+    TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the coordinate systems to get the world coordinate system for
+    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: worldCoordinateSystem !<On exit, a pointer to the world coordinate system for the coordinate systems. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("CoordinateSystems_WorldCoordinateSystemGet",err,error,*998)
+
+    IF(ASSOCIATED(worldCoordinateSystem)) CALL FlagError("World coordinate system is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(coordinateSystems)) CALL FlagError("Coordinate systems is not associated.",err,error,*998)
+
+    CALL CoordinateSystem_UserNumberFind(coordinateSystems,0,worldCoordinateSystem,err,error,*999)
+    IF(.NOT.ASSOCIATED(worldCoordinateSystem)) &
+      & CALL FlagError("Coordinate systems world coordinate system is not associated.",err,error,*999)
+       
+    EXITS("CoordinateSystems_WorldCoordinateSystemGet")
+    RETURN
+999 NULLIFY(worldCoordinateSystem)
+998 ERRORSEXITS("CoordinateSystems_WorldCoordinateSystemGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystems_WorldCoordinateSystemGet
+  
   !
   !================================================================================================================================
   !
