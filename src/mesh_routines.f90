@@ -397,8 +397,11 @@ CONTAINS
                 newDecomposition%MESH_COMPONENT_NUMBER=1
                 !Default decomposition is all the mesh with one domain.
                 newDecomposition%DECOMPOSITION_TYPE=DECOMPOSITION_ALL_TYPE
+                NULLIFY(region)
                 CALL Mesh_RegionGet(mesh,region,err,error,*999)
+                NULLIFY(context)
                 CALL Region_ContextGet(region,context,err,error,*999)
+                NULLIFY(computationEnvironment)
                 CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
                 NULLIFY(worldWorkGroup)
                 CALL ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err,error,*999)
@@ -4748,7 +4751,7 @@ CONTAINS
                   DO node_idx=1,MESH_TOPOLOGY%NODES%numberOfNodes
                     no_computation_node=DOMAIN%NODE_DOMAIN(node_idx)
                     IF(no_computation_node>=0.AND.no_computation_node<numberOfGroupComputationNodes) THEN
-                      NODE_COUNT(no_computation_node)=NODE_COUNT(no_computation_node)
+                      NODE_COUNT(no_computation_node)=NODE_COUNT(no_computation_node)+1
                     ELSE
                       LOCAL_ERROR="The computation node number of "// &
                         & TRIM(NUMBER_TO_VSTRING(no_computation_node,"*",ERR,ERROR))// &

@@ -4626,6 +4626,10 @@ MODULE OpenCMISS_Iron
  !Interfaces
 
  INTERFACE cmfe_Fields_ElementsExport
+   MODULE PROCEDURE cmfe_Fields_ElementsExportCCNumber
+   MODULE PROCEDURE cmfe_Fields_ElementsExportVSCNumber
+   MODULE PROCEDURE cmfe_Fields_ElementsExportCVSNumber
+   MODULE PROCEDURE cmfe_Fields_ElementsExportVSVSNumber
    MODULE PROCEDURE cmfe_Fields_ElementsExportCCObj
    MODULE PROCEDURE cmfe_Fields_ElementsExportVSCObj
    MODULE PROCEDURE cmfe_Fields_ElementsExportCVSObj
@@ -4633,6 +4637,10 @@ MODULE OpenCMISS_Iron
  END INTERFACE cmfe_Fields_ElementsExport
 
  INTERFACE cmfe_Fields_NodesExport
+   MODULE PROCEDURE cmfe_Fields_NodesExportCCNumber
+   MODULE PROCEDURE cmfe_Fields_NodesExportVSCNumber
+   MODULE PROCEDURE cmfe_Fields_NodesExportCVSNumber
+   MODULE PROCEDURE cmfe_Fields_NodesExportVSVSNumber
    MODULE PROCEDURE cmfe_Fields_NodesExportCCObj
    MODULE PROCEDURE cmfe_Fields_NodesExportVSCObj
    MODULE PROCEDURE cmfe_Fields_NodesExportCVSObj
@@ -12972,16 +12980,16 @@ CONTAINS
   !
 
   !>Adds to the value of the specified constant and sets this as a boundary condition on the specified constant for boundary conditions identified by a user number.
-  SUBROUTINE cmfe_BoundaryConditions_AddConstantNumber(contextUserNumber,regionUserNumber,problemUserNumber, &
-    & controlLoopIdentifiers,solverIndex,fieldUserNumber,variableType,componentNumber,condition,value,err)
+  SUBROUTINE cmfe_BoundaryConditions_AddConstantNumber(contextUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
+    & regionUserNumber,fieldUserNumber,variableType,componentNumber,condition,value,err)
     !DLLEXPORT(cmfe_BoundaryConditions_AddConstantNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem/region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the dependent field to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the dependent field to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to add the boundary condition at.
@@ -13064,16 +13072,16 @@ CONTAINS
 
 
   !>Sets the value of the specified constant as a boundary condition on the specified constant for boundary conditions identified by a user number.
-  SUBROUTINE cmfe_BoundaryConditions_SetConstantNumber(contextUserNumber,regionUserNumber,problemUserNumber, &
-    & controlLoopIdentifiers,solverIndex,variableType,fieldUserNumber,componentNumber,condition,value,err)
+  SUBROUTINE cmfe_BoundaryConditions_SetConstantNumber(contextUserNumber,problemUserNumber, &
+    & controlLoopIdentifiers,solverIndex,regionUserNumber,fieldUserNumber,variableType,componentNumber,condition,value,err)
     !DLLEXPORT(cmfe_BoundaryConditions_SetConstantNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem/region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to set the boundary condition at.
@@ -13155,16 +13163,16 @@ CONTAINS
   !
 
   !>Adds the value to the specified element and sets this as a boundary condition on the specified element for boundary conditions identified by a user number.
-  SUBROUTINE cmfe_BoundaryConditions_AddElementNumber(contextUserNumber,regionUserNumber,problemUserNumber, &
-    & controlLoopIdentifiers,solverIndex,fieldUserNumber,variableType,elementUserNumber,componentNumber,condition,value,err)
+  SUBROUTINE cmfe_BoundaryConditions_AddElementNumber(contextUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
+    & regionUserNumber,fieldUserNumber,variableType,elementUserNumber,componentNumber,condition,value,err)
     !DLLEXPORT(cmfe_BoundaryConditions_AddElementNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem/region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to add the boundary conditions for.
@@ -13249,16 +13257,16 @@ CONTAINS
   !
 
   !>Sets the value of the specified element as a boundary condition on the specified element for boundary conditions identified by a user number.
-  SUBROUTINE cmfe_BoundaryConditions_SetElementNumber(contextUserNumber,regionUserNumber,problemUserNumber, &
-    & controlLoopIdentifiers,solverIndex,fieldUserNumber,variableType,elementUserNumber,componentNumber,condition,value,err)
+  SUBROUTINE cmfe_BoundaryConditions_SetElementNumber(contextUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
+    & regionUserNumber,fieldUserNumber,variableType,elementUserNumber,componentNumber,condition,value,err)
     !DLLEXPORT(cmfe_BoundaryConditions_SetElementNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem/region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to set the boundary conditions for.
@@ -13343,17 +13351,17 @@ CONTAINS
   !
 
   !>Adds the value to the specified node and sets this as a boundary condition on the specified node for boundary conditions identified by a user number.
-  SUBROUTINE cmfe_BoundaryConditions_AddNodeNumber(contextUserNumber,regionUserNumber,problemUserNumber, &
-    & controlLoopIdentifiers,solverIndex,fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber, &
-    & componentNumber,condition,value,err)
+  SUBROUTINE cmfe_BoundaryConditions_AddNodeNumber(contextUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
+    & regionUserNumber,fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber,componentNumber,condition, &
+    & value,err)
     !DLLEXPORT(cmfe_BoundaryConditions_AddNodeNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem/region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to add the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to add the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to add the boundary conditions for.
@@ -13442,16 +13450,17 @@ CONTAINS
   !
 
   !>Sets the value of the specified node as a boundary condition on the specified node for boundary conditions identified by a user number.
-  SUBROUTINE cmfe_BoundaryConditions_SetNodeNumber0(contextUserNumber,regionUserNumber,problemUserNumber,controlLoopIdentifier, &
-    & solverIndex,fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber,componentNumber,condition,value,err)
+  SUBROUTINE cmfe_BoundaryConditions_SetNodeNumber0(contextUserNumber,problemUserNumber,controlLoopIdentifier,solverIndex, &
+    & regionUserNumber,fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber,componentNumber,condition, &
+    & value,err)
     !DLLEXPORT(cmfe_BoundaryConditions_SetNodeNumber0)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem/region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to set the boundary conditions for.
@@ -13505,17 +13514,17 @@ CONTAINS
   !
 
   !>Sets the value of the specified node as a boundary condition on the specified node for boundary conditions identified by a user number.
-  SUBROUTINE cmfe_BoundaryConditions_SetNodeNumber1(contextUserNumber,regionUserNumber,problemUserNumber, &
-    & controlLoopIdentifiers,solverIndex,fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber, &
-    & componentNumber,condition,value,err)
+  SUBROUTINE cmfe_BoundaryConditions_SetNodeNumber1(contextUserNumber,problemUserNumber,controlLoopIdentifiers,solverIndex, &
+    & regionUserNumber,fieldUserNumber,variableType,versionNumber,derivativeNumber,nodeUserNumber,componentNumber,condition, &
+    & value,err)
     !DLLEXPORT(cmfe_BoundaryConditions_SetNodeNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem/region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations to destroy the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(i). The i'th control loop identifier to get the solver equations boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver equations for.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations set to set the boundary conditions for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field for the boundary condition.
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the dependent field to set the boundary condition at. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to set the boundary conditions for.
@@ -13723,17 +13732,17 @@ CONTAINS
   !
 
   !>Constrain multiple nodal equations dependent field DOFs to be a single solver DOF in the solver equations
-  SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber(contextUserNumber,regionUserNumber,problemUserNumber, &
-    & controlLoopIdentifier,solverIndex,fieldUserNumber,fieldVariableType,versionNumber,derivativeNumber,component,nodes, &
+  SUBROUTINE cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber(contextUserNumber,problemUserNumber,controlLoopIdentifier, &
+    & solverIndex,regionUserNumber,fieldUserNumber,fieldVariableType,versionNumber,derivativeNumber,component,nodes, &
     & coefficient,err)
     !DLLEXPORT(cmfe_BoundaryConditions_ConstrainNodeDofsEqualNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the problem/region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field DOFs to constrain.
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem containing the solver equations.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier to get the solver equations.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index of the solver equations.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field DOFs to constrain.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the dependent field containing the DOFs to contrain.
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The variable type of the dependent field containing the DOFs to constrain. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number.
@@ -28456,7 +28465,8 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL Region_FieldGet(region,analyticFieldUserNumber,analyticField,err,error,*999)
+    !Find the field so that non-auto created fields can be used by number
+    CALL Field_UserNumberFind(analyticFieldUserNumber,region,analyticField,err,error,*999)
     CALL EQUATIONS_SET_ANALYTIC_CREATE_START(equationsSet,analyticFunctionType,analyticFieldUserNumber,analyticField, &
       & err,error,*999)
 
@@ -29006,7 +29016,8 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,geomFibreFieldUserNumber,geometryFibreField,err,error,*999)
-    CALL Region_FieldGet(region,equationsSetFieldUserNumber,equationsSetField,err,error,*999)
+    !Find the field so that non-auto created fields can be used by number
+    CALL Field_UserNumberFind(equationsSetFieldUserNumber,region,equationsSetField,err,error,*999)
     CALL EQUATIONS_SET_CREATE_START(equationsSetUserNumber,region,geometryFibreField,&
       & equationsSetSpecification,equationsSetFieldUserNumber,&
       & equationsSetField,equationsSet,err,error,*999)
@@ -29155,7 +29166,8 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL Region_FieldGet(region,derivedFieldUserNumber,derivedField,err,error,*999)
+    !Find the field so that non-auto created fields can be used by number
+    CALL Field_UserNumberFind(derivedFieldUserNumber,region,derivedField,err,error,*999)
     CALL EquationsSet_DerivedCreateStart(equationsSet,derivedFieldUserNumber,derivedField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DerivedCreateStartNumber")
@@ -29556,7 +29568,8 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL Region_FieldGet(region,dependentFieldUserNumber,dependentField,err,error,*999)
+    !Find the field so that non-auto created fields can be used by number
+    CALL Field_UserNumberFind(dependentFieldUserNumber,region,dependentField,err,error,*999)
     CALL EQUATIONS_SET_DEPENDENT_CREATE_START(equationsSet,dependentFieldUserNumber,dependentField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_DependentCreateStartNumber")
@@ -29956,7 +29969,8 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL Region_FieldGet(region,independentFieldUserNumber,independentField,err,error,*999)
+    !Find the field so that non-auto created fields can be used by number
+    CALL Field_UserNumberFind(independentFieldUserNumber,region,independentField,err,error,*999)
     CALL EQUATIONS_SET_DEPENDENT_CREATE_START(equationsSet,independentFieldUserNumber,independentField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_IndependentCreateStartNumber")
@@ -30422,7 +30436,8 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL Region_FieldGet(region,materialsFieldUserNumber,materialsField,err,error,*999)
+    !Find the field so that non-auto created fields can be used by number
+    CALL Field_UserNumberFind(materialsFieldUserNumber,region,materialsField,err,error,*999)
     CALL EQUATIONS_SET_MATERIALS_CREATE_START(equationsSet,materialsFieldUserNumber,materialsField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_MaterialsCreateStartNumber")
@@ -30889,7 +30904,8 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL Region_FieldGet(region,sourceFieldUserNumber,sourceField,err,error,*999)
+    !Find the field so that non-auto created fields can be used by number
+    CALL Field_UserNumberFind(sourceFieldUserNumber,region,sourceField,err,error,*999)
     CALL EQUATIONS_SET_SOURCE_CREATE_START(equationsSet,sourceFieldUserNumber,sourceField,err,error,*999)
 
     EXITS("cmfe_EquationsSet_SourceCreateStartNumber")
@@ -41084,7 +41100,173 @@ CONTAINS
 !!
 !!==================================================================================================================================
 
-  !>Export element information for fields set identified by an object. \todo number method
+  !>Export element information for fields set identified by user number. 
+  SUBROUTINE cmfe_Fields_ElementsExportCCNumber(contextUserNumber,regionUserNumber,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_ElementsExportCCNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to export
+    CHARACTER(LEN=*), INTENT(IN) :: fileName !<The file name to export the elements to
+    CHARACTER(LEN=*), INTENT(IN):: method !<The export method to use.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: FileNameLength,MethodLength
+    TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+    TYPE(VARYING_STRING) :: VFileName,VMethod
+
+    ENTERS("cmfe_Fields_ElementsExportCCNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    FileNameLength = LEN_TRIM(fileName)
+    VFileName = fileName(1:FileNameLength)
+    MethodLength = LEN_TRIM(method)
+    VMethod = method(1:MethodLength)
+
+    CALL FIELD_IO_ELEMENTS_EXPORT(region%fields,VFileName,VMethod,err,error,*999)
+
+    EXITS("cmfe_Fields_ElementsExportCCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_ElementsExportCCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_ElementsExportCCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export element information for fields set identified by user number. 
+  SUBROUTINE cmfe_Fields_ElementsExportVSCNumber(contextUserNumber,regionUserNumber,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_ElementsExportVSCNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to export
+    TYPE(VARYING_STRING), INTENT(IN) :: fileName !<The file name to export the elements to
+    CHARACTER(LEN=*), INTENT(IN):: method !<The export method to use.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: MethodLength
+    TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+    TYPE(VARYING_STRING) :: VMethod
+
+    ENTERS("cmfe_Fields_ElementsExportVSCNumber",err,error,*999)
+    
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    MethodLength = LEN_TRIM(method)
+    VMethod = method(1:MethodLength)
+
+    CALL FIELD_IO_ELEMENTS_EXPORT(region%fields,fileName,VMethod,err,error,*999)
+
+    EXITS("cmfe_Fields_ElementsExportVSCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_ElementsExportVSCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_ElementsExportVSCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export element information for fields set identified by user number
+  SUBROUTINE cmfe_Fields_ElementsExportCVSNumber(contextUserNumber,regionUserNumber,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_ElementsExportCVSNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to export
+    CHARACTER(LEN=*), INTENT(IN) :: fileName !<The file name to export the elements to
+    TYPE(VARYING_STRING), INTENT(IN):: method !<The export method to use.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: FileNameLength
+    TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+    TYPE(VARYING_STRING) :: VFileName
+
+    ENTERS("cmfe_Fields_ElementsExportCVSNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    FileNameLength = LEN_TRIM(fileName)
+    VFileName = fileName(1:FileNameLength)
+
+    CALL FIELD_IO_ELEMENTS_EXPORT(region%fields,VFileName,method,err,error,*999)
+
+    EXITS("cmfe_Fields_ElementsExportCVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_ElementsExportCVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_ElementsExportCVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export element information for fields set identified by user number.
+  SUBROUTINE cmfe_Fields_ElementsExportVSVSNumber(contextUserNumber,regionUserNumber,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_ElementsExportVSVSNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to export
+    TYPE(VARYING_STRING), INTENT(IN) :: fileName !<The file name to export the elements to
+    TYPE(VARYING_STRING), INTENT(IN):: method !<The export method to use.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Fields_ElementsExportVSVSNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    
+    CALL FIELD_IO_ELEMENTS_EXPORT(region%fields,fileName,method,err,error,*999)
+
+    EXITS("cmfe_Fields_ElementsExportVSVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_ElementsExportVSVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_ElementsExportVSVSNumber
+  
+  !  
+  !================================================================================================================================
+  !
+
+  !>Export element information for fields set identified by an object. 
   SUBROUTINE cmfe_Fields_ElementsExportCCObj(fields,fileName,method,err)
     !DLLEXPORT(cmfe_Fields_ElementsExportCCObj)
 
@@ -41121,7 +41303,7 @@ CONTAINS
   !
 
 
-  !>Export element information for fields set identified by an object. \todo number method
+  !>Export element information for fields set identified by an object.
   SUBROUTINE cmfe_Fields_ElementsExportVSCObj(fields,fileName,method,err)
     !DLLEXPORT(cmfe_Fields_ElementsExportVSCObj)
 
@@ -41154,7 +41336,7 @@ CONTAINS
   !
 
 
-  !>Export element information for fields set identified by an object. \todo number method
+  !>Export element information for fields set identified by an object.
   SUBROUTINE cmfe_Fields_ElementsExportCVSObj(fields,fileName,method,err)
     !DLLEXPORT(cmfe_Fields_ElementsExportCVSObj)
 
@@ -41186,7 +41368,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Export element information for fields set identified by an object. \todo number method
+  !>Export element information for fields set identified by an object.
   SUBROUTINE cmfe_Fields_ElementsExportVSVSObj(fields,fileName,method,err)
     !DLLEXPORT(cmfe_Fields_ElementsExportVSVSObj)
 
@@ -41213,7 +41395,173 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Export nodal information for fields set identified by an object. \todo number method
+  !>Export nodal information for fields set identified by user number
+  SUBROUTINE cmfe_Fields_NodesExportCCNumber(contextUserNumber,regionUserNumber,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_NodesExportCCNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to export
+    CHARACTER(LEN=*), INTENT(IN) :: fileName !<The file name to export the nodes to
+    CHARACTER(LEN=*), INTENT(IN):: method !<The export method to use.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: FileNameLength,MethodLength
+    TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+    TYPE(VARYING_STRING) :: VFileName,VMethod
+
+    ENTERS("cmfe_Fields_NodesExportCCNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    FileNameLength = LEN_TRIM(fileName)
+    VFileName = fileName(1:FileNameLength)
+    MethodLength = LEN_TRIM(method)
+    VMethod = method(1:MethodLength)
+
+    CALL FIELD_IO_NODES_EXPORT(region%fields,VFileName,VMethod,err,error,*999)
+
+    EXITS("cmfe_Fields_NodesExportCCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_NodesExportCCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_NodesExportCCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export nodal information for fields set identified by user number
+  SUBROUTINE cmfe_Fields_NodesExportVSCNumber(contextUserNumber,regionUserNumber,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_NodesExportVSCNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to export
+    TYPE(VARYING_STRING), INTENT(IN) :: fileName !<The file name to export the nodes to
+    CHARACTER(LEN=*), INTENT(IN):: method !<The export method to use.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: MethodLength
+    TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+    TYPE(VARYING_STRING) :: VMethod
+
+    ENTERS("cmfe_Fields_NodesExportVSCNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    MethodLength = LEN_TRIM(method)
+    VMethod = method(1:MethodLength)
+
+    CALL FIELD_IO_NODES_EXPORT(region%fields,fileName,VMethod,err,error,*999)
+
+    EXITS("cmfe_Fields_NodesExportVSCNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_NodesExportVSCNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_NodesExportVSCNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export nodal information for fields set identified by user number
+  SUBROUTINE cmfe_Fields_NodesExportCVSNumber(contextUserNumber,regionUserNumber,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_NodesExportCVSNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to export
+    CHARACTER(LEN=*), INTENT(IN) :: fileName !<The file name to export the nodes to
+    TYPE(VARYING_STRING), INTENT(IN):: method !<The export method to use.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: FileNameLength
+    TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+    TYPE(VARYING_STRING) :: VFileName
+
+    ENTERS("cmfe_Fields_NodesExportCVSNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    FileNameLength = LEN_TRIM(fileName)
+    VFileName = fileName(1:FileNameLength)
+
+    CALL FIELD_IO_NODES_EXPORT(region%fields,VFileName,method,err,error,*999)
+
+    EXITS("cmfe_Fields_NodesExportCVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_NodesExportCVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_NodesExportCVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export nodal information for fields set identified by user number.
+  SUBROUTINE cmfe_Fields_NodesExportVSVSNumber(contextUserNumber,regionUserNumber,fileName,method,err)
+    !DLLEXPORT(cmfe_Fields_NodesExportVSVSNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to export
+    TYPE(VARYING_STRING), INTENT(IN) :: fileName !<The file name to export the nodes to
+    TYPE(VARYING_STRING), INTENT(IN):: method !<The export method to use.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Fields_NodesExportVSVSNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    
+    CALL FIELD_IO_NODES_EXPORT(region%fields,fileName,method,err,error,*999)
+
+    EXITS("cmfe_Fields_NodesExportVSVSNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_NodesExportVSVSNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_NodesExportVSVSNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export nodal information for fields set identified by an object.
   SUBROUTINE cmfe_Fields_NodesExportCCObj(fields,fileName,method,err)
     !DLLEXPORT(cmfe_Fields_NodesExportCCObj)
 
@@ -41249,7 +41597,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Export nodal information for fields set identified by an object. \todo number method
+  !>Export nodal information for fields set identified by an object.
   SUBROUTINE cmfe_Fields_NodesExportVSCObj(fields,fileName,method,err)
     !DLLEXPORT(cmfe_Fields_NodesExportVSCObj)
 
@@ -41281,7 +41629,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Export nodal information for fields set identified by an object. \todo number method
+  !>Export nodal information for fields set identified by an object.
   SUBROUTINE cmfe_Fields_NodesExportCVSObj(fields,fileName,method,err)
     !DLLEXPORT(cmfe_Fields_NodesExportCVSObj)
 
@@ -41313,7 +41661,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Export nodal information for fields set identified by an object. \todo number method
+  !>Export nodal information for fields set identified by an object.
   SUBROUTINE cmfe_Fields_NodesExportVSVSObj(fields,fileName,method,err)
     !DLLEXPORT(cmfe_Fields_NodesExportVSVSObj)
 
@@ -52405,6 +52753,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('problem Create')
 #endif
 
+    NULLIFY(problems)
     CALL Context_ProblemsGet(context%context,problems,err,error,*999)
     CALL PROBLEM_CREATE_START(problemUserNumber,problems,problemSpecification,problem%problem,err,error,*999)
 

@@ -200,7 +200,9 @@ CONTAINS
           IF(.NOT.ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
             CALL FlagError("The solver equations boundary conditions are not associated.",ERR,ERROR,*999)
           END IF
+          NULLIFY(solver)
           CALL SolverEquations_SolverGet(SOLVER_EQUATIONS,solver,err,error,*999)
+          NULLIFY(workGroup)
           CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
           
           !
@@ -328,6 +330,7 @@ CONTAINS
           !
           !Calculate the row mappings.
           CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+          CALL WorkGroup_GroupNodeNumberGet(workGroup,myrank,err,error,*999)
           NUMBER_OF_GLOBAL_SOLVER_ROWS=0
           NUMBER_OF_LOCAL_SOLVER_ROWS=0
           !Add in the rows from any equations sets that have been added to the solver equations

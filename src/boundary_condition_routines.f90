@@ -318,9 +318,12 @@ CONTAINS
       IF(BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_FINISHED) THEN
         CALL FlagError("Boundary conditions have already been finished.",ERR,ERROR,*999)
       ELSE
+        NULLIFY(SOLVER_EQUATIONS)
         CALL BoundaryConditions_SolverEquationsGet(BOUNDARY_CONDITIONS,SOLVER_EQUATIONS,err,error,*999)
+        NULLIFY(solver)
         CALL SolverEquations_SolverGet(SOLVER_EQUATIONS,solver,err,error,*999)
         IF(ALLOCATED(BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES)) THEN
+          NULLIFY(workGroup)
           CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
           CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
           CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
