@@ -1805,7 +1805,8 @@ CONTAINS
                                                 DO equations_column_idx=ROW_INDICES(equations_row_number), &
                                                   ROW_INDICES(equations_row_number+1)-1
                                                   equations_column_number=COLUMN_INDICES(equations_column_idx)
-                                                  variable_dof=equations_column_idx-ROW_INDICES(equations_row_number)+1
+                                                  variable_dof=COLUMN_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP( &
+                                                    & equations_column_number)%LOCAL_NUMBER(1)
                                                   MATRIX_VALUE=equationsMatrixData(equations_column_idx)
                                                   DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
                                                   RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
