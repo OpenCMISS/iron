@@ -33,14 +33,22 @@ endif ()
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" _uppercase_CMAKE_BUILD_TYPE)
 if (_uppercase_CMAKE_BUILD_TYPE MATCHES "^(DEBUG|RELWITHDEBINFO)$")
-  set(IS_DEBUG_BUILD TRUE)
+    set(IS_DEBUG_BUILD TRUE)
 else()
-  set(IS_DEBUG_BUILD FALSE)
+    set(IS_DEBUG_BUILD FALSE)
 endif()
 
 # Options for building iron
-option(IRON_BUILD_SHARED_LIBRARY "Build a shared iron library." ON)
-option(IRON_BUILD_STATIC_LIBRARY "Build a static iron library." OFF)
+if (DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
+    set(IRON_BUILD_SHARED_LIBRARY ON CACHE BOOL "Build a shared iron library." FORCE)
+    set(IRON_BUILD_STATIC_LIBRARY OFF CACHE BOOL "Build a static iron library." FORCE)
+elseif (DEFINED BUILD_SHARED_LIBS AND NOT BUILD_SHARED_LIBS)
+    set(IRON_BUILD_SHARED_LIBRARY OFF CACHE BOOL "Build a shared iron library." FORCE)
+    set(IRON_BUILD_STATIC_LIBRARY ON CACHE BOOL "Build a static iron library." FORCE)
+else ()
+    option(IRON_BUILD_SHARED_LIBRARY "Build a shared iron library." ON)
+    option(IRON_BUILD_STATIC_LIBRARY "Build a static iron library." OFF)
+endif ()
 set(REAL_PRECISION "double" CACHE STRING "Real precision (single|double)")
 option(WITH_CELLML "Build iron with CellML support" ON)
 option(WITH_FIELDML "Build iron with FieldML support" ON)
@@ -93,8 +101,10 @@ else()
   set(WORKING_REAL_PRECISION_DOUBLE)
 endif()
 
-if(NOT IRON_BUILD_SHARED_LIBRARY AND NOT IRON_BUILD_STATIC_LIBRARY )
-  message(FATAL_ERROR "You have to build at least one of the types of libraries (shared or static)." )
+if(NOT IRON_BUILD_SHARED_LIBRARY AND NOT IRON_BUILD_STATIC_LIBRARY)
+  message(FATAL_ERROR "You have to build one of the types of libraries (shared or static)." )
+elseif(IRON_BUILD_SHARED_LIBRARY AND IRON_BUILD_STATIC_LIBRARY)
+  message(FATAL_ERROR "You have to build either a shared or static library, you cannot build both." )
 endif()
 
 include(OCMiscFunctions)
@@ -158,6 +168,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmiss.in.h ${CMAKE_CURRENT_BINA
 # Populates the IRON_XX_SRC variables
 include(Sources)
 
+set(BUILD_SHARED_LIBS ${IRON_BUILD_SHARED_LIBRARY})
 if(MSVC)
     # Need separate C/Fortran code due to Project natures in VS
     set(IRON_TARGETS iron iron_static_C)
