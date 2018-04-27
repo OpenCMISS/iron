@@ -85,7 +85,6 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
   USE STREE_EQUATION_ROUTINES
   USE Strings
@@ -8535,13 +8534,13 @@ CONTAINS
                                             FluidNodeNumber=node_idx
                                             DO search_idx=1,SIZE(Solver2%SOLVER_equations%SOLVER_MAPPING% &
                                               & INTERFACE_CONDITIONS(1)%ptr%INTERFACE% &
-                                              & NODES%COUPLED_NODES(2,:))
+                                              & NODES%coupledNodes(2,:))
                                               IF(Solver2%SOLVER_equations%SOLVER_MAPPING% &
                                                 & INTERFACE_CONDITIONS(1)%ptr%INTERFACE% &
-                                                & NODES%COUPLED_NODES(2,search_idx)==node_idx) THEN
+                                                & NODES%coupledNodes(2,search_idx)==node_idx) THEN
                                                 SolidNodeNumber=Solver2%SOLVER_equations%SOLVER_MAPPING% &
                                                   & INTERFACE_CONDITIONS(1)%ptr%INTERFACE% &
-                                                  & NODES%COUPLED_NODES(1,search_idx)!might wanna put a break here
+                                                  & NODES%coupledNodes(1,search_idx)!might wanna put a break here
                                                 SolidNodeFound=.TRUE.
                                               END IF
                                             END DO
@@ -8749,7 +8748,7 @@ CONTAINS
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fluidGeometricVariable,interfaceGeometricVariable
     TYPE(INTERFACE_TYPE), POINTER :: fsiInterface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: fsiInterfaceCondition
-    TYPE(NODES_TYPE), POINTER :: interfaceNodes
+    TYPE(NodesType), POINTER :: interfaceNodes
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: laplaceSolverEquations,fluidSolverEquations,fsiSolverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: laplaceSolverMapping,fsiSolverMapping,fluidSolverMapping,solidSolverMapping
@@ -9066,8 +9065,8 @@ CONTAINS
                   NULLIFY(domainNodes)
                   CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
                   DO nodeIdx=1,domainNodes%TOTAL_NUMBER_OF_NODES
-                    solidNode=interfaceNodes%COUPLED_NODES(1,nodeIdx)
-                    fluidNode=interfaceNodes%COUPLED_NODES(2,nodeIdx)
+                    solidNode=interfaceNodes%coupledNodes(1,nodeIdx)
+                    fluidNode=interfaceNodes%coupledNodes(2,nodeIdx)
                     DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%NUMBER_OF_DERIVATIVES
                       DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
                         CALL Field_ParameterSetGetNode(solidDependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &

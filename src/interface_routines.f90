@@ -57,7 +57,7 @@ MODULE INTERFACE_ROUTINES
   USE Kinds
   USE Lists
   USE MESH_ROUTINES
-  USE NODE_ROUTINES
+  USE NodeRoutines
   USE Strings
   USE Types
 
@@ -464,7 +464,7 @@ CONTAINS
          & CALL INTERFACE_MESH_CONNECTIVITY_FINALISE(INTERFACE%MESH_CONNECTIVITY,err,error,*999)
       IF(ASSOCIATED(INTERFACE%pointsConnectivity)) &
         & CALL InterfacePointsConnectivity_Finalise(INTERFACE%pointsConnectivity,err,error,*999)
-      IF(ASSOCIATED(INTERFACE%NODES)) CALL NODES_DESTROY(INTERFACE%NODES,err,error,*999)
+      IF(ASSOCIATED(INTERFACE%NODES)) CALL Nodes_Destroy(INTERFACE%NODES,err,error,*999)
       CALL GENERATED_MESHES_FINALISE(INTERFACE%generatedMeshes,err,error,*999)
       CALL MESHES_FINALISE(INTERFACE%MESHES,err,error,*999)
       CALL FIELDS_FINALISE(INTERFACE%FIELDS,err,error,*999)
@@ -980,7 +980,7 @@ CONTAINS
       & err,error,*)        
         
     !Argument variables
-    TYPE(NODES_TYPE), POINTER :: NODES !<A pointer to the interface mesh connectivity for the interface mesh
+    TYPE(NodesType), POINTER :: NODES !<A pointer to the interface mesh connectivity for the interface mesh
     INTEGER(INTG), INTENT(IN) :: INTERFACE_MESH_NODE_NUMBERS(:) !<The interface mesh element number to which the specified coupled mesh element would be connected
     INTEGER(INTG), INTENT(IN) :: FIRST_COUPLED_MESH_INDEX,SECOND_COUPLED_MESH_INDEX !<The index of the coupled mesh at the interface to set the element connectivity for
     INTEGER(INTG), INTENT(IN) :: FIRST_COUPLED_MESH_NODE_NUMBERS(:),SECOND_COUPLED_MESH_NODE_NUMBERS(:) !<The coupled mesh element to be connected to the interface
@@ -997,10 +997,10 @@ CONTAINS
         CALL FlagError("Interface mesh connectivity has already been finished.",err,error,*999)
       ELSE
         !Default to two coupled meshes
-        ALLOCATE(NODES%COUPLED_NODES(2,SIZE(INTERFACE_MESH_NODE_NUMBERS(:))))
+        ALLOCATE(NODES%coupledNodes(2,SIZE(INTERFACE_MESH_NODE_NUMBERS(:))))
         DO nodeIndex=1,SIZE(INTERFACE_MESH_NODE_NUMBERS(:))
-          NODES%COUPLED_NODES(FIRST_COUPLED_MESH_INDEX,nodeIndex)=FIRST_COUPLED_MESH_NODE_NUMBERS(nodeIndex)
-          NODES%COUPLED_NODES(SECOND_COUPLED_MESH_INDEX,nodeIndex)=SECOND_COUPLED_MESH_NODE_NUMBERS(nodeIndex)
+          NODES%coupledNodes(FIRST_COUPLED_MESH_INDEX,nodeIndex)=FIRST_COUPLED_MESH_NODE_NUMBERS(nodeIndex)
+          NODES%coupledNodes(SECOND_COUPLED_MESH_INDEX,nodeIndex)=SECOND_COUPLED_MESH_NODE_NUMBERS(nodeIndex)
         ENDDO
       ENDIF
     ELSE

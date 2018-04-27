@@ -64,7 +64,7 @@ MODULE FIELDML_INPUT_ROUTINES
   USE Lists
   USE MESH_ROUTINES
   USE MeshAccessRoutines
-  USE NODE_ROUTINES
+  USE NodeRoutines
   USE REGION_ROUTINES
   USE RegionAccessRoutines
   USE Strings
@@ -632,7 +632,7 @@ CONTAINS
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: NODES_ARGUMENT_NAME !<The argument evaluator used as the node index in relevant evaluators.
     TYPE(REGION_TYPE), POINTER, INTENT(IN) :: REGION !<The region in which to create the nodes.
-    TYPE(NODES_TYPE), POINTER, INTENT(INOUT) :: NODES !<The OpenCMISS nodes object to create.
+    TYPE(NodesType), POINTER, INTENT(INOUT) :: NODES !<The OpenCMISS nodes object to create.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
 
@@ -1274,7 +1274,7 @@ CONTAINS
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
     TYPE(MESH_TYPE), POINTER :: MESH
-    TYPE(NODES_TYPE), POINTER :: NODES
+    TYPE(NodesType), POINTER :: NODES
     INTEGER(INTG) :: NODAL_DOFS_HANDLE, DATA_SOURCE, FML_ERR, RANK
     INTEGER(INTG) :: VERSION_NUMBER,COMPONENT_NUMBER, NODE_NUMBER, FIELD_DIMENSIONS, MESH_NODE_COUNT
     INTEGER(INTG), TARGET :: OFFSETS(2), SIZES(2)

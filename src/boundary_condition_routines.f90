@@ -68,7 +68,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE NODE_ROUTINES
+  USE NodeRoutines
   USE SolverAccessRoutines
   USE Strings
   USE Timer

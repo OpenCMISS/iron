@@ -65,7 +65,8 @@ MODULE FIELD_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE NODE_ROUTINES
+  USE MESH_ROUTINES
+  USE MeshAccessRoutines
   USE Strings
   USE Types
 
