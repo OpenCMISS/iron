@@ -245,6 +245,8 @@ MODULE FieldAccessRoutines
 
   PUBLIC FieldVariable_ParameterSetGet
 
+  PUBLIC Fields_RegionGet
+
 CONTAINS
 
   !
@@ -800,6 +802,53 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FieldVariable_ParameterSetGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the region for a fields accounting for regions and interfaces
+  SUBROUTINE Fields_RegionGet(fields,region,err,error,*)
+
+    !Argument variables
+    TYPE(FIELDS_TYPE), POINTER :: fields !<A pointer to the fields to get the region for
+    TYPE(REGION_TYPE), POINTER :: region !<On return, the fields region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Fields_RegionGet",err,error,*998)
+
+    IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fields)) CALL FlagError("Fields is not associated.",err,error,*999)
+       
+    NULLIFY(region)
+    NULLIFY(interface)
+    region=>fields%region
+    IF(.NOT.ASSOCIATED(region)) THEN          
+      interface=>fields%interface
+      IF(ASSOCIATED(interface)) THEN
+        IF(ASSOCIATED(interface%PARENT_REGION)) THEN
+          region=>interface%PARENT_REGION     
+        ELSE
+          localError="The parent region is not associated for interface number "// &
+            & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        CALL FlagError("A region or interface is not associated for the fields.",err,error,*999)
+      ENDIF
+    ENDIF
+    
+    EXITS("Fields_RegionGet")
+    RETURN
+999 NULLIFY(region)
+998 ERRORSEXITS("Fields_RegionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Fields_RegionGet
 
   !
   !================================================================================================================================

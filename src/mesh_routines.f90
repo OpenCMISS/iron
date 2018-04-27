@@ -619,11 +619,9 @@ CONTAINS
     INTEGER(INTG), ALLOCATABLE :: ELEMENT_COUNT(:),ELEMENT_PTR(:),ELEMENT_INDICIES(:),ELEMENT_DISTANCE(:),DISPLACEMENTS(:), &
       & RECEIVE_COUNTS(:)
     INTEGER(INTG) :: ELEMENT_WEIGHT(1),WEIGHT_FLAG,NUMBER_FLAG,NUMBER_OF_CONSTRAINTS, &
-      & NUMBER_OF_COMMON_NODES,PARMETIS_OPTIONS(0:2),randomSeeds(1)
+      & NUMBER_OF_COMMON_NODES,PARMETIS_OPTIONS(0:2),randomSeedsSize
     INTEGER(INTG) :: groupCommunicator
-    !ParMETIS now has double for these
-    !REAL(SP) :: UBVEC(1)
-    !REAL(SP), ALLOCATABLE :: TPWGTS(:)
+    INTEGER(INTG), ALLOCATABLE :: randomSeeds(:)
     REAL(DP) :: UBVEC(1)
     REAL(DP), ALLOCATABLE :: TPWGTS(:)
     REAL(DP) :: NUMBER_ELEMENTS_PER_NODE
@@ -716,7 +714,11 @@ CONTAINS
               ENDDO !ne
               
               !Set up ParMETIS variables
+              NULLIFY(context)
               CALL WorkGroup_ContextGet(decomposition%workGroup,context,err,error,*999)
+              CALL Context_RandomSeedsSizeGet(context,randomSeedsSize,err,error,*999)
+              ALLOCATE(randomSeeds(randomSeedsSize),STAT=err)
+              IF(err/=0) CALL FlagError("Could not allocate random seeds.",err,error,*999)
               CALL Context_RandomSeedsGet(context,randomSeeds,err,error,*999)              
               WEIGHT_FLAG=0 !No weights
               ELEMENT_WEIGHT(1)=1 !Isn't used due to weight flag
@@ -735,7 +737,7 @@ CONTAINS
               PARMETIS_OPTIONS(0)=1 !If zero, defaults are used, otherwise next two values are used
               PARMETIS_OPTIONS(1)=7 !Level of information to output
               PARMETIS_OPTIONS(2)=randomSeeds(1) !Seed for random number generator
-              
+              IF(ALLOCATED(randomSeeds)) DEALLOCATE(randomSeeds)
               !Call ParMETIS to calculate the partitioning of the mesh graph.
               CALL PARMETIS_PARTMESHKWAY(ELEMENT_DISTANCE,ELEMENT_PTR,ELEMENT_INDICIES,ELEMENT_WEIGHT,WEIGHT_FLAG,NUMBER_FLAG, &
                 & NUMBER_OF_CONSTRAINTS,NUMBER_OF_COMMON_NODES,DECOMPOSITION%NUMBER_OF_DOMAINS,TPWGTS,UBVEC,PARMETIS_OPTIONS, &
@@ -829,6 +831,7 @@ CONTAINS
     IF(ALLOCATED(ELEMENT_PTR)) DEALLOCATE(ELEMENT_PTR)
     IF(ALLOCATED(ELEMENT_INDICIES)) DEALLOCATE(ELEMENT_INDICIES)
     IF(ALLOCATED(TPWGTS)) DEALLOCATE(TPWGTS)
+    IF(ALLOCATED(randomSeeds)) DEALLOCATE(randomSeeds)
     ERRORSEXITS("DECOMPOSITION_ELEMENT_DOMAIN_CALCULATE",ERR,ERROR)
     RETURN 1
     

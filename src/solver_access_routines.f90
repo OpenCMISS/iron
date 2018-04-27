@@ -253,13 +253,18 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(SOLVER_TYPE), POINTER :: testSolver
  
     ENTERS("Solver_SolversGet",err,error,*998)
 
     IF(ASSOCIATED(solvers)) CALL FlagError("Solvers is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
-      
-    solvers=>solver%solvers
+
+    testSolver=>solver
+    DO WHILE(ASSOCIATED(testSolver%LINKING_SOLVER))
+      testSolver=>testSolver%LINKING_SOLVER
+    ENDDO
+    solvers=>testSolver%solvers
     IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("The solver solvers is not associated.",err,error,*999)
        
     EXITS("Solver_SolversGet")
@@ -283,19 +288,22 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(SOLVERS_TYPE), POINTER :: solvers
  
     ENTERS("Solver_WorkGroupGet",err,error,*998)
 
     IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
-      
-    IF(.NOT.ASSOCIATED(solver%solvers)) CALL FlagError("Solver solvers is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(solver%solvers%CONTROL_LOOP)) &
+
+    NULLIFY(solvers)
+    CALL Solver_SolversGet(solver,solvers,err,error,*999)
+    IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Solver solvers is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solvers%CONTROL_LOOP)) &
       & CALL FlagError("Solver solvers control loop is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(solver%solvers%CONTROL_LOOP%problem)) &
+    IF(.NOT.ASSOCIATED(solvers%CONTROL_LOOP%problem)) &
       & CALL FlagError("Solver solvers control loop problem is not associated.",err,error,*999)
 
-    workGroup=>solver%solvers%CONTROL_LOOP%problem%workGroup
+    workGroup=>solvers%CONTROL_LOOP%problem%workGroup
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("The solver work group is not associated.",err,error,*999)
        
     EXITS("Solver_WorkGroupGet")

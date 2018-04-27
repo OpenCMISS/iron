@@ -1089,8 +1089,8 @@ CONTAINS
     NULLIFY(interface)
     region=>mesh%region
     IF(.NOT.ASSOCIATED(region)) THEN
-      INTERFACE=>mesh%INTERFACE
-      IF(ASSOCIATED(INTERFACE)) THEN
+      interface=>mesh%interface
+      IF(ASSOCIATED(interface)) THEN
         parentRegion=>interface%PARENT_REGION
         IF(ASSOCIATED(parentRegion)) THEN
           region=>parentRegion

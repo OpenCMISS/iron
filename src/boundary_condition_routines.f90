@@ -2539,7 +2539,9 @@ CONTAINS
         !Set up vector of Neumann point values
         CALL DistributedVector_CreateStart(pointDofMapping,boundaryConditionsNeumann%pointValues,err,error,*999)
         CALL DistributedVector_CreateFinish(boundaryConditionsNeumann%pointValues,err,error,*999)
+        NULLIFY(decomposition)
         CALL Field_DecompositionGet(rhsVariable%field,decomposition,err,error,*999)
+        NULLIFY(workGroup)
         CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
         CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
         !Set point values vector from boundary conditions field parameter set
@@ -2708,6 +2710,7 @@ CONTAINS
         CALL FlagError("Field variable for RHS boundary conditions is not associated.",err,error,*999)
       END IF
 
+      NULLIFY(geometricField)
       CALL Field_GeometricGeneralFieldGet(rhsVariable%field,geometricField,dependentGeometry,err,error,*999)
 
       CALL DistributedMatrix_AllValuesSet(neumannConditions%integrationMatrix,0.0_DP,err,error,*999)
@@ -2715,7 +2718,9 @@ CONTAINS
       numberOfNeumann=rhsBoundaryConditions%DOF_COUNTS(BOUNDARY_CONDITION_NEUMANN_POINT) + &
         & rhsBoundaryConditions%DOF_COUNTS(BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED)
 
+      NULLIFY(decomposition)
       CALL Field_DecompositionGet(rhsVariable%field,decomposition,err,error,*999)
+      NULLIFY(workGroup)
       CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
       CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
 

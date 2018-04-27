@@ -507,7 +507,7 @@ CONTAINS
     context%computationEnvironment%worldWorkGroup%parentWorkGroup=>context%computationEnvironment%worldWorkGroup
     context%computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes= &
       & context%computationEnvironment%numberOfWorldComputationNodes
-    !computationEnvironment%worldWorkGroup%computationEnvironment=>computationEnvironment
+    context%computationEnvironment%worldWorkGroup%computationEnvironment=>context%computationEnvironment
     ALLOCATE(context%computationEnvironment%worldWorkGroup%worldRanks( &
       & context%computationEnvironment%numberOfWorldComputationNodes),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate world work group world ranks.",err,error,*999)
@@ -536,7 +536,7 @@ CONTAINS
     context%computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
     CALL MPI_COMM_RANK(context%computationEnvironment%worldWorkGroup%mpiGroupCommunicator,rank,mpiIError)
     CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
-    context%computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
+    context%computationEnvironment%worldWorkGroup%myGroupComputationNodeNumber=rank
     
     context%computationEnvironment%worldWorkGroup%workGroupFinished=.TRUE.
     

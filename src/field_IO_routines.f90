@@ -6249,13 +6249,16 @@ CONTAINS
     INTEGER(INTG):: computation_node_numbers   !<total process number
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("FIELD_IO_NODES_EXPORT", ERR,ERROR,*999)
 
     IF(.NOT.ASSOCIATED(fields)) CALL FlagError("Fields is not associated.",err,error,*999)
 
+    NULLIFY(region)
+    CALL Fields_RegionGet(fields,region,err,error,*999)
     NULLIFY(context)
-    CALL Region_ContextGet(fields%region,context,err,error,*999)
+    CALL Region_ContextGet(region,context,err,error,*999)
     NULLIFY(computationEnvironment)
     CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
     
@@ -6306,13 +6309,16 @@ CONTAINS
     INTEGER(INTG):: computation_node_numbers   !<total process numbers
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
+    TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("FIELD_IO_ELEMENTS_EXPORT", ERR,ERROR,*999)
 
     IF(.NOT.ASSOCIATED(fields)) CALL FlagError("Fields is not associated.",err,error,*999)
 
+    NULLIFY(region)
+    CALL Fields_RegionGet(fields,region,err,error,*999)
     NULLIFY(context)
-    CALL Region_ContextGet(fields%region,context,err,error,*999)
+    CALL Region_ContextGet(region,context,err,error,*999)
     NULLIFY(computationEnvironment)
     CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
     
