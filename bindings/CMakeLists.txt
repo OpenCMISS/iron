@@ -26,7 +26,7 @@ if (WITH_C_BINDINGS)
     set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/iron_c.f90")
     add_custom_command(OUTPUT ${OPENCMISS_C_F90} ${OPENCMISS_H}
         DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
-        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
+        COMMAND "${Python_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
     list(APPEND _CLEANUP ${OPENCMISS_H} ${OPENCMISS_C_F90})
@@ -77,7 +77,7 @@ if (WITH_Python_BINDINGS)
     if (NOT SWIG_FOUND)
         message(FATAL_ERROR "SWIG could not be found. Unable to generate Python bindings for Iron.")
     endif()
-    execute_process(COMMAND "${PYTHON_EXECUTABLE}" "${Iron_SOURCE_DIR}/utils/numpy_include.py"
+    execute_process(COMMAND "${Python_EXECUTABLE}" "${Iron_SOURCE_DIR}/utils/numpy_include.py"
         OUTPUT_VARIABLE NUMPY_INCLUDES
         RESULT_VARIABLE RES_NUMPY_INC
         OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -101,7 +101,7 @@ if (WITH_Python_BINDINGS)
     set(SWIG_IFACE "${CMAKE_CURRENT_BINARY_DIR}/iron_generated.i")
     add_custom_command(OUTPUT ${SWIG_IFACE}
         DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
-        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" SWIG "${SWIG_IFACE}"
+        COMMAND "${Python_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" SWIG "${SWIG_IFACE}"
         COMMENT "Generating swig interface file for Iron"
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
@@ -196,7 +196,7 @@ if (WITH_Python_BINDINGS)
     set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py) # see python.py script in generate_bindings for iron.py name
     add_custom_command(OUTPUT ${IRON_PY}
         DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
-        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings 
+        COMMAND "${Python_EXECUTABLE}" generate_bindings 
             "${Iron_SOURCE_DIR}" Python ${IRON_PYTHON_MODULE} "${CMAKE_CURRENT_BINARY_DIR}"
         COMMENT "Generating Python binding script"
         WORKING_DIRECTORY "${Iron_SOURCE_DIR}/bindings"
