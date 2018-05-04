@@ -8,7 +8,7 @@ if (WITH_Python_BINDINGS)
 endif()
 # Run checks
 if (WITH_C_BINDINGS)
-    find_package(Python COMPONENTS Interpreter)
+    find_package(Python COMPONENTS Interpreter Development)
     if (NOT Python_Interpreter_FOUND)
         message(FATAL_ERROR "No Python found. A working Python interpreter is required to generate any Iron bindings")
     endif()
