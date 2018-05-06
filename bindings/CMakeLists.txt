@@ -8,8 +8,8 @@ if (WITH_Python_BINDINGS)
 endif()
 # Run checks
 if (WITH_C_BINDINGS)
-    find_package(PythonInterp QUIET)
-    if (NOT PYTHONINTERP_FOUND)
+    find_package(Python COMPONENTS Interpreter Development)
+    if (NOT Python_Interpreter_FOUND)
         message(FATAL_ERROR "No Python found. A working Python interpreter is required to generate any Iron bindings")
     endif()
 endif()
@@ -26,7 +26,7 @@ if (WITH_C_BINDINGS)
     set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/iron_c.f90")
     add_custom_command(OUTPUT ${OPENCMISS_C_F90} ${OPENCMISS_H}
         DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
-        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
+        COMMAND "${Python_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
     list(APPEND _CLEANUP ${OPENCMISS_H} ${OPENCMISS_C_F90})
@@ -67,18 +67,17 @@ endif()
 # Python-Bindings extra target
 if (WITH_Python_BINDINGS)
     message(STATUS "Creating Python bindings")
-    find_package(PythonLibs QUIET)
-    if(NOT PYTHONLIBS_FOUND)
+    find_package(Python COMPONENTS Interpreter Development)
+    if(NOT Python_Development_FOUND)
         message(FATAL_ERROR "No Python development libraries found. Unable to generate Python bindings for Iron.")
     endif()
-    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
     # I know there's also a UseSWIG.cmake file (http://www.cmake.org/cmake/help/v3.3/module/UseSWIG.html)
     # This did not seem to be very flexible at the time of writing this.
     find_package(SWIG QUIET)
     if (NOT SWIG_FOUND)
         message(FATAL_ERROR "SWIG could not be found. Unable to generate Python bindings for Iron.")
     endif()
-    execute_process(COMMAND "${PYTHON_EXECUTABLE}" "${Iron_SOURCE_DIR}/utils/numpy_include.py"
+    execute_process(COMMAND "${Python_EXECUTABLE}" "${Iron_SOURCE_DIR}/utils/numpy_include.py"
         OUTPUT_VARIABLE NUMPY_INCLUDES
         RESULT_VARIABLE RES_NUMPY_INC
         OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -102,17 +101,16 @@ if (WITH_Python_BINDINGS)
     set(SWIG_IFACE "${CMAKE_CURRENT_BINARY_DIR}/iron_generated.i")
     add_custom_command(OUTPUT ${SWIG_IFACE}
         DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
-        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" SWIG "${SWIG_IFACE}"
+        COMMAND "${Python_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" SWIG "${SWIG_IFACE}"
         COMMENT "Generating swig interface file for Iron"
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
 
-    three_part_version_to_vars(${PYTHONLIBS_VERSION_STRING} PYTHONLIBS_MAJOR_VERSION PYTHONLIBS_MINOR_VERSION PYTHONLIBS_PATCH_VERSION)
-    if(${PYTHONLIBS_MAJOR_VERSION} STREQUAL "3")
+    if(Python_VERSION_MAJOR STREQUAL "3")
         set(PYTHONLIBS_SWIG_FLAGS -py3)
     endif()
 
-    set(_PYTHON_DESTINATION_PREFIX lib/python${PYTHONLIBS_MAJOR_VERSION}.${PYTHONLIBS_MINOR_VERSION})
+    set(_PYTHON_DESTINATION_PREFIX lib/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR})
     set(IRON_PYTHON_PACKAGE_DESTINATION_PREFIX ${_PYTHON_DESTINATION_PREFIX}/$<CONFIG>/opencmiss.iron/opencmiss/iron)
     file(RELATIVE_PATH _REL_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${IRON_PYTHON_PACKAGE_DESTINATION_PREFIX} ${CMAKE_INSTALL_PREFIX}/lib)
 
@@ -132,7 +130,7 @@ if (WITH_Python_BINDINGS)
     #Generate wrapper object
     # MODULE: See http://www.cmake.org/cmake/help/v3.3/command/add_library.html
     add_library(${IRON_PYTHON_MODULE} MODULE ${PYTHON_WRAPPER} ${OPENCMISS_H} ${OPENCMISS_C_F90})
-    target_link_libraries(${IRON_PYTHON_MODULE} PUBLIC iron_c ${PYTHON_LIBRARIES})
+    target_link_libraries(${IRON_PYTHON_MODULE} PUBLIC iron_c Python::Python)
     target_include_directories(${IRON_PYTHON_MODULE} PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
         ${PYTHON_INCLUDE_DIRS}
@@ -145,10 +143,10 @@ if (WITH_Python_BINDINGS)
     )
     if (APPLE)
         set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
-            INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH}")
+            INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH};@loader_path/")
     elseif (UNIX)
         set_target_properties(${IRON_PYTHON_MODULE} PROPERTIES
-            INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH}")
+            INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH};\$ORIGIN/")
     endif ()
 
     # "Bugfix": If we use the same source file name, there will be two processes messing with
@@ -198,7 +196,7 @@ if (WITH_Python_BINDINGS)
     set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py) # see python.py script in generate_bindings for iron.py name
     add_custom_command(OUTPUT ${IRON_PY}
         DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
-        COMMAND "${PYTHON_EXECUTABLE}" generate_bindings 
+        COMMAND "${Python_EXECUTABLE}" generate_bindings 
             "${Iron_SOURCE_DIR}" Python ${IRON_PYTHON_MODULE} "${CMAKE_CURRENT_BINARY_DIR}"
         COMMENT "Generating Python binding script"
         WORKING_DIRECTORY "${Iron_SOURCE_DIR}/bindings"
