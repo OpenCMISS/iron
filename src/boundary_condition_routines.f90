@@ -542,7 +542,7 @@ CONTAINS
                                  NULLIFY(EQUATION_MATRIX)
                                  CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,equ_matrix_idx,EQUATION_MATRIX, &
                                    & err,error,*999)
-                                  matrixVariable=>linearMapping%equationsMatrixToVarMaps(equ_matrix_idx)%variable
+                                  matrixVariable=>dynamicMapping%equationsMatrixToVarMaps(equ_matrix_idx)%variable
                                   IF(ASSOCIATED(matrixVariable,FIELD_VARIABLE)) THEN
                                     CALL DistributedMatrix_StorageTypeGet(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
                                     SELECT CASE(STORAGE_TYPE)
