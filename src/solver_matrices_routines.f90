@@ -173,7 +173,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,matrix_idx,NUMBER_OF_NON_ZEROS
     INTEGER(INTG), POINTER :: COLUMN_INDICES(:),ROW_INDICES(:)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP
+    TYPE(DomainMappingType), POINTER :: ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX
@@ -1066,7 +1066,7 @@ CONTAINS
                 INTERFACE_MATRICES=>INTERFACE_MATRIX%INTERFACE_MATRICES
                 IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
                   IF(INTERFACE_MATRICES%INTERFACE_MATRICES_FINISHED) THEN
-                    IF(interface_condition_idx>0.AND.interface_condition_idx<=SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS) THEN
+                    IF(interface_condition_idx>0.AND.interface_condition_idx<=SOLVER_MAPPING%numberOfInterfaceConditions) THEN
                       INTERFACE_TO_SOLVER_MAP=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                         & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(INTERFACE_MATRIX%MATRIX_NUMBER)%INTERFACE_TO_SOLVER_MATRIX_MAPS( &
                         & SOLVER_MATRIX%MATRIX_NUMBER)%PTR
@@ -1346,7 +1346,7 @@ CONTAINS
                       LOCAL_ERROR="The specified interface condition index of "// &
                         & TRIM(NUMBER_TO_VSTRING(interface_condition_idx,"*",ERR,ERROR))// &
                         & " is invalid. The interface condition index needs to be between 1 and "// &
-                        & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS,"*",ERR,ERROR))//"."
+                        & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%numberOfInterfaceConditions,"*",ERR,ERROR))//"."
                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                     ENDIF
                   ELSE
@@ -1777,8 +1777,8 @@ CONTAINS
                         ENDDO !equations_matrix_idx
                       ENDIF
                     ENDDO !equations_set_idx
-                    DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                      INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
+                    DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                      INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
                       SELECT CASE(INTERFACE_CONDITION%METHOD)
                       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
                         DO interface_matrix_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
@@ -2140,12 +2140,12 @@ CONTAINS
                       ENDIF
                       !Now add in any interface matrices columns
                       DO interface_condition_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                        & NUMBER_OF_INTERFACE_CONDITIONS
+                        & numberOfInterfaceConditions
                       ENDDO !interface_condition_idx
                     ENDDO !equations_set_idx
                     !Loop over any equations sets
-                    DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                      INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
+                    DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                      INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
                       SELECT CASE(INTERFACE_CONDITION%METHOD)
                       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
                         DO interface_matrix_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &

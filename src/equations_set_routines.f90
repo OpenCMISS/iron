@@ -195,7 +195,7 @@ CONTAINS
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
           ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
           IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-            EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=ANALYTIC_FIELD%USER_NUMBER
+            EQUATIONS_SET_SETUP_INFO%fieldUserNumber=ANALYTIC_FIELD%userNumber
             EQUATIONS_SET_SETUP_INFO%FIELD=>ANALYTIC_FIELD
           ENDIF
           !Finish the equations set specific analytic setup
@@ -237,7 +237,7 @@ CONTAINS
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
     TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
-    TYPE(REGION_TYPE), POINTER :: REGION,ANALYTIC_FIELD_REGION
+    TYPE(RegionType), POINTER :: REGION,ANALYTIC_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("EQUATIONS_SET_ANALYTIC_CREATE_START",err,error,*998)
@@ -252,21 +252,21 @@ CONTAINS
             !Check the analytic field has been finished
             IF(ANALYTIC_FIELD%FIELD_FINISHED) THEN
               !Check the user numbers match
-              IF(ANALYTIC_FIELD_USER_NUMBER/=ANALYTIC_FIELD%USER_NUMBER) THEN
+              IF(ANALYTIC_FIELD_USER_NUMBER/=ANALYTIC_FIELD%userNumber) THEN
                 localError="The specified analytic field user number of "// &
                   & TRIM(NumberToVString(ANALYTIC_FIELD_USER_NUMBER,"*",err,error))// &
                   & " does not match the user number of the specified analytic field of "// &
-                  & TRIM(NumberToVString(ANALYTIC_FIELD%USER_NUMBER,"*",err,error))//"."
+                  & TRIM(NumberToVString(ANALYTIC_FIELD%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
               ANALYTIC_FIELD_REGION=>ANALYTIC_FIELD%REGION
               IF(ASSOCIATED(ANALYTIC_FIELD_REGION)) THEN                
                 !Check the field is defined on the same region as the equations set
-                IF(ANALYTIC_FIELD_REGION%USER_NUMBER/=REGION%USER_NUMBER) THEN
+                IF(ANALYTIC_FIELD_REGION%userNumber/=REGION%userNumber) THEN
                   localError="Invalid region setup. The specified analytic field has been created on region number "// &
-                    & TRIM(NumberToVString(ANALYTIC_FIELD_REGION%USER_NUMBER,"*",err,error))// &
+                    & TRIM(NumberToVString(ANALYTIC_FIELD_REGION%userNumber,"*",err,error))// &
                     & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 ENDIF
                 !Check the specified analytic field has the same decomposition as the geometric field
@@ -293,7 +293,7 @@ CONTAINS
               localError="The specified analytic field user number of "// &
                 & TRIM(NumberToVString(ANALYTIC_FIELD_USER_NUMBER,"*",err,error))// &
                 & "has already been used to create a field on region number "// &
-                & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
           ENDIF
@@ -304,7 +304,7 @@ CONTAINS
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
           EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_ANALYTIC_TYPE
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-          EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=ANALYTIC_FIELD_USER_NUMBER
+          EQUATIONS_SET_SETUP_INFO%fieldUserNumber=ANALYTIC_FIELD_USER_NUMBER
           EQUATIONS_SET_SETUP_INFO%FIELD=>ANALYTIC_FIELD
           EQUATIONS_SET_SETUP_INFO%ANALYTIC_FUNCTION_TYPE=ANALYTIC_FUNCTION_TYPE
           !Start the equations set specific analytic setup
@@ -376,16 +376,16 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,derivative_idx,element_idx,Gauss_idx,GLOBAL_DERIV_INDEX,local_ny,node_idx, &
-      & NUMBER_OF_ANALYTIC_COMPONENTS,NUMBER_OF_DIMENSIONS,variable_idx, &
+      & NUMBER_OF_ANALYTIC_COMPONENTS,numberOfDimensions,variable_idx, &
       & variable_type,version_idx
     REAL(DP) :: NORMAL(3),POSITION(3),TANGENTS(3,3),VALUE
     REAL(DP) :: ANALYTIC_DUMMY_VALUES(1)=0.0_DP
     REAL(DP) :: MATERIALS_DUMMY_VALUES(1)=0.0_DP
     LOGICAL :: reverseNormal=.FALSE.
-    TYPE(BASIS_TYPE), POINTER :: BASIS
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: DOMAIN_ELEMENTS
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    TYPE(BasisType), POINTER :: BASIS
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainElementsType), POINTER :: DOMAIN_ELEMENTS
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,dependentField,GEOMETRIC_FIELD,MATERIALS_FIELD
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: ANALYTIC_INTERP_PARAMETERS(:),GEOMETRIC_INTERP_PARAMETERS(:), &
       & MATERIALS_INTERP_PARAMETERS(:)
@@ -405,7 +405,7 @@ CONTAINS
           IF(ASSOCIATED(dependentField)) THEN
             GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
             IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
-              CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+              CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
               CALL Field_InterpolationParametersInitialise(GEOMETRIC_FIELD,GEOMETRIC_INTERP_PARAMETERS,err,error,*999)
               CALL Field_InterpolatedPointsInitialise(GEOMETRIC_INTERP_PARAMETERS,GEOMETRIC_INTERP_POINT,err,error,*999)
               CALL Field_InterpolatedPointsMetricsInitialise(GEOMETRIC_INTERP_POINT,GEOMETRIC_INTERPOLATED_POINT_METRICS, &
@@ -437,7 +437,7 @@ CONTAINS
                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                     IF(ASSOCIATED(DOMAIN)) THEN
                       IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
-                        SELECT CASE(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
+                        SELECT CASE(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType)
                         CASE(FIELD_CONSTANT_INTERPOLATION)
                           CALL FlagError("Cannot evaluate an analytic solution for a constant interpolation components.", &
                             & err,error,*999)
@@ -445,7 +445,7 @@ CONTAINS
                           DOMAIN_ELEMENTS=>DOMAIN%TOPOLOGY%ELEMENTS
                           IF(ASSOCIATED(DOMAIN_ELEMENTS)) THEN
                             !Loop over the local elements excluding the ghosts
-                            DO element_idx=1,DOMAIN_ELEMENTS%NUMBER_OF_ELEMENTS
+                            DO element_idx=1,DOMAIN_ELEMENTS%numberOfElements
                               BASIS=>DOMAIN_ELEMENTS%ELEMENTS(element_idx)%BASIS
                               CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
                                 & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
@@ -514,7 +514,7 @@ CONTAINS
                           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                           IF(ASSOCIATED(DOMAIN_NODES)) THEN
                             !Loop over the local nodes excluding the ghosts.
-                            DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
                               CALL Field_PositionNormalTangentsCalculateNode(dependentField,variable_type,component_idx, &
                                 & node_idx,POSITION,NORMAL,TANGENTS,err,error,*999)
                               IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
@@ -528,9 +528,9 @@ CONTAINS
                                   & FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                               ENDIF
                               !Loop over the derivatives
-                              DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES                                
+                              DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives                                
                                 GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)% &
-                                  & GLOBAL_DERIVATIVE_INDEX
+                                  & globalDerivativeIndex
 !! \todo Maybe do this with optional arguments?
                                 IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
                                   IF(ASSOCIATED(MATERIALS_FIELD)) THEN
@@ -577,7 +577,7 @@ CONTAINS
                           DOMAIN_ELEMENTS=>DOMAIN%TOPOLOGY%ELEMENTS
                           IF(ASSOCIATED(DOMAIN_ELEMENTS)) THEN
                             !Loop over the local elements excluding the ghosts
-                            DO element_idx=1,DOMAIN_ELEMENTS%NUMBER_OF_ELEMENTS
+                            DO element_idx=1,DOMAIN_ELEMENTS%numberOfElements
                               BASIS=>DOMAIN_ELEMENTS%ELEMENTS(element_idx)%BASIS
                               CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element_idx, &
                                 & GEOMETRIC_INTERP_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
@@ -648,7 +648,7 @@ CONTAINS
                           ENDIF
                         CASE DEFAULT
                           localError="The interpolation type of "//TRIM(NumberToVString(FIELD_VARIABLE% &
-                            & COMPONENTS(component_idx)%INTERPOLATION_TYPE,"*",err,error))// &
+                            & COMPONENTS(component_idx)%interpolationType,"*",err,error))// &
                             & " for component "//TRIM(NumberToVString(component_idx,"*",err,error))//" of variable type "// &
                             & TRIM(NumberToVString(variable_type,"*",err,error))//" is invalid."
                           CALL FlagError(localError,err,error,*999)
@@ -1091,7 +1091,7 @@ CONTAINS
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping
+    TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -1119,7 +1119,7 @@ CONTAINS
     !Assemble the elements
     !Allocate the element matrices 
     CALL EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*999)
-    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
       & mappings%elements
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
@@ -1134,8 +1134,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%INTERNAL_START,elementsMapping%INTERNAL_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
@@ -1154,8 +1154,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
@@ -1213,7 +1213,7 @@ CONTAINS
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping
+    TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -1256,7 +1256,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_ElementInitialise()")
 #endif
     CALL EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*999)
-    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
       & mappings%elements
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP("EquationsMatrices_ElementInitialise()")
@@ -1278,13 +1278,13 @@ CONTAINS
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("Internal Elements Loop")
 #endif
-    DO elementIdx=elementsMapping%INTERNAL_START,elementsMapping%INTERNAL_FINISH
+    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
       !#ifdef TAUPROF
       !              WRITE (CVAR,'(a23,i3)') 'Internal Elements Loop ',elementIdx
       !              CALL TAU_PHASE_CREATE_DYNAMIC(PHASE,CVAR)
       !              CALL TAU_PHASE_START(PHASE)
       !#endif
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
@@ -1313,8 +1313,8 @@ CONTAINS
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("Boundary and Ghost Elements Loop")
 #endif
-    DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
@@ -1381,7 +1381,7 @@ CONTAINS
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping
+    TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -1409,7 +1409,7 @@ CONTAINS
     !Assemble the elements
     !Allocate the element matrices 
     CALL EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*999)
-    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
       & mappings%elements
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
@@ -1424,8 +1424,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%INTERNAL_START,elementsMapping%INTERNAL_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
@@ -1444,8 +1444,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
@@ -1528,7 +1528,7 @@ CONTAINS
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping
+    TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -1556,7 +1556,7 @@ CONTAINS
     !Assemble the elements
     !Allocate the element matrices 
     CALL EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*999)
-    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
       & mappings%elements
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
@@ -1571,8 +1571,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%INTERNAL_START,elementsMapping%INTERNAL_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
@@ -1591,8 +1591,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementCalculate(equationsSet,element,err,error,*999)
@@ -1653,7 +1653,7 @@ CONTAINS
     REAL(DP) :: DEPENDENT_VALUE,MATRIX_VALUE,RHS_VALUE,SOURCE_VALUE
     REAL(DP), POINTER :: DEPENDENT_PARAMETERS(:),equationsMatrixData(:),sourceVectorData(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: RHS_BOUNDARY_CONDITIONS
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: COLUMN_DOMAIN_MAPPING,RHS_DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: COLUMN_DOMAIN_MAPPING,RHS_DOMAIN_MAPPING
     TYPE(DistributedMatrixType), POINTER :: EQUATIONS_DISTRIBUTED_MATRIX
     TYPE(DistributedVectorType), POINTER :: SOURCE_DISTRIBUTED_VECTOR
     TYPE(EquationsType), POINTER :: equations
@@ -1747,7 +1747,7 @@ CONTAINS
                                             DO equations_row_number=1,vectorMapping%numberOfRows
                                               RHS_VALUE=0.0_DP
                                               rhs_variable_dof=rhsMapping%equationsRowToRHSDOFMap(equations_row_number)
-                                              rhs_global_dof=RHS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(rhs_variable_dof)
+                                              rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(rhs_variable_dof)
                                               rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
                                               !For free RHS DOFs, set the right hand side field values by multiplying the
                                               !row by the dependent variable value
@@ -1755,8 +1755,8 @@ CONTAINS
                                               CASE(BOUNDARY_CONDITION_DOF_FREE)
                                                 !Back substitute
                                                 !Loop over the local columns of the equations matrix
-                                                DO equations_column_idx=1,COLUMN_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-                                                  equations_column_number=COLUMN_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP( &
+                                                DO equations_column_idx=1,COLUMN_DOMAIN_MAPPING%totalNumberOfLocal
+                                                  equations_column_number=COLUMN_DOMAIN_MAPPING%localToGlobalMap( &
                                                     & equations_column_idx)
                                                   variable_dof=equations_column_idx
                                                   MATRIX_VALUE=equationsMatrixData(equations_row_number+ &
@@ -1796,7 +1796,7 @@ CONTAINS
                                             DO equations_row_number=1,vectorMapping%numberOfRows
                                               RHS_VALUE=0.0_DP
                                               rhs_variable_dof=rhsMapping%equationsRowToRHSDOFMap(equations_row_number)
-                                              rhs_global_dof=RHS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(rhs_variable_dof)
+                                              rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(rhs_variable_dof)
                                               rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
                                               SELECT CASE(rhs_boundary_condition)
                                               CASE(BOUNDARY_CONDITION_DOF_FREE)
@@ -1805,8 +1805,8 @@ CONTAINS
                                                 DO equations_column_idx=ROW_INDICES(equations_row_number), &
                                                   ROW_INDICES(equations_row_number+1)-1
                                                   equations_column_number=COLUMN_INDICES(equations_column_idx)
-                                                  variable_dof=COLUMN_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP( &
-                                                    & equations_column_number)%LOCAL_NUMBER(1)
+                                                  variable_dof=COLUMN_DOMAIN_MAPPING%globalToLocalMap( &
+                                                    & equations_column_number)%localNumber(1)
                                                   MATRIX_VALUE=equationsMatrixData(equations_column_idx)
                                                   DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
                                                   RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
@@ -1940,7 +1940,7 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: RHS_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable,residualVariable
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: RHS_BOUNDARY_CONDITIONS
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: RHS_DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: RHS_DOMAIN_MAPPING
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EQUATIONS_SET_NONLINEAR_RHS_UPDATE",err,error,*999)
@@ -1987,7 +1987,7 @@ CONTAINS
                             IF(ASSOCIATED(residualVariable)) THEN
                               DO row_idx=1,vectorMapping%numberOfRows
                                 variable_dof=rhsMapping%equationsRowToRHSDOFMap(row_idx)
-                                rhs_global_dof=RHS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(variable_dof)
+                                rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(variable_dof)
                                 rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
                                 SELECT CASE(rhs_boundary_condition)
                                 CASE(BOUNDARY_CONDITION_DOF_FREE)
@@ -2184,7 +2184,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the equations set
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to create the equations set on
+    TYPE(RegionType), POINTER :: REGION !<A pointer to the region to create the equations set on
     TYPE(FIELD_TYPE), POINTER :: GEOM_FIBRE_FIELD !<A pointer to the either the geometry or, if appropriate, the fibre field for the equation set
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_SPECIFICATION(:) !<The equations set specification array to set
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_FIELD_USER_NUMBER !<The user number of the equations set field
@@ -2197,7 +2197,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: NEW_EQUATIONS_SET
     TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: NEW_EQUATIONS_SETS(:)
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(REGION_TYPE), POINTER :: GEOM_FIBRE_FIELD_REGION,EQUATIONS_SET_FIELD_REGION
+    TYPE(RegionType), POINTER :: GEOM_FIBRE_FIELD_REGION,EQUATIONS_SET_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: EQUATIONS_EQUATIONS_SET_FIELD
     TYPE(FIELD_TYPE), POINTER :: FIELD
@@ -2213,7 +2213,7 @@ CONTAINS
         CALL EQUATIONS_SET_USER_NUMBER_FIND(USER_NUMBER,REGION,NEW_EQUATIONS_SET,err,error,*997)
         IF(ASSOCIATED(NEW_EQUATIONS_SET)) THEN
           localError="Equations set user number "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))// &
-            & " has already been created on region number "//TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+            & " has already been created on region number "//TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
           CALL FlagError(localError,err,error,*997)
         ELSE
           NULLIFY(NEW_EQUATIONS_SET)
@@ -2222,26 +2222,26 @@ CONTAINS
               IF(GEOM_FIBRE_FIELD%TYPE==FIELD_GEOMETRIC_TYPE.OR.GEOM_FIBRE_FIELD%TYPE==FIELD_FIBRE_TYPE) THEN
                 GEOM_FIBRE_FIELD_REGION=>GEOM_FIBRE_FIELD%REGION
                 IF(ASSOCIATED(GEOM_FIBRE_FIELD_REGION)) THEN
-                  IF(GEOM_FIBRE_FIELD_REGION%USER_NUMBER==REGION%USER_NUMBER) THEN
+                  IF(GEOM_FIBRE_FIELD_REGION%userNumber==REGION%userNumber) THEN
                       IF(ASSOCIATED(EQUATIONS_SET_FIELD_FIELD)) THEN
                         !Check the equations set field has been finished
                         IF(EQUATIONS_SET_FIELD_FIELD%FIELD_FINISHED.eqv..TRUE.) THEN
                           !Check the user numbers match
-                          IF(EQUATIONS_SET_FIELD_USER_NUMBER/=EQUATIONS_SET_FIELD_FIELD%USER_NUMBER) THEN
+                          IF(EQUATIONS_SET_FIELD_USER_NUMBER/=EQUATIONS_SET_FIELD_FIELD%userNumber) THEN
                             localError="The specified equations set field user number of "// &
                               & TRIM(NumberToVString(EQUATIONS_SET_FIELD_USER_NUMBER,"*",err,error))// &
                               & " does not match the user number of the specified equations set field of "// &
-                              & TRIM(NumberToVString(EQUATIONS_SET_FIELD_FIELD%USER_NUMBER,"*",err,error))//"."
+                              & TRIM(NumberToVString(EQUATIONS_SET_FIELD_FIELD%userNumber,"*",err,error))//"."
                             CALL FlagError(localError,err,error,*999)
                           ENDIF
                           EQUATIONS_SET_FIELD_REGION=>EQUATIONS_SET_FIELD_FIELD%REGION
                           IF(ASSOCIATED(EQUATIONS_SET_FIELD_REGION)) THEN                
                             !Check the field is defined on the same region as the equations set
-                            IF(EQUATIONS_SET_FIELD_REGION%USER_NUMBER/=REGION%USER_NUMBER) THEN
+                            IF(EQUATIONS_SET_FIELD_REGION%userNumber/=REGION%userNumber) THEN
                               localError="Invalid region setup. The specified equations set field was created on region no. "// &
-                                & TRIM(NumberToVString(EQUATIONS_SET_FIELD_REGION%USER_NUMBER,"*",err,error))// &
+                                & TRIM(NumberToVString(EQUATIONS_SET_FIELD_REGION%userNumber,"*",err,error))// &
                                 & " and the specified equations set has been created on region number "// &
-                                & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                                & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                               CALL FlagError(localError,err,error,*999)
                             ENDIF
                             !Check the specified equations set field has the same decomposition as the geometric field
@@ -2268,15 +2268,15 @@ CONTAINS
                           localError="The specified equations set field user number of "// &
                             & TRIM(NumberToVString(EQUATIONS_SET_FIELD_USER_NUMBER,"*",err,error))// &
                             & "has already been used to create a field on region number "// &
-                            & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                            & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                           CALL FlagError(localError,err,error,*999)
                         ENDIF
                       ENDIF
                       !Initalise equations set
                       CALL EQUATIONS_SET_INITIALISE(NEW_EQUATIONS_SET,err,error,*999)
                       !Set default equations set values
-                      NEW_EQUATIONS_SET%USER_NUMBER=USER_NUMBER
-                      NEW_EQUATIONS_SET%GLOBAL_NUMBER=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1
+                      NEW_EQUATIONS_SET%userNumber=USER_NUMBER
+                      NEW_EQUATIONS_SET%globalNumber=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1
                       NEW_EQUATIONS_SET%EQUATIONS_SETS=>REGION%EQUATIONS_SETS
                       NEW_EQUATIONS_SET%label="Equations Set "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))
                       NEW_EQUATIONS_SET%REGION=>REGION
@@ -2288,7 +2288,7 @@ CONTAINS
                       EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_INITIAL_TYPE
                       EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
                       !Here, we get a pointer to the equations_set_field; default is null
-                      EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=EQUATIONS_SET_FIELD_USER_NUMBER
+                      EQUATIONS_SET_SETUP_INFO%fieldUserNumber=EQUATIONS_SET_FIELD_USER_NUMBER
                       EQUATIONS_SET_SETUP_INFO%FIELD=>EQUATIONS_SET_FIELD_FIELD
                       !Start equations set specific setup
                       CALL EQUATIONS_SET_SETUP(NEW_EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -2304,7 +2304,7 @@ CONTAINS
                       ENDIF
                       EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_GEOMETRY_TYPE
                       EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-                      EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=GEOM_FIBRE_FIELD%USER_NUMBER
+                      EQUATIONS_SET_SETUP_INFO%fieldUserNumber=GEOM_FIBRE_FIELD%userNumber
                       EQUATIONS_SET_SETUP_INFO%FIELD=>GEOM_FIBRE_FIELD
                       !Set up equations set specific geometry
                       CALL EQUATIONS_SET_SETUP(NEW_EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -2331,9 +2331,9 @@ CONTAINS
                   ELSE
                     localError="The geometric field region and the specified region do not match. "// &
                       & "The geometric field was created on region number "// &
-                      & TRIM(NumberToVString(GEOM_FIBRE_FIELD_REGION%USER_NUMBER,"*",err,error))// &
+                      & TRIM(NumberToVString(GEOM_FIBRE_FIELD_REGION%userNumber,"*",err,error))// &
                       & " and the specified region number is "// &
-                      & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                      & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                     CALL FlagError(localError,err,error,*997)
                   ENDIF
                 ELSE
@@ -2350,7 +2350,7 @@ CONTAINS
           ENDIF
         ENDIF
       ELSE
-        localError="The equations sets on region number "//TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))// &
+        localError="The equations sets on region number "//TRIM(NumberToVString(REGION%userNumber,"*",err,error))// &
           & " are not associated."
         CALL FlagError(localError,err,error,*997)
       ENDIF
@@ -2375,7 +2375,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the equations set to destroy
-    TYPE(REGION_TYPE), POINTER :: REGION !<The region of the equations set to destroy
+    TYPE(RegionType), POINTER :: REGION !<The region of the equations set to destroy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2397,7 +2397,7 @@ CONTAINS
         equations_set_position=0
         DO WHILE(equations_set_position<REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS.AND..NOT.FOUND)
           equations_set_position=equations_set_position+1
-          IF(REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_position)%ptr%USER_NUMBER==USER_NUMBER)FOUND=.TRUE.
+          IF(REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_position)%ptr%userNumber==USER_NUMBER)FOUND=.TRUE.
         ENDDO
         
         IF(FOUND) THEN
@@ -2415,8 +2415,8 @@ CONTAINS
               IF(equations_set_idx<equations_set_position) THEN
                 NEW_EQUATIONS_SETS(equations_set_idx)%ptr=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr
               ELSE IF(equations_set_idx>equations_set_position) THEN
-                REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr%GLOBAL_NUMBER=REGION%EQUATIONS_SETS% &
-                  & EQUATIONS_SETS(equations_set_idx)%ptr%GLOBAL_NUMBER-1
+                REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr%globalNumber=REGION%EQUATIONS_SETS% &
+                  & EQUATIONS_SETS(equations_set_idx)%ptr%globalNumber-1
                 NEW_EQUATIONS_SETS(equations_set_idx-1)%ptr=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr
               ENDIF
             ENDDO !equations_set_idx
@@ -2430,11 +2430,11 @@ CONTAINS
           
         ELSE
           localError="Equations set number "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))// &
-            & " has not been created on region number "//TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+            & " has not been created on region number "//TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
-        localError="The equations sets on region number "//TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))// &
+        localError="The equations sets on region number "//TRIM(NumberToVString(REGION%userNumber,"*",err,error))// &
           & " are not associated."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -2472,7 +2472,7 @@ CONTAINS
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       EQUATIONS_SETS=>EQUATIONS_SET%EQUATIONS_SETS
       IF(ASSOCIATED(EQUATIONS_SETS)) THEN
-        equations_set_position=EQUATIONS_SET%GLOBAL_NUMBER
+        equations_set_position=EQUATIONS_SET%globalNumber
 
         !Destroy all the equations set components
         CALL EQUATIONS_SET_FINALISE(EQUATIONS_SET,err,error,*999)
@@ -2485,8 +2485,8 @@ CONTAINS
             IF(equations_set_idx<equations_set_position) THEN
               NEW_EQUATIONS_SETS(equations_set_idx)%ptr=>EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr
             ELSE IF(equations_set_idx>equations_set_position) THEN
-              EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr%GLOBAL_NUMBER=EQUATIONS_SETS% &
-                & EQUATIONS_SETS(equations_set_idx)%ptr%GLOBAL_NUMBER-1
+              EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr%globalNumber=EQUATIONS_SETS% &
+                & EQUATIONS_SETS(equations_set_idx)%ptr%globalNumber-1
               NEW_EQUATIONS_SETS(equations_set_idx-1)%ptr=>EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr
             ENDIF
           ENDDO !equations_set_idx
@@ -2848,8 +2848,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err  !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error  !<The error string
     !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: basis
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: elementsTopology
+    TYPE(BasisType), POINTER :: basis
+    TYPE(DomainElementsType), POINTER :: elementsTopology
     TYPE(DistributedVectorType), POINTER :: parameters
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -2910,14 +2910,14 @@ CONTAINS
       column=0  ! element jacobian matrix column number
       DO componentIdx=1,columnVariable%NUMBER_OF_COMPONENTS
         elementsTopology=>columnVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%ELEMENTS
-        componentInterpolationType=columnVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE
+        componentInterpolationType=columnVariable%COMPONENTS(componentIdx)%interpolationType
         SELECT CASE(componentInterpolationType)
         CASE (FIELD_NODE_BASED_INTERPOLATION)
           basis=>elementsTopology%ELEMENTS(elementNumber)%BASIS
-          DO nodeIdx=1,basis%NUMBER_OF_NODES
-            node=elementsTopology%ELEMENTS(elementNumber)%ELEMENT_NODES(nodeIdx)
-            DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(nodeIdx)
-              derivative=elementsTopology%ELEMENTS(elementNumber)%ELEMENT_DERIVATIVES(derivativeIdx,nodeIdx)
+          DO nodeIdx=1,basis%numberOfNodes
+            node=elementsTopology%ELEMENTS(elementNumber)%elementNodes(nodeIdx)
+            DO derivativeIdx=1,basis%numberOfDerivatives(nodeIdx)
+              derivative=elementsTopology%ELEMENTS(elementNumber)%elementDerivatives(derivativeIdx,nodeIdx)
               version=elementsTopology%ELEMENTS(elementNumber)%elementVersions(derivativeIdx,nodeIdx)
               localDOF=columnVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
                 & DERIVATIVES(derivative)%VERSIONS(version)
@@ -3166,7 +3166,7 @@ CONTAINS
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
           independentField=>EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD
           IF(ASSOCIATED(independentField)) THEN
-            EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=independentField%USER_NUMBER
+            EQUATIONS_SET_SETUP_INFO%fieldUserNumber=independentField%userNumber
             EQUATIONS_SET_SETUP_INFO%FIELD=>independentField
             !Finish equations set specific startup
             CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -3208,7 +3208,7 @@ CONTAINS
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
     TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
-    TYPE(REGION_TYPE), POINTER :: REGION,INDEPENDENT_FIELD_REGION
+    TYPE(RegionType), POINTER :: REGION,INDEPENDENT_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("EQUATIONS_SET_INDEPENDENT_CREATE_START",err,error,*998)
@@ -3223,21 +3223,21 @@ CONTAINS
             !Check the independent field has been finished
             IF(independentField%FIELD_FINISHED) THEN
               !Check the user numbers match
-              IF(INDEPENDENT_FIELD_USER_NUMBER/=independentField%USER_NUMBER) THEN
+              IF(INDEPENDENT_FIELD_USER_NUMBER/=independentField%userNumber) THEN
                 localError="The specified independent field user number of "// &
                   & TRIM(NumberToVString(INDEPENDENT_FIELD_USER_NUMBER,"*",err,error))// &
                   & " does not match the user number of the specified independent field of "// &
-                  & TRIM(NumberToVString(independentField%USER_NUMBER,"*",err,error))//"."
+                  & TRIM(NumberToVString(independentField%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
               INDEPENDENT_FIELD_REGION=>independentField%REGION
               IF(ASSOCIATED(INDEPENDENT_FIELD_REGION)) THEN                
                 !Check the field is defined on the same region as the equations set
-                IF(INDEPENDENT_FIELD_REGION%USER_NUMBER/=REGION%USER_NUMBER) THEN
+                IF(INDEPENDENT_FIELD_REGION%userNumber/=REGION%userNumber) THEN
                   localError="Invalid region setup. The specified independent field has been created on region number "// &
-                    & TRIM(NumberToVString(INDEPENDENT_FIELD_REGION%USER_NUMBER,"*",err,error))// &
+                    & TRIM(NumberToVString(INDEPENDENT_FIELD_REGION%userNumber,"*",err,error))// &
                     & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 ENDIF
                 !Check the specified independent field has the same decomposition as the geometric field
@@ -3264,7 +3264,7 @@ CONTAINS
               localError="The specified independent field user number of "// &
                 & TRIM(NumberToVString(INDEPENDENT_FIELD_USER_NUMBER,"*",err,error))// &
                 & "has already been used to create a field on region number "// &
-                & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
           ENDIF
@@ -3275,7 +3275,7 @@ CONTAINS
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
           EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_INDEPENDENT_TYPE
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-          EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=INDEPENDENT_FIELD_USER_NUMBER
+          EQUATIONS_SET_SETUP_INFO%fieldUserNumber=INDEPENDENT_FIELD_USER_NUMBER
           EQUATIONS_SET_SETUP_INFO%FIELD=>independentField
           !Start equations set specific startup
           CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -3419,8 +3419,8 @@ CONTAINS
     ELSE
       ALLOCATE(EQUATIONS_SET,STAT=ERR)
       IF(ERR/=0) CALL FlagError("Could not allocate equations set.",err,error,*999)
-      EQUATIONS_SET%USER_NUMBER=0
-      EQUATIONS_SET%GLOBAL_NUMBER=0
+      EQUATIONS_SET%userNumber=0
+      EQUATIONS_SET%globalNumber=0
       EQUATIONS_SET%EQUATIONS_SET_FINISHED=.FALSE.
       NULLIFY(EQUATIONS_SET%EQUATIONS_SETS)
       EQUATIONS_SET%label=""
@@ -3529,7 +3529,7 @@ CONTAINS
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
           MATERIALS_FIELD=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
           IF(ASSOCIATED(MATERIALS_FIELD)) THEN
-            EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=MATERIALS_FIELD%USER_NUMBER
+            EQUATIONS_SET_SETUP_INFO%fieldUserNumber=MATERIALS_FIELD%userNumber
             EQUATIONS_SET_SETUP_INFO%FIELD=>MATERIALS_FIELD
             !Finish equations set specific startup
             CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -3571,7 +3571,7 @@ CONTAINS
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
     TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
-    TYPE(REGION_TYPE), POINTER :: REGION,MATERIALS_FIELD_REGION
+    TYPE(RegionType), POINTER :: REGION,MATERIALS_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("EQUATIONS_SET_MATERIALS_CREATE_START",err,error,*998)
@@ -3586,21 +3586,21 @@ CONTAINS
             !Check the materials field has been finished
             IF(MATERIALS_FIELD%FIELD_FINISHED) THEN
               !Check the user numbers match
-              IF(MATERIALS_FIELD_USER_NUMBER/=MATERIALS_FIELD%USER_NUMBER) THEN
+              IF(MATERIALS_FIELD_USER_NUMBER/=MATERIALS_FIELD%userNumber) THEN
                 localError="The specified materials field user number of "// &
                   & TRIM(NumberToVString(MATERIALS_FIELD_USER_NUMBER,"*",err,error))// &
                   & " does not match the user number of the specified materials field of "// &
-                  & TRIM(NumberToVString(MATERIALS_FIELD%USER_NUMBER,"*",err,error))//"."
+                  & TRIM(NumberToVString(MATERIALS_FIELD%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
               MATERIALS_FIELD_REGION=>MATERIALS_FIELD%REGION
               IF(ASSOCIATED(MATERIALS_FIELD_REGION)) THEN                
                 !Check the field is defined on the same region as the equations set
-                IF(MATERIALS_FIELD_REGION%USER_NUMBER/=REGION%USER_NUMBER) THEN
+                IF(MATERIALS_FIELD_REGION%userNumber/=REGION%userNumber) THEN
                   localError="Invalid region setup. The specified materials field has been created on region number "// &
-                    & TRIM(NumberToVString(MATERIALS_FIELD_REGION%USER_NUMBER,"*",err,error))// &
+                    & TRIM(NumberToVString(MATERIALS_FIELD_REGION%userNumber,"*",err,error))// &
                     & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 ENDIF
                 !Check the specified materials field has the same decomposition as the geometric field
@@ -3627,7 +3627,7 @@ CONTAINS
               localError="The specified materials field user number of "// &
                 & TRIM(NumberToVString(MATERIALS_FIELD_USER_NUMBER,"*",err,error))// &
                 & "has already been used to create a field on region number "// &
-                & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
           ENDIF
@@ -3638,7 +3638,7 @@ CONTAINS
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
           EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_MATERIALS_TYPE
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-          EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=MATERIALS_FIELD_USER_NUMBER
+          EQUATIONS_SET_SETUP_INFO%fieldUserNumber=MATERIALS_FIELD_USER_NUMBER
           EQUATIONS_SET_SETUP_INFO%FIELD=>MATERIALS_FIELD
           !Start equations set specific startup
           CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -3788,7 +3788,7 @@ CONTAINS
         EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
         dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(dependentField)) THEN
-          EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=dependentField%USER_NUMBER
+          EQUATIONS_SET_SETUP_INFO%fieldUserNumber=dependentField%userNumber
           EQUATIONS_SET_SETUP_INFO%FIELD=>dependentField
           !Finish equations set specific setup
           CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -3827,7 +3827,7 @@ CONTAINS
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
     TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
-    TYPE(REGION_TYPE), POINTER :: REGION,DEPENDENT_FIELD_REGION
+    TYPE(RegionType), POINTER :: REGION,DEPENDENT_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("EQUATIONS_SET_DEPENDENT_CREATE_START",err,error,*998)
@@ -3842,21 +3842,21 @@ CONTAINS
             !Check the dependent field has been finished
             IF(dependentField%FIELD_FINISHED) THEN
               !Check the user numbers match
-              IF(DEPENDENT_FIELD_USER_NUMBER/=dependentField%USER_NUMBER) THEN
+              IF(DEPENDENT_FIELD_USER_NUMBER/=dependentField%userNumber) THEN
                 localError="The specified dependent field user number of "// &
                   & TRIM(NumberToVString(DEPENDENT_FIELD_USER_NUMBER,"*",err,error))// &
                   & " does not match the user number of the specified dependent field of "// &
-                  & TRIM(NumberToVString(dependentField%USER_NUMBER,"*",err,error))//"."
+                  & TRIM(NumberToVString(dependentField%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
               DEPENDENT_FIELD_REGION=>dependentField%REGION
               IF(ASSOCIATED(DEPENDENT_FIELD_REGION)) THEN                
                 !Check the field is defined on the same region as the equations set
-                IF(DEPENDENT_FIELD_REGION%USER_NUMBER/=REGION%USER_NUMBER) THEN
+                IF(DEPENDENT_FIELD_REGION%userNumber/=REGION%userNumber) THEN
                   localError="Invalid region setup. The specified dependent field has been created on region number "// &
-                    & TRIM(NumberToVString(DEPENDENT_FIELD_REGION%USER_NUMBER,"*",err,error))// &
+                    & TRIM(NumberToVString(DEPENDENT_FIELD_REGION%userNumber,"*",err,error))// &
                     & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 ENDIF
                 !Check the specified dependent field has the same decomposition as the geometric field
@@ -3883,7 +3883,7 @@ CONTAINS
               localError="The specified dependent field user number of "// &
                 & TRIM(NumberToVString(DEPENDENT_FIELD_USER_NUMBER,"*",err,error))// &
                 & " has already been used to create a field on region number "// &
-                & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
             EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED=.TRUE.
@@ -3892,7 +3892,7 @@ CONTAINS
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
           EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_DEPENDENT_TYPE
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-          EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=DEPENDENT_FIELD_USER_NUMBER
+          EQUATIONS_SET_SETUP_INFO%fieldUserNumber=DEPENDENT_FIELD_USER_NUMBER
           EQUATIONS_SET_SETUP_INFO%FIELD=>dependentField
           !Start the equations set specfic solution setup
           CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -4030,7 +4030,7 @@ CONTAINS
           equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
           derivedField=>equationsSet%derived%derivedField
           IF(ASSOCIATED(derivedField)) THEN
-            equationsSetSetupInfo%FIELD_USER_NUMBER=derivedField%USER_NUMBER
+            equationsSetSetupInfo%fieldUserNumber=derivedField%userNumber
             equationsSetSetupInfo%field=>derivedField
             !Finish equations set specific setup
             CALL EQUATIONS_SET_SETUP(equationsSet,equationsSetSetupInfo,err,error,*999)
@@ -4072,7 +4072,7 @@ CONTAINS
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: equationsSetSetupInfo
     TYPE(FIELD_TYPE), POINTER :: field,geometricField
-    TYPE(REGION_TYPE), POINTER :: region,derivedFieldRegion
+    TYPE(RegionType), POINTER :: region,derivedFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("EquationsSet_DerivedCreateStart",err,error,*998)
@@ -4087,21 +4087,21 @@ CONTAINS
             !Check the derived field has been finished
             IF(derivedField%FIELD_FINISHED) THEN
               !Check the user numbers match
-              IF(derivedFieldUserNumber/=derivedField%USER_NUMBER) THEN
+              IF(derivedFieldUserNumber/=derivedField%userNumber) THEN
                 localError="The specified derived field user number of "// &
                   & TRIM(NumberToVString(derivedFieldUserNumber,"*",err,error))// &
                   & " does not match the user number of the specified derived field of "// &
-                  & TRIM(NumberToVString(derivedField%USER_NUMBER,"*",err,error))//"."
+                  & TRIM(NumberToVString(derivedField%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               END IF
               derivedFieldRegion=>derivedField%REGION
               IF(ASSOCIATED(derivedFieldRegion)) THEN
                 !Check the field is defined on the same region as the equations set
-                IF(derivedFieldRegion%USER_NUMBER/=region%USER_NUMBER) THEN
+                IF(derivedFieldRegion%userNumber/=region%userNumber) THEN
                   localError="Invalid region setup. The specified derived field has been created on region number "// &
-                    & TRIM(NumberToVString(derivedFieldRegion%USER_NUMBER,"*",err,error))// &
+                    & TRIM(NumberToVString(derivedFieldRegion%userNumber,"*",err,error))// &
                     & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+                    & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 END IF
                 !Check the specified derived field has the same decomposition as the geometric field
@@ -4128,7 +4128,7 @@ CONTAINS
               localError="The specified derived field user number of "// &
                 & TRIM(NumberToVString(derivedFieldUserNumber,"*",err,error))// &
                 & " has already been used to create a field on region number "// &
-                & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+                & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             END IF
             equationsSet%derived%derivedFieldAutoCreated=.TRUE.
@@ -4138,7 +4138,7 @@ CONTAINS
           CALL EQUATIONS_SET_SETUP_INITIALISE(equationsSetSetupInfo,err,error,*999)
           equationsSetSetupInfo%SETUP_TYPE=EQUATIONS_SET_SETUP_DERIVED_TYPE
           equationsSetSetupInfo%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-          equationsSetSetupInfo%FIELD_USER_NUMBER=derivedFieldUserNumber
+          equationsSetSetupInfo%fieldUserNumber=derivedFieldUserNumber
           equationsSetSetupInfo%FIELD=>derivedField
           !Start the equations set specfic solution setup
           CALL EQUATIONS_SET_SETUP(equationsSet,equationsSetSetupInfo,err,error,*999)
@@ -4687,7 +4687,7 @@ CONTAINS
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping
+    TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -4716,7 +4716,7 @@ CONTAINS
     !Assemble the elements
     !Allocate the element matrices 
     CALL EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*999)
-    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr%mappings%elements
+    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr%mappings%elements
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
@@ -4730,8 +4730,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%INTERNAL_START,elementsMapping%INTERNAL_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,element,err,error,*999)
@@ -4750,8 +4750,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,element,err,error,*999)
@@ -4808,7 +4808,7 @@ CONTAINS
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping
+    TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -4837,7 +4837,7 @@ CONTAINS
     !Assemble the elements
     !Allocate the element matrices 
     CALL EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*999)
-    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr%mappings%elements
+    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr%mappings%elements
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
@@ -4851,8 +4851,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%INTERNAL_START,elementsMapping%INTERNAL_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,element,err,error,*999)
@@ -4871,8 +4871,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementJacobianEvaluate(equationsSet,element,err,error,*999)
@@ -5053,7 +5053,7 @@ CONTAINS
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping
+    TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -5082,7 +5082,7 @@ CONTAINS
     !Assemble the elements
     !Allocate the element matrices 
     CALL EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*999)
-    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr%mappings%elements
+    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr%mappings%elements
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
@@ -5096,8 +5096,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%INTERNAL_START,elementsMapping%INTERNAL_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
@@ -5116,8 +5116,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
@@ -5174,7 +5174,7 @@ CONTAINS
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: elementsMapping
+    TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -5203,7 +5203,7 @@ CONTAINS
     !Assemble the elements
     !Allocate the element matrices 
     CALL EquationsMatrices_ElementInitialise(vectorMatrices,err,error,*999)
-    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+    elementsMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
       & mappings%elements
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
@@ -5218,8 +5218,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal elements
-    DO elementIdx=elementsMapping%INTERNAL_START,elementsMapping%INTERNAL_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%internalStart,elementsMapping%internalFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
@@ -5238,8 +5238,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal elements equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost elements
-    DO elementIdx=elementsMapping%BOUNDARY_START,elementsMapping%GHOST_FINISH
-      element=elementsMapping%DOMAIN_LIST(elementIdx)
+    DO elementIdx=elementsMapping%boundaryStart,elementsMapping%ghostFinish
+      element=elementsMapping%domainList(elementIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_ElementCalculate(vectorMatrices,element,err,error,*999)
       CALL EquationsSet_FiniteElementResidualEvaluate(equationsSet,element,err,error,*999)
@@ -5297,7 +5297,7 @@ CONTAINS
 
     EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=0
     EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=0
-    EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=0
+    EQUATIONS_SET_SETUP_INFO%fieldUserNumber=0
     NULLIFY(EQUATIONS_SET_SETUP_INFO%FIELD)
     EQUATIONS_SET_SETUP_INFO%ANALYTIC_FUNCTION_TYPE=0
     
@@ -5324,7 +5324,7 @@ CONTAINS
 
     EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=0
     EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=0
-    EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=0
+    EQUATIONS_SET_SETUP_INFO%fieldUserNumber=0
     NULLIFY(EQUATIONS_SET_SETUP_INFO%FIELD)
     EQUATIONS_SET_SETUP_INFO%ANALYTIC_FUNCTION_TYPE=0
     
@@ -5525,7 +5525,7 @@ CONTAINS
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_FINISH_ACTION
           SOURCE_FIELD=>EQUATIONS_SET%SOURCE%SOURCE_FIELD
           IF(ASSOCIATED(SOURCE_FIELD)) THEN
-            EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=SOURCE_FIELD%USER_NUMBER
+            EQUATIONS_SET_SETUP_INFO%fieldUserNumber=SOURCE_FIELD%userNumber
             EQUATIONS_SET_SETUP_INFO%FIELD=>SOURCE_FIELD
             !Finish the equation set specific source setup
             CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -5567,7 +5567,7 @@ CONTAINS
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
     TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
-    TYPE(REGION_TYPE), POINTER :: REGION,SOURCE_FIELD_REGION
+    TYPE(RegionType), POINTER :: REGION,SOURCE_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("EQUATIONS_SET_SOURCE_CREATE_START",err,error,*998)
@@ -5582,21 +5582,21 @@ CONTAINS
             !Check the source field has been finished
             IF(SOURCE_FIELD%FIELD_FINISHED) THEN
               !Check the user numbers match
-              IF(SOURCE_FIELD_USER_NUMBER/=SOURCE_FIELD%USER_NUMBER) THEN
+              IF(SOURCE_FIELD_USER_NUMBER/=SOURCE_FIELD%userNumber) THEN
                 localError="The specified source field user number of "// &
                   & TRIM(NumberToVString(SOURCE_FIELD_USER_NUMBER,"*",err,error))// &
                   & " does not match the user number of the specified source field of "// &
-                  & TRIM(NumberToVString(SOURCE_FIELD%USER_NUMBER,"*",err,error))//"."
+                  & TRIM(NumberToVString(SOURCE_FIELD%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
               SOURCE_FIELD_REGION=>SOURCE_FIELD%REGION
               IF(ASSOCIATED(SOURCE_FIELD_REGION)) THEN                
                 !Check the field is defined on the same region as the equations set
-                IF(SOURCE_FIELD_REGION%USER_NUMBER/=REGION%USER_NUMBER) THEN
+                IF(SOURCE_FIELD_REGION%userNumber/=REGION%userNumber) THEN
                   localError="Invalid region setup. The specified source field has been created on region number "// &
-                    & TRIM(NumberToVString(SOURCE_FIELD_REGION%USER_NUMBER,"*",err,error))// &
+                    & TRIM(NumberToVString(SOURCE_FIELD_REGION%userNumber,"*",err,error))// &
                     & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                   CALL FlagError(localError,err,error,*999)
                 ENDIF
                 !Check the specified source field has the same decomposition as the geometric field
@@ -5623,7 +5623,7 @@ CONTAINS
               localError="The specified source field user number of "// &
                 & TRIM(NumberToVString(SOURCE_FIELD_USER_NUMBER,"*",err,error))// &
                 & "has already been used to create a field on region number "// &
-                & TRIM(NumberToVString(REGION%USER_NUMBER,"*",err,error))//"."
+                & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
           ENDIF
@@ -5634,7 +5634,7 @@ CONTAINS
           CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
           EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_SOURCE_TYPE
           EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-          EQUATIONS_SET_SETUP_INFO%FIELD_USER_NUMBER=SOURCE_FIELD_USER_NUMBER
+          EQUATIONS_SET_SETUP_INFO%fieldUserNumber=SOURCE_FIELD_USER_NUMBER
           EQUATIONS_SET_SETUP_INFO%FIELD=>SOURCE_FIELD
           !Start the equation set specific source setup
           CALL EQUATIONS_SET_SETUP(EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
@@ -6194,7 +6194,7 @@ CONTAINS
   SUBROUTINE EQUATIONS_SETS_FINALISE(REGION,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to finalise the problems for.
+    TYPE(RegionType), POINTER :: REGION !<A pointer to the region to finalise the problems for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6226,7 +6226,7 @@ CONTAINS
   SUBROUTINE EQUATIONS_SETS_INITIALISE(REGION,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: REGION !<A pointer to the region to initialise the equations sets for
+    TYPE(RegionType), POINTER :: REGION !<A pointer to the region to initialise the equations sets for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6272,10 +6272,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local variables
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE),   POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: DIRICHLET_BOUNDARY_CONDITIONS
     TYPE(BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE), POINTER :: PRESSURE_INCREMENTED_BOUNDARY_CONDITIONS
@@ -6300,7 +6300,7 @@ CONTAINS
     !Take the stored load, scale it down appropriately then apply to the unknown variables    
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       IF(DIAGNOSTICS1) THEN
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  equations set",EQUATIONS_SET%USER_NUMBER,err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  equations set",EQUATIONS_SET%userNumber,err,error,*999)
       ENDIF
       IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
         dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
@@ -6346,10 +6346,10 @@ CONTAINS
                         CASE(BOUNDARY_CONDITION_FIXED_INCREMENTED, &
                             & BOUNDARY_CONDITION_MOVED_WALL_INCREMENTED)
                           !Convert dof index to local index
-                          IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(dirichlet_dof_idx)%DOMAIN_NUMBER(1)== &
+                          IF(DOMAIN_MAPPING%globalToLocalMap(dirichlet_dof_idx)%domainNumber(1)== &
                             & myGroupComputationNodeNumber) THEN
-                            dirichlet_dof_idx=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(dirichlet_dof_idx)%LOCAL_NUMBER(1)
-                            IF(0<dirichlet_dof_idx.AND.dirichlet_dof_idx<DOMAIN_MAPPING%GHOST_START) THEN
+                            dirichlet_dof_idx=DOMAIN_MAPPING%globalToLocalMap(dirichlet_dof_idx)%localNumber(1)
+                            IF(0<dirichlet_dof_idx.AND.dirichlet_dof_idx<DOMAIN_MAPPING%ghostStart) THEN
                               FULL_LOAD=FULL_LOADS(dirichlet_dof_idx)
                               ! Apply full load if last step, or fixed BC
                               IF(ITERATION_NUMBER==MAXIMUM_NUMBER_OF_ITERATIONS) THEN
@@ -6404,12 +6404,11 @@ CONTAINS
                         ! condition_global_dof could be for non-incremented point Neumann condition
                         IF(BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(condition_global_dof)/= &
                           & BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) CYCLE
-                        IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
+                        IF(DOMAIN_MAPPING%globalToLocalMap(condition_global_dof)%domainNumber(1)== &
                           & myGroupComputationNodeNumber) THEN
-                          condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
-                            & LOCAL_NUMBER(1)
+                          condition_local_dof=DOMAIN_MAPPING%globalToLocalMap(condition_global_dof)%localNumber(1)
                           neumann_point_dof=BOUNDARY_CONDITIONS_VARIABLE%neumannBoundaryConditions%pointDofMapping% &
-                            & GLOBAL_TO_LOCAL_MAP(condition_idx)%LOCAL_NUMBER(1)
+                            & globalToLocalMap(condition_idx)%localNumber(1)
                           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(dependentField,variable_type, &
                             & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,condition_local_dof,FULL_LOAD,err,error,*999)
                           CALL DistributedVector_ValuesSet(BOUNDARY_CONDITIONS_VARIABLE%neumannBoundaryConditions% &
@@ -6451,11 +6450,11 @@ CONTAINS
                           condition_global_dof=PRESSURE_INCREMENTED_BOUNDARY_CONDITIONS%PRESSURE_INCREMENTED_DOF_INDICES &
                             & (condition_idx)
                           !Must convert into local dof index
-                          IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
+                          IF(DOMAIN_MAPPING%globalToLocalMap(condition_global_dof)%domainNumber(1)== &
                             & myGroupComputationNodeNumber) THEN
-                            condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
-                              & LOCAL_NUMBER(1)
-                            IF(0<condition_local_dof.AND.condition_local_dof<DOMAIN_MAPPING%GHOST_START) THEN
+                            condition_local_dof=DOMAIN_MAPPING%globalToLocalMap(condition_global_dof)% &
+                              & localNumber(1)
+                            IF(0<condition_local_dof.AND.condition_local_dof<DOMAIN_MAPPING%ghostStart) THEN
                               NEW_LOAD=CURRENT_LOADS(condition_local_dof)
                               NEW_LOAD=NEW_LOAD/MAXIMUM_NUMBER_OF_ITERATIONS
 !if (condition_idx==1) write(*,*) "new load=",new_load
@@ -6482,11 +6481,11 @@ CONTAINS
                           condition_global_dof=PRESSURE_INCREMENTED_BOUNDARY_CONDITIONS%PRESSURE_INCREMENTED_DOF_INDICES &
                             & (condition_idx)
                           !Must convert into local dof index
-                          IF(DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)%DOMAIN_NUMBER(1)== &
+                          IF(DOMAIN_MAPPING%globalToLocalMap(condition_global_dof)%domainNumber(1)== &
                             & myGroupComputationNodeNumber) THEN
-                            condition_local_dof=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(condition_global_dof)% &
-                              & LOCAL_NUMBER(1)
-                            IF(0<condition_local_dof.AND.condition_local_dof<DOMAIN_MAPPING%GHOST_START) THEN
+                            condition_local_dof=DOMAIN_MAPPING%globalToLocalMap(condition_global_dof)% &
+                              & localNumber(1)
+                            IF(0<condition_local_dof.AND.condition_local_dof<DOMAIN_MAPPING%ghostStart) THEN
                               PREV_LOAD=PREV_LOADS(condition_local_dof)
                               CURRENT_LOAD=CURRENT_LOADS(condition_local_dof)
                               NEW_LOAD=CURRENT_LOAD+(CURRENT_LOAD-PREV_LOAD)  !This may be subject to numerical errors...
@@ -6623,7 +6622,7 @@ CONTAINS
     REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: nodalMapping
+    TYPE(DomainMappingType), POINTER :: nodalMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -6650,7 +6649,7 @@ CONTAINS
     CALL EquationsMatrices_VectorValuesInitialise(vectorMatrices,EQUATIONS_MATRICES_NONLINEAR_ONLY,0.0_DP,err,error,*999)
     !Allocate the nodal matrices 
     CALL EquationsMatrices_NodalInitialise(vectorMatrices,err,error,*999)
-    nodalMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr%mappings%nodes
+    nodalMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr%mappings%nodes
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
@@ -6664,8 +6663,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal nodes
-    DO nodeIdx=nodalMapping%INTERNAL_START,nodalMapping%INTERNAL_FINISH
-      nodeNumber=nodalMapping%DOMAIN_LIST(nodeIdx)
+    DO nodeIdx=nodalMapping%internalStart,nodalMapping%internalFinish
+      nodeNumber=nodalMapping%domainList(nodeIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
@@ -6684,8 +6683,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
-    DO nodeIdx=nodalMapping%BOUNDARY_START,nodalMapping%GHOST_FINISH
-      nodeNumber=nodalMapping%DOMAIN_LIST(nodeIdx)
+    DO nodeIdx=nodalMapping%boundaryStart,nodalMapping%ghostFinish
+      nodeNumber=nodalMapping%domainList(nodeIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
@@ -6993,7 +6992,7 @@ CONTAINS
     REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: nodalMapping
+    TYPE(DomainMappingType), POINTER :: nodalMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -7021,7 +7020,7 @@ CONTAINS
     !Assemble the nodes
     !Allocate the nodal matrices 
     CALL EquationsMatrices_NodalInitialise(vectorMatrices,err,error,*999)
-    nodalMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr%mappings%nodes
+    nodalMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr%mappings%nodes
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
@@ -7033,8 +7032,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal nodes
-    DO nodeIdx=nodalMapping%INTERNAL_START,nodalMapping%INTERNAL_FINISH
-      nodeNumber=nodalMapping%DOMAIN_LIST(nodeIdx)
+    DO nodeIdx=nodalMapping%internalStart,nodalMapping%internalFinish
+      nodeNumber=nodalMapping%domainList(nodeIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
@@ -7053,8 +7052,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
-    DO nodeIdx=nodalMapping%BOUNDARY_START,nodalMapping%GHOST_FINISH
-      nodeNumber=nodalMapping%DOMAIN_LIST(nodeIdx)
+    DO nodeIdx=nodalMapping%boundaryStart,nodalMapping%ghostFinish
+      nodeNumber=nodalMapping%domainList(nodeIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalJacobianEvaluate(equationsSet,nodeNumber,err,error,*999)
@@ -7112,7 +7111,7 @@ CONTAINS
     REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
       & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
       & systemTime5(1),systemTime6(1)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: nodalMapping
+    TYPE(DomainMappingType), POINTER :: nodalMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -7141,7 +7140,7 @@ CONTAINS
     CALL EquationsMatrices_VectorValuesInitialise(vectorMatrices,EQUATIONS_MATRICES_NONLINEAR_ONLY,0.0_DP,err,error,*999)
     !Allocate the nodal matrices 
     CALL EquationsMatrices_NodalInitialise(vectorMatrices,err,error,*999)
-    nodalMapping=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr%mappings%nodes
+    nodalMapping=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr%mappings%nodes
     !Output timing information if required
     IF(equations%outputType>=EQUATIONS_TIMING_OUTPUT) THEN
       CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
@@ -7155,8 +7154,8 @@ CONTAINS
     ENDIF
     numberOfTimes=0
     !Loop over the internal nodes
-    DO nodeIdx=nodalMapping%INTERNAL_START,nodalMapping%INTERNAL_FINISH
-      nodeNumber=nodalMapping%DOMAIN_LIST(nodeIdx)
+    DO nodeIdx=nodalMapping%internalStart,nodalMapping%internalFinish
+      nodeNumber=nodalMapping%domainList(nodeIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)
@@ -7175,8 +7174,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Internal nodes equations assembly",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     !Loop over the boundary and ghost nodes
-    DO nodeIdx=nodalMapping%BOUNDARY_START,nodalMapping%GHOST_FINISH
-      nodeNumber=nodalMapping%DOMAIN_LIST(nodeIdx)
+    DO nodeIdx=nodalMapping%boundaryStart,nodalMapping%ghostFinish
+      nodeNumber=nodalMapping%domainList(nodeIdx)
       numberOfTimes=numberOfTimes+1
       CALL EquationsMatrices_NodalCalculate(vectorMatrices,nodeNumber,err,error,*999)
       CALL EquationsSet_NodalResidualEvaluate(equationsSet,nodeNumber,err,error,*999)

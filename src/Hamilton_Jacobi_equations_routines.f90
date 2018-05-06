@@ -123,11 +123,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,NUMBER_OF_DIMENSIONS,variable_idx,variable_type
+    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,numberOfDimensions,variable_idx,variable_type
     REAL(DP) :: VALUE,X(3)
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(VARYING_STRING) :: localError    
@@ -140,7 +140,7 @@ CONTAINS
         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
           GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-            CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+            CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             NULLIFY(GEOMETRIC_VARIABLE)
             CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
             CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
@@ -152,29 +152,29 @@ CONTAINS
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                   DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
+                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
                         IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
                           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                           IF(ASSOCIATED(DOMAIN_NODES)) THEN
                             !Loop over the local nodes excluding the ghosts.
-                            DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
                               !!TODO \todo We should interpolate the geometric field here and the node position.
-                              DO dim_idx=1,NUMBER_OF_DIMENSIONS
+                              DO dim_idx=1,numberOfDimensions
                                 !Default to version 1 of each node derivative
                                 local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                                   & NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
                                 X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                               ENDDO !dim_idx
                               !Loop over the derivatives
-                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                 SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
                                 CASE(EQUATIONS_SET_HJ_EQUATION_TWO_DIM_1)
                                   !u=x^2+2.x.y-y^2
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=X(1)*X(1)-2.0_DP*X(1)*X(2)-X(2)*X(2)
                                     CASE(GLOBAL_DERIV_S1)
@@ -185,12 +185,12 @@ CONTAINS
                                       VALUE=2.0_DP
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=0.0_DP !!TODO
                                     CASE(GLOBAL_DERIV_S1)
@@ -201,7 +201,7 @@ CONTAINS
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -214,7 +214,7 @@ CONTAINS
                                   !u=cos(x).cosh(y)
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=COS(X(1))*COSH(X(2))
                                     CASE(GLOBAL_DERIV_S1)
@@ -225,12 +225,12 @@ CONTAINS
                                       VALUE=-SIN(X(1))*SINH(X(2))
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=0.0_DP !!TODO
                                     CASE(GLOBAL_DERIV_S1)
@@ -241,7 +241,7 @@ CONTAINS
                                       !CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -254,7 +254,7 @@ CONTAINS
                                   !u=x^2+y^2-2.z^2
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=X(1)*X(1)+X(2)*X(2)-2.0_DP*X(3)*X(3)
                                     CASE(GLOBAL_DERIV_S1)
@@ -273,12 +273,12 @@ CONTAINS
                                       VALUE=0.0_DP
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=0.0_DP !!TODO
                                     CASE(GLOBAL_DERIV_S1)
@@ -297,7 +297,7 @@ CONTAINS
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -310,7 +310,7 @@ CONTAINS
                                   !u=cos(x).cosh(y).z
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=COS(X(1))*COSH(X(2))*X(3)
                                     CASE(GLOBAL_DERIV_S1)
@@ -329,12 +329,12 @@ CONTAINS
                                       VALUE=-SIN(X(1))*SINH(X(2))
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=0.0_DP !!TODO
                                     CASE(GLOBAL_DERIV_S1)
@@ -353,7 +353,7 @@ CONTAINS
                                       !CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -374,7 +374,7 @@ CONTAINS
                                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
                                 IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
-                                  IF(DOMAIN_NODES%NODES(node_idx)%BOUNDARY_NODE) THEN
+                                  IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
                                     !If we are a boundary node then set the analytic value on the boundary
                                     CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,variable_type, &
                                       & local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
@@ -443,7 +443,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,mi,ms,nh,nhs,ni,ns
     REAL(DP) :: RWG,SUM,PGMSI(3),PGNSI(3)
-    TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
+    TYPE(BasisType), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: equationsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -490,9 +490,9 @@ CONTAINS
           linearMapping=>equationsMapping%linearMapping
           FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
           FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%decomposition%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%decomposition%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
           QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
@@ -506,7 +506,7 @@ CONTAINS
 #endif
             CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
               & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,equations%interpolation% &
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi,equations%interpolation% &
               & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             !Calculate RWG.
 !!TODO: Think about symmetric problems. 
@@ -517,22 +517,22 @@ CONTAINS
             DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
-                      DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
+                      DO ni=1,DEPENDENT_BASIS%numberOfXi
                         PGMSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                         PGNSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
 
                       SUM=0.0_DP
-                      DO mi=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                        DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
+                      DO mi=1,DEPENDENT_BASIS%numberOfXi
+                        DO ni=1,DEPENDENT_BASIS%numberOfXi
                           SUM=SUM+PGMSI(mi)*PGNSI(ni)*equations%interpolation% &
                             & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%GU(mi,ni)
                         ENDDO !ni
@@ -557,13 +557,13 @@ CONTAINS
             mhs=0          
             DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
                         & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)* &
@@ -612,7 +612,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,mi,ms,nh,nhs,ni,ns
     REAL(DP) :: RWG,SUM,PGMSI(3),PGNSI(3)
-    TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
+    TYPE(BasisType), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: equationsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -660,9 +660,9 @@ CONTAINS
           linearMapping=>equationsMapping%linearMapping
           FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%variable
           FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%decomposition%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+          GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%decomposition%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
           QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
@@ -676,7 +676,7 @@ CONTAINS
 #endif
             CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
               & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,equations%interpolation% &
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi,equations%interpolation% &
               & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             !Calculate RWG.
 !!TODO: Think about symmetric problems. 
@@ -687,22 +687,22 @@ CONTAINS
             DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
-                      DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
+                      DO ni=1,DEPENDENT_BASIS%numberOfXi
                         PGMSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                         PGNSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
 
                       SUM=0.0_DP
-                      DO mi=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                        DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
+                      DO mi=1,DEPENDENT_BASIS%numberOfXi
+                        DO ni=1,DEPENDENT_BASIS%numberOfXi
                           SUM=SUM+PGMSI(mi)*PGNSI(ni)*equations%interpolation% &
                             & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%GU(mi,ni)
                         ENDDO !ni
@@ -727,13 +727,13 @@ CONTAINS
             mhs=0          
             DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
                         & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)* &
@@ -959,9 +959,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS, &
+    INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE,numberOfDimensions, &
       & NUMBER_OF_MATERIALS_COMPONENTS, GEOMETRIC_MESH_COMPONENT
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: equationsMapping
@@ -1006,7 +1006,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -1130,7 +1130,7 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Create the auto created materials field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
                   & MATERIALS_FIELD,err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
@@ -1147,21 +1147,21 @@ CONTAINS
                 CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,err,error,*999)
+                  & numberOfDimensions,err,error,*999)
                 IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE) THEN
                   !Constant source. Materials field components are 1 for each dimension and 1 for the constant source
                   !i.e., k and c in div(k.grad(u(x)))=c(x)
-                  NUMBER_OF_MATERIALS_COMPONENTS=NUMBER_OF_DIMENSIONS+1
+                  NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+1
                 ELSE
                   !Linear source. Materials field components are 1 for each dimension and 2 for the linear source
                   !i.e., k and a and c in div(k.grad(u(x)))=a(x)u(x)+c(x)
-                  NUMBER_OF_MATERIALS_COMPONENTS=NUMBER_OF_DIMENSIONS+2
+                  NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+2
                 ENDIF
                 !Set the number of materials components
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & NUMBER_OF_MATERIALS_COMPONENTS,err,error,*999)
                 !Default the k materials components to the geometric interpolation setup with constant interpolation
-                DO component_idx=1,NUMBER_OF_DIMENSIONS
+                DO component_idx=1,numberOfDimensions
                   CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                   CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -1172,7 +1172,7 @@ CONTAINS
                 !Default the source materials components to the first component geometric interpolation with constant interpolation
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                DO component_idx=NUMBER_OF_DIMENSIONS+1,NUMBER_OF_MATERIALS_COMPONENTS
+                DO component_idx=numberOfDimensions+1,NUMBER_OF_MATERIALS_COMPONENTS
                   CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -1191,12 +1191,12 @@ CONTAINS
                   & err,error,*999)
                 CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,err,error,*999)
+                  & numberOfDimensions,err,error,*999)
                 IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+1, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions+1, &
                     & err,error,*999)
                 ELSE
-                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+2, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions+2, &
                     & err,error,*999)
                 ENDIF
               ENDIF
@@ -1218,23 +1218,23 @@ CONTAINS
                 CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
                 !Set the default values for the materials field
                 CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,err,error,*999)
+                  & numberOfDimensions,err,error,*999)
                 IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE) THEN
                   !Constant source. Materials field components are 1 for each dimension and 1 for the constant source
                   !i.e., k and c in div(k.grad(u(x)))=c(x)
-                  NUMBER_OF_MATERIALS_COMPONENTS=NUMBER_OF_DIMENSIONS+1
+                  NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+1
                 ELSE
                   !Linear source. Materials field components are 1 for each dimension and 2 for the linear source
                   !i.e., k and a and c in div(k.grad(u(x)))=a(x)u(x)+c(x)
-                  NUMBER_OF_MATERIALS_COMPONENTS=NUMBER_OF_DIMENSIONS+2
+                  NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+2
                 ENDIF
                 !First set the k values to 1.0
-                DO component_idx=1,NUMBER_OF_DIMENSIONS
+                DO component_idx=1,numberOfDimensions
                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VALUES_SET_TYPE,component_idx,1.0_DP,err,error,*999)
                 ENDDO !component_idx
                 !Now set the source values to 1.0
-                DO component_idx=NUMBER_OF_DIMENSIONS+1,NUMBER_OF_MATERIALS_COMPONENTS
+                DO component_idx=numberOfDimensions+1,NUMBER_OF_MATERIALS_COMPONENTS
                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_VALUES_SET_TYPE,component_idx,1.0_DP,err,error,*999)
                 ENDDO !component_idx
@@ -1271,13 +1271,13 @@ CONTAINS
               IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                 GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_HJ_EQUATION_TWO_DIM_1)
                     !Check that we are in 2D
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -1288,9 +1288,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_HJ_EQUATION_TWO_DIM_1
                   CASE(EQUATIONS_SET_HJ_EQUATION_TWO_DIM_2)
                     !Check that we are in 2D
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -1301,9 +1301,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_HJ_EQUATION_TWO_DIM_2
                   CASE(EQUATIONS_SET_HJ_EQUATION_THREE_DIM_1)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -1314,9 +1314,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_HJ_EQUATION_THREE_DIM_1
                   CASE(EQUATIONS_SET_HJ_EQUATION_THREE_DIM_2)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -1679,11 +1679,11 @@ CONTAINS
 
 
   !>Calculates to give back the number of nodes from input file.
-  SUBROUTINE NUMBER_OF_INPUT_NODES(INPUT_FILE_NAME,INPUT_FILE_FORMAT,TOTAL_NUMBER_OF_NODES,TOTAL_NUMBER_OF_ELEMENTS,&
+  SUBROUTINE NUMBER_OF_INPUT_NODES(INPUT_FILE_NAME,INPUT_FILE_FORMAT,totalNumberOfNodes,TOTAL_NUMBER_OF_ELEMENTS,&
   &TOTAL_NUMBER_OF_CONNECTIVITY,Err)
 
     !subroutine variables
-    INTEGER(INTG), INTENT(OUT) :: TOTAL_NUMBER_OF_NODES
+    INTEGER(INTG), INTENT(OUT) :: totalNumberOfNodes
     INTEGER(INTG), INTENT(OUT) :: TOTAL_NUMBER_OF_ELEMENTS
     INTEGER(INTG), INTENT(OUT) :: TOTAL_NUMBER_OF_CONNECTIVITY
     CHARACTER (LEN=300) :: INPUT_FILE_NAME
@@ -1711,14 +1711,14 @@ CONTAINS
       OPEN (11,FILE=STRING)
       READ(11,*) STRING
 !      PRINT *, STRING
-      TOTAL_NUMBER_OF_NODES=-1
+      totalNumberOfNodes=-1
       DO WHILE (STRING .ne. "Connectivity") 
         READ(11,*) STRING
-        TOTAL_NUMBER_OF_NODES=TOTAL_NUMBER_OF_NODES+1
+        totalNumberOfNodes=totalNumberOfNodes+1
       ENDDO
       
       TOTAL_NUMBER_OF_CONNECTIVITY=0
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         READ(11,*) STRING,J
         TOTAL_NUMBER_OF_CONNECTIVITY=TOTAL_NUMBER_OF_CONNECTIVITY+J
       ENDDO
@@ -1740,28 +1740,28 @@ CONTAINS
       READ(11,*) STRING
       READ(11,*) STRING
       READ(11,*) STRING
-      READ(11,*) STRING,TOTAL_NUMBER_OF_NODES
-!      PRINT *, STRING,TOTAL_NUMBER_OF_NODES
+      READ(11,*) STRING,totalNumberOfNodes
+!      PRINT *, STRING,totalNumberOfNodes
       
-      DO I=1,INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)
+      DO I=1,INT((totalNumberOfNodes/3.0_DP)+0.5_DP)
       
         READ(11,*) STRING
 
       ENDDO
 !      READ(11,*) STRING
-!      print*,I,INT(TOTAL_NUMBER_OF_NODES/3.0+0.5),STRING
+!      print*,I,INT(totalNumberOfNodes/3.0+0.5),STRING
       READ(11,*) STRING,TOTAL_NUMBER_OF_ELEMENTS
     
       ALLOCATE(ELEMENT_LIST(TOTAL_NUMBER_OF_ELEMENTS,20),STAT=ERR)
-      ALLOCATE(CONNECTIVITY_LIST(TOTAL_NUMBER_OF_NODES,50),STAT=ERR)
-      ALLOCATE(CONNECTIVITY_NUMBER(TOTAL_NUMBER_OF_NODES),STAT=ERR)
+      ALLOCATE(CONNECTIVITY_LIST(totalNumberOfNodes,50),STAT=ERR)
+      ALLOCATE(CONNECTIVITY_NUMBER(totalNumberOfNodes),STAT=ERR)
 
       DO I=1,TOTAL_NUMBER_OF_ELEMENTS
         DO J=1,20
           ELEMENT_LIST(I,J)=0
         ENDDO
       ENDDO
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         CONNECTIVITY_NUMBER(I)=0
         DO J=1,50
           CONNECTIVITY_LIST(I,J)=0
@@ -1825,10 +1825,10 @@ CONTAINS
       READ(11,*) STRING
       READ(11,*) STRING
       READ(11,*) STRING
-      READ(11,*) STRING,TOTAL_NUMBER_OF_NODES,STRING
-!      PRINT *, STRING,TOTAL_NUMBER_OF_NODES,STRING
+      READ(11,*) STRING,totalNumberOfNodes,STRING
+!      PRINT *, STRING,totalNumberOfNodes,STRING
       
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
       
         READ(11,*) STRING
 
@@ -1837,15 +1837,15 @@ CONTAINS
       READ(11,*) STRING,TOTAL_NUMBER_OF_ELEMENTS
 
       ALLOCATE(ELEMENT_LIST(TOTAL_NUMBER_OF_ELEMENTS,20),STAT=ERR)
-      ALLOCATE(CONNECTIVITY_LIST(TOTAL_NUMBER_OF_NODES,50),STAT=ERR)
-      ALLOCATE(CONNECTIVITY_NUMBER(TOTAL_NUMBER_OF_NODES),STAT=ERR)
+      ALLOCATE(CONNECTIVITY_LIST(totalNumberOfNodes,50),STAT=ERR)
+      ALLOCATE(CONNECTIVITY_NUMBER(totalNumberOfNodes),STAT=ERR)
 
       DO I=1,TOTAL_NUMBER_OF_ELEMENTS
         DO J=1,20
           ELEMENT_LIST(I,J)=0
         ENDDO
       ENDDO
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         CONNECTIVITY_NUMBER(I)=0
         DO J=1,50
           CONNECTIVITY_LIST(I,J)=0
@@ -1905,8 +1905,8 @@ CONTAINS
       STRING = INPUT_FILE_NAME(1:I)//".pts"
 !      PRINT *, STRING
       OPEN (11,FILE=STRING)
-      READ(11,*) TOTAL_NUMBER_OF_NODES
-!      PRINT *, TOTAL_NUMBER_OF_NODES
+      READ(11,*) totalNumberOfNodes
+!      PRINT *, totalNumberOfNodes
       CLOSE (11)
       
       STRING = INPUT_FILE_NAME(1:I)//".elem"
@@ -1915,15 +1915,15 @@ CONTAINS
       READ(11,*) TOTAL_NUMBER_OF_ELEMENTS
       
       ALLOCATE(ELEMENT_LIST(TOTAL_NUMBER_OF_ELEMENTS,20),STAT=ERR)
-      ALLOCATE(CONNECTIVITY_LIST(TOTAL_NUMBER_OF_NODES,50),STAT=ERR)
-      ALLOCATE(CONNECTIVITY_NUMBER(TOTAL_NUMBER_OF_NODES),STAT=ERR)
+      ALLOCATE(CONNECTIVITY_LIST(totalNumberOfNodes,50),STAT=ERR)
+      ALLOCATE(CONNECTIVITY_NUMBER(totalNumberOfNodes),STAT=ERR)
 
       DO I=1,TOTAL_NUMBER_OF_ELEMENTS
         DO J=1,20
           ELEMENT_LIST(I,J)=0
         ENDDO
       ENDDO
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         CONNECTIVITY_NUMBER(I)=0
         DO J=1,50
           CONNECTIVITY_LIST(I,J)=0
@@ -1983,7 +1983,7 @@ CONTAINS
       I = INDEX(INPUT_FILE_NAME,' ') - 1
       STRING = INPUT_FILE_NAME(1:I)//".node"
       OPEN (11,FILE=STRING)
-      READ(11,*) TOTAL_NUMBER_OF_NODES
+      READ(11,*) totalNumberOfNodes
       CLOSE (11)
       
       STRING = INPUT_FILE_NAME(1:I)//".ele"
@@ -1991,15 +1991,15 @@ CONTAINS
       READ(11,*) TOTAL_NUMBER_OF_ELEMENTS
       
       ALLOCATE(ELEMENT_LIST(TOTAL_NUMBER_OF_ELEMENTS,20),STAT=ERR)
-      ALLOCATE(CONNECTIVITY_LIST(TOTAL_NUMBER_OF_NODES,50),STAT=ERR)
-      ALLOCATE(CONNECTIVITY_NUMBER(TOTAL_NUMBER_OF_NODES),STAT=ERR)
+      ALLOCATE(CONNECTIVITY_LIST(totalNumberOfNodes,50),STAT=ERR)
+      ALLOCATE(CONNECTIVITY_NUMBER(totalNumberOfNodes),STAT=ERR)
       
       DO I=1,TOTAL_NUMBER_OF_ELEMENTS
         DO J=1,20
           ELEMENT_LIST(I,J)=0
         ENDDO
       ENDDO
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         CONNECTIVITY_NUMBER(I)=0
         DO J=1,50
           CONNECTIVITY_LIST(I,J)=0
@@ -2055,7 +2055,7 @@ CONTAINS
 
 
   !>to READ input file.
-  SUBROUTINE PRE_PROCESS_INFORMATION(MATERIAL_BEHAVIOUR,INPUT_FILE_NAME,INPUT_FILE_FORMAT,TOTAL_NUMBER_OF_NODES,&
+  SUBROUTINE PRE_PROCESS_INFORMATION(MATERIAL_BEHAVIOUR,INPUT_FILE_NAME,INPUT_FILE_FORMAT,totalNumberOfNodes,&
 &INPUT_TYPE_FOR_SEED_VALUE,INPUT_TYPE_FOR_SPEED_FUNCTION,SPEED_FUNCTION_ALONG_EIGEN_VECTOR,INPUT_TYPE_FOR_CONDUCTIVITY,&
 &STATUS_MASK,NODE_LIST,CONDUCTIVITY_TENSOR,SPEED_FUNCTION_TABLE,SEED_VALUE,CONNECTIVITY_NUMBER,&
 &SPEED_FUNCTION_TABLE_ON_CONNECTIVITY,CONDUCTIVITY_TENSOR_ON_CONNECTIVITY,RAW_INDEX,COLUMN_INDEX,TOTAL_NUMBER_OF_CONNECTIVITY,&
@@ -2080,7 +2080,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: TOTAL_NUMBER_OF_ELEMENTS
     INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_CONNECTIVITY
     INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_NODES_PER_ELEMENT
-    INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_NODES
+    INTEGER(INTG), INTENT(IN) :: totalNumberOfNodes
     CHARACTER (LEN=10)  :: INPUT_TYPE_FOR_SEED_VALUE
     CHARACTER (LEN=10)  :: INPUT_TYPE_FOR_SPEED_FUNCTION
     CHARACTER (LEN=10)  :: INPUT_TYPE_FOR_CONDUCTIVITY
@@ -2098,7 +2098,7 @@ CONTAINS
     REAL(DP) :: DOT_PRODUCT_VALUE
         
 !INITIALIZE PARAMETERS:
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
       CONNECTIVITY_NUMBER(I)=0
       DO J=1,3
         NODE_LIST(I,J) = 0.0
@@ -2109,7 +2109,7 @@ CONTAINS
       ENDDO
       RAW_INDEX(I)=0
     ENDDO
-    RAW_INDEX(TOTAL_NUMBER_OF_NODES+1)=0
+    RAW_INDEX(totalNumberOfNodes+1)=0
 
     DO I=1,TOTAL_NUMBER_OF_CONNECTIVITY
       COLUMN_INDEX(I)=0
@@ -2134,7 +2134,7 @@ CONTAINS
 
 !      input type for *velocity function* = FILE and *seed points* = FILE
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FILE" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "FILE") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
 
             READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1),SEED_VALUE(I)
             
@@ -2156,7 +2156,7 @@ CONTAINS
 
 !      input type for *velocity function* = FIXED and *seed points* = FILE
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "FILE") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
 
             READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),SEED_VALUE(I)
             CONDUCTIVITY_TENSOR(I,1)=1.0_DP
@@ -2177,7 +2177,7 @@ CONTAINS
 
 !      input type for *velocity function* = FILE and *seed points* = LIST
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FILE" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
 
             READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1)
             CONDUCTIVITY_TENSOR(I,1)=1.0_DP
@@ -2202,7 +2202,7 @@ CONTAINS
 
 !      input type for *velocity function* = FIXED and *seed points* = LIST
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
 
             READ(11,*) STRING,(NODE_LIST(I,J),J=1,3)
             CONDUCTIVITY_TENSOR(I,1)=1.0_DP
@@ -2236,7 +2236,7 @@ CONTAINS
 
 !      input type for *velocity function* = FILE and *seed points* = FILE
           IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FILE" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "FILE") THEN
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
 
               READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),(CONDUCTIVITY_TENSOR(I,J),J=1,9),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1),&
                            &SPEED_FUNCTION_ALONG_EIGEN_VECTOR(2),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(3),SEED_VALUE(I)
@@ -2246,7 +2246,7 @@ CONTAINS
 
 !      input type for *velocity function* = FIXED and *seed points* = FILE
           IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "FILE") THEN
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
 
               READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),(CONDUCTIVITY_TENSOR(I,J),J=1,9),SEED_VALUE(I)
  
@@ -2255,7 +2255,7 @@ CONTAINS
 
 !      input type for *velocity function* = FILE and *seed points* = LIST
           IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FILE" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
 
               READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),(CONDUCTIVITY_TENSOR(I,J),J=1,9),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1),&
                            &SPEED_FUNCTION_ALONG_EIGEN_VECTOR(2),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(3)
@@ -2269,7 +2269,7 @@ CONTAINS
 
 !      input type for *velocity function* = FIXED and *seed points* = LIST
           IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FILE" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
 
               READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),(CONDUCTIVITY_TENSOR(I,J),J=1,9)
 
@@ -2288,7 +2288,7 @@ CONTAINS
 
 !      input type for *velocity function* = FILE and *seed points* = FILE
           IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FILE" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "FILE") THEN
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
 
               READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),(CONDUCTIVITY_TENSOR(I,J),J=1,3),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1),&
                            &SPEED_FUNCTION_ALONG_EIGEN_VECTOR(2),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(3),SEED_VALUE(I)
@@ -2298,7 +2298,7 @@ CONTAINS
 
 !      input type for *velocity function* = FIXED and *seed points* = FILE
           IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "FILE") THEN
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
 
               READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),(CONDUCTIVITY_TENSOR(I,J),J=1,3),SEED_VALUE(I)
  
@@ -2307,7 +2307,7 @@ CONTAINS
 
 !      input type for *velocity function* = FILE and *seed points* = LIST
           IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FILE" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
 
               READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),(CONDUCTIVITY_TENSOR(I,J),J=1,3),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1),&
                            &SPEED_FUNCTION_ALONG_EIGEN_VECTOR(2),SPEED_FUNCTION_ALONG_EIGEN_VECTOR(3)
@@ -2321,7 +2321,7 @@ CONTAINS
 
 !      input type for *velocity function* = FIXED and *seed points* = LIST
           IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FILE" .AND. INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
 
               READ(11,*) STRING,(NODE_LIST(I,J),J=1,3),(CONDUCTIVITY_TENSOR(I,J),J=1,3)
 
@@ -2332,7 +2332,7 @@ CONTAINS
             ENDDO
           ENDIF
 
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
 !            CALL CALCULATE_SECOND_EIGENVECTOR()
             A=[CONDUCTIVITY_TENSOR(I,1),CONDUCTIVITY_TENSOR(I,2),CONDUCTIVITY_TENSOR(I,3)]
             B=[0.0_DP,0.0_DP,1.0_DP]
@@ -2380,7 +2380,7 @@ CONTAINS
 ! CONNSDONCOCNCNOSKCN      load data for the CONNECTIVITY list 
       READ(11,*) STRING
 
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
 
         READ(11,*) STRING,CONNECTIVITY_NUMBER(I),(CONNECTIVITY_LIST(I,J),J=1,CONNECTIVITY_NUMBER(I))
         
@@ -2413,26 +2413,26 @@ CONTAINS
       READ(11,*) STRING
       READ(11,*) STRING
 
-      DO I=1,INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-1
+      DO I=1,INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-1
 
         READ(11,*) (NODE_LIST(3*(I-1)+1,J),J=1,3),(NODE_LIST(3*(I-1)+2,J),J=1,3),(NODE_LIST(3*(I-1)+3,J),J=1,3)
 
       ENDDO
 
-      I=INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)
+      I=INT((totalNumberOfNodes/3.0_DP)+0.5_DP)
 
-      IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 0) THEN
+      IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 0) THEN
 
         READ(11,*) (NODE_LIST(3*(I-1)+1,J),J=1,3),(NODE_LIST(3*(I-1)+2,J),J=1,3),(NODE_LIST(3*(I-1)+3,J),J=1,3)
 
       ENDIF
-      IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 1) THEN
+      IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 1) THEN
 
         READ(11,*) (NODE_LIST(3*(I-1)+1,J),J=1,3),(NODE_LIST(3*(I-1)+2,J),J=1,3)
 
 
       ENDIF
-      IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 2) THEN
+      IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 2) THEN
 
         READ(11,*) (NODE_LIST(3*(I-1)+1,J),J=1,3)
 
@@ -2486,7 +2486,7 @@ CONTAINS
 !      set input for *seed points* = LIST
       IF (INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
 
-        DO I=1,TOTAL_NUMBER_OF_NODES 
+        DO I=1,totalNumberOfNodes 
 
           IF (STATUS_MASK(I) .NE. "SEED POINT") THEN
             SEED_VALUE(I) = 1000.0_DP
@@ -2502,7 +2502,7 @@ CONTAINS
         TEXT_LENGTH = INDEX(INPUT_FILE_NAME,' ') - 1
         STRING = INPUT_FILE_NAME(1:TEXT_LENGTH)//".estm"
 
-        DO I=1,TOTAL_NUMBER_OF_NODES
+        DO I=1,totalNumberOfNodes
           STATUS_MASK(I) = ""
         ENDDO
 
@@ -2519,7 +2519,7 @@ CONTAINS
 
         CLOSE(11)
 
-        DO I=1,TOTAL_NUMBER_OF_NODES 
+        DO I=1,totalNumberOfNodes 
 
           IF (STATUS_MASK(I) .NE. "SEED POINT") THEN
             SEED_VALUE(I) = 1000.0_DP
@@ -2533,7 +2533,7 @@ CONTAINS
 !      for the ISOTROPIC materials
       IF (MATERIAL_BEHAVIOUR .EQ. "ISOTROPIC") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             CONDUCTIVITY_TENSOR(I,1)=1.0_DP
             CONDUCTIVITY_TENSOR(I,2)=0.0_DP
             CONDUCTIVITY_TENSOR(I,3)=0.0_DP
@@ -2557,7 +2557,7 @@ CONTAINS
         READ (11,*) STRING
 
         IF (INPUT_TYPE_FOR_CONDUCTIVITY .EQ. "TENSOR") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             READ(11,*) STRING,(CONDUCTIVITY_TENSOR(I,J),J=1,9)
           ENDDO
         ENDIF
@@ -2573,27 +2573,27 @@ CONTAINS
       
 !      PRINT *,STRING
       
-            DO I=1,INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-1
+            DO I=1,INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-1
 
               READ(11,*) (CONDUCTIVITY_TENSOR(3*(I-1)+1,J),J=1,3),(CONDUCTIVITY_TENSOR(3*(I-1)+2,J),J=1,3), &
                & (CONDUCTIVITY_TENSOR(3*(I-1)+3,J),J=1,3)
 
             ENDDO
 
-            I=INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)
+            I=INT((totalNumberOfNodes/3.0_DP)+0.5_DP)
 
-            IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 0) THEN
+            IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 0) THEN
 
               READ(11,*) (CONDUCTIVITY_TENSOR(3*(I-1)+1,J),J=1,3),(CONDUCTIVITY_TENSOR(3*(I-1)+2,J),J=1,3), &
                & (CONDUCTIVITY_TENSOR(3*(I-1)+3,J),J=1,3)
 
             ENDIF
-            IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 1) THEN
+            IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 1) THEN
     
               READ(11,*) (CONDUCTIVITY_TENSOR(3*(I-1)+1,J),J=1,3),(CONDUCTIVITY_TENSOR(3*(I-1)+2,J),J=1,3)
 
             ENDIF
-            IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 2) THEN
+            IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 2) THEN
 
               READ(11,*) (CONDUCTIVITY_TENSOR(3*(I-1)+1,J),J=1,3)
 
@@ -2601,14 +2601,14 @@ CONTAINS
       
           
           ELSE
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
             
               READ(11,*) (CONDUCTIVITY_TENSOR(I,J),J=1,3) 
               
             ENDDO               
           ENDIF ! end if
           
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
           
 !            READ(11,*) (CONDUCTIVITY_TENSOR(I,J),J=1,3)
 
@@ -2665,7 +2665,7 @@ CONTAINS
 !        if it comes with FIXED format
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
             DO J=1,3
               SPEED_FUNCTION_TABLE(I,J) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1)
             ENDDO
@@ -2702,16 +2702,16 @@ CONTAINS
 !        if it comes with FIXED format
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED") THEN 
         
-        DO I=1,TOTAL_NUMBER_OF_NODES
+        DO I=1,totalNumberOfNodes
           DO J=1,3
             SPEED_FUNCTION_TABLE(I,J) = 0.0_DP
           ENDDO
         ENDDO
         
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
 !            DO J=1,CONNECTIVITY_NUMBER(I)
-!              IF (CONNECTIVITY_LIST(I,J) > TOTAL_NUMBER_OF_NODES) THEN
-!                PRINT*, I,J,CONNECTIVITY_NUMBER(I),CONNECTIVITY_LIST(I,J),TOTAL_NUMBER_OF_NODES
+!              IF (CONNECTIVITY_LIST(I,J) > totalNumberOfNodes) THEN
+!                PRINT*, I,J,CONNECTIVITY_NUMBER(I),CONNECTIVITY_LIST(I,J),totalNumberOfNodes
 !              ENDIF
               SPEED_FUNCTION_TABLE(I,1) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1)
               SPEED_FUNCTION_TABLE(I,2) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(2)
@@ -2763,7 +2763,7 @@ CONTAINS
       READ(11,*) STRING
       READ(11,*) STRING
 
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
 
         READ(11,*) (NODE_LIST(I,J),J=1,3)
 
@@ -2773,7 +2773,7 @@ CONTAINS
 
       READ(11,*) STRING
 
-      DO N=1,TOTAL_NUMBER_OF_NODES
+      DO N=1,totalNumberOfNodes
         CONNECTIVITY_NUMBER(N)=0
       ENDDO
 
@@ -2820,7 +2820,7 @@ CONTAINS
 !      set input for *seed points* = LIST
       IF (INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
 
-        DO I=1,TOTAL_NUMBER_OF_NODES 
+        DO I=1,totalNumberOfNodes 
 
           IF (STATUS_MASK(I) .NE. "SEED POINT") THEN
             SEED_VALUE(I) = 1000.0_DP
@@ -2849,7 +2849,7 @@ CONTAINS
 
         CLOSE(11)
 
-        DO I=1,TOTAL_NUMBER_OF_NODES 
+        DO I=1,totalNumberOfNodes 
 
           IF (STATUS_MASK(I) .NE. "SEED POINT") THEN
             SEED_VALUE(I) = 1000.0_DP
@@ -2863,7 +2863,7 @@ CONTAINS
 !      for the ISOTROPIC materials
       IF (MATERIAL_BEHAVIOUR .EQ. "ISOTROPIC") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             CONDUCTIVITY_TENSOR(I,1)=1.0_DP
             CONDUCTIVITY_TENSOR(I,2)=0.0_DP
             CONDUCTIVITY_TENSOR(I,3)=0.0_DP
@@ -2888,7 +2888,7 @@ CONTAINS
 !          print *,STRING
         
         IF (INPUT_TYPE_FOR_CONDUCTIVITY .EQ. "TENSOR") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             READ(11,*) STRING,(CONDUCTIVITY_TENSOR(I,J),J=1,9)
           ENDDO
         ENDIF
@@ -2904,27 +2904,27 @@ CONTAINS
       
 !      PRINT *,STRING
       
-            DO I=1,INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-1
+            DO I=1,INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-1
 
               READ(11,*) (CONDUCTIVITY_TENSOR(3*(I-1)+1,J),J=1,3),(CONDUCTIVITY_TENSOR(3*(I-1)+2,J),J=1,3), &
                & (CONDUCTIVITY_TENSOR(3*(I-1)+3,J),J=1,3)
 
             ENDDO
 
-            I=INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)
+            I=INT((totalNumberOfNodes/3.0_DP)+0.5_DP)
 
-            IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 0) THEN
+            IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 0) THEN
 
               READ(11,*) (CONDUCTIVITY_TENSOR(3*(I-1)+1,J),J=1,3),(CONDUCTIVITY_TENSOR(3*(I-1)+2,J),J=1,3), &
                & (CONDUCTIVITY_TENSOR(3*(I-1)+3,J),J=1,3)
 
             ENDIF
-            IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 1) THEN
+            IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 1) THEN
     
               READ(11,*) (CONDUCTIVITY_TENSOR(3*(I-1)+1,J),J=1,3),(CONDUCTIVITY_TENSOR(3*(I-1)+2,J),J=1,3)
 
             ENDIF
-            IF (3*INT((TOTAL_NUMBER_OF_NODES/3.0_DP)+0.5_DP)-TOTAL_NUMBER_OF_NODES .EQ. 2) THEN
+            IF (3*INT((totalNumberOfNodes/3.0_DP)+0.5_DP)-totalNumberOfNodes .EQ. 2) THEN
 
               READ(11,*) (CONDUCTIVITY_TENSOR(3*(I-1)+1,J),J=1,3)
 
@@ -2932,14 +2932,14 @@ CONTAINS
       
           
           ELSE
-            DO I=1,TOTAL_NUMBER_OF_NODES 
+            DO I=1,totalNumberOfNodes 
             
               READ(11,*) (CONDUCTIVITY_TENSOR(I,J),J=1,3) 
               
             ENDDO               
           ENDIF ! end if
           
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
           
 !            READ(11,*) (CONDUCTIVITY_TENSOR(I,J),J=1,3)
 
@@ -2995,7 +2995,7 @@ CONTAINS
 !        if it comes with FIXED format
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
             DO J=1,3
               SPEED_FUNCTION_TABLE(I,J) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1)
             ENDDO
@@ -3032,7 +3032,7 @@ CONTAINS
 !        if it comes with FIXED format
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
             DO J=1,3
               SPEED_FUNCTION_TABLE(I,J) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(J)
             ENDDO
@@ -3077,7 +3077,7 @@ CONTAINS
       OPEN (11,FILE=STRING)
       READ (11,*) STRING
 
-      DO I=1,TOTAL_NUMBER_OF_NODES 
+      DO I=1,totalNumberOfNodes 
 
         READ(11,*) (NODE_LIST(I,J),J=1,3)
 
@@ -3092,7 +3092,7 @@ CONTAINS
       OPEN (11,FILE=STRING)
       READ (11,*) TOTAL_NUMBER_OF_ELEMENTS
       
-      DO N=1,TOTAL_NUMBER_OF_NODES
+      DO N=1,totalNumberOfNodes
         CONNECTIVITY_NUMBER(N)=0
       ENDDO
 
@@ -3138,7 +3138,7 @@ CONTAINS
 !      set input for *seed points* = LIST
       IF (INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
 
-        DO I=1,TOTAL_NUMBER_OF_NODES 
+        DO I=1,totalNumberOfNodes 
 
           IF (STATUS_MASK(I) .NE. "SEED POINT") THEN
             SEED_VALUE(I) = 1000.0_DP
@@ -3157,7 +3157,7 @@ CONTAINS
         OPEN (11,FILE=STRING)
         READ (11,*) STRING
 
-        DO I=1,TOTAL_NUMBER_OF_NODES 
+        DO I=1,totalNumberOfNodes 
  
           READ(11,*) STRING,SEED_VALUE(I)
 
@@ -3171,7 +3171,7 @@ CONTAINS
 !      for the ISOTROPIC materials
       IF (MATERIAL_BEHAVIOUR .EQ. "ISOTROPIC") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             CONDUCTIVITY_TENSOR(I,1)=1.0_DP
             CONDUCTIVITY_TENSOR(I,2)=0.0_DP
             CONDUCTIVITY_TENSOR(I,3)=0.0_DP
@@ -3195,7 +3195,7 @@ CONTAINS
         READ (11,*) STRING
 
         IF (INPUT_TYPE_FOR_CONDUCTIVITY .EQ. "TENSOR") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             READ(11,*) STRING,(CONDUCTIVITY_TENSOR(I,J),J=1,9)
           ENDDO
         ENDIF
@@ -3264,7 +3264,7 @@ CONTAINS
 !        if it comes with FIXED format
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
             DO J=1,3
               SPEED_FUNCTION_TABLE(I,J) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1)
             ENDDO
@@ -3301,7 +3301,7 @@ CONTAINS
 !        if it comes with FIXED format
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
             DO J=1,3
               SPEED_FUNCTION_TABLE(I,J) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(J)
             ENDDO
@@ -3348,7 +3348,7 @@ CONTAINS
 
       READ(11,*) FIRST_NODE_NUMBER,(NODE_LIST(1,J),J=1,3)
 
-      DO I=2,TOTAL_NUMBER_OF_NODES 
+      DO I=2,totalNumberOfNodes 
 
 
         READ(11,*) STRING,(NODE_LIST(I,J),J=1,3)
@@ -3365,7 +3365,7 @@ CONTAINS
       OPEN (11,FILE=STRING)
       READ (11,*) TOTAL_NUMBER_OF_ELEMENTS
       
-      DO N=1,TOTAL_NUMBER_OF_NODES
+      DO N=1,totalNumberOfNodes
         CONNECTIVITY_NUMBER(N)=0
       ENDDO
 
@@ -3413,7 +3413,7 @@ CONTAINS
 !      set input for *seed points* = LIST
       IF (INPUT_TYPE_FOR_SEED_VALUE .EQ. "LIST") THEN
 
-        DO I=1,TOTAL_NUMBER_OF_NODES 
+        DO I=1,totalNumberOfNodes 
 
           IF (STATUS_MASK(I) .NE. "SEED POINT") THEN
             SEED_VALUE(I) = 1000.0_DP
@@ -3432,7 +3432,7 @@ CONTAINS
         OPEN (11,FILE=STRING)
         READ (11,*) STRING
 
-        DO I=1,TOTAL_NUMBER_OF_NODES 
+        DO I=1,totalNumberOfNodes 
  
           READ(11,*) STRING,SEED_VALUE(I)
 
@@ -3446,7 +3446,7 @@ CONTAINS
 !      for the ISOTROPIC materials
       IF (MATERIAL_BEHAVIOUR .EQ. "ISOTROPIC") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             CONDUCTIVITY_TENSOR(I,1)=1.0_DP
             CONDUCTIVITY_TENSOR(I,2)=0.0_DP
             CONDUCTIVITY_TENSOR(I,3)=0.0_DP
@@ -3470,13 +3470,13 @@ CONTAINS
         READ (11,*) STRING
 
         IF (INPUT_TYPE_FOR_CONDUCTIVITY .EQ. "TENSOR") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             READ(11,*) STRING,(CONDUCTIVITY_TENSOR(I,J),J=1,9)
           ENDDO
         ENDIF
 
         IF (INPUT_TYPE_FOR_CONDUCTIVITY .EQ. "VECTOR") THEN
-          DO I=1,TOTAL_NUMBER_OF_NODES 
+          DO I=1,totalNumberOfNodes 
             READ(11,*) STRING,(CONDUCTIVITY_TENSOR(I,J),J=1,3)
 
             A=[CONDUCTIVITY_TENSOR(I,1),CONDUCTIVITY_TENSOR(I,2),CONDUCTIVITY_TENSOR(I,3)]
@@ -3532,7 +3532,7 @@ CONTAINS
 !        if it comes with FIXED format
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
             DO J=1,3
               SPEED_FUNCTION_TABLE(I,J) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(1)
             ENDDO
@@ -3569,7 +3569,7 @@ CONTAINS
 !        if it comes with FIXED format
         IF (INPUT_TYPE_FOR_SPEED_FUNCTION .EQ. "FIXED") THEN 
 
-          DO I=1,TOTAL_NUMBER_OF_NODES
+          DO I=1,totalNumberOfNodes
             DO J=1,3
               SPEED_FUNCTION_TABLE(I,J) = SPEED_FUNCTION_ALONG_EIGEN_VECTOR(J)
             ENDDO
@@ -3604,7 +3604,7 @@ CONTAINS
 
     ! to set RAW_INDEX and COLUMN_INDEX
     RAW_INDEX(1) = 0
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
         
       RAW_INDEX(I+1) = RAW_INDEX(I) + CONNECTIVITY_NUMBER(I)
       DO J = 1,CONNECTIVITY_NUMBER(I)
@@ -3613,7 +3613,7 @@ CONTAINS
 
     ENDDO
     
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
         
       DO J = RAW_INDEX(I)+1,RAW_INDEX(I+1)
         DO K = 1,3
@@ -3641,11 +3641,11 @@ CONTAINS
   !
 
 
-  SUBROUTINE SOLVE_PROBLEM_FMM(TOTAL_NUMBER_OF_NODES,NODE_LIST,CONDUCTIVITY_TENSOR,SPEED_FUNCTION_TABLE,&
+  SUBROUTINE SOLVE_PROBLEM_FMM(totalNumberOfNodes,NODE_LIST,CONDUCTIVITY_TENSOR,SPEED_FUNCTION_TABLE,&
   &SEED_VALUE,CONNECTIVITY_NUMBER,CONNECTIVITY_LIST,STATUS_MASK)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_NODES
+    INTEGER(INTG), INTENT(IN) :: totalNumberOfNodes
     
     REAL(DP), ALLOCATABLE :: NODE_LIST(:,:)
     REAL(DP), ALLOCATABLE :: SPEED_FUNCTION_TABLE(:,:)
@@ -3667,10 +3667,10 @@ CONTAINS
     Err = 0
     !Start Program
 
-    CALL GENERATE_STATUS_MASK(TOTAL_NUMBER_OF_NODES,SEED_VALUE,STATUS_MASK,Err)
+    CALL GENERATE_STATUS_MASK(totalNumberOfNodes,SEED_VALUE,STATUS_MASK,Err)
 
     MIN_TRIAL_VALUE = 1000
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
 
       IF (STATUS_MASK(I) == "SEED POINT") THEN
 
@@ -3770,7 +3770,7 @@ CONTAINS
       MINIMUM_DATA = 1000.0_DP
       CHANGED_STATUS = 0
 
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
 
         IF (STATUS_MASK(I) .EQ. "CHANGED") THEN
           MIN_TRIAL_NODE=I
@@ -3799,12 +3799,12 @@ CONTAINS
   !
 
 
-  SUBROUTINE SOLVE_PROBLEM_FMM_CONNECTIVITY(TOTAL_NUMBER_OF_NODES,NODE_LIST,CONDUCTIVITY_TENSOR_ON_CONNECTIVITY,&
+  SUBROUTINE SOLVE_PROBLEM_FMM_CONNECTIVITY(totalNumberOfNodes,NODE_LIST,CONDUCTIVITY_TENSOR_ON_CONNECTIVITY,&
                        &SPEED_FUNCTION_TABLE_ON_CONNECTIVITY,RAW_INDEX,COLUMN_INDEX,TOTAL_NUMBER_OF_CONNECTIVITY,&
                        &SEED_VALUE,STATUS_MASK)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_NODES
+    INTEGER(INTG), INTENT(IN) :: totalNumberOfNodes
     INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_CONNECTIVITY
     
     REAL(DP), ALLOCATABLE :: NODE_LIST(:,:)
@@ -3827,10 +3827,10 @@ CONTAINS
     Err = 0
     !Start Program
 
-    CALL GENERATE_STATUS_MASK(TOTAL_NUMBER_OF_NODES,SEED_VALUE,STATUS_MASK,Err)
+    CALL GENERATE_STATUS_MASK(totalNumberOfNodes,SEED_VALUE,STATUS_MASK,Err)
 
     MIN_TRIAL_VALUE = 1000
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
 
       IF (STATUS_MASK(I) == "SEED POINT") THEN
 
@@ -3917,7 +3917,7 @@ CONTAINS
       MINIMUM_DATA = 1000.0_DP
       CHANGED_STATUS = 0
 
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
 
         IF (STATUS_MASK(I) .EQ. "CHANGED") THEN
           MIN_TRIAL_NODE=I
@@ -3947,12 +3947,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  SUBROUTINE SOLVE_PROBLEM_GEODESIC_CONNECTIVITY(TOTAL_NUMBER_OF_NODES,NODE_LIST,CONDUCTIVITY_TENSOR_ON_CONNECTIVITY,&
+  SUBROUTINE SOLVE_PROBLEM_GEODESIC_CONNECTIVITY(totalNumberOfNodes,NODE_LIST,CONDUCTIVITY_TENSOR_ON_CONNECTIVITY,&
                        &SPEED_FUNCTION_TABLE_ON_CONNECTIVITY,RAW_INDEX,COLUMN_INDEX,TOTAL_NUMBER_OF_CONNECTIVITY,&
                        &SEED_VALUE,STATUS_MASK,TRACE_NODE)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_NODES
+    INTEGER(INTG), INTENT(IN) :: totalNumberOfNodes
     INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_CONNECTIVITY
     REAL(DP), ALLOCATABLE :: NODE_LIST(:,:)
     REAL(DP), ALLOCATABLE :: SPEED_FUNCTION_TABLE_ON_CONNECTIVITY(:,:)
@@ -3976,13 +3976,13 @@ CONTAINS
     Err = 0
     
     !initialize data
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
       TRACE_NODE(I)=0
     ENDDO
 
     !Start Program
     ALLOCATE(CONNECTIVITY_WEIGHT(TOTAL_NUMBER_OF_CONNECTIVITY),STAT=ERR)
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
       DO J=RAW_INDEX(I)+1,RAW_INDEX(I+1)
         DISTANCE_VECTOR=[NODE_LIST(I,1)-NODE_LIST(COLUMN_INDEX(J),1)&
                         &,NODE_LIST(I,2)-NODE_LIST(COLUMN_INDEX(J),2)&
@@ -4016,10 +4016,10 @@ CONTAINS
       ENDDO
     ENDDO
           
-    CALL GENERATE_STATUS_MASK(TOTAL_NUMBER_OF_NODES,SEED_VALUE,STATUS_MASK,Err)
+    CALL GENERATE_STATUS_MASK(totalNumberOfNodes,SEED_VALUE,STATUS_MASK,Err)
 
     MIN_TRIAL_VALUE = 1000
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
 
       IF (STATUS_MASK(I) == "SEED POINT") THEN
 
@@ -4075,7 +4075,7 @@ CONTAINS
       MINIMUM_DATA = 1000.0_DP
       CHANGED_STATUS = 0
 
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
 
         IF (STATUS_MASK(I) .EQ. "CHANGED") THEN
           MIN_TRIAL_NODE = I
@@ -4104,11 +4104,11 @@ CONTAINS
   !
 
 
-  SUBROUTINE SOLVE_PROBLEM_GEODESIC(TOTAL_NUMBER_OF_NODES,NODE_LIST,CONDUCTIVITY_TENSOR,SPEED_FUNCTION_TABLE,&
+  SUBROUTINE SOLVE_PROBLEM_GEODESIC(totalNumberOfNodes,NODE_LIST,CONDUCTIVITY_TENSOR,SPEED_FUNCTION_TABLE,&
   & SEED_VALUE,CONNECTIVITY_NUMBER,CONNECTIVITY_LIST,STATUS_MASK,TRACE_NODE)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_NODES
+    INTEGER(INTG), INTENT(IN) :: totalNumberOfNodes
     
     REAL(DP), ALLOCATABLE :: NODE_LIST(:,:)
     REAL(DP), ALLOCATABLE :: SPEED_FUNCTION_TABLE(:,:)
@@ -4132,10 +4132,10 @@ CONTAINS
 
     !Start Program
 
-    CALL GENERATE_STATUS_MASK(TOTAL_NUMBER_OF_NODES,SEED_VALUE,STATUS_MASK,Err)
+    CALL GENERATE_STATUS_MASK(totalNumberOfNodes,SEED_VALUE,STATUS_MASK,Err)
 
     MIN_TRIAL_VALUE = 1000
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
 
       IF (STATUS_MASK(I) == "SEED POINT") THEN
 
@@ -4227,7 +4227,7 @@ CONTAINS
       MINIMUM_DATA = 1000
       CHANGED_STATUS = 0
 
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
 
         IF (STATUS_MASK(I) .EQ. "CHANGED") THEN
           MIN_TRIAL_NODE=I
@@ -4258,10 +4258,10 @@ CONTAINS
   !
 
   !>Calculates status mask for the local nodes.
-  SUBROUTINE GENERATE_STATUS_MASK(TOTAL_NUMBER_OF_NODES,SEED_VALUE,STATUS_MASK,Err)
+  SUBROUTINE GENERATE_STATUS_MASK(totalNumberOfNodes,SEED_VALUE,STATUS_MASK,Err)
 
     !subroutine variables
-    INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_NODES
+    INTEGER(INTG), INTENT(IN) :: totalNumberOfNodes
     REAL(DP), ALLOCATABLE :: SEED_VALUE(:)
     CHARACTER (LEN=10), ALLOCATABLE :: STATUS_MASK(:)
 
@@ -4274,7 +4274,7 @@ CONTAINS
         
 !    ENTERS("GENERATE_STATUS_MASK",Err,Error,*999)
     
-    DO I=1,TOTAL_NUMBER_OF_NODES
+    DO I=1,totalNumberOfNodes
 
       IF (SEED_VALUE(I) .LT. 100.0_DP) THEN
         STATUS_MASK(I) = "SEED POINT"
@@ -4380,7 +4380,7 @@ CONTAINS
 
 
   !>to EXPORT output.
-  SUBROUTINE POST_PROCESS_DATA(MATERIAL_BEHAVIOUR,OUTPUT_FILE_NAME,OUTPUT_FILE_FORMAT,TOTAL_NUMBER_OF_NODES,NODE_LIST,&
+  SUBROUTINE POST_PROCESS_DATA(MATERIAL_BEHAVIOUR,OUTPUT_FILE_NAME,OUTPUT_FILE_FORMAT,totalNumberOfNodes,NODE_LIST,&
 &CONDUCTIVITY_TENSOR,SPEED_FUNCTION_TABLE,SEED_VALUE,CONNECTIVITY_NUMBER,OUTPUT_FILE_FIELD_TITLE,&
 &CONNECTIVITY_LIST,ELEMENT_LIST,TOTAL_NUMBER_OF_ELEMENTS,NUMBER_OF_NODES_PER_ELEMENT,Err)
 
@@ -4395,7 +4395,7 @@ CONTAINS
 
     INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_ELEMENTS
     INTEGER(INTG), INTENT(IN) :: NUMBER_OF_NODES_PER_ELEMENT
-    INTEGER(INTG), INTENT(IN) :: TOTAL_NUMBER_OF_NODES
+    INTEGER(INTG), INTENT(IN) :: totalNumberOfNodes
     CHARACTER (LEN=300) :: OUTPUT_FILE_NAME
     CHARACTER (LEN=300) :: OUTPUT_FILE_FIELD_TITLE
     CHARACTER (LEN=10)  :: OUTPUT_FILE_FORMAT
@@ -4427,9 +4427,9 @@ CONTAINS
 
       WRITE(12,*)"VARIABLES=""NODE"",""X"",""Y"",""Z"",""U"",""V"",""W"",""Speed function along fibers"", &
  &                ""Speed function in transverse direction"",""Time"""
-      WRITE(12,*)"zone i=",TOTAL_NUMBER_OF_NODES," , DATAPACKING=POINT"
+      WRITE(12,*)"zone i=",totalNumberOfNodes," , DATAPACKING=POINT"
 
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         WRITE(12,*) I,NODE_LIST(I,1),NODE_LIST(I,2),NODE_LIST(I,3),CONDUCTIVITY_TENSOR(I,1),CONDUCTIVITY_TENSOR(I,2),&
             &CONDUCTIVITY_TENSOR(I,3),SPEED_FUNCTION_TABLE(I,1),&
             &SPEED_FUNCTION_TABLE(I,2),SPEED_FUNCTION_TABLE(I,3),&
@@ -4437,7 +4437,7 @@ CONTAINS
       ENDDO
 !      EXPORT NODE CONNECTIVITY list
       WRITE(12,*) "Connectivity"
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         WRITE(12,*) I,CONNECTIVITY_NUMBER(I),(CONNECTIVITY_LIST(I,J),J=1,CONNECTIVITY_NUMBER(I))
 !        PRINT *,STRING,CONNECTIVITY_NUMBER(I),(CONNECTIVITY_LIST(I,J),J=1,CONNECTIVITY_NUMBER(I))
       ENDDO
@@ -4458,10 +4458,10 @@ CONTAINS
       WRITE(12,'(A)')"vtk output"
       WRITE(12,'(A)')"ASCII"
       WRITE(12,'(A)')"DATASET UNSTRUCTURED_GRID"
-      WRITE(12,'(A,I8,A6)')"POINTS",TOTAL_NUMBER_OF_NODES,"float"
+      WRITE(12,'(A,I8,A6)')"POINTS",totalNumberOfNodes,"float"
 
 !      export NODAL POSITION list
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         WRITE(12,*) (NODE_LIST(I,J),J=1,3)
       ENDDO
 
@@ -4479,18 +4479,18 @@ CONTAINS
 
 !      export CELL and POINT DATA list
       WRITE(12,'(A,I8)')"CELL_DATA",TOTAL_NUMBER_OF_ELEMENTS
-      WRITE(12,'(A,I8)')"POINT_DATA",TOTAL_NUMBER_OF_NODES
+      WRITE(12,'(A,I8)')"POINT_DATA",totalNumberOfNodes
 
 !      export FIELD information
       WRITE(12,'(A,A)')"FIELD number"," 1"
-      WRITE(12,'(A,I3,I8,A6)')OUTPUT_FILE_FIELD_TITLE,1,TOTAL_NUMBER_OF_NODES,"float"
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      WRITE(12,'(A,I3,I8,A6)')OUTPUT_FILE_FIELD_TITLE,1,totalNumberOfNodes,"float"
+      DO I=1,totalNumberOfNodes
         WRITE(12,'(F15.10)') SEED_VALUE(I)
       ENDDO
 
 !      export VECTORS information
       WRITE(12,'(A,A,A6)') "VECTORS ","fiber_vector","float"
-      DO I=1,TOTAL_NUMBER_OF_NODES
+      DO I=1,totalNumberOfNodes
         WRITE(12,'(3F8.5)') (CONDUCTIVITY_TENSOR(I,J),J=1,3)
       ENDDO
 

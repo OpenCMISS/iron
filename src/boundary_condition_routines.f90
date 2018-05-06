@@ -1,4 +1,4 @@
-!!> \file
+!> \file
 !> \author Ting Yu
 !> \brief This module set the boundary conditions for the given equation set
 !>
@@ -290,7 +290,7 @@ CONTAINS
     INTEGER(INTG) :: pressureIdx,neumannIdx,numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
     INTEGER(INTG), POINTER :: ROW_INDICES(:), COLUMN_INDICES(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITION_VARIABLE
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: VARIABLE_DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: VARIABLE_DOMAIN_MAPPING
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: BOUNDARY_CONDITIONS_DIRICHLET
     TYPE(BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE), POINTER :: BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED
@@ -338,7 +338,7 @@ CONTAINS
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   VARIABLE_DOMAIN_MAPPING=>FIELD_VARIABLE%DOMAIN_MAPPING
                   IF(ASSOCIATED(VARIABLE_DOMAIN_MAPPING)) THEN
-                    SEND_COUNT=VARIABLE_DOMAIN_MAPPING%NUMBER_OF_GLOBAL
+                    SEND_COUNT=VARIABLE_DOMAIN_MAPPING%numberOfGlobal
                     IF(numberOfGroupComputationNodes>1) THEN
                       !\todo This operation is a little expensive as we are doing an unnecessary sum across all the ranks in order to combin
                       !\todo the data from each rank into all ranks. We will see how this goes for now.
@@ -400,7 +400,7 @@ CONTAINS
                   ! Loop over all global DOFs, keeping track of the dof indices of specific BC types where required
                   pressureIdx=1
                   neumannIdx=1
-                  DO dof_idx=1,FIELD_VARIABLE%NUMBER_OF_GLOBAL_DOFS
+                  DO dof_idx=1,FIELD_VARIABLE%numberOfGlobalDofs
                     IF(BOUNDARY_CONDITION_VARIABLE%CONDITION_TYPES(dof_idx)== BOUNDARY_CONDITION_PRESSURE_INCREMENTED) THEN
                       BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED%PRESSURE_INCREMENTED_DOF_INDICES(pressureIdx)=dof_idx
                       pressureIdx=pressureIdx+1
@@ -424,7 +424,7 @@ CONTAINS
                     IF(ASSOCIATED(BOUNDARY_CONDITIONS_DIRICHLET)) THEN
                       ! Find dirichlet conditions
                       dirichlet_idx=1
-                      DO dof_idx=1,FIELD_VARIABLE%NUMBER_OF_GLOBAL_DOFS
+                      DO dof_idx=1,FIELD_VARIABLE%numberOfGlobalDofs
                         IF(BOUNDARY_CONDITION_VARIABLE%DOF_TYPES(dof_idx)==BOUNDARY_CONDITION_DOF_FIXED) THEN
                           BOUNDARY_CONDITIONS_DIRICHLET%DIRICHLET_DOF_INDICES(dirichlet_idx)=dof_idx
                           dirichlet_idx=dirichlet_idx+1
@@ -611,8 +611,8 @@ CONTAINS
                           ENDDO !equations_set_idx
                           !\todo Update interface sparsity structure calculate first then update code below.
 !                          !Loop over interface conditions. Note that only linear interface matrices implemented so far.
-!                          DO interface_condition_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-!                            INTERFACE_CONDITION=>SOLVER_EQUATIONS%SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
+!                          DO interface_condition_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%numberOfInterfaceConditions
+!                            INTERFACE_CONDITION=>SOLVER_EQUATIONS%SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
 !                            IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
 !                              INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
 !                              IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
@@ -761,8 +761,8 @@ CONTAINS
           FIELD_VARIABLE=>BOUNDARY_CONDITION_VARIABLE%VARIABLE
           VARIABLE_DOMAIN_MAPPING=>FIELD_VARIABLE%DOMAIN_MAPPING
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of global dofs = ",VARIABLE_DOMAIN_MAPPING% &
-            & NUMBER_OF_GLOBAL,ERR,ERROR,*999)
-          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,VARIABLE_DOMAIN_MAPPING%NUMBER_OF_GLOBAL,8,8, &
+            & numberOfGlobal,ERR,ERROR,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,VARIABLE_DOMAIN_MAPPING%numberOfGlobal,8,8, &
             & BOUNDARY_CONDITION_VARIABLE%CONDITION_TYPES,'("    Global BCs:",8(X,I8))','(15X,8(X,I8))', &
             & ERR,ERROR,*999)
         ELSE
@@ -1043,8 +1043,8 @@ CONTAINS
               CALL FlagError("Equations set is not associated.",ERR,ERROR,*998)
             ENDIF
           ENDDO !equations_set_idx
-          DO interface_condition_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-            INTERFACE_CONDITION=>SOLVER_EQUATIONS%SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
+          DO interface_condition_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%numberOfInterfaceConditions
+            INTERFACE_CONDITION=>SOLVER_EQUATIONS%SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
             IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
               INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
               IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
@@ -1283,7 +1283,7 @@ CONTAINS
     INTEGER(INTG) :: i,global_ny,local_ny
     REAL(DP) :: INITIAL_VALUE
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -1307,8 +1307,8 @@ CONTAINS
                   IF(SIZE(DOF_INDICES,1)==SIZE(VALUES,1)) THEN
                     DO i=1,SIZE(DOF_INDICES,1)
                       local_ny=DOF_INDICES(i)
-                      IF(local_ny>=1.AND.local_ny<=DOMAIN_MAPPING%NUMBER_OF_LOCAL) THEN
-                        global_ny=DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
+                      IF(local_ny>=1.AND.local_ny<=DOMAIN_MAPPING%numberOfLocal) THEN
+                        global_ny=DOMAIN_MAPPING%localToGlobalMap(local_ny)
                         ! Set boundary condition and dof type, and make sure parameter sets are created
                         CALL BoundaryConditions_SetConditionType(BOUNDARY_CONDITIONS_VARIABLE,global_ny,CONDITIONS(i), &
                           & ERR,ERROR,*999)
@@ -1387,7 +1387,7 @@ CONTAINS
                           & TRIM(NUMBER_TO_VSTRING(local_ny,"*",ERR,ERROR))//" at dof index "// &
                           & TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))// &
                           & " is invalid. The dof should be between 1 and "// &
-                          & TRIM(NUMBER_TO_VSTRING(DOMAIN_MAPPING%NUMBER_OF_LOCAL,"*",ERR,ERROR))//"."
+                          & TRIM(NUMBER_TO_VSTRING(DOMAIN_MAPPING%numberOfLocal,"*",ERR,ERROR))//"."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
                     ENDDO !i
@@ -1476,7 +1476,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: i,global_ny,local_ny
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -1499,8 +1499,8 @@ CONTAINS
                   IF(SIZE(DOF_INDICES,1)==SIZE(VALUES,1)) THEN
                     DO i=1,SIZE(DOF_INDICES,1)
                       local_ny=DOF_INDICES(i)
-                      IF(local_ny>=1.AND.local_ny<=DOMAIN_MAPPING%NUMBER_OF_LOCAL) THEN
-                        global_ny=DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_ny)
+                      IF(local_ny>=1.AND.local_ny<=DOMAIN_MAPPING%numberOfLocal) THEN
+                        global_ny=DOMAIN_MAPPING%localToGlobalMap(local_ny)
                         ! Set boundary condition and dof type
                         CALL BoundaryConditions_SetConditionType(BOUNDARY_CONDITIONS_VARIABLE,global_ny,CONDITIONS(i), &
                           & ERR,ERROR,*999)
@@ -1573,7 +1573,7 @@ CONTAINS
                           & TRIM(NUMBER_TO_VSTRING(local_ny,"*",ERR,ERROR))//" at dof index "// &
                           & TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))// &
                           & " is invalid. The dof should be between 1 and "// &
-                          & TRIM(NUMBER_TO_VSTRING(DOMAIN_MAPPING%NUMBER_OF_LOCAL,"*",ERR,ERROR))//"."
+                          & TRIM(NUMBER_TO_VSTRING(DOMAIN_MAPPING%numberOfLocal,"*",ERR,ERROR))//"."
                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                       ENDIF
                     ENDDO !i
@@ -2203,7 +2203,7 @@ CONTAINS
         NULLIFY(boundaryConditionsNeumann%pointValues)
         NULLIFY(boundaryConditionsNeumann%pointDofMapping)
 
-        numberOfLocalDofs=boundaryConditionsVariable%VARIABLE%NUMBER_OF_DOFS
+        numberOfLocalDofs=boundaryConditionsVariable%VARIABLE%numberOfDofs
         ALLOCATE(boundaryConditionsNeumann%setDofs(numberOfValues),stat=err)
         IF(err/=0) CALL FlagError("Could not allocate Neumann set DOFs.",err,error,*999)
         boundaryConditionsNeumann%setDofs=0
@@ -2237,11 +2237,11 @@ CONTAINS
     !Local Variables
     TYPE(BoundaryConditionsNeumannType), POINTER :: boundaryConditionsNeumann
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowMapping, pointDofMapping
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: topology
-    TYPE(DOMAIN_LINE_TYPE), POINTER :: line
-    TYPE(DOMAIN_FACE_TYPE), POINTER :: face
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainMappingType), POINTER :: rowMapping, pointDofMapping
+    TYPE(DomainTopologyType), POINTER :: topology
+    TYPE(DomainLineType), POINTER :: line
+    TYPE(DomainFaceType), POINTER :: face
     TYPE(LIST_TYPE), POINTER :: columnIndicesList, rowColumnIndicesList
     INTEGER(INTG) :: myGroupComputationNodeNumber
     INTEGER(INTG) :: numberOfPointDofs, numberNonZeros, numberRowEntries, neumannConditionNumber, localNeumannConditionIdx
@@ -2274,10 +2274,10 @@ CONTAINS
         CALL DomainMappings_MappingInitialise(rowMapping%workGroup,pointDofMapping,err,error,*999)
         boundaryConditionsNeumann%pointDofMapping=>pointDofMapping
         ! Calculate global to local mapping for Neumann DOFs
-        pointDofMapping%NUMBER_OF_GLOBAL=numberOfPointDofs
-        ALLOCATE(pointDofMapping%GLOBAL_TO_LOCAL_MAP(numberOfPointDofs),stat=err)
+        pointDofMapping%numberOfGlobal=numberOfPointDofs
+        ALLOCATE(pointDofMapping%globalToLocalMap(numberOfPointDofs),stat=err)
         IF(err/=0) CALL FlagError("Could not allocate Neumann point DOF global to local mapping.",err,error,*999)
-        ALLOCATE(localDofNumbers(0:rowMapping%NUMBER_OF_DOMAINS-1),stat=err)
+        ALLOCATE(localDofNumbers(0:rowMapping%numberOfDomains-1),stat=err)
         IF(ERR/=0) CALL FlagError("Could not allocate local Neumann DOF numbers.",err,error,*999)
         localDofNumbers=0
 
@@ -2287,31 +2287,31 @@ CONTAINS
         DO neumannIdx=1,numberOfPointDofs
           globalDof=boundaryConditionsNeumann%setDofs(neumannIdx)
           ! Get domain information from the RHS variable domain mapping, but set new local numbers.
-          numberOfDomains=rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%NUMBER_OF_DOMAINS
-          pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%NUMBER_OF_DOMAINS=numberOfDomains
-          ALLOCATE(pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_NUMBER(numberOfDomains),stat=err)
+          numberOfDomains=rhsVariable%DOMAIN_MAPPING%globalToLocalMap(globalDof)%numberOfDomains
+          pointDofMapping%globalToLocalMap(neumannIdx)%numberOfDomains=numberOfDomains
+          ALLOCATE(pointDofMapping%globalToLocalMap(neumannIdx)%localNumber(numberOfDomains),stat=err)
           IF(err/=0) CALL FlagError("Could not allocate Neumann DOF global to local map local number.",err,error,*999)
-          ALLOCATE(pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%DOMAIN_NUMBER(numberOfDomains),stat=err)
+          ALLOCATE(pointDofMapping%globalToLocalMap(neumannIdx)%domainNumber(numberOfDomains),stat=err)
           IF(err/=0) CALL FlagError("Could not allocate Neumann DOF global to local map domain number.",err,error,*999)
-          ALLOCATE(pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_TYPE(numberOfDomains),stat=err)
+          ALLOCATE(pointDofMapping%globalToLocalMap(neumannIdx)%localType(numberOfDomains),stat=err)
           IF(err/=0) CALL FlagError("Could not allocate Neumann DOF global to local map local type.",err,error,*999)
           IF(DIAGNOSTICS2) THEN
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Neumann point DOF index = ",neumannIdx,err,error,*999)
           END IF
           DO domainIdx=1,numberOfDomains
-            domainNumber=rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%DOMAIN_NUMBER(domainIdx)
-            pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%DOMAIN_NUMBER(domainIdx)=domainNumber
-            pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_TYPE(domainIdx)= &
-              & rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%LOCAL_TYPE(domainIdx)
-            IF(pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_TYPE(domainIdx)==DOMAIN_LOCAL_INTERNAL.OR. &
-                & pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_TYPE(domainIdx)==DOMAIN_LOCAL_BOUNDARY) THEN
+            domainNumber=rhsVariable%DOMAIN_MAPPING%globalToLocalMap(globalDof)%domainNumber(domainIdx)
+            pointDofMapping%globalToLocalMap(neumannIdx)%domainNumber(domainIdx)=domainNumber
+            pointDofMapping%globalToLocalMap(neumannIdx)%localType(domainIdx)= &
+              & rhsVariable%DOMAIN_MAPPING%globalToLocalMap(globalDof)%localType(domainIdx)
+            IF(pointDofMapping%globalToLocalMap(neumannIdx)%localType(domainIdx)==DOMAIN_LOCAL_INTERNAL.OR. &
+                & pointDofMapping%globalToLocalMap(neumannIdx)%localType(domainIdx)==DOMAIN_LOCAL_BOUNDARY) THEN
               localDofNumbers(domainNumber)=localDofNumbers(domainNumber)+1
-              pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_NUMBER(domainIdx)=localDofNumbers(domainNumber)
+              pointDofMapping%globalToLocalMap(neumannIdx)%localNumber(domainIdx)=localDofNumbers(domainNumber)
               IF(DIAGNOSTICS2) THEN
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Global rhs var DOF = ",globalDof,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain number = ",domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Local type = ", &
-                  & pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_TYPE(domainIdx),err,error,*999)
+                  & pointDofMapping%globalToLocalMap(neumannIdx)%localType(domainIdx),err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Local number = ",localDofNumbers(domainNumber),err,error,*999)
               END IF
             ENDIF
@@ -2323,15 +2323,15 @@ CONTAINS
         END IF
         DO neumannIdx=1,numberOfPointDofs
           globalDof=boundaryConditionsNeumann%setDofs(neumannIdx)
-          numberOfDomains=rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%NUMBER_OF_DOMAINS
+          numberOfDomains=rhsVariable%DOMAIN_MAPPING%globalToLocalMap(globalDof)%numberOfDomains
           IF(DIAGNOSTICS2) THEN
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Neumann point DOF index = ",neumannIdx,err,error,*999)
           END IF
           DO domainIdx=1,numberOfDomains
-            IF(pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_TYPE(domainIdx)==DOMAIN_LOCAL_GHOST) THEN
-              domainNumber=rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%DOMAIN_NUMBER(domainIdx)
+            IF(pointDofMapping%globalToLocalMap(neumannIdx)%localType(domainIdx)==DOMAIN_LOCAL_GHOST) THEN
+              domainNumber=rhsVariable%DOMAIN_MAPPING%globalToLocalMap(globalDof)%domainNumber(domainIdx)
               localDofNumbers(domainNumber)=localDofNumbers(domainNumber)+1
-              pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_NUMBER(domainIdx)=localDofNumbers(domainNumber)
+              pointDofMapping%globalToLocalMap(neumannIdx)%localNumber(domainIdx)=localDofNumbers(domainNumber)
               IF(DIAGNOSTICS2) THEN
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Global rhs var DOF = ",globalDof,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain number = ",domainNumber,err,error,*999)
@@ -2351,7 +2351,7 @@ CONTAINS
           ! multiple processes the number of Neumann point DOFs could be more than the number
           ! of local row DOFs, and multiplying a compressed row matrix by a vector is faster,
           ! so we will use compressed row storage
-          ALLOCATE(rowIndices(rowMapping%TOTAL_NUMBER_OF_LOCAL+1),stat=err)
+          ALLOCATE(rowIndices(rowMapping%totalNumberOfLocal+1),stat=err)
           IF(err/=0) CALL FlagError("Could not allocate Neumann integration matrix column indices.",err,error,*999)
           ! We don't know the number of non zeros before hand, so use a list to keep track of column indices
           NULLIFY(columnIndicesList)
@@ -2366,7 +2366,7 @@ CONTAINS
           CALL LIST_CREATE_FINISH(rowColumnIndicesList,err,error,*999)
           rowIndices(1)=1
 
-          DO localDof=1,rhsVariable%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
+          DO localDof=1,rhsVariable%DOMAIN_MAPPING%totalNumberOfLocal
             localDofNyy=rhsVariable%DOF_TO_PARAM_MAP%DOF_TYPE(2,localDof)
             componentNumber=rhsVariable%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(4,localDofNyy)
             ! Get topology for finding faces/lines
@@ -2375,18 +2375,18 @@ CONTAINS
               CALL FlagError("Field component topology is not associated.",err,error,*999)
             END IF
 
-            SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%INTERPOLATION_TYPE)
+            SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%interpolationType)
             CASE(FIELD_NODE_BASED_INTERPOLATION)
               nodeNumber=rhsVariable%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,localDofNyy)
               IF(.NOT.ASSOCIATED(topology%NODES%NODES)) THEN
                 CALL FlagError("Topology nodes are not associated.",err,error,*999)
               END IF
-              IF(topology%NODES%NODES(nodeNumber)%BOUNDARY_NODE) THEN
-                SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%DOMAIN%NUMBER_OF_DIMENSIONS)
+              IF(topology%NODES%NODES(nodeNumber)%boundaryNode) THEN
+                SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%DOMAIN%numberOfDimensions)
                 CASE(1)
                   ! Only one column used, as this is the same as setting an integrated
                   ! value so no other DOFs are affected
-                  globalDof=rhsVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDof)
+                  globalDof=rhsVariable%DOMAIN_MAPPING%localToGlobalMap(localDof)
                   IF(boundaryConditionsVariable%CONDITION_TYPES(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT.OR. &
                       & boundaryConditionsVariable%CONDITION_TYPES(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) THEN
                     ! Find the Neumann condition number
@@ -2405,20 +2405,20 @@ CONTAINS
                   END IF
                 CASE(2)
                   ! Loop over all lines for this node and find any DOFs that have a Neumann point condition set
-                  DO lineIdx=1,topology%NODES%NODES(nodeNumber)%NUMBER_OF_NODE_LINES
+                  DO lineIdx=1,topology%NODES%NODES(nodeNumber)%numberOfNodeLines
                     IF(.NOT.ALLOCATED(topology%LINES%LINES)) THEN
                       CALL FlagError("Topology lines have not been calculated.",err,error,*999)
                     END IF
-                    line=>topology%LINES%LINES(topology%NODES%NODES(nodeNumber)%NODE_LINES(lineIdx))
-                    IF(.NOT.line%BOUNDARY_LINE) CYCLE
-                    DO nodeIdx=1,line%BASIS%NUMBER_OF_NODES
-                      columnNodeNumber=line%NODES_IN_LINE(nodeIdx)
-                      DO derivIdx=1,line%BASIS%NUMBER_OF_DERIVATIVES(nodeIdx)
-                        derivativeNumber=line%DERIVATIVES_IN_LINE(1,derivIdx,nodeIdx)
-                        versionNumber=line%DERIVATIVES_IN_LINE(2,derivIdx,nodeIdx)
+                    line=>topology%LINES%LINES(topology%NODES%NODES(nodeNumber)%nodeLines(lineIdx))
+                    IF(.NOT.line%boundaryLine) CYCLE
+                    DO nodeIdx=1,line%BASIS%numberOfNodes
+                      columnNodeNumber=line%nodesInLine(nodeIdx)
+                      DO derivIdx=1,line%BASIS%numberOfDerivatives(nodeIdx)
+                        derivativeNumber=line%derivativesInLine(1,derivIdx,nodeIdx)
+                        versionNumber=line%derivativesInLine(2,derivIdx,nodeIdx)
                         columnDof=rhsVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                           & NODES(columnNodeNumber)%DERIVATIVES(derivativeNumber)%VERSIONS(versionNumber)
-                        globalDof=rhsVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(columnDof)
+                        globalDof=rhsVariable%DOMAIN_MAPPING%localToGlobalMap(columnDof)
                         IF(boundaryConditionsVariable%CONDITION_TYPES(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT.OR. &
                             & boundaryConditionsVariable%CONDITION_TYPES(globalDof)== &
                             & BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) THEN
@@ -2440,20 +2440,20 @@ CONTAINS
                   END DO
                 CASE(3)
                   ! Loop over all faces for this node and find any DOFs that have a Neumann point condition set
-                  DO faceIdx=1,topology%NODES%NODES(nodeNumber)%NUMBER_OF_NODE_FACES
+                  DO faceIdx=1,topology%NODES%NODES(nodeNumber)%numberOfNodeFaces
                     IF(.NOT.ALLOCATED(topology%faces%faces)) THEN
                       CALL FlagError("Topology faces have not been calculated.",err,error,*999)
                     END IF
-                    face=>topology%FACES%FACES(topology%NODES%NODES(nodeNumber)%NODE_FACES(faceIdx))
-                    IF(.NOT.face%BOUNDARY_FACE) CYCLE
-                    DO nodeIdx=1,face%BASIS%NUMBER_OF_NODES
-                      columnNodeNumber=face%NODES_IN_FACE(nodeIdx)
-                      DO derivIdx=1,face%BASIS%NUMBER_OF_DERIVATIVES(nodeIdx)
-                        derivativeNumber=face%DERIVATIVES_IN_FACE(1,derivIdx,nodeIdx)
-                        versionNumber=face%DERIVATIVES_IN_FACE(2,derivIdx,nodeIdx)
+                    face=>topology%FACES%FACES(topology%NODES%NODES(nodeNumber)%nodeFaces(faceIdx))
+                    IF(.NOT.face%boundaryFace) CYCLE
+                    DO nodeIdx=1,face%BASIS%numberOfNodes
+                      columnNodeNumber=face%nodesInFace(nodeIdx)
+                      DO derivIdx=1,face%BASIS%numberOfDerivatives(nodeIdx)
+                        derivativeNumber=face%derivativesInFace(1,derivIdx,nodeIdx)
+                        versionNumber=face%derivativesInFace(2,derivIdx,nodeIdx)
                         columnDof=rhsVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                           & NODES(columnNodeNumber)%DERIVATIVES(derivativeNumber)%VERSIONS(versionNumber)
-                        globalDof=rhsVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(columnDof)
+                        globalDof=rhsVariable%DOMAIN_MAPPING%localToGlobalMap(columnDof)
                         IF(boundaryConditionsVariable%CONDITION_TYPES(globalDof)==BOUNDARY_CONDITION_NEUMANN_POINT.OR. &
                             & boundaryConditionsVariable%CONDITION_TYPES(globalDof)== &
                             & BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) THEN
@@ -2488,7 +2488,7 @@ CONTAINS
             CASE DEFAULT
               CALL FlagError("The interpolation type of "// &
                 & TRIM(NUMBER_TO_VSTRING(rhsVariable%COMPONENTS(componentNumber) &
-                & %INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid for component number "// &
+                & %interpolationType,"*",ERR,ERROR))//" is invalid for component number "// &
                 & TRIM(NUMBER_TO_VSTRING(componentNumber,"*",ERR,ERROR))//".", &
                 & err,error,*999)
             END SELECT
@@ -2509,7 +2509,7 @@ CONTAINS
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number non-zeros = ", numberNonZeros,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number columns = ",numberOfPointDofs,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number rows = ", &
-              & rhsVariable%DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL,err,error,*999)
+              & rhsVariable%DOMAIN_MAPPING%totalNumberOfLocal,err,error,*999)
             CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfPointDofs+1,6,6, &
               & rowIndices,'("  Row indices: ",6(X,I6))', '(6X,6(X,I6))',err,error,*999)
             CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberNonZeros,6,6, &
@@ -2547,10 +2547,10 @@ CONTAINS
         !Set point values vector from boundary conditions field parameter set
         DO neumannIdx=1,numberOfPointDofs
           globalDof=boundaryConditionsNeumann%setDofs(neumannIdx)
-          IF(rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%DOMAIN_NUMBER(1)==myGroupComputationNodeNumber) THEN
-            localDof=rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(globalDof)%LOCAL_NUMBER(1)
+          IF(rhsVariable%DOMAIN_MAPPING%globalToLocalMap(globalDof)%domainNumber(1)==myGroupComputationNodeNumber) THEN
+            localDof=rhsVariable%DOMAIN_MAPPING%globalToLocalMap(globalDof)%localNumber(1)
             ! Set point DOF vector value
-            localNeumannConditionIdx=boundaryConditionsNeumann%pointDofMapping%GLOBAL_TO_LOCAL_MAP(neumannIdx)%LOCAL_NUMBER(1)
+            localNeumannConditionIdx=boundaryConditionsNeumann%pointDofMapping%globalToLocalMap(neumannIdx)%localNumber(1)
             CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(rhsVariable%FIELD,rhsVariable%VARIABLE_TYPE, &
               & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,localDof,pointValue,err,error,*999)
             CALL DistributedVector_ValuesSet(boundaryConditionsNeumann%pointValues, &
@@ -2678,19 +2678,19 @@ CONTAINS
     LOGICAL :: dependentGeometry
     REAL(DP) :: integratedValue,phim,phio
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannConditions
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(FIELD_TYPE), POINTER :: geometricField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: interpolatedPointMetrics(:)
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:), scalingParameters(:)
     TYPE(DistributedVectorType), POINTER :: integratedValues
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: topology
-    TYPE(DOMAIN_FACES_TYPE), POINTER :: faces
-    TYPE(DOMAIN_LINES_TYPE), POINTER :: lines
-    TYPE(DOMAIN_FACE_TYPE), POINTER :: face
-    TYPE(DOMAIN_LINE_TYPE), POINTER :: line
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DomainTopologyType), POINTER :: topology
+    TYPE(DomainFacesType), POINTER :: faces
+    TYPE(DomainLinesType), POINTER :: lines
+    TYPE(DomainFaceType), POINTER :: face
+    TYPE(DomainLineType), POINTER :: line
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -2735,8 +2735,8 @@ CONTAINS
       ! and integrating over them
       DO neumannDofIdx=1,numberOfNeumann
         neumannGlobalDof=neumannConditions%setDofs(neumannDofIdx)
-        IF(rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(neumannGlobalDof)%DOMAIN_NUMBER(1)==myGroupComputationNodeNumber) THEN
-          neumannLocalDof=rhsVariable%DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(neumannGlobalDof)%LOCAL_NUMBER(1)
+        IF(rhsVariable%DOMAIN_MAPPING%globalToLocalMap(neumannGlobalDof)%domainNumber(1)==myGroupComputationNodeNumber) THEN
+          neumannLocalDof=rhsVariable%DOMAIN_MAPPING%globalToLocalMap(neumannGlobalDof)%localNumber(1)
           ! Get Neumann DOF component and topology for that component
           neumannDofNyy=rhsVariable%DOF_TO_PARAM_MAP%DOF_TYPE(2,neumannLocalDof)
           componentNumber=rhsVariable%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(4,neumannDofNyy)
@@ -2748,25 +2748,25 @@ CONTAINS
           IF(.NOT.ASSOCIATED(decomposition)) THEN
             CALL FlagError("Field component decomposition is not associated.",err,error,*999)
           END IF
-          SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%INTERPOLATION_TYPE)
+          SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%interpolationType)
           CASE(FIELD_NODE_BASED_INTERPOLATION)
             neumannNodeNumber=rhsVariable%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,neumannDofNyy)
-            SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%DOMAIN%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%domain%numberOfDimensions)
             CASE(1)
               CALL DistributedMatrix_ValuesSet(neumannConditions%integrationMatrix,neumannLocalDof,neumannDofIdx, &
                 & 1.0_DP,err,error,*999)
             CASE(2)
-              IF(.NOT.decomposition%CALCULATE_LINES) THEN
+              IF(.NOT.decomposition%calculateLines) THEN
                 CALL FlagError("Decomposition does not have lines calculated.",err,error,*999)
               END IF
               lines=>topology%LINES
               IF(.NOT.ASSOCIATED(lines)) THEN
                 CALL FlagError("Mesh topology lines is not associated.",err,error,*999)
               END IF
-              linesLoop: DO lineIdx=1,topology%NODES%NODES(neumannNodeNumber)%NUMBER_OF_NODE_LINES
-                lineNumber=topology%NODES%NODES(neumannNodeNumber)%NODE_LINES(lineIdx)
+              linesLoop: DO lineIdx=1,topology%NODES%NODES(neumannNodeNumber)%numberOfNodeLines
+                lineNumber=topology%NODES%NODES(neumannNodeNumber)%nodeLines(lineIdx)
                 line=>topology%lines%lines(lineNumber)
-                IF(.NOT.line%BOUNDARY_LINE) &
+                IF(.NOT.line%boundaryLine) &
                   CYCLE linesLoop
                 basis=>line%basis
                 IF(.NOT.ASSOCIATED(basis)) THEN
@@ -2776,14 +2776,14 @@ CONTAINS
                 neumannLocalDerivNumber=0
                 ! Check all nodes in line to find the local numbers for the Neumann DOF, and
                 ! make sure we don't have an integrated_only condition set on the line
-                DO nodeIdx=1,line%BASIS%NUMBER_OF_NODES
-                  nodeNumber=line%NODES_IN_LINE(nodeIdx)
-                  DO derivIdx=1,line%BASIS%NUMBER_OF_DERIVATIVES(nodeIdx)
-                    derivativeNumber=line%DERIVATIVES_IN_LINE(1,derivIdx,nodeIdx)
-                    versionNumber=line%DERIVATIVES_IN_LINE(2,derivIdx,nodeIdx)
+                DO nodeIdx=1,line%BASIS%numberOfNodes
+                  nodeNumber=line%nodesInLine(nodeIdx)
+                  DO derivIdx=1,line%BASIS%numberOfDerivatives(nodeIdx)
+                    derivativeNumber=line%derivativesInLine(1,derivIdx,nodeIdx)
+                    versionNumber=line%derivativesInLine(2,derivIdx,nodeIdx)
                     localDof=rhsVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                       & NODES(nodeNumber)%DERIVATIVES(derivativeNumber)%VERSIONS(versionNumber)
-                    globalDof=rhsVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDof)
+                    globalDof=rhsVariable%DOMAIN_MAPPING%localToGlobalMap(localDof)
                     IF(globalDof==neumannGlobalDof) THEN
                       neumannLocalNodeNumber=nodeIdx
                       neumannLocalDerivNumber=derivIdx
@@ -2808,16 +2808,16 @@ CONTAINS
                     & scalingParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                 END IF
 
-                DO nodeIdx=1,line%BASIS%NUMBER_OF_NODES
-                  nodeNumber=line%NODES_IN_LINE(nodeIdx)
-                  DO derivIdx=1,line%BASIS%NUMBER_OF_DERIVATIVES(nodeIdx)
-                    derivativeNumber=line%DERIVATIVES_IN_LINE(1,derivIdx,nodeIdx)
-                    versionNumber=line%DERIVATIVES_IN_LINE(2,derivIdx,nodeIdx)
+                DO nodeIdx=1,line%BASIS%numberOfNodes
+                  nodeNumber=line%nodesInLine(nodeIdx)
+                  DO derivIdx=1,line%BASIS%numberOfDerivatives(nodeIdx)
+                    derivativeNumber=line%derivativesInLine(1,derivIdx,nodeIdx)
+                    versionNumber=line%derivativesInLine(2,derivIdx,nodeIdx)
                     localDof=rhsVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                       & NODES(nodeNumber)%DERIVATIVES(derivativeNumber)%VERSIONS(versionNumber)
 
-                    ms=basis%ELEMENT_PARAMETER_INDEX(derivIdx,nodeIdx)
-                    os=basis%ELEMENT_PARAMETER_INDEX(neumannLocalDerivNumber,neumannLocalNodeNumber)
+                    ms=basis%elementParameterIndex(derivIdx,nodeIdx)
+                    os=basis%elementParameterIndex(neumannLocalDerivNumber,neumannLocalNodeNumber)
 
                     integratedValue=0.0_DP
                     ! Loop over line gauss points, adding gauss weighted terms to the integral
@@ -2851,17 +2851,17 @@ CONTAINS
                 END DO
               END DO linesLoop
             CASE(3)
-              IF(.NOT.decomposition%CALCULATE_FACES) THEN
+              IF(.NOT.decomposition%calculateFaces) THEN
                 CALL FlagError("Decomposition does not have faces calculated.",err,error,*999)
               END IF
               faces=>topology%FACES
               IF(.NOT.ASSOCIATED(faces)) THEN
                 CALL FlagError("Mesh topology faces is not associated.",err,error,*999)
               END IF
-              facesLoop: DO faceIdx=1,topology%NODES%NODES(neumannNodeNumber)%NUMBER_OF_NODE_FACES
-                faceNumber=topology%NODES%NODES(neumannNodeNumber)%NODE_FACES(faceIdx)
+              facesLoop: DO faceIdx=1,topology%NODES%NODES(neumannNodeNumber)%numberOfNodeFaces
+                faceNumber=topology%NODES%NODES(neumannNodeNumber)%nodeFaces(faceIdx)
                 face=>topology%FACES%FACES(faceNumber)
-                IF(.NOT.face%BOUNDARY_FACE) &
+                IF(.NOT.face%boundaryFace) &
                   CYCLE facesLoop
                 basis=>face%BASIS
                 IF(.NOT.ASSOCIATED(basis)) THEN
@@ -2871,14 +2871,14 @@ CONTAINS
                 neumannLocalDerivNumber=0
                 ! Check all nodes in the face to find the local numbers for the Neumann DOF, and
                 ! make sure we don't have an integrated_only condition set on the face
-                DO nodeIdx=1,basis%NUMBER_OF_NODES
-                  nodeNumber=face%NODES_IN_FACE(nodeIdx)
-                  DO derivIdx=1,basis%NUMBER_OF_DERIVATIVES(nodeIdx)
-                    derivativeNumber=face%DERIVATIVES_IN_FACE(1,derivIdx,nodeIdx)
-                    versionNumber=face%DERIVATIVES_IN_FACE(2,derivIdx,nodeIdx)
+                DO nodeIdx=1,basis%numberOfNodes
+                  nodeNumber=face%nodesInFace(nodeIdx)
+                  DO derivIdx=1,basis%numberOfDerivatives(nodeIdx)
+                    derivativeNumber=face%derivativesInFace(1,derivIdx,nodeIdx)
+                    versionNumber=face%derivativesInFace(2,derivIdx,nodeIdx)
                     localDof=rhsVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                       & NODES(nodeNumber)%DERIVATIVES(derivativeNumber)%VERSIONS(versionNumber)
-                    globalDof=rhsVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localDof)
+                    globalDof=rhsVariable%DOMAIN_MAPPING%localToGlobalMap(localDof)
                     IF(globalDof==neumannGlobalDof) THEN
                       neumannLocalNodeNumber=nodeIdx
                       neumannLocalDerivNumber=derivIdx
@@ -2903,16 +2903,16 @@ CONTAINS
                     & scalingParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                 END IF
 
-                DO nodeIdx=1,basis%NUMBER_OF_NODES
-                  nodeNumber=face%NODES_IN_FACE(nodeIdx)
-                  DO derivIdx=1,basis%NUMBER_OF_DERIVATIVES(nodeIdx)
-                    derivativeNumber=face%DERIVATIVES_IN_FACE(1,derivIdx,nodeIdx)
-                    versionNumber=face%DERIVATIVES_IN_FACE(2,derivIdx,nodeIdx)
+                DO nodeIdx=1,basis%numberOfNodes
+                  nodeNumber=face%nodesInFace(nodeIdx)
+                  DO derivIdx=1,basis%numberOfDerivatives(nodeIdx)
+                    derivativeNumber=face%derivativesInFace(1,derivIdx,nodeIdx)
+                    versionNumber=face%derivativesInFace(2,derivIdx,nodeIdx)
                     localDof=rhsVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                       & NODES(nodeNumber)%DERIVATIVES(derivativeNumber)%VERSIONS(versionNumber)
 
-                    ms=basis%ELEMENT_PARAMETER_INDEX(derivIdx,nodeIdx)
-                    os=basis%ELEMENT_PARAMETER_INDEX(neumannLocalDerivNumber,neumannLocalNodeNumber)
+                    ms=basis%elementParameterIndex(derivIdx,nodeIdx)
+                    os=basis%elementParameterIndex(neumannLocalDerivNumber,neumannLocalNodeNumber)
 
                     integratedValue=0.0_DP
                     ! Loop over line gauss points, adding gauss weighted terms to the integral
@@ -2959,7 +2959,7 @@ CONTAINS
           CASE DEFAULT
             CALL FlagError("The interpolation type of "// &
               & TRIM(NUMBER_TO_VSTRING(rhsVariable%COMPONENTS(componentNumber) &
-              & %INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid for component number "// &
+              & %interpolationType,"*",ERR,ERROR))//" is invalid for component number "// &
               & TRIM(NUMBER_TO_VSTRING(componentNumber,"*",ERR,ERROR))//".", &
               & err,error,*999)
           END SELECT
@@ -3349,7 +3349,7 @@ CONTAINS
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints
     TYPE(BoundaryConditionsDofConstraintType), POINTER :: dofConstraint
     TYPE(BoundaryConditionsCoupledDofsType), POINTER :: dofCoupling
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: variableDomainMapping
+    TYPE(DomainMappingType), POINTER :: variableDomainMapping
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
 
     ENTERS("BoundaryConditions_DofConstraintsCreateFinish",err,error,*998)
@@ -3379,11 +3379,11 @@ CONTAINS
 
         !Allocate an array of pointers to DOF couplings
         IF(dofConstraints%numberOfConstraints>0) THEN
-          ALLOCATE(dofConstraints%dofCouplings(fieldVariable%number_of_global_dofs),stat=err)
+          ALLOCATE(dofConstraints%dofCouplings(fieldVariable%numberOfGlobalDofs),stat=err)
           IF(err/=0) CALL FlagError( &
             & "Could not allocate dof constraints dof couplings array.",err,error,*998)
-          dofConstraints%numberOfDofs=fieldVariable%number_of_global_dofs
-          DO dofIdx=1,fieldVariable%number_of_global_dofs
+          dofConstraints%numberOfDofs=fieldVariable%numberOfGlobalDofs
+          DO dofIdx=1,fieldVariable%numberOfGlobalDofs
             NULLIFY(dofConstraints%dofCouplings(dofIdx)%ptr)
           END DO
         END IF
@@ -3398,8 +3398,8 @@ CONTAINS
           END IF
 
           globalDof=dofConstraint%globalDof
-          localDof=variableDomainMapping%global_to_local_map(globalDof)%local_number(1)
-          thisDofDomain=variableDomainMapping%global_to_local_map(globalDof)%domain_number(1)
+          localDof=variableDomainMapping%globalToLocalMap(globalDof)%localNumber(1)
+          thisDofDomain=variableDomainMapping%globalToLocalMap(globalDof)%domainNumber(1)
 
           !Check that the constrained DOFs are still set to be constrained, as
           !subsequently setting a boundary condition would change the DOF type but
@@ -3412,7 +3412,7 @@ CONTAINS
 
           DO dofIdx=1,dofConstraint%numberOfDofs
             globalDof2=dofConstraint%dofs(dofIdx)
-            localDof2=variableDomainMapping%global_to_local_map(globalDof2)%local_number(1)
+            localDof2=variableDomainMapping%globalToLocalMap(globalDof2)%localNumber(1)
             !Check a Dirichlet conditions hasn't also been set on this DOF
             IF(boundaryConditionsVariable%dof_types(globalDof2)/=BOUNDARY_CONDITION_DOF_FREE) THEN
               CALL FlagError("A Dirichlet boundary condition has been set on DOF number "// &
@@ -3422,8 +3422,8 @@ CONTAINS
 
             !Check we don't have DOF constraints that are split over domains
             !\todo Implement support for DOF constraints that are split over domains
-            IF(variableDomainMapping%number_of_domains>1) THEN
-              otherDofDomain=variableDomainMapping%global_to_local_map(globalDof2)%domain_number(1)
+            IF(variableDomainMapping%numberOfDomains>1) THEN
+              otherDofDomain=variableDomainMapping%globalToLocalMap(globalDof2)%domainNumber(1)
               IF(thisDofDomain/=otherDofDomain) THEN
                 CALL FlagError("An equal DOF constraint is split over multiple domains, "// &
                   & "support for this has not yet been implemented.",err,error,*999)
@@ -3679,7 +3679,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,variable_idx
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: VARIABLE_DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: VARIABLE_DOMAIN_MAPPING
     TYPE(VARYING_STRING) :: DUMMY_ERROR
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_PTR_TYPE), ALLOCATABLE :: NEW_BOUNDARY_CONDITIONS_VARIABLES(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
@@ -3711,9 +3711,9 @@ CONTAINS
             BOUNDARY_CONDITIONS_VARIABLE%BOUNDARY_CONDITIONS=>BOUNDARY_CONDITIONS
             BOUNDARY_CONDITIONS_VARIABLE%VARIABLE_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
             BOUNDARY_CONDITIONS_VARIABLE%VARIABLE=>FIELD_VARIABLE
-            ALLOCATE(BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(VARIABLE_DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=ERR)
+            ALLOCATE(BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(VARIABLE_DOMAIN_MAPPING%numberOfGlobal),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate global boundary condition types.",ERR,ERROR,*999)
-            ALLOCATE(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(VARIABLE_DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=ERR)
+            ALLOCATE(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(VARIABLE_DOMAIN_MAPPING%numberOfGlobal),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate global boundary condition dof types.",ERR,ERROR,*999)
             BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES=BOUNDARY_CONDITION_FREE
             BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES=BOUNDARY_CONDITION_DOF_FREE
@@ -3787,14 +3787,14 @@ CONTAINS
             VARIABLE=>BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES(variable_idx)%PTR%VARIABLE
             IF(ASSOCIATED(VARIABLE)) THEN
               IF(VARIABLE%VARIABLE_TYPE==FIELD_VARIABLE%VARIABLE_TYPE.AND. &
-                & VARIABLE%FIELD%USER_NUMBER==FIELD_VARIABLE%FIELD%USER_NUMBER) THEN
+                & VARIABLE%FIELD%userNumber==FIELD_VARIABLE%FIELD%userNumber) THEN
                 IF(ASSOCIATED(VARIABLE%FIELD%REGION)) THEN
-                  IF(VARIABLE%FIELD%REGION%USER_NUMBER==FIELD_VARIABLE%FIELD%REGION%USER_NUMBER) THEN
+                  IF(VARIABLE%FIELD%REGION%userNumber==FIELD_VARIABLE%FIELD%REGION%userNumber) THEN
                     VARIABLE_FOUND=.TRUE.
                     BOUNDARY_CONDITIONS_VARIABLE=>BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES(variable_idx)%PTR
                   ENDIF
                 ELSEIF(ASSOCIATED(VARIABLE%FIELD%INTERFACE)) THEN
-                  IF(VARIABLE%FIELD%INTERFACE%USER_NUMBER==FIELD_VARIABLE%FIELD%INTERFACE%USER_NUMBER) THEN
+                  IF(VARIABLE%FIELD%INTERFACE%userNumber==FIELD_VARIABLE%FIELD%INTERFACE%userNumber) THEN
                     VARIABLE_FOUND=.TRUE.
                     BOUNDARY_CONDITIONS_VARIABLE=>BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES(variable_idx)%PTR
                   ENDIF

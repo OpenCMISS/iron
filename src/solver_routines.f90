@@ -451,13 +451,13 @@ MODULE SOLVER_ROUTINES
 
   INTERFACE
 
-    SUBROUTINE SOLVER_DAE_EXTERNAL_INTEGRATE(NUMBER_OF_DOFS,START_TIME,END_TIME,INITIAL_STEP, &
+    SUBROUTINE SOLVER_DAE_EXTERNAL_INTEGRATE(numberOfDofs,START_TIME,END_TIME,INITIAL_STEP, &
       & ONLY_ONE_MODEL_INDEX,MODELS_DATA,NUMBER_OF_STATE,STATE_DATA,NUMBER_OF_PARAMETERS, &
       & PARAMETERS_DATA,NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR) BIND(C, NAME="SolverDAEExternalIntegrate")
       
       USE ISO_C_BINDING
 
-      INTEGER(C_INT), VALUE, INTENT(IN) :: NUMBER_OF_DOFS
+      INTEGER(C_INT), VALUE, INTENT(IN) :: numberOfDofs
       REAL(C_DOUBLE), VALUE, INTENT(IN) :: START_TIME
       REAL(C_DOUBLE), VALUE, INTENT(IN) :: END_TIME
       REAL(C_DOUBLE), INTENT(INOUT) :: INITIAL_STEP
@@ -1630,7 +1630,7 @@ CONTAINS
                   SELECT CASE(CELLML_EVALUATOR_SOLVER%SOLVER_LIBRARY)
                   CASE(SOLVER_CMISS_LIBRARY)
                     CALL SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,time,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
-                      & TOTAL_NUMBER_OF_DOFS,CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
+                      & totalNumberOfDofs,CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
                       & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS, &
                       & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
                   CASE DEFAULT
@@ -2879,7 +2879,7 @@ CONTAINS
 
                       !Integrate these CellML equations
                       CALL SOLVER_DAE_EULER_FORWARD_INTEGRATE(FORWARD_EULER_SOLVER,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
-                        & TOTAL_NUMBER_OF_DOFS,DAE_SOLVER%START_TIME,DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP, &
+                        & totalNumberOfDofs,DAE_SOLVER%START_TIME,DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP, &
                         & CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
                         & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS, &
                         & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
@@ -4200,7 +4200,7 @@ CONTAINS
                     !Integrate these CellML equations
 
                     CALL SOLVER_DAE_BDF_INTEGRATE(BDF_SOLVER,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
-                      & TOTAL_NUMBER_OF_DOFS,DAE_SOLVER%START_TIME,DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP, &
+                      & totalNumberOfDofs,DAE_SOLVER%START_TIME,DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP, &
                       & CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
                       & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS, &
                       & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
@@ -4509,7 +4509,7 @@ CONTAINS
                     ENDIF
 
                     !Call the external solver to integrate these CellML equations
-                    CALL SOLVER_DAE_EXTERNAL_INTEGRATE(MODELS_VARIABLE%TOTAL_NUMBER_OF_DOFS,DAE_SOLVER%START_TIME, &
+                    CALL SOLVER_DAE_EXTERNAL_INTEGRATE(MODELS_VARIABLE%totalNumberOfDofs,DAE_SOLVER%START_TIME, &
                       & DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP,CELLML_ENVIRONMENT%MODELS_FIELD% &
                       & ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_STATE,STATE_DATA, &
                       & CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS,PARAMETERS_DATA,CELLML_ENVIRONMENT% &
@@ -9152,7 +9152,7 @@ CONTAINS
             IF(ERR/=0) CALL FlagError("Could not allocate solver.",ERR,ERROR,*999)
             SOLVERS%SOLVERS(SOLVER_INDEX)%ptr%SOLVERS=>SOLVERS
             CALL SOLVER_INITIALISE_PTR(SOLVERS%SOLVERS(SOLVER_INDEX)%ptr,ERR,ERROR,*999)
-            SOLVERS%SOLVERS(SOLVER_INDEX)%ptr%GLOBAL_NUMBER=SOLVER_INDEX
+            SOLVERS%SOLVERS(SOLVER_INDEX)%ptr%globalNumber=SOLVER_INDEX
             !Default to a linear solver and initialise
             SOLVERS%SOLVERS(SOLVER_INDEX)%ptr%SOLVE_TYPE=SOLVER_LINEAR_TYPE
             CALL SOLVER_LINEAR_INITIALISE(SOLVERS%SOLVERS(SOLVER_INDEX)%ptr,ERR,ERROR,*999)
@@ -10431,7 +10431,7 @@ CONTAINS
     REAL(DP) :: SOLVER_VALUE,VALUE
     REAL(DP), POINTER :: RHS_DATA(:)
     TYPE(DistributedVectorType), POINTER :: rhsVector,SOLVER_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOFS_MAPPING
+    TYPE(DomainMappingType), POINTER :: ROW_DOFS_MAPPING
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -10466,7 +10466,7 @@ CONTAINS
                           IF(ASSOCIATED(ROW_DOFS_MAPPING)) THEN
                             CALL DistributedVector_DataGet(rhsVector,RHS_DATA,ERR,ERROR,*999)
                             DO local_row=1,SOLVER_MAPPING%NUMBER_OF_ROWS
-                              global_row=ROW_DOFS_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
+                              global_row=ROW_DOFS_MAPPING%localToGlobalMap(local_row)
                               CALL DistributedMatrix_ValuesGet(SOLVER_MATRIX%MATRIX,local_row,global_row,VALUE,ERR,ERROR,*999)
                               IF(ABS(VALUE)>ZERO_TOLERANCE) THEN
                                 SOLVER_VALUE=RHS_DATA(local_row)/VALUE
@@ -11795,7 +11795,7 @@ CONTAINS
     REAL(DP) :: RESIDUAL_NORM,SOLVER_VALUE,VALUE
     REAL(DP), POINTER :: RHS_DATA(:)
     TYPE(DistributedVectorType), POINTER :: rhsVector,SOLVER_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOFS_MAPPING
+    TYPE(DomainMappingType), POINTER :: ROW_DOFS_MAPPING
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -11830,7 +11830,7 @@ CONTAINS
                           IF(ASSOCIATED(ROW_DOFS_MAPPING)) THEN
                             CALL DistributedVector_DataGet(rhsVector,RHS_DATA,ERR,ERROR,*999)
                             DO local_row=1,SOLVER_MAPPING%NUMBER_OF_ROWS
-                              global_row=ROW_DOFS_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
+                              global_row=ROW_DOFS_MAPPING%localToGlobalMap(local_row)
                               CALL DistributedMatrix_ValuesGet(SOLVER_MATRIX%MATRIX,local_row,global_row,VALUE,ERR,ERROR,*999)
                               IF(ABS(VALUE)>ZERO_TOLERANCE) THEN
                                 SOLVER_VALUE=RHS_DATA(local_row)/VALUE
@@ -12393,7 +12393,7 @@ CONTAINS
       & LINEAR_TEMP_VECTOR,PREDICTED_MEAN_ACCELERATION_VECTOR,PREDICTED_MEAN_DISPLACEMENT_VECTOR,PREDICTED_MEAN_VELOCITY_VECTOR, &
       & SOLVER_RHS_VECTOR, SOLVER_RESIDUAL_VECTOR,RESIDUAL_VECTOR,INCREMENTAL_VECTOR,INTERFACE_TEMP_VECTOR, &
       & LAGRANGE_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: RHS_DOMAIN_MAPPING,VARIABLE_DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: RHS_DOMAIN_MAPPING,VARIABLE_DOMAIN_MAPPING
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -12727,7 +12727,7 @@ CONTAINS
                             ENDIF
                           ENDDO !equations_set_idx
                           !Loop over any interface conditions
-                          DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
+                          DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
                             !Loop over the interface matrices
                             DO interface_matrix_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                               & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_INTERFACE_MATRICES
@@ -13088,7 +13088,7 @@ CONTAINS
                                           DO equations_row_number=1,vectorMapping%totalNumberOfRows
                                             !Get the dynamic contribution to the the RHS values
                                             rhs_variable_dof=rhsMapping%equationsRowToRHSDofMap(equations_row_number)
-                                            rhs_global_dof=RHS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(rhs_variable_dof)
+                                            rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(rhs_variable_dof)
                                             rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
                                             !Apply boundary conditions
                                             SELECT CASE(rhs_boundary_condition)
@@ -13142,7 +13142,7 @@ CONTAINS
                                                       & DEPENDENT_BOUNDARY_CONDITIONS,ERR,ERROR,*999)
                                                     variable_dof=dynamicMapping%equationsRowToVariableDOFMaps( &
                                                       & equations_row_number)
-                                                    variable_global_dof=VARIABLE_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(variable_dof)
+                                                    variable_global_dof=VARIABLE_DOMAIN_MAPPING%localToGlobalMap(variable_dof)
                                                     variable_boundary_condition=DEPENDENT_BOUNDARY_CONDITIONS%DOF_TYPES( &
                                                       & variable_global_dof)
 
@@ -13397,8 +13397,8 @@ CONTAINS
                       ENDDO !equations_set_idx
               !!!! TODO TODO !!!! ???
                       !Add in any rows from any interface conditions
-                      DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                        INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%ptr
+                      DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                        INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                         IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                           SELECT CASE(INTERFACE_CONDITION%METHOD)
                           CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
@@ -13697,8 +13697,8 @@ CONTAINS
                       ENDDO !equations_set_idx
 
                       !Loop over the interface conditions
-                      DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                        INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%ptr
+                      DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                        INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                         IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                           LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                           IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
@@ -14059,7 +14059,7 @@ CONTAINS
     TYPE(DistributedMatrixType), POINTER :: PREVIOUS_SOLVER_DISTRIBUTED_MATRIX,SOLVER_DISTRIBUTED_MATRIX
     TYPE(DistributedVectorType), POINTER :: LAGRANGE_VECTOR,DEPENDENT_VECTOR,DISTRIBUTED_SOURCE_VECTOR,EQUATIONS_RHS_VECTOR, &
       & LINEAR_TEMP_VECTOR,INTERFACE_TEMP_VECTOR,RESIDUAL_VECTOR,SOLVER_RESIDUAL_VECTOR,SOLVER_RHS_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: RHS_DOMAIN_MAPPING,VARIABLE_DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: RHS_DOMAIN_MAPPING,VARIABLE_DOMAIN_MAPPING
     TYPE(EquationsJacobianType), POINTER :: JACOBIAN_MATRIX
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -14170,7 +14170,7 @@ CONTAINS
                         ENDIF
                       ENDDO !equations_set_idx
                       !Loop over any interface conditions
-                      DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
+                      DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
                         !Loop over the interface matrices
                         DO interface_matrix_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                           & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_INTERFACE_MATRICES
@@ -14377,8 +14377,8 @@ CONTAINS
                     ENDIF
                   ENDDO !equations_set_idx
                   !Loop over the interface conditions
-                  DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                    INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%ptr
+                  DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                    INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                       LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
@@ -14686,7 +14686,7 @@ CONTAINS
                                           ENDDO !solver_row_idx
                                         ENDIF
                                         rhs_variable_dof=rhsMapping%equationsRowToRHSDofMap(equations_row_number)
-                                        rhs_global_dof=RHS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(rhs_variable_dof)
+                                        rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(rhs_variable_dof)
                                         rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
                                         !Apply boundary conditions
                                         SELECT CASE(rhs_boundary_condition)
@@ -14727,7 +14727,7 @@ CONTAINS
                                                 & DEPENDENT_BOUNDARY_CONDITIONS,ERR,ERROR,*999)
                                               variable_dof=linearMapping%equationsRowToVariableDOFMaps( &
                                                 & equations_row_number,variable_idx)
-                                              variable_global_dof=VARIABLE_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(variable_dof)
+                                              variable_global_dof=VARIABLE_DOMAIN_MAPPING%localToGlobalMap(variable_dof)
                                               variable_boundary_condition=DEPENDENT_BOUNDARY_CONDITIONS%DOF_TYPES( &
                                                 & variable_global_dof)
                                               IF(variable_boundary_condition==BOUNDARY_CONDITION_DOF_FIXED) THEN
@@ -14943,8 +14943,8 @@ CONTAINS
                     ENDIF
                   ENDDO !equations_set_idx
                   !Add in any rows from any interface conditions
-                  DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                    INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%ptr
+                  DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                    INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                       SELECT CASE(INTERFACE_CONDITION%METHOD)
                       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
@@ -15844,8 +15844,8 @@ CONTAINS
                     ENDIF
                   ENDDO !equations_set_idx
                   !Loop over the interface conditions
-                  DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                    INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%ptr
+                  DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                    INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                       LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
@@ -18625,8 +18625,8 @@ CONTAINS
                     ENDIF
                   ENDDO !equations_set_idx
                   !Loop over the interface conditions
-                  DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                    INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%ptr
+                  DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                    INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                       LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
@@ -21556,12 +21556,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: column_number,equations_set_idx,local_number,solver_matrix_idx,variable_dof_idx,variable_idx,variable_type, &
+    INTEGER(INTG) :: column_number,equations_set_idx,localNumber,solver_matrix_idx,variable_dof_idx,variable_idx,variable_type, &
       & interface_condition_idx
     REAL(DP) :: additive_constant,VALUE,coupling_coefficient
     REAL(DP), POINTER :: VARIABLE_DATA(:)
     TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: DOMAIN_MAPPING
+    TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -21599,7 +21599,7 @@ CONTAINS
                             NULLIFY(VARIABLE_DATA)
                             CALL FIELD_PARAMETER_SET_DATA_GET(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE,VARIABLE_DATA, &
                               & ERR,ERROR,*999)
-                            DO variable_dof_idx=1,DEPENDENT_VARIABLE%NUMBER_OF_DOFS
+                            DO variable_dof_idx=1,DEPENDENT_VARIABLE%numberOfDofs
                               column_number=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                                 & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%VARIABLE_TO_SOLVER_COL_MAPS(variable_idx)% &
                                 & COLUMN_NUMBERS(variable_dof_idx)
@@ -21611,8 +21611,8 @@ CONTAINS
                                   & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%VARIABLE_TO_SOLVER_COL_MAPS( &
                                   & variable_idx)%ADDITIVE_CONSTANTS(variable_dof_idx)
                                 VALUE=VARIABLE_DATA(variable_dof_idx)*coupling_coefficient+additive_constant
-                                local_number=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(column_number)%LOCAL_NUMBER(1)
-                                CALL DistributedVector_ValuesSet(SOLVER_VECTOR,local_number,VALUE,ERR,ERROR,*999)
+                                localNumber=DOMAIN_MAPPING%globalToLocalMap(column_number)%localNumber(1)
+                                CALL DistributedVector_ValuesSet(SOLVER_VECTOR,localNumber,VALUE,ERR,ERROR,*999)
                               ENDIF
                             ENDDO !variable_dof_idx
                             CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
@@ -21622,7 +21622,7 @@ CONTAINS
                           ENDIF
                         ENDDO !variable_idx
                       ENDDO !equations_set_idx
-                      DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
+                      DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
                         LAGRANGE_VARIABLE=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                           & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE
                         IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
@@ -21631,7 +21631,7 @@ CONTAINS
                           NULLIFY(VARIABLE_DATA)
                           CALL FIELD_PARAMETER_SET_DATA_GET(LAGRANGE_FIELD,variable_type,FIELD_VALUES_SET_TYPE,VARIABLE_DATA, &
                             & ERR,ERROR,*999)
-                          DO variable_dof_idx=1,LAGRANGE_VARIABLE%NUMBER_OF_DOFS
+                          DO variable_dof_idx=1,LAGRANGE_VARIABLE%numberOfDofs
                             column_number=SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                               & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE_TO_SOLVER_COL_MAP% &
                               & COLUMN_NUMBERS(variable_dof_idx)
@@ -21643,8 +21643,8 @@ CONTAINS
                                 & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE_TO_SOLVER_COL_MAP% &
                                 & ADDITIVE_CONSTANTS(variable_dof_idx)
                               VALUE=VARIABLE_DATA(variable_dof_idx)*coupling_coefficient+additive_constant
-                              local_number=DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP(column_number)%LOCAL_NUMBER(1)
-                              CALL DistributedVector_ValuesSet(SOLVER_VECTOR,local_number,VALUE,ERR,ERROR,*999)
+                              localNumber=DOMAIN_MAPPING%globalToLocalMap(column_number)%localNumber(1)
+                              CALL DistributedVector_ValuesSet(SOLVER_VECTOR,localNumber,VALUE,ERR,ERROR,*999)
                             ENDIF
                           ENDDO !variable_dof_idx
                           CALL FIELD_PARAMETER_SET_DATA_RESTORE(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE, &
@@ -21919,7 +21919,7 @@ CONTAINS
                       !Get the solver variables data
                       CALL DistributedVector_DataGet(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                       !Loop over the solver variable dofs
-                      DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%NUMBER_OF_DOFS
+                      DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%numberOfDofs
                         !Loop over the equations sets associated with this dof
                         DO equations_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                           & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%NUMBER_OF_EQUATION_DOFS
@@ -22587,7 +22587,7 @@ CONTAINS
                     !Get the solver variables data                  
                     CALL DistributedVector_DataGet(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                     !Loop over the solver variable dofs
-                    DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%NUMBER_OF_DOFS
+                    DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%numberOfDofs
                       !Loop over the equations associated with this dof
                       DO equations_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                         & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%NUMBER_OF_EQUATION_DOFS
@@ -22700,7 +22700,7 @@ CONTAINS
                           DEPENDENT_VARIABLE=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                             & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%VARIABLE(equations_idx)%ptr
                           !EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_idx)%ptr see above
-                          INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(SOLVER_MAPPING% &
+                          INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(SOLVER_MAPPING% &
                             & SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                             & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%EQUATIONS_INDICES(equations_idx))%ptr
                           IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
@@ -22793,8 +22793,8 @@ CONTAINS
                     
                     
                     !TODO Generalize
-                    DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                      INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%ptr
+                    DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                      INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                       DEPENDENT_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                       VARIABLE_TYPE=SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                         & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE_TYPE
@@ -22878,7 +22878,7 @@ CONTAINS
                     !Get the solver variables data
                     CALL DistributedVector_DataGet(SOLVER_VECTOR,SOLVER_DATA,ERR,ERROR,*999)
                     !Loop over the solver variable dofs
-                    DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%NUMBER_OF_DOFS
+                    DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%numberOfDofs
                       !Loop over the equations associated with this dof
                       DO equations_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                         & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%NUMBER_OF_EQUATION_DOFS
@@ -22946,7 +22946,7 @@ CONTAINS
                     ENDDO !solver_dof_idx
                     IF(DIAGNOSTICS2) THEN
                       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Solver matrix index = ",solver_matrix_idx,ERR,ERROR,*999)
-                      DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%NUMBER_OF_DOFS
+                      DO solver_dof_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%numberOfDofs
                         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Solver dof index = ",solver_dof_idx,ERR,ERROR,*999)
                         DO equations_idx=1,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                           & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%NUMBER_OF_EQUATION_DOFS

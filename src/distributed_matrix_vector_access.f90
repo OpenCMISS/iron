@@ -127,7 +127,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to get the column mapping for
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: columnMapping !<On return, the column mapping for the distributed matrix. Must not be associated on entry.
+    TYPE(DomainMappingType), POINTER :: columnMapping !<On return, the column mapping for the distributed matrix. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -187,7 +187,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to get the row mapping for
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowMapping !<On return, the row mapping for the distributed matrix. Must not be associated on entry.
+    TYPE(DomainMappingType), POINTER :: rowMapping !<On return, the row mapping for the distributed matrix. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -339,7 +339,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector to get the row mapping for
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowMapping !<On return, the row mapping for the distributed vector. Must not be associated on entry.
+    TYPE(DomainMappingType), POINTER :: rowMapping !<On return, the row mapping for the distributed vector. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

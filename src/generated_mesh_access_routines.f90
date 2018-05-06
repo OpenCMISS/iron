@@ -95,7 +95,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the generated mesh to find
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<The list of generated meshes containing the generated mesh.
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -113,7 +113,7 @@ CONTAINS
     IF(ASSOCIATED(generatedMeshes%generatedMeshes)) THEN
       DO generatedMeshIdx=1,generatedMeshes%numberOfGeneratedMeshes
         IF(ASSOCIATED(generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr)) THEN
-          IF(generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr%userNumber==userNumber) THEN
             generatedMesh=>generatedMeshes%generatedMeshes(generatedMeshIdx)%ptr
             EXIT
           ENDIF
@@ -141,8 +141,8 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the generated mesh to find
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface containing the generated mesh
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containing the generated mesh
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -170,8 +170,8 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the generated mesh to find
-    TYPE(REGION_TYPE), POINTER :: region !<The region containing the generated  mesh
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: region !<The region containing the generated  mesh
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh !<On return, a pointer to the generated mesh of the specified user number. In no generated mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -198,7 +198,7 @@ CONTAINS
   SUBROUTINE GeneratedMesh_UserNumberGet(generatedMesh,userNumber,err,error,*)
 
     !Argument variables
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh !<A pointer to the generatedMesh to get the user number for
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh !<A pointer to the generatedMesh to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number of the generatedMesh.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -208,7 +208,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(generatedMesh)) CALL FlagError("GeneratedMesh is not associated.",err,error,*999)
 
-    userNumber=generatedMesh%USER_NUMBER
+    userNumber=generatedMesh%userNumber
   
     EXITS("GeneratedMesh_UserNumberGet")
     RETURN

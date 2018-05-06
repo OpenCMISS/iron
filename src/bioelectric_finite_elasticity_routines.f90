@@ -780,7 +780,7 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS
+    TYPE(BasisType), POINTER :: DEPENDENT_BASIS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
@@ -792,11 +792,11 @@ CONTAINS
       & DEPENDENT_INTERPOLATED_POINT
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT_METRICS, &
       & DEPENDENT_INTERPOLATED_POINT_METRICS
-    TYPE(BASIS_TYPE), POINTER :: GEOMETRIC_BASIS
-    TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
+    TYPE(BasisType), POINTER :: GEOMETRIC_BASIS
+    TYPE(DecompositionType), POINTER :: DECOMPOSITION
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VAR_U1
     INTEGER(INTG) :: DEPENDENT_NUMBER_OF_GAUSS_POINTS
-    INTEGER(INTG) :: MESH_COMPONENT_NUMBER,NUMBER_OF_ELEMENTS,FIELD_VAR_TYPE
+    INTEGER(INTG) :: meshComponentNumber,numberOfElements,FIELD_VAR_TYPE
     INTEGER(INTG) :: equations_set_idx,gauss_idx,dof_idx,element_idx,idx
     REAL(DP) :: DZDNU(3,3),DZDNUT(3,3),AZL(3,3)
 
@@ -884,7 +884,7 @@ CONTAINS
           CALL Field_VariableGet(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VAR_U1,ERR,ERROR,*999)
 
           DECOMPOSITION=>dependentField%DECOMPOSITION
-          MESH_COMPONENT_NUMBER=DECOMPOSITION%MESH_COMPONENT_NUMBER
+          meshComponentNumber=decomposition%meshComponentNumber
 
           IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1) THEN
             !copy the old fibre stretch to the previous values parameter set
@@ -892,7 +892,7 @@ CONTAINS
               & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
           ENDIF
 
-          NUMBER_OF_ELEMENTS=dependentField%GEOMETRIC_FIELD%DECOMPOSITION%TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS
+          numberOfElements=dependentField%GEOMETRIC_FIELD%DECOMPOSITION%TOPOLOGY%ELEMENTS%numberOfElements
 
           !Grab interpolation parameters
           FIELD_VAR_TYPE=nonlinearMapping%residualVariables(1)%ptr%VARIABLE_TYPE
@@ -907,12 +907,12 @@ CONTAINS
           DEPENDENT_INTERPOLATED_POINT_METRICS=>equations%interpolation%dependentInterpPointMetrics(FIELD_VAR_TYPE)%ptr
           
           !loop over the elements of the finite elasticity mesh (internal and boundary elements)
-          DO element_idx=1,NUMBER_OF_ELEMENTS
+          DO element_idx=1,numberOfElements
 
-            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
+            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
             DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
             DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%NUMBER_OF_GAUSS
-            GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+            GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
               & TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS
 
             !Initialise tensors and matrices
@@ -934,11 +934,11 @@ CONTAINS
               !Interpolate dependent, geometric, fibre and materials fields
               CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                 & DEPENDENT_INTERPOLATED_POINT,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(DEPENDENT_BASIS%NUMBER_OF_XI, &
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(DEPENDENT_BASIS%numberOfXi, &
                 & DEPENDENT_INTERPOLATED_POINT_METRICS,ERR,ERROR,*999)
               CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                 & GEOMETRIC_INTERPOLATED_POINT,ERR,ERROR,*999)
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI, &
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi, &
                 & GEOMETRIC_INTERPOLATED_POINT_METRICS,ERR,ERROR,*999)
               CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                 & FIBRE_INTERPOLATED_POINT,ERR,ERROR,*999)
@@ -1003,7 +1003,7 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS
+    TYPE(BasisType), POINTER :: DEPENDENT_BASIS
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: DEPENDENT_QUADRATURE_SCHEME
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS, &
@@ -1012,11 +1012,11 @@ CONTAINS
       & DEPENDENT_INTERPOLATED_POINT
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT_METRICS, &
       & DEPENDENT_INTERPOLATED_POINT_METRICS
-    TYPE(BASIS_TYPE), POINTER :: GEOMETRIC_BASIS
-    TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
+    TYPE(BasisType), POINTER :: GEOMETRIC_BASIS
+    TYPE(DecompositionType), POINTER :: DECOMPOSITION
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VAR_U,FIELD_VAR_U1
     INTEGER(INTG) :: DEPENDENT_NUMBER_OF_GAUSS_POINTS
-    INTEGER(INTG) :: MESH_COMPONENT_NUMBER,NUMBER_OF_ELEMENTS
+    INTEGER(INTG) :: meshComponentNumber,numberOfElements
     INTEGER(INTG) :: equations_set_idx,gauss_idx,dof_idx,element_idx
     INTEGER(INTG) :: ITERATION_NUMBER,MAXIMUM_NUMBER_OF_ITERATIONS
     REAL(DP) :: LENGTH_HS,LENGTH_HS_0,ACTIVE_STRESS,FIBRE_STRETCH,FIBRE_STRETCH_OLD
@@ -1117,7 +1117,7 @@ CONTAINS
           TIME_STEP=CONTROL_LOOP_PARENT%TIME_LOOP%TIME_INCREMENT
 
           DECOMPOSITION=>dependentField%DECOMPOSITION
-          MESH_COMPONENT_NUMBER=DECOMPOSITION%MESH_COMPONENT_NUMBER
+          meshComponentNumber=decomposition%meshComponentNumber
 
 !tomo start
           VELOCITY_AVERAGE=0.0_DP
@@ -1126,12 +1126,12 @@ CONTAINS
           counter=0
 !tomo end
 
-          NUMBER_OF_ELEMENTS=dependentField%GEOMETRIC_FIELD%DECOMPOSITION%TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS
+          numberOfElements=dependentField%GEOMETRIC_FIELD%DECOMPOSITION%TOPOLOGY%ELEMENTS%numberOfElements
 
           !loop over the elements of the finite elasticity mesh (internal and boundary elements)
-          DO element_idx=1,NUMBER_OF_ELEMENTS
+          DO element_idx=1,numberOfElements
 
-            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
+            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
             DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
             DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%NUMBER_OF_GAUSS
 
@@ -1300,9 +1300,9 @@ CONTAINS
 !!!            ENDIF
 !!!          ENDIF
 
-!!!          DO element_idx=1,NUMBER_OF_ELEMENTS
+!!!          DO element_idx=1,numberOfElements
 
-!!!            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
+!!!            DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(element_idx)%BASIS       
 !!!            DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
 !!!            DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%NUMBER_OF_GAUSS
 
@@ -1368,7 +1368,7 @@ CONTAINS
     TYPE(CONTROL_LOOP_TIME_TYPE), POINTER :: TIME_LOOP
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(REGION_TYPE), POINTER :: DEPENDENT_REGION   
+    TYPE(RegionType), POINTER :: DEPENDENT_REGION   
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
@@ -1436,7 +1436,7 @@ CONTAINS
                       dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                       NULLIFY(DEPENDENT_REGION)
                       CALL FIELD_REGION_GET(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
-                      FILENAME="MainTime_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%USER_NUMBER,"*",ERR,ERROR))// &
+                      FILENAME="MainTime_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
                         & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%GLOBAL_ITERATION_NUMBER,"*",ERR,ERROR))
                       METHOD="FORTRAN"
                       CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
@@ -1476,7 +1476,7 @@ CONTAINS
                         dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         NULLIFY(DEPENDENT_REGION)
                         CALL FIELD_REGION_GET(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
-                        FILENAME="MainTime_M_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%USER_NUMBER,"*",ERR,ERROR))// &
+                        FILENAME="MainTime_M_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
                           & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%GLOBAL_ITERATION_NUMBER,"*",ERR,ERROR))
                         METHOD="FORTRAN"
                         CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
@@ -1531,7 +1531,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
-    INTEGER(INTG) :: equations_set_idx,NUMBER_OF_NODES,dof_idx,node_idx
+    INTEGER(INTG) :: equations_set_idx,numberOfNodes,dof_idx,node_idx
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FIELD_TYPE), POINTER :: dependentField
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -1590,11 +1590,11 @@ CONTAINS
             ELSE
               CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VAR,ERR,ERROR,*999)
 
-              NUMBER_OF_NODES=dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION% &
-                & MESH_COMPONENT_NUMBER)%ptr%MAPPINGS%NODES%NUMBER_OF_LOCAL
+              numberOfNodes=dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION% &
+                & meshComponentNumber)%ptr%MAPPINGS%NODES%numberOfLocal
 
               my_sum=0.0_DP
-              DO node_idx=1,NUMBER_OF_NODES
+              DO node_idx=1,numberOfNodes
 
                 !get the current node position (x) and the node position of the last iteration (y)
                 dof_idx=FIELD_VAR%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)% &
@@ -1687,8 +1687,8 @@ CONTAINS
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: NODES_MAPPING
-    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: ELEMENTS_TOPOLOGY
+    TYPE(DomainMappingType), POINTER :: NODES_MAPPING
+    TYPE(DecompositionElementsType), POINTER :: ELEMENTS_TOPOLOGY
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VAR_DEP_M,FIELD_VAR_GEO_M,FIELD_VAR_IND_FE,FIELD_VAR_IND_M,FIELD_VAR_IND_M_2
     INTEGER(INTG) :: component_idx,element_idx,ne,start_elem,START_ELEMENT,start_element_idx
     INTEGER(INTG) :: DEPENDENT_FIELD_INTERPOLATION,GEOMETRIC_FIELD_INTERPOLATION
@@ -1800,8 +1800,8 @@ CONTAINS
               ENDIF
               DO component_idx=1,GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%NUMBER_OF_COMPONENTS
                 !check for identical interpolation of the fields
-                GEOMETRIC_FIELD_INTERPOLATION=GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
-                DEPENDENT_FIELD_INTERPOLATION=DEPENDENT_FIELD_ELASTICITY%VARIABLES(1)%COMPONENTS(component_idx)%INTERPOLATION_TYPE
+                GEOMETRIC_FIELD_INTERPOLATION=GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%COMPONENTS(component_idx)%interpolationType
+                DEPENDENT_FIELD_INTERPOLATION=DEPENDENT_FIELD_ELASTICITY%VARIABLES(1)%COMPONENTS(component_idx)%interpolationType
                 IF(GEOMETRIC_FIELD_INTERPOLATION==DEPENDENT_FIELD_INTERPOLATION) THEN
                   !copy the dependent field components to the geometric field
                   CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD_ELASTICITY,FIELD_U_VARIABLE_TYPE, &
@@ -1809,9 +1809,9 @@ CONTAINS
                     & component_idx,ERR,ERROR,*999)
                 ELSE
                   LOCAL_ERROR="The interpolation type of component number "//TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR, &
-                    & ERROR))//" of field number "//TRIM(NUMBER_TO_VSTRING(GEOMETRIC_FIELD_MONODOMAIN%USER_NUMBER,"*",ERR, &
+                    & ERROR))//" of field number "//TRIM(NUMBER_TO_VSTRING(GEOMETRIC_FIELD_MONODOMAIN%userNumber,"*",ERR, &
                     & ERROR))//" does not coincide with the interpolation type of field number " &
-                    & //TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD_ELASTICITY%USER_NUMBER,"*",ERR,ERROR))//"."
+                    & //TRIM(NUMBER_TO_VSTRING(DEPENDENT_FIELD_ELASTICITY%userNumber,"*",ERR,ERROR))//"."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ENDDO
@@ -1897,7 +1897,7 @@ CONTAINS
               CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U2_VARIABLE_TYPE,FIELD_VAR_IND_M_2,ERR,ERROR,*999)
 
               NODES_MAPPING=>GEOMETRIC_FIELD_MONODOMAIN%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_MONODOMAIN%DECOMPOSITION% &
-                & MESH_COMPONENT_NUMBER)%ptr%MAPPINGS%NODES
+                & meshComponentNumber)%ptr%MAPPINGS%NODES
               
               ELEMENTS_TOPOLOGY=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%TOPOLOGY%ELEMENTS
 
@@ -1915,8 +1915,8 @@ CONTAINS
 
               !loop over the elements of the finite elasticity mesh (internal and boundary elements)
               !no need to consider ghost elements here since only bioelectrical fields are changed
-              DO element_idx=1,ELEMENTS_TOPOLOGY%NUMBER_OF_ELEMENTS
-                ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%LOCAL_NUMBER
+              DO element_idx=1,ELEMENTS_TOPOLOGY%numberOfElements
+                ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%localNumber
                 my_element_idx=element_idx
 
                 !the Field_V_Variable_Type of the FE independent field contains the number of nodes in each Xi-direction of the bioelectrics grid
@@ -1959,7 +1959,7 @@ CONTAINS
 
                       !get the positions of the Gauss points of the Finite Elasticity element, GAUSS_POSITIONS(components,number_of_Gauss_points)
                       GAUSS_POSITIONS=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION% &
-                        & MESH_COMPONENT_NUMBER)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP( &
+                        & meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP( &
                         & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%GAUSS_POSITIONS
                       
                       DO n1=1,nodes_in_Xi_1
@@ -2260,10 +2260,10 @@ CONTAINS
 
 
                       !if there is not an adjacent element in positive XI_1 direction, go to the next FE element
-                      IF(ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%ADJACENT_ELEMENTS(1)%NUMBER_OF_ADJACENT_ELEMENTS==0) EXIT
+                      IF(ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%adjacentElements(1)%numberOfAdjacentElements==0) EXIT
                       
                       !consider the adjacent element in positive XI_1 direction
-                      ne=ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%ADJACENT_ELEMENTS(1)%ADJACENT_ELEMENTS(1)
+                      ne=ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%adjacentElements(1)%adjacentElements(1)
 
                       !if a fibre starts in the next element, go to the next FE elem
                       dof_idx=FIELD_VAR_IND_FE%COMPONENTS(4)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(ne)
@@ -2271,14 +2271,14 @@ CONTAINS
                         & FIELD_VALUES_SET_TYPE,dof_idx,start_elem,ERR,ERROR,*999)
                       !beginning of a fibre in this element: 1=yes, 0=no
                       IF (start_elem==1) THEN
-                        ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%LOCAL_NUMBER
+                        ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%localNumber
                         EXIT
                       ENDIF
                       
                       !find the element_idx that corresponds to ne
                       my_element_idx=0
-                      DO idx=1,ELEMENTS_TOPOLOGY%NUMBER_OF_ELEMENTS
-                        IF(ne==ELEMENTS_TOPOLOGY%ELEMENTS(idx)%ADJACENT_ELEMENTS(0)%ADJACENT_ELEMENTS(1)) THEN
+                      DO idx=1,ELEMENTS_TOPOLOGY%numberOfElements
+                        IF(ne==ELEMENTS_TOPOLOGY%ELEMENTS(idx)%adjacentElements(0)%adjacentElements(1)) THEN
                           my_element_idx=idx
                           EXIT
                         ENDIF
@@ -2391,14 +2391,14 @@ CONTAINS
               CALL Field_VariableGet(INDEPENDENT_FIELD_ELASTICITY,FIELD_V_VARIABLE_TYPE,FIELD_VAR_IND_FE,ERR,ERROR,*999)
 
               NODES_MAPPING=>GEOMETRIC_FIELD_MONODOMAIN%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_MONODOMAIN%DECOMPOSITION% &
-                & MESH_COMPONENT_NUMBER)%ptr%MAPPINGS%NODES
+                & meshComponentNumber)%ptr%MAPPINGS%NODES
               
               ELEMENTS_TOPOLOGY=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%TOPOLOGY%ELEMENTS
 
               !loop over the elements of the finite elasticity mesh (internal and boundary elements)
               !no need to consider ghost elements here since only bioelectrical fields are changed
-              DO element_idx=1,ELEMENTS_TOPOLOGY%NUMBER_OF_ELEMENTS
-                ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%LOCAL_NUMBER
+              DO element_idx=1,ELEMENTS_TOPOLOGY%numberOfElements
+                ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%localNumber
                 my_element_idx=element_idx
 
                 !the Field_V_Variable_Type of the FE independent field contains the number of nodes in each Xi-direction of the bioelectrics grid
@@ -2441,7 +2441,7 @@ CONTAINS
 
                       !get the positions of the Gauss points of the Finite Elasticity element, GAUSS_POSITIONS(components,number_of_Gauss_points)
                       GAUSS_POSITIONS=>GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD_ELASTICITY%DECOMPOSITION% &
-                        & MESH_COMPONENT_NUMBER)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP( &
+                        & meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP( &
                         & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%GAUSS_POSITIONS
                       
                       DO n1=1,nodes_in_Xi_1
@@ -2538,10 +2538,10 @@ CONTAINS
 
 
                       !if there is not an adjacent element in positive XI_1 direction, go to the next FE element
-                      IF(ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%ADJACENT_ELEMENTS(1)%NUMBER_OF_ADJACENT_ELEMENTS==0) EXIT
+                      IF(ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%adjacentElements(1)%numberOfAdjacentElements==0) EXIT
                       
                       !consider the adjacent element in positive XI_1 direction
-                      ne=ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%ADJACENT_ELEMENTS(1)%ADJACENT_ELEMENTS(1)
+                      ne=ELEMENTS_TOPOLOGY%ELEMENTS(my_element_idx)%adjacentElements(1)%adjacentElements(1)
 
                       !if a fibre starts in the next element, go to the next FE elem
                       dof_idx=FIELD_VAR_IND_FE%COMPONENTS(4)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(ne)
@@ -2549,14 +2549,14 @@ CONTAINS
                         & FIELD_VALUES_SET_TYPE,dof_idx,start_elem,ERR,ERROR,*999)
                       !beginning of a fibre in this element: 1=yes, 0=no
                       IF (start_elem==1) THEN
-                        ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%LOCAL_NUMBER
+                        ne=ELEMENTS_TOPOLOGY%ELEMENTS(element_idx)%localNumber
                         EXIT
                       ENDIF
                       
                       !find the element_idx that corresponds to ne
                       my_element_idx=0
-                      DO idx=1,ELEMENTS_TOPOLOGY%NUMBER_OF_ELEMENTS
-                        IF(ne==ELEMENTS_TOPOLOGY%ELEMENTS(idx)%ADJACENT_ELEMENTS(0)%ADJACENT_ELEMENTS(1)) THEN
+                      DO idx=1,ELEMENTS_TOPOLOGY%numberOfElements
+                        IF(ne==ELEMENTS_TOPOLOGY%ELEMENTS(idx)%adjacentElements(0)%adjacentElements(1)) THEN
                           my_element_idx=idx
                           EXIT
                         ENDIF
@@ -2642,7 +2642,7 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ELEMENTS_MAPPING,NODES_MAPPING
+    TYPE(DomainMappingType), POINTER :: ELEMENTS_MAPPING,NODES_MAPPING
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE_U,FIELD_VARIABLE_V,FIELD_VARIABLE_FE
     INTEGER(INTG) :: node_idx,element_idx,gauss_idx,ne
@@ -2651,7 +2651,7 @@ CONTAINS
     REAL(DP) :: ACTIVE_STRESS
     REAL(DP) :: TITIN_STRESS_UNBOUND,TITIN_STRESS_BOUND,TITIN_STRESS_CROSS_FIBRE_UNBOUND,TITIN_STRESS_CROSS_FIBRE_BOUND,ACTIVATION
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_GAUSS_POINTS=64
-    INTEGER(INTG) :: NUMBER_OF_NODES(MAX_NUMBER_OF_GAUSS_POINTS)
+    INTEGER(INTG) :: numberOfNodes(MAX_NUMBER_OF_GAUSS_POINTS)
     REAL(DP) :: ACTIVE_STRESS_VALUES(MAX_NUMBER_OF_GAUSS_POINTS)
     REAL(DP) :: TITIN_STRESS_VALUES_UNBOUND(MAX_NUMBER_OF_GAUSS_POINTS),TITIN_STRESS_VALUES_BOUND(MAX_NUMBER_OF_GAUSS_POINTS)
     REAL(DP) :: TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(MAX_NUMBER_OF_GAUSS_POINTS)
@@ -2737,9 +2737,9 @@ CONTAINS
 
             !--- NOW INTERPOLATE ---
             ELEMENTS_MAPPING=>INDEPENDENT_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_ELASTICITY%DECOMPOSITION% &
-              & MESH_COMPONENT_NUMBER)%ptr%MAPPINGS%ELEMENTS
+              & meshComponentNumber)%ptr%MAPPINGS%ELEMENTS
             NODES_MAPPING=>INDEPENDENT_FIELD_MONODOMAIN%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_MONODOMAIN%DECOMPOSITION% &
-              & MESH_COMPONENT_NUMBER)%ptr%MAPPINGS%NODES
+              & meshComponentNumber)%ptr%MAPPINGS%NODES
 
             CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE_U,ERR,ERROR,*999)
             CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE,FIELD_VARIABLE_V,ERR,ERROR,*999)
@@ -2747,16 +2747,16 @@ CONTAINS
 
             !loop over the finite elasticity elements
             !first process the internal and boundary elements
-            DO element_idx=ELEMENTS_MAPPING%INTERNAL_START,ELEMENTS_MAPPING%BOUNDARY_FINISH
-              ne=ELEMENTS_MAPPING%DOMAIN_LIST(element_idx)
+            DO element_idx=ELEMENTS_MAPPING%internalStart,ELEMENTS_MAPPING%boundaryFinish
+              ne=ELEMENTS_MAPPING%domainList(element_idx)
               
               NUMBER_OF_GAUSS_POINTS=INDEPENDENT_FIELD_ELASTICITY%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_ELASTICITY% &
-                & DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP &
+                & decomposition%meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(ne)%BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP &
                 & (BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%NUMBER_OF_GAUSS
 
               IF(NUMBER_OF_GAUSS_POINTS>MAX_NUMBER_OF_GAUSS_POINTS) CALL FlagError( & 
                 & "NUMBER_OF_GAUSS_POINTS is greater than MAX_NUMBER_OF_GAUSS_POINTS.",ERR,ERROR,*999)
-              NUMBER_OF_NODES=0
+              numberOfNodes=0
               ACTIVE_STRESS_VALUES=0.0_DP
               TITIN_STRESS_VALUES_UNBOUND=0.0_DP
               TITIN_STRESS_VALUES_BOUND=0.0_DP
@@ -2769,7 +2769,7 @@ CONTAINS
               x_2_VALUES=0.0_DP
               
               !loop over the bioelectrics nodes
-              DO node_idx=1,NODES_MAPPING%NUMBER_OF_LOCAL
+              DO node_idx=1,NODES_MAPPING%numberOfLocal
                 dof_idx=FIELD_VARIABLE_V%COMPONENTS(5)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
                   & VERSIONS(1)
                 CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(INDEPENDENT_FIELD_MONODOMAIN,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -2795,7 +2795,7 @@ CONTAINS
                       & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
                     
                     !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
-                    NUMBER_OF_NODES(nearestGP)=NUMBER_OF_NODES(nearestGP)+1
+                    numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
                     !add up the active stress value
                     ACTIVE_STRESS_VALUES(nearestGP)=ACTIVE_STRESS_VALUES(nearestGP)+ACTIVE_STRESS
                     
@@ -2808,7 +2808,7 @@ CONTAINS
                       & FIELD_VALUES_SET_TYPE,dof_idx,ACTIVE_STRESS,ERR,ERROR,*999)
                     
                     !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
-                    NUMBER_OF_NODES(nearestGP)=NUMBER_OF_NODES(nearestGP)+1
+                    numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
                     !add up the active stress value
                     ACTIVE_STRESS_VALUES(nearestGP)=ACTIVE_STRESS_VALUES(nearestGP)+ACTIVE_STRESS
                     
@@ -2849,7 +2849,7 @@ CONTAINS
                   CASE(PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
 
                     !count the number of bioelectrics nodes that are closest to each finite elasticity Gauss point
-                    NUMBER_OF_NODES(nearestGP)=NUMBER_OF_NODES(nearestGP)+1
+                    numberOfNodes(nearestGP)=numberOfNodes(nearestGP)+1
 
                     !component 1 of variable U contains A_1
                     dof_idx=FIELD_VARIABLE_U%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &
@@ -2884,7 +2884,7 @@ CONTAINS
               !loop over the finite elasticity Gauss points
               DO gauss_idx=1,NUMBER_OF_GAUSS_POINTS
                 !make sure we don't divide by zero
-                IF(NUMBER_OF_NODES(gauss_idx)<=0) THEN
+                IF(numberOfNodes(gauss_idx)<=0) THEN
                   ACTIVE_STRESS=0.0_DP
                   TITIN_STRESS_UNBOUND=0.0_DP
                   TITIN_STRESS_BOUND=0.0_DP
@@ -2896,17 +2896,17 @@ CONTAINS
                   x_1=0.0_DP
                   x_2=0.0_DP
                 ELSE
-                  ACTIVE_STRESS=ACTIVE_STRESS_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
-                  TITIN_STRESS_UNBOUND=TITIN_STRESS_VALUES_UNBOUND(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
-                  TITIN_STRESS_BOUND=TITIN_STRESS_VALUES_BOUND(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
-                  TITIN_STRESS_CROSS_FIBRE_UNBOUND=TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
+                  ACTIVE_STRESS=ACTIVE_STRESS_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
+                  TITIN_STRESS_UNBOUND=TITIN_STRESS_VALUES_UNBOUND(gauss_idx)/numberOfNodes(gauss_idx)
+                  TITIN_STRESS_BOUND=TITIN_STRESS_VALUES_BOUND(gauss_idx)/numberOfNodes(gauss_idx)
+                  TITIN_STRESS_CROSS_FIBRE_UNBOUND=TITIN_STRESS_VALUES_CROSS_FIBRE_UNBOUND(gauss_idx)/numberOfNodes(gauss_idx)
                   TITIN_STRESS_CROSS_FIBRE_BOUND=TITIN_STRESS_VALUES_CROSS_FIBRE_BOUND(gauss_idx)/ &
-                    & NUMBER_OF_NODES(gauss_idx)
-                  ACTIVATION=ACTIVATION_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
-                  A_1=A_1_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
-                  A_2=A_2_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
-                  x_1=x_1_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
-                  x_2=x_2_VALUES(gauss_idx)/NUMBER_OF_NODES(gauss_idx)
+                    & numberOfNodes(gauss_idx)
+                  ACTIVATION=ACTIVATION_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
+                  A_1=A_1_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
+                  A_2=A_2_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
+                  x_1=x_1_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
+                  x_2=x_2_VALUES(gauss_idx)/numberOfNodes(gauss_idx)
                 ENDIF
 
                 SELECT CASE(PROBLEM%SPECIFICATION(3))
@@ -3006,7 +3006,7 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: NODES_MAPPING
+    TYPE(DomainMappingType), POINTER :: NODES_MAPPING
     INTEGER(INTG) :: node_idx,dof_idx
     REAL(DP), PARAMETER :: LENGTH_ACTIN=1.04_DP,LENGTH_MBAND=0.0625_DP,LENGTH_MYOSIN=0.7375_DP
     REAL(DP), PARAMETER :: LENGTH_ZERO=0.635_DP,LENGTH_ZDISC=0.05_DP
@@ -3134,12 +3134,12 @@ CONTAINS
                   CALL Field_VariableGet(INDEPENDENT_FIELD_MONODOMAIN,FIELD_U1_VARIABLE_TYPE,FIELD_VAR_IND_M,ERR,ERROR,*999)
 
                   NODES_MAPPING=>INDEPENDENT_FIELD_MONODOMAIN%DECOMPOSITION%DOMAIN(INDEPENDENT_FIELD_MONODOMAIN%DECOMPOSITION% &
-                    & MESH_COMPONENT_NUMBER)%ptr%MAPPINGS%NODES
+                    & meshComponentNumber)%ptr%MAPPINGS%NODES
 
                   ! Initialization
                   INDEX_REF=1
 
-                  DO node_idx=1,NODES_MAPPING%NUMBER_OF_LOCAL
+                  DO node_idx=1,NODES_MAPPING%numberOfLocal
                   
                     !the fourth component of the U1 variable contains the half sarcomere length at activation
                     dof_idx=FIELD_VAR_IND_M%COMPONENTS(4)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)% &

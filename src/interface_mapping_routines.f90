@@ -132,16 +132,16 @@ CONTAINS
                 INTERFACE_MAPPING%LAGRANGE_VARIABLE_TYPE=CREATE_VALUES_CACHE%LAGRANGE_VARIABLE_TYPE
                 INTERFACE_MAPPING%LAGRANGE_VARIABLE=>LAGRANGE_VARIABLE
                 !Set the number of columns in the interface matrices
-                INTERFACE_MAPPING%NUMBER_OF_COLUMNS=LAGRANGE_VARIABLE%NUMBER_OF_DOFS
-                INTERFACE_MAPPING%TOTAL_NUMBER_OF_COLUMNS=LAGRANGE_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                INTERFACE_MAPPING%NUMBER_OF_GLOBAL_COLUMNS=LAGRANGE_VARIABLE%NUMBER_OF_GLOBAL_DOFS
+                INTERFACE_MAPPING%NUMBER_OF_COLUMNS=LAGRANGE_VARIABLE%numberOfDofs
+                INTERFACE_MAPPING%TOTAL_NUMBER_OF_COLUMNS=LAGRANGE_VARIABLE%totalNumberOfDofs
+                INTERFACE_MAPPING%NUMBER_OF_GLOBAL_COLUMNS=LAGRANGE_VARIABLE%numberOfGlobalDofs
                 !Set the column dofs mapping
                 INTERFACE_MAPPING%COLUMN_DOFS_MAPPING=>LAGRANGE_VARIABLE%DOMAIN_MAPPING
-                ALLOCATE(INTERFACE_MAPPING%LAGRANGE_DOF_TO_COLUMN_MAP(LAGRANGE_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
+                ALLOCATE(INTERFACE_MAPPING%LAGRANGE_DOF_TO_COLUMN_MAP(LAGRANGE_VARIABLE%totalNumberOfDofs),STAT=ERR)
                 IF(ERR/=0) CALL FlagError("Could not allocate Lagrange dof to column map.",ERR,ERROR,*999)
                 !1-1 mapping for now
-                DO dof_idx=1,LAGRANGE_VARIABLE%TOTAL_NUMBER_OF_DOFS
-                  column_idx=LAGRANGE_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dof_idx)
+                DO dof_idx=1,LAGRANGE_VARIABLE%totalNumberOfDofs
+                  column_idx=LAGRANGE_VARIABLE%DOMAIN_MAPPING%localToGlobalMap(dof_idx)
                   INTERFACE_MAPPING%LAGRANGE_DOF_TO_COLUMN_MAP(dof_idx)=column_idx
                 ENDDO
                 !Set the number of interface matrices
@@ -182,19 +182,19 @@ CONTAINS
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%HAS_TRANSPOSE=INTERFACE_MAPPING% &
                         & CREATE_VALUES_CACHE%HAS_TRANSPOSE(matrix_idx)
                        !Set the number of rows
-                      INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_ROWS=FIELD_VARIABLE%NUMBER_OF_DOFS
+                      INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_ROWS=FIELD_VARIABLE%numberOfDofs
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%TOTAL_NUMBER_OF_ROWS= &
-                        & FIELD_VARIABLE%TOTAL_NUMBER_OF_DOFS
+                        & FIELD_VARIABLE%totalNumberOfDofs
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_GLOBAL_ROWS= &
-                        & FIELD_VARIABLE%NUMBER_OF_GLOBAL_DOFS
+                        & FIELD_VARIABLE%numberOfGlobalDofs
                       !Set the row mapping
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%ROW_DOFS_MAPPING=> &
                         & FIELD_VARIABLE%DOMAIN_MAPPING
                       ALLOCATE(INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_DOF_TO_ROW_MAP( &
-                        & FIELD_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
+                        & FIELD_VARIABLE%totalNumberOfDofs),STAT=ERR)
                       IF(ERR/=0) CALL FlagError("Could not allocate variable dof to row map.",ERR,ERROR,*999)
                       !1-1 mapping for now
-                      DO dof_idx=1,FIELD_VARIABLE%TOTAL_NUMBER_OF_DOFS
+                      DO dof_idx=1,FIELD_VARIABLE%totalNumberOfDofs
                         INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_DOF_TO_ROW_MAP(dof_idx)=dof_idx
                       ENDDO !dof_idx
                     ELSE
@@ -235,19 +235,19 @@ CONTAINS
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%HAS_TRANSPOSE=INTERFACE_MAPPING% &
                         & CREATE_VALUES_CACHE%HAS_TRANSPOSE(matrix_idx)
                         !Set the number of rows
-                      INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_ROWS=FIELD_VARIABLE%NUMBER_OF_DOFS
+                      INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_ROWS=FIELD_VARIABLE%numberOfDofs
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%TOTAL_NUMBER_OF_ROWS= &
-                        & FIELD_VARIABLE%TOTAL_NUMBER_OF_DOFS
+                        & FIELD_VARIABLE%totalNumberOfDofs
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%NUMBER_OF_GLOBAL_ROWS= &
-                        & FIELD_VARIABLE%NUMBER_OF_GLOBAL_DOFS
+                        & FIELD_VARIABLE%numberOfGlobalDofs
                       !Set the row mapping
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%ROW_DOFS_MAPPING=> &
                         & FIELD_VARIABLE%DOMAIN_MAPPING
                       ALLOCATE(INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_DOF_TO_ROW_MAP( &
-                        & FIELD_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
+                        & FIELD_VARIABLE%totalNumberOfDofs),STAT=ERR)
                       IF(ERR/=0) CALL FlagError("Could not allocate variable dof to row map.",ERR,ERROR,*999)
                       !1-1 mapping for now
-                      DO dof_idx=1,FIELD_VARIABLE%TOTAL_NUMBER_OF_DOFS
+                      DO dof_idx=1,FIELD_VARIABLE%totalNumberOfDofs
                         INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_DOF_TO_ROW_MAP(dof_idx)=dof_idx
                       ENDDO !dof_idx
                     ELSE
@@ -273,11 +273,11 @@ CONTAINS
                     RHS_MAPPING%RHS_VARIABLE_MAPPING=>LAGRANGE_VARIABLE%DOMAIN_MAPPING
                     RHS_MAPPING%RHS_COEFFICIENT=CREATE_VALUES_CACHE%RHS_COEFFICIENT
                     !Allocate and set up the row mappings
-                    ALLOCATE(RHS_MAPPING%RHS_DOF_TO_INTERFACE_ROW_MAP(LAGRANGE_VARIABLE%TOTAL_NUMBER_OF_DOFS),STAT=ERR)
+                    ALLOCATE(RHS_MAPPING%RHS_DOF_TO_INTERFACE_ROW_MAP(LAGRANGE_VARIABLE%totalNumberOfDofs),STAT=ERR)
                     IF(ERR/=0) CALL FlagError("Could not allocate rhs dof to interface row map.",ERR,ERROR,*999)
                     ALLOCATE(RHS_MAPPING%INTERFACE_ROW_TO_RHS_DOF_MAP(INTERFACE_MAPPING%TOTAL_NUMBER_OF_COLUMNS),STAT=ERR)
                     IF(ERR/=0) CALL FlagError("Could not allocate interface row to dof map.",ERR,ERROR,*999)
-                    DO dof_idx=1,LAGRANGE_VARIABLE%TOTAL_NUMBER_OF_DOFS
+                    DO dof_idx=1,LAGRANGE_VARIABLE%totalNumberOfDofs
                       !1-1 mapping for now
                       column_idx=dof_idx
                       RHS_MAPPING%RHS_DOF_TO_INTERFACE_ROW_MAP(dof_idx)=column_idx

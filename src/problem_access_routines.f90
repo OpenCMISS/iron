@@ -235,13 +235,13 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(problem%problems)) THEN
       localError="Problems is not associated for problem number "// &
-        & TRIM(NumberToVString(problem%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(problem%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     context=>problem%problems%context
     IF(.NOT.ASSOCIATED(context)) THEN
       localError="The context is not associated for the problems for problem number "// &
-        & TRIM(NumberToVString(problem%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(problem%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -333,7 +333,7 @@ CONTAINS
     controlLoopRoot=>problem%CONTROL_LOOP
     IF(.NOT.ASSOCIATED(controlLoopRoot)) THEN
       localError="The problem control loop root is not associated for problem number "// &
-        & TRIM(NumberToVString(problem%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(problem%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -399,7 +399,7 @@ CONTAINS
     problems=>problem%problems
     IF(.NOT.ASSOCIATED(problems)) THEN
       localError="The problem problems is not associated for problem number "// &
-        & TRIM(NumberToVString(problem%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(problem%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -575,7 +575,7 @@ CONTAINS
     IF(ASSOCIATED(problems%problems)) THEN
       DO problemIdx=1,problems%numberOfProblems
         IF(ASSOCIATED(problems%problems(problemIdx)%ptr)) THEN
-          IF(problems%problems(problemIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(problems%problems(problemIdx)%ptr%userNumber==userNumber) THEN
             problem=>problems%problems(problemIdx)%ptr
             EXIT
           ENDIF

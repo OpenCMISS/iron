@@ -168,7 +168,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
       localError="Equations set analytic has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
      
@@ -234,13 +234,13 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%analytic)) THEN
       localError="Analytic information is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     analyticField=>equationsSet%analytic%ANALYTIC_FIELD
     IF(.NOT.ASSOCIATED(analyticField)) THEN
       localError="Analytic field is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -317,11 +317,11 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system for the specified equations set. Must not be associated on entry
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system for the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsSet_CoordinateSystemGet",err,error,*998)
@@ -332,14 +332,14 @@ CONTAINS
     region=>equationsSet%region
     IF(.NOT.ASSOCIATED(region)) THEN
       localError="Region is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    coordinateSystem=>region%COORDINATE_SYSTEM
+    coordinateSystem=>region%coordinateSystem
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
       localError="Coordinate system is not associated for region number "// &
-        & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//" of equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(region%userNumber,"*",err,error))//" of equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -371,7 +371,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%derived)) THEN
       localError="Equations set derived has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
      
@@ -439,7 +439,7 @@ CONTAINS
     derivedField=>equationsSet%derived%derivedField
     IF(.NOT.ASSOCIATED(derivedField)) THEN
       localError="Derived field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -474,7 +474,7 @@ CONTAINS
     dependentField=>equationsSet%dependent%DEPENDENT_FIELD
     IF(.NOT.ASSOCIATED(dependentField)) THEN
       localError="Dependent field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -510,7 +510,7 @@ CONTAINS
     equations=>equationsSet%equations
     IF(.NOT.ASSOCIATED(equations)) THEN
       localError="Equations is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -545,7 +545,7 @@ CONTAINS
     equationsSetField=>equationsSet%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
     IF(.NOT.ASSOCIATED(equationsSetField)) THEN
       localError="Equations set field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -609,7 +609,7 @@ CONTAINS
     geometricField=>equationsSet%geometry%GEOMETRIC_FIELD
     IF(.NOT.ASSOCIATED(geometricField)) THEN
       localError="Geometric field is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
       
@@ -641,7 +641,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%independent)) THEN
       localError="Equations set independent has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
      
@@ -707,13 +707,13 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%independent)) THEN
       localError="Independent information is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     independentField=>equationsSet%independent%INDEPENDENT_FIELD
     IF(.NOT.ASSOCIATED(independentField)) THEN
       localError="Independent field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -862,7 +862,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%materials)) THEN
       localError="Equations set materials has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
      
@@ -928,13 +928,13 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%materials)) THEN
       localError="Materials information is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     materialsField=>equationsSet%materials%MATERIALS_FIELD
     IF(.NOT.ASSOCIATED(materialsField)) THEN
       localError="Materials field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -955,7 +955,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the region for
-    TYPE(REGION_TYPE), POINTER :: region !<On exit, a pointer to the region for the specified equations set. Must not be associated on entry
+    TYPE(RegionType), POINTER :: region !<On exit, a pointer to the region for the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -969,7 +969,7 @@ CONTAINS
     region=>equationsSet%region
     IF(.NOT.ASSOCIATED(region)) THEN
       localError="Region is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -1001,7 +1001,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%source)) THEN
       localError="Equations set source has not been created for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
      
@@ -1067,13 +1067,13 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(equationsSet%source)) THEN
       localError="Source information is not associated for equations set number "// &
-        & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     sourceField=>equationsSet%source%SOURCE_FIELD
     IF(.NOT.ASSOCIATED(sourceField)) THEN
       localError="Source field is not associated for equations set number "// &
-      & TRIM(NumberToVString(equationsSet%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -1094,7 +1094,7 @@ CONTAINS
 
     !Argument variables 
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the equation set to find.
-    TYPE(REGION_TYPE), POINTER :: region !<The region to find the equations set in
+    TYPE(RegionType), POINTER :: region !<The region to find the equations set in
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On return, a pointer to the equations set if an equations set with the specified user number exists in the given region. If no equation set with the specified number exists a NULL pointer is returned. The pointer must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1107,7 +1107,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(region%EQUATIONS_SETS)) THEN
-      localError="The equations sets on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+      localError="The equations sets on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -1116,7 +1116,7 @@ CONTAINS
     IF(ASSOCIATED(region%EQUATIONS_SETS%EQUATIONS_SETS)) THEN
       DO equationsSetIdx=1,region%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS
         IF(ASSOCIATED(region%EQUATIONS_SETS%EQUATIONS_SETS(equationsSetIdx)%ptr)) THEN
-          IF(region%EQUATIONS_SETS%EQUATIONS_SETS(equationsSetIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(region%EQUATIONS_SETS%EQUATIONS_SETS(equationsSetIdx)%ptr%userNumber==userNumber) THEN
             equationsSet=>region%EQUATIONS_SETS%EQUATIONS_SETS(equationsSetIdx)%ptr
             EXIT
           ENDIF

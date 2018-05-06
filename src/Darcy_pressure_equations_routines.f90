@@ -111,7 +111,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) ng,mh,mhs,mi,ms,nh,nhs,ni,ns
     REAL(DP) :: RWG,PGMSI(3),PGNSI(3)
-    TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
+    TYPE(BasisType), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -131,7 +131,7 @@ CONTAINS
     REAL(DP) :: K(3,3),density
     REAL(DP) :: DZDNU(3,3),SIGMA(3,3),DNUDZ(3,3),DNUDZT(3,3),TEMP_MATRIX(3,3)
     REAL(DP) :: Jznu
-    INTEGER(INTG) :: SOLID_COMPONENT_NUMBER,SOLID_NUMBER_OF_XI,NUMBER_OF_DIMENSIONS
+    INTEGER(INTG) :: SOLID_COMPONENT_NUMBER,SOLID_NUMBER_OF_XI,numberOfDimensions
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DarcyPressure_FiniteElementResidualEvaluate",err,error,*999)
@@ -169,9 +169,9 @@ CONTAINS
           rhsVector=>vectorMatrices%rhsVector
           vectorMapping=>vectorEquations%vectorMapping
           FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(FIELD_V_VARIABLE_TYPE)%ptr
-          DEPENDENT_BASIS=>dependentField%DECOMPOSITION%DOMAIN(FIELD_VARIABLE%COMPONENTS(1)%MESH_COMPONENT_NUMBER)%ptr% &
+          DEPENDENT_BASIS=>dependentField%DECOMPOSITION%DOMAIN(FIELD_VARIABLE%COMPONENTS(1)%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+          GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
           QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
 
@@ -200,10 +200,10 @@ CONTAINS
           SOLID_DEPENDENT_INTERPOLATED_POINT_METRICS=>equations%interpolation%dependentInterpPointMetrics( &
             & FIELD_U_VARIABLE_TYPE)%ptr
 
-          SOLID_COMPONENT_NUMBER=dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr%COMPONENTS(1)%MESH_COMPONENT_NUMBER
+          SOLID_COMPONENT_NUMBER=dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr%COMPONENTS(1)%meshComponentNumber
           SOLID_NUMBER_OF_XI=dependentField%DECOMPOSITION%DOMAIN(SOLID_COMPONENT_NUMBER)%ptr%TOPOLOGY%ELEMENTS% &
-            & ELEMENTS(ELEMENT_NUMBER)%BASIS%NUMBER_OF_XI
-          NUMBER_OF_DIMENSIONS=GEOMETRIC_BASIS%NUMBER_OF_XI
+            & ELEMENTS(ELEMENT_NUMBER)%BASIS%numberOfXi
+          numberOfDimensions=GEOMETRIC_BASIS%numberOfXi
 
           IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
@@ -224,9 +224,9 @@ CONTAINS
               & FIBRE_INTERPOLATED_POINT,err,error,*999)
             CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
               & MATERIALS_INTERPOLATED_POINT,err,error,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(DEPENDENT_BASIS%NUMBER_OF_XI, &
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(DEPENDENT_BASIS%numberOfXi, &
               & SOLID_DEPENDENT_INTERPOLATED_POINT_METRICS,err,error,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI, &
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi, &
               & GEOMETRIC_INTERPOLATED_POINT_METRICS,err,error,*999)
 
             !Get the permeability tensor
@@ -268,20 +268,20 @@ CONTAINS
             mhs=0
             DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(nonlinearMatrices%updateResidual) THEN
                   !Loop over element columns
                   DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
-                      DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
+                      DO ni=1,DEPENDENT_BASIS%numberOfXi
                         PGMSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                         PGNSI(ni)=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
-                      DO mi=1,DEPENDENT_BASIS%NUMBER_OF_XI
-                        DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
+                      DO mi=1,DEPENDENT_BASIS%numberOfXi
+                        DO ni=1,DEPENDENT_BASIS%numberOfXi
                           IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
                             elementResidualVector(mhs)=elementResidualVector(mhs)+ &
                               & PGMSI(mi)*PGNSI(ni)*TEMP_MATRIX(mi,ni)*DEPENDENT_INTERPOLATION_PARAMETERS%PARAMETERS(ns,1)* &
@@ -308,7 +308,7 @@ CONTAINS
             mhs=0
             DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)* &
                   & equations%interpolation%dependentInterpParameters(FIELD_V_VARIABLE_TYPE)%ptr%SCALE_FACTORS(ms,mh)
@@ -348,9 +348,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS,component_idx
+    INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,numberOfDimensions,component_idx
     INTEGER(INTG) :: NUMBER_OF_DARCY_COMPONENTS,NUMBER_OF_COMPONENTS,NUMBER_OF_SOLID_COMPONENTS
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -373,7 +373,7 @@ CONTAINS
         CALL FlagError("Equations set specification must have three entries for a Darcy pressure type equations set.", &
           & err,error,*999)
       END IF
-      NUMBER_OF_DIMENSIONS = EQUATIONS_SET%REGION%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
+      numberOfDimensions = EQUATIONS_SET%REGION%coordinateSystem%numberOfDimensions
       SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
       CASE(EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
         & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE, &
@@ -399,14 +399,14 @@ CONTAINS
           CASE(EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE, &
               & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE, &
               & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE)
-            NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS !Solid components
+            NUMBER_OF_COMPONENTS=numberOfDimensions !Solid components
             NUMBER_OF_DARCY_COMPONENTS=1 !Only solving for the fluid pressure at the moment
           END SELECT
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
               CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
@@ -437,7 +437,7 @@ CONTAINS
                 & FIELD_DP_TYPE,err,error,*999)
 
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
+                & numberOfDimensions,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
@@ -468,7 +468,7 @@ CONTAINS
                 & "del p/del n",err,error,*999)
 
               !Elasticity: Default to the geometric interpolation setup
-              DO component_idx=1,NUMBER_OF_DIMENSIONS
+              DO component_idx=1,numberOfDimensions
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -489,7 +489,7 @@ CONTAINS
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 !Elasticity: Set the displacement components to node based interpolation
-                DO component_idx=1,NUMBER_OF_DIMENSIONS
+                DO component_idx=1,numberOfDimensions
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
@@ -544,7 +544,7 @@ CONTAINS
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
 
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
+                & numberOfDimensions,err,error,*999)
 
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
                   & NUMBER_OF_COMPONENTS,err,error,*999)
@@ -558,7 +558,7 @@ CONTAINS
               SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
               CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                 !Elasticity:
-                DO component_idx=1,NUMBER_OF_DIMENSIONS
+                DO component_idx=1,numberOfDimensions
                   CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
                     & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,component_idx, &
@@ -618,7 +618,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
               !Create the auto created materials field, which is shared with the solid equations
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
                 & MATERIALS_FIELD,err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
               CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)

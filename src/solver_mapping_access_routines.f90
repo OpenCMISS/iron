@@ -134,16 +134,16 @@ CONTAINS
 
     IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
-    IF(interfaceConditionIdx<1.OR.interfaceConditionIdx>solverMapping%NUMBER_OF_INTERFACE_CONDITIONS) THEN
+    IF(interfaceConditionIdx<1.OR.interfaceConditionIdx>solverMapping%numberOfInterfaceConditions) THEN
       localError="The specified interface condition index of "//TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))// &
         & " is invalid. The index must be > 1 and <= "// &
-        & TRIM(NumberToVString(SolverMapping%NUMBER_OF_INTERFACE_CONDITIONS,"*",err,error))//"."      
+        & TRIM(NumberToVString(SolverMapping%numberOfInterfaceConditions,"*",err,error))//"."      
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(solverMapping%INTERFACE_CONDITIONS)) &
+    IF(.NOT.ALLOCATED(solverMapping%interfaceConditions)) &
       & CALL FlagError("Solver mapping interface conditions is not allocated.",err,error,*999)
 
-    interfaceCondition=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%ptr
+    interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
     IF(.NOT.ASSOCIATED(interfaceCondition)) THEN
       localError="The interface condition for the specified interface condition index of "// &
         & TRIM(NumberToVString(interfaceConditionIdx,"*",err,error))//" is not associated."      

@@ -119,11 +119,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,NUMBER_OF_DIMENSIONS,variable_idx,variable_type
+    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,numberOfDimensions,variable_idx,variable_type
     REAL(DP) :: VALUE,X(3)
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     TYPE(FIELD_TYPE), POINTER :: dependentField,GEOMETRIC_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(VARYING_STRING) :: localError    
@@ -138,7 +138,7 @@ CONTAINS
         IF(ASSOCIATED(dependentField)) THEN
           GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
-            CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+            CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             NULLIFY(GEOMETRIC_VARIABLE)
             CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
             CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS, &
@@ -150,29 +150,29 @@ CONTAINS
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(dependentField,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                   DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
+                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
                         IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
                           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                           IF(ASSOCIATED(DOMAIN_NODES)) THEN
                             !Loop over the local nodes excluding the ghosts.
-                            DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
                               !!TODO \todo We should interpolate the geometric field here and the node position.
-                              DO dim_idx=1,NUMBER_OF_DIMENSIONS
+                              DO dim_idx=1,numberOfDimensions
                                 !Default to version 1 of each node derivative
                                 local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                                   & NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
                                 X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                               ENDDO !dim_idx
                               !Loop over the derivatives
-                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                 SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
                                 CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1)
                                   !u=x^2+2.x.y-y^2
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=X(1)*X(1)-2.0_DP*X(1)*X(2)-X(2)*X(2)
                                     CASE(GLOBAL_DERIV_S1)
@@ -183,12 +183,12 @@ CONTAINS
                                       VALUE=2.0_DP
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=0.0_DP !!TODO
                                     CASE(GLOBAL_DERIV_S1)
@@ -199,7 +199,7 @@ CONTAINS
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -212,7 +212,7 @@ CONTAINS
                                   !u=cos(x).cosh(y)
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=COS(X(1))*COSH(X(2))
                                     CASE(GLOBAL_DERIV_S1)
@@ -223,12 +223,12 @@ CONTAINS
                                       VALUE=-SIN(X(1))*SINH(X(2))
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=0.0_DP !!TODO
                                     CASE(GLOBAL_DERIV_S1)
@@ -239,7 +239,7 @@ CONTAINS
                                       !CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -252,7 +252,7 @@ CONTAINS
                                   !u=x^2+y^2-2.z^2
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=X(1)*X(1)+X(2)*X(2)-2.0_DP*X(3)*X(3)
                                     CASE(GLOBAL_DERIV_S1)
@@ -271,12 +271,12 @@ CONTAINS
                                       VALUE=0.0_DP
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=0.0_DP !!TODO
                                     CASE(GLOBAL_DERIV_S1)
@@ -295,7 +295,7 @@ CONTAINS
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -308,7 +308,7 @@ CONTAINS
                                   !u=cos(x).cosh(y).z
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=COS(X(1))*COSH(X(2))*X(3)
                                     CASE(GLOBAL_DERIV_S1)
@@ -327,12 +327,12 @@ CONTAINS
                                       VALUE=-SIN(X(1))*SINH(X(2))
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       VALUE=0.0_DP !!TODO
                                     CASE(GLOBAL_DERIV_S1)
@@ -351,7 +351,7 @@ CONTAINS
                                       !CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NUMBER_TO_VSTRING( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -371,7 +371,7 @@ CONTAINS
                                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField,variable_type, &
                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
                                 IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
-                                  IF(DOMAIN_NODES%NODES(node_idx)%BOUNDARY_NODE) THEN
+                                  IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
                                     !If we are a boundary node then set the analytic value on the boundary
                                     CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,dependentField,variable_type, &
                                       & local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
@@ -440,7 +440,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) fieldVarType,ng,mh,mhs,mi,ms,nh,nhs,ni,ns,i,k,h
     REAL(DP) :: conductivityMaterial(3,3),conductivity(3,3),conductivityTemp(3,3),rwg,sum,pgmsi(3),pgnsi(3),kValue(3)
-    TYPE(BASIS_TYPE), POINTER :: dependentBasis,geometricBasis,independentBasis
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,independentBasis
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -492,9 +492,9 @@ CONTAINS
           linearMapping=>vectorMapping%linearMapping
           fieldVariable=>linearMapping%equationsMatrixToVarMaps(1)%variable
           fieldVarType=fieldVariable%VARIABLE_TYPE
-          dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+          dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
             & topology%elements%elements(elementNumber)%basis
-          geometricBasis=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+          geometricBasis=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
             & topology%elements%elements(elementNumber)%basis
           quadratureScheme=>dependentBasis%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
@@ -508,7 +508,7 @@ CONTAINS
 #endif
             CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
               & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%numberOfXi,equations%interpolation% &
               & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             !Calculate RWG.
 !!TODO: Think about symmetric problems. 
@@ -519,21 +519,21 @@ CONTAINS
             DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
-              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
-                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
-                      DO ni=1,dependentBasis%NUMBER_OF_XI
+                      DO ni=1,dependentBasis%numberOfXi
                         pgmsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                         pgnsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
                       sum=0.0_DP
-                      DO mi=1,dependentBasis%NUMBER_OF_XI
-                        DO ni=1,dependentBasis%NUMBER_OF_XI
+                      DO mi=1,dependentBasis%numberOfXi
+                        DO ni=1,dependentBasis%numberOfXi
                           sum=sum+pgmsi(mi)*pgnsi(ni)*equations%interpolation% &
                             & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%gu(mi,ni)
                         ENDDO !ni
@@ -558,13 +558,13 @@ CONTAINS
             mhs=0          
             DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
-                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
                         & equations%interpolation%dependentInterpParameters(fieldVarType)%ptr%SCALE_FACTORS(ms,mh)* &
@@ -595,15 +595,15 @@ CONTAINS
           fieldVariable=>linearMapping%equationsMatrixToVarMaps(1)%variable
           fieldVarType=fieldVariable%VARIABLE_TYPE
           
-          dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+          dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
             & topology%elements%elements(elementNumber)%basis
-          geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+          geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%meshComponentNumber)%ptr% &
             & topology%elements%elements(elementNumber)%basis
           
           quadratureScheme=>dependentBasis%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
                   
-          numberOfDimensions=equationsSet%region%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
-          numberOfXi=dependentBasis%NUMBER_OF_XI
+          numberOfDimensions=equationsSet%region%coordinateSystem%numberOfDimensions
+          numberOfXi=dependentBasis%numberOfXi
                     
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
             & geometricInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
@@ -631,7 +631,7 @@ CONTAINS
             CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,fibreInterpolatedPoint, &
               & err,error,*999)
               
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%NUMBER_OF_XI,geometricInterpPointMetrics, &
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%numberOfXi,geometricInterpPointMetrics, &
               & err,error,*999)
               
             !Calculate RWG.
@@ -680,25 +680,25 @@ CONTAINS
             mhs=0          
             DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1
                 !Loop over field components
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
                     !Loop over element columns
-                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       
-                      DO ni=1,dependentBasis%NUMBER_OF_XI
+                      DO ni=1,dependentBasis%numberOfXi
                         pgmsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                         pgnsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
                       
                       sum=0.0_DP
-                      DO i=1,dependentBasis%NUMBER_OF_XI
-                        DO k=1,dependentBasis%NUMBER_OF_XI
-                          DO h=1,dependentBasis%NUMBER_OF_XI
+                      DO i=1,dependentBasis%numberOfXi
+                        DO k=1,dependentBasis%numberOfXi
+                          DO h=1,dependentBasis%numberOfXi
                             sum=sum+conductivity(i,k)*pgnsi(k)*pgmsi(h)*geometricInterpPointMetrics%GU(i,h)
                           ENDDO !h
                         ENDDO !k
@@ -726,13 +726,13 @@ CONTAINS
             mhs=0          
             DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
-                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
                         & equations%interpolation%dependentInterpParameters(fieldVarType)%ptr%SCALE_FACTORS(ms,mh)* &
@@ -760,11 +760,11 @@ CONTAINS
           linearMapping=>vectorMapping%linearMapping
           fieldVariable=>linearMapping%equationsMatrixToVarMaps(1)%variable
           fieldVarType=fieldVariable%VARIABLE_TYPE
-          independentBasis=>independentField%DECOMPOSITION%DOMAIN(independentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+          independentBasis=>independentField%DECOMPOSITION%DOMAIN(independentField%decomposition%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-          dependentBasis=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+          dependentBasis=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-          geometricBasis=>geometricField%DECOMPOSITION%DOMAIN(geometricField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+          geometricBasis=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
           quadratureScheme=>dependentBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
           CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
@@ -775,7 +775,7 @@ CONTAINS
           DO ng=1,quadratureScheme%NUMBER_OF_GAUSS
             CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
               & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+            CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(geometricBasis%numberOfXi,equations%interpolation% &
               & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
               & independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
@@ -796,23 +796,23 @@ CONTAINS
             DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
-              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
-                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
-                      DO ni=1,dependentBasis%NUMBER_OF_XI
+                      DO ni=1,dependentBasis%numberOfXi
                         pgmsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                         pgnsi(ni)=quadratureScheme%GAUSS_BASIS_FNS(ns,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)
                       ENDDO !ni
 
                       IF(nh==mh) THEN 
                         sum=0.0_DP
-                        DO mi=1,dependentBasis%NUMBER_OF_XI
-                          DO ni=1,dependentBasis%NUMBER_OF_XI
+                        DO mi=1,dependentBasis%numberOfXi
+                          DO ni=1,dependentBasis%numberOfXi
                             sum=sum+pgmsi(mi)*pgnsi(ni)*equations%interpolation% &
                               & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR%GU(mi,ni)*kValue(mh)
                           ENDDO !ni
@@ -835,13 +835,13 @@ CONTAINS
             mhs=0          
             DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
               !Loop over element rows
-              DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+              DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
                   DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
-                    DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
                         & equations%interpolation%dependentInterpParameters(fieldVarType)%ptr%SCALE_FACTORS(ms,mh)* &
@@ -889,9 +889,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,GEOMETRIC_COMPONENT_NUMBER,MATERIAL_FIELD_NUMBER_OF_COMPONENTS
-    INTEGER(INTG) :: DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,NUMBER_OF_DIMENSIONS,I,MATERIAL_FIELD_NUMBER_OF_VARIABLES
+    INTEGER(INTG) :: DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,numberOfDimensions,I,MATERIAL_FIELD_NUMBER_OF_VARIABLES
     INTEGER(INTG) :: INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,INDEPENDENT_FIELD_NUMBER_OF_VARIABLES
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,dependentField,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -936,7 +936,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -964,10 +964,10 @@ CONTAINS
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
+                & numberOfDimensions,err,error,*999)
 
               !calculate number of components with one component for each dimension and one for pressure
-              DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+              DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                 & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, & 
@@ -1028,9 +1028,9 @@ CONTAINS
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
 
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
+                & numberOfDimensions,err,error,*999)
 
-              DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+              DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, & 
                 & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, & 
@@ -1075,7 +1075,7 @@ CONTAINS
             IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created independent field
               !start field creation with name 'INDEPENDENT_FIELD'
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION, &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
                 & EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
               !start creation of a new field
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -1102,9 +1102,9 @@ CONTAINS
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
+                & numberOfDimensions,err,error,*999)
               !calculate number of components with one component for each dimension
-              INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+              INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, & 
                 & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, & 
@@ -1124,9 +1124,9 @@ CONTAINS
                 & err,error,*999)
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
+                & numberOfDimensions,err,error,*999)
               !calculate number of components with one component for each dimension and one for pressure
-              INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+              INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
                 & INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
             ENDIF    
@@ -1156,7 +1156,7 @@ CONTAINS
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Create the auto created materials field
                 !start field creation with name 'MATERIAL_FIELD'
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET% & 
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET% & 
                   & MATERIALS%MATERIALS_FIELD,err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
@@ -1198,7 +1198,7 @@ CONTAINS
                   & err,error,*999)
                 CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,err,error,*999)
+                  & numberOfDimensions,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
               ENDIF              
             ELSE
@@ -1243,13 +1243,13 @@ CONTAINS
               IF(ASSOCIATED(dependentField)) THEN
                 geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(geometricField)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1)
                     !Check that we are in 2D
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -1260,9 +1260,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2)
                     !Check that we are in 2D
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -1273,9 +1273,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -1286,9 +1286,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -1619,8 +1619,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+    INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,numberOfDimensions
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,dependentField,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -1663,7 +1663,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -1803,13 +1803,13 @@ CONTAINS
               IF(ASSOCIATED(dependentField)) THEN
                 geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(geometricField)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1)
                     !Check that we are in 2D
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -1820,9 +1820,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2)
                     !Check that we are in 2D
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -1833,9 +1833,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -1846,9 +1846,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -1986,9 +1986,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,NUMBER_OF_DIMENSIONS,NUMBER_OF_MATERIALS_COMPONENTS
+    INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,numberOfDimensions,NUMBER_OF_MATERIALS_COMPONENTS
     INTEGER(INTG) :: component_idx
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,dependentField,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -2035,7 +2035,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -2157,7 +2157,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
               !Create the auto created materials field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%MATERIALS% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%MATERIALS% &
                 & MATERIALS_FIELD,err,error,*999)
               CALL FIELD_LABEL_SET(EQUATIONS_SET%MATERIALS%MATERIALS_FIELD,"Materials Field",err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
@@ -2172,12 +2172,12 @@ CONTAINS
               CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,"conductivity",ERR, &
                 & ERROR,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
-              IF(NUMBER_OF_DIMENSIONS==1) THEN
+                & numberOfDimensions,err,error,*999)
+              IF(numberOfDimensions==1) THEN
                 NUMBER_OF_MATERIALS_COMPONENTS=1
-              ELSEIF(NUMBER_OF_DIMENSIONS==2) THEN
+              ELSEIF(numberOfDimensions==2) THEN
                 NUMBER_OF_MATERIALS_COMPONENTS=3
-              ELSEIF(NUMBER_OF_DIMENSIONS==3) THEN
+              ELSEIF(numberOfDimensions==3) THEN
                 NUMBER_OF_MATERIALS_COMPONENTS=6
               ENDIF
               !Set the number of materials components
@@ -2224,14 +2224,14 @@ CONTAINS
               CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
-              IF(NUMBER_OF_DIMENSIONS==1) THEN
+                & numberOfDimensions,err,error,*999)
+              IF(numberOfDimensions==1) THEN
                 CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,ERR, &
                   & ERROR,*999)
-              ELSEIF(NUMBER_OF_DIMENSIONS==2) THEN
+              ELSEIF(numberOfDimensions==2) THEN
                 CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,3,ERR, &
                   & ERROR,*999)
-              ELSEIF(NUMBER_OF_DIMENSIONS==3) THEN
+              ELSEIF(numberOfDimensions==3) THEN
                 CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,6,ERR, &
                   & ERROR,*999)
               ENDIF              
@@ -2288,13 +2288,13 @@ CONTAINS
               IF(ASSOCIATED(dependentField)) THEN
                 geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(geometricField)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1)
                     !Check that we are in 2D
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -2305,9 +2305,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2)
                     !Check that we are in 2D
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -2318,9 +2318,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -2331,9 +2331,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1
                   CASE(EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NUMBER_TO_VSTRING(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."

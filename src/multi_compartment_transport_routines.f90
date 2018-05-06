@@ -423,12 +423,12 @@ CONTAINS
                IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
 
                 CALL MultiCompartmentTransport_PreSolveUpdateAnalyticValues(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-!               IF(SOLVER%GLOBAL_NUMBER==1) THEN
+!               IF(SOLVER%globalNumber==1) THEN
 !                 !copy current value of concentration_one to another variable
 !                 !CALL ADVEC_DIFFUSION_EQUATION_PRE_SOLVE_STORE_CURRENT_SOLN(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
 !                 !Set source term to be updated value of concentration_two
 !                 !CALL ADVECTION_DIFFUSION_EQUATION_PRE_SOLVE_GET_SOURCE_VALUE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-!               ELSE IF(SOLVER%GLOBAL_NUMBER==2) THEN
+!               ELSE IF(SOLVER%globalNumber==2) THEN
 !                 !compute value of constant source term - evaluated from lamdba*(0.5*(c_1^{t+1}+c_1^{t}) - c_2^{t})
 !                 !CALL DIFFUSION_EQUATION_PRE_SOLVE_GET_SOURCE_VALUE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
 !               ENDIF
@@ -476,15 +476,15 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
-!    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: DOMAIN_TOPOLOGY
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
+!    TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
 !    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
 !    REAL(DP), POINTER :: BOUNDARY_VALUES(:)
     REAL(DP), POINTER :: ANALYTIC_PARAMETERS(:),GEOMETRIC_PARAMETERS(:),MATERIALS_PARAMETERS(:)
-    INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_CHECK_VARIABLE
+    INTEGER(INTG) :: numberOfDimensions,BOUNDARY_CONDITION_CHECK_VARIABLE
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     REAL(DP) :: NORMAL(3),TANGENTS(3,3),VALUE,X(3),VALUE_SOURCE !<The value to add
@@ -497,7 +497,7 @@ CONTAINS
 !    INTEGER(INTG) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
 !    INTEGER(INTG) :: DERIVATIVE_NUMBER !<The node derivative number
 !    INTEGER(INTG) :: COMPONENT_NUMBER !<The field variable component number
-!    INTEGER(INTG) :: TOTAL_NUMBER_OF_NODES !<The total number of (geometry) nodes
+!    INTEGER(INTG) :: totalNumberOfNodes !<The total number of (geometry) nodes
 !    INTEGER(INTG) :: LOCAL_NODE_NUMBER
 !    INTEGER(INTG) :: EQUATIONS_SET_IDX
 !    INTEGER(INTG) :: equations_row_number
@@ -549,7 +549,7 @@ CONTAINS
                           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
                             ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
                             CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,&
-                              & NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                              & numberOfDimensions,ERR,ERROR,*999)
                             NULLIFY(GEOMETRIC_VARIABLE)
                             NULLIFY(GEOMETRIC_PARAMETERS)
                             CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
@@ -577,7 +577,7 @@ CONTAINS
                               FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                                 DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                                  IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE== & 
+                                  IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== & 
                                     & FIELD_NODE_BASED_INTERPOLATION) THEN
                                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                                     IF(ASSOCIATED(DOMAIN)) THEN
@@ -588,19 +588,19 @@ CONTAINS
                                             & FIELD_VARIABLE,BOUNDARY_CONDITIONS_VARIABLE,ERR,ERROR,*999)
                                           IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
                                             !Loop over the local nodes excluding the ghosts.
-                                            DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
                                               !!TODO \todo We should interpolate the geometric field here and the node position.
-                                              DO dim_idx=1,NUMBER_OF_DIMENSIONS
+                                              DO dim_idx=1,numberOfDimensions
                                                 !Default to version 1 of each node derivative
                                                 local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP% &
                                                   & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
                                                 X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                                               ENDDO !dim_idx
                                               !Loop over the derivatives
-                                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                                 ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE
                                                 GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
-                                                  & GLOBAL_DERIVATIVE_INDEX
+                                                  & globalDerivativeIndex
                                                 CALL Diffusion_AnalyticFunctionsEvaluate(EQUATIONS_SET, &
                                                   & ANALYTIC_FUNCTION_TYPE,X,TANGENTS,NORMAL,CURRENT_TIME,variable_type, &
                                                   & GLOBAL_DERIV_INDEX,component_idx,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS, &
@@ -619,7 +619,7 @@ CONTAINS
                                                 ENDIF
 
 !                                              IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
-!                                                IF(DOMAIN_NODES%NODES(node_idx)%BOUNDARY_NODE) THEN
+!                                                IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
 !                                                  !If we are a boundary node then set the analytic value on the boundary
 !                                                  CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
 !                                                    & BOUNDARY_CONDITION_FIXED,VALUE,ERR,ERROR,*999)
@@ -692,7 +692,7 @@ CONTAINS
                 IF(ASSOCIATED(SOURCE_FIELD)) THEN
                   GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                   IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
-                    CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,ERR,ERROR,*999)
+                    CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,ERR,ERROR,*999)
                     NULLIFY(GEOMETRIC_VARIABLE)
                     CALL Field_VariableGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,ERR,ERROR,*999)
                     CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -701,23 +701,23 @@ CONTAINS
                       FIELD_VARIABLE=>SOURCE_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
                       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                          IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
+                          IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                             DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                             IF(ASSOCIATED(DOMAIN)) THEN
                               IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
                                 DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                                 IF(ASSOCIATED(DOMAIN_NODES)) THEN
                                   !Loop over the local nodes excluding the ghosts.
-                                  DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                                  DO node_idx=1,DOMAIN_NODES%numberOfNodes
                                     !!TODO \todo We should interpolate the geometric field here and the node position.
-                                    DO dim_idx=1,NUMBER_OF_DIMENSIONS
+                                    DO dim_idx=1,numberOfDimensions
                                       !Default to version 1 of each node derivative
                                       local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP% &
                                         & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
                                       X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                                     ENDDO !dim_idx
                                     !Loop over the derivatives
-                                    DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                    DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                       SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
                                       CASE(EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM)
                                         SELECT CASE(eqnset_idx)
@@ -852,7 +852,7 @@ CONTAINS
           END IF
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE)
-              IF(SOLVER%GLOBAL_NUMBER==1) THEN
+              IF(SOLVER%globalNumber==1) THEN
 !              CALL ADVECTION_DIFFUSION_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
                   
                    SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -888,7 +888,7 @@ CONTAINS
                      ENDIF
                     endif
                    ENDIF
-              ELSE IF(SOLVER%GLOBAL_NUMBER==2) THEN
+              ELSE IF(SOLVER%globalNumber==2) THEN
 !              CALL DIFFUSION_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT

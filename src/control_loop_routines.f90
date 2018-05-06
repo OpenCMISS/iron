@@ -745,7 +745,7 @@ CONTAINS
               field=>fieldVariable%field
               IF(ASSOCIATED(field)) THEN
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable index : ",variableIdx,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable field user number = ",field%USER_NUMBER, &
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable field user number = ",field%userNumber, &
                   & err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type = ",fieldVariable%VARIABLE_TYPE, &
                   & err,error,*999)

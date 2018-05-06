@@ -116,14 +116,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,NUMBER_OF_DIMENSIONS,variable_idx,variable_type
+    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,numberOfDimensions,variable_idx,variable_type
     INTEGER(INTG) :: BC_X_FORCE_counter,BC_X_counter,BC_Y_counter,BC_X_Nodes,BC_Z_Nodes
     REAL(DP) :: ANALYTIC_VALUE,BC_VALUE,X(3),GEOMETRIC_TOL,FORCE_X,FORCE_Y,FORCE_Y_AREA,LENGTH,WIDTH,HEIGHT,E,v_X,FORCE_X_AREA
     REAL(DP) :: FORCE_Z,Iyy
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
     LOGICAL :: SET_BC
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,geometricField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(VARYING_STRING) :: localError    
@@ -137,7 +137,7 @@ CONTAINS
         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
           geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
           IF(ASSOCIATED(geometricField)) THEN
-            CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+            CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             NULLIFY(GEOMETRIC_VARIABLE)
             CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,GEOMETRIC_VARIABLE,err,error,*999)
             NULLIFY(GEOMETRIC_PARAMETERS)
@@ -156,23 +156,23 @@ CONTAINS
               FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                 DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                  IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
+                  IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                     IF(ASSOCIATED(DOMAIN)) THEN
                       IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
                         DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                         IF(ASSOCIATED(DOMAIN_NODES)) THEN
                           !Loop over the local nodes excluding the ghosts.
-                          DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                          DO node_idx=1,DOMAIN_NODES%numberOfNodes
                             !!TODO \todo We should interpolate the geometric field here and the node position.
-                            DO dim_idx=1,NUMBER_OF_DIMENSIONS
+                            DO dim_idx=1,numberOfDimensions
                               !Default to version 1 of each node derivative
                               local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                                 & NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
                               X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                             ENDDO !dim_idx
                             !Loop over the derivatives
-                            DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                            DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                               SET_BC = .FALSE.
                               SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
                               !
@@ -181,12 +181,12 @@ CONTAINS
                               CASE(EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1)
                                 SELECT CASE(variable_type)
                                 CASE(FIELD_U_VARIABLE_TYPE)
-                                  SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                  SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                   CASE(NO_GLOBAL_DERIV)
                                     !pass
                                   END SELECT
                                 CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                  SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                  SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                   CASE(NO_GLOBAL_DERIV)
                                     !pass
                                   END SELECT
@@ -200,12 +200,12 @@ CONTAINS
                                 CASE(1) !u component
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
@@ -213,7 +213,7 @@ CONTAINS
                                 CASE(2) !v component
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       IF (ABS(X(1)-0.0_DP) < GEOMETRIC_TOL) THEN
                                         BC_X_counter = BC_X_counter + 1
@@ -223,7 +223,7 @@ CONTAINS
                                       ENDIF
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
@@ -242,12 +242,12 @@ CONTAINS
                                 CASE(1) !u component
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
@@ -255,12 +255,12 @@ CONTAINS
                                 CASE(2) !v component
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       IF (ABS(X(2)-WIDTH) < GEOMETRIC_TOL) THEN
                                         IF (ABS(X(1)-LENGTH) < GEOMETRIC_TOL) THEN
@@ -275,12 +275,12 @@ CONTAINS
                                 CASE(3) !w component
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
@@ -300,12 +300,12 @@ CONTAINS
                                 CASE(1) !u component
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
@@ -313,12 +313,12 @@ CONTAINS
                                 CASE(2) !v component
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
@@ -326,12 +326,12 @@ CONTAINS
                                 CASE(3) !w component
                                   SELECT CASE(variable_type)
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       !pass
                                     END SELECT
@@ -374,23 +374,23 @@ CONTAINS
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                   DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
+                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
                         IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
                           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                           IF(ASSOCIATED(DOMAIN_NODES)) THEN
                             !Loop over the local nodes excluding the ghosts.
-                            DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
+                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
                               !!TODO \todo We should interpolate the geometric field here and the node position.
-                              DO dim_idx=1,NUMBER_OF_DIMENSIONS
+                              DO dim_idx=1,numberOfDimensions
                                 !Default to version 1 of each node derivative
                                 local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
                                   & NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
                                 X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                               ENDDO !dim_idx
                               !Loop over the derivatives
-                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                 SET_BC = .FALSE.
                                 SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
                                 !
@@ -406,7 +406,7 @@ CONTAINS
                                   SELECT CASE(variable_type)
                                   !!TODO set material parameters from material field
                                   CASE(FIELD_U_VARIABLE_TYPE)
-                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                    SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       ANALYTIC_VALUE=(X(1)*(FORCE_X/FORCE_X_AREA))/E
                                       IF (ABS(X(1)-0.0_DP) < GEOMETRIC_TOL) THEN
@@ -417,12 +417,12 @@ CONTAINS
                                       ANALYTIC_VALUE=1.0_DP
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NumberToVString( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
                                   CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                   SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                     CASE(NO_GLOBAL_DERIV)
                                       IF (ABS(X(1)-0.0_DP) < GEOMETRIC_TOL) THEN
                                         ANALYTIC_VALUE=-FORCE_X
@@ -437,7 +437,7 @@ CONTAINS
                                       ANALYTIC_VALUE=1.0_DP
                                     CASE DEFAULT
                                       localError="The global derivative index of "//TRIM(NumberToVString( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                       CALL FlagError(localError,err,error,*999)
                                     END SELECT
@@ -463,7 +463,7 @@ CONTAINS
                                     SELECT CASE(variable_type)
                                     !!TODO set material parameters from material field
                                     CASE(FIELD_U_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=(-v_X*X(1)*(FORCE_Y/FORCE_Y_AREA))/E
                                         IF (ABS(X(1)-0.0_DP) < GEOMETRIC_TOL) THEN
@@ -478,12 +478,12 @@ CONTAINS
                                         ANALYTIC_VALUE=1.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                     SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                     SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE(GLOBAL_DERIV_S1)
@@ -494,7 +494,7 @@ CONTAINS
                                         ANALYTIC_VALUE=1.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
@@ -507,7 +507,7 @@ CONTAINS
                                   !v=Sigmay*y/E
                                     SELECT CASE(variable_type)
                                     CASE(FIELD_U_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=(X(2)*(FORCE_Y/FORCE_Y_AREA))/E
                                         IF (ABS(X(2)-0.0_DP) < GEOMETRIC_TOL) THEN
@@ -522,12 +522,12 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                     SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                     SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=0.0_DP
                                         !If node located on a line edge of mesh
@@ -553,7 +553,7 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
@@ -585,7 +585,7 @@ CONTAINS
                                   !u=
                                     SELECT CASE(variable_type)
                                     CASE(FIELD_U_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=(-v_X*X(1)*(FORCE_Y/FORCE_Y_AREA))/E
                                         IF (ABS(X(1)-0.0_DP) < GEOMETRIC_TOL) THEN
@@ -608,12 +608,12 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE(GLOBAL_DERIV_S1)
@@ -632,7 +632,7 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
@@ -645,7 +645,7 @@ CONTAINS
                                   !v=
                                     SELECT CASE(variable_type)
                                     CASE(FIELD_U_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=(X(2)*(FORCE_Y/FORCE_Y_AREA))/E
                                         IF (ABS(X(2)-0.0_DP) < GEOMETRIC_TOL) THEN
@@ -668,12 +668,12 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=0.0_DP
                                         IF (ABS(X(2)-WIDTH) < GEOMETRIC_TOL) THEN !Apply Force BC
@@ -718,7 +718,7 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
@@ -731,7 +731,7 @@ CONTAINS
                                   !w=
                                     SELECT CASE(variable_type)
                                     CASE(FIELD_U_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=(-v_X*X(3)*(FORCE_Y/FORCE_Y_AREA))/E
                                         IF (ABS(X(3)-0.0_DP) < GEOMETRIC_TOL) THEN
@@ -754,12 +754,12 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE(GLOBAL_DERIV_S1)
@@ -778,7 +778,7 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
@@ -812,7 +812,7 @@ CONTAINS
                                   !u=
                                     SELECT CASE(variable_type)
                                     CASE(FIELD_U_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         !ANALYTIC_VALUE=(-v_X*X(1)*(FORCE_Y/FORCE_Y_AREA))/E
                                         IF (ABS(X(1)-0.0_DP) < GEOMETRIC_TOL) THEN
@@ -835,12 +835,12 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE(GLOBAL_DERIV_S1)
@@ -859,7 +859,7 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
@@ -872,7 +872,7 @@ CONTAINS
                                   !v=
                                     SELECT CASE(variable_type)
                                     CASE(FIELD_U_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         !ANALYTIC_VALUE=(X(2)*(FORCE_Y/FORCE_Y_AREA))/E
                                         !IF (ABS(X(1)-0.0_DP) < GEOMETRIC_TOL) THEN
@@ -895,12 +895,12 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                          & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                           & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=0.0_DP
 !                                      IF (ABS(X(2)-WIDTH) < GEOMETRIC_TOL) THEN !Apply Force BC
@@ -945,7 +945,7 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
@@ -958,7 +958,7 @@ CONTAINS
                                   !w=
                                     SELECT CASE(variable_type)
                                     CASE(FIELD_U_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         ANALYTIC_VALUE=0.0_DP
                                         IF ((ABS(X(1)-0.0_DP) < GEOMETRIC_TOL) .AND. (ABS(X(2)-0.0_DP) < GEOMETRIC_TOL)) THEN
@@ -984,12 +984,12 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
                                     CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX)
+                                      SELECT CASE(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex)
                                       CASE(NO_GLOBAL_DERIV)
                                         IF ((ABS(X(1)-LENGTH) < GEOMETRIC_TOL)  .AND.  (ABS(X(2)-0.0_DP) < GEOMETRIC_TOL) .AND. &
                                           (ABS(X(3)-0.0_DP) < GEOMETRIC_TOL)) THEN
@@ -1013,7 +1013,7 @@ CONTAINS
                                         ANALYTIC_VALUE=0.0_DP
                                       CASE DEFAULT
                                         localError="The global derivative index of "//TRIM(NumberToVString( &
-                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX,"*", &
+                                        & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex,"*", &
                                         & err,error))//" is invalid."
                                         CALL FlagError(localError,err,error,*999)
                                       END SELECT
@@ -1131,7 +1131,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField
-    TYPE(BASIS_PTR_TYPE) :: DEPENDENT_BASES(3) !,GEOMETRIC_BASES(:)
+    TYPE(BasisPtrType) :: DEPENDENT_BASES(3) !,GEOMETRIC_BASES(:)
     TYPE(QUADRATURE_SCHEME_PTR_TYPE) :: QUADRATURE_SCHEMES(3)
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS
@@ -1183,19 +1183,19 @@ CONTAINS
         !!TODO:: Use highest interpolation scheme's guass points. Warn if Gauss Points insufficient
         !Create an array of Bases with each component 
         DO ns=1,NUMBER_OF_DEPENDENT_COMPONENTS
-          MESH_COMPONENT=dependentField%VARIABLE_TYPE_MAP(1)%ptr%COMPONENTS(ns)%mesh_component_number
+          MESH_COMPONENT=dependentField%VARIABLE_TYPE_MAP(1)%ptr%COMPONENTS(ns)%meshComponentNumber
           DEPENDENT_BASES(ns)%ptr=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-          DEPENDENT_BASES_EP(ns)=DEPENDENT_BASES(ns)%ptr%NUMBER_OF_ELEMENT_PARAMETERS
+          DEPENDENT_BASES_EP(ns)=DEPENDENT_BASES(ns)%ptr%numberOfElementParameters
           QUADRATURE_SCHEMES(ns)%ptr=>DEPENDENT_BASES(ns)%ptr%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
         ENDDO
-        NUMBER_OF_XI = DEPENDENT_BASES(1)%ptr%NUMBER_OF_XI
+        NUMBER_OF_XI = DEPENDENT_BASES(1)%ptr%numberOfXi
         TOTAL_DEPENDENT_BASIS_EP = SUM(DEPENDENT_BASES_EP(1:NUMBER_OF_XI))
         !DO ns=1,NUMBER_OF_GEOMETRIC_COMPONENTS
-        !  MESH_COMPONENT=dependentField%VARIABLE_TYPE_MAP(1)%ptr%COMPONENTS(ns)%mesh_component_number
+        !  MESH_COMPONENT=dependentField%VARIABLE_TYPE_MAP(1)%ptr%COMPONENTS(ns)%meshComponentNumber
         !  GEOMETRIC_BASES(ns)%ptr=>geometricField%DECOMPOSITION%DOMAIN(MESH_COMPONENT)%ptr% &
         !    & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-        !  GEOMETRIC_BASES_EP(ns)=GEOMETRIC_BASES(ns)%ptr%NUMBER_OF_ELEMENT_PARAMETERS
+        !  GEOMETRIC_BASES_EP(ns)=GEOMETRIC_BASES(ns)%ptr%numberOfElementParameters
         !ENDDO
         SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
         !
@@ -1523,8 +1523,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE, &
-      & NUMBER_OF_COMPONENTS,NUMBER_OF_DIMENSIONS
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+      & NUMBER_OF_COMPONENTS,numberOfDimensions
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,dependentField,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -1576,7 +1576,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
@@ -1597,14 +1597,14 @@ CONTAINS
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
-              NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+                & numberOfDimensions,err,error,*999)
+              NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & NUMBER_OF_COMPONENTS,err,error,*999)
               !Default to the geometric interpolation setup
-              DO component_idx=1,NUMBER_OF_DIMENSIONS
+              DO component_idx=1,numberOfDimensions
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -1652,8 +1652,8 @@ CONTAINS
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
-              NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+                & numberOfDimensions,err,error,*999)
+              NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
                 & err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
@@ -1698,7 +1698,7 @@ CONTAINS
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Default to the general 3D orthotropic material
                 !Create the auto created materials field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
                   & MATERIALS_FIELD,err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
@@ -1789,14 +1789,14 @@ CONTAINS
               IF(ASSOCIATED(dependentField)) THEN
                 geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(geometricField)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
                   !List 3 Dimensional Analytic function types currently implemented
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -1807,9 +1807,9 @@ CONTAINS
                     EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1
                   CASE(EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2)
                     !Check that we are in 3D
-                    IF(NUMBER_OF_DIMENSIONS/=3) THEN
+                    IF(numberOfDimensions/=3) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 3 geometric dimensions."
@@ -1944,7 +1944,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
@@ -1965,14 +1965,14 @@ CONTAINS
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
-              NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+                & numberOfDimensions,err,error,*999)
+              NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & NUMBER_OF_COMPONENTS,err,error,*999)
               !Default to the geometric interpolation setup
-              DO component_idx=1,NUMBER_OF_DIMENSIONS
+              DO component_idx=1,numberOfDimensions
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -2020,8 +2020,8 @@ CONTAINS
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
-              NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+                & numberOfDimensions,err,error,*999)
+              NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
                 & err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
@@ -2066,7 +2066,7 @@ CONTAINS
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Default to the general 3D orthotropic material
                 !Create the auto created materials field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
                   & MATERIALS_FIELD,err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
@@ -2155,15 +2155,15 @@ CONTAINS
               IF(ASSOCIATED(dependentField)) THEN
                 geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(geometricField)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
                   !List 3 Dimensional Analytic function types currently implemented
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1)
                     !Check that we are in 2D
                     !!TODO:: This check may have been done before
-                    IF(NUMBER_OF_DIMENSIONS/=2) THEN
+                    IF(numberOfDimensions/=2) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 2 geometric dimensions."
@@ -2299,7 +2299,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
@@ -2320,14 +2320,14 @@ CONTAINS
               CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
-              NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+                & numberOfDimensions,err,error,*999)
+              NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & NUMBER_OF_COMPONENTS,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                 & NUMBER_OF_COMPONENTS,err,error,*999)
               !Default to the geometric interpolation setup
-              DO component_idx=1,NUMBER_OF_DIMENSIONS
+              DO component_idx=1,numberOfDimensions
                 CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -2375,8 +2375,8 @@ CONTAINS
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
-              NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+                & numberOfDimensions,err,error,*999)
+              NUMBER_OF_COMPONENTS=numberOfDimensions
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
                 & err,error,*999)
               CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
@@ -2421,7 +2421,7 @@ CONTAINS
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Default to the general 3D orthotropic material
                 !Create the auto created materials field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
                   & MATERIALS_FIELD,err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
@@ -2509,14 +2509,14 @@ CONTAINS
               IF(ASSOCIATED(dependentField)) THEN
                 geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                 IF(ASSOCIATED(geometricField)) THEN
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
                   !List 3 Dimensional Analytic function types currently implemented
                   SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                   CASE(EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1)
                     !Check that we are in 1D
-                    IF(NUMBER_OF_DIMENSIONS/=1) THEN
+                    IF(numberOfDimensions/=1) THEN
                       localError="The number of geometric dimensions of "// &
-                        & TRIM(NumberToVString(NUMBER_OF_DIMENSIONS,"*",err,error))// &
+                        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                         & " is invalid. The analytic function type of "// &
                         & TRIM(NumberToVString(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE,"*",err,error))// &
                         & " requires that there be 1 geometric dimension."

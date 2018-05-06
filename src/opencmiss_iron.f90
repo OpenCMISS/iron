@@ -134,7 +134,7 @@ MODULE OpenCMISS_Iron
  !>Contains information about a basis function.
  TYPE cmfe_BasisType
    PRIVATE
-   TYPE(BASIS_TYPE), POINTER :: basis
+   TYPE(BasisType), POINTER :: basis
  END TYPE cmfe_BasisType
 
  !>Contains information on the boundary conditions for the equations set.
@@ -176,7 +176,7 @@ MODULE OpenCMISS_Iron
  !>Contains information on a coordinate system.
  TYPE cmfe_CoordinateSystemType
    PRIVATE
-   TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+   TYPE(CoordinateSystemType), POINTER :: coordinateSystem
  END TYPE cmfe_CoordinateSystemType
 
  !>Contains information on the data points defined on a region.
@@ -194,7 +194,7 @@ MODULE OpenCMISS_Iron
  !>Contains information on the mesh decomposition.
  TYPE cmfe_DecompositionType
    PRIVATE
-   TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+   TYPE(DecompositionType), POINTER :: decomposition
  END TYPE cmfe_DecompositionType
 
  !>Contains information about the equations in an equations set.
@@ -224,7 +224,7 @@ MODULE OpenCMISS_Iron
  !>Contains information on a generated mesh.
  TYPE cmfe_GeneratedMeshType
    PRIVATE
-   TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
+   TYPE(GeneratedMeshType), POINTER :: generatedMesh
  END TYPE cmfe_GeneratedMeshType
 
  !>Contains information about a history file for a control loop.
@@ -236,7 +236,7 @@ MODULE OpenCMISS_Iron
  !>Contains information about an interface.
  TYPE cmfe_InterfaceType
    PRIVATE
-   TYPE(INTERFACE_TYPE), POINTER :: interface
+   TYPE(InterfaceType), POINTER :: interface
  END TYPE cmfe_InterfaceType
 
  !>Contains information about an interface condition.
@@ -254,7 +254,7 @@ MODULE OpenCMISS_Iron
   !>Contains information on an interfaces meshes connectivity.
  TYPE cmfe_InterfaceMeshConnectivityType
    PRIVATE
-   TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: meshConnectivity
+   TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
  END TYPE cmfe_InterfaceMeshConnectivityType
 
  !>Contains information on an interfaces points connectivity.
@@ -279,7 +279,7 @@ MODULE OpenCMISS_Iron
  !>Contains information on a mesh defined on a region.
  TYPE cmfe_MeshType
    PRIVATE
-   TYPE(MESH_TYPE), POINTER :: mesh
+   TYPE(MeshType), POINTER :: mesh
  END TYPE cmfe_MeshType
 
  !>Contains information on a mesh elements defined in a mesh
@@ -321,7 +321,7 @@ MODULE OpenCMISS_Iron
 !>Contains information for a region.
  TYPE cmfe_RegionType
    PRIVATE
-   TYPE(REGION_TYPE), POINTER :: region
+   TYPE(RegionType), POINTER :: region
  END TYPE cmfe_RegionType
 
  !>Contains information about a solver.
@@ -9887,7 +9887,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_OutputNumber",err,error,*999)
@@ -9959,7 +9959,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_AbsoluteErrorGetNodeNumber",err,error,*999)
@@ -10041,7 +10041,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_PercentageErrorGetNodeNumber",err,error,*999)
@@ -10124,7 +10124,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_RelativeErrorGetNodeNumber",err,error,*999)
@@ -10204,7 +10204,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_AbsoluteErrorGetElementNumber",err,error,*999)
@@ -10279,7 +10279,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_PercentageErrorGetElementNumber",err,error,*999)
@@ -10355,7 +10355,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_RelativeErrorGetElementNumber",err,error,*999)
@@ -10429,7 +10429,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_AbsoluteErrorGetConstantNumber",err,error,*999)
@@ -10502,7 +10502,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_PercentageErrorGetConstantNumber",err,error,*999)
@@ -10576,7 +10576,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_RelativeErrorGetConstantNumber",err,error,*999)
@@ -10652,7 +10652,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetNodeNumber",err,error,*999)
@@ -10732,7 +10732,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_RMSErrorGetElementNumber",err,error,*999)
@@ -10811,7 +10811,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_IntegralNumericalValueGetNumber",err,error,*999)
@@ -10889,7 +10889,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_IntegralAnalyticValueGetNumber",err,error,*999)
@@ -10967,7 +10967,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_IntegralPercentageErrorGetNumber",err,error,*999)
@@ -11045,7 +11045,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_IntegralAbsoluteErrorGetNumber",err,error,*999)
@@ -11123,7 +11123,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_IntegralRelativeErrorGetNumber",err,error,*999)
@@ -11201,7 +11201,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_AnalyticAnalysis_IntegralNIDNumericalValueGetNumber",err,error,*999)
@@ -11279,7 +11279,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_AnalyticAnalysis_IntegralNIDErrorGetNumber",err,error,*999)
@@ -11547,7 +11547,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_CollapsedXiGetNumber",err,error,*999)
@@ -11609,7 +11609,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_CollapsedXiSetNumber",err,error,*999)
@@ -11670,7 +11670,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_CreateFinishNumber",err,error,*999)
@@ -11738,7 +11738,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_CreateStartNumber",err,error,*999)
@@ -11810,7 +11810,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_DestroyNumber",err,error,*999)
@@ -11871,7 +11871,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_InterpolationXiGetNumber",err,error,*999)
@@ -11933,7 +11933,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_InterpolationXiSetNumber",err,error,*999)
@@ -11995,7 +11995,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_NumberOfLocalNodesGetNumber",err,error,*999)
@@ -12057,7 +12057,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_NumberOfXiGetNumber",err,error,*999)
@@ -12119,7 +12119,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_NumberOfXiSetNumber",err,error,*999)
@@ -12181,7 +12181,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureNumberOfGaussXiGetNumber",err,error,*999)
@@ -12244,7 +12244,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureNumberOfGaussXiSetNumber",err,error,*999)
@@ -12308,7 +12308,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureSingleGaussXiGetNumber",err,error,*999)
@@ -12375,7 +12375,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureMultipleGaussXiGetNumber",err,error,*999)
@@ -12440,7 +12440,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureOrderGetNumber",err,error,*999)
@@ -12503,7 +12503,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureOrderSetNumber",err,error,*999)
@@ -12565,7 +12565,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureTypeGetNumber",err,error,*999)
@@ -12627,7 +12627,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureTypeSetNumber",err,error,*999)
@@ -12689,7 +12689,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_QuadratureLocalFaceGaussEvaluateSetNumber",err,error,*999)
@@ -12742,17 +12742,17 @@ CONTAINS
   !
 
   !>Returns the type of a basis identified by a user number.
-  SUBROUTINE cmfe_Basis_TypeGetNumber(contextUserNumber,basisUserNumber,basisType,err)
+  SUBROUTINE cmfe_Basis_TypeGetNumber(contextUserNumber,basisUserNumber,basisType_,err)
     !DLLEXPORT(cmfe_Basis_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the basis function.
     INTEGER(INTG), INTENT(IN) :: basisUserNumber !<The user number of the basis to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: basisType !<On return, the type of the specified basis. \see OpenCMISS_BasisTypes
+    INTEGER(INTG), INTENT(OUT) :: basisType_ !<On return, the type of the specified basis. \see OpenCMISS_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_TypeGetNumber",err,error,*999)
@@ -12763,7 +12763,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_BasisFunctionsGet(context,basisFunctions,err,error,*999)
     CALL Basis_Get(basisFunctions,basisUserNumber,basis,err,error,*999)
-    CALL Basis_TypeGet(basis,basisType,err,error,*999)
+    CALL Basis_TypeGet(basis,basisType_,err,error,*999)
 
     EXITS("cmfe_Basis_TypeGetNumber")
     RETURN
@@ -12778,18 +12778,18 @@ CONTAINS
   !
 
   !>Returns the type of a basis identified by an object.
-  SUBROUTINE cmfe_Basis_TypeGetObj(basis,basisType,err)
+  SUBROUTINE cmfe_Basis_TypeGetObj(basis,basisType_,err)
     !DLLEXPORT(cmfe_Basis_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: basisType !<On return, the type of the specified basis. \see OpenCMISS_BasisTypes
+    INTEGER(INTG), INTENT(OUT) :: basisType_ !<On return, the type of the specified basis. \see OpenCMISS_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Basis_TypeGetObj",err,error,*999)
 
-    CALL Basis_TypeGet(basis%basis,basisType,err,error,*999)
+    CALL Basis_TypeGet(basis%basis,basisType_,err,error,*999)
 
     EXITS("cmfe_Basis_TypeGetObj")
     RETURN
@@ -12804,17 +12804,17 @@ CONTAINS
   !
 
   !>Sets/changes the type of a basis identified by a user number.
-  SUBROUTINE cmfe_Basis_TypeSetNumber(contextUserNumber,basisUserNumber,basisType,err)
+  SUBROUTINE cmfe_Basis_TypeSetNumber(contextUserNumber,basisUserNumber,basisType_,err)
     !DLLEXPORT(cmfe_Basis_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the basis function.
     INTEGER(INTG), INTENT(IN) :: basisUserNumber !<The user number of the basis to set the type for.
-    INTEGER(INTG), INTENT(IN) :: basisType !<The type of the specified basis to set. \see OpenCMISS_BasisTypes
+    INTEGER(INTG), INTENT(IN) :: basisType_ !<The type of the specified basis to set. \see OpenCMISS_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
     ENTERS("cmfe_Basis_TypeSetNumber",err,error,*999)
@@ -12825,7 +12825,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_BasisFunctionsGet(context,basisFunctions,err,error,*999)
     CALL Basis_Get(basisFunctions,basisUserNumber,basis,err,error,*999)
-    CALL Basis_TypeSet(basis,basisType,err,error,*999)
+    CALL Basis_TypeSet(basis,basisType_,err,error,*999)
 
     EXITS("cmfe_Basis_TypeSetNumber")
     RETURN
@@ -12840,18 +12840,18 @@ CONTAINS
   !
 
   !>Sets/changes the type of a basis identified by an object.
-  SUBROUTINE cmfe_Basis_TypeSetObj(basis,basisType,err)
+  SUBROUTINE cmfe_Basis_TypeSetObj(basis,basisType_,err)
     !DLLEXPORT(cmfe_Basis_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<The basis to set the type for.
-    INTEGER(INTG), INTENT(IN) :: basisType !<The type of the specified basis to set. \see OpenCMISS_BasisTypes
+    INTEGER(INTG), INTENT(IN) :: basisType_ !<The type of the specified basis to set. \see OpenCMISS_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Basis_TypeSetObj",err,error,*999)
 
-    CALL Basis_TypeSet(basis%basis,basisType,err,error,*999)
+    CALL Basis_TypeSet(basis%basis,basisType_,err,error,*999)
 
     EXITS("cmfe_Basis_TypeSetObj")
     RETURN
@@ -13003,7 +13003,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_BoundaryConditions_AddConstantNumber",err,error,*999)
@@ -13095,7 +13095,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_BoundaryConditions_SetConstantNumber",err,error,*999)
@@ -13187,7 +13187,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_BoundaryConditions_AddElementNumber",err,error,*999)
@@ -13281,7 +13281,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_BoundaryConditions_SetElementNumber",err,error,*999)
@@ -13378,7 +13378,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_BoundaryConditions_AddNodeNumber",err,error,*999)
@@ -13477,7 +13477,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_BoundaryConditions_SetNodeNumber0",err,error,*999)
@@ -13541,7 +13541,7 @@ CONTAINS
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_BoundaryConditions_SetNodeNumber1",err,error,*999)
@@ -13757,7 +13757,7 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: field
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
 
@@ -13979,7 +13979,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_VariableSetAsKnownNumberC",err,error,*999)
@@ -14060,7 +14060,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_VariableSetAsKnownNumberVS",err,error,*999)
@@ -14141,7 +14141,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_VariableSetAsWantedNumberC",err,error,*999)
@@ -14222,7 +14222,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_VariableSetAsWantedNumberVS",err,error,*999)
@@ -14309,7 +14309,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_CreateCellMLToFieldMapNumberC",err,error,*999)
@@ -14406,7 +14406,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_CreateCellMLToFieldMapNumberVS",err,error,*999)
@@ -14503,7 +14503,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_CreateFieldToCellMLMapNumberC",err,error,*999)
@@ -14600,7 +14600,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_CreateFieldToCellMLMapNumberVS",err,error,*999)
@@ -14688,7 +14688,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_CreateFinishNumber",err,error,*999)
@@ -14772,7 +14772,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_CreateStartNumber",err,error,*999)
@@ -14857,7 +14857,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_DestroyNumber",err,error,*999)
@@ -14933,7 +14933,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_FieldMapsCreateFinishNumber",err,error,*999)
@@ -15013,7 +15013,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_FieldMapsCreateStartNumber",err,error,*999)
@@ -15091,7 +15091,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_CellML_ModelImportNumberC",err,error,*999)
@@ -15171,7 +15171,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_ModelImportNumberVS",err,error,*999)
@@ -15249,7 +15249,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_ModelsFieldCreateFinishNumber",err,error,*999)
@@ -15328,7 +15328,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_ModelsFieldCreateStartNumber",err,error,*999)
@@ -15409,7 +15409,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_ModelsFieldGetNumber",err,error,*999)
@@ -15428,7 +15428,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL CELLML_MODELS_FIELD_GET(cellml,field,err,error,*999)
-    cellMLModelsFieldUserNumber = FIELD%USER_NUMBER
+    cellMLModelsFieldUserNumber = FIELD%userNumber
 
 #else
 
@@ -15492,7 +15492,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_StateFieldCreateFinishNumber",err,error,*999)
@@ -15571,7 +15571,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_StateFieldCreateStartNumber",err,error,*999)
@@ -15652,7 +15652,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_StateFieldGetNumber",err,error,*999)
@@ -15671,7 +15671,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL CELLML_STATE_FIELD_GET(cellml,field,err,error,*999)
-    cellMLStateFieldUserNumber = field%USER_NUMBER
+    cellMLStateFieldUserNumber = field%userNumber
 
 #else
 
@@ -15740,7 +15740,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_FieldComponentGetNumberC",err,error,*999)
@@ -15834,7 +15834,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_FieldComponentGetNumberVS",err,error,*999)
@@ -15922,7 +15922,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_IntermediateFieldCreateFinishNumber",err,error,*999)
@@ -16003,7 +16003,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_IntermediateFieldCreateStartNumber",err,error,*999)
@@ -16086,7 +16086,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_IntermediateFieldGetNumber",err,error,*999)
@@ -16105,7 +16105,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL CELLML_INTERMEDIATE_FIELD_GET(cellml,field,err,error,*999)
-    cellMLIntermediateFieldUserNumber = field%USER_NUMBER
+    cellMLIntermediateFieldUserNumber = field%userNumber
 
 #else
 
@@ -16169,7 +16169,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_ParametersFieldCreateFinishNumber",err,error,*999)
@@ -16249,7 +16249,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_ParametersFieldCreateStartNumber",err,error,*999)
@@ -16332,7 +16332,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_ParametersFieldGetNumber",err,error,*999)
@@ -16351,7 +16351,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL CELLML_PARAMETERS_FIELD_GET(cellml,field,err,error,*999)
-    cellMLParametersFieldUserNumber = field%USER_NUMBER
+    cellMLParametersFieldUserNumber = field%userNumber
 
 #else
 
@@ -16415,7 +16415,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_CellML_GenerateNumber",err,error,*999)
@@ -17747,7 +17747,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: worldRegion
+    TYPE(RegionType), POINTER :: worldRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Context_WorldRegionGetNumber",err,error,*999)
@@ -20269,7 +20269,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
     
     ENTERS("cmfe_CoordinateSystem_CreateFinishNumber",err,error,*999)
@@ -20337,7 +20337,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_CreateStartNumber",err,error,*999)
@@ -20410,7 +20410,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_DestroyNumber",err,error,*999)
@@ -20471,7 +20471,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_DimensionGetNumber",err,error,*999)
@@ -20533,7 +20533,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_DimensionSetNumber",err,error,*999)
@@ -20595,7 +20595,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_FocusGetNumber",err,error,*999)
@@ -20657,7 +20657,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_FocusSetNumber",err,error,*999)
@@ -20720,7 +20720,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_RadialInterpolationGetNumber",err,error,*999)
@@ -20785,7 +20785,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_RadialInterpolationSetNumber",err,error,*999)
@@ -20839,17 +20839,17 @@ CONTAINS
   !
 
   !>Returns the type of a coordinate system identified by a user number.
-  SUBROUTINE cmfe_CoordinateSystem_TypeGetNumber(contextUserNumber,coordinateSystemUserNumber,coordinateSystemType,err)
+  SUBROUTINE cmfe_CoordinateSystem_TypeGetNumber(contextUserNumber,coordinateSystemUserNumber,coordinateSystemType_,err)
     !DLLEXPORT(cmfe_CoordinateSystem_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the coordinate system.
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: coordinateSystemType !<On return, the type of the coordinate system. \see OpenCMISS_CoordinateSystemTypes
+    INTEGER(INTG), INTENT(OUT) :: coordinateSystemType_ !<On return, the type of the coordinate system. \see OpenCMISS_CoordinateSystemTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_TypeGetNumber",err,error,*999)
@@ -20860,7 +20860,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_TYPE_GET(coordinateSystem,coordinateSystemType,err,error,*999)
+    CALL COORDINATE_SYSTEM_TYPE_GET(coordinateSystem,coordinateSystemType_,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_TypeGetNumber")
     RETURN
@@ -20875,18 +20875,18 @@ CONTAINS
   !
 
   !>Returns the type of a coordinate system identified by an object.
-  SUBROUTINE cmfe_CoordinateSystem_TypeGetObj(coordinateSystem,coordinateSystemType,err)
+  SUBROUTINE cmfe_CoordinateSystem_TypeGetObj(coordinateSystem,coordinateSystemType_,err)
     !DLLEXPORT(cmfe_CoordinateSystem_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(IN) :: coordinateSystem !<The coordinate system to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: coordinateSystemType !<On return, the type of the coordinate system. \see OpenCMISS_CoordinateSystemTypes
+    INTEGER(INTG), INTENT(OUT) :: coordinateSystemType_ !<On return, the type of the coordinate system. \see OpenCMISS_CoordinateSystemTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_CoordinateSystem_TypeGetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_TYPE_GET(coordinateSystem%coordinateSystem,coordinateSystemType,err,error,*999)
+    CALL COORDINATE_SYSTEM_TYPE_GET(coordinateSystem%coordinateSystem,coordinateSystemType_,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_TypeGetObj")
     RETURN
@@ -20901,17 +20901,17 @@ CONTAINS
   !
 
   !>Sets/changes the type of a coordinate system identified by a user number.
-  SUBROUTINE cmfe_CoordinateSystem_TypeSetNumber(contextUserNumber,coordinateSystemUserNumber,coordinateSystemType,err)
+  SUBROUTINE cmfe_CoordinateSystem_TypeSetNumber(contextUserNumber,coordinateSystemUserNumber,coordinateSystemType_,err)
     !DLLEXPORT(cmfe_CoordinateSystem_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the coordinate system.
     INTEGER(INTG), INTENT(IN) :: coordinateSystemUserNumber !<The user number of the coordinate system to set the type for.
-    INTEGER(INTG), INTENT(IN) :: coordinateSystemType !<The type of the coordinate system to set. \see OpenCMISS_CoordinateSystemTypes
+    INTEGER(INTG), INTENT(IN) :: coordinateSystemType_ !<The type of the coordinate system to set. \see OpenCMISS_CoordinateSystemTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_TypeSetNumber",err,error,*999)
@@ -20922,7 +20922,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_CoordinateSystemsGet(context,coordinateSystems,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL COORDINATE_SYSTEM_TYPE_SET(coordinateSystem,coordinateSystemType,err,error,*999)
+    CALL COORDINATE_SYSTEM_TYPE_SET(coordinateSystem,coordinateSystemType_,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_TypeSetNumber")
     RETURN
@@ -20937,18 +20937,18 @@ CONTAINS
   !
 
   !>Sets/changes the type of a coordinate system identified by an object.
-  SUBROUTINE cmfe_CoordinateSystem_TypeSetObj(coordinateSystem,coordinateSystemType,err)
+  SUBROUTINE cmfe_CoordinateSystem_TypeSetObj(coordinateSystem,coordinateSystemType_,err)
     !DLLEXPORT(cmfe_CoordinateSystem_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_CoordinateSystemType), INTENT(INOUT) :: coordinateSystem !<The coordinate system to set the type for.
-    INTEGER(INTG), INTENT(IN) :: coordinateSystemType !<The type of the coordinate system to set. \see OpenCMISS_CoordinateSystemTypes
+    INTEGER(INTG), INTENT(IN) :: coordinateSystemType_ !<The type of the coordinate system to set. \see OpenCMISS_CoordinateSystemTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_CoordinateSystem_TypeSetObj",err,error,*999)
 
-    CALL COORDINATE_SYSTEM_TYPE_SET(coordinateSystem%coordinateSystem,coordinateSystemType,err,error,*999)
+    CALL COORDINATE_SYSTEM_TYPE_SET(coordinateSystem%coordinateSystem,coordinateSystemType_,err,error,*999)
 
     EXITS("cmfe_CoordinateSystem_TypeSetObj")
     RETURN
@@ -20973,7 +20973,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_OriginGetNumber",err,error,*999)
@@ -21035,7 +21035,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_OriginSetNumber",err,error,*999)
@@ -21097,7 +21097,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_OrientationGetNumber",err,error,*999)
@@ -21159,7 +21159,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_CoordinateSystem_OrientationSetNumber",err,error,*999)
@@ -21224,7 +21224,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_CreateFinishNumber",err,error,*999)
@@ -21289,7 +21289,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_CreateStartNumber",err,error,*999)
@@ -21388,7 +21388,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_DestroyNumber",err,error,*999)
@@ -21454,7 +21454,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_NumberOfDataPointsGetNumber",err,error,*999)
@@ -21522,7 +21522,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_LabelGetCNumber",err,error,*999)
@@ -21590,7 +21590,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_LabelGetVSNumber",err,error,*999)
@@ -21658,7 +21658,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_LabelSetCNumber",err,error,*999)
@@ -21726,7 +21726,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_LabelSetVSNumber",err,error,*999)
@@ -21795,7 +21795,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_UserNumberGetNumber",err,error,*999)
@@ -21864,7 +21864,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_UserNumberSetNumber",err,error,*999)
@@ -21933,7 +21933,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_PositionGetNumber",err,error,*999)
@@ -22002,7 +22002,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_PositionSetNumber",err,error,*999)
@@ -22071,7 +22071,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_WeightsGetNumber",err,error,*999)
@@ -22140,7 +22140,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataPoints_WeightsSetNumber",err,error,*999)
@@ -22212,7 +22212,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_AbsoluteToleranceGetNumber",err,error,*999)
@@ -22284,7 +22284,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_AbsoluteToleranceSetNumber",err,error,*999)
@@ -22355,7 +22355,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_CreateFinishNumber",err,error,*999)
@@ -22427,7 +22427,7 @@ CONTAINS
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(FIELD_TYPE), POINTER :: projectionField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_CreateStartNumber",err,error,*999)
@@ -22503,7 +22503,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_DestroyNumber",err,error,*999)
@@ -22576,7 +22576,7 @@ CONTAINS
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber",err,error,*999)
@@ -22629,8 +22629,8 @@ CONTAINS
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_DataPointsPositionEvaluateInterfaceNumber",err,error,*999)
@@ -22743,7 +22743,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1",err,error,*999)
@@ -22823,8 +22823,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1",err,error,*999)
@@ -22927,7 +22927,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber",err,error,*999)
@@ -22975,8 +22975,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber",err,error,*999)
@@ -23084,7 +23084,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1",err,error,*999)
@@ -23164,8 +23164,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: INTERFACE
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1",err,error,*999)
@@ -23267,7 +23267,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateElementsSetRegionNumber",err,error,*999)
@@ -23314,8 +23314,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateElementsSetIntNum",err,error,*999)
@@ -23490,7 +23490,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetRegNum11",err,error,*999)
@@ -23641,8 +23641,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetIntNum11",err,error,*999)
@@ -23811,7 +23811,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateFacesSetRegionNumber",err,error,*999)
@@ -23859,8 +23859,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateFacesSetInterfaceNumber",err,error,*999)
@@ -24041,7 +24041,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111",err,error,*999)
@@ -24203,8 +24203,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateFacesSetIntNum111",err,error,*999)
@@ -24378,7 +24378,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateLinesSetRegionNumber",err,error,*999)
@@ -24426,8 +24426,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionCandidateLinesSetInterfaceNumber",err,error,*999)
@@ -24612,7 +24612,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetRegNum111",err,error,*999)
@@ -24774,8 +24774,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
   
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateLinesSetIntNum111",err,error,*999)
@@ -24948,7 +24948,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_DataPointsProjectionEvaluateNumber",err,error,*999)
@@ -25021,7 +25021,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_MaximumIterationUpdateGetNumber",err,error,*999)
@@ -25094,7 +25094,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_MaximumIterationUpdateSetNumber",err,error,*999)
@@ -25167,7 +25167,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_MaximumNumberOfIterationsGetNumber",err,error,*999)
@@ -25240,7 +25240,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultAnalysisOutputNumber",err,error,*999)
@@ -25313,7 +25313,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultDistanceGetNumber",err,error,*999)
@@ -25388,7 +25388,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultElementNumberGetNumber",err,error,*999)
@@ -25464,7 +25464,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultElementFaceNumberGetNumber",err,error,*999)
@@ -25542,7 +25542,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultElementLineNumberGetNumber",err,error,*999)
@@ -25620,7 +25620,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultExitTagGetNumber",err,error,*999)
@@ -25694,7 +25694,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultMaximumErrorGetNumber",err,error,*999)
@@ -25770,7 +25770,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultMinimumErrorGetNumber",err,error,*999)
@@ -25845,7 +25845,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_DataProjection_ResultRMSErrorGetNumber",err,error,*999)
@@ -25917,7 +25917,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultXiGetNumber",err,error,*999)
@@ -25990,7 +25990,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultXiSetNumber",err,error,*999)
@@ -26063,7 +26063,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ResultProjectionVectorGetNumber",err,error,*999)
@@ -26138,7 +26138,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_MaximumNumberOfIterationsSetNumber",err,error,*999)
@@ -26211,7 +26211,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_NumberOfClosestElementsGetNumber",err,error,*999)
@@ -26284,7 +26284,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_DataProjection_NumberOfClosestElementsSetNumber",err,error,*999)
@@ -26357,7 +26357,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionTypeGetNumber",err,error,*999)
@@ -26428,7 +26428,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ProjectionTypeSetNumber",err,error,*999)
@@ -26499,7 +26499,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_RelativeToleranceGetNumber",err,error,*999)
@@ -26571,7 +26571,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_RelativeToleranceSetNumber",err,error,*999)
@@ -26643,7 +26643,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_StartingXiGetNumber",err,error,*999)
@@ -26715,7 +26715,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_StartingXiSetNumber",err,error,*999)
@@ -26788,8 +26788,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_DataProjection_ElementSetInterfaceNumber",err,error,*999)
@@ -26838,7 +26838,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_ElementSetRegionNumber",err,error,*999)
@@ -26911,8 +26911,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_LabelGetCInterfaceNumber",err,error,*999)
@@ -26961,8 +26961,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_LabelGetVSInterfaceNumber",err,error,*999)
@@ -27010,7 +27010,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_LabelGetCRegionNumber",err,error,*999)
@@ -27055,7 +27055,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_LabelGetVSRegionNumber",err,error,*999)
@@ -27153,8 +27153,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_LabelSetCInterfaceNumber",err,error,*999)
@@ -27203,9 +27203,9 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionsType), POINTER :: regions
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(RegionType), POINTER :: parentRegion
 
     ENTERS("cmfe_DataProjection_LabelSetVSInterfaceNumber",err,error,*999)
 
@@ -27252,7 +27252,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_DataProjection_LabelSetCRegionNumber",err,error,*999)
@@ -27297,7 +27297,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_DataProjection_LabelSetVSRegionNumber",err,error,*999)
@@ -27393,7 +27393,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Equations_DestroyNumber",err,error,*999)
@@ -27461,7 +27461,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Equations_LinearityTypeGetNumber",err,error,*999)
@@ -27530,7 +27530,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Equations_LumpingTypeGetNumber",err,error,*999)
@@ -27599,7 +27599,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Equations_LumpingTypeSetNumber",err,error,*999)
@@ -27668,7 +27668,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Equations_OutputTypeGetNumber",err,error,*999)
@@ -27737,7 +27737,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Equations_OutputTypeSetNumber",err,error,*999)
@@ -27806,7 +27806,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Equations_SparsityTypeGetNumber",err,error,*999)
@@ -27875,7 +27875,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Equations_SparsityTypeSetNumber",err,error,*999)
@@ -27945,7 +27945,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Equations_TimeDependenceTypeGetNumber",err,error,*999)
@@ -28382,7 +28382,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_AnalyticCreateFinishNumber",err,error,*999)
@@ -28451,7 +28451,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: analyticField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_AnalyticCreateStartNumber",err,error,*999)
@@ -28523,7 +28523,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_AnalyticDestroyNumber",err,error,*999)
@@ -28588,7 +28588,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_AnalyticEvaluateNumber",err,error,*999)
@@ -28653,7 +28653,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_AnalyticTimeGetNumber",err,error,*999)
@@ -28719,7 +28719,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_AnalyticTimeSetNumber",err,error,*999)
@@ -28786,7 +28786,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_AnalyticUserParamSetNumber",err,error,*999)
@@ -28854,7 +28854,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_AnalyticUserParamGetNumber",err,error,*999)
@@ -28920,7 +28920,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_CreateFinishNumber",err,error,*999)
@@ -28997,7 +28997,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: geometryFibreField,equationsSetField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_CreateStartNumber",err,error,*999)
@@ -29085,7 +29085,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_DerivedCreateFinishNumber",err,error,*999)
@@ -29152,7 +29152,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: derivedField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_DerivedCreateStartNumber",err,error,*999)
@@ -29222,7 +29222,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_DerivedDestroyNumber",err,error,*999)
@@ -29288,7 +29288,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_DerivedVariableCalculateNumber",err,error,*999)
@@ -29357,7 +29357,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_EquationsSet_DerivedVariableSetNumber",err,error,*999)
@@ -29422,7 +29422,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_DestroyNumber",err,error,*999)
@@ -29486,7 +29486,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_DependentCreateFinishNumber",err,error,*999)
@@ -29554,7 +29554,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_DependentCreateStartNumber",err,error,*999)
@@ -29625,7 +29625,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_DependentDestroyNumber",err,error,*999)
@@ -29689,7 +29689,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_EquationsSet_EquationsCreateFinishNumber",err,error,*999)
@@ -29755,7 +29755,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_EquationsCreateStartNumber",err,error,*999)
@@ -29822,7 +29822,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_EquationsDestroyNumber",err,error,*999)
@@ -29886,7 +29886,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_IndependentCreateFinishNumber",err,error,*999)
@@ -29955,7 +29955,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: independentField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_IndependentCreateStartNumber",err,error,*999)
@@ -30026,7 +30026,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_IndependentDestroyNumber",err,error,*999)
@@ -30091,7 +30091,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_LabelGetCNumber",err,error,*999)
@@ -30157,7 +30157,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_LabelGetVSNumber",err,error,*999)
@@ -30223,7 +30223,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_LabelSetCNumber",err,error,*999)
@@ -30289,7 +30289,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_LabelSetVSNumber",err,error,*999)
@@ -30354,7 +30354,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_MaterialsCreateFinishNumber",err,error,*999)
@@ -30422,7 +30422,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: materialsField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_MaterialsCreateStartNumber",err,error,*999)
@@ -30493,7 +30493,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_MaterialsDestroyNumber",err,error,*999)
@@ -30558,7 +30558,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_OutputTypeGetNumber",err,error,*999)
@@ -30624,7 +30624,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_OutputTypeSetNumber",err,error,*999)
@@ -30691,7 +30691,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_SolutionMethodGetNumber",err,error,*999)
@@ -30758,7 +30758,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_SolutionMethodSetNumber",err,error,*999)
@@ -30823,7 +30823,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_SourceCreateFinishNumber",err,error,*999)
@@ -30890,7 +30890,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FIELD_TYPE), POINTER :: sourceField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_SourceCreateStartNumber",err,error,*999)
@@ -30959,7 +30959,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_SourceDestroyNumber",err,error,*999)
@@ -31025,7 +31025,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_SpecificationGetNumber",err,error,*999)
@@ -31094,7 +31094,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_SpecificationSizeGetNumber",err,error,*999)
@@ -31166,7 +31166,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_TensorInterpolateGaussPointNumber",err,error,*999)
@@ -31243,7 +31243,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_TensorInterpolateXiNumber",err,error,*999)
@@ -31313,7 +31313,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_EquationsSet_TimesGetNumber",err,error,*999)
@@ -31383,7 +31383,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_EquationsSet_TimesSetNumber",err,error,*999)
@@ -31457,7 +31457,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentInterpolationGetNumber",err,error,*999)
@@ -31528,7 +31528,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentInterpolationSetNumber",err,error,*999)
@@ -31599,7 +31599,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentLabelGetCNumber",err,error,*999)
@@ -31670,7 +31670,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentLabelGetVSNumber",err,error,*999)
@@ -31741,7 +31741,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentLabelSetCNumber",err,error,*999)
@@ -31812,7 +31812,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentLabelSetVSNumber",err,error,*999)
@@ -31883,7 +31883,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentMeshComponentGetNumber",err,error,*999)
@@ -31954,7 +31954,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentMeshComponentSetNumber",err,error,*999)
@@ -32026,7 +32026,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentValuesInitialiseIntgNumber",err,error,*999)
@@ -32099,7 +32099,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentValuesInitialiseSPNumber",err,error,*999)
@@ -32172,7 +32172,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentValuesInitialiseDPNumber",err,error,*999)
@@ -32245,7 +32245,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ComponentValuesInitialiseLNumber",err,error,*999)
@@ -32315,7 +32315,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DataTypeGetNumber",err,error,*999)
@@ -32383,7 +32383,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DataTypeSetNumber",err,error,*999)
@@ -32451,7 +32451,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DOFOrderTypeGetNumber",err,error,*999)
@@ -32519,7 +32519,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DOFOrderTypeSetNumber",err,error,*999)
@@ -32585,7 +32585,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_CreateFinishNumber",err,error,*999)
@@ -32657,7 +32657,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_CreateStartNumber",err,error,*999)
@@ -32758,7 +32758,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DependentTypeGetNumber",err,error,*999)
@@ -32824,7 +32824,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DependentTypeSetNumber",err,error,*999)
@@ -32889,7 +32889,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DestroyNumber",err,error,*999)
@@ -32955,7 +32955,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DimensionGetNumber",err,error,*999)
@@ -33023,7 +33023,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DimensionSetNumber",err,error,*999)
@@ -33090,7 +33090,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field,geometricField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_GeometricFieldGetNumber",err,error,*999)
@@ -33105,7 +33105,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL FIELD_GEOMETRIC_FIELD_GET(field,geometricField,err,error,*999)
-    geometricFieldUserNumber=geometricField%USER_NUMBER
+    geometricFieldUserNumber=geometricField%userNumber
 
     EXITS("cmfe_Field_GeometricFieldGetNumber")
     RETURN
@@ -33158,7 +33158,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field,geometricField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_GeometricFieldSetNumber",err,error,*999)
@@ -33229,7 +33229,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: geometricField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_GeometricParametersElementLineLengthGetNumber",err,error,*999)
@@ -33303,7 +33303,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: geometricField
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_GeometricParametersElementVolumeGetNumber",err,error,*999)
@@ -33380,7 +33380,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetNodeScaleFactorGetNumber",err,error,*999)
@@ -33459,7 +33459,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetNodeScaleFactorsGetNumber",err,error,*999)
@@ -33531,7 +33531,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGetNumber",err,error,*999)
@@ -33610,7 +33610,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetNodeScaleFactorSetNumber",err,error,*999)
@@ -33689,7 +33689,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetNodeScaleFactorsSetNumber",err,error,*999)
@@ -33759,7 +33759,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_LabelGetCNumber",err,error,*999)
@@ -33825,7 +33825,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_LabelGetVSNumber",err,error,*999)
@@ -33891,7 +33891,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Field_LabelSetCNumber",err,error,*999)
@@ -33957,7 +33957,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_LabelSetVSNumber",err,error,*999)
@@ -34027,7 +34027,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_PositionNormalTangentCalculateNodeNumber",err,error,*999)
@@ -34100,9 +34100,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_MeshDecompositionGetNumber",err,error,*999)
@@ -34117,7 +34117,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL Field_DecompositionGet(field,decomposition,err,error,*999)
-    decompositionUserNumber=decomposition%USER_NUMBER
+    decompositionUserNumber=decomposition%userNumber
 
     EXITS("cmfe_Field_MeshDecompositionGetNumber")
     RETURN
@@ -34171,10 +34171,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_MeshDecompositionSetNumber",err,error,*999)
@@ -34248,7 +34248,7 @@ CONTAINS
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_DataProjectionSetNumber",err,error,*999)
@@ -34320,7 +34320,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_NumberOfComponentsGetNumber",err,error,*999)
@@ -34389,7 +34389,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_NumberOfComponentsSetNumber",err,error,*999)
@@ -34456,7 +34456,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_NumberOfVariablesGetNumber",err,error,*999)
@@ -34522,7 +34522,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_NumberOfVariablesSetNumber",err,error,*999)
@@ -34592,7 +34592,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddConstantIntgNumber",err,error,*999)
@@ -34666,7 +34666,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddConstantSPNumber",err,error,*999)
@@ -34739,7 +34739,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddConstantDPNumber",err,error,*999)
@@ -34812,7 +34812,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddConstantLNumber",err,error,*999)
@@ -34886,7 +34886,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddElementIntgNumber",err,error,*999)
@@ -34962,7 +34962,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddElementSPNumber",err,error,*999)
@@ -35038,7 +35038,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddElementDPNumber",err,error,*999)
@@ -35114,7 +35114,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddElementLNumber",err,error,*999)
@@ -35191,7 +35191,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddGaussPointIntgNumber",err,error,*999)
@@ -35273,7 +35273,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddGaussPointSPNumber",err,error,*999)
@@ -35355,7 +35355,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddGaussPointDPNumber",err,error,*999)
@@ -35437,7 +35437,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddGaussPointLNumber",err,error,*999)
@@ -35520,7 +35520,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddNodeIntgNumber",err,error,*999)
@@ -35602,7 +35602,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddNodeSPNumber",err,error,*999)
@@ -35684,7 +35684,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddNodeDPNumber",err,error,*999)
@@ -35766,7 +35766,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetAddNodeLNumber",err,error,*999)
@@ -35842,7 +35842,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetCreateNumber",err,error,*999)
@@ -35910,7 +35910,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDestroyNumber",err,error,*999)
@@ -35980,7 +35980,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDataGetIntgNumber",err,error,*999)
@@ -36051,7 +36051,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDataGetSPNumber",err,error,*999)
@@ -36122,7 +36122,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDataGetDPNumber",err,error,*999)
@@ -36193,7 +36193,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDataGetLNumber",err,error,*999)
@@ -36264,7 +36264,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDataRestoreIntgNumber",err,error,*999)
@@ -36336,7 +36336,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDataRestoreSPNumber",err,error,*999)
@@ -36407,7 +36407,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDataRestoreDPNumber",err,error,*999)
@@ -36478,7 +36478,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetDataRestoreLNumber",err,error,*999)
@@ -36550,7 +36550,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetConstantIntgNumber",err,error,*999)
@@ -36624,7 +36624,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetConstantSPNumber",err,error,*999)
@@ -36697,7 +36697,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetConstantDPNumber",err,error,*999)
@@ -36770,7 +36770,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetConstantLNumber",err,error,*999)
@@ -36845,8 +36845,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetDataPointIntgNumberI",err,error,*999)
@@ -36895,7 +36895,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetDataPointIntgNumberR",err,error,*999)
@@ -36975,8 +36975,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetDataPointSPNumberI",err,error,*999)
@@ -37025,7 +37025,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetDataPointSPNumberR",err,error,*999)
@@ -37104,8 +37104,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetDataPointDPNumberI",err,error,*999)
@@ -37154,7 +37154,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetDataPointDPNumberR",err,error,*999)
@@ -37233,8 +37233,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetDataPointLNumberI",err,error,*999)
@@ -37282,7 +37282,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetDataPointLNumberR",err,error,*999)
@@ -37359,7 +37359,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetElementIntgNumber",err,error,*999)
@@ -37435,7 +37435,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetElementSPNumber",err,error,*999)
@@ -37511,7 +37511,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetElementDPNumber",err,error,*999)
@@ -37587,7 +37587,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetElementLNumber",err,error,*999)
@@ -37665,7 +37665,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetNodeIntgNumber",err,error,*999)
@@ -37747,7 +37747,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetNodeSPNumber",err,error,*999)
@@ -37829,7 +37829,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetNodeDPNumber",err,error,*999)
@@ -37911,7 +37911,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetGetNodeLNumber",err,error,*999)
@@ -38023,7 +38023,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateConstantIntgNumber",err,error,*999)
@@ -38098,7 +38098,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateConstantSPNumber",err,error,*999)
@@ -38172,7 +38172,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateConstantDPNumber",err,error,*999)
@@ -38246,7 +38246,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateConstantLNumber",err,error,*999)
@@ -38322,8 +38322,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateDataPointIntgNumberI",err,error,*999)
@@ -38372,7 +38372,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateDataPointIntgNumberR",err,error,*999)
@@ -38453,8 +38453,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateDataPointSPNumberI",err,error,*999)
@@ -38503,7 +38503,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateDataPointSPNumberR",err,error,*999)
@@ -38583,8 +38583,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateDataPointDPNumberI",err,error,*999)
@@ -38633,7 +38633,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateDataPointDPNumberR",err,error,*999)
@@ -38713,8 +38713,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateDataPointLNumberI",err,error,*999)
@@ -38763,7 +38763,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateDataPointLNumberR",err,error,*999)
@@ -38842,7 +38842,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateElementIntgNumber",err,error,*999)
@@ -38921,7 +38921,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateElementSPNumber",err,error,*999)
@@ -39000,7 +39000,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateElementDPNumber",err,error,*999)
@@ -39079,7 +39079,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateElementLNumber",err,error,*999)
@@ -39188,7 +39188,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateFinishNumber",err,error,*999)
@@ -39262,7 +39262,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateNodeIntgNumber",err,error,*999)
@@ -39345,7 +39345,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateNodeSPNumber",err,error,*999)
@@ -39428,7 +39428,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateNodeDPNumber",err,error,*999)
@@ -39511,7 +39511,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateNodeLNumber",err,error,*999)
@@ -39621,7 +39621,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateGaussPointIntgNumber",err,error,*999)
@@ -39705,7 +39705,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateGaussPointSPNumber",err,error,*999)
@@ -39789,7 +39789,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateGaussPointDPNumber",err,error,*999)
@@ -39873,7 +39873,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateGaussPointLNumber",err,error,*999)
@@ -39956,7 +39956,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetInterpolateSingleXiDPNumber",err,error,*999)
@@ -40038,7 +40038,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetInterpolateMultipleXiDPNumber",err,error,*999)
@@ -40121,7 +40121,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetInterpolateSingleGaussDPNumber",err,error,*999)
@@ -40205,7 +40205,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetInterpolateMultipleGaussDPNumber",err,error,*999)
@@ -40284,7 +40284,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParameterSetUpdateStartNumber",err,error,*999)
@@ -40361,7 +40361,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: fromField,toField
-    TYPE(REGION_TYPE), POINTER :: fromRegion,toRegion
+    TYPE(RegionType), POINTER :: fromRegion,toRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ParametersToFieldParametersComponentCopyNumber",err,error,*999)
@@ -40443,7 +40443,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ScalingTypeGetNumber",err,error,*999)
@@ -40509,7 +40509,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_ScalingTypeSetNumber",err,error,*999)
@@ -40575,7 +40575,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_TypeGetNumber",err,error,*999)
@@ -40641,7 +40641,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_TypeSetNumber",err,error,*999)
@@ -40708,7 +40708,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Field_VariableLabelGetCNumber",err,error,*999)
@@ -40776,7 +40776,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_VariableLabelGetVSNumber",err,error,*999)
@@ -40844,7 +40844,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_VariableLabelSetCNumber",err,error,*999)
@@ -40912,7 +40912,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_VariableLabelSetVSNumber",err,error,*999)
@@ -40979,7 +40979,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_VariableTypesGetNumber",err,error,*999)
@@ -41045,7 +41045,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Field_VariableTypesSetNumber",err,error,*999)
@@ -41113,7 +41113,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: FileNameLength,MethodLength
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(VARYING_STRING) :: VFileName,VMethod
 
@@ -41157,7 +41157,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: MethodLength
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(VARYING_STRING) :: VMethod
 
@@ -41199,7 +41199,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: FileNameLength
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(VARYING_STRING) :: VFileName
 
@@ -41240,7 +41240,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Fields_ElementsExportVSVSNumber",err,error,*999)
@@ -41408,7 +41408,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: FileNameLength,MethodLength
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(VARYING_STRING) :: VFileName,VMethod
 
@@ -41452,7 +41452,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: MethodLength
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(VARYING_STRING) :: VMethod
 
@@ -41494,7 +41494,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: FileNameLength
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(VARYING_STRING) :: VFileName
 
@@ -41535,7 +41535,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Fields_NodesExportVSVSNumber",err,error,*999)
@@ -41701,10 +41701,10 @@ CONTAINS
     INTEGER(INTG), INTENT(INOUT) :: basisUserNumbers(:) !<On return, the user numbers of the bases.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BASIS_PTR_TYPE), POINTER :: bases(:)
+    TYPE(BasisPtrType), POINTER :: bases(:)
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     INTEGER(INTG) :: basisIdx,numberOfBases
     TYPE(VARYING_STRING) :: localError
@@ -41731,7 +41731,7 @@ CONTAINS
     END IF
     DO basisIdx=1,numberOfBases
       IF(ASSOCIATED(bases(basisIdx)%ptr)) THEN
-        basisUserNumbers(basisIdx)=bases(basisIdx)%PTR%USER_NUMBER
+        basisUserNumbers(basisIdx)=bases(basisIdx)%PTR%userNumber
       ELSE
         localError="The basis with index "//TRIM(NumberToVString(basisIdx,"*",err,error))// &
           & " is not associated for the generated mesh with a user number of "// &
@@ -41761,7 +41761,7 @@ CONTAINS
     TYPE(cmfe_BasisType), INTENT(INOUT) :: bases(:) !<On return, the array of bases.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BASIS_PTR_TYPE), POINTER :: bases2(:)
+    TYPE(BasisPtrType), POINTER :: bases2(:)
     INTEGER(INTG) :: basisIdx,numberOfBases
     TYPE(VARYING_STRING) :: localError
 
@@ -41837,12 +41837,12 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: basisUserNumbers(:) !<The user numbers of the bases to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BASIS_PTR_TYPE), POINTER :: bases(:)
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisPtrType), POINTER :: bases(:)
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     INTEGER(INTG) :: basisIdx,numberOfBases
 
@@ -41918,7 +41918,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     INTEGER(INTG) :: basisIdx
-    TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: bases2(:)
+    TYPE(BasisPtrType), ALLOCATABLE :: bases2(:)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_GeneratedMesh_BasisSetObj1",err,error,*999)
@@ -41959,8 +41959,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_BaseVectorsSetNumber",err,error,*999)
@@ -42025,9 +42025,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_CreateFinishNumber",err,error,*999)
@@ -42101,8 +42101,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_CreateStartNumber",err,error,*999)
@@ -42201,8 +42201,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_DestroyNumber",err,error,*999)
@@ -42265,8 +42265,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_ExtentGetNumber",err,error,*999)
@@ -42331,8 +42331,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_ExtentSetNumber",err,error,*999)
@@ -42398,8 +42398,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_NumberOfElementsGetNumber",err,error,*999)
@@ -42466,8 +42466,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_NumberOfElementsSetNumber",err,error,*999)
@@ -42533,8 +42533,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_OriginGetNumber",err,error,*999)
@@ -42599,8 +42599,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_OriginSetNumber",err,error,*999)
@@ -42654,19 +42654,19 @@ CONTAINS
   !
 
   !>Returns the type of a generated mesh on a region identified by a user number.
-  SUBROUTINE cmfe_GeneratedMesh_TypeGetNumber(contextUserNumber,regionUserNumber,generatedMeshUserNumber,generatedMeshType,err)
+  SUBROUTINE cmfe_GeneratedMesh_TypeGetNumber(contextUserNumber,regionUserNumber,generatedMeshUserNumber,generatedMeshType_,err)
     !DLLEXPORT(cmfe_GeneratedMesh_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to get the type for.
     INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: generatedMeshType !<On return, the type of the generated mesh. \see OpenCMISS_GeneratedMeshTypes
+    INTEGER(INTG), INTENT(OUT) :: generatedMeshType_ !<On return, the type of the generated mesh. \see OpenCMISS_GeneratedMeshTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_TypeGetNumber",err,error,*999)
@@ -42679,7 +42679,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_TYPE_GET(generatedMesh,generatedMeshType,err,error,*999)
+    CALL GENERATED_MESH_TYPE_GET(generatedMesh,generatedMeshType_,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_TypeGetNumber")
     RETURN
@@ -42694,18 +42694,18 @@ CONTAINS
   !
 
   !>Returns the type of a generated mesh identified by an object.
-  SUBROUTINE cmfe_GeneratedMesh_TypeGetObj(generatedMesh,generatedMeshType,err)
+  SUBROUTINE cmfe_GeneratedMesh_TypeGetObj(generatedMesh,generatedMeshType_,err)
     !DLLEXPORT(cmfe_GeneratedMesh_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to get the generated mesh type for.
-    INTEGER(INTG), INTENT(OUT) :: generatedMeshType !<On return, the type of the generated mesh. \see OpenCMISS_GeneratedMeshTypes
+    INTEGER(INTG), INTENT(OUT) :: generatedMeshType_ !<On return, the type of the generated mesh. \see OpenCMISS_GeneratedMeshTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_GeneratedMesh_TypeGetObj",err,error,*999)
 
-    CALL GENERATED_MESH_TYPE_GET(generatedMesh%generatedMesh,generatedMeshType,err,error,*999)
+    CALL GENERATED_MESH_TYPE_GET(generatedMesh%generatedMesh,generatedMeshType_,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_TypeGetObj")
     RETURN
@@ -42720,19 +42720,19 @@ CONTAINS
   !
 
   !>Sets/changes the type of a generated mesh on a region identified by a user number.
-  SUBROUTINE cmfe_GeneratedMesh_TypeSetNumber(contextUserNumber,regionUserNumber,generatedMeshUserNumber,generatedMeshType,err)
+  SUBROUTINE cmfe_GeneratedMesh_TypeSetNumber(contextUserNumber,regionUserNumber,generatedMeshUserNumber,generatedMeshType_,err)
     !DLLEXPORT(cmfe_GeneratedMesh_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the type for.
     INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to set the type for.
-    INTEGER(INTG), INTENT(IN) :: generatedMeshType !<The type of the generated mesh to set. \see OpenCMISS_GeneratedMeshTypes
+    INTEGER(INTG), INTENT(IN) :: generatedMeshType_ !<The type of the generated mesh to set. \see OpenCMISS_GeneratedMeshTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_TypeSetNumber",err,error,*999)
@@ -42745,7 +42745,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
-    CALL GENERATED_MESH_TYPE_SET(generatedMesh,generatedMeshType,err,error,*999)
+    CALL GENERATED_MESH_TYPE_SET(generatedMesh,generatedMeshType_,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_TypeSetNumber")
     RETURN
@@ -42760,18 +42760,18 @@ CONTAINS
   !
 
   !>Sets/changes the type of a generated mesh identified by an object.
-  SUBROUTINE cmfe_GeneratedMesh_TypeSetObj(generatedMesh,generatedMeshType,err)
+  SUBROUTINE cmfe_GeneratedMesh_TypeSetObj(generatedMesh,generatedMeshType_,err)
     !DLLEXPORT(cmfe_GeneratedMesh_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the generated mesh type for.
-    INTEGER(INTG), INTENT(IN) :: generatedMeshType !<The type of the generated mesh to set. \see OpenCMISS_GeneratedMeshTypes
+    INTEGER(INTG), INTENT(IN) :: generatedMeshType_ !<The type of the generated mesh to set. \see OpenCMISS_GeneratedMeshTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_GeneratedMesh_TypeSetObj",err,error,*999)
 
-    CALL GENERATED_MESH_TYPE_SET(generatedMesh%generatedMesh,generatedMeshType,err,error,*999)
+    CALL GENERATED_MESH_TYPE_SET(generatedMesh%generatedMesh,generatedMeshType_,err,error,*999)
 
     EXITS("cmfe_GeneratedMesh_TypeSetObj")
     RETURN
@@ -42799,8 +42799,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_GeometricParametersCalculateNumber",err,error,*999)
@@ -42872,8 +42872,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_SurfaceGetNumber0",err,error,*999)
@@ -42915,8 +42915,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_GeneratedMesh_SurfaceGetNumber1",err,error,*999)
@@ -43034,8 +43034,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: PARENTMESH,CHILDMESH
-    TYPE(REGION_TYPE), POINTER :: region1, REGION2
+    TYPE(MeshType), POINTER :: PARENTMESH,CHILDMESH
+    TYPE(RegionType), POINTER :: region1, REGION2
     TYPE(RegionsType), POINTER :: regions
     TYPE(VARYING_STRING) :: localError
 
@@ -43235,8 +43235,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_CreateFinishNumber",err,error,*999)
@@ -43299,8 +43299,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_CreateStartNumber",err,error,*999)
@@ -43366,10 +43366,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_CoordinateSystemSetNumber",err,error,*999)
@@ -43438,9 +43438,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_CoordinateSystemGetNumber",err,error,*999)
@@ -43455,7 +43455,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_CoordinateSystemGet(interface,coordinateSystem,err,error,*999)
-    coordinateSystemUserNumber = coordinateSystem%USER_NUMBER
+    coordinateSystemUserNumber = coordinateSystem%userNumber
 
     EXITS("cmfe_Interface_CoordinateSystemGetNumber")
     RETURN
@@ -43506,8 +43506,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_DestroyNumber",err,error,*999)
@@ -43571,8 +43571,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_LabelGetCNumber",err,error,*999)
@@ -43637,8 +43637,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_LabelGetVSNumber",err,error,*999)
@@ -43703,8 +43703,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_LabelSetCNumber",err,error,*999)
@@ -43769,8 +43769,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_LabelSetVSNumber",err,error,*999)
@@ -43864,9 +43864,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: meshRegion,parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: meshRegion,parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Interface_MeshAddNumber",err,error,*999)
@@ -43935,8 +43935,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceMeshConnectivity_CreateFinishNumber",err,error,*999)
@@ -43949,7 +43949,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_CREATE_FINISH(interface%MESH_CONNECTIVITY,err,error,*999)
+    CALL INTERFACE_MESH_CONNECTIVITY_CREATE_FINISH(interface%meshConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_CreateFinishNumber")
     RETURN
@@ -44003,10 +44003,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: interfaceMeshConnectivity
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(InterfaceMeshConnectivityType), POINTER :: interfaceMeshConnectivity
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceMeshConnectivity_CreateStartNumber",err,error,*999)
@@ -44081,8 +44081,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber",err,error,*999)
@@ -44095,7 +44095,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
-    CALL InterfaceMeshConnectivity_ElementNumberSet(interface%MESH_CONNECTIVITY,interfaceElementNumber, &
+    CALL InterfaceMeshConnectivity_ElementNumberSet(interface%meshConnectivity,interfaceElementNumber, &
       & coupledMeshIndexNumber,coupledMeshElementNumber,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber")
@@ -44235,8 +44235,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceMeshConnectivity_ElementXiSetNumber",err,error,*999)
@@ -44249,7 +44249,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_ELEMENT_XI_SET(interface%MESH_CONNECTIVITY,interfaceElementNumber, &
+    CALL INTERFACE_MESH_CONNECTIVITY_ELEMENT_XI_SET(interface%meshConnectivity,interfaceElementNumber, &
       & coupledMeshIndexNumber,coupledMeshElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi, &
       & err,error,*999)
 
@@ -44312,11 +44312,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceBasisNumber !<The user number of the basis to denote the interface mesh connectivity basis
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceMeshConnectivity_BasisSetNumber",err,error,*999)
@@ -44333,7 +44333,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Basis_Get(basisFunctions,interfaceBasisNumber,basis,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_BASIS_SET(interface%MESH_CONNECTIVITY,basis,err,error,*999)
+    CALL INTERFACE_MESH_CONNECTIVITY_BASIS_SET(interface%meshConnectivity,basis,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_BasisSetNumber")
     RETURN
@@ -44386,8 +44386,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceMeshConnectivity_DestroyNumber",err,error,*999)
@@ -44400,7 +44400,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_DESTROY(interface%MESH_CONNECTIVITY,err,error,*999)
+    CALL INTERFACE_MESH_CONNECTIVITY_DESTROY(interface%meshConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_DestroyNumber")
     RETURN
@@ -44452,8 +44452,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfacePointsConnectivity_CreateFinishNumber",err,error,*999)
@@ -44522,10 +44522,10 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(InterfacePointsConnectivityType), POINTER :: interfacePointsConnectivity
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_InterfacePointsConnectivity_CreateStartNumber",err,error,*999)
@@ -44599,8 +44599,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfacePointsConnectivity_DestroyNumber",err,error,*999)
@@ -44669,8 +44669,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfacePointsConnectivity_ElementNumberGetNumber",err,error,*999)
@@ -44747,8 +44747,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfacePointsConnectivity_ElementNumberSetNumber",err,error,*999)
@@ -44824,8 +44824,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfacePointsConnectivity_PointXiGetNumber",err,error,*999)
@@ -44900,8 +44900,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_InterfacePointsConnectivity_PointXiSetNumber",err,error,*999)
@@ -44979,8 +44979,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion,dataPointsRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion,dataPointsRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionRNumber",err,error,*999)
@@ -45034,8 +45034,8 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(INTERFACE_TYPE), POINTER :: interface,dataPointsInterface
-    TYPE(REGION_TYPE), POINTER :: parentRegion,dataPointsRegion
+    TYPE(InterfaceType), POINTER :: interface,dataPointsInterface
+    TYPE(RegionType), POINTER :: parentRegion,dataPointsRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfacePointsConnectivity_UpdateFromProjectionINumber",err,error,*999)
@@ -45117,9 +45117,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_CreateFinishNumber",err,error,*999)
@@ -45188,9 +45188,9 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: geometricField
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_CreateStartNumber",err,error,*999)
@@ -45268,9 +45268,9 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: equationsSetRegion,interfaceRegion
+    TYPE(RegionType), POINTER :: equationsSetRegion,interfaceRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_DependentVariableAddNumber",err,error,*999)
@@ -45348,9 +45348,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_DestroyNumber",err,error,*999)
@@ -45417,9 +45417,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_EquationsCreateFinishNumber",err,error,*999)
@@ -45488,10 +45488,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_EquationsCreateStartNumber",err,error,*999)
@@ -45563,9 +45563,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_EquationsDestroyNumber",err,error,*999)
@@ -45634,9 +45634,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_IntegrationTypeGetNumber",err,error,*999)
@@ -45708,9 +45708,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_IntegrationTypeSetNumber",err,error,*999)
@@ -45781,9 +45781,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_LagrangeFieldCreateFinishNumber",err,error,*999)
@@ -45854,9 +45854,9 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: lagrangeField
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_InterfaceCondition_LagrangeFieldCreateStartNumber",err,error,*999)
@@ -45931,9 +45931,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_LabelGetCNumber",err,error,*999)
@@ -46002,9 +46002,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_LabelGetVSNumber",err,error,*999)
@@ -46073,9 +46073,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_LabelSetCNumber",err,error,*999)
@@ -46144,9 +46144,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_LabelSetVSNumber",err,error,*999)
@@ -46215,9 +46215,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_OutputTypeGetNumber",err,error,*999)
@@ -46286,9 +46286,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_OutputTypeSetNumber",err,error,*999)
@@ -46356,9 +46356,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_PenaltyFieldCreateFinishNumber",err,error,*999)
@@ -46429,9 +46429,9 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: penaltyField
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_PenaltyFieldCreateStartNumber",err,error,*999)
@@ -46506,9 +46506,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_MethodGetNumber",err,error,*999)
@@ -46577,9 +46577,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_MethodSetNumber",err,error,*999)
@@ -46648,9 +46648,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_OperatorGetNumber",err,error,*999)
@@ -46720,9 +46720,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceCondition_OperatorSetNumber",err,error,*999)
@@ -46829,10 +46829,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber1",err,error,*999)
@@ -46978,10 +46978,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceEquations_MatrixTimeDependenceTypeSetNumber1",err,error,*999)
@@ -47090,10 +47090,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceEquations_OutputTypeGetNumber",err,error,*999)
@@ -47164,10 +47164,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceEquations_OutputTypeSetNumber",err,error,*999)
@@ -47238,10 +47238,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceEquations_SparsityGetNumber",err,error,*999)
@@ -47312,10 +47312,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_InterfaceEquations_SparsitySetNumber",err,error,*999)
@@ -47386,9 +47386,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_CreateFinishNumber",err,error,*999)
@@ -47595,9 +47595,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_CreateStartNumber",err,error,*999)
@@ -47672,9 +47672,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_DestroyNumber",err,error,*999)
@@ -47741,9 +47741,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_ElementDomainCalculateNumber",err,error,*999)
@@ -47814,9 +47814,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_ElementDomainGetNumber",err,error,*999)
@@ -47887,9 +47887,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_ElementDomainSetNumber",err,error,*999)
@@ -47959,9 +47959,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Decomposition_MeshComponentGetNumber",err,error,*999)
@@ -48030,9 +48030,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_MeshComponentSetNumber",err,error,*999)
@@ -48101,9 +48101,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_NumberOfDomainsGetNumber",err,error,*999)
@@ -48172,9 +48172,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Decomposition_NumberOfDomainsSetNumber",err,error,*999)
@@ -48231,7 +48231,7 @@ CONTAINS
 
   !>Returns the type of a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_TypeGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
-    & decompositionType,err)
+    & domainDecompositionType,err)
     !DLLEXPORT(cmfe_Decomposition_TypeGetNumber)
 
     !Argument variables
@@ -48239,13 +48239,13 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the decomposition type for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the decomposition type for.
     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the decomposition type for.
-    INTEGER(INTG), INTENT(OUT) :: decompositionType !<On return, the type of the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: domainDecompositionType !<On return, the type of the decomposition.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_TypeGetNumber",err,error,*999)
@@ -48260,7 +48260,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_TYPE_GET(decomposition,decompositionType,err,error,*999)
+    CALL DECOMPOSITION_TYPE_GET(decomposition,domainDecompositionType,err,error,*999)
 
     EXITS("cmfe_Decomposition_TypeGetNumber")
     RETURN
@@ -48275,18 +48275,18 @@ CONTAINS
   !
 
   !>Returns the type of a decomposition identified by an object.
-  SUBROUTINE cmfe_Decomposition_TypeGetObj(decomposition,decompositionType,err)
+  SUBROUTINE cmfe_Decomposition_TypeGetObj(decomposition,domainDecompositionType,err)
     !DLLEXPORT(cmfe_Decomposition_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the type for.
-    INTEGER(INTG), INTENT(OUT) :: decompositionType !<On return, the type of the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: domainDecompositionType !<On return, the type of the decomposition.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Decomposition_TypeGetObj",err,error,*999)
 
-    CALL DECOMPOSITION_TYPE_GET(decomposition%decomposition,decompositionType,err,error,*999)
+    CALL DECOMPOSITION_TYPE_GET(decomposition%decomposition,domainDecompositionType,err,error,*999)
 
     EXITS("cmfe_Decomposition_TypeGetObj")
     RETURN
@@ -48302,7 +48302,7 @@ CONTAINS
 
   !>Sets/changes the type of a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_TypeSetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
-    & decompositionType,err)
+    & domainDecompositionType,err)
     !DLLEXPORT(cmfe_Decomposition_TypeSetNumber)
 
     !Argument variables
@@ -48310,13 +48310,13 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the decomposition type for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to set the decomposition type for.
     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to set the decomposition type for.
-    INTEGER(INTG), INTENT(IN) :: decompositionType !<The type of the decomposition to set.
+    INTEGER(INTG), INTENT(IN) :: domainDecompositionType !<The type of the decomposition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_TypeSetNumber",err,error,*999)
@@ -48331,7 +48331,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_TYPE_SET(decomposition,decompositionType,err,error,*999)
+    CALL DECOMPOSITION_TYPE_SET(decomposition,domainDecompositionType,err,error,*999)
 
     EXITS("cmfe_Decomposition_TypeSetNumber")
     RETURN
@@ -48346,18 +48346,18 @@ CONTAINS
   !
 
   !>Sets/changes the type of a decomposition identified by an object.
-  SUBROUTINE cmfe_Decomposition_TypeSetObj(decomposition,decompositionType,err)
+  SUBROUTINE cmfe_Decomposition_TypeSetObj(decomposition,domainDecompositionType,err)
     !DLLEXPORT(cmfe_Decomposition_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to Set the type for.
-    INTEGER(INTG), INTENT(IN) :: decompositionType !<The type of the decomposition to set.
+    INTEGER(INTG), INTENT(IN) :: domainDecompositionType !<The type of the decomposition to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Decomposition_TypeSetObj",err,error,*999)
 
-    CALL DECOMPOSITION_TYPE_SET(decomposition%decomposition,decompositionType,err,error,*999)
+    CALL DECOMPOSITION_TYPE_SET(decomposition%decomposition,domainDecompositionType,err,error,*999)
 
     EXITS("cmfe_Decomposition_TypeSetObj")
     RETURN
@@ -48386,9 +48386,9 @@ CONTAINS
     !Local variables
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -48462,9 +48462,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_CalculateLinesSetNumber",err,error,*999)
@@ -48533,9 +48533,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_CalculateFacesSetNumber",err,error,*999)
@@ -48606,9 +48606,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Decomposition_NodeDomainGetNumber",err,error,*999)
@@ -48676,8 +48676,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_CreateFinishNumber",err,error,*999)
@@ -48749,8 +48749,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_CreateStartNumber",err,error,*999)
@@ -48855,8 +48855,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_DestroyNumber",err,error,*999)
@@ -48920,8 +48920,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     
     ENTERS("cmfe_Mesh_NumberOfComponentsGetNumber",err,error,*999)
@@ -48986,8 +48986,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_NumberOfComponentsSetNumber",err,error,*999)
@@ -49053,8 +49053,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_SurroundingElementsCalculateSetNumber",err,error,*999)
@@ -49121,8 +49121,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_NumberOfElementsGetNumber",err,error,*999)
@@ -49187,8 +49187,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_NumberOfElementsSetNumber",err,error,*999)
@@ -49254,8 +49254,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: Err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_TopologyDataPointsCalculateProjectionRegionNumber",err,error,*999)
@@ -49297,9 +49297,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_TopologyDataPointsCalculateProjectionInterfaceNumber",err,error,*999)
@@ -49368,9 +49368,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     
     ENTERS("cmfe_MeshElements_CreateFinishNumber",err,error,*999)
@@ -49437,12 +49437,12 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: basisUserNumber !<The user number of the default basis to use for the elements.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_CreateStartNumber",err,error,*999)
@@ -49515,8 +49515,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_ElementsGetNumber",err,error,*999)
@@ -49587,11 +49587,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: basisUserNumber !<On return, the user number of the basis for the element.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_BasisGetNumber",err,error,*999)
@@ -49608,7 +49608,7 @@ CONTAINS
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
     CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_BASIS_GET(globalElementNumber,meshElements,basis,err,error,*999)
-    basisUserNumber = basis%USER_NUMBER
+    basisUserNumber = basis%userNumber
 
     EXITS("cmfe_MeshElements_BasisGetNumber")
     RETURN
@@ -49663,12 +49663,12 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: basisUserNumber !<The user number of the basis for the element to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_BasisSetNumber",err,error,*999)
@@ -49744,9 +49744,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_AdjacentElementGetNumber",err,error,*999)
@@ -49819,9 +49819,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_MeshElements_ElementOnBoundaryGetNumber",err,error,*999)
@@ -49892,9 +49892,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_NodesGetNumber",err,error,*999)
@@ -49963,9 +49963,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_NodesSetNumber",err,error,*999)
@@ -50042,9 +50042,9 @@ CONTAINS
     INTEGER(INTG) :: localElementNode
     LOGICAL :: found
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(VARYING_STRING) :: localError
 
@@ -50062,8 +50062,8 @@ CONTAINS
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
 !!TODO: This check should be moved into the MeshElements_ElementNodeVersionSet routine
     found=.FALSE.
-    DO localElementNode=1,meshElements%elements(globalElementNumber)%basis%NUMBER_OF_NODES
-      IF(meshElements%elements(globalElementNumber)%USER_ELEMENT_NODES(localElementNode)==userNodeNumber) THEN
+    DO localElementNode=1,meshElements%elements(globalElementNumber)%basis%numberOfNodes
+      IF(meshElements%elements(globalElementNumber)%userElementNodes(localElementNode)==userNodeNumber) THEN
         found=.TRUE.
         EXIT
       END IF
@@ -50109,8 +50109,8 @@ CONTAINS
     ENTERS("cmfe_MeshElements_UserNodeVersionSetObj",err,error,*999)
 
     FOUND=.FALSE.
-    DO localelementnode=1,meshElements%meshElements%ELEMENTS(globalElementNumber)%basis%NUMBER_OF_NODES
-      IF(meshElements%meshElements%ELEMENTS(globalElementNumber)%USER_ELEMENT_NODES(localelementnode)==userNodeNumber) THEN
+    DO localelementnode=1,meshElements%meshElements%ELEMENTS(globalElementNumber)%basis%numberOfNodes
+      IF(meshElements%meshElements%ELEMENTS(globalElementNumber)%userElementNodes(localelementnode)==userNodeNumber) THEN
         FOUND=.TRUE.
         EXIT
       END IF
@@ -50154,9 +50154,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_LocalElementNodeVersionSetNumber",err,error,*999)
@@ -50234,9 +50234,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_UserNumberGetNumber",err,error,*999)
@@ -50308,9 +50308,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_UserNumberSetNumber",err,error,*999)
@@ -50379,9 +50379,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshElements_UserNumbersAllSetNumber",err,error,*999)
@@ -50454,8 +50454,8 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: meshNodeNumber
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_NodeExistsNumber",err,error,*999)
@@ -50531,8 +50531,8 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: meshElementNumber
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_ElementExistsNumber",err,error,*999)
@@ -50607,8 +50607,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Mesh_NodesGetNumber",err,error,*999)
@@ -50678,9 +50678,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshNodesType), POINTER :: meshNodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_MeshNodes_NodeOnBoundaryGetNumber",err,error,*999)
@@ -50750,9 +50750,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshNodesType), POINTER :: meshNodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshNodes_NumberOfNodesGetNumber",err,error,*999)
@@ -50821,9 +50821,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshNodesType), POINTER :: meshNodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshNodes_NumberOfDerivativesGetNumber",err,error,*999)
@@ -50894,9 +50894,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshNodesType), POINTER :: meshNodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshNodes_DerivativesGetNumber",err,error,*999)
@@ -50968,9 +50968,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
+    TYPE(MeshType), POINTER :: mesh
     TYPE(MeshNodesType), POINTER :: meshNodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_MeshNodes_NumberOfVersionsGetNumber",err,error,*999)
@@ -51592,7 +51592,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Nodes_CreateFinishNumber",err,error,*999)
@@ -51664,7 +51664,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Nodes_CreateStartNumber",err,error,*999)
@@ -51767,7 +51767,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Nodes_DestroyNumber",err,error,*999)
@@ -51831,7 +51831,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Nodes_NumberOfNodesGetNumber",err,error,*999)
@@ -51897,7 +51897,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Nodes_LabelGetCNumber",err,error,*999)
@@ -51964,7 +51964,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Nodes_LabelGetVSNumber",err,error,*999)
@@ -52031,7 +52031,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Nodes_LabelSetCNumber",err,error,*999)
@@ -52098,7 +52098,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Nodes_LabelSetVSNumber",err,error,*999)
@@ -52165,7 +52165,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Nodes_UserNumberGetNumber",err,error,*999)
@@ -52232,7 +52232,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Nodes_UserNumberSetNumber",err,error,*999)
@@ -52298,7 +52298,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(NodesType), POINTER :: nodes
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_Nodes_UserNumbersAllSetNumber",err,error,*999)
@@ -54212,8 +54212,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_CoordinateSystemGetNumber",err,error,*999)
@@ -54226,7 +54226,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_CoordinateSystemGet(region,coordinateSystem,err,error,*999)
-    coordinateSystemUserNumber = coordinateSystem%USER_NUMBER
+    coordinateSystemUserNumber = coordinateSystem%userNumber
 
     EXITS("cmfe_Region_CoordinateSystemGetNumber")
     RETURN
@@ -54277,9 +54277,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_CoordinateSystemSetNumber",err,error,*999)
@@ -54344,7 +54344,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_CreateFinishNumber",err,error,*999)
@@ -54413,7 +54413,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: parentRegion,region
+    TYPE(RegionType), POINTER :: parentRegion,region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_CreateStartNumber",err,error,*999)
@@ -54511,7 +54511,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_DestroyNumber",err,error,*999)
@@ -54572,7 +54572,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_LabelGetCNumber",err,error,*999)
@@ -54634,7 +54634,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_LabelGetVSNumber",err,error,*999)
@@ -54696,7 +54696,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_LabelSetCNumber",err,error,*999)
@@ -54758,7 +54758,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_Region_LabelSetVSNumber",err,error,*999)
@@ -54861,7 +54861,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -54917,7 +54917,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56397,7 +56397,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL SOLVER_DYNAMIC_NONLINEAR_SOLVER_GET(solver,nonlinearSolver,err,error,*999)
     !todo: get the solver index from nonlinear solver
-    nonlinearSolverIndex=nonlinearSolver%GLOBAL_NUMBER
+    nonlinearSolverIndex=nonlinearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_DynamicNonlinearSolverGetNumber0")
@@ -56444,7 +56444,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL SOLVER_DYNAMIC_NONLINEAR_SOLVER_GET(solver,nonlinearSolver,err,error,*999)
     !todo: get the solver index from nonlinear solver
-    nonlinearSolverIndex=nonlinearSolver%GLOBAL_NUMBER
+    nonlinearSolverIndex=nonlinearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_DynamicNonlinearSolverGetNumber1")
@@ -56517,7 +56517,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL SOLVER_DYNAMIC_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
-    linearSolverIndex=linearSolver%GLOBAL_NUMBER
+    linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_DynamicLinearSolverGetNumber0")
@@ -56563,7 +56563,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL SOLVER_DYNAMIC_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
-    linearSolverIndex=linearSolver%GLOBAL_NUMBER
+    linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_DynamicLinearSolverGetNumber1")
@@ -57195,7 +57195,7 @@ CONTAINS
     TYPE(FIELD_TYPE), POINTER :: field
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59901,7 +59901,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL SOLVER_NEWTON_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
-    linearSolverIndex=linearSolver%GLOBAL_NUMBER
+    linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLinearSolverGetNumber0")
@@ -59947,7 +59947,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL SOLVER_NEWTON_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
-    linearSolverIndex=linearSolver%GLOBAL_NUMBER
+    linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_NewtonLinearSolverGetNumber1")
@@ -60018,7 +60018,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL SOLVER_NEWTON_CELLML_SOLVER_GET(solver,cellMLSolver,err,error,*999)
     !todo: get the solver index from CellML solver
-    cellMLSolverIndex=cellMLSolver%GLOBAL_NUMBER
+    cellMLSolverIndex=cellMLSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_NewtonCellMLSolverGetNumber0")
@@ -60064,7 +60064,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL SOLVER_NEWTON_CELLML_SOLVER_GET(solver,cellMLSolver,err,error,*999)
     !todo: get the solver index from CellML solver
-    cellMLSolverIndex=cellMLSolver%GLOBAL_NUMBER
+    cellMLSolverIndex=cellMLSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_NewtonCellMLSolverGetNumber1")
@@ -61803,7 +61803,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL SOLVER_QUASI_NEWTON_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
-    linearSolverIndex=linearSolver%GLOBAL_NUMBER
+    linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLinearSolverGetNumber0")
@@ -61850,7 +61850,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL SOLVER_QUASI_NEWTON_LINEAR_SOLVER_GET(solver,linearSolver,err,error,*999)
     !todo: get the solver index from linear solver
-    linearSolverIndex=linearSolver%GLOBAL_NUMBER
+    linearSolverIndex=linearSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonLinearSolverGetNumber1")
@@ -61922,7 +61922,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifier,solverIndex,solver,err,error,*999)
     CALL SOLVER_QUASI_NEWTON_CELLML_SOLVER_GET(solver,cellMLSolver,err,error,*999)
     !todo: get the solver index from CellML solver
-    cellMLSolverIndex=cellMLSolver%GLOBAL_NUMBER
+    cellMLSolverIndex=cellMLSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonCellMLSolverGetNumber0")
@@ -61969,7 +61969,7 @@ CONTAINS
     CALL Problem_SolverGet(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*999)
     CALL SOLVER_QUASI_NEWTON_CELLML_SOLVER_GET(solver,cellMLSolver,err,error,*999)
     !todo: get the solver index from CellML solver
-    cellMLSolverIndex=cellMLSolver%GLOBAL_NUMBER
+    cellMLSolverIndex=cellMLSolver%globalNumber
     CALL FlagError("Not implemented.",err,error,*999)
 
     EXITS("cmfe_Solver_QuasiNewtonCellMLSolverGetNumber1")
@@ -64024,7 +64024,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -64080,7 +64080,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -64161,11 +64161,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(REGION_TYPE), POINTER :: interfaceRegion
+    TYPE(RegionType), POINTER :: interfaceRegion
     TYPE(RegionsType), POINTER :: regions
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -64223,11 +64223,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(REGION_TYPE), POINTER :: interfaceRegion
+    TYPE(RegionType), POINTER :: interfaceRegion
     TYPE(RegionsType), POINTER :: regions
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -65345,8 +65345,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_FieldML_InputMeshCreateStartNumberVS",err,error,*999)
@@ -65425,8 +65425,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_FieldML_InputMeshCreateStartNumberC",err,error,*999)
@@ -65512,7 +65512,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_FieldML_InputCoordinateSystemCreateStartNumberVS",err,error,*999)
@@ -65596,7 +65596,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("cmfe_FieldML_InputCoordinateSystemCreateStartNumberC",err,error,*999)
@@ -65638,7 +65638,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !< The user number of the context to create the basis in.
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
     TYPE(ContextType), POINTER :: context
 
@@ -65718,7 +65718,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context on which to create the basis
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
     TYPE(ContextType), POINTER :: context
 
@@ -65801,7 +65801,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_FieldML_InputNodesCreateStartNumberVS",err,error,*999)
@@ -65877,7 +65877,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_FieldML_InputNodesCreateStartNumberC",err,error,*999)
@@ -65988,8 +65988,8 @@ CONTAINS
 
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("CMISSFieldML_InputCreateMeshComponentNumberVS",err,error,*999)
@@ -66073,8 +66073,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("CMISSFieldML_InputCreateMeshComponentNumberC",err,error,*999)
@@ -66163,10 +66163,10 @@ CONTAINS
 
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(FIELD_TYPE), POINTER :: field
 
     ENTERS("cmfe_FieldML_InputFieldCreateStartNumberVS",err,error,*999)
@@ -66257,10 +66257,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_FieldML_InputFieldCreateStartNumberC",err,error,*999)
@@ -66350,7 +66350,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(FIELD_TYPE), POINTER :: field
 
@@ -66438,7 +66438,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_FieldML_InputFieldParametersUpdateNumberC",err,error,*999)
@@ -66593,7 +66593,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(FIELD_TYPE), POINTER :: field
 
@@ -66681,7 +66681,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(FIELD_TYPE), POINTER :: field
 
@@ -66768,7 +66768,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(FIELD_TYPE), POINTER :: field
 
@@ -66858,7 +66858,7 @@ CONTAINS
     !Locals
     TYPE(ContextType), POINTER :: context
     TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_FieldML_OutputAddFieldWithTypeNumberC",err,error,*999)
@@ -66943,8 +66943,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
     ENTERS("cmfe_FieldML_OutputCreateNumberVS",err,error,*999)
@@ -67029,8 +67029,8 @@ CONTAINS
 
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: mesh
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
     ENTERS("cmfe_FieldML_OutputCreateNumberC",err,error,*999)
@@ -67121,7 +67121,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(FIELD_TYPE), POINTER :: field
 
@@ -67214,7 +67214,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
     TYPE(FIELD_TYPE), POINTER :: field
 

@@ -96,7 +96,7 @@ CONTAINS
   SUBROUTINE CoordinateSystem_CoordinateSystemsGet(coordinateSystem,coordinateSystems,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER, INTENT(IN) :: coordinateSystem !<A pointer to the coordinate system to get the coordinate systems for
+    TYPE(CoordinateSystemType), POINTER, INTENT(IN) :: coordinateSystem !<A pointer to the coordinate system to get the coordinate systems for
     TYPE(CoordinateSystemsType), POINTER, INTENT(OUT) :: coordinateSystems !<On return, a pointer to the coordinate systems for the coordinate system. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -111,7 +111,7 @@ CONTAINS
     coordinateSystems=>coordinateSystem%coordinateSystems
     IF(.NOT.ASSOCIATED(coordinateSystems)) THEN
       localError="Coordinate systems is not associated for coordinate system number "// &
-        & TRIM(NumberToVString(coordinateSystem%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(coordinateSystem%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -132,7 +132,7 @@ CONTAINS
   SUBROUTINE CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<A pointer to the coordinate system to get the dimension for
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<A pointer to the coordinate system to get the dimension for
     INTEGER(INTG), INTENT(OUT) :: numberOfDimensions !<On return, the number of dimensions in the coordinate system.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -141,9 +141,9 @@ CONTAINS
     ENTERS("CoordinateSystem_DimensionGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
-    IF(.NOT.coordinateSystem%COORDINATE_SYSTEM_FINISHED) CALL FlagError("Coordinate system has not been finished.",err,error,*999)
+    IF(.NOT.coordinateSystem%coordinateSystemFinished) CALL FlagError("Coordinate system has not been finished.",err,error,*999)
 
-    numberOfDimensions=coordinateSystem%NUMBER_OF_DIMENSIONS
+    numberOfDimensions=coordinateSystem%numberOfDimensions
     
     EXITS("CoordinateSystem_DimensionGet")
     RETURN
@@ -162,7 +162,7 @@ CONTAINS
     !Argument variables
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the coordinate systems to get the user number for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the coordinate system to get
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system with the specified user number if it exists. Must not be associated on entry.
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system with the specified user number if it exists. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -194,7 +194,7 @@ CONTAINS
     !Argument variables
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<The coordinate systems to find the user number for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the coordinate system to find.
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system with the specified user number if it exists. If no coordinate system has the specified user number the pointer is returned as NULL. Must not be associated on entry.
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system with the specified user number if it exists. If no coordinate system has the specified user number the pointer is returned as NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -210,7 +210,7 @@ CONTAINS
     IF(ASSOCIATED(coordinateSystems%coordinateSystems)) THEN
       DO coordinateSystemIdx=1,coordinateSystems%numberOfCoordinateSystems
         IF(ASSOCIATED(coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr)) THEN
-          IF(coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr%userNumber==userNumber) THEN
             coordinateSystem=>coordinateSystems%coordinateSystems(coordinateSystemIdx)%ptr
             EXIT
           ENDIF
@@ -239,7 +239,7 @@ CONTAINS
 
     !Argument variables
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the coordinate systems to get the world coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: worldCoordinateSystem !<On exit, a pointer to the world coordinate system for the coordinate systems. Must not be associated on entry.
+    TYPE(CoordinateSystemType), POINTER :: worldCoordinateSystem !<On exit, a pointer to the world coordinate system for the coordinate systems. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

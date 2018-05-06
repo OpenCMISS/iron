@@ -907,7 +907,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     INTEGER(INTG) :: dummyErr
     TYPE(VARYING_STRING) :: dummyError
     
@@ -919,11 +919,11 @@ CONTAINS
     NULLIFY(domainMapping)
     domainMapping=>cmissMatrix%distributedMatrix%rowDomainMapping
     IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Distributed matrix row domain mapping is not associated.",err,error,*998)
-    IF(domainMapping%NUMBER_OF_DOMAINS==1) THEN
+    IF(domainMapping%numberOfDomains==1) THEN
       distributedDataId=distributedDataId+1
     ELSE
       distributedDataId=distributedDataId+ &
-        & domainMapping%ADJACENT_DOMAINS_PTR(domainMapping%NUMBER_OF_DOMAINS)
+        & domainMapping%adjacentDomainsPtr(domainMapping%numberOfDomains)
     END IF
     CALL Matrix_CreateFinish(cmissMatrix%matrix,err,error,*999)
    
@@ -974,7 +974,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping,columnDomainMapping
+    TYPE(DomainMappingType), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("DistributedMatrix_CMISSInitialise",err,error,*998)
@@ -1001,11 +1001,11 @@ CONTAINS
     CALL Matrix_StorageTypeSet(distributedMatrix%cmiss%matrix,MATRIX_BLOCK_STORAGE_TYPE,err,error,*999)
     SELECT CASE(distributedMatrix%ghostingType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-      CALL Matrix_SizeSet(distributedMatrix%cmiss%matrix,rowDomainMapping%TOTAL_NUMBER_OF_LOCAL, &
-        & columnDomainMapping%NUMBER_OF_GLOBAL,err,error,*999)
+      CALL Matrix_SizeSet(distributedMatrix%cmiss%matrix,rowDomainMapping%totalNumberOfLocal, &
+        & columnDomainMapping%numberOfGlobal,err,error,*999)
     CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-      CALL Matrix_SizeSet(distributedMatrix%cmiss%matrix,rowDomainMapping%NUMBER_OF_LOCAL, &
-        & columnDomainMapping%NUMBER_OF_GLOBAL,err,error,*999)
+      CALL Matrix_SizeSet(distributedMatrix%cmiss%matrix,rowDomainMapping%numberOfLocal, &
+        & columnDomainMapping%numberOfGlobal,err,error,*999)
     CASE DEFAULT
       localError="The distributed matrix ghosting type of "// &
         & TRIM(NumberToVString(distributedMatrix%ghostingType,"*",err,error))//" is invalid."
@@ -1069,8 +1069,8 @@ CONTAINS
   SUBROUTINE DistributedMatrix_CreateStart(rowDomainMapping,columnDomainMapping,distributedMatrix,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping !<A pointer to the row domain mapping to be used for the distribution
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: columnDomainMapping !<A pointer to the column domain mapping to be used for the distribution
+    TYPE(DomainMappingType), POINTER :: rowDomainMapping !<A pointer to the row domain mapping to be used for the distribution
+    TYPE(DomainMappingType), POINTER :: columnDomainMapping !<A pointer to the column domain mapping to be used for the distribution
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<On return a pointer to the distributed matrix being created
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1084,14 +1084,14 @@ CONTAINS
     IF(.NOT.ASSOCIATED(columnDomainMapping)) CALL FlagError("Column domain mapping is not associated.",err,error,*998)
     IF(ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is already associated.",err,error,*998)
     
-    IF(rowDomainMapping%NUMBER_OF_DOMAINS==columnDomainMapping%NUMBER_OF_DOMAINS) THEN
+    IF(rowDomainMapping%numberOfDomains==columnDomainMapping%numberOfDomains) THEN
       CALL DistributedMatrix_Initialise(rowDomainMapping,columnDomainMapping,distributedMatrix,err,error,*999)
       !Set the defaults
     ELSE
       localError="The number of domains in the row domain mapping ("// &
-        & TRIM(NumberToVString(rowDomainMapping%NUMBER_OF_DOMAINS,"*",err,error))// &
+        & TRIM(NumberToVString(rowDomainMapping%numberOfDomains,"*",err,error))// &
         & ") does not match the number of domains in the column domain mapping ("// &
-        & TRIM(NumberToVString(columnDomainMapping%NUMBER_OF_DOMAINS,"*",err,error))//")."
+        & TRIM(NumberToVString(columnDomainMapping%numberOfDomains,"*",err,error))//")."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -1914,7 +1914,7 @@ CONTAINS
     !Local Variables
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping,columnDomainMapping
+    TYPE(DomainMappingType), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("DistributedMatrix_GhostingTypeSet",err,error,*999)
@@ -1933,11 +1933,11 @@ CONTAINS
       CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
       SELECT CASE(ghostingType)
       CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-        CALL Matrix_SizeSet(cmissMatrix%matrix,rowDomainMapping%TOTAL_NUMBER_OF_LOCAL, &
-          & columnDomainMapping%NUMBER_OF_GLOBAL,err,error,*999)
+        CALL Matrix_SizeSet(cmissMatrix%matrix,rowDomainMapping%totalNumberOfLocal, &
+          & columnDomainMapping%numberOfGlobal,err,error,*999)
       CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-        CALL Matrix_SizeSet(cmissMatrix%matrix,rowDomainMapping%NUMBER_OF_LOCAL, &
-          & columnDomainMapping%NUMBER_OF_GLOBAL,err,error,*999)
+        CALL Matrix_SizeSet(cmissMatrix%matrix,rowDomainMapping%numberOfLocal, &
+          & columnDomainMapping%numberOfGlobal,err,error,*999)
       CASE DEFAULT
         localError="The given ghosting type of "//TRIM(NumberToVString(ghostingType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -1947,9 +1947,9 @@ CONTAINS
       CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
       SELECT CASE(ghostingType)
       CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-        petscMatrix%n=rowDomainMapping%TOTAL_NUMBER_OF_LOCAL
+        petscMatrix%n=rowDomainMapping%totalNumberOfLocal
       CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-        petscMatrix%n=rowDomainMapping%NUMBER_OF_LOCAL
+        petscMatrix%n=rowDomainMapping%numberOfLocal
       CASE DEFAULT
         localError="The given ghosting type of "//TRIM(NumberToVString(ghostingType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -2036,8 +2036,8 @@ CONTAINS
   SUBROUTINE DistributedMatrix_Initialise(rowDomainMapping,columnDomainMapping,distributedMatrix,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping !<A pointer to the row domain mapping used to distribute this matrix
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: columnDomainMapping !<A pointer to the column domain mapping used to distribute this matrix
+    TYPE(DomainMappingType), POINTER :: rowDomainMapping !<A pointer to the row domain mapping used to distribute this matrix
+    TYPE(DomainMappingType), POINTER :: columnDomainMapping !<A pointer to the column domain mapping used to distribute this matrix
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2317,7 +2317,7 @@ CONTAINS
     CHARACTER(LEN=39) :: initialString
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowMapping
+    TYPE(DomainMappingType), POINTER :: rowMapping
     TYPE(VARYING_STRING) :: localError
      
     ENTERS("DistributedMatrix_Output",err,error,*999)
@@ -2340,7 +2340,7 @@ CONTAINS
       ALLOCATE(values(petscMatrix%maximumColumnIndicesPerRow),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate values.",err,error,*999)
       DO rowIdx=1,petscMatrix%m
-        globalRow=rowMapping%LOCAL_TO_GLOBAL_MAP(rowIdx)
+        globalRow=rowMapping%localToGlobalMap(rowIdx)
         IF(petscMatrix%useOverrideMatrix) THEN
           CALL Petsc_MatGetRow(petscMatrix%overrideMatrix,globalRow-1,numberOfColumns,columns,values,err,error,*999)
         ELSE
@@ -2471,7 +2471,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr,rowIdx,groupCommunicator
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping,columnDomainMapping
+    TYPE(DomainMappingType), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("DistributedMatrix_PETScCreateFinish",err,error,*999)
@@ -2495,7 +2495,7 @@ CONTAINS
       ALLOCATE(petscMatrix%globalRowNumbers(petscMatrix%m),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate global row numbers for PETSc distributed matrix.",err,error,*999)
       DO rowIdx=1,petscMatrix%m
-        petscMatrix%globalRowNumbers(rowIdx)=rowDomainMapping%LOCAL_TO_GLOBAL_MAP(rowIdx)-1 !PETSc uses 0 based indexing
+        petscMatrix%globalRowNumbers(rowIdx)=rowDomainMapping%localToGlobalMap(rowIdx)-1 !PETSc uses 0 based indexing
       ENDDO !rowIdx
       !Set up the matrix
       ALLOCATE(petscMatrix%dataDP(petscMatrix%dataSize),STAT=err)
@@ -2510,7 +2510,7 @@ CONTAINS
       ALLOCATE(petscMatrix%globalRowNumbers(petscMatrix%m),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate global row numbers for PETSc distributed matrix.",err,error,*999)
       DO rowIdx=1,petscMatrix%m
-        petscMatrix%globalRowNumbers(rowIdx)=rowDomainMapping%LOCAL_TO_GLOBAL_MAP(rowIdx)-1 !PETSc uses 0 based indexing
+        petscMatrix%globalRowNumbers(rowIdx)=rowDomainMapping%localToGlobalMap(rowIdx)-1 !PETSc uses 0 based indexing
       ENDDO !rowIdx
       !Set up the matrix
       ALLOCATE(petscMatrix%diagonalNumberOfNonZeros(petscMatrix%n),STAT=err)
@@ -2545,7 +2545,7 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate global row numbers for PETSc distributed matrix.",err,error,*999)
       petscMatrix%maximumColumnIndicesPerRow=0
       DO rowIdx=1,petscMatrix%m
-        petscMatrix%globalRowNumbers(rowIdx)=rowDomainMapping%LOCAL_TO_GLOBAL_MAP(rowIdx)-1 !PETSc uses 0 based indexing
+        petscMatrix%globalRowNumbers(rowIdx)=rowDomainMapping%localToGlobalMap(rowIdx)-1 !PETSc uses 0 based indexing
         IF((petscMatrix%rowIndices(rowIdx+1)-petscMatrix%rowIndices(rowIdx))>petscMatrix%maximumColumnIndicesPerRow) &
           & petscMatrix%maximumColumnIndicesPerRow=petscMatrix%rowIndices(rowIdx+1)-petscMatrix%rowIndices(rowIdx)
       ENDDO !rowIdx
@@ -2627,7 +2627,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping,columnDomainMapping
+    TYPE(DomainMappingType), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("DistributedMatrix_PETScInitialise",err,error,*998)
@@ -2648,17 +2648,17 @@ CONTAINS
     !Set the defaults          
     SELECT CASE(distributedMatrix%ghostingType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-      distributedMatrix%petsc%m=rowDomainMapping%TOTAL_NUMBER_OF_LOCAL            
+      distributedMatrix%petsc%m=rowDomainMapping%totalNumberOfLocal            
     CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-      distributedMatrix%petsc%m=rowDomainMapping%NUMBER_OF_LOCAL
+      distributedMatrix%petsc%m=rowDomainMapping%numberOfLocal
     CASE DEFAULT
       localError="The distributed matrix ghosting type of "// &
         & TRIM(NumberToVString(distributedMatrix%ghostingType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    distributedMatrix%petsc%n=columnDomainMapping%TOTAL_NUMBER_OF_LOCAL
-    distributedMatrix%petsc%globalM=rowDomainMapping%NUMBER_OF_GLOBAL
-    distributedMatrix%petsc%globalN=columnDomainMapping%NUMBER_OF_GLOBAL
+    distributedMatrix%petsc%n=columnDomainMapping%totalNumberOfLocal
+    distributedMatrix%petsc%globalM=rowDomainMapping%numberOfGlobal
+    distributedMatrix%petsc%globalN=columnDomainMapping%numberOfGlobal
     distributedMatrix%petsc%storageType=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
     distributedMatrix%petsc%symmetryType=DISTRIBUTED_MATRIX_SYMMETRIC_TYPE  !Should this be unsymmetric???
     distributedMatrix%petsc%dataSize=0
@@ -2758,7 +2758,7 @@ CONTAINS
     INTEGER(INTG) :: column,columnIdx,globalRowStart,globalRowFinish,rowIdx
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping,columnDomainMapping
+    TYPE(DomainMappingType), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("DistributedMatrix_StorageLocationsSet",err,error,*999)
@@ -2839,8 +2839,8 @@ CONTAINS
         IF(err/=0) CALL FlagError("Could not allocate PETSc matrix column indices.",err,error,*999)
         petscMatrix%columnIndices(1:petscMatrix%numberOfNonZeros)=columnIndices(1:petscMatrix%numberOfNonZeros)
         !Check the column indices are correct and calculate number of diagonal and off-diagonal columns
-        globalRowStart=rowDomainMapping%LOCAL_TO_GLOBAL_MAP(1)
-        globalRowFinish=rowDomainMapping%LOCAL_TO_GLOBAL_MAP(petscMatrix%M)
+        globalRowStart=rowDomainMapping%localToGlobalMap(1)
+        globalRowFinish=rowDomainMapping%localToGlobalMap(petscMatrix%M)
         DO rowIdx=1,petscMatrix%m
           DO columnIdx=rowIndices(rowIdx),rowIndices(rowIdx+1)-1
             column=columnIndices(columnIdx)
@@ -5045,7 +5045,7 @@ CONTAINS
     REAL(DP) :: sum
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector,cmissProduct
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowMapping,columnMapping,productMapping,vectorMapping
+    TYPE(DomainMappingType), POINTER :: rowMapping,columnMapping,productMapping,vectorMapping
     TYPE(MATRIX_TYPE), POINTER :: matrix
     TYPE(VARYING_STRING) :: localError
 
@@ -5115,15 +5115,15 @@ CONTAINS
           
         SELECT CASE(rowSelectionType)
         CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-          numberOfRows=rowMapping%TOTAL_NUMBER_OF_LOCAL
+          numberOfRows=rowMapping%totalNumberOfLocal
         CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-          numberOfRows=rowMapping%NUMBER_OF_LOCAL
+          numberOfRows=rowMapping%numberOfLocal
         CASE DEFAULT
           localError="The row selection type of "// &
             & TRIM(NumberToVString(rowSelectionType,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        numberOfColumns=columnMapping%NUMBER_OF_GLOBAL
+        numberOfColumns=columnMapping%numberOfGlobal
         SELECT CASE(matrix%data_Type)
         CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
           CALL FlagError("Not implemented.",err,error,*999)
@@ -5134,8 +5134,8 @@ CONTAINS
           CASE(MATRIX_BLOCK_STORAGE_TYPE)
             DO row=1,numberOfRows
               sum=0.0_DP
-              DO localColumn=1,columnMapping%TOTAL_NUMBER_OF_LOCAL
-                globalColumn=columnMapping%LOCAL_TO_GLOBAL_MAP(localColumn)
+              DO localColumn=1,columnMapping%totalNumberOfLocal
+                globalColumn=columnMapping%localToGlobalMap(localColumn)
                 sum=sum+matrix%data_DP(row+(globalColumn-1)*matrix%m)*cmissVector%dataDP(localColumn)
               ENDDO !localColumn
               cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
@@ -5148,8 +5148,8 @@ CONTAINS
           CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
             DO row=1,numberOfRows
               sum=0.0_DP
-              DO localColumn=1,columnMapping%TOTAL_NUMBER_OF_LOCAL
-                globalColumn=columnMapping%LOCAL_TO_GLOBAL_MAP(localColumn)
+              DO localColumn=1,columnMapping%totalNumberOfLocal
+                globalColumn=columnMapping%localToGlobalMap(localColumn)
                 sum=sum+matrix%data_DP(row+(globalColumn-1)*matrix%MAX_M)*cmissVector%dataDP(localColumn)
               ENDDO !localColumn
               cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
@@ -5157,8 +5157,8 @@ CONTAINS
           CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
             DO row=1,numberOfRows
               sum=0.0_DP
-              DO localColumn=1,columnMapping%TOTAL_NUMBER_OF_LOCAL
-                globalColumn=columnMapping%LOCAL_TO_GLOBAL_MAP(localColumn)
+              DO localColumn=1,columnMapping%totalNumberOfLocal
+                globalColumn=columnMapping%localToGlobalMap(localColumn)
                 sum=sum+matrix%data_DP((row-1)*matrix%MAX_N+globalColumn)*cmissVector%dataDP(localColumn)
               ENDDO !localColumn
               cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
@@ -5169,7 +5169,7 @@ CONTAINS
               DO columnIdx=matrix%row_Indices(row),matrix%row_Indices(row+1)-1
                 globalColumn=matrix%column_Indices(columnIdx)
                 !This ranks global to local mappings are stored in the first position
-                localColumn=columnMapping%GLOBAL_TO_LOCAL_MAP(globalColumn)%LOCAL_NUMBER(1)
+                localColumn=columnMapping%globalToLocalMap(globalColumn)%localNumber(1)
                 sum=sum+matrix%data_DP(columnIdx)*cmissVector%dataDP(localColumn)
               ENDDO !localColumn
               cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
@@ -5178,7 +5178,7 @@ CONTAINS
             DO columnIdx=1,numberOfColumns
               DO rowIdx=matrix%column_Indices(columnIdx),matrix%column_Indices(columnIdx+1)-1
                 row=matrix%row_Indices(rowIdx)
-                localColumn=columnMapping%GLOBAL_TO_LOCAL_MAP(columnIdx)%LOCAL_NUMBER(1)
+                localColumn=columnMapping%globalToLocalMap(columnIdx)%localNumber(1)
                 sum=matrix%data_DP(rowIdx)*cmissVector%dataDP(localColumn)
                 cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
               ENDDO !local_row
@@ -5423,7 +5423,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DistributedVectorCMISSType), POINTER :: fromCMISSVector,toCMISSVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: fromMapping,toMapping
+    TYPE(DomainMappingType), POINTER :: fromMapping,toMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_CopyIntg",err,error,*999)
@@ -5489,7 +5489,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DistributedVectorCMISSType), POINTER :: fromCMISSVector,toCMISSVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: fromMapping,toMapping
+    TYPE(DomainMappingType), POINTER :: fromMapping,toMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_CopySP",err,error,*999)
@@ -5557,7 +5557,7 @@ CONTAINS
     !Local Variables
     TYPE(DistributedVectorCMISSType), POINTER :: fromCMISSVector,toCMISSVector
     TYPE(DistributedVectorPETScType), POINTER :: fromPETScVector,toPETScVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: fromMapping,toMapping
+    TYPE(DomainMappingType), POINTER :: fromMapping,toMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_CopyDP",err,error,*999)
@@ -5643,7 +5643,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DistributedVectorCMISSType), POINTER :: fromCMISSVector,toCMISSVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: fromMapping,toMapping
+    TYPE(DomainMappingType), POINTER :: fromMapping,toMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_CopyL",err,error,*999)
@@ -5761,9 +5761,9 @@ CONTAINS
     distributedVector%cmiss%baseTagNumber=0
     SELECT CASE(distributedVector%ghostingType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-      distributedVector%cmiss%n=distributedVector%domainMapping%TOTAL_NUMBER_OF_LOCAL
+      distributedVector%cmiss%n=distributedVector%domainMapping%totalNumberOfLocal
     CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-      distributedVector%cmiss%n=distributedVector%domainMapping%NUMBER_OF_LOCAL
+      distributedVector%cmiss%n=distributedVector%domainMapping%numberOfLocal
     CASE DEFAULT
       localError="The distributed vector ghosting type of "// &
         & TRIM(NumberToVString(distributedVector%ghostingType,"*",err,error))//" is invalid."
@@ -5794,7 +5794,7 @@ CONTAINS
     INTEGER(INTG) :: domainIdx,domainIdx2,domainNumber,dummyErr,myComputationNodeNumber
     LOGICAL :: found
     TYPE(DistributedVectorType), POINTER :: distributedVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("DistributedVector_CMISSCreateFinish",err,error,*999)
@@ -5829,35 +5829,35 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     cmissVector%baseTagNumber=distributedDataId
-    IF(domainMapping%NUMBER_OF_DOMAINS==1) THEN
+    IF(domainMapping%numberOfDomains==1) THEN
       distributedDataId=distributedDataId+1
     ELSE
-      distributedDataId=distributedDataId+domainMapping%ADJACENT_DOMAINS_PTR(domainMapping%NUMBER_OF_DOMAINS)
+      distributedDataId=distributedDataId+domainMapping%adjacentDomainsPtr(domainMapping%numberOfDomains)
     END IF
-    IF(domainMapping%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
+    IF(domainMapping%numberOfAdjacentDomains>0) THEN
       CALL WorkGroup_GroupNodeNumberGet(domainMapping%workGroup,myComputationNodeNumber,err,error,*999)
       IF(distributedVector%ghostingType==DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE) THEN
-        ALLOCATE(cmissVector%transfers(domainMapping%NUMBER_OF_ADJACENT_DOMAINS),STAT=err)
+        ALLOCATE(cmissVector%transfers(domainMapping%numberOfAdjacentDomains),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate CMISS distributed vector transfer buffers.",err,error,*999)
-        DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
+        DO domainIdx=1,domainMapping%numberOfAdjacentDomains
           CALL DistributedVector_CMISSTransferInitialise(cmissVector,domainIdx,err,error,*999)
-          cmissVector%transfers(domainIdx)%sendBufferSize=domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_SEND_GHOSTS
-          cmissVector%transfers(domainIdx)%receiveBufferSize=domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_RECEIVE_GHOSTS
+          cmissVector%transfers(domainIdx)%sendBufferSize=domainMapping%adjacentDomains(domainIdx)%numberOfSendGhosts
+          cmissVector%transfers(domainIdx)%receiveBufferSize=domainMapping%adjacentDomains(domainIdx)%numberOfReceiveGhosts
           cmissVector%transfers(domainIdx)%dataType=distributedVector%dataType
           cmissVector%transfers(domainIdx)%sendTagNumber=cmissVector%baseTagNumber+ &
-            & domainMapping%ADJACENT_DOMAINS_PTR(myComputationNodeNumber)+domainIdx-1
-          domainNumber=domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER
+            & domainMapping%adjacentDomainsPtr(myComputationNodeNumber)+domainIdx-1
+          domainNumber=domainMapping%adjacentDomains(domainIdx)%domainNumber
           found=.FALSE.
-          DO domainIdx2=domainMapping%ADJACENT_DOMAINS_PTR(domainNumber),domainMapping%ADJACENT_DOMAINS_PTR(domainNumber+1)-1
-            IF(domainMapping%ADJACENT_DOMAINS_LIST(domainIdx2)==myComputationNodeNumber) THEN
+          DO domainIdx2=domainMapping%adjacentDomainsPtr(domainNumber),domainMapping%adjacentDomainsPtr(domainNumber+1)-1
+            IF(domainMapping%adjacentDomainsList(domainIdx2)==myComputationNodeNumber) THEN
               found=.TRUE.
               EXIT
             ENDIF
           ENDDO !domainIdx2
           IF(.NOT.found) CALL FlagError("Could not find domain to set the receive tag number.",err,error,*999)
-            domainIdx2=domainIdx2-domainMapping%ADJACENT_DOMAINS_PTR(domainNumber)+1
+            domainIdx2=domainIdx2-domainMapping%adjacentDomainsPtr(domainNumber)+1
             cmissVector%transfers(domainIdx)%receiveTagNumber=cmissVector%baseTagNumber+ &
-              & domainMapping%ADJACENT_DOMAINS_PTR(domainNumber)+domainIdx2-1
+              & domainMapping%adjacentDomainsPtr(domainNumber)+domainIdx2-1
           SELECT CASE(distributedVector%dataType)
           CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
             ALLOCATE(cmissVector%transfers(domainIdx)%sendBufferIntg(cmissVector%transfers(domainIdx)%sendBufferSize),STAT=err)
@@ -5962,7 +5962,7 @@ CONTAINS
   SUBROUTINE DistributedVector_CreateStart(domainMapping,distributedVector,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping !<A pointer to the domain mapping used to distribute this vector
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping used to distribute this vector
     TYPE(DistributedVectorType), POINTER :: distributedVector !<On return, a pointer to the created distributed vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -6179,7 +6179,7 @@ CONTAINS
   SUBROUTINE DistributedVector_Initialise(domainMapping,distributedVector,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping !<A pointer to the domain mapping used to distribute this vector
+    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping used to distribute this vector
     TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -6588,7 +6588,7 @@ CONTAINS
     !Local Variables
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DistributedVectorPETScType), POINTER :: petscVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("DistributedVector_GhostingTypeSet",err,error,*999)
@@ -6604,9 +6604,9 @@ CONTAINS
       CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
       SELECT CASE(ghostingType)
       CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-        cmissVector%n=domainMapping%TOTAL_NUMBER_OF_LOCAL
+        cmissVector%n=domainMapping%totalNumberOfLocal
       CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-        cmissVector%N=domainMapping%NUMBER_OF_LOCAL
+        cmissVector%N=domainMapping%numberOfLocal
       CASE DEFAULT
         localError="The given ghosting type of "//TRIM(NumberToVString(ghostingType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -6616,9 +6616,9 @@ CONTAINS
       CALL DistributedVector_PETScVectorGet(distributedVector,petscVector,err,error,*999)
       SELECT CASE(ghostingType)
       CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-        petscVector%n=domainMapping%TOTAL_NUMBER_OF_LOCAL
+        petscVector%n=domainMapping%totalNumberOfLocal
       CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-        petscVector%n=domainMapping%NUMBER_OF_LOCAL
+        petscVector%n=domainMapping%numberOfLocal
       CASE DEFAULT
         localError="The given ghosting type of "//TRIM(NumberToVString(ghostingType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -6875,7 +6875,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dummyErr,i,groupCommunicator
     TYPE(DistributedVectorType), POINTER :: distributedVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("DistributedVector_PETScCreateFinish",err,error,*998)
@@ -6893,7 +6893,7 @@ CONTAINS
       & err,error,*999)
     !Set up the Local to Global Mappings
     DO i=1,petscVector%n
-      petscVector%globalNumbers(i)=domainMapping%LOCAL_TO_GLOBAL_MAP(i)-1
+      petscVector%globalNumbers(i)=domainMapping%localToGlobalMap(i)-1
     ENDDO !i
    
     EXITS("DistributedVector_PETScCreateFinish")
@@ -6946,7 +6946,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("DistributedVector_PETScInitialise",err,error,*998)
@@ -6964,15 +6964,15 @@ CONTAINS
     !Set the defaults
     SELECT CASE(distributedVector%ghostingType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE)
-      distributedVector%petsc%n=distributedVector%domainMapping%TOTAL_NUMBER_OF_LOCAL
+      distributedVector%petsc%n=distributedVector%domainMapping%totalNumberOfLocal
     CASE(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE)
-      distributedVector%petsc%n=distributedVector%domainMapping%NUMBER_OF_LOCAL
+      distributedVector%petsc%n=distributedVector%domainMapping%numberOfLocal
     CASE DEFAULT
       localError="The distributed vector ghosting type of "// &
         & TRIM(NumberToVString(distributedVector%ghostingType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    distributedVector%petsc%globalN=distributedVector%domainMapping%NUMBER_OF_GLOBAL
+    distributedVector%petsc%globalN=distributedVector%domainMapping%numberOfGlobal
     ALLOCATE(distributedVector%petsc%globalNumbers(distributedVector%petsc%n),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate PETSc distributed vector global numbers.",err,error,*999)
     distributedVector%petsc%useOverrideVector=.FALSE.
@@ -7102,7 +7102,7 @@ CONTAINS
     INTEGER(INTG) :: domainIdx,i,numberOfComputationalNodes
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DistributedVectorPETScType), POINTER :: petscVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
    
     ENTERS("DistributedVector_UpdateFinish",err,error,*999)
@@ -7122,30 +7122,30 @@ CONTAINS
         !Copy the receive buffers back to the ghost positions in the data vector
         SELECT CASE(distributedVector%dataType)
         CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
-          DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
-            DO i=1,domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_RECEIVE_GHOSTS
-              cmissVector%dataIntg(domainMapping%ADJACENT_DOMAINS(domainIdx)%LOCAL_GHOST_RECEIVE_INDICES(i))= &
+          DO domainIdx=1,domainMapping%numberOfAdjacentDomains
+            DO i=1,domainMapping%adjacentDomains(domainIdx)%numberOfReceiveGhosts
+              cmissVector%dataIntg(domainMapping%adjacentDomains(domainIdx)%localGhostReceiveIndices(i))= &
                 & cmissVector%transfers(domainIdx)%receiveBufferIntg(i)
             ENDDO !i
           ENDDO !domainIdx
         CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
-          DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
-            DO i=1,domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_RECEIVE_GHOSTS
-              cmissVector%dataSP(domainMapping%ADJACENT_DOMAINS(domainIdx)%LOCAL_GHOST_RECEIVE_INDICES(i))= &
+          DO domainIdx=1,domainMapping%numberOfAdjacentDomains
+            DO i=1,domainMapping%adjacentDomains(domainIdx)%numberOfReceiveGhosts
+              cmissVector%dataSP(domainMapping%adjacentDomains(domainIdx)%localGhostReceiveIndices(i))= &
                 & cmissVector%transfers(domainIdx)%receiveBufferSP(i)
             ENDDO !i
           ENDDO !domainIdx
         CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
-          DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
-            DO i=1,domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_RECEIVE_GHOSTS
-              cmissVector%dataDP(domainMapping%ADJACENT_DOMAINS(domainIdx)%LOCAL_GHOST_RECEIVE_INDICES(i))= &
+          DO domainIdx=1,domainMapping%numberOfAdjacentDomains
+            DO i=1,domainMapping%adjacentDomains(domainIdx)%numberOfReceiveGhosts
+              cmissVector%dataDP(domainMapping%adjacentDomains(domainIdx)%localGhostReceiveIndices(i))= &
                 & cmissVector%transfers(domainIdx)%receiveBufferDP(i)
             ENDDO !i
           ENDDO !domainIdx
         CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
-          DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
-            DO i=1,domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_RECEIVE_GHOSTS
-              cmissVector%dataL(domainMapping%ADJACENT_DOMAINS(domainIdx)%LOCAL_GHOST_RECEIVE_INDICES(i))= &
+          DO domainIdx=1,domainMapping%numberOfAdjacentDomains
+            DO i=1,domainMapping%adjacentDomains(domainIdx)%numberOfReceiveGhosts
+              cmissVector%dataL(domainMapping%adjacentDomains(domainIdx)%localGhostReceiveIndices(i))= &
                 & cmissVector%transfers(domainIdx)%receiveBufferL(i)
             ENDDO !i
           ENDDO !domainIdx
@@ -7179,12 +7179,12 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Distributed vector :",err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Data type = ",distributedVector%dataType,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Base tag number = ",cmissVector%baseTagNumber,err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of adjacent domains = ",domainMapping%NUMBER_OF_ADJACENT_DOMAINS, &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of adjacent domains = ",domainMapping%numberOfAdjacentDomains, &
           & err,error,*999)
-        DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
+        DO domainIdx=1,domainMapping%numberOfAdjacentDomains
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain idx = ",domainIdx,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain number = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-            & DOMAIN_NUMBER,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain number = ",domainMapping%adjacentDomains(domainIdx)% &
+            & domainNumber,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Receive tag number = ",cmissVector%transfers(domainIdx)% &
             & receiveTagNumber,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Send tag number = ",cmissVector%transfers(domainIdx)% &
@@ -7249,7 +7249,7 @@ CONTAINS
     INTEGER(INTG) :: domainIdx
     INTEGER(INTG) :: mpiIError,status(MPI_STATUS_SIZE)
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_UpdateIsFinished",err,error,*999)
@@ -7265,7 +7265,7 @@ CONTAINS
       NULLIFY(cmissVector)
       CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
 !!TODO: USE MPI_TESTALL and store the request handles as big array.
-      DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
+      DO domainIdx=1,domainMapping%numberOfAdjacentDomains
         CALL MPI_TEST(cmissVector%transfers(domainIdx)%mpiReceiveRequest,isFinished,status,mpiIError)
         CALL MPI_ErrorCheck("MPI_TEST",mpiIError,err,error,*999)
         IF(.NOT.isFinished) EXIT
@@ -7303,7 +7303,7 @@ CONTAINS
     INTEGER(INTG) :: domainIdx
     INTEGER(INTG) :: mpiIError,status(MPI_STATUS_SIZE)
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_UpdateWaitFinished",err,error,*999)
@@ -7318,7 +7318,7 @@ CONTAINS
       NULLIFY(cmissVector)
       CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
 !!TODO: USE MPI_WAITALL and store the request handles as big array.
-      DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
+      DO domainIdx=1,domainMapping%numberOfAdjacentDomains
         CALL MPI_WAIT(cmissVector%transfers(domainIdx)%mpiReceiveRequest,status,mpiIError)
         CALL MPI_ErrorCheck("MPI_WAIT",mpiIError,err,error,*999)
       ENDDO !domainIdx
@@ -7352,7 +7352,7 @@ CONTAINS
     INTEGER(INTG) :: domainIdx,i,mpiIError,numberOfComputationNodes,groupCommunicator
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DistributedVectorPETScType), POINTER :: petscVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_UpdateStart",err,error,*999)
@@ -7369,29 +7369,29 @@ CONTAINS
       CALL WorkGroup_GroupCommunicatorGet(domainMapping%workGroup,groupCommunicator,err,error,*999)
       CALL WorkGroup_NumberOfGroupNodesGet(domainMapping%workGroup,numberOfComputationNodes,err,error,*999)
       IF(numberOfComputationNodes>1) THEN
-        IF(domainMapping%NUMBER_OF_ADJACENT_DOMAINS>0) THEN
+        IF(domainMapping%numberOfAdjacentDomains>0) THEN
           !Fill in the send buffers with the send ghost values
-          DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
+          DO domainIdx=1,domainMapping%numberOfAdjacentDomains
             SELECT CASE(distributedVector%dataType)
             CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
-              DO i=1,domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_SEND_GHOSTS
+              DO i=1,domainMapping%adjacentDomains(domainIdx)%numberOfSendGhosts
                 cmissVector%transfers(domainIdx)%sendBufferIntg(i)= &
-                  & cmissVector%dataIntg(domainMapping%ADJACENT_DOMAINS(domainIdx)%LOCAL_GHOST_SEND_INDICES(i))
+                  & cmissVector%dataIntg(domainMapping%adjacentDomains(domainIdx)%localGhostSendIndices(i))
               ENDDO !i
             CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
-              DO i=1,domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_SEND_GHOSTS
+              DO i=1,domainMapping%adjacentDomains(domainIdx)%numberOfSendGhosts
                 cmissVector%transfers(domainIdx)%sendBufferSP(i)= &
-                  & cmissVector%dataSP(domainMapping%ADJACENT_DOMAINS(domainIdx)%LOCAL_GHOST_SEND_INDICES(i))
+                  & cmissVector%dataSP(domainMapping%adjacentDomains(domainIdx)%localGhostSendIndices(i))
               ENDDO !i
             CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
-              DO i=1,domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_SEND_GHOSTS
+              DO i=1,domainMapping%adjacentDomains(domainIdx)%numberOfSendGhosts
                 cmissVector%transfers(domainIdx)%sendBufferDP(i)= &
-                  & cmissVector%dataDP(domainMapping%ADJACENT_DOMAINS(domainIdx)%LOCAL_GHOST_SEND_INDICES(i))
+                  & cmissVector%dataDP(domainMapping%adjacentDomains(domainIdx)%localGhostSendIndices(i))
               ENDDO !i
             CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
-              DO i=1,domainMapping%ADJACENT_DOMAINS(domainIdx)%NUMBER_OF_SEND_GHOSTS
+              DO i=1,domainMapping%adjacentDomains(domainIdx)%numberOfSendGhosts
                 cmissVector%transfers(domainIdx)%sendBufferL(i)= &
-                  & cmissVector%dataL(domainMapping%ADJACENT_DOMAINS(domainIdx)%LOCAL_GHOST_SEND_INDICES(i))
+                  & cmissVector%dataL(domainMapping%adjacentDomains(domainIdx)%localGhostSendIndices(i))
               ENDDO !i
             CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -7404,12 +7404,12 @@ CONTAINS
             END SELECT
           ENDDO !domainIdx
           !Post all the receive calls first and then the send calls.
-          DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
+          DO domainIdx=1,domainMapping%numberOfAdjacentDomains
             SELECT CASE(distributedVector%dataType)
             CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
               CALL MPI_IRECV(cmissVector%transfers(domainIdx)%receiveBufferIntg, &
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_INTEGER, &
-                & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
@@ -7418,8 +7418,8 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive count = ",cmissVector%transfers(domainIdx)% &
                   & receiveBufferSize,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = ",MPI_INTEGER,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-                  & DOMAIN_NUMBER,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%adjacentDomains(domainIdx)% &
+                  & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
@@ -7429,7 +7429,7 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
               CALL MPI_IRECV(cmissVector%transfers(domainIdx)%receiveBufferSP, &
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_REAL, &
-                & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
@@ -7438,8 +7438,8 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive count = ",cmissVector%transfers(domainIdx)% &
                   & receiveBufferSize,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = ",MPI_REAL,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-                  & DOMAIN_NUMBER,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%adjacentDomains(domainIdx)% &
+                  & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
@@ -7449,7 +7449,7 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
               CALL MPI_IRECV(cmissVector%transfers(domainIdx)%receiveBufferDP, &
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_DOUBLE_PRECISION, &
-                & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
@@ -7458,8 +7458,8 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive count = ",cmissVector%transfers(domainIdx)% &
                   & receiveBufferSize,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = ",MPI_DOUBLE_PRECISION,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-                  & DOMAIN_NUMBER,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%adjacentDomains(domainIdx)% &
+                  & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)%receiveTagNumber, &
                   & err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
@@ -7469,7 +7469,7 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
               CALL MPI_IRECV(cmissVector%transfers(domainIdx)%receiveBufferL, &
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_LOGICAL, &
-                & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
@@ -7478,8 +7478,8 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive count = ",cmissVector%transfers(domainIdx)% &
                   & receiveBufferSize,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = ",MPI_LOGICAL,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-                  & DOMAIN_NUMBER,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%adjacentDomains(domainIdx)% &
+                  & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
@@ -7497,12 +7497,12 @@ CONTAINS
             END SELECT
           ENDDO !domainIdx
           !Post all the send calls.
-          DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
+          DO domainIdx=1,domainMapping%numberOfAdjacentDomains
             SELECT CASE(distributedVector%dataType)
             CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
               CALL MPI_ISEND(cmissVector%transfers(domainIdx)%sendBufferIntg, &
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_INTEGER, &
-                & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
@@ -7511,8 +7511,8 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send count = ",cmissVector%transfers(domainIdx)% &
                   & sendBufferSize,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = ",MPI_INTEGER,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-                  & DOMAIN_NUMBER,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%adjacentDomains(domainIdx)% &
+                  & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
@@ -7522,7 +7522,7 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
               CALL MPI_ISEND(cmissVector%transfers(domainIdx)%sendBufferSP, &
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_REAL, &
-                & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
@@ -7531,8 +7531,8 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send count = ",cmissVector%transfers(domainIdx)% &
                   & sendBufferSize,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = ",MPI_REAL,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-                  & DOMAIN_NUMBER,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%adjacentDomains(domainIdx)% &
+                  & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
@@ -7542,7 +7542,7 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
               CALL MPI_ISEND(cmissVector%transfers(domainIdx)%sendBufferDP, &
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_DOUBLE_PRECISION, &
-                & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
@@ -7551,8 +7551,8 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send count = ",cmissVector%transfers(domainIdx)% &
                   & sendBufferSize,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = ",MPI_DOUBLE_PRECISION,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-                  & DOMAIN_NUMBER,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%adjacentDomains(domainIdx)% &
+                  & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
@@ -7562,7 +7562,7 @@ CONTAINS
             CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
               CALL MPI_ISEND(cmissVector%transfers(domainIdx)%sendBufferL, &
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_LOGICAL, &
-                & domainMapping%ADJACENT_DOMAINS(domainIdx)%DOMAIN_NUMBER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
@@ -7571,8 +7571,8 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send count = ",cmissVector%transfers(domainIdx)%sendBufferSize, &
                   & err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = ",MPI_LOGICAL,err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-                  & DOMAIN_NUMBER,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%adjacentDomains(domainIdx)% &
+                  & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
@@ -7611,12 +7611,12 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Distributed vector :",err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Data type = ",distributedVector%dataType,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Base tag number = ",cmissVector%baseTagNumber,err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of adjacent domains = ",domainMapping%NUMBER_OF_ADJACENT_DOMAINS, &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of adjacent domains = ",domainMapping%numberOfAdjacentDomains, &
           & err,error,*999)
-        DO domainIdx=1,domainMapping%NUMBER_OF_ADJACENT_DOMAINS
+        DO domainIdx=1,domainMapping%numberOfAdjacentDomains
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain idx = ",domainIdx,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain number = ",domainMapping%ADJACENT_DOMAINS(domainIdx)% &
-            & DOMAIN_NUMBER,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Domain number = ",domainMapping%adjacentDomains(domainIdx)% &
+            & domainNumber,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Receive tag number = ",cmissVector%transfers(domainIdx)% &
             & receiveTagNumber,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Send tag number = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
@@ -8701,7 +8701,7 @@ CONTAINS
     INTEGER(INTG) :: i,petscIndices(SIZE(indices,1))
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DistributedVectorPETScType), POINTER :: petscVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_ValuesGetDP",err,error,*999)
@@ -8739,7 +8739,7 @@ CONTAINS
       NULLIFY(domainMapping)
       CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
       DO i=1,SIZE(indices,1)
-        petscIndices(i)=domainMapping%LOCAL_TO_GLOBAL_MAP(indices(i))-1 !PETSc uses global 0-based indices
+        petscIndices(i)=domainMapping%localToGlobalMap(indices(i))-1 !PETSc uses global 0-based indices
       ENDDO !i
       IF(petscVector%useOverrideVector) THEN
         CALL Petsc_VecGetValues(petscVector%overrideVector,SIZE(indices,1),petscIndices,values,err,error,*999)
@@ -8777,7 +8777,7 @@ CONTAINS
     REAL(DP) :: petscValue(1)
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DistributedVectorPETScType), POINTER :: petscVector
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedVector_ValuesGetDP1",err,error,*999)
@@ -8807,7 +8807,7 @@ CONTAINS
       CALL DistributedVector_PETScVectorGet(distributedVector,petscVector,err,error,*999)
       NULLIFY(domainMapping)
       CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
-      petscIndex=domainMapping%LOCAL_TO_GLOBAL_MAP(index)-1 !PETSc uses global 0-based indices
+      petscIndex=domainMapping%localToGlobalMap(index)-1 !PETSc uses global 0-based indices
       IF(petscVector%useOverrideVector) THEN
         CALL Petsc_VecGetValues(petscVector%overrideVector,1,petscIndex,petscValue,err,error,*999)
       ELSE

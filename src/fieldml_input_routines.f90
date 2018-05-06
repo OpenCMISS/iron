@@ -571,7 +571,7 @@ CONTAINS
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: EVALUATOR_NAME !<The name of the coordinate system evaluator.
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the coordinate systems to create the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER, INTENT(IN) :: COORDINATE_SYSTEM !<The OpenCMISS coordinate system to initialize.
+    TYPE(CoordinateSystemType), POINTER, INTENT(IN) :: COORDINATE_SYSTEM !<The OpenCMISS coordinate system to initialize.
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to assign to the coordinate system.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
@@ -631,7 +631,7 @@ CONTAINS
     !Arguments
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: NODES_ARGUMENT_NAME !<The argument evaluator used as the node index in relevant evaluators.
-    TYPE(REGION_TYPE), POINTER, INTENT(IN) :: REGION !<The region in which to create the nodes.
+    TYPE(RegionType), POINTER, INTENT(IN) :: REGION !<The region in which to create the nodes.
     TYPE(NodesType), POINTER, INTENT(INOUT) :: NODES !<The OpenCMISS nodes object to create.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
@@ -681,9 +681,9 @@ CONTAINS
     !Arguments
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: MESH_ARGUMENT_NAME !<The argument evaluator used as the mesh location in relevant evaluators.
-    TYPE(MESH_TYPE), POINTER, INTENT(INOUT) :: MESH !<The OpenCMISS mesh object to create.
+    TYPE(MeshType), POINTER, INTENT(INOUT) :: MESH !<The OpenCMISS mesh object to create.
     INTEGER(INTG), INTENT(IN) :: MESH_NUMBER !<The user number to assign to the mesh.
-    TYPE(REGION_TYPE), POINTER, INTENT(IN) :: REGION !<The region in which to create the mesh.
+    TYPE(RegionType), POINTER, INTENT(IN) :: REGION !<The region in which to create the mesh.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
 
@@ -744,14 +744,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(IN) :: EVALUATOR_NAME !<The name of the basis evaluator.
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number to assign to the basis.
     TYPE(BasisFunctionsType), POINTER :: basisFunctions !<A pointer to the basis functions to create the basis for
-    TYPE(BASIS_TYPE), POINTER, INTENT(INOUT) :: BASIS !<The OpenCMISS basis object to create.
+    TYPE(BasisType), POINTER, INTENT(INOUT) :: BASIS !<The OpenCMISS basis object to create.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
 
     !Locals
     INTEGER(INTG) :: LIST_INDEX
     INTEGER(INTG) :: HANDLE, CONNECTIVITY_HANDLE, LAYOUT_HANDLE, FML_ERR
-    INTEGER(INTG) :: BASISTYPE
+    INTEGER(INTG) :: FIELDBASISTYPE
     INTEGER(INTG), ALLOCATABLE :: BASIS_INTERPOLATIONS(:)
     INTEGER(INTG), ALLOCATABLE :: COLLAPSE(:)
     
@@ -767,7 +767,7 @@ CONTAINS
       CALL FlagError( "Named basis "//EVALUATOR_NAME//" already created", ERR, ERROR, *999 )
     ENDIF
     
-    CALL FIELDML_INPUT_GET_BASIS_INFO( FIELDML_INFO, HANDLE, CONNECTIVITY_HANDLE, LAYOUT_HANDLE, BASISTYPE, &
+    CALL FIELDML_INPUT_GET_BASIS_INFO( FIELDML_INFO, HANDLE, CONNECTIVITY_HANDLE, LAYOUT_HANDLE, FIELDBASISTYPE, &
       & BASIS_INTERPOLATIONS, COLLAPSE, ERR, ERROR, *999 )
     
     CALL LIST_ITEM_ADD( FIELDML_INFO%BASIS_HANDLES, HANDLE, ERR, ERROR, *999 )
@@ -779,7 +779,7 @@ CONTAINS
   
     NULLIFY(BASIS)
     CALL BASIS_CREATE_START(USER_NUMBER, basisFunctions, BASIS, ERR, ERROR, *999 )
-    CALL BASIS_TYPE_SET( BASIS, BASISTYPE, ERR, ERROR, *999 )
+    CALL BASIS_TYPE_SET( BASIS, FIELDBASISTYPE, ERR, ERROR, *999 )
     CALL BASIS_NUMBER_OF_XI_SET( BASIS, size( BASIS_INTERPOLATIONS ), ERR, ERROR, *999 )
     CALL BASIS_INTERPOLATION_XI_SET( BASIS, BASIS_INTERPOLATIONS, ERR, ERROR, *999 )
     !Note: collapse bases currently only supported for BASIS_LAGRANGE_HERMITE_TP_TYPE
@@ -936,7 +936,7 @@ CONTAINS
   SUBROUTINE FIELDML_INPUT_CREATE_MESH_COMPONENT( FIELDML_INFO, MESH, COMPONENT_NUMBER, EVALUATOR_NAME, ERR, ERROR, * )
     !Arguments
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
-    TYPE(MESH_TYPE), POINTER, INTENT(IN) :: MESH !<The OpenCMISS mesh in which to create the component.
+    TYPE(MeshType), POINTER, INTENT(IN) :: MESH !<The OpenCMISS mesh in which to create the component.
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The component number to create.
     TYPE(VARYING_STRING), INTENT(IN) :: EVALUATOR_NAME !<The name of the mesh component evaluator.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
@@ -951,11 +951,11 @@ CONTAINS
     INTEGER(INTG), ALLOCATABLE :: CONNECTIVITY_READERS(:), CONNECTIVITY_COUNTS(:)
     TYPE(INTEGER_CINT_ALLOC_TYPE), ALLOCATABLE :: CONNECTIVITY_ORDERS(:)
     INTEGER(INTG) :: TEMP_POINTER, DATA_SOURCE, ORDER_HANDLE, TEMP_BASIS_HANDLE, FML_ERR
-    TYPE(BASIS_TYPE), POINTER :: BASIS
+    TYPE(BasisType), POINTER :: BASIS
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
     TYPE(ContextType), POINTER :: context
     TYPE(MeshElementsType), POINTER :: MESH_ELEMENTS
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(RegionType), POINTER :: region
 
     ENTERS( "FIELDML_INPUT_CREATE_MESH_COMPONENT", ERR, ERROR, *999 )
     
@@ -1139,8 +1139,8 @@ CONTAINS
     & EVALUATOR_NAME, ERR, ERROR, * )
     !Arguments
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
-    TYPE(REGION_TYPE), POINTER, INTENT(IN) :: REGION !<The region in which to create the field.
-    TYPE(DECOMPOSITION_TYPE), POINTER, INTENT(IN) :: DECOMPOSITION !<The decomposition to use when creating the field.
+    TYPE(RegionType), POINTER, INTENT(IN) :: REGION !<The region in which to create the field.
+    TYPE(DecompositionType), POINTER, INTENT(IN) :: DECOMPOSITION !<The decomposition to use when creating the field.
     INTEGER(INTG), INTENT(IN) :: FIELD_NUMBER !<The user number to assign to the created field.
     TYPE(FIELD_TYPE), POINTER, INTENT(INOUT) :: FIELD !<The OpenCMISS field object to create.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The OpenCMISS variable type.
@@ -1273,7 +1273,7 @@ CONTAINS
     !Locals
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
-    TYPE(MESH_TYPE), POINTER :: MESH
+    TYPE(MeshType), POINTER :: MESH
     TYPE(NodesType), POINTER :: NODES
     INTEGER(INTG) :: NODAL_DOFS_HANDLE, DATA_SOURCE, FML_ERR, RANK
     INTEGER(INTG) :: VERSION_NUMBER,COMPONENT_NUMBER, NODE_NUMBER, FIELD_DIMENSIONS, MESH_NODE_COUNT
@@ -1312,7 +1312,7 @@ CONTAINS
     NULLIFY( NODES )
     CALL REGION_NODES_GET( MESH%REGION, NODES, ERR, ERROR, *999 )
     CALL NODES_NUMBER_OF_NODES_GET( NODES, MESH_NODE_COUNT, ERR, ERROR, *999 )
-    CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get mesh nodes count for mesh ")//mesh%USER_NUMBER//".", &
+    CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get mesh nodes count for mesh ")//mesh%userNumber//".", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     
     OFFSETS(:) = 0

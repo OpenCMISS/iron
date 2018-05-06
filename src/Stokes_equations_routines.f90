@@ -240,7 +240,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: GEOMETRIC_SCALING_TYPE,GEOMETRIC_MESH_COMPONENT
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -249,7 +249,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG):: DEPENDENT_FIELD_NUMBER_OF_VARIABLES,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS
     INTEGER(INTG):: INDEPENDENT_FIELD_NUMBER_OF_VARIABLES,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS
-    INTEGER(INTG):: NUMBER_OF_DIMENSIONS,GEOMETRIC_COMPONENT_NUMBER
+    INTEGER(INTG):: numberOfDimensions,GEOMETRIC_COMPONENT_NUMBER
     INTEGER(INTG):: MATERIAL_FIELD_NUMBER_OF_VARIABLES,MATERIAL_FIELD_NUMBER_OF_COMPONENTS,I
 
     ENTERS("STOKES_EQUATIONS_SET_SETUP",err,error,*999)
@@ -324,7 +324,7 @@ CONTAINS
                       IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
                         !Create the auto created dependent field
                         !start field creation with name 'DEPENDENT_FIELD'
-                        CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION, &
+                        CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
                           & EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
                         !start creation of a new field
                         CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -357,9 +357,9 @@ CONTAINS
                         CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                           & FIELD_DP_TYPE,err,error,*999)
                         CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                          & NUMBER_OF_DIMENSIONS,err,error,*999)
+                          & numberOfDimensions,err,error,*999)
                         !calculate number of components with one component for each dimension and one for pressure
-                        DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS+1
+                        DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=numberOfDimensions+1
                         CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                           & FIELD_U_VARIABLE_TYPE,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
                         CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
@@ -407,9 +407,9 @@ CONTAINS
                         CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
                           & err,error,*999)
                         CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                          & NUMBER_OF_DIMENSIONS,err,error,*999)
+                          & numberOfDimensions,err,error,*999)
                         !calculate number of components with one component for each dimension and one for pressure
-                        DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS+1
+                        DEPENDENT_FIELD_NUMBER_OF_COMPONENTS=numberOfDimensions+1
                         CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
                           & DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
                         CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
@@ -453,7 +453,7 @@ CONTAINS
                     IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
                       !Create the auto created independent field
                       !start field creation with name 'INDEPENDENT_FIELD'
-                      CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION, &
+                      CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION, &
                         & EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
                       !start creation of a new field
                       CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -482,9 +482,9 @@ CONTAINS
                       CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & FIELD_DP_TYPE,err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                        & NUMBER_OF_DIMENSIONS,err,error,*999)
+                        & numberOfDimensions,err,error,*999)
                       !calculate number of components with one component for each dimension
-                      INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+                      INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS=numberOfDimensions
                       CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
                         & FIELD_U_VARIABLE_TYPE,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
                       CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -521,9 +521,9 @@ CONTAINS
                           & err,error,*999)
                         CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                         CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                          & NUMBER_OF_DIMENSIONS,err,error,*999)
+                          & numberOfDimensions,err,error,*999)
                         !calculate number of components with one component for each dimension and one for pressure
-                        INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS=NUMBER_OF_DIMENSIONS
+                        INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS=numberOfDimensions
                         CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
                           & INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
                         SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
@@ -573,7 +573,7 @@ CONTAINS
                         IF(ASSOCIATED(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD)) THEN
                           IF(ASSOCIATED(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD)) THEN
                             CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                              & NUMBER_OF_DIMENSIONS,err,error,*999)
+                              & numberOfDimensions,err,error,*999)
                             SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                               CASE(EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1)
                                 !Set analtyic function type
@@ -659,7 +659,7 @@ CONTAINS
                         IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                           !Create the auto created materials field
                           !start field creation with name 'MATERIAL_FIELD'
-                          CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET% &
+                          CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET% &
                             & MATERIALS%MATERIALS_FIELD,err,error,*999)
                           CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                           !label the field
@@ -703,7 +703,7 @@ CONTAINS
                             & err,error,*999)
                           CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                           CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                            & NUMBER_OF_DIMENSIONS,err,error,*999)
+                            & numberOfDimensions,err,error,*999)
                           CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
                         ENDIF
                       ELSE
@@ -1348,7 +1348,7 @@ CONTAINS
     INTEGER(INTG) FIELD_VAR_TYPE,ng,mh,mhs,mi,ms,nh,nhs,ni,ns,MESH_COMPONENT1,MESH_COMPONENT2, nhs_max, mhs_max, nhs_min, mhs_min
     REAL(DP) :: JGW,SUM,DXI_DX(3,3),PHIMS,PHINS,MU_PARAM,RHO_PARAM,DPHIMS_DXI(3),DPHINS_DXI(3)
     LOGICAL :: updateStiffnessMatrix, updateDampingMatrix,updateRHSVector
-    TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,DEPENDENT_BASIS1,DEPENDENT_BASIS2,GEOMETRIC_BASIS,INDEPENDENT_BASIS
+    TYPE(BasisType), POINTER :: DEPENDENT_BASIS,DEPENDENT_BASIS1,DEPENDENT_BASIS2,GEOMETRIC_BASIS,INDEPENDENT_BASIS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -1413,9 +1413,9 @@ CONTAINS
             geometricField=>equations%interpolation%geometricField
             materialsField=>equations%interpolation%materialsField
             vectorMatrices=>vectorEquations%vectorMatrices
-            GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+            GEOMETRIC_BASIS=>geometricField%DECOMPOSITION%DOMAIN(geometricField%decomposition%meshComponentNumber)%ptr% &
               & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-            DEPENDENT_BASIS=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+            DEPENDENT_BASIS=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%ptr% &
               & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
             QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
             rhsVector=>vectorMatrices%rhsVector
@@ -1443,7 +1443,7 @@ CONTAINS
                 IF(ASSOCIATED(rhsVector)) updateRHSVector=rhsVector%updateVector
               CASE(EQUATIONS_SET_ALE_STOKES_SUBTYPE,EQUATIONS_SET_PGM_STOKES_SUBTYPE)
                 independentField=>equations%interpolation%independentField
-                INDEPENDENT_BASIS=>independentField%DECOMPOSITION%DOMAIN(independentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)% &
+                INDEPENDENT_BASIS=>independentField%DECOMPOSITION%DOMAIN(independentField%decomposition%meshComponentNumber)% &
                   & PTR%TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
                 dynamicMatrices=>vectorMatrices%dynamicMatrices
                 stiffnessMatrix=>dynamicMatrices%matrices(1)%ptr
@@ -1472,7 +1472,7 @@ CONTAINS
             DO ng=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
               CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,equations%interpolation% &
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi,equations%interpolation% &
                 & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
@@ -1502,31 +1502,31 @@ CONTAINS
                 !Loop over field components
                 mhs=0
                 DO mh=1,(FIELD_VARIABLE%NUMBER_OF_COMPONENTS-1)
-                  MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
+                  MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                   DEPENDENT_BASIS1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT1)%ptr% &
                     & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
                   QUADRATURE_SCHEME1=>DEPENDENT_BASIS1%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
                   JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
                     & QUADRATURE_SCHEME1%GAUSS_WEIGHTS(ng)
-                  DO ms=1,DEPENDENT_BASIS1%NUMBER_OF_ELEMENT_PARAMETERS
+                  DO ms=1,DEPENDENT_BASIS1%numberOfElementParameters
                     mhs=mhs+1
                     nhs=0
                     IF(updateStiffnessMatrix.OR.updateDampingMatrix) THEN
                       !Loop over element columns
                       DO nh=1,(FIELD_VARIABLE%NUMBER_OF_COMPONENTS)
 
-                        MESH_COMPONENT2=FIELD_VARIABLE%COMPONENTS(nh)%MESH_COMPONENT_NUMBER
+                        MESH_COMPONENT2=FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                         DEPENDENT_BASIS2=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT2)%ptr% &
                           & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
                         QUADRATURE_SCHEME2=>DEPENDENT_BASIS2%QUADRATURE%QUADRATURE_SCHEME_MAP &
                           & (BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
                         ! JGW=equations%interpolation%geometricInterpPointMetrics%JACOBIAN*QUADRATURE_SCHEME2%&
                         ! &GAUSS_WEIGHTS(ng)
-                        DO ns=1,DEPENDENT_BASIS2%NUMBER_OF_ELEMENT_PARAMETERS
+                        DO ns=1,DEPENDENT_BASIS2%numberOfElementParameters
                           nhs=nhs+1
                         !Calculate some variables used later on
-                          DO ni=1,DEPENDENT_BASIS2%NUMBER_OF_XI
-                            DO mi=1,DEPENDENT_BASIS1%NUMBER_OF_XI
+                          DO ni=1,DEPENDENT_BASIS2%numberOfXi
+                            DO mi=1,DEPENDENT_BASIS1%numberOfXi
                               DXI_DX(mi,ni)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
                                 & DXI_DX(mi,ni)
                             END DO
@@ -1535,8 +1535,8 @@ CONTAINS
                           END DO !ni
                           PHIMS=QUADRATURE_SCHEME1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                           PHINS=QUADRATURE_SCHEME2%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
-                        !                         DO mi=1,DEPENDENT_BASIS1%NUMBER_OF_XI
-                        !                           DO ni=1,DEPENDENT_BASIS2%NUMBER_OF_XI
+                        !                         DO mi=1,DEPENDENT_BASIS1%numberOfXi
+                        !                           DO ni=1,DEPENDENT_BASIS2%numberOfXi
                         !                             SUM=SUM-MU_PARAM*DPHIMSS_DXI(mi)*DPHINSS_DXI(ni)*equations%interpolation%geometricInterpPointMetrics%GU(mi,ni)
                         !                           ENDDO !ni
                         !                         ENDDO !mi
@@ -1546,9 +1546,9 @@ CONTAINS
                             IF(nh==mh) THEN
                               SUM=0.0_DP
                               !Calculate SUM
-                              DO xv=1,DEPENDENT_BASIS1%NUMBER_OF_XI
-                                DO mi=1,DEPENDENT_BASIS1%NUMBER_OF_XI
-                                  DO ni=1,DEPENDENT_BASIS2%NUMBER_OF_XI
+                              DO xv=1,DEPENDENT_BASIS1%numberOfXi
+                                DO mi=1,DEPENDENT_BASIS1%numberOfXi
+                                  DO ni=1,DEPENDENT_BASIS2%numberOfXi
                                     SUM=SUM+MU_PARAM*DPHINS_DXI(ni)*DXI_DX(ni,xv)*DPHIMS_DXI(mi)*DXI_DX(mi,xv)
                                   ENDDO !ni
                                 ENDDO !mi
@@ -1565,8 +1565,8 @@ CONTAINS
                               IF(nh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
                                 SUM=0.0_DP
                                 !Calculate SUM
-                                DO mi=1,DEPENDENT_BASIS1%NUMBER_OF_XI
-                                  DO ni=1,DEPENDENT_BASIS2%NUMBER_OF_XI
+                                DO mi=1,DEPENDENT_BASIS1%numberOfXi
+                                  DO ni=1,DEPENDENT_BASIS2%numberOfXi
                                     !note mh/nh derivative in DXI_DX
                                     SUM=SUM+MU_PARAM*DPHINS_DXI(mi)*DXI_DX(mi,mh)*DPHIMS_DXI(ni)*DXI_DX(ni,nh)
                                   ENDDO !ni
@@ -1585,8 +1585,8 @@ CONTAINS
                               IF(nh==mh) THEN
                                 SUM=0.0_DP
                                 !Calculate SUM
-                                DO mi=1,DEPENDENT_BASIS1%NUMBER_OF_XI
-                                  DO ni=1,DEPENDENT_BASIS1%NUMBER_OF_XI
+                                DO mi=1,DEPENDENT_BASIS1%numberOfXi
+                                  DO ni=1,DEPENDENT_BASIS1%numberOfXi
                                     SUM=SUM-RHO_PARAM*W_VALUE(mi)*DPHINS_DXI(ni)*DXI_DX(ni,mi)*PHIMS
                                   ENDDO !ni
                                 ENDDO !mi
@@ -1603,7 +1603,7 @@ CONTAINS
                             IF(nh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
                               SUM=0.0_DP
                               !Calculate SUM
-                              DO ni=1,DEPENDENT_BASIS1%NUMBER_OF_XI
+                              DO ni=1,DEPENDENT_BASIS1%numberOfXi
                                 SUM=SUM-PHINS*DPHIMS_DXI(ni)*DXI_DX(ni,mh)
                               ENDDO !ni
                               !Calculate MATRIX
@@ -1646,20 +1646,20 @@ CONTAINS
 
                     mhs=0
                     DO mh=1,(FIELD_VARIABLE%NUMBER_OF_COMPONENTS-1)
-                      MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
+                      MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                       DEPENDENT_BASIS1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT1)%ptr% &
                         & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
                       QUADRATURE_SCHEME1=>DEPENDENT_BASIS1%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
                       JGW=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
                         & QUADRATURE_SCHEME1%GAUSS_WEIGHTS(ng)
-                      DO ms=1,DEPENDENT_BASIS1%NUMBER_OF_ELEMENT_PARAMETERS
+                      DO ms=1,DEPENDENT_BASIS1%numberOfElementParameters
                         mhs=mhs+1
                         PHIMS=QUADRATURE_SCHEME1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                         !note mh value derivative
                         SUM=0.0_DP
                         X(1) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,1)
                         X(2) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(2,1)
-                        IF(DEPENDENT_BASIS1%NUMBER_OF_XI==3) THEN
+                        IF(DEPENDENT_BASIS1%numberOfXi==3) THEN
                           X(3) = equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,1)
                         END IF
                         IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1) THEN
@@ -1781,19 +1781,19 @@ CONTAINS
               mhs=0
               DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                 !Loop over element rows
-                MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
+                MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                 DEPENDENT_BASIS1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT1)%ptr% &
                   & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                DO ms=1,DEPENDENT_BASIS1%NUMBER_OF_ELEMENT_PARAMETERS
+                DO ms=1,DEPENDENT_BASIS1%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                    IF(updateStiffnessMatrix.OR.updateDampingMatrix) THEN
                     !Loop over element columns
                     DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                      MESH_COMPONENT2=FIELD_VARIABLE%COMPONENTS(nh)%MESH_COMPONENT_NUMBER
+                      MESH_COMPONENT2=FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                       DEPENDENT_BASIS2=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT2)%ptr% &
                         & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-                      DO ns=1,DEPENDENT_BASIS2%NUMBER_OF_ELEMENT_PARAMETERS
+                      DO ns=1,DEPENDENT_BASIS2%numberOfElementParameters
                         nhs=nhs+1
                         IF(updateStiffnessMatrix)THEN
                           stiffnessMatrix%elementMatrix%matrix(mhs,nhs)=stiffnessMatrix%elementMatrix%matrix(mhs,nhs)* &
@@ -2011,13 +2011,13 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,materialsField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINT(:)
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:)
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT,DISPLACEMENT_VALUE,VALUE,XI_COORDINATES(3)
     REAL(DP) :: T_COORDINATES(20,3)
-    INTEGER(INTG) :: NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_CHECK_VARIABLE,GLOBAL_DERIV_INDEX,node_idx,variable_type
+    INTEGER(INTG) :: numberOfDimensions,BOUNDARY_CONDITION_CHECK_VARIABLE,GLOBAL_DERIV_INDEX,node_idx,variable_type
     INTEGER(INTG) :: variable_idx,local_ny,ANALYTIC_FUNCTION_TYPE,component_idx,deriv_idx,dim_idx
     INTEGER(INTG) :: element_idx,en_idx,I,J,K,number_of_nodes_xic(3)
     REAL(DP) :: X(3),MU_PARAM,RHO_PARAM
@@ -2061,7 +2061,7 @@ CONTAINS
                             geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
                             IF(ASSOCIATED(geometricField)) THEN
                               CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,&
-                                & NUMBER_OF_DIMENSIONS,err,error,*999)
+                                & numberOfDimensions,err,error,*999)
                               NULLIFY(INTERPOLATION_PARAMETERS)
                               NULLIFY(INTERPOLATED_POINT)
                               CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(geometricField,INTERPOLATION_PARAMETERS,err,error, &
@@ -2077,7 +2077,7 @@ CONTAINS
                                 FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
                                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                                   DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE== &
+                                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== &
                                       & FIELD_NODE_BASED_INTERPOLATION) THEN
                                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                                       IF(ASSOCIATED(DOMAIN)) THEN
@@ -2085,44 +2085,44 @@ CONTAINS
                                           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                                           IF(ASSOCIATED(DOMAIN_NODES)) THEN
                                             !Should be replaced by boundary node flag
-                                            DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                              element_idx=DOMAIN%topology%nodes%nodes(node_idx)%surrounding_elements(1)
+                                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                                              element_idx=DOMAIN%topology%nodes%nodes(node_idx)%surroundingElements(1)
                                               CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
                                                 & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                                               en_idx=0
                                               XI_COORDINATES=0.0_DP
                                               number_of_nodes_xic(1)=DOMAIN%topology%elements%elements(element_idx)% &
-                                                & basis%number_of_nodes_xic(1)
+                                                & basis%numberOfNodesXiC(1)
                                               number_of_nodes_xic(2)=DOMAIN%topology%elements%elements(element_idx)% &
-                                                & basis%number_of_nodes_xic(2)
-                                              IF(NUMBER_OF_DIMENSIONS==3) THEN
+                                                & basis%numberOfNodesXiC(2)
+                                              IF(numberOfDimensions==3) THEN
                                                 number_of_nodes_xic(3)=DOMAIN%topology%elements%elements(element_idx)%basis% &
-                                                  & number_of_nodes_xic(3)
+                                                  & numberOfNodesXiC(3)
                                               ELSE
                                                 number_of_nodes_xic(3)=1
                                               ENDIF
 !\todo: change definitions as soon as adjacent elements / boundary elements calculation works for simplex
-                                              IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==4.OR. &
-                                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==9.OR. &
-                                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==16.OR. &
-                                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==8.OR. &
-                                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==27.OR. &
-                                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==64) THEN
+                                              IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4.OR. &
+                                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==9.OR. &
+                                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==16.OR. &
+                                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==8.OR. &
+                                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==27.OR. &
+                                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==64) THEN
                                                   DO K=1,number_of_nodes_xic(3)
                                                     DO J=1,number_of_nodes_xic(2)
                                                       DO I=1,number_of_nodes_xic(1)
                                                         en_idx=en_idx+1
                                                           IF(DOMAIN%topology%elements%elements(element_idx)% &
-                                                            & element_nodes(en_idx)==node_idx) EXIT
+                                                            & elementNodes(en_idx)==node_idx) EXIT
                                                           XI_COORDINATES(1)=XI_COORDINATES(1)+(1.0_DP/(number_of_nodes_xic(1)-1))
                                                       ENDDO
                                                       IF(DOMAIN%topology%elements%elements(element_idx)% &
-                                                        & element_nodes(en_idx)==node_idx) EXIT
+                                                        & elementNodes(en_idx)==node_idx) EXIT
                                                         XI_COORDINATES(1)=0.0_DP
                                                         XI_COORDINATES(2)=XI_COORDINATES(2)+(1.0_DP/(number_of_nodes_xic(2)-1))
                                                     ENDDO
                                                     IF(DOMAIN%topology%elements%elements(element_idx)% &
-                                                      & element_nodes(en_idx)==node_idx) EXIT
+                                                      & elementNodes(en_idx)==node_idx) EXIT
                                                     XI_COORDINATES(1)=0.0_DP
                                                     XI_COORDINATES(2)=0.0_DP
                                                     IF(number_of_nodes_xic(3)/=1) THEN
@@ -2133,19 +2133,19 @@ CONTAINS
                                                     & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                                               ELSE
 !\todo: Use boundary flag
-                                                IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==3) THEN
+                                                IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==3) THEN
                                                   T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
                                                   T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
                                                   T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
-                                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==6) THEN
+                                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==6) THEN
                                                   T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
                                                   T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
                                                   T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
                                                   T_COORDINATES(4,1:2)=[0.5_DP,0.5_DP]
                                                   T_COORDINATES(5,1:2)=[1.0_DP,0.5_DP]
                                                   T_COORDINATES(6,1:2)=[0.5_DP,1.0_DP]
-                                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==10.AND. &
-                                                  & NUMBER_OF_DIMENSIONS==2) THEN
+                                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==10.AND. &
+                                                  & numberOfDimensions==2) THEN
                                                   T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
                                                   T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
                                                   T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
@@ -2156,13 +2156,13 @@ CONTAINS
                                                   T_COORDINATES(8,1:2)=[2.0_DP/3.0_DP,1.0_DP]
                                                   T_COORDINATES(9,1:2)=[1.0_DP/3.0_DP,1.0_DP]
                                                   T_COORDINATES(10,1:2)=[2.0_DP/3.0_DP,2.0_DP/3.0_DP]
-                                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==4) THEN
+                                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4) THEN
                                                   T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
                                                   T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
                                                   T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
                                                   T_COORDINATES(4,1:3)=[1.0_DP,1.0_DP,1.0_DP]
-                                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==10.AND. &
-                                                  & NUMBER_OF_DIMENSIONS==3) THEN
+                                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==10.AND. &
+                                                  & numberOfDimensions==3) THEN
                                                   T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
                                                   T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
                                                   T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
@@ -2173,7 +2173,7 @@ CONTAINS
                                                   T_COORDINATES(8,1:3)=[1.0_DP,0.5_DP,0.5_DP]
                                                   T_COORDINATES(9,1:3)=[1.0_DP,1.0_DP,0.5_DP]
                                                   T_COORDINATES(10,1:3)=[1.0_DP,0.5_DP,1.0_DP]
-                                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==20) THEN
+                                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==20) THEN
                                                   T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
                                                   T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
                                                   T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
@@ -2195,19 +2195,19 @@ CONTAINS
                                                   T_COORDINATES(19,1:3)=[2.0_DP/3.0_DP,1.0_DP,2.0_DP/3.0_DP]
                                                   T_COORDINATES(20,1:3)=[1.0_DP,2.0_DP/3.0_DP,2.0_DP/3.0_DP]
                                                 ENDIF
-                                                DO K=1,DOMAIN%topology%elements%maximum_number_of_element_parameters
-                                                  IF(DOMAIN%topology%elements%elements(element_idx)%element_nodes(K)==node_idx) EXIT
+                                                DO K=1,DOMAIN%topology%elements%maximumNumberOfElementParameters
+                                                  IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(K)==node_idx) EXIT
                                                 ENDDO
-                                                IF(NUMBER_OF_DIMENSIONS==2) THEN
+                                                IF(numberOfDimensions==2) THEN
                                                   CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,T_COORDINATES(K,1:2), &
                                                     & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                                                ELSE IF(NUMBER_OF_DIMENSIONS==3) THEN
+                                                ELSE IF(numberOfDimensions==3) THEN
                                                   CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,T_COORDINATES(K,1:3), &
                                                     & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                                                 ENDIF
                                               ENDIF
                                               X=0.0_DP
-                                              DO dim_idx=1,NUMBER_OF_DIMENSIONS
+                                              DO dim_idx=1,numberOfDimensions
                                                 X(dim_idx)=INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(dim_idx,1)
                                               ENDDO !dim_idx
                                               !Loop over the derivatives
@@ -2215,10 +2215,10 @@ CONTAINS
                                                 & dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr, &
                                                 & BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
                                               IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                                                DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                                DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                                   ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE
                                                   GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
-                                                    & GLOBAL_DERIVATIVE_INDEX
+                                                    & globalDerivativeIndex
                                                   materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
                                                   !Define MU_PARAM, density=1
                                                   MU_PARAM=materialsField%variables(1)%parameter_sets%parameter_sets(1)%ptr% &
@@ -2235,7 +2235,7 @@ CONTAINS
                                                   ENDIF
                                                   CALL STOKES_EQUATION_ANALYTIC_FUNCTIONS(VALUE,X,MU_PARAM,RHO_PARAM,CURRENT_TIME, &
                                                     & variable_type, &
-                                                    & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,NUMBER_OF_DIMENSIONS, &
+                                                    & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,numberOfDimensions, &
                                                     & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,component_idx,err,error,*999)
                                                   !Default to version 1 of each node derivative
                                                   local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
@@ -2322,7 +2322,7 @@ CONTAINS
                           & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
                         IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
                           CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                            & NUMBER_OF_DIMENSIONS,err,error,*999)
+                            & numberOfDimensions,err,error,*999)
                           NULLIFY(MESH_VELOCITY_VALUES)
                           CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_MESH_VELOCITY_SET_TYPE,MESH_VELOCITY_VALUES,err,error,*999)
@@ -2330,7 +2330,7 @@ CONTAINS
                           CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,err,error,*999)
                           CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,BOUNDARY_VALUES, &
-                            & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
+                            & numberOfDimensions,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
                             & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP,err,error,*999)
 !                           DO equations_row_number=1,vectorEquations%vectorMapping%TOTAL_NUMBER_OF_ROWS
 ! xxxxxxxxxxxxxxxxxxxxxx
@@ -2345,8 +2345,8 @@ CONTAINS
                                     DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                                     IF(ASSOCIATED(DOMAIN_NODES)) THEN
                                       !Loop over the local nodes excluding the ghosts.
-                                      DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                        DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                      DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                                        DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                           !Default to version 1 of each node derivative
                                           local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                             & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
@@ -2408,12 +2408,12 @@ CONTAINS
                           & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
                         IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
                           CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                            & NUMBER_OF_DIMENSIONS,err,error,*999)
+                            & numberOfDimensions,err,error,*999)
                           NULLIFY(BOUNDARY_VALUES)
                           CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,err,error,*999)
                           CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,BOUNDARY_VALUES, &
-                            & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_MOVED_WALL,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
+                            & numberOfDimensions,BOUNDARY_CONDITION_MOVED_WALL,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
                             & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP,err,error,*999)
                           DO variable_idx=1,EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%variable_TYPE
@@ -2426,8 +2426,8 @@ CONTAINS
                                     DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                                     IF(ASSOCIATED(DOMAIN_NODES)) THEN
                                       !Loop over the local nodes excluding the ghosts.
-                                      DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                        DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                      DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                                        DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                           !Default to version 1 of each node derivative
                                           local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                             & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
@@ -2484,7 +2484,7 @@ CONTAINS
                           & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
                         IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
                           CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                            & NUMBER_OF_DIMENSIONS,err,error,*999)
+                            & numberOfDimensions,err,error,*999)
                           NULLIFY(MESH_VELOCITY_VALUES)
                           CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_MESH_VELOCITY_SET_TYPE,MESH_VELOCITY_VALUES,err,error,*999)
@@ -2492,7 +2492,7 @@ CONTAINS
                           CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                             & FIELD_BOUNDARY_SET_TYPE,BOUNDARY_VALUES,err,error,*999)
                           CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS(SOLVER_LINEAR_TYPE,BOUNDARY_VALUES, &
-                            & NUMBER_OF_DIMENSIONS,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
+                            & numberOfDimensions,BOUNDARY_CONDITION_FIXED_INLET,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
                             & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,CURRENT_TIME,1.0_DP,err,error,*999)
                           DO variable_idx=1,EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%NUMBER_OF_VARIABLES
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%variable_TYPE
@@ -2505,8 +2505,8 @@ CONTAINS
                                     DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                                     IF(ASSOCIATED(DOMAIN_NODES)) THEN
                                       !Loop over the local nodes excluding the ghosts.
-                                      DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                        DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                      DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                                        DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                           !Default to version 1 of each node derivative
                                           local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                             & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
@@ -2597,12 +2597,12 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(VARYING_STRING) :: localError
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT,ALPHA
     REAL(DP), POINTER :: MESH_DISPLACEMENT_VALUES(:)
-    INTEGER(INTG) :: I,NUMBER_OF_DIMENSIONS_LAPLACE,NUMBER_OF_DIMENSIONS_ALE_STOKES,GEOMETRIC_MESH_COMPONENT
+    INTEGER(INTG) :: I,numberOfDimensions_LAPLACE,numberOfDimensions_ALE_STOKES,GEOMETRIC_MESH_COMPONENT
     INTEGER(INTG) :: INPUT_TYPE,INPUT_OPTION,component_idx,deriv_idx,local_ny,node_idx,variable_idx,variable_type
 
     ENTERS("STOKES_PRE_SOLVE_ALE_UPDATE_MESH",err,error,*999)
@@ -2640,7 +2640,7 @@ CONTAINS
                     END IF
                     !Get the data
                     CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET_ALE_STOKES%GEOMETRY%GEOMETRIC_FIELD, &
-                      & FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS_ALE_STOKES,err,error,*999)
+                      & FIELD_U_VARIABLE_TYPE,numberOfDimensions_ALE_STOKES,err,error,*999)
 !\todo: Introduce flags set by the user (42/1 only for testings purpose)
                     !Copy input to Stokes' independent field
                     INPUT_TYPE=42
@@ -2649,7 +2649,7 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET_ALE_STOKES%INDEPENDENT%INDEPENDENT_FIELD, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,MESH_DISPLACEMENT_VALUES, &
-                      & NUMBER_OF_DIMENSIONS_ALE_STOKES,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                      & numberOfDimensions_ALE_STOKES,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
                       & err,error,*999)
                     CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET_ALE_STOKES%INDEPENDENT%INDEPENDENT_FIELD, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
@@ -2683,8 +2683,8 @@ CONTAINS
                               DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                               IF(ASSOCIATED(DOMAIN_NODES)) THEN
                                 !Loop over the local nodes excluding the ghosts.
-                                DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                  DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                                  DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                     !Default to version 1 of each node derivative
                                     local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                       & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
@@ -2734,7 +2734,7 @@ CONTAINS
                         CALL FlagError("Laplace equations set is not associated.",err,error,*999)
                       END IF
                       CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET_LAPLACE%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                        & NUMBER_OF_DIMENSIONS_LAPLACE,err,error,*999)
+                        & numberOfDimensions_LAPLACE,err,error,*999)
                     ELSE
                       CALL FlagError("Laplace solver mapping is not associated.",err,error,*999)
                     END IF
@@ -2754,7 +2754,7 @@ CONTAINS
                         CALL FlagError("ALE Stokes equations set is not associated.",err,error,*999)
                       END IF
                       CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET_ALE_STOKES%GEOMETRY%GEOMETRIC_FIELD, &
-                        & FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS_ALE_STOKES,err,error,*999)
+                        & FIELD_U_VARIABLE_TYPE,numberOfDimensions_ALE_STOKES,err,error,*999)
                     ELSE
                       CALL FlagError("ALE Stokes solver mapping is not associated.",err,error,*999)
                     END IF
@@ -2762,8 +2762,8 @@ CONTAINS
                     CALL FlagError("ALE Stokes solver equations are not associated.",err,error,*999)
                   END IF
                   !Copy result from Laplace mesh movement to Stokes' independent field
-                  IF(NUMBER_OF_DIMENSIONS_ALE_STOKES==NUMBER_OF_DIMENSIONS_LAPLACE) THEN
-                    DO I=1,NUMBER_OF_DIMENSIONS_ALE_STOKES
+                  IF(numberOfDimensions_ALE_STOKES==numberOfDimensions_LAPLACE) THEN
+                    DO I=1,numberOfDimensions_ALE_STOKES
                       CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD_LAPLACE, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,INDEPENDENT_FIELD_ALE_STOKES, &
                         & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,I,err,error,*999)
@@ -2794,8 +2794,8 @@ CONTAINS
                                 DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                                 IF(ASSOCIATED(DOMAIN_NODES)) THEN
                                   !Loop over the local nodes excluding the ghosts.
-                                  DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                    DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                  DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                                    DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                       !Default to version 1 of each node derivative
                                       local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                         & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
@@ -2871,9 +2871,9 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(VARYING_STRING) :: localError
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
+    TYPE(DomainType), POINTER :: DOMAIN
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: component_idx,node_idx,deriv_idx,local_ny,variable_idx,variable_type
@@ -2923,8 +2923,8 @@ CONTAINS
                                     DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                                     IF(ASSOCIATED(DOMAIN_NODES)) THEN
                                       !Loop over the local nodes excluding the ghosts.
-                                      DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                                        DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                                      DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                                        DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                           !Default to version 1 of each node derivative
                                           local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                             & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
@@ -3001,7 +3001,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError,METHOD,FILENAME
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
-    INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,NUMBER_OF_DIMENSIONS
+    INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,numberOfDimensions
     LOGICAL :: EXPORT_FIELD
     CHARACTER(14) :: OUTPUT_FILE
 
@@ -3128,14 +3128,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
 !\todo: Reduce number of variables used
-    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,NUMBER_OF_DIMENSIONS,variable_idx,variable_type,I,J,K
+    INTEGER(INTG) :: component_idx,deriv_idx,dim_idx,local_ny,node_idx,numberOfDimensions,variable_idx,variable_type,I,J,K
     INTEGER(INTG) :: number_of_nodes_xic(3),element_idx,en_idx,BOUND_COUNT,ANALYTIC_FUNCTION_TYPE,GLOBAL_DERIV_INDEX
     REAL(DP) :: VALUE,X(3),XI_COORDINATES(3)
 !     REAL(DP) :: BOUNDARY_TOLERANCE, BOUNDARY_X(3,2),MU_PARAM,L
     REAL(DP) :: T_COORDINATES(20,3),CURRENT_TIME,MU_PARAM,RHO_PARAM
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,materialsField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINT(:)
@@ -3168,14 +3168,14 @@ CONTAINS
             NULLIFY(INTERPOLATED_POINT)
             CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(geometricField,INTERPOLATION_PARAMETERS,err,error,*999)
             CALL FIELD_INTERPOLATED_POINTS_INITIALISE(INTERPOLATION_PARAMETERS,INTERPOLATED_POINT,err,error,*999)
-            CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS,err,error,*999)
+            CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
 ! ! ! !\todo: Check adjacent element calculation / use boundary node flag instead / didn't work for simplex
-! ! !             IF(NUMBER_OF_DIMENSIONS==2) THEN
+! ! !             IF(numberOfDimensions==2) THEN
 ! ! !               BOUNDARY_X(1,1)=0.0_DP
 ! ! !               BOUNDARY_X(1,2)=10.0_DP
 ! ! !               BOUNDARY_X(2,1)=0.0_DP
 ! ! !               BOUNDARY_X(2,2)=10.0_DP
-! ! !             ELSE IF(NUMBER_OF_DIMENSIONS==3) THEN
+! ! !             ELSE IF(numberOfDimensions==3) THEN
 ! ! !               BOUNDARY_X(1,1)=-5.0_DP
 ! ! !               BOUNDARY_X(1,2)=5.0_DP
 ! ! !               BOUNDARY_X(2,1)=-5.0_DP
@@ -3196,45 +3196,45 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_CREATE(dependentField,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                   DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                     BOUND_COUNT=0
-                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
+                    IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
                         IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
                           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
                           IF(ASSOCIATED(DOMAIN_NODES)) THEN
                             !Loop over the local nodes excluding the ghosts.
-                            DO node_idx=1,DOMAIN_NODES%NUMBER_OF_NODES
-                              element_idx=DOMAIN%topology%nodes%nodes(node_idx)%surrounding_elements(1)
+                            DO node_idx=1,DOMAIN_NODES%numberOfNodes
+                              element_idx=DOMAIN%topology%nodes%nodes(node_idx)%surroundingElements(1)
                               CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element_idx, &
                                 & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                               en_idx=0
                               XI_COORDINATES=0.0_DP
-                              number_of_nodes_xic(1)=DOMAIN%topology%elements%elements(element_idx)%basis%number_of_nodes_xic(1)
-                              number_of_nodes_xic(2)=DOMAIN%topology%elements%elements(element_idx)%basis%number_of_nodes_xic(2)
-                              IF(NUMBER_OF_DIMENSIONS==3) THEN
-                                number_of_nodes_xic(3)=DOMAIN%topology%elements%elements(element_idx)%basis%number_of_nodes_xic(3)
+                              number_of_nodes_xic(1)=DOMAIN%topology%elements%elements(element_idx)%basis%numberOfNodesXiC(1)
+                              number_of_nodes_xic(2)=DOMAIN%topology%elements%elements(element_idx)%basis%numberOfNodesXiC(2)
+                              IF(numberOfDimensions==3) THEN
+                                number_of_nodes_xic(3)=DOMAIN%topology%elements%elements(element_idx)%basis%numberOfNodesXiC(3)
                               ELSE
                                 number_of_nodes_xic(3)=1
                               ENDIF
   !\todo: Use boundary flag
-                              IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==4.AND.NUMBER_OF_DIMENSIONS==2 .OR. &
-                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==9.OR. &
-                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==16.OR. &
-                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==8.OR. &
-                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==27.OR. &
-                                & DOMAIN%topology%elements%maximum_number_of_element_parameters==64) THEN
+                              IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4.AND.numberOfDimensions==2 .OR. &
+                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==9.OR. &
+                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==16.OR. &
+                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==8.OR. &
+                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==27.OR. &
+                                & DOMAIN%topology%elements%maximumNumberOfElementParameters==64) THEN
                                 DO K=1,number_of_nodes_xic(3)
                                   DO J=1,number_of_nodes_xic(2)
                                     DO I=1,number_of_nodes_xic(1)
                                       en_idx=en_idx+1
-                                      IF(DOMAIN%topology%elements%elements(element_idx)%element_nodes(en_idx)==node_idx) EXIT
+                                      IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(en_idx)==node_idx) EXIT
                                       XI_COORDINATES(1)=XI_COORDINATES(1)+(1.0_DP/(number_of_nodes_xic(1)-1))
                                     ENDDO
-                                      IF(DOMAIN%topology%elements%elements(element_idx)%element_nodes(en_idx)==node_idx) EXIT
+                                      IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(en_idx)==node_idx) EXIT
                                       XI_COORDINATES(1)=0.0_DP
                                       XI_COORDINATES(2)=XI_COORDINATES(2)+(1.0_DP/(number_of_nodes_xic(2)-1))
                                   ENDDO
-                                  IF(DOMAIN%topology%elements%elements(element_idx)%element_nodes(en_idx)==node_idx) EXIT
+                                  IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(en_idx)==node_idx) EXIT
                                   XI_COORDINATES(1)=0.0_DP
                                   XI_COORDINATES(2)=0.0_DP
                                   IF(number_of_nodes_xic(3)/=1) THEN
@@ -3245,19 +3245,19 @@ CONTAINS
                                   & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                               ELSE
   !\todo: Use boundary flag
-                                IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==3) THEN
+                                IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==3) THEN
                                   T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
                                   T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
                                   T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
-                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==6) THEN
+                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==6) THEN
                                   T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
                                   T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
                                   T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
                                   T_COORDINATES(4,1:2)=[0.5_DP,0.5_DP]
                                   T_COORDINATES(5,1:2)=[1.0_DP,0.5_DP]
                                   T_COORDINATES(6,1:2)=[0.5_DP,1.0_DP]
-                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==10.AND. &
-                                  & NUMBER_OF_DIMENSIONS==2) THEN
+                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==10.AND. &
+                                  & numberOfDimensions==2) THEN
                                   T_COORDINATES(1,1:2)=[0.0_DP,1.0_DP]
                                   T_COORDINATES(2,1:2)=[1.0_DP,0.0_DP]
                                   T_COORDINATES(3,1:2)=[1.0_DP,1.0_DP]
@@ -3268,13 +3268,13 @@ CONTAINS
                                   T_COORDINATES(8,1:2)=[2.0_DP/3.0_DP,1.0_DP]
                                   T_COORDINATES(9,1:2)=[1.0_DP/3.0_DP,1.0_DP]
                                   T_COORDINATES(10,1:2)=[2.0_DP/3.0_DP,2.0_DP/3.0_DP]
-                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==4) THEN
+                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4) THEN
                                   T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
                                   T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
                                   T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
                                   T_COORDINATES(4,1:3)=[1.0_DP,1.0_DP,1.0_DP]
-                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==10.AND. &
-                                  & NUMBER_OF_DIMENSIONS==3) THEN
+                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==10.AND. &
+                                  & numberOfDimensions==3) THEN
                                   T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
                                   T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
                                   T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
@@ -3285,7 +3285,7 @@ CONTAINS
                                   T_COORDINATES(8,1:3)=[1.0_DP,0.5_DP,0.5_DP]
                                   T_COORDINATES(9,1:3)=[1.0_DP,1.0_DP,0.5_DP]
                                   T_COORDINATES(10,1:3)=[1.0_DP,0.5_DP,1.0_DP]
-                                ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==20) THEN
+                                ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==20) THEN
                                   T_COORDINATES(1,1:3)=[0.0_DP,1.0_DP,1.0_DP]
                                   T_COORDINATES(2,1:3)=[1.0_DP,0.0_DP,1.0_DP]
                                   T_COORDINATES(3,1:3)=[1.0_DP,1.0_DP,0.0_DP]
@@ -3307,26 +3307,26 @@ CONTAINS
                                   T_COORDINATES(19,1:3)=[2.0_DP/3.0_DP,1.0_DP,2.0_DP/3.0_DP]
                                   T_COORDINATES(20,1:3)=[1.0_DP,2.0_DP/3.0_DP,2.0_DP/3.0_DP]
                                 ENDIF
-                                DO K=1,DOMAIN%topology%elements%maximum_number_of_element_parameters
-                                  IF(DOMAIN%topology%elements%elements(element_idx)%element_nodes(K)==node_idx) EXIT
+                                DO K=1,DOMAIN%topology%elements%maximumNumberOfElementParameters
+                                  IF(DOMAIN%topology%elements%elements(element_idx)%elementNodes(K)==node_idx) EXIT
                                 ENDDO
-                                IF(NUMBER_OF_DIMENSIONS==2) THEN
+                                IF(numberOfDimensions==2) THEN
                                   CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,T_COORDINATES(K,1:2), &
                                     & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                                ELSE IF(NUMBER_OF_DIMENSIONS==3) THEN
+                                ELSE IF(numberOfDimensions==3) THEN
                                   CALL FIELD_INTERPOLATE_XI(NO_PART_DERIV,T_COORDINATES(K,1:3), &
                                     & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                                 ENDIF
                               ENDIF
                               X=0.0_DP
-                              DO dim_idx=1,NUMBER_OF_DIMENSIONS
+                              DO dim_idx=1,numberOfDimensions
                                 X(dim_idx)=INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(dim_idx,1)
                               ENDDO !dim_idx
 
                               !Loop over the derivatives
-                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                              DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                 ANALYTIC_FUNCTION_TYPE=EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE
-                                GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%GLOBAL_DERIVATIVE_INDEX
+                                GLOBAL_DERIV_INDEX=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)%globalDerivativeIndex
                                 CURRENT_TIME=0.0_DP
                                 materialsField=>EQUATIONS_SET%MATERIALS%MATERIALS_FIELD
                                 !Define MU_PARAM, density=1
@@ -3343,7 +3343,7 @@ CONTAINS
                                   RHO_PARAM=0.0_DP
                                 ENDIF
                                 CALL STOKES_EQUATION_ANALYTIC_FUNCTIONS(VALUE,X,MU_PARAM,RHO_PARAM,CURRENT_TIME,variable_type, &
-                                  & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,NUMBER_OF_DIMENSIONS, &
+                                  & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,numberOfDimensions, &
                                   & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,component_idx,err,error,*999)
                                 !Default to version 1 of each node derivative
                                 local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
@@ -3352,15 +3352,15 @@ CONTAINS
                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
                                 IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
   ! \todo: This part should work even for simplex elements as soon as adjacent element calculation has been fixed
-                                  IF(DOMAIN_NODES%NODES(node_idx)%BOUNDARY_NODE) THEN
+                                  IF(DOMAIN_NODES%NODES(node_idx)%boundaryNode) THEN
                                     !If we are a boundary node then set the analytic value on the boundary
-                                    IF(component_idx<=NUMBER_OF_DIMENSIONS) THEN
+                                    IF(component_idx<=numberOfDimensions) THEN
                                       CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,dependentField,variable_type, &
                                         & local_ny,BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
                                       BOUND_COUNT=BOUND_COUNT+1
                                     ELSE
   ! \todo: This is just a workaround for linear pressure fields in simplex element components
-                                      IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==3) THEN
+                                      IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==3) THEN
                                         IF(ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1.OR. &
                                           & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2.OR. &
                                           & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3.OR. &
@@ -3378,8 +3378,8 @@ CONTAINS
                                               BOUND_COUNT=BOUND_COUNT+1
                                           ENDIF
                                         ENDIF
-                                      ELSE IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==4.AND. &
-                                        & NUMBER_OF_DIMENSIONS==3) THEN
+                                      ELSE IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4.AND. &
+                                        & numberOfDimensions==3) THEN
                                         IF(ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1.OR. &
                                           & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2.OR. &
                                           & ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3.OR. &
@@ -3416,25 +3416,25 @@ CONTAINS
 
                                     ENDIF
                                   ELSE
-                                    IF(component_idx<=NUMBER_OF_DIMENSIONS) THEN
+                                    IF(component_idx<=numberOfDimensions) THEN
                                       CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField,variable_type, &
                                         & FIELD_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
                                     ENDIF
                                   ENDIF
   ! \todo: Use boundary node flag
   ! ! !                                 !If we are a boundary node then set the analytic value on the boundary
-  ! ! !                                 IF(NUMBER_OF_DIMENSIONS==2) THEN
+  ! ! !                                 IF(numberOfDimensions==2) THEN
   ! ! !                                   IF(X(1)<BOUNDARY_X(1,1)+BOUNDARY_TOLERANCE.AND.X(1)>BOUNDARY_X(1,1)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                     & X(1)<BOUNDARY_X(1,2)+BOUNDARY_TOLERANCE.AND.X(1)>BOUNDARY_X(1,2)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                     & X(2)<BOUNDARY_X(2,1)+BOUNDARY_TOLERANCE.AND.X(2)>BOUNDARY_X(2,1)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                     & X(2)<BOUNDARY_X(2,2)+BOUNDARY_TOLERANCE.AND.X(2)>BOUNDARY_X(2,2)-BOUNDARY_TOLERANCE) THEN
-  ! ! !                                     IF(component_idx<=NUMBER_OF_DIMENSIONS) THEN
+  ! ! !                                     IF(component_idx<=numberOfDimensions) THEN
   ! ! !                                       CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
   ! ! !                                         & BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
   ! ! !                                     BOUND_COUNT=BOUND_COUNT+1
   ! ! !                                     !Apply boundary conditions check for pressure nodes
-  ! ! !                                     ELSE IF(component_idx>NUMBER_OF_DIMENSIONS) THEN
-  ! ! !                                       IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==4) THEN
+  ! ! !                                     ELSE IF(component_idx>numberOfDimensions) THEN
+  ! ! !                                       IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4) THEN
   ! ! !                                       IF(X(1)<BOUNDARY_X(1,1)+BOUNDARY_TOLERANCE.AND.X(1)>BOUNDARY_X(1,1)-BOUNDARY_TOLERANCE.AND. &
   ! ! !                                         & X(2)<BOUNDARY_X(2,1)+BOUNDARY_TOLERANCE.AND.X(2)>BOUNDARY_X(2,1)-BOUNDARY_TOLERANCE) &
   ! ! !                                         & THEN
@@ -3445,9 +3445,9 @@ CONTAINS
   ! ! !                                       ENDIF
   ! ! !                                       ENDIF
   ! ! ! !\todo: Again, ...
-  ! ! !                                       IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==3.OR. &
-  ! ! !                                         & DOMAIN%topology%elements%maximum_number_of_element_parameters==6.OR. &
-  ! ! !                                         & DOMAIN%topology%elements%maximum_number_of_element_parameters==10) THEN
+  ! ! !                                       IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==3.OR. &
+  ! ! !                                         & DOMAIN%topology%elements%maximumNumberOfElementParameters==6.OR. &
+  ! ! !                                         & DOMAIN%topology%elements%maximumNumberOfElementParameters==10) THEN
   ! ! !                                       IF(X(1)<BOUNDARY_X(1,1)+BOUNDARY_TOLERANCE.AND.X(1)>BOUNDARY_X(1,1)-BOUNDARY_TOLERANCE.AND. &
   ! ! !                                         & X(2)<BOUNDARY_X(2,1)+BOUNDARY_TOLERANCE.AND.X(2)>BOUNDARY_X(2,1)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                         & X(1)<BOUNDARY_X(1,1)+BOUNDARY_TOLERANCE.AND.X(1)>BOUNDARY_X(1,1)-BOUNDARY_TOLERANCE.AND.&
@@ -3464,26 +3464,26 @@ CONTAINS
   ! ! !                                       ENDIF
   ! ! !                                     ENDIF
   ! ! !                                   ENDIF
-  ! ! !                                     IF(component_idx<=NUMBER_OF_DIMENSIONS+1) THEN
+  ! ! !                                     IF(component_idx<=numberOfDimensions+1) THEN
   ! ! !                                       CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField,variable_type, &
   ! ! !                                         & FIELD_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
   ! ! !                                     ENDIF
-  ! ! !                                 ELSE IF(NUMBER_OF_DIMENSIONS==3) THEN
+  ! ! !                                 ELSE IF(numberOfDimensions==3) THEN
   ! ! !                                   IF(X(1)<BOUNDARY_X(1,1)+BOUNDARY_TOLERANCE.AND.X(1)>BOUNDARY_X(1,1)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                     & X(1)<BOUNDARY_X(1,2)+BOUNDARY_TOLERANCE.AND.X(1)>BOUNDARY_X(1,2)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                     & X(2)<BOUNDARY_X(2,1)+BOUNDARY_TOLERANCE.AND.X(2)>BOUNDARY_X(2,1)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                     & X(2)<BOUNDARY_X(2,2)+BOUNDARY_TOLERANCE.AND.X(2)>BOUNDARY_X(2,2)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                     & X(3)<BOUNDARY_X(3,1)+BOUNDARY_TOLERANCE.AND.X(3)>BOUNDARY_X(3,1)-BOUNDARY_TOLERANCE.OR. &
   ! ! !                                     & X(3)<BOUNDARY_X(3,2)+BOUNDARY_TOLERANCE.AND.X(3)>BOUNDARY_X(3,2)-BOUNDARY_TOLERANCE) THEN
-  ! ! !                                     IF(component_idx<=NUMBER_OF_DIMENSIONS) THEN
+  ! ! !                                     IF(component_idx<=numberOfDimensions) THEN
   ! ! !                                       CALL BOUNDARY_CONDITIONS_SET_LOCAL_DOF(BOUNDARY_CONDITIONS,variable_type,local_ny, &
   ! ! !                                         & BOUNDARY_CONDITION_FIXED,VALUE,err,error,*999)
   ! ! !                                     BOUND_COUNT=BOUND_COUNT+1
   ! ! !                                     !Apply boundary conditions check for pressure nodes
-  ! ! !                                     ELSE IF(component_idx>NUMBER_OF_DIMENSIONS) THEN
-  ! ! !                                       IF(DOMAIN%topology%elements%maximum_number_of_element_parameters==4.OR. &
-  ! ! !                                         & DOMAIN%topology%elements%maximum_number_of_element_parameters==10.OR. &
-  ! ! !                                         & DOMAIN%topology%elements%maximum_number_of_element_parameters==20) THEN
+  ! ! !                                     ELSE IF(component_idx>numberOfDimensions) THEN
+  ! ! !                                       IF(DOMAIN%topology%elements%maximumNumberOfElementParameters==4.OR. &
+  ! ! !                                         & DOMAIN%topology%elements%maximumNumberOfElementParameters==10.OR. &
+  ! ! !                                         & DOMAIN%topology%elements%maximumNumberOfElementParameters==20) THEN
   ! ! !                                       IF(X(1)<BOUNDARY_X(1,1)+BOUNDARY_TOLERANCE.AND.X(1)>BOUNDARY_X(1,1)-BOUNDARY_TOLERANCE.AND. &
   ! ! !                                        & X(2)<BOUNDARY_X(2,1)+BOUNDARY_TOLERANCE.AND.X(2)>BOUNDARY_X(2,1)-BOUNDARY_TOLERANCE.AND. &
   ! ! !                                        & X(3)<BOUNDARY_X(3,1)+BOUNDARY_TOLERANCE.AND.X(3)>BOUNDARY_X(3,1)-BOUNDARY_TOLERANCE.OR. &
@@ -3515,7 +3515,7 @@ CONTAINS
   ! ! !                                       ENDIF
   ! ! !                                     ENDIF
   ! ! !                                   ELSE
-  ! ! !                                     IF(component_idx<=NUMBER_OF_DIMENSIONS+1) THEN
+  ! ! !                                     IF(component_idx<=numberOfDimensions+1) THEN
   ! ! !                                       CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(dependentField,variable_type, &
   ! ! !                                         & FIELD_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
   ! ! !                                     ENDIF
@@ -3580,7 +3580,7 @@ CONTAINS
   !
   !>Calculates the various analytic solutions given X and time, can be called from within analytic calculate or elsewhere if needed
   SUBROUTINE STOKES_EQUATION_ANALYTIC_FUNCTIONS(VALUE,X,MU_PARAM,RHO_PARAM,CURRENT_TIME,VARIABLE_TYPE, &
-    & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,NUMBER_OF_DIMENSIONS,NUMBER_OF_COMPONENTS,COMPONENT_IDX,err,error,*)
+    & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,numberOfDimensions,NUMBER_OF_COMPONENTS,COMPONENT_IDX,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -3589,12 +3589,12 @@ CONTAINS
     REAL(DP) :: MU_PARAM,RHO_PARAM
     REAL(DP), INTENT(IN) :: CURRENT_TIME
     REAL(DP), INTENT(IN), DIMENSION(3) :: X
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_DIMENSIONS,NUMBER_OF_COMPONENTS,COMPONENT_IDX
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions,NUMBER_OF_COMPONENTS,COMPONENT_IDX
     !Local variables
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: variable_type,GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE
-    !TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    !TYPE(DOMAIN_NODES_TYPE), POINTER :: DOMAIN_NODES
+    !TYPE(DomainType), POINTER :: DOMAIN
+    !TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     REAL(DP) :: INTERNAL_TIME
 
     ENTERS("STOKES_EQUATION_ANALYTIC_FUNCTIONS",err,error,*999)
@@ -3603,7 +3603,7 @@ CONTAINS
     INTERNAL_TIME=CURRENT_TIME
      SELECT CASE(ANALYTIC_FUNCTION_TYPE)
        CASE(EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1)
-         IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
+         IF(numberOfDimensions==2.AND.NUMBER_OF_COMPONENTS==3) THEN
            !Polynomial function
            SELECT CASE(variable_type)
              CASE(FIELD_U_VARIABLE_TYPE)
@@ -3659,7 +3659,7 @@ CONTAINS
            CALL FlagError(localError,err,error,*999)
          ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2)
-         IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
+         IF(numberOfDimensions==2.AND.NUMBER_OF_COMPONENTS==3) THEN
            !Exponential function
            SELECT CASE(variable_type)
              CASE(FIELD_U_VARIABLE_TYPE)
@@ -3726,7 +3726,7 @@ CONTAINS
            CALL FlagError(localError,err,error,*999)
          ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3)
-         IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
+         IF(numberOfDimensions==2.AND.NUMBER_OF_COMPONENTS==3) THEN
            !Sine and cosine functions
            SELECT CASE(variable_type)
              CASE(FIELD_U_VARIABLE_TYPE)
@@ -3793,12 +3793,12 @@ CONTAINS
            CALL FlagError(localError,err,error,*999)
          ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4)
-         IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
+         IF(numberOfDimensions==2.AND.NUMBER_OF_COMPONENTS==3) THEN
            !Reduced Taylor-Green solution for Stokes
            CALL FlagError("Not implemented.",err,error,*999)
          ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5)
-         IF(NUMBER_OF_DIMENSIONS==2.AND.NUMBER_OF_COMPONENTS==3) THEN
+         IF(numberOfDimensions==2.AND.NUMBER_OF_COMPONENTS==3) THEN
            !Stokes-Taylor-Green dynamic
            SELECT CASE(variable_type)
              CASE(FIELD_U_VARIABLE_TYPE)
@@ -3865,7 +3865,7 @@ CONTAINS
            CALL FlagError(localError,err,error,*999)
          ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1)
-         IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
+         IF(numberOfDimensions==3.AND.NUMBER_OF_COMPONENTS==4) THEN
 !POLYNOM
            SELECT CASE(variable_type)
              CASE(FIELD_U_VARIABLE_TYPE)
@@ -3924,7 +3924,7 @@ CONTAINS
            CALL FlagError(localError,err,error,*999)
          ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2)
-         IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
+         IF(numberOfDimensions==3.AND.NUMBER_OF_COMPONENTS==4) THEN
            !Exponential function
            SELECT CASE(variable_type)
              CASE(FIELD_U_VARIABLE_TYPE)
@@ -3997,7 +3997,7 @@ CONTAINS
            CALL FlagError(localError,err,error,*999)
          ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3)
-         IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
+         IF(numberOfDimensions==3.AND.NUMBER_OF_COMPONENTS==4) THEN
            !Sine and cosine functions
            SELECT CASE(variable_type)
              CASE(FIELD_U_VARIABLE_TYPE)
@@ -4072,12 +4072,12 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4)
-         IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
+         IF(numberOfDimensions==3.AND.NUMBER_OF_COMPONENTS==4) THEN
            !Reduced Taylor-Green solution for Stokes
            CALL FlagError("Not implemented.",err,error,*999)
          ENDIF
        CASE(EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5)
-         IF(NUMBER_OF_DIMENSIONS==3.AND.NUMBER_OF_COMPONENTS==4) THEN
+         IF(numberOfDimensions==3.AND.NUMBER_OF_COMPONENTS==4) THEN
            !Stokes-Taylor-Green dynamic
            SELECT CASE(variable_type)
              CASE(FIELD_U_VARIABLE_TYPE)

@@ -129,7 +129,7 @@ CONTAINS
   SUBROUTINE Region_CellMLGet(region,userNumber,cellml,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the cellml for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the cellml for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the cellml to get.
     TYPE(CELLML_TYPE), POINTER :: cellml !<On exit, a pointer to the cellml for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -141,8 +141,8 @@ CONTAINS
 
     IF(ASSOCIATED(cellml)) CALL FlagError("CellML is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -151,7 +151,7 @@ CONTAINS
     CALL CellML_UserNumberFind(userNumber,region,cellml,err,error,*999)
     IF(.NOT.ASSOCIATED(cellml)) THEN
       localError="A cellml environment with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " do not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -171,7 +171,7 @@ CONTAINS
   SUBROUTINE Region_ContextGet(region,context,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the context for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the context for
     TYPE(ContextType), POINTER :: context !<On exit, a pointer to the context for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -185,13 +185,13 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(region%regions)) THEN
       localError="Regions is not associated for region number "// &
-        & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     context=>region%regions%context
     IF(.NOT.ASSOCIATED(context)) THEN
       localError="The context is not associated for the regions for region number "// &
-        & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -211,8 +211,8 @@ CONTAINS
   SUBROUTINE Region_CoordinateSystemGet(region,coordinateSystem,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, the coordinate system for the specified region. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the coordinate system for
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<On exit, the coordinate system for the specified region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -223,15 +223,15 @@ CONTAINS
     !Check input arguments
     IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    coordinateSystem=>region%COORDINATE_SYSTEM
+    coordinateSystem=>region%coordinateSystem
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
-      localError="The coordinate system for region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+      localError="The coordinate system for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -252,7 +252,7 @@ CONTAINS
   SUBROUTINE Region_DataPointsGet(region,userNumber,dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the data points for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the data points for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data points to get.
     TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the data points for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -264,14 +264,14 @@ CONTAINS
 
     IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ASSOCIATED(region%dataPointSets)) THEN
       localError="Region data point sets is not associated for region number "// &
-        & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -279,7 +279,7 @@ CONTAINS
     CALL DataPointSets_UserNumberFind(region%dataPointSets,userNumber,dataPoints,err,error,*999)
     IF(.NOT.ASSOCIATED(dataPoints)) THEN
       localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -299,7 +299,7 @@ CONTAINS
   SUBROUTINE Region_EquationsSetGet(region,userNumber,equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the equationsSet for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the equationsSet for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the equations set to get.
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the equations set for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -311,8 +311,8 @@ CONTAINS
 
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -321,7 +321,7 @@ CONTAINS
     CALL EquationsSet_UserNumberFind(userNumber,region,equationsSet,err,error,*999)
     IF(.NOT.ASSOCIATED(equationsSet)) THEN
       localError="An equations set with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -341,7 +341,7 @@ CONTAINS
   SUBROUTINE Region_FieldGet(region,userNumber,field,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the field for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the field for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the field to get.
     TYPE(FIELD_TYPE), POINTER :: field !<On exit, a pointer to the field for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -353,8 +353,8 @@ CONTAINS
 
     IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -363,7 +363,7 @@ CONTAINS
     CALL Field_UserNumberFind(userNumber,region,field,err,error,*999)
     IF(.NOT.ASSOCIATED(field)) THEN
       localError="A field with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -383,9 +383,9 @@ CONTAINS
   SUBROUTINE Region_GeneratedMeshGet(region,userNumber,generatedMesh,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the generated mesh for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the generated mesh for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the generated mesh to get.
-    TYPE(GENERATED_MESH_TYPE), POINTER :: generatedMesh !<On exit, a pointer to the generated mesh for the region. Must not be associated on entry.
+    TYPE(GeneratedMeshType), POINTER :: generatedMesh !<On exit, a pointer to the generated mesh for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -395,8 +395,8 @@ CONTAINS
 
     IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -405,7 +405,7 @@ CONTAINS
     CALL GeneratedMesh_UserNumberFind(userNumber,region,generatedMesh,err,error,*999)
     IF(.NOT.ASSOCIATED(generatedMesh)) THEN
       localError="A generated mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -427,7 +427,7 @@ CONTAINS
     !Argument variables
     TYPE(RegionsType), POINTER :: regions !<The regions to get the user number for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the region to find
-    TYPE(REGION_TYPE), POINTER :: region !<On exit, a pointer to the region with the specified user number if it exists. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: region !<On exit, a pointer to the region with the specified user number if it exists. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -456,9 +456,9 @@ CONTAINS
   SUBROUTINE Region_InterfaceGet(region,userNumber,interface,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the parent region to get the interface for
+    TYPE(RegionType), POINTER :: region !<A pointer to the parent region to get the interface for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the interface to get.
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<On exit, a pointer to the interface for the parent region. Must not be associated on entry.
+    TYPE(InterfaceType), POINTER :: interface !<On exit, a pointer to the interface for the parent region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -468,8 +468,8 @@ CONTAINS
 
     IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -478,7 +478,7 @@ CONTAINS
     CALL Interface_UserNumberFind(userNumber,region,interface,err,error,*999)
     IF(.NOT.ASSOCIATED(interface)) THEN
       localError="An interface with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -498,9 +498,9 @@ CONTAINS
   SUBROUTINE Region_MeshGet(region,userNumber,mesh,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the mesh for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the mesh for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the mesh to get.
-    TYPE(MESH_TYPE), POINTER :: mesh !<On exit, a pointer to the mesh for the region. Must not be associated on entry.
+    TYPE(MeshType), POINTER :: mesh !<On exit, a pointer to the mesh for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -510,8 +510,8 @@ CONTAINS
 
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -520,7 +520,7 @@ CONTAINS
     CALL Mesh_UserNumberFind(userNumber,region,mesh,err,error,*999)
     IF(.NOT.ASSOCIATED(mesh)) THEN
       localError="A mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -540,7 +540,7 @@ CONTAINS
   SUBROUTINE Region_NodesGet(region,nodes,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the nodes for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the nodes for
     TYPE(NodesType), POINTER :: nodes !<On exit, a pointer to the nodes for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -551,15 +551,15 @@ CONTAINS
 
     IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%REGION_FINISHED) THEN
-      localError="Region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
     nodes=>region%nodes
     IF(.NOT.ASSOCIATED(nodes)) THEN
-      localError="The nodes for region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))// &
+      localError="The nodes for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -580,7 +580,7 @@ CONTAINS
   SUBROUTINE Region_RegionsGet(region,regions,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the regions for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the regions for
     TYPE(RegionsType), POINTER :: regions !<On exit, a pointer to the regions for the region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -595,7 +595,7 @@ CONTAINS
     regions=>region%regions   
     IF(.NOT.ASSOCIATED(regions)) THEN
       localError="Regions is not associated for region number "// &
-        & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -617,12 +617,12 @@ CONTAINS
     !Argument variables
     TYPE(RegionsType), POINTER :: regions !<The regions to find the user number for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the region to find
-    TYPE(REGION_TYPE), POINTER :: region !<On exit, a pointer to the region with the specified user number if it exists. If no region exists with the specified user number a NULL pointer is returned. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: region !<On exit, a pointer to the region with the specified user number if it exists. If no region exists with the specified user number a NULL pointer is returned. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: regionIdx
-    TYPE(REGION_TYPE), POINTER :: worldRegion
+    TYPE(RegionType), POINTER :: worldRegion
     
     ENTERS("Region_UserNumberFind",err,error,*999)
 
@@ -636,9 +636,9 @@ CONTAINS
     IF(userNumber==0) THEN
       region=>worldRegion
     ELSE
-      IF(ASSOCIATED(worldRegion%SUB_REGIONS)) THEN
-        DO regionIdx=1,worldRegion%NUMBER_OF_SUB_REGIONS
-          CALL Region_UserNumberFindPtr(userNumber,worldRegion%SUB_REGIONS(regionIdx)%ptr,region,err,error,*999)
+      IF(ASSOCIATED(worldRegion%subRegions)) THEN
+        DO regionIdx=1,worldRegion%numberOfSubRegions
+          CALL Region_UserNumberFindPtr(userNumber,worldRegion%subRegions(regionIdx)%ptr,region,err,error,*999)
           IF(ASSOCIATED(region)) EXIT
         ENDDO !regionIdx
       ENDIF
@@ -660,8 +660,8 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find
-    TYPE(REGION_TYPE), POINTER :: startRegion !<A pointer to the region to start the search from
-    TYPE(REGION_TYPE), POINTER :: region !<On exit, a pointer to the region with the specified user number if it exists. If no region exists with the specified user number a NULL pointer is returned.
+    TYPE(RegionType), POINTER :: startRegion !<A pointer to the region to start the search from
+    TYPE(RegionType), POINTER :: region !<On exit, a pointer to the region with the specified user number if it exists. If no region exists with the specified user number a NULL pointer is returned.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -673,12 +673,12 @@ CONTAINS
     IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*999)
 
     NULLIFY(region)
-    IF(startRegion%USER_NUMBER==userNumber) THEN
+    IF(startRegion%userNumber==userNumber) THEN
       region=>startRegion
     ELSE
-      IF(ASSOCIATED(startRegion%SUB_REGIONS)) THEN
-        DO regionIdx=1,startRegion%NUMBER_OF_SUB_REGIONS
-          CALL Region_UserNumberFindPtr(userNumber,startRegion%SUB_REGIONS(regionIdx)%ptr,region,err,error,*999)
+      IF(ASSOCIATED(startRegion%subRegions)) THEN
+        DO regionIdx=1,startRegion%numberOfSubRegions
+          CALL Region_UserNumberFindPtr(userNumber,startRegion%subRegions(regionIdx)%ptr,region,err,error,*999)
           IF(ASSOCIATED(region)) EXIT
         ENDDO !regionIdx
       ENDIF
@@ -699,7 +699,7 @@ CONTAINS
   SUBROUTINE Region_UserNumberGet(region,userNumber,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to get the user number for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number of the region.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -709,7 +709,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
 
-    userNumber=region%USER_NUMBER
+    userNumber=region%userNumber
   
     EXITS("Region_UserNumberGet")
     RETURN
@@ -727,7 +727,7 @@ CONTAINS
 
     !Argument variables
     TYPE(RegionsType), POINTER :: regions !<A pointer to the regions to get the world region for
-    TYPE(REGION_TYPE), POINTER :: worldRegion !<On exit, a pointer to the world region for the regions. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: worldRegion !<On exit, a pointer to the world region for the regions. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

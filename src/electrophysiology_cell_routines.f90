@@ -168,13 +168,13 @@ contains
     real(dp), dimension(:), pointer :: celldata, activdata
 
     integer(intg) :: ncells, i, d
-    type(domain_ptr_type), pointer :: domain
+    type(DomainPtrType), pointer :: domain
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: CELLS_VARIABLE, ACTIV_VARIABLE
 
     ENTERS('bueno_orovio_integrate',err,error,*999)
 
     domain=>cells%decomposition%domain(1)
-    ncells = domain%ptr%topology%nodes%number_of_nodes ! local
+    ncells = domain%ptr%topology%nodes%numberOfNodes ! local
 
     CELLS_VARIABLE=>cells%VARIABLE_TYPE_MAP(field_u_variable_type)%PTR
     ACTIV_VARIABLE=>materials%VARIABLE_TYPE_MAP(field_u_variable_type)%PTR
@@ -379,13 +379,13 @@ contains
     real(dp), dimension(:), pointer :: celldata, activdata
 
     integer(intg) :: ncells, i, d
-    type(domain_ptr_type), pointer :: domain
+    type(DomainPtrType), pointer :: domain
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: CELLS_VARIABLE, ACTIV_VARIABLE
 
     ENTERS('tentusscher06_integrate',err,error,*999)
 
     domain=>cells%decomposition%domain(1)
-    ncells = domain%ptr%topology%nodes%number_of_nodes ! local
+    ncells = domain%ptr%topology%nodes%numberOfNodes ! local
 
     CELLS_VARIABLE=>cells%VARIABLE_TYPE_MAP(field_u_variable_type)%PTR
     ACTIV_VARIABLE=>materials%VARIABLE_TYPE_MAP(field_u_variable_type)%PTR

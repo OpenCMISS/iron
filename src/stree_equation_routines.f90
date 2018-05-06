@@ -222,7 +222,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
+    TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -267,7 +267,7 @@ CONTAINS
               equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
               IF(equationsEquationsSetField%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
                 !Create the auto created equations set field field for SUPG element metrics
-                CALL FIELD_CREATE_START(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+                CALL FIELD_CREATE_START(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                   & equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD,err,error,*999)
                 equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
                 CALL FIELD_LABEL_SET(equationsSetField,"Equations Set Field",err,error,*999)
@@ -352,7 +352,7 @@ CONTAINS
               IF(equationsSet%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created dependent field
                 !start field creation with name 'DEPENDENT_FIELD'
-                CALL FIELD_CREATE_START(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+                CALL FIELD_CREATE_START(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                   & equationsSet%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
                 !start creation of a new field
                 CALL FIELD_TYPE_SET_AND_LOCK(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -477,7 +477,7 @@ CONTAINS
                 IF(equationsMaterials%MATERIALS_FIELD_AUTO_CREATED) THEN
                   !Create the auto created materials field
                   !start field creation with name 'MATERIAL_FIELD'
-                  CALL FIELD_CREATE_START(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+                  CALL FIELD_CREATE_START(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                     & equationsSet%MATERIALS%MATERIALS_FIELD,err,error,*999)
                   CALL FIELD_TYPE_SET_AND_LOCK(equationsMaterials%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                   !label the field
@@ -678,8 +678,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
-    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainType), POINTER :: domain
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -715,7 +715,7 @@ CONTAINS
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         dependentField=>equations%equationsSet%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(dependentField)) THEN
-          domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr
+          domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%ptr
           IF(ASSOCIATED(domain)) THEN
             domainNodes=>domain%TOPOLOGY%NODES
           ELSE
@@ -770,8 +770,8 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop,parentLoop,navierstokesLoop
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
-    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainType), POINTER :: domain
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet,navierstokesEquationsSet
     TYPE(EquationsType), POINTER :: equations,navierstokesEquations
     TYPE(FIELD_TYPE), POINTER :: materialsField,navierstokesDependentField
@@ -855,19 +855,19 @@ CONTAINS
       IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
         IF(ASSOCIATED(dependentFieldVariable)) THEN
           DO componentIdx=1,dependentFieldVariable%NUMBER_OF_COMPONENTS
-            IF(dependentFieldVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN
+            IF(dependentFieldVariable%COMPONENTS(componentIdx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
               domain=>dependentFieldVariable%COMPONENTS(componentIdx)%DOMAIN
               IF(ASSOCIATED(domain)) THEN
                 IF(ASSOCIATED(domain%TOPOLOGY)) THEN
                   domainNodes=>domain%TOPOLOGY%NODES
                   IF(ASSOCIATED(domainNodes)) THEN
                     !Loop over the local nodes excluding the ghosts.
-                    DO nodeIdx=1,domainNodes%NUMBER_OF_NODES
-                      userNodeNumber=domainNodes%NODES(nodeIdx)%USER_NUMBER
-                      DO derivativeIdx=1,domainNodes%NODES(nodeIdx)%NUMBER_OF_DERIVATIVES
-                        DO versionIdx=1,domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%numberOfVersions
+                    DO nodeIdx=1,domainNodes%numberOfNodes
+                      userNodeNumber=domainNodes%nodes(nodeIdx)%userNumber
+                      DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
+                        DO versionIdx=1,domainNodes%nodes(nodeIdx)%DERIVATIVES(derivativeIdx)%numberOfVersions
                           dependentDof = dependentFieldVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP% &
-                            & NODE_PARAM2DOF_MAP%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
+                            & NODE_PARAM2DOF_MAP%nodes(nodeIdx)%DERIVATIVES(derivativeIdx)%VERSIONS(versionIdx)
                           BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE%CONDITION_TYPES(dependentDof)
                           IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED_STREE) THEN
                             ! Update dependent field value

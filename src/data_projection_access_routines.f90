@@ -130,7 +130,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the decomposition for
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<On exit, the decomposition of the data projection. Must not be associated on entry.
+    TYPE(DecompositionType), POINTER :: decomposition !<On exit, the decomposition of the data projection. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

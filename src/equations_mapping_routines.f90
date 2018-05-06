@@ -214,31 +214,31 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     IF(.NOT.ASSOCIATED(dependentVariable)) CALL FlagError("The dependent variable is not associated.",err,error,*999)
-    numberOfRows=dependentVariable%NUMBER_OF_DOFS
-    totalNumberOfRows=dependentVariable%TOTAL_NUMBER_OF_DOFS
+    numberOfRows=dependentVariable%numberOfDofs
+    totalNumberOfRows=dependentVariable%totalNumberOfDofs
     vectorMapping%rowDofsMapping=>dependentVariable%DOMAIN_MAPPING
     IF(.NOT.ASSOCIATED(vectorMapping%rowDofsMapping)) &
       & CALL FlagError("Dependent variable domain mapping is not associated.",err,error,*999)
-    numberOfGlobalRows=vectorMapping%rowDofsMapping%NUMBER_OF_GLOBAL
+    numberOfGlobalRows=vectorMapping%rowDofsMapping%numberOfGlobal
     
     !Check that the number of rows is consistent across the remaining linear matrices
     DO matrixIdx=linearMatrixStart,createValuesCache%numberOfLinearMatrices
       dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%linearMatrixVariableTypes(matrixIdx))%ptr
       IF(ASSOCIATED(dependentVariable)) THEN
-        IF(dependentVariable%NUMBER_OF_DOFS/=numberOfRows) THEN
+        IF(dependentVariable%numberOfDofs/=numberOfRows) THEN
           localError="Invalid equations set up. The number of rows in the equations set ("// &
             & TRIM(NumberToVString(numberOfRows,"*",err,error))// &
             & ") does not match the number of rows in equations linear matrix number "// &
             & TRIM(NumberToVString(matrixIdx,"*",err,error))//" ("// &
-                      & TRIM(NumberToVString(dependentVariable%NUMBER_OF_DOFS,"*",err,error))//")."
+                      & TRIM(NumberToVString(dependentVariable%numberOfDofs,"*",err,error))//")."
           CALL FlagError(localError,err,error,*999)
         ENDIF
-        IF(dependentVariable%TOTAL_NUMBER_OF_DOFS/=totalNumberOfRows) THEN
+        IF(dependentVariable%totalNumberOfDofs/=totalNumberOfRows) THEN
           localError="Invalid equations set up. The total number of rows in the equations set ("// &
             & TRIM(NumberToVString(totalNumberOfRows,"*",err,error))// &
             & ") does not match the total number of rows in equations matrix number "// &
             & TRIM(NumberToVString(matrixIdx,"*",err,error))//" ("// &
-            & TRIM(NumberToVString(dependentVariable%TOTAL_NUMBER_OF_DOFS,"*",err,error))//")."
+            & TRIM(NumberToVString(dependentVariable%totalNumberOfDofs,"*",err,error))//")."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
@@ -261,18 +261,18 @@ CONTAINS
     IF(createValuesCache%rhsVariableType/=0) THEN
       dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%rhsVariableType)%ptr
       IF(ASSOCIATED(dependentVariable)) THEN
-        IF(dependentVariable%NUMBER_OF_DOFS/=numberOfRows) THEN
+        IF(dependentVariable%numberOfDofs/=numberOfRows) THEN
           localError="Invalid equations set up. The number of rows in the equations set ("// &
             & TRIM(NumberToVString(numberOfRows,"*",err,error))// &
             & ") does not match the number of rows in the RHS vector ("// &
-            & TRIM(NumberToVString(dependentVariable%NUMBER_OF_DOFS,"*",err,error))//")."
+            & TRIM(NumberToVString(dependentVariable%numberOfDofs,"*",err,error))//")."
           CALL FlagError(localError,err,error,*999)
         ENDIF
-        IF(dependentVariable%TOTAL_NUMBER_OF_DOFS/=totalNumberOfRows) THEN
+        IF(dependentVariable%totalNumberOfDofs/=totalNumberOfRows) THEN
           localError="Invalid equations set up. The total number of rows in the equations set ("// &
             & TRIM(NumberToVString(totalNumberOfRows,"*",err,error))// &
             & ") does not match the total number of rows in the RHS vector ("// &
-            & TRIM(NumberToVString(dependentVariable%TOTAL_NUMBER_OF_DOFS,"*",err,error))//")."
+            & TRIM(NumberToVString(dependentVariable%totalNumberOfDofs,"*",err,error))//")."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
@@ -283,18 +283,18 @@ CONTAINS
     !IF(createValuesCache%sourceVariableType/=0) THEN
     !  sourceVariable=>sourceField%VARIABLE_TYPE_MAP(createValuesCache%sourceVariableType)%ptr
     !  IF(ASSOCIATED(sourceVariable)) THEN
-    !    IF(sourceVariable%NUMBER_OF_DOFS/=numberOfRows) THEN
+    !    IF(sourceVariable%numberOfDofs/=numberOfRows) THEN
     !      localError="Invalid equations set up. The number of rows in the equations set ("// &
     !        & TRIM(NumberToVString(numberOfRows,"*",err,error))// &
     !        & ") does not match the number of rows in the source vector ("// &
-    !        & TRIM(NumberToVString(sourceVariable%NUMBER_OF_DOFS,"*",err,error))//")."
+    !        & TRIM(NumberToVString(sourceVariable%numberOfDofs,"*",err,error))//")."
     !      CALL FlagError(localError,err,error,*999)
     !    ENDIF
-    !    IF(sourceVariable%TOTAL_NUMBER_OF_DOFS/=totalNumberOfRows) THEN
+    !    IF(sourceVariable%totalNumberOfDofs/=totalNumberOfRows) THEN
     !      localError="Invalid equations set up. The total number of rows in the equations set ("// &
     !        & TRIM(NumberToVString(totalNumberOfRows,"*",err,error))// &
     !        & ") does not match the total number of rows in the source vector ("// &
-    !        & TRIM(NumberToVString(sourceVariable%TOTAL_NUMBER_OF_DOFS,"*",err,error))//")."
+    !        & TRIM(NumberToVString(sourceVariable%totalNumberOfDofs,"*",err,error))//")."
     !      CALL FlagError(localError,err,error,*999)
     !    ENDIF
     !  ELSE
@@ -334,7 +334,7 @@ CONTAINS
           IF(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices==-1) THEN
 !!TODO: check if this can be removed and just allocate those variables that are actually used
             ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap( &
-              & dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+              & dependentVariable%totalNumberOfDofs),STAT=err)
             IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
             dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap=0
           ELSE IF(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices>0) THEN
@@ -358,18 +358,18 @@ CONTAINS
                 & createValuesCache%dynamicMassMatrixNumber)=createValuesCache%dynamicMassMatrixNumber
               DO matrixIdx=1,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices
                 ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
-                  & matrixIdx)%columnDOF(dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+                  & matrixIdx)%columnDOF(dependentVariable%totalNumberOfDofs),STAT=err)
                 IF(err/=0) CALL FlagError("Could not allocate variable dof to columns map column dof.",err,error,*999)
-                DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+                DO dofIdx=1,dependentVariable%totalNumberOfDofs
                   !1-1 mapping for now
-                  columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+                  columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
                   dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps(matrixIdx)%columnDOF(dofIdx)=columnIdx
                 ENDDO !dofIdx                          
               ENDDO !matrixIdx
               ALLOCATE(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap( &
-                & dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+                & dependentVariable%totalNumberOfDofs),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
-              DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+              DO dofIdx=1,dependentVariable%totalNumberOfDofs
                 !1-1 mappings for now.
                 rowIdx=dofIdx
                 dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap(dofIdx)=rowIdx
@@ -391,15 +391,15 @@ CONTAINS
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%matrixNumber=matrixIdx
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%variableType=variableType
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%variable=>dependentVariable
-        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%numberOfGlobal
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%matrixCoefficient=createValuesCache%dynamicMatrixCoefficients(matrixIdx)
         ALLOCATE(dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(dependentVariable%DOMAIN_MAPPING% &
-          & NUMBER_OF_GLOBAL),STAT=err)
+          & numberOfGlobal),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate equation matrix to variable map column to dof map.",err,error,*999)
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap=0
-        DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+        DO dofIdx=1,dependentVariable%totalNumberOfDofs
           !1-1 mapping for now
-          columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+          columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
           dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(columnIdx)=dofIdx
         ENDDO !dofIdx
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
@@ -445,7 +445,7 @@ CONTAINS
           IF(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices==-1) THEN
 !!TODO: check if this can be removed and just allocate those variables that are actually used
             ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap( &
-              & dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+              & dependentVariable%totalNumberOfDofs),STAT=err)
             IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
             linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap=0
             linearMapping%numberOfLinearMatrixVariables=linearMapping%numberOfLinearMatrixVariables+1
@@ -467,11 +467,11 @@ CONTAINS
                   & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices)=matrixIdx
                 ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
                   & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
-                  & numberOfEquationsMatrices)%columnDOF(dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+                  & numberOfEquationsMatrices)%columnDOF(dependentVariable%totalNumberOfDofs),STAT=err)
                 IF(err/=0) CALL FlagError("Could not allocate variable dof to columns map column dof.",err,error,*999)
-                DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+                DO dofIdx=1,dependentVariable%totalNumberOfDofs
                   !1-1 mapping for now
-                  columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+                  columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
                   linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
                     & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
                     & numberOfEquationsMatrices)%columnDOF(dofIdx)=columnIdx
@@ -479,9 +479,9 @@ CONTAINS
               ENDIF
             ENDDO !matrixIdx
             ALLOCATE(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap( &
-              & dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+              & dependentVariable%totalNumberOfDofs),STAT=err)
             IF(err/=0) CALL FlagError("Could not allocate variable to equations matrices maps dof to rows map.",err,error,*999)
-            DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+            DO dofIdx=1,dependentVariable%totalNumberOfDofs
               !1-1 mappings for now.
               rowIdx=dofIdx
               linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToRowsMap(dofIdx)=rowIdx
@@ -511,16 +511,16 @@ CONTAINS
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%matrixNumber=matrixIdx
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%variableType=variableType
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%variable=>dependentVariable
-        linearMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%numberOfGlobal
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%matrixCoefficient=vectorMapping% &
           createValuesCache%linearMatrixCoefficients(matrixIdx)
         ALLOCATE(linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap( &
-          & dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=err)                  
+          & dependentVariable%DOMAIN_MAPPING%numberOfGlobal),STAT=err)                  
         IF(err/=0) CALL FlagError("Could not allocate equation matrix to variable map column to dof map.",err,error,*999)
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap=0
-        DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+        DO dofIdx=1,dependentVariable%totalNumberOfDofs
           !1-1 mapping for now
-          columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+          columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
           linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(columnIdx)=dofIdx
         ENDDO !dofIdx
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
@@ -563,17 +563,17 @@ CONTAINS
           rowVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(1))%ptr
         ENDIF
         !Allocate and set dof to Jacobian columns map
-        ALLOCATE(nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap(dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+        ALLOCATE(nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap(dependentVariable%totalNumberOfDofs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian map dof to columns map.",err,error,*999)
-        DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+        DO dofIdx=1,dependentVariable%totalNumberOfDofs
           !1-1 mapping for now
-          columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+          columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
           nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap(dofIdx)=columnIdx
         ENDDO !dofIdx
         !Allocate and set dof to Jacobian rows map
-        ALLOCATE(nonlinearMapping%varToJacobianMap(matrixIdx)%dofToRowsMap(rowVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+        ALLOCATE(nonlinearMapping%varToJacobianMap(matrixIdx)%dofToRowsMap(rowVariable%totalNumberOfDofs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian map dof to columns map.",err,error,*999)
-        DO dofIdx=1,rowVariable%TOTAL_NUMBER_OF_DOFS
+        DO dofIdx=1,rowVariable%totalNumberOfDofs
           !1-1 mapping for now
           rowIdx=dofIdx
           nonlinearMapping%varToJacobianMap(matrixIdx)%dofToRowsMap(dofIdx)=rowIdx
@@ -582,14 +582,14 @@ CONTAINS
         nonlinearMapping%jacobianToVarMap(matrixIdx)%jacobianNumber=matrixIdx
         nonlinearMapping%jacobianToVarMap(matrixIdx)%variableType=createValuesCache%residualVariableTypes(matrixIdx)
         nonlinearMapping%jacobianToVarMap(matrixIdx)%variable=>dependentVariable
-        nonlinearMapping%jacobianToVarMap(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%numberOfGlobal
         nonlinearMapping%jacobianToVarMap(matrixIdx)%jacobianCoefficient=createValuesCache%residualCoefficient
         ALLOCATE(nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap( &
-          & dependentVariable%DOMAIN_MAPPING%NUMBER_OF_GLOBAL),STAT=err)
+          & dependentVariable%DOMAIN_MAPPING%numberOfGlobal),STAT=err)
         nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap=0
-        DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+        DO dofIdx=1,dependentVariable%totalNumberOfDofs
           !1-1 mapping for now
-          columnIdx=dependentVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(dofIdx)
+          columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
           nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap(columnIdx)=dofIdx
         ENDDO !dofIdx
         nonlinearMapping%jacobianToVarMap(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
@@ -614,11 +614,11 @@ CONTAINS
       rhsMapping%rhsVariableMapping=>dependentVariable%DOMAIN_MAPPING
       rhsMapping%rhsCoefficient=createValuesCache%rhsCoefficient
       !Allocate and set up the row mappings
-      ALLOCATE(rhsMapping%rhsDOFToEquationsRowMap(dependentVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+      ALLOCATE(rhsMapping%rhsDOFToEquationsRowMap(dependentVariable%totalNumberOfDofs),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate rhs dof to equations row map.",err,error,*999)
       ALLOCATE(rhsMapping%equationsRowToRHSDOFMap(totalNumberOfRows),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate equations row to dof map.",err,error,*999)
-      DO dofIdx=1,dependentVariable%TOTAL_NUMBER_OF_DOFS
+      DO dofIdx=1,dependentVariable%totalNumberOfDofs
         !1-1 mapping for now
         rowIdx=dofIdx
         rhsMapping%rhsDOFToEquationsRowMap(dofIdx)=rowIdx
@@ -640,11 +640,11 @@ CONTAINS
       !    sourceMapping%sourceVariableMapping=>sourceVariable%DOMAIN_MAPPING
       !    sourceMapping%sourceCoefficient=createValuesCache%sourceCoefficient
       !    !Allocate and set up the row mappings
-      !    ALLOCATE(sourceMapping%sourceDOFToEquationsRowMap(sourceVariable%TOTAL_NUMBER_OF_DOFS),STAT=err)
+      !    ALLOCATE(sourceMapping%sourceDOFToEquationsRowMap(sourceVariable%totalNumberOfDofs),STAT=err)
       !    IF(err/=0) CALL FlagError("Could not allocate source dof to equations row map.",err,error,*999)
       !    ALLOCATE(sourceMapping%equationsRowToSourceDOFMap(totalNumberOfRows),STAT=err)
       !    IF(err/=0) CALL FlagError("Could not allocate equations row to source map.",err,error,*999)
-      !    DO dofIdx=1,sourceVariable%TOTAL_NUMBER_OF_DOFS
+      !    DO dofIdx=1,sourceVariable%totalNumberOfDofs
       !      !1-1 mapping for now
       !      rowIdx=dofIdx
       !      sourceMapping%sourceDOFToEquationsRowMap(dofIdx)=rowIdx
@@ -679,7 +679,7 @@ CONTAINS
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type : ",variableTypeIdx,err,error,*999)
           IF(ASSOCIATED(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable)) THEN
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",dynamicMapping% &
-              & varToEquationsMatricesMaps(variableTypeIdx)%variable%TOTAL_NUMBER_OF_DOFS,err,error,*999)
+              & varToEquationsMatricesMaps(variableTypeIdx)%variable%totalNumberOfDofs,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of equations matrices = ",dynamicMapping% &
               & varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices,err,error,*999)
             IF(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices>0) THEN
@@ -690,12 +690,12 @@ CONTAINS
               DO matrixIdx=1,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix number : ",matrixIdx,err,error,*999)
                 CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dynamicMapping%varToEquationsMatricesMaps( &
-                  & variableTypeIdx)%variable%TOTAL_NUMBER_OF_DOFS,5,5,dynamicMapping%varToEquationsMatricesMaps( &
+                  & variableTypeIdx)%variable%totalNumberOfDofs,5,5,dynamicMapping%varToEquationsMatricesMaps( &
                   & variableTypeIdx)%dofToColumnsMaps(matrixIdx)%columnDOF, &
                   & '("        Column numbers :",5(X,I13))','(24X,5(X,I13))',err,error,*999) 
               ENDDO !matrixIdx
               CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
-                & VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & VARIABLE%totalNumberOfDofs,5,5,dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
                 & dofToRowsMap,'("      DOF to row maps  :",5(X,I13))','(24X,5(X,I13))',err,error,*999)
             ENDIF
           ENDIF
@@ -733,7 +733,7 @@ CONTAINS
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type : ",variableTypeIdx,err,error,*999)
           IF(ASSOCIATED(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable)) THEN
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",linearMapping% &
-              & varToEquationsMatricesMaps(variableTypeIdx)%variable%TOTAL_NUMBER_OF_DOFS,err,error,*999)
+              & varToEquationsMatricesMaps(variableTypeIdx)%variable%totalNumberOfDofs,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of equations matrices = ",linearMapping% &
               & varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices,err,error,*999)
             IF(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices>0) THEN
@@ -744,12 +744,12 @@ CONTAINS
               DO matrixIdx=1,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Matrix number : ",matrixIdx,err,error,*999)
                 CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,linearMapping%varToEquationsMatricesMaps( &
-                  & variableTypeIdx)%variable%TOTAL_NUMBER_OF_DOFS,5,5,linearMapping%varToEquationsMatricesMaps( &
+                  & variableTypeIdx)%variable%totalNumberOfDofs,5,5,linearMapping%varToEquationsMatricesMaps( &
                   & variableTypeIdx)%dofToColumnsMaps(matrixIdx)%columnDOF, &
                   & '("        Column numbers :",5(X,I13))','(24X,5(X,I13))',err,error,*999) 
               ENDDO !matrixIdx
               CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
-                & VARIABLE%TOTAL_NUMBER_OF_DOFS,5,5,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
+                & VARIABLE%totalNumberOfDofs,5,5,linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
                 & dofToRowsMap,'("      DOF to row maps  :",5(X,I13))','(24X,5(X,I13))',err,error,*999)
             ENDIF
           ENDIF
@@ -783,7 +783,7 @@ CONTAINS
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Residual variable type = ",nonlinearMapping% &
             & jacobianToVarMap(matrixIdx)%variableType,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of residual DOFs = ",nonlinearMapping% &
-            & jacobianToVarMap(matrixIdx)%variable%TOTAL_NUMBER_OF_DOFS,err,error,*999)
+            & jacobianToVarMap(matrixIdx)%variable%totalNumberOfDofs,err,error,*999)
         ENDDO
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Residual coefficient = ",nonlinearMapping%residualCoefficient, &
           & err,error,*999)
@@ -798,12 +798,12 @@ CONTAINS
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Jacobian variable type = ",nonlinearMapping% &
             & varToJacobianMap(matrixIdx)%variableType,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of Jacobain DOFs = ",nonlinearMapping% &
-            & varToJacobianMap(matrixIdx)%variable%TOTAL_NUMBER_OF_DOFS,err,error,*999)
+            & varToJacobianMap(matrixIdx)%variable%totalNumberOfDofs,err,error,*999)
           CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,nonlinearMapping%varToJacobianMap(matrixIdx)%variable% &
-            & TOTAL_NUMBER_OF_DOFS,5,5,nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap, &
+            & totalNumberOfDofs,5,5,nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap, &
             & '("      DOF to column map :",5(X,I13))','(26X,5(X,I13))',err,error,*999) 
           CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,nonlinearMapping%varToJacobianMap(matrixIdx)%variable% &
-            & TOTAL_NUMBER_OF_DOFS,5,5,nonlinearMapping%varToJacobianMap(matrixIdx)%dofToRowsMap, &
+            & totalNumberOfDofs,5,5,nonlinearMapping%varToJacobianMap(matrixIdx)%dofToRowsMap, &
             & '("      DOF to row map    :",5(X,I13))','(26X,5(X,I13))',err,error,*999) 
           CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Jacobian to variable mappings:",err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Jacobian variable type = ",nonlinearMapping% &
@@ -822,10 +822,10 @@ CONTAINS
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  RHS mappings:",err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    RHS variable type = ",rhsMapping%rhsVariableType,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of RHS DOFs = ",rhsMapping%rhsVariable% &
-          & TOTAL_NUMBER_OF_DOFS,err,error,*999)
+          & totalNumberOfDofs,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    RHS coefficient = ",rhsMapping%rhsCoefficient,err,error,*999)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",err,error,*999)
-        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,rhsMapping%rhsVariable%TOTAL_NUMBER_OF_DOFS,5,5, &
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,rhsMapping%rhsVariable%totalNumberOfDofs,5,5, &
           & rhsMapping%rhsDOFToEquationsRowMap,'("    DOF to row mappings :",5(X,I13))','(25X,5(X,I13))',err,error,*999) 
         CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,vectorMapping%totalNumberOfRows,5,5, &
           & rhsMapping%equationsRowToRHSDOFMap,'("    Row to DOF mappings :",5(X,I13))','(25X,5(X,I13))',err,error,*999) 
@@ -836,10 +836,10 @@ CONTAINS
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Source variable type = ",sourceMapping%sourceVariableType, &
           & err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of source DOFs = ",sourceMapping%sourceVariable% &
-          & TOTAL_NUMBER_OF_DOFS,err,error,*999)
+          & totalNumberOfDofs,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Source coefficient = ",sourceMapping%sourceCoefficient,err,error,*999)
         !CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Row mappings:",err,error,*999)
-        !CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,sourceMapping%sourceVariable%TOTAL_NUMBER_OF_DOFS,5,5, &
+        !CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,sourceMapping%sourceVariable%totalNumberOfDofs,5,5, &
         !  & sourceMapping%sourceDOFToEquationsRowMap,'("    DOF to row mappings :",5(X,I13))','(25X,5(X,I13))', &
         !  & err,error,*999) 
         !CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,vectorMapping%totalNumberOfRows,5,5, &
@@ -1016,9 +1016,9 @@ CONTAINS
     lhsMapping%lhsVariableType=lhsVariableType
     lhsMapping%lhsVariable=>lhsVariable
     lhsMapping%rowDofsMapping=>lhsVariable%DOMAIN_MAPPING
-    lhsMapping%numberOfRows=lhsVariable%NUMBER_OF_DOFS
-    lhsMapping%totalNumberOfRows=lhsVariable%TOTAL_NUMBER_OF_DOFS
-    lhsMapping%numberOfGlobalRows=lhsVariable%NUMBER_OF_GLOBAL_DOFS
+    lhsMapping%numberOfRows=lhsVariable%numberOfDofs
+    lhsMapping%totalNumberOfRows=lhsVariable%totalNumberOfDofs
+    lhsMapping%numberOfGlobalRows=lhsVariable%numberOfGlobalDofs
    
     EXITS("EquationsMapping_VectorCreateStart")
     RETURN

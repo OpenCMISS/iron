@@ -86,7 +86,7 @@ CONTAINS
   SUBROUTINE REACTION_DIFFUSION_IO_WRITE_CMGUI(REGION, EQUATIONS_SET_GLOBAL_NUMBER, NAME, exportExelem, ERR, ERROR,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), INTENT(IN), POINTER :: REGION !<A pointer to the region to get the coordinate system for
+    TYPE(RegionType), INTENT(IN), POINTER :: REGION !<A pointer to the region to get the coordinate system for
     CHARACTER(30),INTENT(IN) :: NAME !<the prefix name of file.
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_GLOBAL_NUMBER
     LOGICAL, INTENT(IN) :: exportExelem !<A flag to indicate whether to write an exelem file.
@@ -96,7 +96,7 @@ CONTAINS
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(DOMAIN_TYPE), POINTER :: COMPUTATION_DOMAIN
+    TYPE(DomainType), POINTER :: COMPUTATION_DOMAIN
     TYPE(FIELD_TYPE), POINTER :: SOURCE_FIELD
     REAL(DP) :: NodeXValue,NodeYValue,NodeZValue,NodeUValue
     INTEGER(INTG):: myWorldComputationNodeNumber,NumberOfOutputFields,NumberOfDimensions,NumberOfElements,NumberOfNodes
@@ -125,10 +125,10 @@ CONTAINS
     COMPUTATION_DOMAIN=>REGION%MESHES%MESHES(1) & 
       & %ptr%DECOMPOSITIONS%DECOMPOSITIONS(1)%ptr%DOMAIN(1)%ptr
 
-    NumberOfDimensions = COMPUTATION_DOMAIN%NUMBER_OF_DIMENSIONS
-    NumberOfNodes = COMPUTATION_DOMAIN%TOPOLOGY%NODES%NUMBER_OF_NODES
+    NumberOfDimensions = COMPUTATION_DOMAIN%numberOfDimensions
+    NumberOfNodes = COMPUTATION_DOMAIN%TOPOLOGY%NODES%numberOfNodes
     NodesInMeshComponent = REGION%meshes%meshes(1)%ptr%topology(1)%ptr%nodes%numberOfNodes
-    NumberOfElements = COMPUTATION_DOMAIN%TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS
+    NumberOfElements = COMPUTATION_DOMAIN%TOPOLOGY%ELEMENTS%numberOfElements
     NumberOfVariableComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
       & variables(1)%number_of_components
     NumberOfOutputFields=2
@@ -204,7 +204,7 @@ CONTAINS
 
     !WRITE OUT NODE VALUES
     DO I = 1,NumberOfNodes
-      NODE_GLOBAL_NUMBER = COMPUTATION_DOMAIN%TOPOLOGY%NODES%NODES(I)%GLOBAL_NUMBER
+      NODE_GLOBAL_NUMBER = COMPUTATION_DOMAIN%TOPOLOGY%NODES%NODES(I)%globalNumber
       NodeXValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
         & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I)
       IF(NumberOfDimensions==2 .OR. NumberOfDimensions==3) THEN
@@ -243,7 +243,7 @@ CONTAINS
     CLOSE(myWorldComputationNodeNumber)
 
     !OUTPUT ELEMENTS IN CURRENT DOMAIN
-    MaxNodesPerElement=COMPUTATION_DOMAIN%TOPOLOGY%ELEMENTS%ELEMENTS(1)%basis%number_of_element_parameters
+    MaxNodesPerElement=COMPUTATION_DOMAIN%TOPOLOGY%ELEMENTS%ELEMENTS(1)%basis%numberOfElementParameters
     BasisType = 1
     IF(NumberOfDimensions==2) THEN
       IF(MaxNodesPerElement==4.OR.MaxNodesPerElement==9.OR.MaxNodesPerElement==16) THEN
@@ -564,10 +564,10 @@ CONTAINS
       IF(.NOT.ALLOCATED(ElementNodes)) ALLOCATE(ElementNodes(NumberOfElements,MaxNodesPerElement))
       IF(.NOT.ALLOCATED(ElementNodesScales)) ALLOCATE(ElementNodesScales(NumberOfElements,MaxNodesPerElement))
       DO I=1,NumberOfElements
-        ELEMENT_GLOBAL_NUMBER=COMPUTATION_DOMAIN%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(K)%GLOBAL_NUMBER
+        ELEMENT_GLOBAL_NUMBER=COMPUTATION_DOMAIN%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(K)%globalNumber
         DO J=1,MaxNodesPerElement
-          NODE_LOCAL_NUMBER=COMPUTATION_DOMAIN%TOPOLOGY%ELEMENTS%ELEMENTS(I)%ELEMENT_NODES(J)
-          NODE_GLOBAL_NUMBER=COMPUTATION_DOMAIN%MAPPINGS%NODES%LOCAL_TO_GLOBAL_MAP(NODE_LOCAL_NUMBER)
+          NODE_LOCAL_NUMBER=COMPUTATION_DOMAIN%TOPOLOGY%ELEMENTS%ELEMENTS(I)%elementNodes(J)
+          NODE_GLOBAL_NUMBER=COMPUTATION_DOMAIN%MAPPINGS%NODES%localToGlobalMap(NODE_LOCAL_NUMBER)
           ElementNodes(I,J)=NODE_GLOBAL_NUMBER
           ElementNodesScales(I,J)=1.0000000000000000E+00
         END DO
@@ -575,7 +575,7 @@ CONTAINS
 
 
       DO K=1,NumberOfElements
-        ELEMENT_GLOBAL_NUMBER=COMPUTATION_DOMAIN%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(K)%GLOBAL_NUMBER
+        ELEMENT_GLOBAL_NUMBER=COMPUTATION_DOMAIN%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(K)%globalNumber
         IF (BasisType==1) THEN
           WRITE(INTG_STRING,'(I0)') ELEMENT_GLOBAL_NUMBER
           WRITE(myWorldComputationNodeNumber,*) 'Element:     ', TRIM(INTG_STRING),' 0  0'

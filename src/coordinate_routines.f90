@@ -197,7 +197,7 @@ CONTAINS
   FUNCTION COORDINATE_CONVERT_FROM_RC_DP(COORDINATE_SYSTEM,Z,err,error)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to perform the conversion on
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to perform the conversion on
     REAL(DP), INTENT(IN) :: Z(:) !<The rectangular cartesian coordiantes to convert
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -210,14 +210,14 @@ CONTAINS
 
     COORDINATE_CONVERT_FROM_RC_DP=0.0_DP
 
-    IF(SIZE(Z,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(Z,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of Z is less than the number of dimensions.",err,error,*999)
     
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-      COORDINATE_CONVERT_FROM_RC_DP(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)=Z(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      COORDINATE_CONVERT_FROM_RC_DP(1:COORDINATE_SYSTEM%numberOfDimensions)=Z(1:COORDINATE_SYSTEM%numberOfDimensions)
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-      SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
       CASE(2)
         COORDINATE_CONVERT_FROM_RC_DP(1)=SQRT(Z(1)**2+Z(2)**2)
         COORDINATE_CONVERT_FROM_RC_DP(2)=ATAN2(Z(1),Z(2))
@@ -231,7 +231,7 @@ CONTAINS
       IF(COORDINATE_CONVERT_FROM_RC_DP(2)<0.0_DP) &
         & COORDINATE_CONVERT_FROM_RC_DP(2)=COORDINATE_CONVERT_FROM_RC_DP(2)+2.0_DP*PI !reference coordinate 0->2*pi
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         COORDINATE_CONVERT_FROM_RC_DP(1)=SQRT(Z(1)**2+Z(2)**2+Z(3)**2)
         IF(ABS(Z(1))>=ZERO_TOLERANCE.OR.ABS(Z(2))>=ZERO_TOLERANCE) THEN
           COORDINATE_CONVERT_FROM_RC_DP(2)=ATAN2(Z(2),Z(1))
@@ -249,7 +249,7 @@ CONTAINS
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       FOCUS=COORDINATE_SYSTEM%FOCUS
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         A1=Z(1)**2+Z(2)**2+Z(3)**2-FOCUS**2
         A2=SQRT(A1**2+4.0_DP*(FOCUS**2)*(Z(2)**2+Z(3)**2))
         A3=2.0_DP*FOCUS**2
@@ -316,7 +316,7 @@ CONTAINS
   FUNCTION COORDINATE_CONVERT_FROM_RC_SP(COORDINATE_SYSTEM,Z,err,error)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to convert from RC to
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to convert from RC to
     REAL(SP), INTENT(IN) :: Z(:) !<The coordinate to convert from rectangular cartesian
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -329,14 +329,14 @@ CONTAINS
 
     COORDINATE_CONVERT_FROM_RC_SP=0.0_SP
     
-    IF(SIZE(Z,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(Z,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of Z is less than the number of dimensions.",err,error,*999)
     
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-      COORDINATE_CONVERT_FROM_RC_SP(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)=Z(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      COORDINATE_CONVERT_FROM_RC_SP(1:COORDINATE_SYSTEM%numberOfDimensions)=Z(1:COORDINATE_SYSTEM%numberOfDimensions)
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-      SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
       CASE(2)
         COORDINATE_CONVERT_FROM_RC_SP(1)=SQRT(Z(1)**2+Z(2)**2)
         COORDINATE_CONVERT_FROM_RC_SP(2)=ATAN2(Z(1),Z(2))
@@ -350,7 +350,7 @@ CONTAINS
       IF(COORDINATE_CONVERT_FROM_RC_SP(2)<0.0_SP)  &
         & COORDINATE_CONVERT_FROM_RC_SP(2)=COORDINATE_CONVERT_FROM_RC_SP(2)+2.0_SP*REAL(PI,SP) !reference coordinate 0->2*pi
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         COORDINATE_CONVERT_FROM_RC_SP(1)=SQRT(Z(1)**2+Z(2)**2+Z(3)**2)
         IF(ABS(Z(1))>=ZERO_TOLERANCE_SP.OR.ABS(Z(2))>ZERO_TOLERANCE_SP) THEN
           COORDINATE_CONVERT_FROM_RC_SP(2)=ATAN2(Z(2),Z(1))
@@ -368,7 +368,7 @@ CONTAINS
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
       FOCUS=REAL(COORDINATE_SYSTEM%FOCUS,SP)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         A1=Z(1)**2+Z(2)**2+Z(3)**2-FOCUS**2
         A2=SQRT(A1**2+4.0_SP*(FOCUS**2)*(Z(2)**2+Z(3)**2))
         A3=2.0_SP*FOCUS**2
@@ -436,7 +436,7 @@ CONTAINS
   FUNCTION COORDINATE_CONVERT_TO_RC_DP(COORDINATE_SYSTEM,X,err,error)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to convert to rectangular cartesian
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to convert to rectangular cartesian
     REAL(DP), INTENT(IN) :: X(:) !<The coordiante to convert
     INTEGER(INTG), INTENT(OUT) :: err !<The error coode
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -449,14 +449,14 @@ CONTAINS
     
     COORDINATE_CONVERT_TO_RC_DP=0.0_DP
 
-    IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(X,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of X is less than the number of dimensions.",err,error,*999)
 
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-      COORDINATE_CONVERT_TO_RC_DP(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)=X(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      COORDINATE_CONVERT_TO_RC_DP(1:COORDINATE_SYSTEM%numberOfDimensions)=X(1:COORDINATE_SYSTEM%numberOfDimensions)
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-      SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
       CASE(2)
         COORDINATE_CONVERT_TO_RC_DP(1)=X(1)*COS(X(2))
         COORDINATE_CONVERT_TO_RC_DP(2)=X(1)*SIN(X(2))
@@ -468,7 +468,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates.",err,error,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN  
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN  
         COORDINATE_CONVERT_TO_RC_DP(1)=X(1)*COS(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_DP(2)=X(1)*SIN(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_DP(3)=X(1)*SIN(X(3))
@@ -476,7 +476,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates.",err,error,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         FOCUS=COORDINATE_SYSTEM%FOCUS
         COORDINATE_CONVERT_TO_RC_DP(1)=FOCUS*COSH(X(1))*COS(X(2))
         COORDINATE_CONVERT_TO_RC_DP(2)=FOCUS*SINH(X(1))*SIN(X(2))*COS(X(3))
@@ -485,7 +485,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates.",err,error,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         FOCUS=COORDINATE_SYSTEM%FOCUS
         COORDINATE_CONVERT_TO_RC_DP(1)=FOCUS*COSH(X(1))*COS(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_DP(2)=FOCUS*SINH(X(1))*SIN(X(2))
@@ -513,7 +513,7 @@ CONTAINS
   FUNCTION COORDINATE_CONVERT_TO_RC_SP(COORDINATE_SYSTEM,X,err,error)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to convert to rectangular cartesian
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to convert to rectangular cartesian
     REAL(SP), INTENT(IN) :: X(:) !<The coordinate to convert
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -526,14 +526,14 @@ CONTAINS
     
     COORDINATE_CONVERT_TO_RC_SP=0.0_SP
 
-    IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(X,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of X is less than the number of dimensions.",err,error,*999)
 
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-      COORDINATE_CONVERT_TO_RC_SP(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)=X(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      COORDINATE_CONVERT_TO_RC_SP(1:COORDINATE_SYSTEM%numberOfDimensions)=X(1:COORDINATE_SYSTEM%numberOfDimensions)
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-      SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
       CASE(2)
         COORDINATE_CONVERT_TO_RC_SP(1)=X(1)*COS(X(2))
         COORDINATE_CONVERT_TO_RC_SP(2)=X(1)*SIN(X(2))
@@ -545,7 +545,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates.",err,error,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN  
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN  
         COORDINATE_CONVERT_TO_RC_SP(1)=X(1)*COS(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_SP(2)=X(1)*SIN(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_SP(3)=X(1)*SIN(X(3))
@@ -553,7 +553,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates.",err,error,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         FOCUS=REAL(COORDINATE_SYSTEM%FOCUS,SP)
         COORDINATE_CONVERT_TO_RC_SP(1)=FOCUS*COSH(X(1))*COS(X(2))
         COORDINATE_CONVERT_TO_RC_SP(2)=FOCUS*SINH(X(1))*SIN(X(2))*COS(X(3))
@@ -562,7 +562,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates.",err,error,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         FOCUS=REAL(COORDINATE_SYSTEM%FOCUS,SP)
         COORDINATE_CONVERT_TO_RC_SP(1)=FOCUS*COSH(X(1))*COS(X(2))*COS(X(3))
         COORDINATE_CONVERT_TO_RC_SP(2)=FOCUS*SINH(X(1))*SIN(X(2))
@@ -589,7 +589,7 @@ CONTAINS
   FUNCTION COORDINATE_DELTA_CALCULATE_DP(COORDINATE_SYSTEM,X,Y,err,error)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to calculate the delta for
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM !<The coordinate system to calculate the delta for
     REAL(DP), INTENT(IN) :: X(:) !<The first coordinate
     REAL(DP), INTENT(IN) :: Y(:) !<The second coordinate
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -602,14 +602,14 @@ CONTAINS
 
     COORDINATE_DELTA_CALCULATE_DP=0.0_DP
 
-    IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(X,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of X is less than the number of dimensions.",err,error,*999)
 
     IF(SIZE(X,1)/=SIZE(Y,1)) &
       & CALL FlagError("Size of X is different to the size of Y.",err,error,*999)
    
-    COORDINATE_DELTA_CALCULATE_DP(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)=Y(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)- &
-      & X(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+    COORDINATE_DELTA_CALCULATE_DP(1:COORDINATE_SYSTEM%numberOfDimensions)=Y(1:COORDINATE_SYSTEM%numberOfDimensions)- &
+      & X(1:COORDINATE_SYSTEM%numberOfDimensions)
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
       !Do nothing
@@ -639,7 +639,7 @@ CONTAINS
   SUBROUTINE COORDINATE_METRICS_CALCULATE(COORDINATE_SYSTEM,JACOBIAN_TYPE,METRICS,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to calculate the metrics for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to calculate the metrics for
     INTEGER(INTG), INTENT(IN) :: JACOBIAN_TYPE !<The type of Jacobian to calculate \see COORDINATE_ROUTINES_JacobianTypes,COORDINATE_ROUTINES
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: METRICS !<A pointer to the metrics to calculate
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -660,19 +660,19 @@ CONTAINS
         IF(ASSOCIATED(INTERPOLATED_POINT)) THEN
           IF(INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE>=FIRST_PART_DERIV) THEN
 
-            SELECT CASE(METRICS%NUMBER_OF_XI_DIMENSIONS)
+            SELECT CASE(METRICS%numberOfXiDimensions)
             CASE(1)
               !Calculate the derivatives of X with respect to XI
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1)
-              METRICS%DX_DXI(1:METRICS%NUMBER_OF_X_DIMENSIONS,1)=INTERPOLATED_POINT%VALUES(1:METRICS%NUMBER_OF_X_DIMENSIONS,nu)
+              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               !Initialise the covariant metric tensor to the identity matrix
               METRICS%GL(1,1)=1.0_DP
             CASE(2)
               !Calculate the derivatives of X with respect to XI
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1)
-              METRICS%DX_DXI(1:METRICS%NUMBER_OF_X_DIMENSIONS,1)=INTERPOLATED_POINT%VALUES(1:METRICS%NUMBER_OF_X_DIMENSIONS,nu)
+              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(2)
-              METRICS%DX_DXI(1:METRICS%NUMBER_OF_X_DIMENSIONS,2)=INTERPOLATED_POINT%VALUES(1:METRICS%NUMBER_OF_X_DIMENSIONS,nu)
+              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,2)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               !Initialise the covariant metric tensor to the identity matrix
               METRICS%GL(1,1)=1.0_DP
               METRICS%GL(1,2)=0.0_DP
@@ -681,11 +681,11 @@ CONTAINS
             CASE(3)
               !Calculate the derivatives of X with respect to XI
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1)
-              METRICS%DX_DXI(1:METRICS%NUMBER_OF_X_DIMENSIONS,1)=INTERPOLATED_POINT%VALUES(1:METRICS%NUMBER_OF_X_DIMENSIONS,nu)
+              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(2)
-              METRICS%DX_DXI(1:METRICS%NUMBER_OF_X_DIMENSIONS,2)=INTERPOLATED_POINT%VALUES(1:METRICS%NUMBER_OF_X_DIMENSIONS,nu)
+              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,2)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(3)
-              METRICS%DX_DXI(1:METRICS%NUMBER_OF_X_DIMENSIONS,3)=INTERPOLATED_POINT%VALUES(1:METRICS%NUMBER_OF_X_DIMENSIONS,nu)
+              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,3)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               !Initialise the covariant metric tensor to the identity matrix
               METRICS%GL(1,1)=1.0_DP
               METRICS%GL(1,2)=0.0_DP
@@ -703,51 +703,51 @@ CONTAINS
             !Calculate the covariant metric tensor GL(i,j)
             SELECT CASE(COORDINATE_SYSTEM%TYPE)
             CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-              SELECT CASE(METRICS%NUMBER_OF_X_DIMENSIONS)
+              SELECT CASE(METRICS%numberOfXDimensions)
               CASE(1)
-                DO mi=1,METRICS%NUMBER_OF_XI_DIMENSIONS
-                  DO ni=1,METRICS%NUMBER_OF_XI_DIMENSIONS
+                DO mi=1,METRICS%numberOfXiDimensions
+                  DO ni=1,METRICS%numberOfXiDimensions
                     METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)                    
                   ENDDO !ni
                 ENDDO !mi
               CASE(2)
-                DO mi=1,METRICS%NUMBER_OF_XI_DIMENSIONS
-                  DO ni=1,METRICS%NUMBER_OF_XI_DIMENSIONS
+                DO mi=1,METRICS%numberOfXiDimensions
+                  DO ni=1,METRICS%numberOfXiDimensions
                     METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+ &
                       & METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)
                   ENDDO !ni
                 ENDDO !mi
               CASE(3)
-                DO mi=1,METRICS%NUMBER_OF_XI_DIMENSIONS
-                  DO ni=1,METRICS%NUMBER_OF_XI_DIMENSIONS
+                DO mi=1,METRICS%numberOfXiDimensions
+                  DO ni=1,METRICS%numberOfXiDimensions
                     METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+ &
                       & METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)+ &
                       & METRICS%DX_DXI(3,mi)*METRICS%DX_DXI(3,ni)
                   ENDDO !ni
                 ENDDO !mi
               CASE DEFAULT
-                LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%NUMBER_OF_X_DIMENSIONS,"*",err,error))// &
+                LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%numberOfXDimensions,"*",err,error))// &
                   & " is an invalid number of dimensions for a rectangular cartesian coordinate system."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
             CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
               R=INTERPOLATED_POINT%VALUES(1,1)
               RR=R*R
-              IF(METRICS%NUMBER_OF_X_DIMENSIONS==2) THEN
-                DO mi=1,METRICS%NUMBER_OF_XI_DIMENSIONS
-                  DO ni=1,METRICS%NUMBER_OF_XI_DIMENSIONS
+              IF(METRICS%numberOfXDimensions==2) THEN
+                DO mi=1,METRICS%numberOfXiDimensions
+                  DO ni=1,METRICS%numberOfXiDimensions
                     METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+RR*METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)
                   ENDDO !ni
                 ENDDO !mi
-              ELSE IF(METRICS%NUMBER_OF_X_DIMENSIONS==3) THEN
-                DO mi=1,METRICS%NUMBER_OF_XI_DIMENSIONS
-                  DO ni=1,METRICS%NUMBER_OF_XI_DIMENSIONS
+              ELSE IF(METRICS%numberOfXDimensions==3) THEN
+                DO mi=1,METRICS%numberOfXiDimensions
+                  DO ni=1,METRICS%numberOfXiDimensions
                     METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+RR*METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)+ &
                       & METRICS%DX_DXI(3,mi)*METRICS%DX_DXI(3,ni)
                   ENDDO !ni
                 ENDDO !mi
               ELSE
-                LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%NUMBER_OF_X_DIMENSIONS,"*",err,error))// &
+                LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%numberOfXDimensions,"*",err,error))// &
                   & " is an invalid number of dimensions for a cylindrical polar coordinate system."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               ENDIF
@@ -756,8 +756,8 @@ CONTAINS
               RR=R*R
               RC=R*COS(INTERPOLATED_POINT%VALUES(3,1))
               RCRC=RC*RC          
-              DO mi=1,METRICS%NUMBER_OF_XI_DIMENSIONS
-                DO ni=1,METRICS%NUMBER_OF_XI_DIMENSIONS
+              DO mi=1,METRICS%numberOfXiDimensions
+                DO ni=1,METRICS%numberOfXiDimensions
                   METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+RCRC*METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)+ &
                     & RR*METRICS%DX_DXI(3,mi)*METRICS%DX_DXI(3,ni)
                 ENDDO !ni
@@ -771,21 +771,21 @@ CONTAINS
                 MU=INTERPOLATED_POINT%VALUES(2,1)
                 G1=FF*(SINH(R)*SINH(R)+SIN(MU)*SIN(MU))
                 G3=FF*SINH(R)*SINH(R)*SIN(MU)*SIN(MU)
-                IF(METRICS%NUMBER_OF_X_DIMENSIONS==2) THEN
-                  DO mi=1,METRICS%NUMBER_OF_XI_DIMENSIONS
-                    DO ni=1,METRICS%NUMBER_OF_XI_DIMENSIONS
+                IF(METRICS%numberOfXDimensions==2) THEN
+                  DO mi=1,METRICS%numberOfXiDimensions
+                    DO ni=1,METRICS%numberOfXiDimensions
                       METRICS%GL(mi,ni)=G1*(METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni))
                     ENDDO !ni
                   ENDDO !mi
-                ELSE IF(METRICS%NUMBER_OF_X_DIMENSIONS==3) THEN
-                  DO mi=1,METRICS%NUMBER_OF_XI_DIMENSIONS
-                    DO ni=1,METRICS%NUMBER_OF_XI_DIMENSIONS
+                ELSE IF(METRICS%numberOfXDimensions==3) THEN
+                  DO mi=1,METRICS%numberOfXiDimensions
+                    DO ni=1,METRICS%numberOfXiDimensions
                       METRICS%GL(mi,ni)=G1*(METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni))+ &
                         & G3*METRICS%DX_DXI(3,mi)*METRICS%DX_DXI(3,ni)
                     ENDDO !ni
                   ENDDO !mi
                 ELSE
-                  LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%NUMBER_OF_X_DIMENSIONS,"*",err,error))// &
+                  LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(METRICS%numberOfXDimensions,"*",err,error))// &
                     & " is an invalid number of dimensions for a prolate spheroidal coordinate system."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 ENDIF
@@ -799,8 +799,8 @@ CONTAINS
             END SELECT
             
             !Calcualte the contravariant metric tensor
-            CALL INVERT(METRICS%GL(1:METRICS%NUMBER_OF_XI_DIMENSIONS,1:METRICS%NUMBER_OF_XI_DIMENSIONS), &
-              & METRICS%GU(1:METRICS%NUMBER_OF_XI_DIMENSIONS,1:METRICS%NUMBER_OF_XI_DIMENSIONS),DET_GL, &
+            CALL INVERT(METRICS%GL(1:METRICS%numberOfXiDimensions,1:METRICS%numberOfXiDimensions), &
+              & METRICS%GU(1:METRICS%numberOfXiDimensions,1:METRICS%numberOfXiDimensions),DET_GL, &
               & err,error,*999)
 
             !Calculate the Jacobian
@@ -812,7 +812,7 @@ CONTAINS
               METRICS%JACOBIAN=SQRT(ABS(METRICS%GL(1,1)))
               METRICS%JACOBIAN_TYPE=COORDINATE_JACOBIAN_LINE_TYPE
             CASE(COORDINATE_JACOBIAN_AREA_TYPE)
-              IF(METRICS%NUMBER_OF_XI_DIMENSIONS==3) THEN
+              IF(METRICS%numberOfXiDimensions==3) THEN
                 METRICS%JACOBIAN=SQRT(ABS(DET_GL*METRICS%GU(3,3)))
               ELSE
                 METRICS%JACOBIAN=SQRT(ABS(DET_GL))
@@ -828,14 +828,14 @@ CONTAINS
             END SELECT
             
             !Calculate the derivatives of Xi with respect to X - DXI_DX
-            IF(METRICS%NUMBER_OF_XI_DIMENSIONS==METRICS%NUMBER_OF_X_DIMENSIONS) THEN
+            IF(METRICS%numberOfXiDimensions==METRICS%numberOfXDimensions) THEN
               CALL INVERT(METRICS%DX_DXI,METRICS%DXI_DX,DET_DX_DXI,err,error,*999)
             ELSE
               !We have a line or a surface embedded in a higher dimensional space
-              SELECT CASE(METRICS%NUMBER_OF_XI_DIMENSIONS)
+              SELECT CASE(METRICS%numberOfXiDimensions)
               CASE(1)
                 !Line in space
-                SELECT CASE(METRICS%NUMBER_OF_X_DIMENSIONS)
+                SELECT CASE(METRICS%numberOfXDimensions)
                 CASE(2)
                   IF(INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE>FIRST_PART_DERIV) THEN
                     !We have curvature information. Form the frenet vector frame.
@@ -896,7 +896,7 @@ CONTAINS
                 END SELECT
               CASE(2)
                 !Surface in space
-                IF(METRICS%NUMBER_OF_X_DIMENSIONS==3) THEN
+                IF(METRICS%numberOfXDimensions==3) THEN
                   !Surface in 3D space.
                   !Calculate the covariant vectors g^1 and g^2. These are calculated as follows:
                   !First define g_3=g_1 x g_2, and then define g^1=((g_2 x g_3)_b)/DET_GL and g^2=((g_3 x g_1)_b)/DET_GL. 
@@ -963,37 +963,37 @@ CONTAINS
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Coordinate system metrics:",err,error,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Coordinate system type = ",TRIM(COORDINATE_SYSTEM_TYPE_STRING( &
         & COORDINATE_SYSTEM%TYPE)),err,error,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions = ",METRICS%NUMBER_OF_X_DIMENSIONS,err,error,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",METRICS%NUMBER_OF_XI_DIMENSIONS,err,error,*999)
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions = ",METRICS%numberOfXDimensions,err,error,*999)
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi dimensions = ",METRICS%numberOfXiDimensions,err,error,*999)
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Location of metrics:",err,error,*999)
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_X_DIMENSIONS,3,3,INTERPOLATED_POINT%VALUES(:,1), &
+      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXDimensions,3,3,INTERPOLATED_POINT%VALUES(:,1), &
         & '("    X           :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)      
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt Xi:",err,error,*999)
-      CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_X_DIMENSIONS,1,1,METRICS%NUMBER_OF_XI_DIMENSIONS, &
+      CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXDimensions,1,1,METRICS%numberOfXiDimensions, &
         & 3,3,METRICS%DX_DXI,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dX_dXi','(",I1,",:)',' :",3(X,E13.6))', &
         & '(17X,3(X,E13.6))',err,error,*999)
-      IF(METRICS%NUMBER_OF_X_DIMENSIONS/=METRICS%NUMBER_OF_XI_DIMENSIONS) THEN
+      IF(METRICS%numberOfXDimensions/=METRICS%numberOfXiDimensions) THEN
         CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Constructed derivative of X wrt Xi:",err,error,*999)
-        SELECT CASE(METRICS%NUMBER_OF_XI_DIMENSIONS)
+        SELECT CASE(METRICS%numberOfXiDimensions)
         CASE(1)
           !Line in space
-          SELECT CASE(METRICS%NUMBER_OF_X_DIMENSIONS)
+          SELECT CASE(METRICS%numberOfXDimensions)
           CASE(2)
-            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_X_DIMENSIONS,3,3,DX_DXI2, &
+            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXDimensions,3,3,DX_DXI2, &
               & '("    dX_dXi(:,2) :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)      
           CASE(3)
-            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_X_DIMENSIONS,3,3,DX_DXI2, &
+            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXDimensions,3,3,DX_DXI2, &
               & '("    dX_dXi(:,2) :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)      
-            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_X_DIMENSIONS,3,3,DX_DXI3, &
+            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXDimensions,3,3,DX_DXI3, &
               & '("    dX_dXi(:,3) :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)      
           CASE DEFAULT
             CALL FlagError("Invalid embedding of a line in space.",err,error,*999)
           END SELECT
         CASE(2)
           !Surface in space
-          SELECT CASE(METRICS%NUMBER_OF_X_DIMENSIONS)
+          SELECT CASE(METRICS%numberOfXDimensions)
           CASE(3)
-            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_X_DIMENSIONS,3,3,DX_DXI3, &
+            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXDimensions,3,3,DX_DXI3, &
               & '("    dX_dXi(:,3) :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)      
           CASE DEFAULT
             CALL FlagError("Invalid embedding of a surface in space.",err,error,*999)
@@ -1004,15 +1004,15 @@ CONTAINS
       ENDIF
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  det dX_dXi    = ",DET_DX_DXI,err,error,*999)
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Xi wrt X:",err,error,*999)
-      CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_XI_DIMENSIONS,1,1,METRICS%NUMBER_OF_X_DIMENSIONS, &
+      CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXiDimensions,1,1,METRICS%numberOfXDimensions, &
         & 3,3,METRICS%DXI_DX,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dXi_dX','(",I1,",:)',' :",3(X,E13.6))', &
         & '(17X,3(X,E13.6))',err,error,*999)
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Covariant metric tensor:",err,error,*999)
-      CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_XI_DIMENSIONS,1,1,METRICS%NUMBER_OF_XI_DIMENSIONS, &
+      CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXiDimensions,1,1,METRICS%numberOfXiDimensions, &
         & 3,3,METRICS%GL,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    GL','(",I1,",:)','     :",3(X,E13.6))','(17X,3(X,E13.6))', &
         & err,error,*999)      
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Contravariant metric tensor:",err,error,*999)
-      CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%NUMBER_OF_XI_DIMENSIONS,1,1,METRICS%NUMBER_OF_XI_DIMENSIONS, &
+      CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXiDimensions,1,1,METRICS%numberOfXiDimensions, &
         & 3,3,METRICS%GU,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    GU','(",I1,",:)','     :",3(X,E13.6))','(17X,3(X,E13.6))', &
         & err,error,*999)      
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian type = ",METRICS%JACOBIAN_TYPE,err,error,*999)
@@ -1033,33 +1033,33 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_NORMAL_CALCULATE(COORDINATE_SYSTEM,REVERSE,X,N,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<The coordinate system to calculate the normal for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<The coordinate system to calculate the normal for
     LOGICAL, INTENT(IN) :: REVERSE !<If .TRUE. the reversed normal is returned.
     REAL(DP), INTENT(IN) :: X(:,:) !<The coordinate and it's derivatives to calcualte the normal at
     REAL(DP), INTENT(OUT) :: N(3) !<On exit, the normal vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: NUMBER_OF_X_DIMENSIONS,d_s1,d_s2,d2_s1
+    INTEGER(INTG) :: numberOfXDimensions,d_s1,d_s2,d2_s1
     REAL(DP) :: LENGTH,R,TANGENT1(3),TANGENT2(3)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("COORDINATE_SYSTEM_NORMAL_CALCULATE",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         CALL FlagError("Coordinate system has been finished.",err,error,*999)
       ELSE
-        NUMBER_OF_X_DIMENSIONS=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS
+        numberOfXDimensions=COORDINATE_SYSTEM%numberOfDimensions
         d_s1=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1)
         d_s2=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(2)
         d2_s1=PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(1)
         SELECT CASE(COORDINATE_SYSTEM%TYPE)
         CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-          IF(NUMBER_OF_X_DIMENSIONS==2) THEN
+          IF(numberOfXDimensions==2) THEN
             TANGENT1(1)=X(1,d_s1)
             TANGENT1(2)=X(2,d_s1)
-          ELSE IF(NUMBER_OF_X_DIMENSIONS==3) THEN
+          ELSE IF(numberOfXDimensions==3) THEN
             TANGENT1(1)=X(1,d_s1)
             TANGENT1(2)=X(2,d_s1)
             TANGENT1(3)=X(3,d_s1)
@@ -1067,16 +1067,16 @@ CONTAINS
             TANGENT2(2)=X(2,d_s2)
             TANGENT2(3)=X(3,d_s2)
           ELSE
-            LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(NUMBER_OF_X_DIMENSIONS,"*",err,error))// &
+            LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(numberOfXDimensions,"*",err,error))// &
               & " is an invalid number of dimensions to calculate a normal from in a rectangular cartesian coordinate system."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
           R=X(1,1)
-          IF(NUMBER_OF_X_DIMENSIONS==2) THEN
+          IF(numberOfXDimensions==2) THEN
             TANGENT1(1)=X(1,d_s1)*COS(X(1,d_s1))-R*SIN(X(1,d_s1))*X(2,d_s1)
             TANGENT1(2)=X(2,d_s1)*SIN(X(1,d_s1))+R*COS(X(1,d_s1))*X(2,d_s1)
-          ELSE IF(NUMBER_OF_X_DIMENSIONS==3) THEN
+          ELSE IF(numberOfXDimensions==3) THEN
             TANGENT1(1)=X(1,d_s1)*COS(X(1,d_s1))-R*SIN(X(1,d_s1))*X(2,d_s1)
             TANGENT1(2)=X(2,d_s1)*SIN(X(1,d_s1))+R*COS(X(1,d_s1))*X(2,d_s1)
             TANGENT1(3)=X(3,d_s1)
@@ -1084,7 +1084,7 @@ CONTAINS
             TANGENT2(2)=X(1,d_s2)*SIN(X(1,d_s1))+R*COS(X(1,d_s1))*X(2,d_s2)
             TANGENT2(3)=X(3,d_s2)
            ELSE
-            LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(NUMBER_OF_X_DIMENSIONS,"*",err,error))// &
+            LOCAL_ERROR=TRIM(NUMBER_TO_VSTRING(numberOfXDimensions,"*",err,error))// &
               & " is an invalid number of dimensions to calculate a normal from in a rectangular cartesian coordinate system."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF          
@@ -1113,7 +1113,7 @@ CONTAINS
             & " is invalid."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
-        IF(NUMBER_OF_X_DIMENSIONS==2) THEN
+        IF(numberOfXDimensions==2) THEN
           N(1)=-TANGENT1(2)
           N(2)=TANGENT1(1)
           LENGTH=SQRT(N(1)*N(1)+N(2)*N(2))
@@ -1149,16 +1149,16 @@ CONTAINS
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"Coordinate system metrics:",err,error,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Coordinate system type = ",TRIM(COORDINATE_SYSTEM_TYPE_STRING( &
         & COORDINATE_SYSTEM%TYPE)),err,error,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions = ",NUMBER_OF_X_DIMENSIONS,err,error,*999)
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_X_DIMENSIONS,3,3,X(:,1),'("  X         :",3(X,E13.6))', &
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X dimensions = ",numberOfXDimensions,err,error,*999)
+      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,3,3,X(:,1),'("  X         :",3(X,E13.6))', &
         & '(13X,3(X,E13.6))',err,error,*999)      
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_X_DIMENSIONS,3,3,TANGENT1,'("  Tangent 1 :",3(X,E13.6))', &
+      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,3,3,TANGENT1,'("  Tangent 1 :",3(X,E13.6))', &
         & '(13X,3(X,E13.6))',err,error,*999)
-      IF(NUMBER_OF_X_DIMENSIONS==3) THEN
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_X_DIMENSIONS,3,3,TANGENT2,'("  Tangent 2 :",3(X,E13.6))', &
+      IF(numberOfXDimensions==3) THEN
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,3,3,TANGENT2,'("  Tangent 2 :",3(X,E13.6))', &
           & '(13X,3(X,E13.6))',err,error,*999)
       ENDIF
-      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_X_DIMENSIONS,3,3,N,'("  Normal    :",3(X,E13.6))', &
+      CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,3,3,N,'("  Normal    :",3(X,E13.6))', &
         & '(13X,3(X,E13.6))',err,error,*999)            
     ENDIF
     
@@ -1176,7 +1176,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_FINALISE(COORDINATE_SYSTEM,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to finalise.
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to finalise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1202,7 +1202,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_FOCUS_GET(COORDINATE_SYSTEM,FOCUS,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the focus for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the focus for
     REAL(DP), INTENT(OUT) :: FOCUS !<On return, the focus of the coordinate system.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1211,7 +1211,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_FOCUS_GET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         SELECT CASE(COORDINATE_SYSTEM%TYPE)
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE,COORDINATE_OBLATE_SPHEROIDAL_TYPE)
           FOCUS=COORDINATE_SYSTEM%FOCUS
@@ -1241,7 +1241,7 @@ CONTAINS
   SUBROUTINE Coordinates_RadialInterpolationTypeGet(coordinateSystem,radialInterpolationType,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<The coordinate system to get the radial interpolation for
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<The coordinate system to get the radial interpolation for
     INTEGER(INTG), INTENT(OUT) :: radialInterpolationType !<On return, the radial interpolation type for the coordinate system \see COORDINATE_ROUTINES_RadialInterpolations,COORDINATE_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1250,10 +1250,10 @@ CONTAINS
     ENTERS("Coordinates_RadialInterpolationTypeGet",err,error,*999)
 
     IF(ASSOCIATED(coordinateSystem)) THEN
-      IF(coordinateSystem%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(coordinateSystem%coordinateSystemFinished) THEN
         SELECT CASE(coordinateSystem%TYPE)
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE,COORDINATE_SPHERICAL_POLAR_TYPE)
-          radialInterpolationType=coordinateSystem%RADIAL_INTERPOLATION_TYPE
+          radialInterpolationType=coordinateSystem%radialInterpolationType
         CASE DEFAULT
           CALL FlagError("No radial interpolation type defined for this coordinate system interpolation.",err,error,*999)
         END SELECT
@@ -1279,7 +1279,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_TYPE_GET(COORDINATE_SYSTEM,SYSTEM_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the type for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the type for
     INTEGER(INTG), INTENT(OUT) :: SYSTEM_TYPE !<On return, the type for the coordinate system.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1288,7 +1288,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_TYPE_GET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         SYSTEM_TYPE=COORDINATE_SYSTEM%TYPE
       ELSE
         CALL FlagError("Coordinate system has not been finished.",err,error,*999)
@@ -1312,7 +1312,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_DIMENSION_SET(COORDINATE_SYSTEM,DIMENSION,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer the coordinate system to set the dimension for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer the coordinate system to set the dimension for
     INTEGER(INTG), INTENT(IN) :: DIMENSION !<The dimension to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1321,37 +1321,37 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_DIMENSION_SET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         CALL FlagError("Coordinate system has been finished.",err,error,*999)
       ELSE
         SELECT CASE(COORDINATE_SYSTEM%TYPE)
         CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
           IF(DIMENSION>=1.AND.DIMENSION<=3) THEN
-            COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
+            COORDINATE_SYSTEM%numberOfDimensions=DIMENSION
           ELSE
             CALL FlagError("Invalid number of dimensions.",err,error,*999)
           ENDIF
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
           IF(DIMENSION>=2.AND.DIMENSION<=3) THEN
-            COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
+            COORDINATE_SYSTEM%numberOfDimensions=DIMENSION
           ELSE
             CALL FlagError("Invalid number of dimensions.",err,error,*999)
           ENDIF
         CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
           IF(DIMENSION==3) THEN
-            COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
+            COORDINATE_SYSTEM%numberOfDimensions=DIMENSION
           ELSE
             CALL FlagError("Invalid number of dimensions.",err,error,*999)
           ENDIF
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
           IF(DIMENSION==3) THEN
-            COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
+            COORDINATE_SYSTEM%numberOfDimensions=DIMENSION
           ELSE
             CALL FlagError("Invalid number of dimensions.",err,error,*999)
           ENDIF
         CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
           IF(DIMENSION==3) THEN
-            COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=DIMENSION
+            COORDINATE_SYSTEM%numberOfDimensions=DIMENSION
           ELSE
             CALL FlagError("Invalid number of dimensions.",err,error,*999)
           ENDIF
@@ -1377,7 +1377,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_FOCUS_SET(COORDINATE_SYSTEM,FOCUS,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to set the focus for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to set the focus for
     REAL(DP), INTENT(IN) :: FOCUS !<The focus to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1386,7 +1386,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_FOCUS_SET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         CALL FlagError("Coordinate system has been finished.",err,error,*999)
       ELSE
         SELECT CASE(COORDINATE_SYSTEM%TYPE)
@@ -1424,7 +1424,7 @@ CONTAINS
   SUBROUTINE Coordinates_RadialInterpolationTypeSet(coordinateSystem,radialInterpolationType,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<The coordinate system to set the interpolation type for
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<The coordinate system to set the interpolation type for
     INTEGER(INTG), INTENT(IN) :: radialInterpolationType !<The interpolation type to set \see COORDINATE_ROUTINES_RadialInterpolations,COORDINATE_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1434,14 +1434,14 @@ CONTAINS
     ENTERS("Coordinates_RadialInterpolationTypeSet",err,error,*999)
 
     IF(ASSOCIATED(coordinateSystem)) THEN
-      IF(coordinateSystem%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(coordinateSystem%coordinateSystemFinished) THEN
         CALL FlagError("Coordinate system has been finished.",err,error,*999)
       ELSE
         SELECT CASE(coordinateSystem%TYPE)
         CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
           SELECT CASE(radialInterpolationType)
           CASE(COORDINATE_NO_RADIAL_INTERPOLATION_TYPE)
-            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_NO_RADIAL_INTERPOLATION_TYPE
+            coordinateSystem%radialInterpolationType=COORDINATE_NO_RADIAL_INTERPOLATION_TYPE
           CASE DEFAULT
             localERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(radialInterpolationType,"*",err,error))// &
               & " is invalid for a rectangular cartesian coordinate system."
@@ -1450,9 +1450,9 @@ CONTAINS
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE,COORDINATE_SPHERICAL_POLAR_TYPE)
           SELECT CASE(radialInterpolationType)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
-            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_INTERPOLATION_TYPE
+            coordinateSystem%radialInterpolationType=COORDINATE_RADIAL_INTERPOLATION_TYPE
           CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
-            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE
+            coordinateSystem%radialInterpolationType=COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE
           CASE DEFAULT
             localERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(radialInterpolationType,"*",err,error))// &
               & " is invalid for a cylindrical/spherical coordinate system."
@@ -1461,11 +1461,11 @@ CONTAINS
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
           SELECT CASE(radialInterpolationType)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
-            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_INTERPOLATION_TYPE
+            coordinateSystem%radialInterpolationType=COORDINATE_RADIAL_INTERPOLATION_TYPE
           CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
-            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE
+            coordinateSystem%radialInterpolationType=COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE
           CASE(COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE)
-            coordinateSystem%RADIAL_INTERPOLATION_TYPE=COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE
+            coordinateSystem%radialInterpolationType=COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE
           CASE DEFAULT
             localERROR="The radial interpolation type of "//TRIM(NumberToVString(radialInterpolationType,"*",err,error))// &
               & " is invalid for a prolate spheroidal coordinate system."
@@ -1495,7 +1495,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_TYPE_SET(COORDINATE_SYSTEM,TYPE,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<The coordinate system to set the type for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<The coordinate system to set the type for
     INTEGER(INTG), INTENT(IN) :: TYPE !<The coordinate system type to set \see COORDINATE_ROUTINES_CoordinateSystemTypes,COORDINATE_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1504,7 +1504,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_TYPE_SET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         CALL FlagError("Coordinate system has been finished.",err,error,*999)
       ELSE
         SELECT CASE(TYPE)
@@ -1540,7 +1540,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_ORIGIN_GET(COORDINATE_SYSTEM,ORIGIN,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the origin for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the origin for
     REAL(DP), INTENT(OUT) :: ORIGIN(:) !<On return, the origin of the coordinate system.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1549,7 +1549,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_ORIGIN_GET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         IF(SIZE(ORIGIN)>=3) THEN
           ORIGIN(1:3)=COORDINATE_SYSTEM%ORIGIN
         ELSE
@@ -1577,7 +1577,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_ORIGIN_SET(COORDINATE_SYSTEM,ORIGIN,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to set the origin for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to set the origin for
     REAL(DP), INTENT(IN) :: ORIGIN(:) !<The origin to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1586,7 +1586,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_ORIGIN_SET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         CALL FlagError("Coordinate system has been finished.",err,error,*999)
       ELSE
         IF(SIZE(ORIGIN)==3) THEN
@@ -1613,7 +1613,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_ORIENTATION_GET(COORDINATE_SYSTEM,ORIENTATION,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the orientation for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to get the orientation for
     REAL(DP), INTENT(OUT) :: ORIENTATION(:,:) !<On return, the orientation of the coordinate system
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1622,7 +1622,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_ORIENTATION_GET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         IF(SIZE(ORIENTATION,1)>=3.AND.SIZE(ORIENTATION,2)>=3) THEN
           ORIENTATION(1:3,1:3)=COORDINATE_SYSTEM%ORIENTATION
         ELSE
@@ -1649,7 +1649,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_ORIENTATION_SET(COORDINATE_SYSTEM,ORIENTATION,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to set the orientation for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to set the orientation for
     REAL(DP), INTENT(IN) :: ORIENTATION(:,:) !<The orientation to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1658,7 +1658,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_ORIENTATION_SET",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED) THEN
+      IF(COORDINATE_SYSTEM%coordinateSystemFinished) THEN
         CALL FlagError("Coordinate system has been finished.",err,error,*999)
       ELSE
         IF(SIZE(ORIENTATION,1)==3.AND.SIZE(ORIENTATION,2)==3) THEN
@@ -1685,7 +1685,7 @@ CONTAINS
   !>Starts the creation of and initialises a new coordinate system. \see OPENCMISS::CMISSCoordinateSystemCreateStart
   !>The default values of the COORDINATE_SYSTEM's attributes are:
   !>- TYPE: 1 (COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-  !>- RADIAL_INTERPOLATION_TYPE: 0 (COORDINATE_NO_RADIAL_INTERPOLATION_TYPE)
+  !>- radialInterpolationType: 0 (COORDINATE_NO_RADIAL_INTERPOLATION_TYPE)
   !>- Dimensions: 3
   !>- Focus: 1.0
   !>- Origin: (0.0,0.0,0.0)
@@ -1695,13 +1695,13 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number for the created coordinate system
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the coordinate systems to create the coordinate system for.
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<On exit, a pointer to the created coordinate system. Must not be associated on entry.
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<On exit, a pointer to the created coordinate system. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: coord_system_idx
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: NEW_COORDINATE_SYSTEM
-    TYPE(COORDINATE_SYSTEM_PTR_TYPE), POINTER :: NEW_COORDINATE_SYSTEMS(:)
+    TYPE(CoordinateSystemType), POINTER :: NEW_COORDINATE_SYSTEM
+    TYPE(CoordinateSystemPtrType), POINTER :: NEW_COORDINATE_SYSTEMS(:)
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     NULLIFY(NEW_COORDINATE_SYSTEM)
@@ -1726,12 +1726,12 @@ CONTAINS
         ALLOCATE(NEW_COORDINATE_SYSTEM,STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new coordinate system.",err,error,*999)
       
-        NEW_COORDINATE_SYSTEM%USER_NUMBER=USER_NUMBER
+        NEW_COORDINATE_SYSTEM%userNumber=USER_NUMBER
         NEW_COORDINATE_SYSTEM%coordinateSystems=>coordinateSystems
-        NEW_COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED=.FALSE.
+        NEW_COORDINATE_SYSTEM%coordinateSystemFinished=.FALSE.
         NEW_COORDINATE_SYSTEM%TYPE=COORDINATE_RECTANGULAR_CARTESIAN_TYPE
-        NEW_COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE=COORDINATE_NO_RADIAL_INTERPOLATION_TYPE
-        NEW_COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS=3
+        NEW_COORDINATE_SYSTEM%radialInterpolationType=COORDINATE_NO_RADIAL_INTERPOLATION_TYPE
+        NEW_COORDINATE_SYSTEM%numberOfDimensions=3
         NEW_COORDINATE_SYSTEM%FOCUS=1.0_DP    
         NEW_COORDINATE_SYSTEM%ORIGIN=[0.0_DP,0.0_DP,0.0_DP]
         NEW_COORDINATE_SYSTEM%ORIENTATION=RESHAPE(&
@@ -1771,7 +1771,7 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_CREATE_FINISH(COORDINATE_SYSTEM,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to finish
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to finish
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1781,7 +1781,7 @@ CONTAINS
     ENTERS("COORDINATE_SYSTEM_CREATE_FINISH",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      COORDINATE_SYSTEM%COORDINATE_SYSTEM_FINISHED=.TRUE.
+      COORDINATE_SYSTEM%coordinateSystemFinished=.TRUE.
     ELSE
       CALL FlagError("Coordinate system is not associated.",err,error,*999)
     ENDIF
@@ -1794,11 +1794,11 @@ CONTAINS
       DO coord_system_idx=1,coordinateSystems%numberOfCoordinateSystems
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Coordinate system : ",coord_system_idx,err,error,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number = ", &
-          & coordinateSystems%coordinateSystems(coord_system_idx)%ptr%USER_NUMBER,err,error,*999)
+          & coordinateSystems%coordinateSystems(coord_system_idx)%ptr%userNumber,err,error,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Type = ", &
           & COORDINATE_SYSTEM_TYPE_STRING(coordinateSystems%coordinateSystems(coord_system_idx)%ptr%TYPE),err,error,*999)
         CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Number of dimensions = ", &
-          & coordinateSystems%coordinateSystems(coord_system_idx)%ptr%NUMBER_OF_DIMENSIONS,err,error,*999)
+          & coordinateSystems%coordinateSystems(coord_system_idx)%ptr%numberOfDimensions,err,error,*999)
       ENDDO !coord_system_idx
     ENDIF
     
@@ -1816,19 +1816,19 @@ CONTAINS
   SUBROUTINE COORDINATE_SYSTEM_DESTROY(COORDINATE_SYSTEM,err,error,*)
 
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to destroy
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to destroy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: coord_system_no,new_coord_system_no
     LOGICAL :: FOUND
-    TYPE(COORDINATE_SYSTEM_PTR_TYPE), POINTER :: NEW_COORDINATE_SYSTEMS(:)
+    TYPE(CoordinateSystemPtrType), POINTER :: NEW_COORDINATE_SYSTEMS(:)
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems
 
     ENTERS("COORDINATE_SYSTEM_DESTROY",err,error,*999)
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
-      IF(COORDINATE_SYSTEM%USER_NUMBER==0) THEN
+      IF(COORDINATE_SYSTEM%userNumber==0) THEN
         CALL FlagError("Cannot destroy the world coordinate system.",err,error,*999)
       ELSE
         NULLIFY(coordinateSystems)
@@ -1838,7 +1838,7 @@ CONTAINS
         ALLOCATE(NEW_COORDINATE_SYSTEMS(coordinateSystems%numberOfCoordinateSystems-1),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new coordianate systems.",err,error,*999)
         DO coord_system_no=1,coordinateSystems%numberOfCoordinateSystems
-          IF(coordinateSystems%coordinateSystems(coord_system_no)%ptr%USER_NUMBER==COORDINATE_SYSTEM%USER_NUMBER) THEN
+          IF(coordinateSystems%coordinateSystems(coord_system_no)%ptr%userNumber==COORDINATE_SYSTEM%userNumber) THEN
             FOUND=.TRUE.
           ELSE
             new_coord_system_no=new_coord_system_no+1
@@ -1873,7 +1873,7 @@ CONTAINS
   FUNCTION DXZ_DP(COORDINATE_SYSTEM,I,X,err,error)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM
     INTEGER(INTG), INTENT(IN) :: I
     REAL(DP), INTENT(IN) :: X(:)
     INTEGER(INTG), INTENT(OUT) :: err
@@ -1887,19 +1887,19 @@ CONTAINS
 
     DXZ_DP=0.0_DP
 
-    IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(X,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of X is less than the number of dimensions", &
       & err,error,*999)
    
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-      IF(I>0.AND.I<=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) THEN
+      IF(I>0.AND.I<=COORDINATE_SYSTEM%numberOfDimensions) THEN
         DXZ_DP(I)=1.0_DP
       ELSE
         CALL FlagError("Invalid i value",err,error,*999)
       ENDIF
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-      SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
       CASE(2)
         SELECT CASE(I)
         CASE(1)
@@ -1932,7 +1932,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates",err,error,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         SELECT CASE(I)
         CASE(1)
           DXZ_DP(1)=COS(X(2))*COS(X(3))
@@ -1953,7 +1953,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates",err,error,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         FOCUS=COORDINATE_SYSTEM%FOCUS
         RD=FOCUS*(COSH(X(1))*COSH(X(1))-COS(X(2))*COS(X(2)))
         SELECT CASE(I)
@@ -2013,7 +2013,7 @@ CONTAINS
     !###  Parent-function: D2ZX
     
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM
     INTEGER(INTG), INTENT(IN) :: I,J
     REAL(DP), INTENT(IN) :: X(:)
     INTEGER(INTG), INTENT(OUT) :: err
@@ -2027,15 +2027,15 @@ CONTAINS
 
     D2ZX_DP=0.0_DP
 
-    IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(X,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of X is less than the number of dimensions", &
       & err,error,*999)
    
     SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-      D2ZX_DP(1:COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)=0.0_DP
+      D2ZX_DP(1:COORDINATE_SYSTEM%numberOfDimensions)=0.0_DP
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-      SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
       CASE(2)
         SELECT CASE(I)
         CASE(1)
@@ -2123,7 +2123,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates",err,error,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         SELECT CASE(I)
         CASE(1)
           SELECT CASE(J)
@@ -2183,7 +2183,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates",err,error,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         FOCUS=COORDINATE_SYSTEM%FOCUS
         SELECT CASE(I)
         CASE(1)
@@ -2281,7 +2281,7 @@ CONTAINS
     !###  Parent-function: DZX
     
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM
     INTEGER(INTG), INTENT(IN) :: I
     REAL(DP), INTENT(IN) :: X(:)
     INTEGER(INTG), INTENT(OUT) :: err
@@ -2295,19 +2295,19 @@ CONTAINS
 
     DZX_DP=0.0_DP
 
-    IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(X,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of X is less than the number of dimensions", &
       & err,error,*999)
    
    SELECT CASE(COORDINATE_SYSTEM%TYPE)
     CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-      IF(I>0.AND.I<=COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) THEN
+      IF(I>0.AND.I<=COORDINATE_SYSTEM%numberOfDimensions) THEN
         DZX_DP(I)=1.0_DP
       ELSE
         CALL FlagError("Invalid i value",err,error,*999)
       ENDIF
     CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-      SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+      SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
       CASE(2)
         SELECT CASE(I)
         CASE(1)
@@ -2340,7 +2340,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates",err,error,*999)
       END SELECT
     CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         SELECT CASE(I)
         CASE(1)
           DZX_DP(1)=COS(X(2))*COS(X(3))
@@ -2361,7 +2361,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates",err,error,*999)
       ENDIF
     CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         FOCUS=COORDINATE_SYSTEM%FOCUS
         SELECT CASE(I)
         CASE(1)
@@ -2383,7 +2383,7 @@ CONTAINS
         CALL FlagError("Invalid number of coordinates",err,error,*999)
       ENDIF
     CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-      IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+      IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
         FOCUS=COORDINATE_SYSTEM%FOCUS
         SELECT CASE(I)
         CASE(1)
@@ -2445,7 +2445,7 @@ CONTAINS
     !###  Parent-function: COORDINATE_DERIVATIVE_CONVERT_TO_RC
     
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM
     INTEGER(INTG), INTENT(IN) :: PART_DERIV_TYPE
     REAL(DP), INTENT(IN) :: X(:,:)
     REAL(DP), INTENT(OUT) :: Z(:)
@@ -2459,7 +2459,7 @@ CONTAINS
 !!TODO: change all second index X(:,?) numbers to their apropriate constant
 !!as defined in constants e.g. X(1,2) == X(1,PART_DERIV_S1)
     
-    IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(X,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of X is less than the number of dimensions", &
       & err,error,*999)
     
@@ -2478,7 +2478,7 @@ CONTAINS
           IF(err/=0) GOTO 999
         CASE(PART_DERIV_S1)
           IF(SIZE(X,2)>=2) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=COS(X(2,1))*X(1,2)-X(1,1)*SIN(X(2,1))*X(2,2) !d(x)/d(s1)
               Z(2)=SIN(X(2,1))*X(1,2)+X(1,1)*COS(X(2,1))*X(2,2) !d(y)/d(s1)
@@ -2496,7 +2496,7 @@ CONTAINS
           CALL FlagError("Not implemented",err,error,*999)
         CASE(PART_DERIV_S2)
           IF(SIZE(X,2)>=4) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=COS(X(2,1))*X(1,4)-X(1,1)*SIN(X(2,1))*X(2,4) !d(x)/d(s2)
               Z(2)=SIN(X(2,1))*X(1,4)+X(1,1)*COS(X(2,1))*X(2,4) !d(y)/d(s2)
@@ -2538,7 +2538,7 @@ CONTAINS
           ENDIF
         CASE(PART_DERIV_S3)
           IF(SIZE(X,2)>=7) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=0.0_DP
               Z(2)=0.0_DP
@@ -2556,7 +2556,7 @@ CONTAINS
           CALL FlagError("Not implemented",err,error,*999)
         CASE(PART_DERIV_S1_S3)
           IF(SIZE(X,2)>=9) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=0.0_DP
               Z(2)=0.0_DP
@@ -2576,7 +2576,7 @@ CONTAINS
           ENDIF
         CASE(PART_DERIV_S2_S3)
           IF(SIZE(X,2)>=10) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=0.0_DP
               Z(2)=0.0_DP
@@ -2596,7 +2596,7 @@ CONTAINS
           ENDIF
         CASE(PART_DERIV_S1_S2_S3)
           IF(SIZE(X,2)>=11) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=0.0_DP
               Z(2)=0.0_DP
@@ -2632,7 +2632,7 @@ CONTAINS
           CALL FlagError("Invalid partial derivative type",err,error,*999)
         END SELECT
       CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-        IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+        IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
           SELECT CASE(PART_DERIV_TYPE)
           CASE(NO_PART_DERIV)
             Z=COORDINATE_CONVERT_TO_RC(COORDINATE_SYSTEM,X(:,1),err,error)
@@ -2648,7 +2648,7 @@ CONTAINS
           CALL FlagError("Invalid number of coordinates",err,error,*999)
         ENDIF
       CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-        IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+        IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
           FOCUS=COORDINATE_SYSTEM%FOCUS
           SELECT CASE(PART_DERIV_TYPE)
           CASE(NO_PART_DERIV)
@@ -2966,7 +2966,7 @@ CONTAINS
           END SELECT
         ENDIF
       CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-        IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+        IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
           FOCUS=COORDINATE_SYSTEM%FOCUS
           SELECT CASE(PART_DERIV_TYPE)
           CASE(NO_PART_DERIV)
@@ -3013,7 +3013,7 @@ CONTAINS
     !###  Parent-function: COORDINATE_DERIVATIVE_CONVERT_TO_RC
     
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), INTENT(IN) :: COORDINATE_SYSTEM
+    TYPE(CoordinateSystemType), INTENT(IN) :: COORDINATE_SYSTEM
     INTEGER(INTG), INTENT(IN) :: PART_DERIV_TYPE
     REAL(SP), INTENT(IN) :: X(:,:)
     REAL(SP), INTENT(OUT) :: Z(:)
@@ -3027,7 +3027,7 @@ CONTAINS
 !!TODO: change all second index X(:,?) numbers to their apropriate constant
 !!as defined in constants e.g. X(1,2) == X(1,PART_DERIV_S1)
 
-    IF(SIZE(X,1)<COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS) &
+    IF(SIZE(X,1)<COORDINATE_SYSTEM%numberOfDimensions) &
       & CALL FlagError("Size of X is less than the number of dimensions", &
       & err,error,*999)
     
@@ -3046,7 +3046,7 @@ CONTAINS
           IF(err/=0) GOTO 999
         CASE(PART_DERIV_S1)
           IF(SIZE(X,2)>=2) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=COS(X(2,1))*X(1,2)-X(1,1)*SIN(X(2,1))*X(2,2) !d(x)/d(s1)
               Z(2)=SIN(X(2,1))*X(1,2)+X(1,1)*COS(X(2,1))*X(2,2) !d(y)/d(s1)
@@ -3064,7 +3064,7 @@ CONTAINS
           CALL FlagError("Not implemented",err,error,*999)
         CASE(PART_DERIV_S2)
           IF(SIZE(X,2)>=4) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=COS(X(2,1))*X(1,4)-X(1,1)*SIN(X(2,1))*X(2,4) !d(x)/d(s2)
               Z(2)=SIN(X(2,1))*X(1,4)+X(1,1)*COS(X(2,1))*X(2,4) !d(y)/d(s2)
@@ -3082,7 +3082,7 @@ CONTAINS
           CALL FlagError("Not implemented",err,error,*999)
         CASE(PART_DERIV_S1_S2)
           IF(SIZE(X,2)>=6) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=COS(X(2,1))*X(1,6)-X(1,2)*SIN(X(2,1))*X(2,4)-&
                 & (X(1,4)*SIN(X(2,1))*X(2,2)+X(1,1)*COS(X(2,1))*&
@@ -3106,7 +3106,7 @@ CONTAINS
           ENDIF
         CASE(PART_DERIV_S3)
           IF(SIZE(X,2)>=7) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=0.0_SP
               Z(2)=0.0_SP
@@ -3124,7 +3124,7 @@ CONTAINS
           CALL FlagError("Not implemented",err,error,*999)
         CASE(PART_DERIV_S1_S3)
           IF(SIZE(X,2)>=9) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=0.0_SP
               Z(2)=0.0_SP
@@ -3144,7 +3144,7 @@ CONTAINS
           ENDIF
         CASE(PART_DERIV_S2_S3)
           IF(SIZE(X,2)>=10) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=0.0_SP
               Z(2)=0.0_SP
@@ -3164,7 +3164,7 @@ CONTAINS
           ENDIF
         CASE(PART_DERIV_S1_S2_S3)
           IF(SIZE(X,2)>=11) THEN
-            SELECT CASE(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS)
+            SELECT CASE(COORDINATE_SYSTEM%numberOfDimensions)
             CASE(2)
               Z(1)=0.0_SP
               Z(2)=0.0_SP
@@ -3200,7 +3200,7 @@ CONTAINS
           CALL FlagError("Invalid partial derivative type",err,error,*999)
         END SELECT
       CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-        IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+        IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
           SELECT CASE(PART_DERIV_TYPE)
           CASE(NO_PART_DERIV)
             Z=COORDINATE_CONVERT_TO_RC(COORDINATE_SYSTEM,X(:,1),err,error)
@@ -3216,7 +3216,7 @@ CONTAINS
           CALL FlagError("Invalid number of coordinates",err,error,*999)
         ENDIF
       CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-        IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+        IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
           FOCUS=REAL(COORDINATE_SYSTEM%FOCUS,SP)
           SELECT CASE(PART_DERIV_TYPE)
           CASE(NO_PART_DERIV)
@@ -3535,7 +3535,7 @@ CONTAINS
           END SELECT
         ENDIF
       CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
-        IF(COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS==3) THEN
+        IF(COORDINATE_SYSTEM%numberOfDimensions==3) THEN
           SELECT CASE(PART_DERIV_TYPE)
           CASE(NO_PART_DERIV)
             Z=COORDINATE_CONVERT_TO_RC(COORDINATE_SYSTEM,X(:,1),err,error)
@@ -3574,7 +3574,7 @@ CONTAINS
   SUBROUTINE COORDINATE_DERIVATIVE_NORM(COORDINATE_SYSTEM,PART_DERIV_INDEX,INTERPOLATED_POINT,DERIV_NORM,err,error,*)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to calculate the derivative norm for
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to calculate the derivative norm for
     INTEGER(INTG), INTENT(IN) :: PART_DERIV_INDEX !<The partial derivative index to select the direction to normalise
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !<A pointer to the interpolated point 
     REAL(DP), INTENT(OUT) :: DERIV_NORM !<On exit, the derivative norm of the coordinate
@@ -3591,7 +3591,7 @@ CONTAINS
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(ASSOCIATED(INTERPOLATED_POINT)) THEN
         IF(INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE>=FIRST_PART_DERIV) THEN
-          IF(PART_DERIV_INDEX<=INTERPOLATED_POINT%MAX_PARTIAL_DERIVATIVE_INDEX) THEN
+          IF(PART_DERIV_INDEX<=INTERPOLATED_POINT%maximumPartialDerivativeIndex) THEN
             NUMBER_OF_COMPONENTS=SIZE(INTERPOLATED_POINT%VALUES,1)
             SELECT CASE(PART_DERIV_INDEX)
             CASE(PART_DERIV_S1,PART_DERIV_S2,PART_DERIV_S3)
@@ -3639,7 +3639,7 @@ CONTAINS
           ELSE
             LOCAL_ERROR="The partial derivative index of "//TRIM(NUMBER_TO_VSTRING(PART_DERIV_INDEX,"*",err,error))// &
               & " is invalid. The interpolated point has a maximum number of partial derivatives of "// &
-              & TRIM(NUMBER_TO_VSTRING(INTERPOLATED_POINT%MAX_PARTIAL_DERIVATIVE_INDEX,"*",err,error))//"."
+              & TRIM(NUMBER_TO_VSTRING(INTERPOLATED_POINT%maximumPartialDerivativeIndex,"*",err,error))//"."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         ELSE
@@ -3666,7 +3666,7 @@ CONTAINS
   SUBROUTINE COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,PARTIAL_DERIVATIVE_INDEX,VALUE,err,error,*)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to adjust
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to adjust
     INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_INDEX !<The partial derivative index to adjust
     REAL(DP), INTENT(INOUT) :: VALUE !<On entry, the coordinate value to adjust. On exit, the adjusted value.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -3682,7 +3682,7 @@ CONTAINS
       CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
         !Do nothing
       CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-        SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
+        SELECT CASE(COORDINATE_SYSTEM%radialInterpolationType)
         CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
           !Do nothing
         CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
@@ -3694,11 +3694,11 @@ CONTAINS
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
-            & RADIAL_INTERPOLATION_TYPE,"*",err,error))//" is invalid for a cylindrical coordinate system."
+            & radialInterpolationType,"*",err,error))//" is invalid for a cylindrical coordinate system."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-        SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
+        SELECT CASE(COORDINATE_SYSTEM%radialInterpolationType)
         CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
           !Do nothing
         CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
@@ -3710,11 +3710,11 @@ CONTAINS
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
-            & RADIAL_INTERPOLATION_TYPE,"*",err,error))//" is invalid for a cylindrical/spherical coordinate system."
+            & radialInterpolationType,"*",err,error))//" is invalid for a cylindrical/spherical coordinate system."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-        SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
+        SELECT CASE(COORDINATE_SYSTEM%radialInterpolationType)
         CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
           !Do nothing
         CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
@@ -3746,7 +3746,7 @@ CONTAINS
           ENDIF
         CASE DEFAULT
           LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
-            & RADIAL_INTERPOLATION_TYPE,"*",err,error))//" is invalid for a prolate spheroidal coordinate system."
+            & radialInterpolationType,"*",err,error))//" is invalid for a prolate spheroidal coordinate system."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
         END SELECT
       CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
@@ -3774,7 +3774,7 @@ CONTAINS
   SUBROUTINE COORDINATE_INTERPOLATION_PARAMETERS_ADJUST(COORDINATE_SYSTEM,INTERPOLATION_PARAMETERS,err,error,*)
   
     !Argument variables
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to adjust
+    TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to adjust
     TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<A pointer to the interpolation parameters to adjust
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3791,36 +3791,36 @@ CONTAINS
         CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
           !Do nothing
         CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
-          SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
+          SELECT CASE(COORDINATE_SYSTEM%radialInterpolationType)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
             !Do nothing
           CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
           CASE DEFAULT
             LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
-              & RADIAL_INTERPOLATION_TYPE,"*",err,error))//" is invalid for a cylindrical coordinate system."
+              & radialInterpolationType,"*",err,error))//" is invalid for a cylindrical coordinate system."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
           CALL FlagError("Not implemented",err,error,*999)
         CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
-          SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
+          SELECT CASE(COORDINATE_SYSTEM%radialInterpolationType)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
             !Do nothing
           CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
           CASE DEFAULT
             LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
-              & RADIAL_INTERPOLATION_TYPE,"*",err,error))//" is invalid for a spherical coordinate system."
+              & radialInterpolationType,"*",err,error))//" is invalid for a spherical coordinate system."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
-          SELECT CASE(COORDINATE_SYSTEM%RADIAL_INTERPOLATION_TYPE)
+          SELECT CASE(COORDINATE_SYSTEM%radialInterpolationType)
           CASE(COORDINATE_RADIAL_INTERPOLATION_TYPE)
             !Do nothing
           CASE(COORDINATE_RADIAL_SQUARED_INTERPOLATION_TYPE)
           CASE(COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE)
           CASE DEFAULT
             LOCAL_ERROR="The radial interpolation type of "//TRIM(NUMBER_TO_VSTRING(COORDINATE_SYSTEM% &
-              & RADIAL_INTERPOLATION_TYPE,"*",err,error))//" is invalid for a prolate spheroidal coordinate system."
+              & radialInterpolationType,"*",err,error))//" is invalid for a prolate spheroidal coordinate system."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
           END SELECT
           CALL FlagError("Not implemented.",err,error,*999)
@@ -3869,8 +3869,8 @@ CONTAINS
     
     IF(ASSOCIATED(geometricInterpPointMetrics)) THEN
       
-      numberOfXDimensions=geometricInterpPointMetrics%NUMBER_OF_X_DIMENSIONS
-      numberOfXiDimensions=geometricInterpPointMetrics%NUMBER_OF_XI_DIMENSIONS
+      numberOfXDimensions=geometricInterpPointMetrics%numberOfXDimensions
+      numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
       
       !Calculate dX/dNu and its inverse dNu/dX (same as transpose due to orthogonality)
       
@@ -4268,9 +4268,9 @@ CONTAINS
     !Create the default RC World cooordinate system
     ALLOCATE(context%coordinateSystems%coordinateSystems(1)%ptr,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate world coordinate system.",err,error,*999)
-    context%coordinateSystems%coordinateSystems(1)%ptr%USER_NUMBER=0
+    context%coordinateSystems%coordinateSystems(1)%ptr%userNumber=0
     context%coordinateSystems%coordinateSystems(1)%ptr%type=COORDINATE_RECTANGULAR_CARTESIAN_TYPE
-    context%coordinateSystems%coordinateSystems(1)%ptr%NUMBER_OF_DIMENSIONS=3
+    context%coordinateSystems%coordinateSystems(1)%ptr%numberOfDimensions=3
     context%coordinateSystems%coordinateSystems(1)%ptr%focus=1.0_DP    
     context%coordinateSystems%coordinateSystems(1)%ptr%origin=[0.0_DP,0.0_DP,0.0_DP]
     context%coordinateSystems%coordinateSystems(1)%ptr%orientation=RESHAPE(&
@@ -4278,7 +4278,7 @@ CONTAINS
       &  0.0_DP,1.0_DP,0.0_DP, &
       &  0.0_DP,0.0_DP,1.0_DP], &
       & [3,3])    
-    context%coordinateSystems%coordinateSystems(1)%ptr%COORDINATE_SYSTEM_FINISHED=.TRUE.
+    context%coordinateSystems%coordinateSystems(1)%ptr%coordinateSystemFinished=.TRUE.
     context%coordinateSystems%numberOfCoordinateSystems=1
    
     EXITS("CoordinateSystems_Initialise")

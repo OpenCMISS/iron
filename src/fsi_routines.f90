@@ -676,12 +676,12 @@ CONTAINS
       & solidNode,versionIdx
     LOGICAL :: fluidEquationsSetFound=.FALSE.,solidEquationsSetFound=.FALSE.
     REAL(DP) :: startTime,currentTime,stopTime,timeIncrement,VALUE
-    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DomainType), POINTER :: domain
     TYPE(EQUATIONS_SET_TYPE), POINTER :: solidEquationsSet,fluidEquationsSet,equationsSet
     TYPE(FIELD_TYPE), POINTER :: solidGeometricField,interfaceGeometricField,solidDependentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: geometricVariable
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_TYPE), POINTER :: fsInterface
+    TYPE(InterfaceType), POINTER :: fsInterface
     TYPE(NodesType), POINTER :: interfaceNodes
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: dynamicSolver,linearSolver
@@ -761,7 +761,7 @@ CONTAINS
     NULLIFY(solidGeometricField)
     CALL EquationsSet_GeometricFieldGet(solidEquationsSet,solidGeometricField,err,error,*999)
     CALL Field_NumberOfComponentsGet(solidGeometricField,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-    IF(DynamicSolverMapping%NUMBER_OF_INTERFACE_CONDITIONS>1) &
+    IF(DynamicSolverMapping%numberOfInterfaceConditions>1) &
       & CALL FlagError("Invalid number of interface conditions. Must be 1 for FSI.",err,error,*999)
     NULLIFY(solidDependentField)
     CALL EquationsSet_DependentFieldGet(solidEquationsSet,solidDependentField,err,error,*999)
@@ -781,13 +781,13 @@ CONTAINS
     NULLIFY(geometricVariable)
     CALL Field_VariableGet(interfaceGeometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
     DO componentIdx=1,numberOfComponents
-      SELECT CASE(geometricVariable%components(componentIdx)%INTERPOLATION_TYPE)
+      SELECT CASE(geometricVariable%components(componentIdx)%interpolationType)
       CASE(FIELD_NODE_BASED_INTERPOLATION)
         NULLIFY(domain)
         CALL FieldVariable_DomainGet(geometricVariable,componentIdx,domain,err,error,*999)
-        DO nodeIdx=1,domain%topology%nodes%TOTAL_NUMBER_OF_NODES
+        DO nodeIdx=1,domain%topology%nodes%totalNumberOfNodes
           solidNode=interfaceNodes%coupledNodes(1,nodeIdx)
-          DO derivativeIdx=1,domain%topology%nodes%nodes(nodeIdx)%NUMBER_OF_DERIVATIVES
+          DO derivativeIdx=1,domain%topology%nodes%nodes(nodeIdx)%numberOfDerivatives
             DO versionIdx=1,domain%topology%nodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
               CALL Field_ParameterSetGetNode(solidDependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & versionIdx,derivativeIdx,solidNode,componentIdx,VALUE,err,error,*999)

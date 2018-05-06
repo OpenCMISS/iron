@@ -292,8 +292,8 @@ CONTAINS
           model=>cellML%models(modelIdx)%ptr
           IF(ASSOCIATED(model)) THEN
             IF(dofOrderType==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
-              parameterDataOffset=modelsVariable%TOTAL_NUMBER_OF_DOFS
-              intermediateDataOffset=modelsVariable%TOTAL_NUMBER_OF_DOFS
+              parameterDataOffset=modelsVariable%totalNumberOfDofs
+              intermediateDataOffset=modelsVariable%totalNumberOfDofs
             ELSE
               parameterDataOffset=maxNumberOfParameters
               intermediateDataOffset=maxNumberOfIntermediates
@@ -697,9 +697,9 @@ CONTAINS
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number of problems = ",problems%numberOfProblems,err,error,*999)
       DO problem_idx=1,problems%numberOfProblems
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Problem number  = ",problem_idx,err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  User number     = ",problems%problems(problem_idx)%PTR%USER_NUMBER, &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  User number     = ",problems%problems(problem_idx)%PTR%userNumber, &
           & err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Global number   = ",problems%problems(problem_idx)%PTR%GLOBAL_NUMBER, &
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Global number   = ",problems%problems(problem_idx)%PTR%globalNumber, &
           & err,error,*999)
         CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,SIZE(problems%problems(problem_idx)%PTR%SPECIFICATION,1),8,8, &
           & problems%problems(problem_idx)%PTR%SPECIFICATION,'("  Problem specification = ",8(X,I3))','(16X,8(X,I3))', &
@@ -758,8 +758,8 @@ CONTAINS
         !Initalise problem
         CALL PROBLEM_INITIALISE(NEW_PROBLEM,err,error,*999)
         !Set default problem values
-        NEW_PROBLEM%USER_NUMBER=USER_NUMBER
-        NEW_PROBLEM%GLOBAL_NUMBER=PROBLEMS%numberOfProblems+1
+        NEW_PROBLEM%userNumber=USER_NUMBER
+        NEW_PROBLEM%globalNumber=PROBLEMS%numberOfProblems+1
         NEW_PROBLEM%PROBLEMS=>PROBLEMS
         NULLIFY(context)
         CALL Problems_ContextGet(problems,context,err,error,*999)
@@ -825,7 +825,7 @@ CONTAINS
       CALL Problem_ProblemsGet(problem,problems,err,error,*999)
       IF(ASSOCIATED(PROBLEMS%PROBLEMS)) THEN
         
-        problem_position=PROBLEM%GLOBAL_NUMBER
+        problem_position=PROBLEM%globalNumber
       
         !Destroy all the problem components
         CALL PROBLEM_FINALISE(PROBLEM,err,error,*999)
@@ -838,7 +838,7 @@ CONTAINS
             IF(problem_idx<problem_position) THEN
               NEW_PROBLEMS(problem_idx)%PTR=>PROBLEMS%PROBLEMS(problem_idx)%PTR
             ELSE IF(problem_idx>problem_position) THEN
-              PROBLEMS%PROBLEMS(problem_idx)%PTR%GLOBAL_NUMBER=PROBLEMS%PROBLEMS(problem_idx)%PTR%GLOBAL_NUMBER-1
+              PROBLEMS%PROBLEMS(problem_idx)%PTR%globalNumber=PROBLEMS%PROBLEMS(problem_idx)%PTR%globalNumber-1
               NEW_PROBLEMS(problem_idx-1)%PTR=>PROBLEMS%PROBLEMS(problem_idx)%PTR
             ENDIF
           ENDDO !problem_idx
@@ -956,8 +956,8 @@ CONTAINS
     ENTERS("PROBLEM_INITIALISE",err,error,*999)
 
     IF(ASSOCIATED(PROBLEM)) THEN
-      PROBLEM%USER_NUMBER=0
-      PROBLEM%GLOBAL_NUMBER=0
+      PROBLEM%userNumber=0
+      PROBLEM%globalNumber=0
       PROBLEM%PROBLEM_FINISHED=.FALSE.
       NULLIFY(PROBLEM%PROBLEMS)
       NULLIFY(problem%workGroup)
@@ -1248,8 +1248,8 @@ CONTAINS
                   CALL EquationsSet_JacobianEvaluate(EQUATIONS_SET,err,error,*999)
                 ENDDO !equations_set_idx
                 !Update interface matrices
-!                DO interfaceConditionIdx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-!                  interfaceCondition=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR
+!                DO interfaceConditionIdx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+!                  interfaceCondition=>SOLVER_MAPPING%interfaceConditions(interfaceConditionIdx)%PTR
 !                  !Assemble the interface condition for the Jacobian LHS
 !                  CALL WriteString(GENERAL_OUTPUT_TYPE,"********************Jacobian evaluation******************",err,error,*999)
 !                  CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
@@ -1405,8 +1405,8 @@ CONTAINS
                 ENDDO !equations_set_idx
                 !Note that the linear interface matrices are not required to be updated since these matrices do not change
                 !Update interface matrices
-!                DO interfaceConditionIdx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-!                  interfaceCondition=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR
+!                DO interfaceConditionIdx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+!                  interfaceCondition=>SOLVER_MAPPING%interfaceConditions(interfaceConditionIdx)%PTR
 !                  !Assemble the interface condition for the Jacobian LHS
 !                  CALL WriteString(GENERAL_OUTPUT_TYPE,"********************Residual evaluation******************",err,error,*999)
 !                  CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
@@ -2353,8 +2353,8 @@ CONTAINS
                   ENDIF
                 ENDDO !equations_set_idx
                 !Make sure the interface matrices are up to date
-                DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
-                  INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
+                DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
+                  INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
                   CALL INTERFACE_CONDITION_ASSEMBLE(INTERFACE_CONDITION,err,error,*999)
                 ENDDO !interface_condition_idx
                 !Set the solver time
@@ -2595,13 +2595,13 @@ CONTAINS
 #endif
           ENDDO !equations_set_idx
           !Make sure the interface matrices are up to date
-          DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
+          DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
 #ifdef TAUPROF
             WRITE (CVAR,'(a8,i2)') 'Interface',interface_condition_idx
             CALL TAU_PHASE_CREATE_DYNAMIC(PHASE,CVAR)
             CALL TAU_PHASE_START(PHASE)
 #endif
-            INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
+            INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
             CALL INTERFACE_CONDITION_ASSEMBLE(INTERFACE_CONDITION,err,error,*999)
 #ifdef TAUPROF
             CALL TAU_PHASE_STOP(PHASE)
@@ -2677,13 +2677,13 @@ CONTAINS
             CALL EQUATIONS_SET_ASSEMBLE(EQUATIONS_SET,err,error,*999)
           ENDDO !equations_set_idx
           !Make sure the interface matrices are up to date
-          DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
+          DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
 #ifdef TAUPROF
             WRITE (CVAR,'(a8,i2)') 'Interface',interface_condition_idx
             CALL TAU_PHASE_CREATE_DYNAMIC(PHASE,CVAR)
             CALL TAU_PHASE_START(PHASE)
 #endif
-            INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
+            INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
             CALL INTERFACE_CONDITION_ASSEMBLE(INTERFACE_CONDITION,err,error,*999)
 #ifdef TAUPROF
             CALL TAU_PHASE_STOP(PHASE)
@@ -2747,7 +2747,7 @@ CONTAINS
     IF(solver%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
       CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Solver: ",solver%label,err,error,*999)
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solver index = ",solver%GLOBAL_NUMBER,err,error,*999)
+      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Solver index = ",solver%globalNumber,err,error,*999)
     ENDIF
       
 #ifdef TAUPROF
@@ -3015,8 +3015,8 @@ CONTAINS
     INTEGER(INTG) :: componentIdx,versionIdx,derivativeIdx,nodeIdx,noGeomComp
     INTEGER(INTG) :: localNodeNumber,userNodeNumber,incrementIdx,iterationNumber
     REAL(DP) :: nodalParameters(3),nodalParametersTrans(3),transformationMatrix(4,4)
-    TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
     LOGICAL :: transformBC=.FALSE.,sameBases=.TRUE.
     
     ENTERS("Problem_SolverGeometricTransformationSolve",err,error,*999) 
@@ -3111,17 +3111,17 @@ CONTAINS
         ! Transform the field
         ! Determine if the all components have the same mesh components/ bases
         DO componentIdx=1,noGeomComp-1
-          IF(fieldVariable%COMPONENTS(componentIdx)%MESH_COMPONENT_NUMBER/= &
-            & fieldVariable%COMPONENTS(componentIdx+1)%MESH_COMPONENT_NUMBER) sameBases=.FALSE.
+          IF(fieldVariable%COMPONENTS(componentIdx)%meshComponentNumber/= &
+            & fieldVariable%COMPONENTS(componentIdx+1)%meshComponentNumber) sameBases=.FALSE.
         ENDDO
         IF(sameBases) THEN
           domain=>fieldVariable%COMPONENTS(1)%DOMAIN !Use the 1st component domain since they are the same for all components
           IF(ASSOCIATED(domain)) THEN
             domainNodes=>domain%TOPOLOGY%NODES
-            DO nodeIdx=1,domainNodes%NUMBER_OF_NODES
-              localNodeNumber=domainNodes%NODES(nodeIdx)%LOCAL_NUMBER
-              userNodeNumber=domainNodes%NODES(nodeIdx)%USER_NUMBER
-              DO derivativeIdx=1,domainNodes%NODES(nodeIdx)%NUMBER_OF_DERIVATIVES
+            DO nodeIdx=1,domainNodes%numberOfNodes
+              localNodeNumber=domainNodes%NODES(nodeIdx)%localNumber
+              userNodeNumber=domainNodes%NODES(nodeIdx)%userNumber
+              DO derivativeIdx=1,domainNodes%NODES(nodeIdx)%numberOfDerivatives
                 DO versionIdx=1,domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%numberOfVersions
                   DO componentIdx=1,noGeomComp !Get all component for a nodal derivative
                     CALL FIELD_PARAMETER_SET_GET_NODE(geometricTransformationSolver%field,geometricTransformationSolver% &
@@ -3129,7 +3129,7 @@ CONTAINS
                       & nodalParameters(componentIdx),err,error,*999)
                   ENDDO !componentIdx
                   !Rotate the nodal parameters
-                  userNodeNumber=domainNodes%NODES(nodeIdx)%USER_NUMBER
+                  userNodeNumber=domainNodes%NODES(nodeIdx)%userNumber
                   nodalParametersTrans(1:noGeomComp)=MATMUL(transformationMatrix(1:noGeomComp,1:noGeomComp), &
                     & nodalParameters(1:noGeomComp))
                   DO componentIdx=1,noGeomComp !Update all component for a nodal derivative
@@ -3196,7 +3196,7 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     LOGICAL :: reproject
     TYPE(VARYING_STRING) :: localError
     
@@ -3249,8 +3249,8 @@ CONTAINS
                   IF(ASSOCIATED(solverEquations)) THEN
                     solverMapping=>solverEquations%SOLVER_MAPPING
                     IF(ASSOCIATED(solverMapping)) THEN
-                      DO interfaceConditionIdx=1,solverMapping%NUMBER_OF_INTERFACE_CONDITIONS
-                        interfaceCondition=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR
+                      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+                        interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%PTR
                         IF(ASSOCIATED(interfaceCondition)) THEN
                           IF(interfaceCondition%OPERATOR==INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR .OR. &
                               & interfaceCondition%OPERATOR==INTERFACE_CONDITION_FLS_CONTACT_OPERATOR) THEN !Only reproject for contact operator
@@ -3344,14 +3344,14 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,load_step
     LOGICAL :: dirExists
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to region to output the fields for
+    TYPE(RegionType), POINTER :: region !<A pointer to region to output the fields for
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping 
     TYPE(FIELDS_TYPE), POINTER :: fields
     TYPE(VARYING_STRING) :: fileName,method,directory
     
     INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledMeshElementNumber, &
       & coupledMeshFaceLineNumber, coupledMeshIdx,component
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface 
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface 
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<A pointer to the interface points connectivity
     TYPE(FIELD_TYPE), POINTER :: coupledMeshDependentField
@@ -3467,13 +3467,13 @@ CONTAINS
 
           IF(DIAGNOSTICS1) THEN
             IUNIT = 300
-            DO interfaceConditionIdx=1,solverMapping%NUMBER_OF_INTERFACE_CONDITIONS
-              interfaceCondition=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR
-              interface=>solverMapping%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR%interface
+            DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+              interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%PTR
+              interface=>solverMapping%interfaceConditions(interfaceConditionIdx)%PTR%interface
               pointsConnectivity=>interface%pointsConnectivity
               interfaceDatapoints=>pointsConnectivity%dataPoints
               IF(ASSOCIATED(pointsConnectivity)) THEN
-                DO coupledMeshIdx=1,interface%NUMBER_OF_COUPLED_MESHES
+                DO coupledMeshIdx=1,interface%numberOfCoupledMeshes
                   filenameOutput=directory//"PointsConnectivity"//TRIM(NumberToVString(coupledMeshIdx,"*",err,error))// &
                     & "_solveCall"//TRIM(NumberToVString(solve_call,"*",err,error))// &
                     & "_load"//TRIM(NumberToVString(load_step,"*",err,error))// &
@@ -3519,7 +3519,7 @@ CONTAINS
                         & coupledMeshElementNumber
                       coupledMeshFaceLineNumber=coupledMeshDependentField%DECOMPOSITION%TOPOLOGY%ELEMENTS% &
                         & ELEMENTS(coupledMeshElementNumber)% &
-                        & ELEMENT_FACES(pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
+                        & elementFaces(pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
                         & elementLineFaceNumber)
                       CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,coupledMeshFaceLineNumber, &
                         & interpolationParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)

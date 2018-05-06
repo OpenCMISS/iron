@@ -120,8 +120,8 @@ CONTAINS
   SUBROUTINE Interface_CoordinateSystemGet(interface,coordinateSystem,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, the coordinate system for the specified interface. Must not be associated on entry.
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the coordinate system for
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<On exit, the coordinate system for the specified interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -130,12 +130,12 @@ CONTAINS
     ENTERS("Interface_CoordinateSystemGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*999)
-    IF(.NOT.INTERFACE%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*999)
+    IF(.NOT.INTERFACE%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*999)
     IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
 
-    coordinateSystem=>interface%COORDINATE_SYSTEM
+    coordinateSystem=>interface%coordinateSystem
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
-      localError="The coordinate system for interface number "//TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))// &
+      localError="The coordinate system for interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -155,7 +155,7 @@ CONTAINS
   SUBROUTINE Interface_DataPointsGet(interface,userNumber,dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the data points for
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the data points for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data points to get.
     TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the data points for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -166,7 +166,7 @@ CONTAINS
     ENTERS("Interface_DataPointsGet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
+    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
     IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interface%dataPointSets)) CALL FlagError("Interface data point sets is not associated.",err,error,*998)
 
@@ -174,7 +174,7 @@ CONTAINS
     CALL DataPointSets_UserNumberFind(INTERFACE%dataPointSets,userNumber,dataPoints,err,error,*999)
     IF(.NOT.ASSOCIATED(dataPoints)) THEN
       localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on interface number "//TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
       
@@ -194,7 +194,7 @@ CONTAINS
   SUBROUTINE Interface_FieldGet(interface,userNumber,field,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface to get the field for
+    TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface to get the field for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the field to get.
     TYPE(FIELD_TYPE), POINTER :: field !<On exit, a pointer to the field for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -205,7 +205,7 @@ CONTAINS
     ENTERS("Interface_FieldGet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
+    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
     IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interface%fields)) CALL FlagError("Interface fields is not associated.",err,error,*998)
 
@@ -213,7 +213,7 @@ CONTAINS
     CALL Field_UserNumberFind(userNumber,interface,field,err,error,*999)
     IF(.NOT.ASSOCIATED(field)) THEN
       localError="A field with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on interface number "//TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -233,7 +233,7 @@ CONTAINS
   SUBROUTINE Interface_InterfaceConditionGet(interface,userNumber,interfaceCondition,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE !<A pointer to the interface to get the interface condition for
+    TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface to get the interface condition for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the interface condition to get.
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<On exit, a pointer to the interface condition for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -244,16 +244,16 @@ CONTAINS
     ENTERS("Interface_InterfaceConditionGet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
-    IF(ASSOCIATED(interfaceCondition)) CALL FlagError("InterfaceCondition is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(INTERFACE%INTERFACE_CONDITIONS)) &
+    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
+    IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interface%interfaceConditions)) &
       & CALL FlagError("Interface interface conditions is not associated.",err,error,*998)
 
     NULLIFY(interfaceCondition)
     CALL InterfaceCondition_UserNumberFind(userNumber,interface,interfaceCondition,err,error,*999)
     IF(.NOT.ASSOCIATED(interfaceCondition)) THEN
       localError="An interface Condition with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on interface number "//TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -273,9 +273,9 @@ CONTAINS
   SUBROUTINE Interface_MeshGet(interface,userNumber,mesh,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the mesh for
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the mesh for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the mesh to get.
-    TYPE(MESH_TYPE), POINTER :: mesh !<On exit, a pointer to the mesh for the interface. Must not be associated on entry.
+    TYPE(MeshType), POINTER :: mesh !<On exit, a pointer to the mesh for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -284,14 +284,14 @@ CONTAINS
     ENTERS("Interface_MeshGet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
+    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
     
     NULLIFY(mesh)
     CALL Mesh_UserNumberFind(userNumber,interface,mesh,err,error,*999)
     IF(.NOT.ASSOCIATED(mesh)) THEN
       localError="A mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist on interface number "//TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+        & " does not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -311,8 +311,8 @@ CONTAINS
   SUBROUTINE Interface_MeshConnectivityGet(INTERFACE,meshConnectivity,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the mesh connectivity for
-    TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: meshConnectivity !<On exit, a pointer to the mesh connectivity for the interface. Must not be associated on entry.
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the mesh connectivity for
+    TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity !<On exit, a pointer to the mesh connectivity for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -322,12 +322,12 @@ CONTAINS
 
     IF(ASSOCIATED(meshConnectivity)) CALL FlagError("Mesh connectivity is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
+    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
     
-    meshConnectivity=>interface%MESH_CONNECTIVITY
+    meshConnectivity=>interface%meshConnectivity
     IF(.NOT.ASSOCIATED(meshConnectivity)) THEN
       localError="Mesh connectivity is not associated on intereface number "// &
-        & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -347,7 +347,7 @@ CONTAINS
   SUBROUTINE Interface_NodesGet(interface,nodes,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the nodes for
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the nodes for
     TYPE(NodesType), POINTER :: nodes !<On exit, a pointer to the nodes for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -356,7 +356,7 @@ CONTAINS
     ENTERS("Interface_NodesGet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
-    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*998)
+    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*998)
     IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*998)
 
     nodes=>interface%nodes
@@ -378,7 +378,7 @@ CONTAINS
   SUBROUTINE Interface_PointsConnectivityGet(INTERFACE,pointsConnectivity,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to get the points connectivity for
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the points connectivity for
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<On exit, a pointer to the points connectivity for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -389,12 +389,12 @@ CONTAINS
 
     IF(ASSOCIATED(pointsConnectivity)) CALL FlagError("Point connectivity is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
-    IF(.NOT.interface%INTERFACE_FINISHED) CALL FlagError("Interface has not been finished.",err,error,*999)
+    IF(.NOT.interface%interfaceFinished) CALL FlagError("Interface has not been finished.",err,error,*999)
     
     pointsConnectivity=>interface%pointsConnectivity
     IF(.NOT.ASSOCIATED(pointsConnectivity)) THEN
       localError="Points connectivity is not associated on intereface number "// &
-        & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -415,8 +415,8 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find.
-    TYPE(REGION_TYPE), POINTER :: parentRegion !<The parent region to find the interface in    
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<On return a pointer to the interface with the given user number. If no interface with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: parentRegion !<The parent region to find the interface in    
+    TYPE(InterfaceType), POINTER :: interface !<On return a pointer to the interface with the given user number. If no interface with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -430,16 +430,16 @@ CONTAINS
     IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(parentRegion%interfaces)) THEN
       localError="The interfaces on parent region number "// &
-        & TRIM(NumberToVString(parentRegion%USER_NUMBER,"*",err,error))//" are not associated."
+        & TRIM(NumberToVString(parentRegion%userNumber,"*",err,error))//" are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
     !Get the interface from the user number
     NULLIFY(INTERFACE)
     IF(ASSOCIATED(parentRegion%interfaces%interfaces)) THEN
-      DO interfaceIdx=1,parentRegion%interfaces%NUMBER_OF_INTERFACES
+      DO interfaceIdx=1,parentRegion%interfaces%numberOfInterfaces
         IF(ASSOCIATED(parentRegion%interfaces%interfaces(interfaceIdx)%ptr)) THEN
-          IF(parentRegion%interfaces%interfaces(interfaceIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(parentRegion%interfaces%interfaces(interfaceIdx)%ptr%userNumber==userNumber) THEN
             INTERFACE=>parentRegion%interfaces%interfaces(interfaceIdx)%ptr
             EXIT
           ENDIF

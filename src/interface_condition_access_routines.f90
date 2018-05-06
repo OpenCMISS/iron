@@ -153,7 +153,7 @@ CONTAINS
     geometricField=>interfaceCondition%geometry%GEOMETRIC_FIELD
     IF(.NOT.ASSOCIATED(geometricField)) THEN
       localError="Geometric field is not associated for interface condition number "// &
-      & TRIM(NumberToVString(interfaceCondition%USER_NUMBER,"*",err,error))//"."
+      & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -174,7 +174,7 @@ CONTAINS
 
     !Argument variables
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the interface for
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<On exit, a pointer to the interface in the specified interface condition. Must not be associated on entry
+    TYPE(InterfaceType), POINTER :: interface !<On exit, a pointer to the interface in the specified interface condition. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -323,7 +323,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find.
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<The interface to find the interface condition in.
+    TYPE(InterfaceType), POINTER :: interface !<The interface to find the interface condition in.
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<On return a pointer to the interface condition with the given user number. If no interface condition with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -335,18 +335,18 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
     IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(interface%INTERFACE_CONDITIONS)) THEN
+    IF(.NOT.ASSOCIATED(interface%interfaceConditions)) THEN
       localError="The interface interface conditions are not associated for interface number "// &
-        & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
     NULLIFY(interfaceCondition)
-    IF(ASSOCIATED(INTERFACE%INTERFACE_CONDITIONS%INTERFACE_CONDITIONS)) THEN
-      DO interfaceConditionIdx=1,INTERFACE%INTERFACE_CONDITIONS%NUMBER_OF_INTERFACE_CONDITIONS
-        IF(ASSOCIATED(interface%INTERFACE_CONDITIONS%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR)) THEN
-          IF(interface%INTERFACE_CONDITIONS%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR%USER_NUMBER==userNumber) THEN
-            interfaceCondition=>interface%INTERFACE_CONDITIONS%INTERFACE_CONDITIONS(interfaceConditionIdx)%PTR
+    IF(ASSOCIATED(INTERFACE%interfaceConditions%interfaceConditions)) THEN
+      DO interfaceConditionIdx=1,INTERFACE%interfaceConditions%numberOfInterfaceConditions
+        IF(ASSOCIATED(interface%interfaceConditions%interfaceConditions(interfaceConditionIdx)%PTR)) THEN
+          IF(interface%interfaceConditions%interfaceConditions(interfaceConditionIdx)%PTR%userNumber==userNumber) THEN
+            interfaceCondition=>interface%interfaceConditions%interfaceConditions(interfaceConditionIdx)%PTR
             EXIT
           ENDIF
         ELSE

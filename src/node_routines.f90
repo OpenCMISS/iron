@@ -336,7 +336,7 @@ CONTAINS
   SUBROUTINE Nodes_CreateStartInterface(interface,numberOfNodes,nodes,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface in which to create the nodes
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface in which to create the nodes
     INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of nodes to create
     TYPE(NodesType), POINTER :: nodes !<On exit, a pointer to the created nodes. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -374,7 +374,7 @@ CONTAINS
   SUBROUTINE Nodes_CreateStartRegion(region,numberOfNodes,nodes,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region in which to create the nodes
+    TYPE(RegionType), POINTER :: region !<A pointer to the region in which to create the nodes
     INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of nodes to create
     TYPE(NodesType), POINTER :: nodes !<On exit, a pointer to the created nodes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -512,7 +512,7 @@ CONTAINS
   SUBROUTINE Nodes_InitialiseInterface(INTERFACE,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface to initialise the nodes for
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to initialise the nodes for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -545,7 +545,7 @@ CONTAINS
   SUBROUTINE Nodes_InitialiseRegion(region,err,error,*)
 
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to initialise the nodes for
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to initialise the nodes for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

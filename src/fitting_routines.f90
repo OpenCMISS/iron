@@ -125,9 +125,9 @@ CONTAINS
     REAL(DP) :: uValue(3)
     REAL(DP) :: phiM,phiN
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
-    TYPE(BASIS_TYPE), POINTER :: dependentBasis,geometricBasis,sourceBasis,dependentBasisRow,dependentBasisColumn
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,sourceBasis,dependentBasisRow,dependentBasisColumn
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
@@ -214,9 +214,9 @@ CONTAINS
             dependentVariableType=dependentVariable%VARIABLE_TYPE
             dataVariable=>independentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr
             dataWeightVariable=>independentField%VARIABLE_TYPE_MAP(FIELD_V_VARIABLE_TYPE)%ptr
-            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
-            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
             quadratureScheme=>dependentBasis%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
@@ -226,7 +226,7 @@ CONTAINS
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             CALL Field_NumberOfComponentsGet(independentField,FIELD_U_VARIABLE_TYPE,numberOfDataComponents,err,error,*999)
             IF(numberOfDataComponents>99) CALL FlagError("Increase the size of the data point vectors.",err,error,*999)
-            numberOfXi = dependentBasis%NUMBER_OF_XI
+            numberOfXi = dependentBasis%numberOfXi
 
             !Get data point vector parameters
             CALL Field_ParameterSetDataGet(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -261,7 +261,7 @@ CONTAINS
                 & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
                 & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,equations%interpolation% &
                 & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               !Get data point vector value and weight
               DO componentIdx=1,numberOfDataComponents
@@ -276,10 +276,10 @@ CONTAINS
               dependentParameterRowIdx=0
               !Loop over element rows
               DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
-                meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
+                meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr%topology%elements% &
                   & elements(elementNumber)%basis
-                DO dependentElementParameterRowIdx=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                DO dependentElementParameterRowIdx=1,dependentBasisRow%numberOfElementParameters
                   dependentParameterRowIdx=dependentParameterRowIdx+1
                   dependentParameterColumnIdx=0
                   basisFunctionRow=Basis_EvaluateXi(dependentBasisRow,dependentElementParameterRowIdx,NO_PART_DERIV, &
@@ -287,10 +287,10 @@ CONTAINS
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
                     DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
-                      meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                      meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
-                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%numberOfElementParameters
                         dependentParameterColumnIdx=dependentParameterColumnIdx+1
                         !Treat each component as separate and independent so only calculate the diagonal blocks
                         IF(dependentComponentColumnIdx==dependentComponentRowIdx) THEN
@@ -334,7 +334,7 @@ CONTAINS
                     & equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                   CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                     & equations%interpolation%dependentInterpPoint(dependentVariableType)%ptr,err,error,*999)
-                  CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+                  CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,equations%interpolation% &
                     & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                   !Get Sobolev smoothing parameters from interpolated material field
                   CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
@@ -348,21 +348,21 @@ CONTAINS
                   dependentParameterRowIdx=0
                   DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
                     !Loop over element rows
-                    meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
+                    meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%meshComponentNumber
                     dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
                       & topology%elements%elements(elementNumber)%basis
                     quadratureSchemeRow=>dependentBasisRow%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                    DO dependentElementParameterRowIdx=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO dependentElementParameterRowIdx=1,dependentBasisRow%numberOfElementParameters
                       dependentParameterRowIdx=dependentParameterRowIdx+1
                       dependentParameterColumnIdx=0
                       !Loop over element columns
                       DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
-                        meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                        meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%meshComponentNumber
                         dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                           & topology%elements%elements(elementNumber)%basis
                         quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
                           & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                        DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                        DO dependentElementParameterColumnIdx=1,dependentBasisColumn%numberOfElementParameters
                           dependentParameterColumnIdx=dependentParameterColumnIdx+1
 
                           !Calculate Sobolev surface tension and curvature smoothing terms
@@ -458,9 +458,9 @@ CONTAINS
             linearMapping=>vectorMapping%linearMapping
             dependentVariable=>linearMapping%equationsMatrixToVarMaps(1)%variable
             dependentVariableType=dependentVariable%VARIABLE_TYPE
-            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
-            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
             quadratureScheme=>dependentBasis%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
@@ -470,7 +470,7 @@ CONTAINS
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
               & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-            numberOfXi = dependentBasis%NUMBER_OF_XI
+            numberOfXi = dependentBasis%numberOfXi
             projectionXi=0.0_DP
             ! Get data point vector parameters
             CALL Field_ParameterSetDataGet(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -493,7 +493,7 @@ CONTAINS
                 & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
                 & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,equations%interpolation% &
                 & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
 
               ! Get data point vector value
@@ -514,20 +514,20 @@ CONTAINS
               mhs=0
               !Loop over element rows
               DO mh=1,dependentVariable%NUMBER_OF_COMPONENTS
-                meshComponent1=dependentVariable%components(mh)%MESH_COMPONENT_NUMBER
+                meshComponent1=dependentVariable%components(mh)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr%topology%elements% &
                   & elements(elementNumber)%basis
-                DO ms=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                DO ms=1,dependentBasisRow%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   PGM=Basis_EvaluateXi(dependentBasisRow,ms,NO_PART_DERIV,projectionXi,err,error)
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
                     DO nh=1,dependentVariable%NUMBER_OF_COMPONENTS
-                      meshComponent2=dependentVariable%components(nh)%MESH_COMPONENT_NUMBER
+                      meshComponent2=dependentVariable%components(nh)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
-                      DO ns=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                      DO ns=1,dependentBasisColumn%numberOfElementParameters
                         nhs=nhs+1
                         PGN=Basis_EvaluateXi(dependentBasisColumn,ns,NO_PART_DERIV,projectionXi,err,error)
                         sum=0.0_DP
@@ -569,7 +569,7 @@ CONTAINS
                 & dependentInterpPoint(dependentVariableType)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,equations%interpolation% &
                 & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               tauParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
               kappaParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
@@ -580,22 +580,22 @@ CONTAINS
               mhs=0
               DO mh=1,dependentVariable%NUMBER_OF_COMPONENTS
                 !Loop over element rows
-                meshComponent1=dependentVariable%components(mh)%MESH_COMPONENT_NUMBER
+                meshComponent1=dependentVariable%components(mh)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr% &
                   & topology%elements%elements(elementNumber)%basis
                 quadratureSchemeRow=>dependentBasisRow%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                DO ms=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                DO ms=1,dependentBasisRow%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
                     DO nh=1,dependentVariable%NUMBER_OF_COMPONENTS
-                      meshComponent2=dependentVariable%components(nh)%MESH_COMPONENT_NUMBER
+                      meshComponent2=dependentVariable%components(nh)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
                       quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
                         & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                      DO ns=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                      DO ns=1,dependentBasisColumn%numberOfElementParameters
                         nhs=nhs+1
                         sum = 0.0_DP
 
@@ -668,9 +668,9 @@ CONTAINS
             fieldVariable=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
             dependentVariableType=fieldVariable%VARIABLE_TYPE
 
-            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
-            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
 
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber, &
@@ -690,8 +690,8 @@ CONTAINS
               CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
                 & referenceGeometricInterpolatedPoint,err,error,*999)
               !--- Retrieve local map dYdXi
-              DO component_idx=1,dependentBasis%NUMBER_OF_XI
-                DO xi_idx=1,dependentBasis%NUMBER_OF_XI
+              DO component_idx=1,dependentBasis%numberOfXi
+                DO xi_idx=1,dependentBasis%numberOfXi
                   derivative_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx) !2,4,7
                   dYdXi(component_idx,xi_idx)=referenceGeometricInterpolatedPoint%values(component_idx,derivative_idx) !dy/dxi (y = referential)
                 ENDDO
@@ -703,11 +703,11 @@ CONTAINS
               geometricInterpolatedPoint=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
               CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng, &
                 & geometricInterpolatedPoint,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI, &
+              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi, &
                 & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               !--- Retrieve local map dXdXi
-              DO component_idx=1,dependentBasis%NUMBER_OF_XI
-                DO xi_idx=1,dependentBasis%NUMBER_OF_XI
+              DO component_idx=1,dependentBasis%numberOfXi
+                DO xi_idx=1,dependentBasis%numberOfXi
                   derivative_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx) !2,4,7
                   dXdXi(component_idx,xi_idx)=geometricInterpolatedPoint%values(component_idx,derivative_idx) !dx/dxi
                 ENDDO
@@ -763,14 +763,14 @@ CONTAINS
               DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
                 !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
-                DO ms=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                DO ms=1,dependentBasis%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   IF(equationsMatrix%updateMatrix) THEN
 
                     !Loop over element columns
                     DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
-                      DO ns=1,dependentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                      DO ns=1,dependentBasis%numberOfElementParameters
                         nhs=nhs+1
 
                         PGM=quadratureScheme%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
@@ -809,10 +809,10 @@ CONTAINS
               IF( elementNumber == 1 ) THEN
                 numberDofs = 0
                 DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
-                  meshComponent1 = fieldVariable%components(mh)%MESH_COMPONENT_NUMBER
+                  meshComponent1 = fieldVariable%components(mh)%meshComponentNumber
                   dependentBasisRow => dependentField%decomposition%domain(meshComponent1)%ptr% &
                     & topology%elements%elements(elementNumber)%basis
-                  numberDofs = numberDofs + dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                  numberDofs = numberDofs + dependentBasisRow%numberOfElementParameters
                 END DO
 
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Element Matrix for element number 1 (Galerkin Projection):",err,error,*999)
@@ -841,11 +841,11 @@ CONTAINS
             linearMapping=>vectorMapping%linearMapping
             fieldVariable=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
             dependentVariableType=fieldVariable%VARIABLE_TYPE
-            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
-            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
-            sourceBasis=>sourceField%decomposition%domain(sourceField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            sourceBasis=>sourceField%decomposition%domain(sourceField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
             quadratureScheme=>dependentBasis%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
@@ -864,7 +864,7 @@ CONTAINS
                 & dependentInterpPoint(dependentVariableType)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,equations%interpolation% &
                 & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               tauParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
               kappaParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
@@ -877,7 +877,7 @@ CONTAINS
                   & sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                 uValue(1)=equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
                 uValue(2)=equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
-                IF(dependentBasis%NUMBER_OF_XI==3) THEN
+                IF(dependentBasis%numberOfXi==3) THEN
                   uValue(3)=equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(3,NO_PART_DERIV)
                 ENDIF
               ENDIF
@@ -888,27 +888,27 @@ CONTAINS
               mhs=0
               DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
                 !Loop over element rows
-                meshComponent1=fieldVariable%components(mh)%MESH_COMPONENT_NUMBER
+                meshComponent1=fieldVariable%components(mh)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr% &
                   & topology%elements%elements(elementNumber)%basis
                 quadratureSchemeRow=>dependentBasisRow%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                DO ms=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                DO ms=1,dependentBasisRow%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
                     DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
-                      meshComponent2=fieldVariable%components(nh)%MESH_COMPONENT_NUMBER
+                      meshComponent2=fieldVariable%components(nh)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
                       quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP &
                         & (BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                      DO ns=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                      DO ns=1,dependentBasisColumn%numberOfElementParameters
                         nhs=nhs+1
                         PGM=quadratureSchemeRow%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                         PGN=quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
-                        DO ni=1,dependentBasisColumn%NUMBER_OF_XI
-                          DO mi=1,dependentBasisRow%NUMBER_OF_XI
+                        DO ni=1,dependentBasisColumn%numberOfXi
+                          DO mi=1,dependentBasisRow%numberOfXi
                             dXidX(mi,ni)=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
                               & dXi_dX(mi,ni)
                           END DO
@@ -1022,7 +1022,7 @@ CONTAINS
                           IF(nh==fieldVariable%NUMBER_OF_COMPONENTS.AND.mh<=numberOfDimensions) THEN
                             sum=0.0_DP
                             !Calculate sum
-                            DO ni=1,dependentBasisRow%NUMBER_OF_XI
+                            DO ni=1,dependentBasisRow%numberOfXi
                               sum=sum+PGN*PGMSI(ni)*dXidX(ni,mh)
                             ENDDO !ni
                             equationsMatrix%elementMatrix%matrix(mhs,nhs) = &
@@ -1081,9 +1081,9 @@ CONTAINS
             linearMapping=>vectorMapping%linearMapping
             dependentVariable=>linearMapping%equationsMatrixToVarMaps(1)%variable
             dependentVariableType=dependentVariable%VARIABLE_TYPE
-            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
-            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
+            geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%meshComponentNumber)%ptr% &
               & topology%elements%elements(elementNumber)%basis
             quadratureScheme=>dependentBasis%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
@@ -1097,7 +1097,7 @@ CONTAINS
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             CALL Field_NumberOfComponentsGet(independentField,FIELD_U_VARIABLE_TYPE,numberOfDataComponents,err,error,*999)
             IF(numberOfDataComponents>99) CALL FlagError("Increase the size of the data point vector.",err,error,*999)
-            numberOfXi = dependentBasis%NUMBER_OF_XI
+            numberOfXi = dependentBasis%numberOfXi
 
             SELECT CASE(smoothingType)
             CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
@@ -1130,7 +1130,7 @@ CONTAINS
                 & equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                 & equations%interpolation%independentInterpPoint(FIELD_V_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%numberOfXi,equations%interpolation% &
                 & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
 
               !Get fitting data from interpolated fields
@@ -1166,23 +1166,23 @@ CONTAINS
               dependentParameterRowIdx=0
               !Loop over element rows
               DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
-                meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
+                meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
                   & topology%elements%elements(elementNumber)%basis
                 quadratureSchemeRow=>dependentBasisRow%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                DO dependentElementParameterRowIdx=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                DO dependentElementParameterRowIdx=1,dependentBasisRow%numberOfElementParameters
                   dependentParameterRowIdx=dependentParameterRowIdx+1
                   dependentParameterColumnIdx=0
                   phiM=quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,NO_PART_DERIV,gaussPointIdx)
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
                     DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
-                      meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                      meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
                       quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
                         & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%numberOfElementParameters
                         dependentParameterColumnIdx=dependentParameterColumnIdx+1
                         !Treat each component as separate and independent so only calculate the diagonal blocks
                         IF(dependentComponentColumnIdx==dependentComponentRowIdx) THEN
@@ -1286,19 +1286,19 @@ CONTAINS
           dependentParameterRowIdx=0
           !Loop over element rows
           DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
-            meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%MESH_COMPONENT_NUMBER
+            meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%meshComponentNumber
             dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
               & topology%elements%elements(elementNumber)%basis
-            DO dependentElementParameterRowIdx=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+            DO dependentElementParameterRowIdx=1,dependentBasisRow%numberOfElementParameters
               dependentParameterRowIdx=dependentParameterRowIdx+1
               dependentParameterColumnIdx=0
               IF(equationsMatrix%updateMatrix) THEN
                 !Loop over element columns
                 DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
-                  meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                  meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%meshComponentNumber
                   dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                     & topology%elements%elements(elementNumber)%basis
-                  DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                  DO dependentElementParameterColumnIdx=1,dependentBasisColumn%numberOfElementParameters
                     dependentParameterColumnIdx=dependentParameterColumnIdx+1
                     equationsMatrix%elementMatrix%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
                       & equationsMatrix%elementMatrix%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)* &
@@ -1349,7 +1349,7 @@ CONTAINS
     INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,GEOMETRIC_COMPONENT_NUMBER,MATERIAL_FIELD_NUMBER_OF_COMPONENTS
     INTEGER(INTG) :: DEPENDENT_FIELD_NUMBER_OF_COMPONENTS,numberOfDimensions,I,MATERIAL_FIELD_NUMBER_OF_VARIABLES
     INTEGER(INTG) :: INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,INDEPENDENT_FIELD_NUMBER_OF_VARIABLES
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
 !     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -1407,7 +1407,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(equationsSet%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION,equationsSet%DEPENDENT% &
+              CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION,equationsSet%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -1550,7 +1550,7 @@ CONTAINS
             IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created independent field
               !start field creation with name 'INDEPENDENT_FIELD'
-              CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+              CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                 & equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
               !start creation of a new field
               CALL Field_TypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -1634,7 +1634,7 @@ CONTAINS
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Create the auto created materials field
                 !start field creation with name 'MATERIAL_FIELD'
-                CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION,equationsSet% &
+                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION,equationsSet% &
                   & MATERIALS%MATERIALS_FIELD,err,error,*999)
                 CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
@@ -2193,7 +2193,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: componentIdx,geometricMeshComponent,geometricScalingType,numberOfComponents,numberOfComponents2, &
       & numberOfDependentComponents,numberOfIndependentComponents
-    TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
+    TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -2256,7 +2256,7 @@ CONTAINS
               !Set start action
               IF(equationsSet%dependent%DEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created dependent field
-                CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%region, &
+                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region, &
                   & equationsSet%dependent%DEPENDENT_FIELD,err,error,*999)
                 CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
                 !start creation of a new field
@@ -2452,7 +2452,7 @@ CONTAINS
                 IF(ASSOCIATED(equationsMaterials)) THEN
                   IF(equationsMaterials%MATERIALS_FIELD_AUTO_CREATED) THEN
                     !Create the auto created materials field
-                    CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%region,equationsSet% &
+                    CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region,equationsSet% &
                       & materials%MATERIALS_FIELD,err,error,*999)
                     CALL Field_TypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                     CALL Field_DependentTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
@@ -2542,7 +2542,7 @@ CONTAINS
               IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created independent field
                 !start field creation with name 'INDEPENDENT_FIELD'
-                CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%region, &
+                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region, &
                   & equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
                 !start creation of a new field
                 CALL Field_TypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -2788,7 +2788,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: componentIdx,geometricMeshComponent,geometricScalingType,numberOfComponents,numberOfComponents2, &
       & numberOfDependentComponents,numberOfIndependentComponents
-    TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
+    TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -2841,7 +2841,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(equationsSet%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION,equationsSet%DEPENDENT% &
+              CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION,equationsSet%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -3035,7 +3035,7 @@ CONTAINS
               IF(ASSOCIATED(equationsMaterials)) THEN
                 IF(equationsMaterials%MATERIALS_FIELD_AUTO_CREATED) THEN
                   !Create the auto created materials field
-                  CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%region,equationsSet% &
+                  CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region,equationsSet% &
                     & materials%MATERIALS_FIELD,err,error,*999)
                   CALL Field_TypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                   CALL Field_DependentTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
@@ -3126,7 +3126,7 @@ CONTAINS
               IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created independent field
                 !start field creation with name 'INDEPENDENT_FIELD'
-                CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%region, &
+                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%region, &
                   & equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
                 !start creation of a new field
                 CALL Field_TypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -3398,7 +3398,7 @@ CONTAINS
     INTEGER(INTG) :: dependentFieldNumberOfVariables
     INTEGER(INTG) :: dimensionIdx
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
 !     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -3459,7 +3459,7 @@ CONTAINS
           CASE(EQUATIONS_SET_SETUP_START_ACTION)
             IF(equationsSet%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION,equationsSet%DEPENDENT% &
+              CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION,equationsSet%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -3642,7 +3642,7 @@ CONTAINS
             IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created independent field
               !start field creation with name 'INDEPENDENT_FIELD'
-              CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+              CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                 & equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
               !start creation of a new field
               CALL Field_TypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -3723,7 +3723,7 @@ CONTAINS
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Create the auto created materials field
                 !start field creation with name 'MATERIAL_FIELD'
-                CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION,equationsSet% &
+                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION,equationsSet% &
                   & MATERIALS%MATERIALS_FIELD,err,error,*999)
                 CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
@@ -3810,7 +3810,7 @@ CONTAINS
               IF(equationsSet%SOURCE%SOURCE_FIELD_AUTO_CREATED) THEN
                 !Create the auto created source field
                 !start field creation with name 'sourceField'
-                CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                   & equationsSet%SOURCE%SOURCE_FIELD,err,error,*999)
                 !start creation of a new field
                 CALL Field_TypeSetAndLock(equationsSet%SOURCE%SOURCE_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -4136,7 +4136,7 @@ CONTAINS
             IF(equationsSet%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
               !start field creation with name 'DEPENDENT_FIELD'
-              CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+              CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                 & equationsSet%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
               !start creation of a new field
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -4263,7 +4263,7 @@ CONTAINS
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Create the auto created materials field
                 !start field creation with name 'MATERIAL_FIELD'
-                CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION,equationsSet% &
+                CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION,equationsSet% &
                   & MATERIALS%MATERIALS_FIELD,err,error,*999)
                 CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
@@ -4347,7 +4347,7 @@ CONTAINS
             IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created independent field
               !start field creation with name 'INDEPENDENT_FIELD'
-              CALL Field_CreateStart(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+              CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                 & equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
               !start creation of a new field
               CALL Field_TypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -5351,7 +5351,7 @@ CONTAINS
                           IF(MOD(currentLoopIteration,outputIterationNumber)==0)  THEN
                             CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)
                             CALL WriteString(GENERAL_OUTPUT_TYPE,"Now export fields... ",err,error,*999)
-                            CALL FLUID_MECHANICS_IO_WRITE_FITTED_FIELD(equationsSet%region,equationsSet%GLOBAL_NUMBER, &
+                            CALL FLUID_MECHANICS_IO_WRITE_FITTED_FIELD(equationsSet%region,equationsSet%globalNumber, &
                               & outputFile,err,error,*999)
                             CALL WriteString(GENERAL_OUTPUT_TYPE,outputFile,err,error,*999)
                             CALL WriteString(GENERAL_OUTPUT_TYPE,"...",err,error,*999)

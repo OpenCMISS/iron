@@ -271,7 +271,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
     IF(.NOT.field%FIELD_FINISHED) THEN
-      localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))// &
+      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -295,12 +295,12 @@ CONTAINS
 
     !Argument variables
     TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem!<On return, the field coordinate system. Must not be associated on entry.
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem!<On return, the field coordinate system. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_CoordinateSystemGet",err,error,*999)
@@ -313,26 +313,26 @@ CONTAINS
     NULLIFY(interface)
     region=>field%region
     IF(ASSOCIATED(region)) THEN
-      coordinateSystem=>region%COORDINATE_SYSTEM
+      coordinateSystem=>region%coordinateSystem
       IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
         localError="The coordinate system is not associated for field number "// &
-          & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" of region number "// &
-          & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+          & TRIM(NumberToVString(field%userNumber,"*",err,error))//" of region number "// &
+          & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE
       interface=>field%interface
       IF(ASSOCIATED(interface)) THEN
-        coordinateSystem=>interface%COORDINATE_SYSTEM
+        coordinateSystem=>interface%coordinateSystem
         IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
           localError="The coordinate system is not associated for field number "// &
-            & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" of interface number "// &
-            & TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+            & TRIM(NumberToVString(field%userNumber,"*",err,error))//" of interface number "// &
+            & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
         localError="A region or interface is not associated for field number "// &
-          & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+          & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ENDIF
@@ -367,7 +367,7 @@ CONTAINS
 
     dataProjection=>field%dataProjection
     IF(.NOT.ASSOCIATED(dataProjection)) THEN
-      localError="Data projection  is not associated for field "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+      localError="Data projection  is not associated for field "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -389,7 +389,7 @@ CONTAINS
 
     !Argument variables
     TYPE(FIELD_TYPE), POINTER :: field !<The field to get the decomposition for.
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<On exit, a pointer to the decomposition for the field. Must not be associated on entry.
+    TYPE(DecompositionType), POINTER :: decomposition !<On exit, a pointer to the decomposition for the field. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -406,7 +406,7 @@ CONTAINS
     !Check field decomposition is associated.
     IF(.NOT.ASSOCIATED(decomposition)) THEN
       localError="Field decomposition is not associated for decomposition "// &
-        & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -426,11 +426,11 @@ CONTAINS
 
     !Argument variables
     TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the region for
-    TYPE(REGION_TYPE), POINTER :: region !<On return, the fields region. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: region !<On return, the fields region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_RegionGet",err,error,*999)
@@ -445,17 +445,17 @@ CONTAINS
     IF(.NOT.ASSOCIATED(region)) THEN          
       INTERFACE=>field%INTERFACE
       IF(ASSOCIATED(INTERFACE)) THEN
-        IF(ASSOCIATED(interface%PARENT_REGION)) THEN
-          region=>interface%PARENT_REGION     
+        IF(ASSOCIATED(interface%parentRegion)) THEN
+          region=>interface%parentRegion     
         ELSE
           localError="The parent region is not associated for field number "// &
-            & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" of interface number "// &
-            & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+            & TRIM(NumberToVString(field%userNumber,"*",err,error))//" of interface number "// &
+            & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
         localError="A region or interface is not associated for field number "// &
-          & TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+          & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ENDIF
@@ -495,7 +495,7 @@ CONTAINS
     IF(ASSOCIATED(fields%fields)) THEN
       DO fieldIdx=1,fields%NUMBER_OF_FIELDS
         IF(ASSOCIATED(fields%fields(fieldIdx)%ptr)) THEN
-          IF(fields%fields(fieldIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(fields%fields(fieldIdx)%ptr%userNumber==userNumber) THEN
             field=>fields%fields(fieldIdx)%ptr
             EXIT
           ENDIF
@@ -523,7 +523,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The field user number to find
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface containing the field
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containing the field
     TYPE(FIELD_TYPE), POINTER :: field !<On exit, a pointer to the field with the given user number. If no field with that user number exists in the interface the field is null. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -552,7 +552,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The field user number to find
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region containing the field
+    TYPE(RegionType), POINTER :: region !<A pointer to the region containing the field
     TYPE(FIELD_TYPE), POINTER :: field !<On exit, a pointer to the field with the given user number. If no field with that user number exists in the region the field is null. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -594,7 +594,7 @@ CONTAINS
     IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
     IF(.NOT.field%FIELD_FINISHED) THEN
-      localError="Field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//" has not been finished."
+      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//" has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(variableType<0.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
@@ -607,7 +607,7 @@ CONTAINS
     fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%ptr
     IF(.NOT.ASSOCIATED(fieldVariable)) THEN
       localError="The field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-        & " has not been defined on field number "//TRIM(NumberToVString(field%USER_NUMBER,"*",err,error))//"."
+        & " has not been defined on field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
@@ -642,7 +642,7 @@ CONTAINS
       IF(ASSOCIATED(fieldVariable%field)) THEN
         localError="The specified component number of "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
           & " is invalid for variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))// &
-          & " of field number "//TRIM(NumberToVString(fieldVariable%field%USER_NUMBER,"*",err,error))// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))// &
           & ". The field variable component must be >= 1 and <= "// &
           & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//"."
       ELSE
@@ -656,7 +656,7 @@ CONTAINS
     IF(.NOT.ALLOCATED(fieldVariable%components)) &
       & CALL FlagError("Field variable components has not been allocated.",err,error,*999)
     
-    interpolationType=fieldVariable%components(componentIdx)%INTERPOLATION_TYPE
+    interpolationType=fieldVariable%components(componentIdx)%interpolationType
 
     EXITS("FieldVariable_ComponentInterpolationGet")
     RETURN
@@ -675,7 +675,7 @@ CONTAINS
     !Argument variables
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the domain for
     INTEGER(INTG), INTENT(IN) :: componentIdx !<The component index of the field variable to get the domain for. If 0 then the component used to decompose the domain is used. 
-    TYPE(DOMAIN_TYPE), POINTER :: domain  !<On exit, a pointer to domain for the field variable component. Must not be associated on entry.
+    TYPE(DomainType), POINTER :: domain  !<On exit, a pointer to domain for the field variable component. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -692,7 +692,7 @@ CONTAINS
         & CALL FlagError("Field variable field is not associated.",err,error,*999)
       IF(.NOT.ASSOCIATED(fieldVariable%field%decomposition%domain)) &
         & CALL FlagError("Decomposition domain is not associated.",err,error,*999)
-      domainMeshComponent=fieldVariable%field%decomposition%MESH_COMPONENT_NUMBER
+      domainMeshComponent=fieldVariable%field%decomposition%meshComponentNumber
       IF(domainMeshComponent<1.OR.domainMeshComponent>fieldVariable%field%decomposition%numberOfComponents) THEN
         localError="The domain mesh component of "//TRIM(NumberToVString(domainMeshComponent,"*",err,error))// &
           & " is invalid. The mesh component must be >= 1 and <= "// &
@@ -786,7 +786,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(parameterSet)) THEN
       IF(ASSOCIATED(fieldVariable%field)) THEN
         localError="The parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
-          & " has not been defined on field number "//TRIM(NumberToVString(fieldVariable%field%USER_NUMBER, &
+          & " has not been defined on field number "//TRIM(NumberToVString(fieldVariable%field%userNumber, &
           & "*",err,error))//"."
       ELSE
         localError="The parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
@@ -812,11 +812,11 @@ CONTAINS
 
     !Argument variables
     TYPE(FIELDS_TYPE), POINTER :: fields !<A pointer to the fields to get the region for
-    TYPE(REGION_TYPE), POINTER :: region !<On return, the fields region. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: region !<On return, the fields region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Fields_RegionGet",err,error,*998)
@@ -830,11 +830,11 @@ CONTAINS
     IF(.NOT.ASSOCIATED(region)) THEN          
       interface=>fields%interface
       IF(ASSOCIATED(interface)) THEN
-        IF(ASSOCIATED(interface%PARENT_REGION)) THEN
-          region=>interface%PARENT_REGION     
+        IF(ASSOCIATED(interface%parentRegion)) THEN
+          region=>interface%parentRegion     
         ELSE
           localError="The parent region is not associated for interface number "// &
-            & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+            & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE

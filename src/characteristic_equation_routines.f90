@@ -230,7 +230,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
+    TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -276,7 +276,7 @@ CONTAINS
               equationsEquationsSetField=>equationsSet%EQUATIONS_SET_FIELD
               IF(equationsEquationsSetField%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
                 !Create the auto created equations set field field for SUPG element metrics
-                CALL FIELD_CREATE_START(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+                CALL FIELD_CREATE_START(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                   & equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD,ERR,ERROR,*999)
                 equationsSetField=>equationsEquationsSetField%EQUATIONS_SET_FIELD_FIELD
                 CALL FIELD_LABEL_SET(equationsSetField,"Equations Set Field",ERR,ERROR,*999)
@@ -366,7 +366,7 @@ CONTAINS
               IF(equationsSet%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created dependent field
                 !start field creation with name 'DEPENDENT_FIELD'
-                CALL FIELD_CREATE_START(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+                CALL FIELD_CREATE_START(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                   & equationsSet%DEPENDENT%DEPENDENT_FIELD,err,error,*999)
                 !start creation of a new field
                 CALL FIELD_TYPE_SET_AND_LOCK(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -550,7 +550,7 @@ CONTAINS
               IF(equationsSet%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created independent field
                 !start field creation with name 'INDEPENDENT_FIELD'
-                CALL FIELD_CREATE_START(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, &
+                CALL FIELD_CREATE_START(equationsSetSetup%fieldUserNumber,equationsSet%REGION, &
                   & equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
                 !start creation of a new field
                 CALL FIELD_TYPE_SET_AND_LOCK(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -647,7 +647,7 @@ CONTAINS
                 IF(equationsMaterials%MATERIALS_FIELD_AUTO_CREATED) THEN
                   !Create the auto created materials field
                   !start field creation with name 'MATERIAL_FIELD'
-                  CALL FIELD_CREATE_START(equationsSetSetup%FIELD_USER_NUMBER,equationsSet%REGION, & 
+                  CALL FIELD_CREATE_START(equationsSetSetup%fieldUserNumber,equationsSet%REGION, & 
                     & equationsSet%MATERIALS%MATERIALS_FIELD,err,error,*999)
                   CALL FIELD_TYPE_SET_AND_LOCK(equationsMaterials%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                   !label the field
@@ -864,8 +864,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
-    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainType), POINTER :: domain
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -911,7 +911,7 @@ CONTAINS
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
     CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
     CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-    domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
+    domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR
     IF(ASSOCIATED(domain)) THEN
       domainNodes=>domain%TOPOLOGY%NODES
     ELSE
@@ -942,8 +942,8 @@ CONTAINS
       derivativeIdx=1
       normalWave=0.0_DP
       numberOfVersions=domainNodes%NODES(nodeNumber)%DERIVATIVES(derivativeIdx)%numberOfVersions
-      boundaryNode=dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-        & TOPOLOGY%NODES%NODES(nodeNumber)%BOUNDARY_NODE
+      boundaryNode=dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR% &
+        & TOPOLOGY%NODES%NODES(nodeNumber)%boundaryNode
 
       !Get normal wave direction for nodes
       DO componentIdx=1,2
@@ -1076,8 +1076,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
-    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainType), POINTER :: domain
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -1126,7 +1126,7 @@ CONTAINS
         CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
         dependentField=>equations%equationsSet%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(dependentField)) THEN
-          domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
+          domain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR
           IF(ASSOCIATED(domain)) THEN
             domainNodes=>domain%TOPOLOGY%NODES
           ELSE
@@ -1164,8 +1164,8 @@ CONTAINS
       derivativeIdx=1
       normalWave=0.0_DP
       numberOfVersions=domainNodes%NODES(nodeNumber)%DERIVATIVES(derivativeIdx)%numberOfVersions
-      boundaryNode=dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR% &
-        & TOPOLOGY%NODES%NODES(nodeNumber)%BOUNDARY_NODE
+      boundaryNode=dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR% &
+        & TOPOLOGY%NODES%NODES(nodeNumber)%boundaryNode
 
       !Get normal wave direction for nodes
       CALL FIELD_PARAMETER_SET_DATA_GET(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -1323,8 +1323,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
     !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: dependentBasis,materialsBasis
-    TYPE(DOMAIN_TYPE), POINTER :: dependentDomain,materialsDomain
+    TYPE(BasisType), POINTER :: dependentBasis,materialsBasis
+    TYPE(DomainType), POINTER :: dependentDomain,materialsDomain
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
     TYPE(FIELD_TYPE), POINTER ::  dependentField,materialsField,independentField,geometricField
@@ -1367,10 +1367,10 @@ CONTAINS
               dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
               independentField=>equationsSet%INDEPENDENT%INDEPENDENT_FIELD
               materialsField=>equations%interpolation%materialsField
-              dependentDomain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
-              materialsDomain=>materialsField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR
+              dependentDomain=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR
+              materialsDomain=>materialsField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR
 
-              numberOfLocalNodes=dependentDomain%TOPOLOGY%NODES%NUMBER_OF_NODES
+              numberOfLocalNodes=dependentDomain%TOPOLOGY%NODES%numberOfNodes
               derivativeIdx=1
 
               !!!--  L o o p   O v e r   L o c a l  N o d e s  --!!!
@@ -1395,18 +1395,16 @@ CONTAINS
                   overExtrapolated = .FALSE.
                   !!!-- G e t   E l e m e n t   L e n g t h s --!!!
                   elementLengths = 0.0_DP
-                  DO elementIdx=1,dependentDomain%TOPOLOGY%NODES%NODES(nodeIdx)%NUMBER_OF_SURROUNDING_ELEMENTS
-                    elementNumber=dependentDomain%TOPOLOGY%NODES%NODES(nodeIdx)%SURROUNDING_ELEMENTS(elementIdx)
+                  DO elementIdx=1,dependentDomain%TOPOLOGY%NODES%NODES(nodeIdx)%numberOfSurroundingElements
+                    elementNumber=dependentDomain%TOPOLOGY%NODES%NODES(nodeIdx)%surroundingElements(elementIdx)
                     ! Get the line lengths to extrapolate at equidistant points from the branch node
-                    lineNumber = geometricField%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)% &
-                     & ELEMENT_LINES(1)
+                    lineNumber = geometricField%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%elementLines(1)
                     elementLength = geometricField%GEOMETRIC_FIELD_PARAMETERS%LENGTHS(lineNumber)
                     !Loop over the nodes on this (surrounding) element
                     dependentBasis=>dependentDomain%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
                     materialsBasis=>materialsDomain%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-                    DO elementNodeIdx=1,dependentBasis%NUMBER_OF_NODES
-                      elementNodeNumber=dependentDomain%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)% &
-                        & ELEMENT_NODES(elementNodeIdx)
+                    DO elementNodeIdx=1,dependentBasis%numberOfNodes
+                      elementNodeNumber=dependentDomain%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%elementNodes(elementNodeIdx)
                       !Check that this node is the same as the current iterative node
                       IF(elementNodeNumber==nodeIdx) THEN
                         !Loop over the versions to find the element index that matches the version
@@ -1574,7 +1572,7 @@ CONTAINS
     !Local Variables
     TYPE(FIELD_TYPE), POINTER ::  dependentField,materialsField,independentField
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
+    TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: nodeNumber,nodeIdx,derivativeIdx,versionIdx,componentIdx,numberOfVersions,dofNumber
     REAL(DP) :: qCurrent(4), aCurrent(4),W(2,4)
@@ -1605,14 +1603,14 @@ CONTAINS
       CALL FlagError("Equations set is not associated.",err,error,*999)
     END IF
 
-    domainNodes=>dependentField%DECOMPOSITION%DOMAIN(dependentField%DECOMPOSITION%MESH_COMPONENT_NUMBER)%PTR%TOPOLOGY%NODES
+    domainNodes=>dependentField%DECOMPOSITION%DOMAIN(dependentField%decomposition%meshComponentNumber)%PTR%TOPOLOGY%NODES
 
     !!!--  L o o p   O v e r   L o c a l  N o d e s  --!!!
-    DO nodeIdx=1,domainNodes%NUMBER_OF_NODES
-      nodeNumber = domainNodes%NODES(nodeIdx)%local_number
+    DO nodeIdx=1,domainNodes%numberOfNodes
+      nodeNumber = domainNodes%NODES(nodeIdx)%localNumber
       derivativeIdx = 1
       numberOfVersions=domainNodes%NODES(nodeNumber)%DERIVATIVES(derivativeIdx)%numberOfVersions      
-      boundaryNode=domainNodes%NODES(nodeNumber)%BOUNDARY_NODE
+      boundaryNode=domainNodes%NODES(nodeNumber)%boundaryNode
       !!!-- F i n d    B r a n c h    N o d e s --!!!
       IF(numberOfVersions > 1 .AND. .NOT. boundaryNode) THEN
         DO componentIdx=1,2

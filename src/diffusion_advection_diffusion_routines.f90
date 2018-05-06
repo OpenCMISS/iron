@@ -495,7 +495,7 @@ CONTAINS
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
 
-              IF(SOLVER%GLOBAL_NUMBER==1) THEN
+              IF(SOLVER%globalNumber==1) THEN
                 !copy current value of concentration_one to another variable
                 CALL AdvectionDiffusion_PreSolveStoreCurrentSoln(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
                 !Set source term to be updated value of concentration_two
@@ -505,7 +505,7 @@ CONTAINS
 !                 CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Read in vector data... ",ERR,ERROR,*999)
 !                 CALL ADVECTION_DIFFUSION_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
  
-              ELSE IF(SOLVER%GLOBAL_NUMBER==2) THEN
+              ELSE IF(SOLVER%globalNumber==2) THEN
                 !copy current value of concentration_one to another variable
                 CALL Diffusion_PreSolveStoreCurrentSolution(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
                 !compute value of constant source term - evaluated from lamdba*(0.5*(c_1^{t+1}+c_1^{t}) - c_2^{t})
@@ -561,9 +561,9 @@ CONTAINS
           END IF
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE)
-              IF(SOLVER%GLOBAL_NUMBER==1) THEN
+              IF(SOLVER%globalNumber==1) THEN
 !              CALL ADVECTION_DIFFUSION_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
-              ELSE IF(SOLVER%GLOBAL_NUMBER==2) THEN
+              ELSE IF(SOLVER%globalNumber==2) THEN
 !              CALL DIFFUSION_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*999)
               ENDIF
             CASE DEFAULT

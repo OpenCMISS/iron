@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -130,13 +130,13 @@ CONTAINS
     REAL(DP), ALLOCATABLE :: INTEGRAL_ERRORS(:,:),GHOST_INTEGRAL_ERRORS(:,:)
     CHARACTER(LEN=40) :: FIRST_FORMAT
     CHARACTER(LEN=MAXSTRLEN) :: FILE_NAME
-    TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
-    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: ELEMENTS_DECOMPOSITION
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: DECOMPOSITION_TOPOLOGY
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: ELEMENTS_DOMAIN
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: NODES_DOMAIN
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: DOMAIN_TOPOLOGY
+    TYPE(DecompositionType), POINTER :: DECOMPOSITION
+    TYPE(DecompositionElementsType), POINTER :: ELEMENTS_DECOMPOSITION
+    TYPE(DecompositionTopologyType), POINTER :: DECOMPOSITION_TOPOLOGY
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainElementsType), POINTER :: ELEMENTS_DOMAIN
+    TYPE(DomainNodesType), POINTER :: NODES_DOMAIN
+    TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR,LOCAL_STRING
     TYPE(WorkGroupType), POINTER :: workGroup
@@ -173,7 +173,7 @@ CONTAINS
               ENDIF
               CALL WRITE_STRING(OUTPUT_ID,"Analytic error analysis:",ERR,ERROR,*999)
               CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-              LOCAL_STRING="Field "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" : "//FIELD%LABEL
+              LOCAL_STRING="Field "//TRIM(NUMBER_TO_VSTRING(FIELD%userNumber,"*",ERR,ERROR))//" : "//FIELD%LABEL
               IF(ERR/=0) GOTO 999
               CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
               NULLIFY(NUMERICAL_VALUES)
@@ -195,7 +195,7 @@ CONTAINS
                     & ERR,ERROR,*999)
                   !Loop over the components
                   DO component_idx=1,FIELD%VARIABLES(var_idx)%NUMBER_OF_COMPONENTS
-                    MESH_COMPONENT=FIELD_VARIABLE%COMPONENTS(component_idx)%MESH_COMPONENT_NUMBER
+                    MESH_COMPONENT=FIELD_VARIABLE%COMPONENTS(component_idx)%meshComponentNumber
                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                     IF(ASSOCIATED(DOMAIN)) THEN
                       DOMAIN_TOPOLOGY=>DOMAIN%TOPOLOGY
@@ -205,7 +205,7 @@ CONTAINS
                         IF(ERR/=0) GOTO 999
                         CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
                         CALL WRITE_STRING(OUTPUT_ID,"",ERR,ERROR,*999)
-                        SELECT CASE(FIELD%VARIABLES(var_idx)%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
+                        SELECT CASE(FIELD%VARIABLES(var_idx)%COMPONENTS(component_idx)%interpolationType)
                         CASE(FIELD_CONSTANT_INTERPOLATION)
                           CALL WRITE_STRING(OUTPUT_ID,"Constant errors:",ERR,ERROR,*999)
                           LOCAL_STRING="                       Numerical      Analytic       % error  Absolute err  Relative err"
@@ -239,7 +239,7 @@ CONTAINS
                                   LOCAL_STRING= &
                                     & "  Element#             Numerical      Analytic       % error  Absolute err  Relative err"
                                   CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                                  DO element_idx=1,ELEMENTS_DOMAIN%NUMBER_OF_ELEMENTS
+                                  DO element_idx=1,ELEMENTS_DOMAIN%numberOfElements
                                     local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                       & ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)
                                     VALUES(1)=NUMERICAL_VALUES(local_ny)
@@ -252,12 +252,12 @@ CONTAINS
                                     RMS_ERROR_PER(1)=RMS_ERROR_PER(1)+VALUES(3)*VALUES(3)
                                     RMS_ERROR_ABS(1)=RMS_ERROR_ABS(1)+VALUES(4)*VALUES(4)
                                     RMS_ERROR_REL(1)=RMS_ERROR_REL(1)+VALUES(5)*VALUES(5)
-                                    WRITE(FIRST_FORMAT,"(A,I10,A)") "('",ELEMENTS_DECOMPOSITION%ELEMENTS(element_idx)%USER_NUMBER, &
+                                    WRITE(FIRST_FORMAT,"(A,I10,A)") "('",ELEMENTS_DECOMPOSITION%ELEMENTS(element_idx)%userNumber, &
                                       & "',20X,3(2X,E12.5))"
                                     CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))", &
                                       & ERR,ERROR,*999)
                                   ENDDO !element_idx
-                                  DO element_idx=ELEMENTS_DOMAIN%NUMBER_OF_ELEMENTS+1,ELEMENTS_DOMAIN%TOTAL_NUMBER_OF_ELEMENTS
+                                  DO element_idx=ELEMENTS_DOMAIN%numberOfElements+1,ELEMENTS_DOMAIN%totalNumberOfElements
                                     local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                       & ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)
                                     VALUES(1)=NUMERICAL_VALUES(local_ny)
@@ -270,7 +270,7 @@ CONTAINS
                                     GHOST_RMS_ERROR_PER(1)=GHOST_RMS_ERROR_PER(1)+VALUES(3)*VALUES(3)
                                     GHOST_RMS_ERROR_ABS(1)=GHOST_RMS_ERROR_ABS(1)+VALUES(4)*VALUES(4)
                                     GHOST_RMS_ERROR_REL(1)=GHOST_RMS_ERROR_REL(1)+VALUES(5)*VALUES(5)
-                                    WRITE(FIRST_FORMAT,"(A,I10,A)") "('",ELEMENTS_DECOMPOSITION%ELEMENTS(element_idx)%USER_NUMBER, &
+                                    WRITE(FIRST_FORMAT,"(A,I10,A)") "('",ELEMENTS_DECOMPOSITION%ELEMENTS(element_idx)%userNumber, &
                                       & "',20X,3(2X,E12.5))"
                                     CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))", &
                                       & ERR,ERROR,*999)
@@ -359,8 +359,8 @@ CONTAINS
                             CALL WRITE_STRING(OUTPUT_ID,"Nodal errors:",ERR,ERROR,*999)
                             LOCAL_STRING="     Node#  Deriv#     Numerical      Analytic       % error  Absolute err  Relative err"
                             CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                            DO node_idx=1,NODES_DOMAIN%NUMBER_OF_NODES
-                              DO deriv_idx=1,NODES_DOMAIN%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                            DO node_idx=1,NODES_DOMAIN%numberOfNodes
+                              DO deriv_idx=1,NODES_DOMAIN%NODES(node_idx)%numberOfDerivatives
                                 local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
                                 VALUES(1)=NUMERICAL_VALUES(local_ny)
@@ -374,7 +374,7 @@ CONTAINS
                                 RMS_ERROR_ABS(deriv_idx)=RMS_ERROR_ABS(deriv_idx)+VALUES(4)*VALUES(4)
                                 RMS_ERROR_REL(deriv_idx)=RMS_ERROR_REL(deriv_idx)+VALUES(5)*VALUES(5)
                                 IF(deriv_idx==1) THEN
-                                  WRITE(FIRST_FORMAT,"(A,I10,A,I6,A)") "('",NODES_DOMAIN%NODES(node_idx)%USER_NUMBER,"',2X,'", &
+                                  WRITE(FIRST_FORMAT,"(A,I10,A,I6,A)") "('",NODES_DOMAIN%NODES(node_idx)%userNumber,"',2X,'", &
                                     & deriv_idx,"',5(2X,E12.5))"
                                 ELSE
                                   WRITE(FIRST_FORMAT,"(A,I6,A)") "(12X,'",deriv_idx,"',5(2X,E12.5))"
@@ -382,8 +382,8 @@ CONTAINS
                                 CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,5,5,5,VALUES,FIRST_FORMAT,"(20X,5(2X,E12.5))",ERR,ERROR,*999)
                               ENDDO !deriv_idx
                             ENDDO !node_idx
-                            DO node_idx=NODES_DOMAIN%NUMBER_OF_NODES+1,NODES_DOMAIN%TOTAL_NUMBER_OF_NODES
-                              DO deriv_idx=1,NODES_DOMAIN%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+                            DO node_idx=NODES_DOMAIN%numberOfNodes+1,NODES_DOMAIN%totalNumberOfNodes
+                              DO deriv_idx=1,NODES_DOMAIN%NODES(node_idx)%numberOfDerivatives
                                 local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
                                 VALUES(1)=NUMERICAL_VALUES(local_ny)
@@ -397,7 +397,7 @@ CONTAINS
                                 GHOST_RMS_ERROR_ABS(deriv_idx)=GHOST_RMS_ERROR_ABS(deriv_idx)+VALUES(4)*VALUES(4)
                                 GHOST_RMS_ERROR_REL(deriv_idx)=GHOST_RMS_ERROR_REL(deriv_idx)+VALUES(5)*VALUES(5)
                                 IF(deriv_idx==1) THEN
-                                  WRITE(FIRST_FORMAT,"(A,I10,A,I6,A)") "('",NODES_DOMAIN%NODES(node_idx)%USER_NUMBER, &
+                                  WRITE(FIRST_FORMAT,"(A,I10,A,I6,A)") "('",NODES_DOMAIN%NODES(node_idx)%userNumber, &
                                     & "',2X,'",deriv_idx,"',5(2X,E12.5))"
                                 ELSE
                                   WRITE(FIRST_FORMAT,"(A,I6,A)") "(12X,'",deriv_idx,"',5(2X,E12.5))"
@@ -498,10 +498,10 @@ CONTAINS
                         CASE DEFAULT
                           LOCAL_ERROR="The interpolation type of "// &
                             & TRIM(NUMBER_TO_VSTRING(FIELD%VARIABLES(var_idx)%COMPONENTS(component_idx)% &
-                            & INTERPOLATION_TYPE,"*",ERR,ERROR))//" for component number "// &
+                            & interpolationType,"*",ERR,ERROR))//" for component number "// &
                             & TRIM(NUMBER_TO_VSTRING(component_idx,"*",ERR,ERROR))//" of variable type "// &
                             & TRIM(NUMBER_TO_VSTRING(variable_type,"*",ERR,ERROR))//" of field number "// &
-                            & TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))//" is invalid."
+                            & TRIM(NUMBER_TO_VSTRING(FIELD%userNumber,"*",ERR,ERROR))//" is invalid."
                           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                         END SELECT
                       ELSE
@@ -687,12 +687,12 @@ CONTAINS
             IF(ERR/=0) CALL FlagError("Error closing analysis output file.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))// &
+          LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%userNumber,"*",ERR,ERROR))// &
             & " is not a dependent field."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
-        LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%USER_NUMBER,"*",ERR,ERROR))// &
+        LOCAL_ERROR="Field number "//TRIM(NUMBER_TO_VSTRING(FIELD%userNumber,"*",ERR,ERROR))// &
           & " has not been finished."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
@@ -804,9 +804,9 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: element_idx,component_idx,gauss_idx,parameter_idx,variable_type
     REAL(DP) :: ANALYTIC_INT,NUMERICAL_INT,RWG
-    TYPE(BASIS_TYPE), POINTER :: BASIS,DEPENDENT_BASIS,GEOMETRIC_BASIS
-    TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: DOMAIN_ELEMENTS1,DOMAIN_ELEMENTS2,DOMAIN_ELEMENTS3
+    TYPE(BasisType), POINTER :: BASIS,DEPENDENT_BASIS,GEOMETRIC_BASIS
+    TYPE(DecompositionType), POINTER :: DECOMPOSITION
+    TYPE(DomainElementsType), POINTER :: DOMAIN_ELEMENTS1,DOMAIN_ELEMENTS2,DOMAIN_ELEMENTS3
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: GEOMETRIC_INTERP_POINT(:)
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: GEOMETRIC_INTERP_POINT_METRICS(:)
@@ -844,9 +844,9 @@ CONTAINS
                   CALL FIELD_INTERPOLATED_POINTS_INITIALISE(GEOMETRIC_INTERP_PARAMETERS,GEOMETRIC_INTERP_POINT,ERR,ERROR,*999)
                   CALL Field_InterpolatedPointsMetricsInitialise(GEOMETRIC_INTERP_POINT,GEOMETRIC_INTERP_POINT_METRICS, &
                     & ERR,ERROR,*999)
-                  DOMAIN_ELEMENTS1=>FIELD_VARIABLE%COMPONENTS(DECOMPOSITION%MESH_COMPONENT_NUMBER)%DOMAIN%TOPOLOGY%ELEMENTS
-                  DOMAIN_ELEMENTS2=>GEOMETRIC_VARIABLE%COMPONENTS(DECOMPOSITION%MESH_COMPONENT_NUMBER)%DOMAIN%TOPOLOGY%ELEMENTS
-                  DO element_idx=1,DOMAIN_ELEMENTS1%NUMBER_OF_ELEMENTS
+                  DOMAIN_ELEMENTS1=>FIELD_VARIABLE%COMPONENTS(decomposition%meshComponentNumber)%DOMAIN%TOPOLOGY%ELEMENTS
+                  DOMAIN_ELEMENTS2=>GEOMETRIC_VARIABLE%COMPONENTS(decomposition%meshComponentNumber)%DOMAIN%TOPOLOGY%ELEMENTS
+                  DO element_idx=1,DOMAIN_ELEMENTS1%numberOfElements
                     DEPENDENT_BASIS=>DOMAIN_ELEMENTS1%ELEMENTS(element_idx)%BASIS
                     GEOMETRIC_BASIS=>DOMAIN_ELEMENTS2%ELEMENTS(element_idx)%BASIS
                     QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
@@ -859,7 +859,7 @@ CONTAINS
                     DO gauss_idx=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
                       CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                         & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                      CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI, &
+                      CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi, &
                         & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                       RWG=GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
                         & QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
@@ -870,14 +870,14 @@ CONTAINS
                         ANALYTIC_INT=0.0_DP
                         SELECT CASE(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE)
                         CASE(FIELD_NO_SCALING)
-                          DO parameter_idx=1,BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                          DO parameter_idx=1,BASIS%numberOfElementParameters
                             NUMERICAL_INT=NUMERICAL_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
                               & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)
                             ANALYTIC_INT=ANALYTIC_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
                               & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)
                           ENDDO !parameter_idx
                         CASE(FIELD_UNIT_SCALING,FIELD_ARC_LENGTH_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-                          DO parameter_idx=1,BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                          DO parameter_idx=1,BASIS%numberOfElementParameters
                             NUMERICAL_INT=NUMERICAL_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
                               & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)* &
                               & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%SCALE_FACTORS(parameter_idx,component_idx)
@@ -899,7 +899,7 @@ CONTAINS
                       ENDDO !component_idx
                     ENDDO !gauss_idx
                   ENDDO !element_idx
-                  DO element_idx=DOMAIN_ELEMENTS1%NUMBER_OF_ELEMENTS+1,DOMAIN_ELEMENTS1%TOTAL_NUMBER_OF_ELEMENTS
+                  DO element_idx=DOMAIN_ELEMENTS1%numberOfElements+1,DOMAIN_ELEMENTS1%totalNumberOfElements
                     DEPENDENT_BASIS=>DOMAIN_ELEMENTS1%ELEMENTS(element_idx)%BASIS
                     GEOMETRIC_BASIS=>DOMAIN_ELEMENTS2%ELEMENTS(element_idx)%BASIS
                     QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
@@ -912,7 +912,7 @@ CONTAINS
                     DO gauss_idx=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
                       CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                         & GEOMETRIC_INTERP_POINT(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
-                      CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI, &
+                      CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi, &
                         & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                       RWG=GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
                         & QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
@@ -923,14 +923,14 @@ CONTAINS
                         ANALYTIC_INT=0.0_DP
                         SELECT CASE(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE)
                         CASE(FIELD_NO_SCALING)
-                          DO parameter_idx=1,BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                          DO parameter_idx=1,BASIS%numberOfElementParameters
                             NUMERICAL_INT=NUMERICAL_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
                               & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)
                             ANALYTIC_INT=ANALYTIC_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
                               & ANALYTIC_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)
                           ENDDO !parameter_idx
                         CASE(FIELD_UNIT_SCALING,FIELD_ARC_LENGTH_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-                          DO parameter_idx=1,BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                          DO parameter_idx=1,BASIS%numberOfElementParameters
                             NUMERICAL_INT=NUMERICAL_INT+QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,NO_PART_DERIV,gauss_idx)* &
                               & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%PARAMETERS(parameter_idx,component_idx)* &
                               & NUMERICAL_INTERP_PARAMETERS(variable_type)%PTR%SCALE_FACTORS(parameter_idx,component_idx)
@@ -1658,8 +1658,8 @@ CONTAINS
     INTEGER(INTG) :: GHOST_NUMBER(8),NUMBER(8),MPI_IERROR,numberOfGroupComputationNodes,myGroupComputationNodeNumber, &
       & groupCommunicator
     REAL(DP) :: RMS_ERROR(8),GHOST_RMS_ERROR(8)
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: NODES_DOMAIN
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainNodesType), POINTER :: NODES_DOMAIN
     TYPE(WorkGroupType), POINTER :: workGroup
         
     ENTERS("AnalyticAnalysis_RMSErrorGetNode",ERR,ERROR,*999)
@@ -1678,8 +1678,8 @@ CONTAINS
         RMS_ERROR=0.0_DP
         GHOST_NUMBER=0
         GHOST_RMS_ERROR=0.0_DP
-        DO node_idx=1,NODES_DOMAIN%NUMBER_OF_NODES
-          DO deriv_idx=1,NODES_DOMAIN%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+        DO node_idx=1,NODES_DOMAIN%numberOfNodes
+          DO deriv_idx=1,NODES_DOMAIN%NODES(node_idx)%numberOfDerivatives
             SELECT CASE(ERROR_TYPE)
             CASE(ABSOLUTE_ERROR_TYPE)
               !Default to version 1 of each node derivative
@@ -1701,8 +1701,8 @@ CONTAINS
             RMS_ERROR(deriv_idx)=RMS_ERROR(deriv_idx)+ERROR_VALUE*ERROR_VALUE
           ENDDO !deriv_idx
         ENDDO !node_idx
-        DO node_idx=NODES_DOMAIN%NUMBER_OF_NODES+1,NODES_DOMAIN%TOTAL_NUMBER_OF_NODES
-          DO deriv_idx=1,NODES_DOMAIN%NODES(node_idx)%NUMBER_OF_DERIVATIVES
+        DO node_idx=NODES_DOMAIN%numberOfNodes+1,NODES_DOMAIN%totalNumberOfNodes
+          DO deriv_idx=1,NODES_DOMAIN%NODES(node_idx)%numberOfDerivatives
             SELECT CASE(ERROR_TYPE)
             CASE(ABSOLUTE_ERROR_TYPE)
               !Default to version 1 of each node derivative
@@ -1796,11 +1796,11 @@ CONTAINS
     INTEGER(INTG) :: element_idx
     INTEGER(INTG) :: GHOST_NUMBER,NUMBER,MPI_IERROR,numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
     REAL(DP) :: ERROR_VALUE,RMS_ERROR,GHOST_RMS_ERROR
-    TYPE(DECOMPOSITION_TYPE), POINTER :: DECOMPOSITION
-    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: ELEMENTS_DECOMPOSITION
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: DECOMPOSITION_TOPOLOGY
-    TYPE(DOMAIN_TYPE), POINTER :: DOMAIN
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: ELEMENTS_DOMAIN
+    TYPE(DecompositionType), POINTER :: DECOMPOSITION
+    TYPE(DecompositionElementsType), POINTER :: ELEMENTS_DECOMPOSITION
+    TYPE(DecompositionTopologyType), POINTER :: DECOMPOSITION_TOPOLOGY
+    TYPE(DomainType), POINTER :: DOMAIN
+    TYPE(DomainElementsType), POINTER :: ELEMENTS_DOMAIN
     TYPE(WorkGroupType), POINTER :: workGroup
 
     ENTERS("AnalyticAnalysis_RMSErrorGetElement",ERR,ERROR,*999)
@@ -1826,7 +1826,7 @@ CONTAINS
               RMS_ERROR=0.0_DP
               GHOST_NUMBER=0
               GHOST_RMS_ERROR=0.0_DP
-              DO element_idx=1,ELEMENTS_DOMAIN%NUMBER_OF_ELEMENTS
+              DO element_idx=1,ELEMENTS_DOMAIN%numberOfElements
                 SELECT CASE(ERROR_TYPE)
                 CASE(ABSOLUTE_ERROR_TYPE)
                   CALL AnalyticAnalysis_AbsoluteErrorGetElement(FIELD,VARIABLE_TYPE,element_idx,COMPONENT_NUMBER,ERROR_VALUE, &
@@ -1843,7 +1843,7 @@ CONTAINS
                 NUMBER=NUMBER+1
                 RMS_ERROR=RMS_ERROR+ERROR_VALUE*ERROR_VALUE
               ENDDO !element_idx
-              DO element_idx=ELEMENTS_DOMAIN%NUMBER_OF_ELEMENTS+1,ELEMENTS_DOMAIN%TOTAL_NUMBER_OF_ELEMENTS
+              DO element_idx=ELEMENTS_DOMAIN%numberOfElements+1,ELEMENTS_DOMAIN%totalNumberOfElements
                 SELECT CASE(ERROR_TYPE)
                 CASE(ABSOLUTE_ERROR_TYPE)
                   CALL AnalyticAnalysis_AbsoluteErrorGetElement(FIELD,VARIABLE_TYPE,element_idx,COMPONENT_NUMBER,ERROR_VALUE, &

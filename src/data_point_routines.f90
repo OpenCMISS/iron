@@ -1,4 +1,4 @@
-!> \file
+!!> \file
 !> \author Tim Wu
 !> \brief This module handles all data point routines.
 !>
@@ -375,7 +375,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data points to create on the interface
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface in which to create the data points
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface in which to create the data points
     INTEGER(INTG), INTENT(IN) :: numberOfDataPoints !<The number of data points to create
     TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the created data points. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -387,7 +387,7 @@ CONTAINS
     ENTERS("DataPoints_CreateStartInterface",err,error,*999)
 
     IF(ASSOCIATED(INTERFACE)) THEN
-      IF(ASSOCIATED(INTERFACE%COORDINATE_SYSTEM)) THEN
+      IF(ASSOCIATED(INTERFACE%coordinateSystem)) THEN
         IF(ASSOCIATED(dataPoints)) THEN
           CALL FlagError("Data points is already associated.",err,error,*999)
         ELSE
@@ -397,12 +397,12 @@ CONTAINS
             CALL DataPointSets_UserNumberFind(INTERFACE%dataPointSets,userNumber,existingDataPoints,err,error,*999)
             IF(ASSOCIATED(existingDataPoints)) THEN
               localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-                & " has already been created on interface number "//TRIM(NumberToVString(INTERFACE%USER_NUMBER,"*",err,error))//"."
+                & " has already been created on interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ELSE
               !Create the data points 
               CALL DataPoints_CreateStartGeneric(INTERFACE%dataPointSets,userNumber,numberOfDataPoints, &
-                & INTERFACE%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS,dataPoints,err,error,*999)
+                & INTERFACE%coordinateSystem%numberOfDimensions,dataPoints,err,error,*999)
               dataPoints%interface=>interface
             ENDIF
           ELSE
@@ -432,7 +432,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data points to create on the interface
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region in which to create the data points
+    TYPE(RegionType), POINTER :: region !<A pointer to the region in which to create the data points
     INTEGER(INTG), INTENT(IN) :: numberOfDataPoints !<The number of data points to create
     TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the created data points. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -444,7 +444,7 @@ CONTAINS
     ENTERS("DataPoints_CreateStartRegion",err,error,*999)
 
     IF(ASSOCIATED(region)) THEN
-      IF(ASSOCIATED(region%COORDINATE_SYSTEM)) THEN
+      IF(ASSOCIATED(region%coordinateSystem)) THEN
         IF(ASSOCIATED(dataPoints)) THEN
           CALL FlagError("Data points is already associated.",err,error,*999)
         ELSE
@@ -454,12 +454,12 @@ CONTAINS
             CALL DataPointSets_UserNumberFind(region%dataPointSets,userNumber,existingDataPoints,err,error,*999)
             IF(ASSOCIATED(existingDataPoints)) THEN
               localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-                & " has already been created on region number "//TRIM(NumberToVString(region%USER_NUMBER,"*",err,error))//"."
+                & " has already been created on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ELSE
               !Create the data points 
               CALL DataPoints_CreateStartGeneric(region%dataPointSets,userNumber,numberOfDataPoints, &
-                & region%COORDINATE_SYSTEM%NUMBER_OF_DIMENSIONS,dataPoints,err,error,*999)
+                & region%coordinateSystem%numberOfDimensions,dataPoints,err,error,*999)
               dataPoints%region=>region
             ENDIF
           ELSE
@@ -1342,7 +1342,7 @@ CONTAINS
   SUBROUTINE DataPointSets_InitialiseInterface(interface,err,error,*)
     
     !Argument variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<The interface to initialise the data point sets for.
+    TYPE(InterfaceType), POINTER :: interface !<The interface to initialise the data point sets for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1375,7 +1375,7 @@ CONTAINS
   SUBROUTINE DataPointSets_InitialiseRegion(region,err,error,*)
     
     !Argument variables
-    TYPE(REGION_TYPE), POINTER :: region !<The region to initialise the data point sets for.
+    TYPE(RegionType), POINTER :: region !<The region to initialise the data point sets for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

@@ -123,7 +123,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
-    TYPE(REGION_TYPE), POINTER :: DEPENDENT_REGION   
+    TYPE(RegionType), POINTER :: DEPENDENT_REGION   
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
@@ -171,19 +171,19 @@ CONTAINS
                         IF(ASSOCIATED(TIME_LOOP_PARENT)) THEN
                           OUTPUT_ITERATION_NUMBER=TIME_LOOP_PARENT%OUTPUT_NUMBER
                           CURRENT_LOOP_ITERATION=TIME_LOOP_PARENT%GLOBAL_ITERATION_NUMBER
-                          FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%USER_NUMBER,"*",err,error))// &
+                          FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",err,error))// &
                             & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP_PARENT%GLOBAL_ITERATION_NUMBER,"*",err,error))// &
                             & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%ITERATION_NUMBER,"*",err,error))
                         ELSE
                           OUTPUT_ITERATION_NUMBER=TIME_LOOP%OUTPUT_NUMBER
                           CURRENT_LOOP_ITERATION=TIME_LOOP%GLOBAL_ITERATION_NUMBER
-                          FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%USER_NUMBER,"*",err,error))// &
+                          FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",err,error))// &
                             & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%GLOBAL_ITERATION_NUMBER,"*",err,error))
                         ENDIF
                       ELSE
                         OUTPUT_ITERATION_NUMBER=TIME_LOOP%OUTPUT_NUMBER
                         CURRENT_LOOP_ITERATION=TIME_LOOP%GLOBAL_ITERATION_NUMBER
-                        FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%USER_NUMBER,"*",err,error))// &
+                        FILENAME="Time_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",err,error))// &
                           & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%GLOBAL_ITERATION_NUMBER,"*",err,error))
                       ENDIF
                       METHOD="FORTRAN"
@@ -246,8 +246,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,dimension_idx,DIMENSION_MULTIPLIER,GEOMETRIC_COMPONENT_NUMBER,GEOMETRIC_SCALING_TYPE, &
-      & NUMBER_OF_DIMENSIONS,NUMBER_OF_MATERIALS_COMPONENTS,GEOMETRIC_MESH_COMPONENT
-    TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
+      & numberOfDimensions,NUMBER_OF_MATERIALS_COMPONENTS,GEOMETRIC_MESH_COMPONENT
+    TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -294,7 +294,7 @@ CONTAINS
           CASE(EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE)
             IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
               !Create the auto created dependent field
-              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+              CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                 & DEPENDENT_FIELD,err,error,*999)
               CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -429,7 +429,7 @@ CONTAINS
             CASE(EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE)
               IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created dependent field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%DEPENDENT% &
                   & DEPENDENT_FIELD,err,error,*999)
                 CALL FIELD_LABEL_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -647,7 +647,7 @@ CONTAINS
               & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE)
               IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created independent field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%INDEPENDENT% &
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%INDEPENDENT% &
                   & INDEPENDENT_FIELD,err,error,*999)
                 CALL FIELD_LABEL_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,"Independent Field",err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -916,7 +916,7 @@ CONTAINS
             CASE(EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
               IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Create the auto created independent field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%INDEPENDENT% &
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_SET%INDEPENDENT% &
                   & INDEPENDENT_FIELD,err,error,*999)
                 CALL FIELD_LABEL_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,"Independent Field",err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
@@ -1062,7 +1062,7 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               IF(EQUATIONS_MATERIALS%MATERIALS_FIELD_AUTO_CREATED) THEN
                 !Create the auto created materials field
-                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
+                CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%fieldUserNumber,EQUATIONS_SET%REGION,EQUATIONS_MATERIALS% &
                   & MATERIALS_FIELD,err,error,*999)
                 CALL FIELD_LABEL_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,"Materials Field",err,error,*999)
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
@@ -1081,14 +1081,14 @@ CONTAINS
                 CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,err,error,*999)
+                  & numberOfDimensions,err,error,*999)
                 IF(EQUATIONS_SET_SPEC_TYPE==EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE) THEN
                   !Monodomain. Materials field components are 2 plus one for each dimension i.e., Am, Cm and \sigma
-                  NUMBER_OF_MATERIALS_COMPONENTS=NUMBER_OF_DIMENSIONS+2
+                  NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+2
                   DIMENSION_MULTIPLIER=1
                 ELSE
                   !Bidomain. Materials field components are 2 plus two for each dimension i.e., Am, C, \sigma_i and \sigma_e
-                  NUMBER_OF_MATERIALS_COMPONENTS=2*NUMBER_OF_DIMENSIONS+2
+                  NUMBER_OF_MATERIALS_COMPONENTS=2*numberOfDimensions+2
                   DIMENSION_MULTIPLIER=2
                 ENDIF
                 !Set the number of materials components
@@ -1108,14 +1108,14 @@ CONTAINS
                 CALL FIELD_COMPONENT_LABEL_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE,2,"Cm", &
                   & err,error,*999)
                 !Default the \sigma materials components to the geometric interpolation setup with constant interpolation
-                DO component_idx=1,NUMBER_OF_DIMENSIONS
+                DO component_idx=1,numberOfDimensions
                   CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                   DO dimension_idx=1,DIMENSION_MULTIPLIER
                     CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & 2+component_idx+(dimension_idx-1)*NUMBER_OF_DIMENSIONS,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
+                      & 2+component_idx+(dimension_idx-1)*numberOfDimensions,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                     CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & 2+component_idx+(dimension_idx-1)*NUMBER_OF_DIMENSIONS,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                      & 2+component_idx+(dimension_idx-1)*numberOfDimensions,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                   ENDDO !dimension_idx
                 ENDDO !component_idx
                 !Default the field scaling to that of the geometric field
@@ -1131,15 +1131,15 @@ CONTAINS
                   & err,error,*999)
                 CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & NUMBER_OF_DIMENSIONS,err,error,*999)
+                  & numberOfDimensions,err,error,*999)
                 SELECT CASE(EQUATIONS_SET_SPEC_TYPE)
                 CASE(EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE,EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE)
                   !Monodomain. Materials field components are 2 plus one for each dimension i.e., Am, Cm and \sigma
-                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_DIMENSIONS+2, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions+2, &
                     & err,error,*999)
                 CASE(EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE)
                   !Bidomain. Materials field components are 2 plus two for each dimension i.e., Am, C, \sigma_i and \sigma_e
-                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,2*NUMBER_OF_DIMENSIONS+2, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,2*numberOfDimensions+2, &
                     & err,error,*999)
                 CASE DEFAULT
                   LOCAL_ERROR="The equations set type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS_SET_SPEC_TYPE,"*",err,error))// &
@@ -1161,14 +1161,14 @@ CONTAINS
               CALL FIELD_CREATE_FINISH(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
               !Set the default values for the materials field
               CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                & NUMBER_OF_DIMENSIONS,err,error,*999)
+                & numberOfDimensions,err,error,*999)
               IF(EQUATIONS_SET_SPEC_TYPE==EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE) THEN
                 !Monodomain. Materials field components are 2 plus one for each dimension i.e., Am, Cm and \sigma
-                NUMBER_OF_MATERIALS_COMPONENTS=NUMBER_OF_DIMENSIONS+2
+                NUMBER_OF_MATERIALS_COMPONENTS=numberOfDimensions+2
                 DIMENSION_MULTIPLIER=1
               ELSE
                 !Bidomain. Materials field components are 2 plus two for each dimension i.e., Am, C, \sigma_i and \sigma_e
-                NUMBER_OF_MATERIALS_COMPONENTS=2*NUMBER_OF_DIMENSIONS+2
+                NUMBER_OF_MATERIALS_COMPONENTS=2*numberOfDimensions+2
                 DIMENSION_MULTIPLIER=2
               ENDIF
               !First set Am
@@ -1178,10 +1178,10 @@ CONTAINS
               CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VALUES_SET_TYPE,2,0.0025_DP,err,error,*999)
               !Now set the sigmas to be 1.0
-              DO component_idx=1,NUMBER_OF_DIMENSIONS
+              DO component_idx=1,numberOfDimensions
                 DO dimension_idx=1,DIMENSION_MULTIPLIER
                   CALL FIELD_COMPONENT_VALUES_INITIALISE(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,2+component_idx+(dimension_idx-1)*NUMBER_OF_DIMENSIONS,1.0_DP,err,error,*999)
+                    & FIELD_VALUES_SET_TYPE,2+component_idx+(dimension_idx-1)*numberOfDimensions,1.0_DP,err,error,*999)
                 ENDDO !dimension_idx
               ENDDO !component_idx
             ENDIF
@@ -1647,18 +1647,18 @@ CONTAINS
             CASE(PROBLEM_MONODOMAIN_EQUATION_TYPE)
               SELECT CASE(PROBLEM%SPECIFICATION(3))
               CASE(PROBLEM_MONODOMAIN_GUDUNOV_SPLIT_SUBTYPE)
-                SELECT CASE(SOLVER%GLOBAL_NUMBER)
+                SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT,err,error,*999)
                 CASE(2)
                   !Do nothing
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a Gudunov split monodomain problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               CASE(PROBLEM_MONODOMAIN_STRANG_SPLIT_SUBTYPE)
-                SELECT CASE(SOLVER%GLOBAL_NUMBER)
+                SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT/2.0_DP,err,error,*999)
                 CASE(2)
@@ -1667,7 +1667,7 @@ CONTAINS
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME+TIME_INCREMENT/2.0_DP,CURRENT_TIME+TIME_INCREMENT, &
                     & err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a Strang split monodomain problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -1679,7 +1679,7 @@ CONTAINS
             CASE(PROBLEM_BIDOMAIN_EQUATION_TYPE)
               SELECT CASE(PROBLEM%SPECIFICATION(3))
               CASE(PROBLEM_BIDOMAIN_GUDUNOV_SPLIT_SUBTYPE)
-                SELECT CASE(SOLVER%GLOBAL_NUMBER)
+                SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT,err,error,*999)
                 CASE(2)
@@ -1687,12 +1687,12 @@ CONTAINS
                 CASE(3)
                   !Do nothing
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a Gudunov split bidomain problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
               CASE(PROBLEM_BIDOMAIN_STRANG_SPLIT_SUBTYPE)
-                SELECT CASE(SOLVER%GLOBAL_NUMBER)
+                SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT/2.0_DP,err,error,*999)
                 CASE(2)
@@ -1703,7 +1703,7 @@ CONTAINS
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME+TIME_INCREMENT/2.0_DP,CURRENT_TIME+TIME_INCREMENT, &
                     & err,error,*999)
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a Gudunov split bidomain problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -1717,13 +1717,13 @@ CONTAINS
               CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
                 & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
                 & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-                SELECT CASE(SOLVER%GLOBAL_NUMBER)
+                SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   CALL SOLVER_DAE_TIMES_SET(SOLVER,CURRENT_TIME,CURRENT_TIME+TIME_INCREMENT,err,error,*999)
                 CASE(2)
                   !Do nothing
                 CASE DEFAULT
-                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%GLOBAL_NUMBER,"*",err,error))// &
+                  LOCAL_ERROR="The solver global number of "//TRIM(NUMBER_TO_VSTRING(SOLVER%globalNumber,"*",err,error))// &
                     & " is invalid for a bioelectrics finite elasticity problem."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
@@ -2280,7 +2280,7 @@ CONTAINS
     INTEGER(INTG) FIELD_VAR_TYPE,mh,mhs,ms,ng,nh,nhs,ni,nj,ns
     LOGICAL :: USE_FIBRES
     REAL(DP) :: CONDUCTIVITY(3,3),DPHIDX(3,64),RWG,SUM
-    TYPE(BASIS_TYPE), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS,FIBRE_BASIS
+    TYPE(BasisType), POINTER :: DEPENDENT_BASIS,GEOMETRIC_BASIS,FIBRE_BASIS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
@@ -2308,12 +2308,12 @@ CONTAINS
         USE_FIBRES=ASSOCIATED(FIBRE_FIELD)
         vectorMapping=>vectorEquations%vectorMapping
         vectorMatrices=>vectorEquations%vectorMatrices
-        DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+        DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%decomposition%meshComponentNumber)%ptr% &
           & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
-        GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+        GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%decomposition%meshComponentNumber)%ptr% &
           & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
         GEOMETRIC_VARIABLE=>GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr
-        IF(USE_FIBRES) FIBRE_BASIS=>FIBRE_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
+        IF(USE_FIBRES) FIBRE_BASIS=>FIBRE_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%decomposition%meshComponentNumber)%ptr% &
           & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
         QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
         CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
@@ -2344,14 +2344,14 @@ CONTAINS
             DO ng=1,QUADRATURE_SCHEME%NUMBER_OF_GAUSS
               CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%NUMBER_OF_XI,equations%interpolation% &
+              CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(GEOMETRIC_BASIS%numberOfXi,equations%interpolation% &
                 & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                 & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               IF(USE_FIBRES) THEN
                 CALL FIELD_INTERPOLATE_GAUSS(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
                   & fibreInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(FIBRE_BASIS%NUMBER_OF_XI,equations%interpolation% &
+                CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(FIBRE_BASIS%numberOfXi,equations%interpolation% &
                   & fibreInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               ENDIF
               !Calculate RWG.
@@ -2370,9 +2370,9 @@ CONTAINS
               ENDIF
               !Compute basis dPhi/dx terms
               DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
-                DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   DPHIDX(nj,ms)=0.0_DP
-                  DO ni=1,DEPENDENT_BASIS%NUMBER_OF_XI
+                  DO ni=1,DEPENDENT_BASIS%numberOfXi
                     DPHIDX(nj,ms)=DPHIDX(nj,ms)+ &
                       & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni),ng)* &
                       & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(ni,nj)
@@ -2383,12 +2383,12 @@ CONTAINS
               mhs=0          
               DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
                 !Loop over element rows
-                DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   !Loop over element columns
                   DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                    DO ns=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                    DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       SUM=0.0_DP
                       IF(stiffnessMatrix%updateMatrix) THEN

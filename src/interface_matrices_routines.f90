@@ -299,14 +299,14 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx,rowsElementNumber,rowsMeshIdx
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: colsFieldVariable,rowsFieldVariable
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping
     TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: rhsMapping
     TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
     TYPE(INTERFACE_RHS_TYPE), POINTER :: rhsVector
-    TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: meshConnectivity
+    TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity
     TYPE(VARYING_STRING) :: localError
 
@@ -327,9 +327,9 @@ CONTAINS
             IF(ASSOCIATED(interface)) THEN
               SELECT CASE(interfaceCondition%integrationType)
               CASE(INTERFACE_CONDITION_GAUSS_INTEGRATION)
-                meshConnectivity=>interface%MESH_CONNECTIVITY
+                meshConnectivity=>interface%meshConnectivity
                 IF(ASSOCIATED(meshConnectivity)) THEN
-                  IF(ALLOCATED(meshConnectivity%ELEMENT_CONNECTIVITY)) THEN
+                  IF(ALLOCATED(meshConnectivity%elementConnectivity)) THEN
                     !Calculate the row and columns for the interface equations matrices
                     DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
                       interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
@@ -341,8 +341,8 @@ CONTAINS
                           ! If the rows and column variables are both the Lagrange variable (this is the diagonal matrix)
                           rowsElementNumber=InterfaceElementNumber
                         ELSE
-                          rowsElementNumber=meshConnectivity%ELEMENT_CONNECTIVITY(InterfaceElementNumber,rowsMeshIdx)% &
-                            & COUPLED_MESH_ELEMENT_NUMBER
+                          rowsElementNumber=meshConnectivity%elementConnectivity(InterfaceElementNumber,rowsMeshIdx)% &
+                            & coupledMeshElementNumber
                         ENDIF
                         CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%ELEMENT_MATRIX, &
                           & interfaceMatrix%UPDATE_MATRIX,[rowsElementNumber],[interfaceElementNumber],rowsFieldVariable, &
@@ -503,7 +503,7 @@ CONTAINS
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(INTERFACE_TYPE), POINTER :: interface
+    TYPE(InterfaceType), POINTER :: interface
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity
     TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
     TYPE(INTERFACE_RHS_TYPE), POINTER :: rhsVector
@@ -669,15 +669,15 @@ CONTAINS
      & row_version,row_derivative,row_local_derivative_idx,row_idx,row_local_node_idx,row_node,TRANSPOSE_NUMBER_OF_NON_ZEROS
     INTEGER(INTG), ALLOCATABLE :: COLUMNS(:),TRANSPOSE_COLUMNS(:)
     REAL(DP) :: SPARSITY
-    TYPE(BASIS_TYPE), POINTER :: COLUMN_BASIS,ROW_BASIS
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: COLUMN_DOFS_DOMAIN_MAPPING,ROW_DOFS_DOMAIN_MAPPING
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: COLUMN_DOMAIN_ELEMENTS,ROW_DOMAIN_ELEMENTS
-    TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
+    TYPE(BasisType), POINTER :: COLUMN_BASIS,ROW_BASIS
+    TYPE(DomainMappingType), POINTER :: COLUMN_DOFS_DOMAIN_MAPPING,ROW_DOFS_DOMAIN_MAPPING
+    TYPE(DomainElementsType), POINTER :: COLUMN_DOMAIN_ELEMENTS,ROW_DOMAIN_ELEMENTS
+    TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
     TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
-    TYPE(INTERFACE_MESH_CONNECTIVITY_TYPE), POINTER :: MESH_CONNECTIVITY
+    TYPE(InterfaceMeshConnectivityType), POINTER :: MESH_CONNECTIVITY
     TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE), POINTER :: COLUMN_DOFS_PARAM_MAPPING,ROW_DOFS_PARAM_MAPPING
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: COLUMN_VARIABLE,ROW_VARIABLE
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: COLUMN_INDICES_LISTS(:)
@@ -709,7 +709,7 @@ CONTAINS
                         IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                           INTERFACE=>INTERFACE_CONDITION%INTERFACE
                           IF(ASSOCIATED(INTERFACE)) THEN
-                            MESH_CONNECTIVITY=>INTERFACE%MESH_CONNECTIVITY
+                            MESH_CONNECTIVITY=>INTERFACE%meshConnectivity
                             IF(ASSOCIATED(MESH_CONNECTIVITY)) THEN
                               ROW_VARIABLE=>INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(MATRIX_NUMBER)%VARIABLE
                               INTERFACE_MESH_INDEX=INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(MATRIX_NUMBER)%MESH_INDEX
@@ -725,9 +725,9 @@ CONTAINS
                                         COLUMN_DOFS_PARAM_MAPPING=>COLUMN_VARIABLE%DOF_TO_PARAM_MAP
                                         IF(ASSOCIATED(COLUMN_DOFS_PARAM_MAPPING)) THEN
                                           !Allocate lists
-                                          ALLOCATE(COLUMN_INDICES_LISTS(ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL),STAT=ERR)
+                                          ALLOCATE(COLUMN_INDICES_LISTS(ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal),STAT=ERR)
                                           IF(ERR/=0) CALL FlagError("Could not allocate column indices lists.",ERR,ERROR,*999)
-                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
+                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
                                             !Set up list
                                             NULLIFY(COLUMN_INDICES_LISTS(local_row)%ptr)
                                             CALL LIST_CREATE_START(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
@@ -737,15 +737,15 @@ CONTAINS
                                             CALL LIST_CREATE_FINISH(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
                                           ENDDO !local_row
                                           !Allocate row indices
-                                          ALLOCATE(ROW_INDICES(ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL+1),STAT=ERR)
+                                          ALLOCATE(ROW_INDICES(ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal+1),STAT=ERR)
                                           IF(ERR/=0) CALL FlagError("Could not allocate row indices.",ERR,ERROR,*999)
                                           IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                             !Allocate transpose lists
                                             ALLOCATE(TRANSPOSE_COLUMN_INDICES_LISTS(COLUMN_DOFS_DOMAIN_MAPPING% &
-                                              & TOTAL_NUMBER_OF_LOCAL),STAT=ERR)
+                                              & totalNumberOfLocal),STAT=ERR)
                                             IF(ERR/=0) CALL FlagError("Could not allocate transpose column indices lists.", &
                                               & ERR,ERROR,*999)
-                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
+                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
                                               !Set up list
                                               NULLIFY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr)
                                               CALL LIST_CREATE_START(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
@@ -758,73 +758,73 @@ CONTAINS
                                                 & ERR,ERROR,*999)
                                             ENDDO !local_column
                                             !Allocate transpose row indices
-                                            ALLOCATE(TRANSPOSE_ROW_INDICES(COLUMN_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL+1), &
+                                            ALLOCATE(TRANSPOSE_ROW_INDICES(COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal+1), &
                                               & STAT=ERR)
                                             IF(ERR/=0) CALL FlagError("Could not allocate transpose row indices.",ERR,ERROR,*999)
                                           ENDIF
                                           !Loop over the number of components in the Lagrange multipler variable
                                           DO column_component_idx=1,COLUMN_VARIABLE%NUMBER_OF_COMPONENTS
-                                            IF(COLUMN_VARIABLE%COMPONENTS(column_component_idx)%INTERPOLATION_TYPE== &
+                                            IF(COLUMN_VARIABLE%COMPONENTS(column_component_idx)%interpolationType== &
                                               & FIELD_NODE_BASED_INTERPOLATION) THEN
                                               !Loop over the elements in the interface mesh
                                               COLUMN_DOMAIN_ELEMENTS=>COLUMN_VARIABLE%COMPONENTS(column_component_idx)%DOMAIN% &
                                                 & TOPOLOGY%ELEMENTS
-                                              DO interface_element_idx=1,COLUMN_DOMAIN_ELEMENTS%TOTAL_NUMBER_OF_ELEMENTS
+                                              DO interface_element_idx=1,COLUMN_DOMAIN_ELEMENTS%totalNumberOfElements
                                                 COLUMN_BASIS=>COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)%BASIS
                                                 !Loop over the column DOFs in the element
-                                                DO column_local_node_idx=1,COLUMN_BASIS%NUMBER_OF_NODES
+                                                DO column_local_node_idx=1,COLUMN_BASIS%numberOfNodes
                                                   column_node=COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)% &
-                                                    & ELEMENT_NODES(column_local_node_idx)
+                                                    & elementNodes(column_local_node_idx)
                                                   DO column_local_derivative_idx=1,COLUMN_BASIS% &
-                                                    & NUMBER_OF_DERIVATIVES(column_local_node_idx)
+                                                    & numberOfDerivatives(column_local_node_idx)
                                                     column_derivative=COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)% &
-                                                      & ELEMENT_DERIVATIVES(column_local_derivative_idx,column_local_node_idx)
+                                                      & elementDerivatives(column_local_derivative_idx,column_local_node_idx)
                                                     column_version=COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)% &
                                                       & elementVersions(column_local_derivative_idx,column_local_node_idx)
                                                     local_column=COLUMN_VARIABLE%COMPONENTS(column_component_idx)% &
                                                       & PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(column_node)% &
                                                       & DERIVATIVES(column_derivative)%VERSIONS(column_version)
-                                                    global_column=COLUMN_DOFS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_column)
+                                                    global_column=COLUMN_DOFS_DOMAIN_MAPPING%localToGlobalMap(local_column)
                                                     !Loop over the components in the dependent variable
                                                     DO row_component_idx=1,ROW_VARIABLE%NUMBER_OF_COMPONENTS
-                                                      SELECT CASE(ROW_VARIABLE%COMPONENTS(row_component_idx)%INTERPOLATION_TYPE)
+                                                      SELECT CASE(ROW_VARIABLE%COMPONENTS(row_component_idx)%interpolationType)
                                                       CASE(FIELD_CONSTANT_INTERPOLATION)
                                                         local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)%PARAM_TO_DOF_MAP% &
                                                           & CONSTANT_PARAM2DOF_MAP
                                                         CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                           & ERR,ERROR,*999)
                                                         IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                          global_row=ROW_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
+                                                          global_row=ROW_VARIABLE%DOMAIN_MAPPING%localToGlobalMap(local_row)
                                                           CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                             & global_row,ERR,ERROR,*999)
                                                         ENDIF
                                                       CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
                                                         domain_element=MESH_CONNECTIVITY% &
-                                                          & ELEMENT_CONNECTIVITY(interface_element_idx,INTERFACE_MESH_INDEX)% &
-                                                          & COUPLED_MESH_ELEMENT_NUMBER
+                                                          & elementConnectivity(interface_element_idx,INTERFACE_MESH_INDEX)% &
+                                                          & coupledMeshElementNumber
                                                         local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)%PARAM_TO_DOF_MAP% &
                                                           & ELEMENT_PARAM2DOF_MAP%ELEMENTS(domain_element)
                                                         CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                           & ERR,ERROR,*999)
                                                         IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                          global_row=ROW_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
+                                                          global_row=ROW_VARIABLE%DOMAIN_MAPPING%localToGlobalMap(local_row)
                                                           CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                             & global_row,ERR,ERROR,*999)
                                                         ENDIF
                                                       CASE(FIELD_NODE_BASED_INTERPOLATION)
                                                         ROW_DOMAIN_ELEMENTS=>ROW_VARIABLE%COMPONENTS(row_component_idx)%DOMAIN% &
                                                           & TOPOLOGY%ELEMENTS
-                                                        domain_element=MESH_CONNECTIVITY%ELEMENT_CONNECTIVITY( &
-                                                          & interface_element_idx,INTERFACE_MESH_INDEX)%COUPLED_MESH_ELEMENT_NUMBER
+                                                        domain_element=MESH_CONNECTIVITY%elementConnectivity( &
+                                                          & interface_element_idx,INTERFACE_MESH_INDEX)%coupledMeshElementNumber
                                                         ROW_BASIS=>ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)%BASIS
                                                         !Loop over the row DOFs in the domain mesh element
-                                                        DO row_local_node_idx=1,ROW_BASIS%NUMBER_OF_NODES
+                                                        DO row_local_node_idx=1,ROW_BASIS%numberOfNodes
                                                           row_node=ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)% &
-                                                            & ELEMENT_NODES(row_local_node_idx)
+                                                            & elementNodes(row_local_node_idx)
                                                           DO row_local_derivative_idx=1,ROW_BASIS% &
-                                                            & NUMBER_OF_DERIVATIVES(row_local_node_idx)
+                                                            & numberOfDerivatives(row_local_node_idx)
                                                             row_derivative=ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)% &
-                                                              & ELEMENT_DERIVATIVES(row_local_derivative_idx,row_local_node_idx)
+                                                              & elementDerivatives(row_local_derivative_idx,row_local_node_idx)
                                                             row_version=ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)% &
                                                               & elementVersions(row_local_derivative_idx,row_local_node_idx)
                                                             local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)% &
@@ -833,7 +833,7 @@ CONTAINS
                                                             CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                               & ERR,ERROR,*999)
                                                             IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                              global_row=ROW_VARIABLE%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(local_row)
+                                                              global_row=ROW_VARIABLE%DOMAIN_MAPPING%localToGlobalMap(local_row)
                                                               CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                                 & global_row,ERR,ERROR,*999)
                                                             ENDIF
@@ -846,7 +846,7 @@ CONTAINS
                                                       CASE DEFAULT
                                                         LOCAL_ERROR="The row variable interpolation type of "// &
                                                           & TRIM(NUMBER_TO_VSTRING(ROW_VARIABLE%COMPONENTS(row_component_idx)% &
-                                                          INTERPOLATION_TYPE,"*",ERR,ERROR))//" is invalid."
+                                                          interpolationType,"*",ERR,ERROR))//" is invalid."
                                                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                                       END SELECT
                                                     ENDDO !row_component_idx
@@ -858,7 +858,7 @@ CONTAINS
                                             ENDIF
                                           ENDDO !column_component_idx
                                           ROW_INDICES(1)=1
-                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
+                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
                                             CALL LIST_REMOVE_DUPLICATES(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
                                             CALL LIST_NUMBER_OF_ITEMS_GET(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
                                               & ERR,ERROR,*999)
@@ -868,7 +868,7 @@ CONTAINS
                                           IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                             TRANSPOSE_NUMBER_OF_NON_ZEROS=0
                                             TRANSPOSE_ROW_INDICES(1)=1
-                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
+                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
                                               CALL LIST_REMOVE_DUPLICATES(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & ERR,ERROR,*999)
                                               CALL LIST_NUMBER_OF_ITEMS_GET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
@@ -889,7 +889,7 @@ CONTAINS
                                           !Allocate and setup the column locations
                                           ALLOCATE(COLUMN_INDICES(NUMBER_OF_NON_ZEROS),STAT=ERR)
                                           IF(ERR/=0) CALL FlagError("Could not allocate column indices.",ERR,ERROR,*999)
-                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
+                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
                                             CALL LIST_DETACH_AND_DESTROY(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
                                               & COLUMNS,ERR,ERROR,*999)
                                             DO column_idx=1,NUMBER_OF_COLUMNS
@@ -902,7 +902,7 @@ CONTAINS
                                             ALLOCATE(TRANSPOSE_COLUMN_INDICES(NUMBER_OF_NON_ZEROS),STAT=ERR)
                                             IF(ERR/=0) &
                                               & CALL FlagError("Could not allocate transpose column indices.",ERR,ERROR,*999)
-                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
+                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
                                               CALL LIST_DETACH_AND_DESTROY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & NUMBER_OF_ROWS,TRANSPOSE_COLUMNS,ERR,ERROR,*999)
                                               DO row_idx=1,NUMBER_OF_ROWS
@@ -917,27 +917,27 @@ CONTAINS
                                             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Interface matrix number : ", &
                                               & MATRIX_NUMBER,ERR,ERROR,*999)
                                             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ", &
-                                              & ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL,ERR,ERROR,*999)
+                                              & ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal,ERR,ERROR,*999)
                                             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ", &
-                                              & COLUMN_DOFS_DOMAIN_MAPPING%NUMBER_OF_GLOBAL,ERR,ERROR,*999)
+                                              & COLUMN_DOFS_DOMAIN_MAPPING%numberOfGlobal,ERR,ERROR,*999)
                                             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ", &
                                               & NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
-                                            IF(ROW_DOFS_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL* &
-                                              & COLUMN_DOFS_DOMAIN_MAPPING%NUMBER_OF_GLOBAL/=0) THEN
+                                            IF(ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal* &
+                                              & COLUMN_DOFS_DOMAIN_MAPPING%numberOfGlobal/=0) THEN
                                               SPARSITY=REAL(NUMBER_OF_NON_ZEROS,DP)/REAL(ROW_DOFS_DOMAIN_MAPPING% &
-                                                & TOTAL_NUMBER_OF_LOCAL*COLUMN_DOFS_DOMAIN_MAPPING%NUMBER_OF_GLOBAL,DP)*100.0_DP
+                                                & totalNumberOfLocal*COLUMN_DOFS_DOMAIN_MAPPING%numberOfGlobal,DP)*100.0_DP
                                               CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (%) = ",SPARSITY, &
                                                 & "F6.2",ERR,ERROR,*999)
                                             ENDIF
                                             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,ROW_DOFS_DOMAIN_MAPPING% &
-                                              & TOTAL_NUMBER_OF_LOCAL+1,5,5,ROW_INDICES, &
+                                              & totalNumberOfLocal+1,5,5,ROW_INDICES, &
                                               & '("  Row indices              :",5(X,I13))','(28X,5(X,I13))',ERR,ERROR,*999)
                                             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_NON_ZEROS,8,8, &
                                               & COLUMN_INDICES,'("  Column indices           :",5(X,I13))','(28X,5(X,I13))', &
                                               & ERR,ERROR,*999)
                                             IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN 
                                               CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,COLUMN_DOFS_DOMAIN_MAPPING% &
-                                                & TOTAL_NUMBER_OF_LOCAL+1,5,5,TRANSPOSE_ROW_INDICES, &
+                                                & totalNumberOfLocal+1,5,5,TRANSPOSE_ROW_INDICES, &
                                                 & '("  Transpose row indices    :",5(X,I13))','(28X,5(X,I13))',ERR,ERROR,*999)
                                               CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_NON_ZEROS,8,8, &
                                                 & TRANSPOSE_COLUMN_INDICES,'("  Transpose column indices :",5(X,I13))', &
@@ -1047,7 +1047,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,matrix_idx,NUMBER_OF_NON_ZEROS
     INTEGER(INTG), POINTER :: ROW_INDICES(:),COLUMN_INDICES(:),TRANSPOSE_ROW_INDICES(:),TRANSPOSE_COLUMN_INDICES(:)
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP
+    TYPE(DomainMappingType), POINTER :: ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
     TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
     TYPE(INTERFACE_RHS_TYPE), POINTER :: RHS_VECTOR

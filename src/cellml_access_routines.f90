@@ -83,7 +83,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find.
-    TYPE(REGION_TYPE), POINTER :: region !<A pointer to the region to find the CellML user number.
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to find the CellML user number.
     TYPE(CELLML_TYPE), POINTER :: cellml !<On return a pointer to the CellML environment with the given user number. If no CellML environment with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -101,7 +101,7 @@ CONTAINS
     IF(ALLOCATED(region%CELLML_ENVIRONMENTS%environments)) THEN
       DO cellmlIdx=1,region%CELLML_ENVIRONMENTS%NUMBER_OF_ENVIRONMENTS
         IF(ASSOCIATED(region%CELLML_ENVIRONMENTS%environments(cellmlIdx)%ptr)) THEN
-          IF(region%CELLML_ENVIRONMENTS%environments(cellmlIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(region%CELLML_ENVIRONMENTS%environments(cellmlIdx)%ptr%userNumber==userNumber) THEN
             cellml=>region%CELLML_ENVIRONMENTS%environments(cellmlIdx)%ptr
             EXIT
           ENDIF

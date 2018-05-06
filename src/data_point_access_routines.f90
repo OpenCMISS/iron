@@ -79,7 +79,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the coordinate system for
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system for the data points. Must not be associated on entry.
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system for the data points. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -92,19 +92,19 @@ CONTAINS
     IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
 
     IF(ASSOCIATED(dataPoints%region)) THEN
-      IF(.NOT.dataPoints%region%REGION_FINISHED) CALL FlagError("Data points region has not been finished.",err,error,*999)
-      coordinateSystem=>dataPoints%region%COORDINATE_SYSTEM
+      IF(.NOT.dataPoints%region%regionFinished) CALL FlagError("Data points region has not been finished.",err,error,*999)
+      coordinateSystem=>dataPoints%region%coordinateSystem
       IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
         localError="The coordinate system for region number "// &
-          & TRIM(NumberToVString(dataPoints%region%USER_NUMBER,"*",err,error))//" is not associated."
+          & TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))//" is not associated."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
-      IF(.NOT.dataPoints%interface%INTERFACE_FINISHED) CALL FlagError("Data points interface has not been finished.",err,error,*999)
-      coordinateSystem=>dataPoints%interface%COORDINATE_SYSTEM
+      IF(.NOT.dataPoints%interface%interfaceFinished) CALL FlagError("Data points interface has not been finished.",err,error,*999)
+      coordinateSystem=>dataPoints%interface%coordinateSystem
       IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
         localError="The coordinate system for interface number "// &
-          & TRIM(NumberToVString(dataPoints%INTERFACE%USER_NUMBER,"*",err,error))//" is not associated."
+          & TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))//" is not associated."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE

@@ -119,7 +119,7 @@ CONTAINS
   SUBROUTINE Basis_BasisFunctionsGet(basis,basisFunctions,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the quadrature scheme for
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the quadrature scheme for
     TYPE(BasisFunctionsType), POINTER :: basisFunctions !<On return, the basis fucntions for the basis. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -130,12 +130,12 @@ CONTAINS
 
     IF(ASSOCIATED(basisFunctions)) CALL FlagError("Basis functions is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)    
-    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
     
     basisFunctions=>basis%basisFunctions
     IF(.NOT.ASSOCIATED(basisFunctions)) THEN
       localError="Basis functions is not associated for basis number "// &
-        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
       
@@ -155,7 +155,7 @@ CONTAINS
   SUBROUTINE Basis_ContextGet(basis,context,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the context for
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the context for
     TYPE(ContextType), POINTER :: context !<On exit, a pointer to the context for the basis. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -169,13 +169,13 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(basis%basisFunctions)) THEN
       localError="Basis functions is not associated for basis number "// &
-        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     context=>basis%basisFunctions%context
     IF(.NOT.ASSOCIATED(context)) THEN
       localError="The context is not associated for the basis functions for basis number "// &
-        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -199,7 +199,7 @@ CONTAINS
     TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to find the user number. 
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to find
     INTEGER(INTG), INTENT(IN) :: familyNumber !<The family number of the basis to find
-    TYPE(BASIS_TYPE), POINTER :: basis !<On exit, A pointer to the basis. If no basis with the specified user and family numbers can be found the pointer is not associated.
+    TYPE(BasisType), POINTER :: basis !<On exit, A pointer to the basis. If no basis with the specified user and family numbers can be found the pointer is not associated.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -215,7 +215,7 @@ CONTAINS
     IF(ALLOCATED(basisFunctions%bases)) THEN
       BasisLoop: DO basisIdx=1,basisFunctions%numberOfBasisFunctions
         IF(ASSOCIATED(basisFunctions%bases(basisIdx)%ptr)) THEN
-          IF(basisFunctions%bases(basisIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(basisFunctions%bases(basisIdx)%ptr%userNumber==userNumber) THEN
             IF(familyNumber==0) THEN
               basis=>basisFunctions%bases(basisIdx)%ptr
               EXIT BasisLoop
@@ -224,7 +224,7 @@ CONTAINS
               IF(ALLOCATED(basisFunctions%bases(basisIdx)%ptr%subBases)) THEN
                 SubBasisLoop: DO subBasisIdx=1,basisFunctions%bases(basisIdx)%ptr%numberOfSubBases
                   IF(ASSOCIATED(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr)) THEN
-                    IF(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr%FAMILY_NUMBER==familyNumber) THEN
+                    IF(basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr%familyNumber==familyNumber) THEN
                       basis=>basisFunctions%bases(basisIdx)%ptr%subBases(subBasisIdx)%ptr
                       EXIT BasisLoop
                     ENDIF
@@ -263,7 +263,7 @@ CONTAINS
     !Argument variables
     TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to get the user number for. 
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to find
-    TYPE(BASIS_TYPE), POINTER :: basis !<On exit, a pointer to the basis with the specified user number if it exists. Must not be associated on entry
+    TYPE(BasisType), POINTER :: basis !<On exit, a pointer to the basis with the specified user number if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -292,7 +292,7 @@ CONTAINS
   SUBROUTINE Basis_LocalFaceNumberGet(basis,normalXiDirection,localFaceNumber,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the local face number for
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the local face number for
     INTEGER(INTG), INTENT(IN) :: normalXiDirection !<The normal xi direction of the face.
     INTEGER(INTG), INTENT(OUT) :: localFaceNumber !<On exit, the local face number corresponding to the normal xi direction.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -303,21 +303,21 @@ CONTAINS
     ENTERS("Basis_LocalFaceNumberGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
-    IF(normalXiDirection < -basis%NUMBER_OF_XI_COORDINATES .OR. normalXiDirection > basis%NUMBER_OF_XI_COORDINATES) THEN
+    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
+    IF(normalXiDirection < -basis%numberOfXiCoordinates .OR. normalXiDirection > basis%numberOfXiCoordinates) THEN
       localError="The specified normal xi direction of "//TRIM(NumberToVString(normalXiDirection,"*",err,error))// &
         & " is invalid the normal xi direction must be >= "// &
-        & TRIM(NumberToVString(-basis%NUMBER_OF_XI_COORDINATES,"*",err,error))// &
-        & " and <= "//TRIM(NumberToVString(basis%NUMBER_OF_XI_COORDINATES,"*",err,error))//"."
+        & TRIM(NumberToVString(-basis%numberOfXiCoordinates,"*",err,error))// &
+        & " and <= "//TRIM(NumberToVString(basis%numberOfXiCoordinates,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
     localFaceNumber=basis%xiNormalLocalFace(normalXiDirection)
-    IF(localFaceNumber<1.OR.localFaceNumber>basis%NUMBER_OF_LOCAL_FACES) THEN
+    IF(localFaceNumber<1.OR.localFaceNumber>basis%numberOfLocalFaces) THEN
       localError="The local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))//" for xi normal direction "// &
         & TRIM(NumberToVString(normalXiDirection,"*",err,error))//" of basis number "// &
-        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid. The local face number should be >= 1 and <= "// &
-        & TRIM(NumberToVString(basis%NUMBER_OF_LOCAL_FACES,"*",err,error))//"."
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" is invalid. The local face number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
       
@@ -336,7 +336,7 @@ CONTAINS
   SUBROUTINE Basis_LocalLineNumberGet(basis,normalXiDirections,localLineNumber,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the local face number for
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the local face number for
     INTEGER(INTG), INTENT(IN) :: normalXiDirections(:) !<The normal xi directions of the line.
     INTEGER(INTG), INTENT(OUT) :: localLineNumber !<On exit, the local line number corresponding to the normal xi directions.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -347,34 +347,34 @@ CONTAINS
     ENTERS("Basis_LocalLineNumberGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
     IF(.NOT.SIZE(normalXiDirections,1)==2) THEN
       localError="The specified number of normal xi directions of "// &
         & TRIM(NumberToVString(SIZE(normalXiDirections,1),"*",err,error))//" is invalid. There should be 2 normal xi directions."
       CALL FlagError(localError,err,error,*999)
     END IF
-    IF(normalXiDirections(1) < -basis%NUMBER_OF_XI_COORDINATES .OR. normalXiDirections(1) > basis%NUMBER_OF_XI_COORDINATES) THEN
+    IF(normalXiDirections(1) < -basis%numberOfXiCoordinates .OR. normalXiDirections(1) > basis%numberOfXiCoordinates) THEN
       localError="The first specified normal xi direction of "//TRIM(NumberToVString(normalXiDirections(1),"*",err,error))// &
         & " is invalid the normal xi direction must be >= "// &
-        & TRIM(NumberToVString(-basis%NUMBER_OF_XI_COORDINATES,"*",err,error))// &
-        & " and <= "//TRIM(NumberToVString(basis%NUMBER_OF_XI_COORDINATES,"*",err,error))//"."
+        & TRIM(NumberToVString(-basis%numberOfXiCoordinates,"*",err,error))// &
+        & " and <= "//TRIM(NumberToVString(basis%numberOfXiCoordinates,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(normalXiDirections(2) < -basis%NUMBER_OF_XI_COORDINATES .OR. normalXiDirections(2) > basis%NUMBER_OF_XI_COORDINATES) THEN
+    IF(normalXiDirections(2) < -basis%numberOfXiCoordinates .OR. normalXiDirections(2) > basis%numberOfXiCoordinates) THEN
       localError="The second specified normal xi direction of "//TRIM(NumberToVString(normalXiDirections(2),"*",err,error))// &
         & " is invalid the normal xi direction must be >= "// &
-        & TRIM(NumberToVString(-basis%NUMBER_OF_XI_COORDINATES,"*",err,error))// &
-        & " and <= "//TRIM(NumberToVString(basis%NUMBER_OF_XI_COORDINATES,"*",err,error))//"."
+        & TRIM(NumberToVString(-basis%numberOfXiCoordinates,"*",err,error))// &
+        & " and <= "//TRIM(NumberToVString(basis%numberOfXiCoordinates,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
     localLineNumber=basis%xiNormalsLocalLine(normalXiDirections(1),normalXiDirections(2))
-    IF(localLineNumber<1.OR.localLineNumber>basis%NUMBER_OF_LOCAL_LINES) THEN
+    IF(localLineNumber<1.OR.localLineNumber>basis%numberOfLocalLines) THEN
       localError="The local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))//" for xi normal directions "// &
         & TRIM(NumberToVString(normalXiDirections(1),"*",err,error))//","// &
         & TRIM(NumberToVString(normalXiDirections(2),"*",err,error))//" of basis number "// &
-        & TRIM(NumberToVString(basis%USER_NUMBER,"*",err,error))//" is invalid. The local line number should be >= 1 and <= "// &
-        & TRIM(NumberToVString(basis%NUMBER_OF_LOCAL_LINES,"*",err,error))//"."
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//" is invalid. The local line number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
       
@@ -393,7 +393,7 @@ CONTAINS
   SUBROUTINE Basis_QuadratureSchemeGet(basis,quadratureSchemeIdx,quadratureScheme,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the quadrature scheme for
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the quadrature scheme for
     INTEGER(INTG), INTENT(IN) :: quadratureSchemeIdx !<The index of the quadrature scheme to get. \see Basis_QuadratureScheme,BasisRoutines,BasisAccessRoutines
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme !<On exit, the basis quadrature scheme corresponding to the quadrature index. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -405,7 +405,7 @@ CONTAINS
 
     IF(ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(.NOT.basis%BASIS_FINISHED) CALL FlagError("Basis has not been finished.",err,error,*999)
+    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
     IF(quadratureSchemeIdx<1.OR.quadratureSchemeIdx>BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES) THEN
       localError="The specified quadrature scheme index of "//TRIM(NumberToVString(quadratureSchemeIdx,"*",err,error))// &
         & " is invalid. The quadrature scheme index should be >= 1 and <= "// &
@@ -440,7 +440,7 @@ CONTAINS
     !Argument variables
     TYPE(BasisFunctionsType), POINTER :: basisFunctions !<The basis functions to find the user number for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the basis to find.
-    TYPE(BASIS_TYPE), POINTER :: basis !<On exit, a pointer to the found basis. If no basis with the given user number exists the pointer is NULL.
+    TYPE(BasisType), POINTER :: basis !<On exit, a pointer to the found basis. If no basis with the given user number exists the pointer is NULL.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -464,7 +464,7 @@ CONTAINS
   SUBROUTINE Basis_UserNumberGet(basis,userNumber,err,error,*)
 
     !Argument variables
-    TYPE(BASIS_TYPE), POINTER :: basis !<A pointer to the basis to get the user number for
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number of the basis.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -474,7 +474,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
 
-    userNumber=basis%USER_NUMBER
+    userNumber=basis%userNumber
   
     EXITS("Basis_UserNumberGet")
     RETURN

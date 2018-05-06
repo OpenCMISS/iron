@@ -159,8 +159,8 @@ CONTAINS
   SUBROUTINE Decomposition_CoordinateSystemGet(decomposition,coordinateSystem,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<The decomposition to get the coordinate system for.
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system of decomposition. Must not be associated on entry.
+    TYPE(DecompositionType), POINTER :: decomposition !<The decomposition to get the coordinate system for.
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem !<On exit, a pointer to the coordinate system of decomposition. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -172,9 +172,9 @@ CONTAINS
     IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*999)
 
     IF(ASSOCIATED(decomposition%region)) THEN
-      coordinateSystem=>decomposition%region%COORDINATE_SYSTEM
+      coordinateSystem=>decomposition%region%coordinateSystem
     ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
-      coordinateSystem=>decomposition%interface%COORDINATE_SYSTEM
+      coordinateSystem=>decomposition%interface%coordinateSystem
     ELSE
       CALL FlagError("Decomposition is not associated with a region or an interface.",err,error,*999)
     ENDIF
@@ -197,9 +197,9 @@ CONTAINS
   SUBROUTINE Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<The decomposition to get the domain for.
+    TYPE(DecompositionType), POINTER :: decomposition !<The decomposition to get the domain for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the domain to get. If mesh component number is 0 the mesh component used to construct the decomposition is used.
-    TYPE(DOMAIN_TYPE), POINTER :: domain !<On exit, a pointer to the domain of decomposition of the specified mesh component number. Must not be associated on entry.
+    TYPE(DomainType), POINTER :: domain !<On exit, a pointer to the domain of decomposition of the specified mesh component number. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -220,7 +220,7 @@ CONTAINS
 
     !Get the domain
     IF(meshComponentNumber==0) THEN
-      meshComponent=decomposition%MESH_COMPONENT_NUMBER
+      meshComponent=decomposition%meshComponentNumber
     ELSE
       meshComponent=meshComponentNumber
     ENDIF
@@ -248,8 +248,8 @@ CONTAINS
   SUBROUTINE Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<The decomposition to get the domain for.
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<On exit, a pointer to the decomposition topology. Must not be associated on entry.
+    TYPE(DecompositionType), POINTER :: decomposition !<The decomposition to get the domain for.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<On exit, a pointer to the decomposition topology. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -266,7 +266,7 @@ CONTAINS
     !Check decompositionTopology is associated.
     IF(.NOT.ASSOCIATED(decompositionTopology)) THEN
       localError="Decomposition topology is not associated for decomposition "// &
-        & TRIM(NumberToVString(decomposition%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -285,8 +285,8 @@ CONTAINS
   SUBROUTINE DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the elements for.
-     TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements !<On exit, a pointer to the decomposition topology elements. Must not be associated on entry.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the elements for.
+     TYPE(DecompositionElementsType), POINTER :: decompositionElements !<On exit, a pointer to the decomposition topology elements. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -318,7 +318,7 @@ CONTAINS
   SUBROUTINE DecompositionTopology_DataPointsGet(decompositionTopology,decompositionDataPoints,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the data points for.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the data points for.
     TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints !<On exit, a pointer to the decomposition topology data points. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -352,8 +352,8 @@ CONTAINS
   SUBROUTINE DecompositionTopology_FacesGet(decompositionTopology,decompositionFaces,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the faces for.
-    TYPE(DECOMPOSITION_FACES_TYPE), POINTER :: decompositionFaces !<On exit, a pointer to the decomposition topology faces. Must not be associated on entry.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the faces for.
+    TYPE(DecompositionFacesType), POINTER :: decompositionFaces !<On exit, a pointer to the decomposition topology faces. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -385,8 +385,8 @@ CONTAINS
   SUBROUTINE DecompositionTopology_LinesGet(decompositionTopology,decompositionLines,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the lines for.
-    TYPE(DECOMPOSITION_LINES_TYPE), POINTER :: decompositionLines !<On exit, a pointer to the decomposition topology lines. Must not be associated on entry.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the lines for.
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines !<On exit, a pointer to the decomposition topology lines. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -418,8 +418,8 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the decomposition to find
-    TYPE(MESH_TYPE), POINTER :: mesh !<A pointer to the mesh containing the decomposition to find
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<On return a pointer to the decomposition with the specified user number. If no decomposition with that user number exists then decomposition is returned NULL.
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh containing the decomposition to find
+    TYPE(DecompositionType), POINTER :: decomposition !<On return a pointer to the decomposition with the specified user number. If no decomposition with that user number exists then decomposition is returned NULL.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -432,7 +432,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(mesh%decompositions)) THEN
-      localError="The decompositions on mesh number "//TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))// &
+      localError="The decompositions on mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))// &
         & " are not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -440,9 +440,9 @@ CONTAINS
     !Get the decomposition from the user number
     NULLIFY(decomposition)
     IF(ALLOCATED(mesh%decompositions%decompositions)) THEN
-      DO decompositionIdx=1,mesh%decompositions%NUMBER_OF_DECOMPOSITIONS
+      DO decompositionIdx=1,mesh%decompositions%numberOfDecompositions
         IF(ASSOCIATED(mesh%decompositions%decompositions(decompositionIdx)%ptr)) THEN
-          IF(mesh%decompositions%decompositions(decompositionIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(mesh%decompositions%decompositions(decompositionIdx)%ptr%userNumber==userNumber) THEN
             decomposition=>mesh%decompositions%decompositions(decompositionIdx)%ptr
             EXIT
           ENDIF
@@ -469,7 +469,7 @@ CONTAINS
   SUBROUTINE Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*)
 
     !Argument variables
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<A pointer to the decomposition to get the work group for.
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition to get the work group for.
     TYPE(WorkGroupType), POINTER :: workGroup !<On exit, A pointer to the work group for the decomposition. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -499,9 +499,9 @@ CONTAINS
   SUBROUTINE DomainElements_BasisGet(domainElements,localElementNumber,basis,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements !<A pointer to the domain elements to get the element basis for
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to get the element basis for
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the basis for
-    TYPE(BASIS_TYPE), POINTER, INTENT(OUT) :: basis !<On return, a pointer to the basis for the element. Must not be associated on entry
+    TYPE(BasisType), POINTER, INTENT(OUT) :: basis !<On return, a pointer to the basis for the element. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -510,10 +510,10 @@ CONTAINS
     ENTERS("DomainElements_BasisGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain elements is not associated.",err,error,*999)
-    IF(localElementNumber<=0.OR.localElementNumber>domainElements%TOTAL_NUMBER_OF_ELEMENTS) THEN
+    IF(localElementNumber<=0.OR.localElementNumber>domainElements%totalNumberOfElements) THEN
       localError="The local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
         & " is invalid. The local number must be >= 1 and <= "// &
-        & TRIM(NumberToVString(domainElements%TOTAL_NUMBER_OF_ELEMENTS,"*",err,error))//"."
+        & TRIM(NumberToVString(domainElements%totalNumberOfElements,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)
@@ -541,9 +541,9 @@ CONTAINS
   SUBROUTINE DomainFaces_FaceGet(domainFaces,faceNumber,face,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_FACES_TYPE), POINTER :: domainFaces !<A pointer to the domain faces to get the face for
+    TYPE(DomainFacesType), POINTER :: domainFaces !<A pointer to the domain faces to get the face for
     INTEGER(INTG), INTENT(IN) :: faceNumber !<The face number to get
-    TYPE(DOMAIN_FACE_TYPE), POINTER, INTENT(OUT) :: face !<On return, a pointer to the specified face. Must not be associated on entry
+    TYPE(DomainFaceType), POINTER, INTENT(OUT) :: face !<On return, a pointer to the specified face. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -553,10 +553,10 @@ CONTAINS
 
     IF(ASSOCIATED(face)) CALL FlagError("Face is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)
-    IF(faceNumber<=0.OR.faceNumber>domainFaces%NUMBER_OF_FACES) THEN
+    IF(faceNumber<=0.OR.faceNumber>domainFaces%numberOfFaces) THEN
       localError="The face number of "//TRIM(NumberToVString(faceNumber,"*",err,error))// &
         & " is invalid. The face number must be >= 1 and <= "// &
-        & TRIM(NumberToVString(domainFaces%NUMBER_OF_FACES,"*",err,error))//"."
+        & TRIM(NumberToVString(domainFaces%numberOfFaces,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faces is not associated.",err,error,*999)
@@ -583,9 +583,9 @@ CONTAINS
   SUBROUTINE DomainLines_LineGet(domainLines,lineNumber,line,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_LINES_TYPE), POINTER :: domainLines !<A pointer to the domain lines to get the line for
+    TYPE(DomainLinesType), POINTER :: domainLines !<A pointer to the domain lines to get the line for
     INTEGER(INTG), INTENT(IN) :: lineNumber !<The line number to get
-    TYPE(DOMAIN_LINE_TYPE), POINTER, INTENT(OUT) :: line !<On return, a pointer to the specified line. Must not be associated on entry
+    TYPE(DomainLineType), POINTER, INTENT(OUT) :: line !<On return, a pointer to the specified line. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -595,10 +595,10 @@ CONTAINS
 
     IF(ASSOCIATED(line)) CALL FlagError("Line is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)
-    IF(lineNumber<=0.OR.lineNumber>domainLines%NUMBER_OF_LINES) THEN
+    IF(lineNumber<=0.OR.lineNumber>domainLines%numberOfLines) THEN
       localError="The line number of "//TRIM(NumberToVString(lineNumber,"*",err,error))// &
         & " is invalid. The line number must be >= 1 and <= "// &
-        & TRIM(NumberToVString(domainLines%NUMBER_OF_LINES,"*",err,error))//"."
+        & TRIM(NumberToVString(domainLines%numberOfLines,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not associated.",err,error,*999)
@@ -625,8 +625,8 @@ CONTAINS
   SUBROUTINE Domain_MappingsGet(domain,domainMappings,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_TYPE), POINTER :: domain !<The domain to get the mappings for.
-    TYPE(DOMAIN_MAPPINGS_TYPE), POINTER :: domainMappings !<On exit, a pointer to the domain mappings. Must not be associated on entry.
+    TYPE(DomainType), POINTER :: domain !<The domain to get the mappings for.
+    TYPE(DomainMappingsType), POINTER :: domainMappings !<On exit, a pointer to the domain mappings. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -664,8 +664,8 @@ CONTAINS
   SUBROUTINE Domain_TopologyGet(domain,domainTopology,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_TYPE), POINTER :: domain !<The domain to get the topologya for.
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology !<On exit, a pointer to the domain topology. Must not be associated on entry.
+    TYPE(DomainType), POINTER :: domain !<The domain to get the topologya for.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<On exit, a pointer to the domain topology. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -697,8 +697,8 @@ CONTAINS
   SUBROUTINE DomainMappings_ElementsGet(domainMappings,domainElements,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_MAPPINGS_TYPE), POINTER :: domainMappings !<A pointer to the domain mappings to get the elements for.
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainElements !<On exit, a pointer to the domain mapping elements. Must not be associated on entry.
+    TYPE(DomainMappingsType), POINTER :: domainMappings !<A pointer to the domain mappings to get the elements for.
+    TYPE(DomainMappingType), POINTER :: domainElements !<On exit, a pointer to the domain mapping elements. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -729,8 +729,8 @@ CONTAINS
   SUBROUTINE DomainMappings_NodesGet(domainMappings,domainNodes,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_MAPPINGS_TYPE), POINTER :: domainMappings !<A pointer to the domain mappings to get the nodes for.
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainNodes !<On exit, a pointer to the domain mapping nodes. Must not be associated on entry.
+    TYPE(DomainMappingsType), POINTER :: domainMappings !<A pointer to the domain mappings to get the nodes for.
+    TYPE(DomainMappingType), POINTER :: domainNodes !<On exit, a pointer to the domain mapping nodes. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -761,8 +761,8 @@ CONTAINS
   SUBROUTINE DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology !<A pointer to the domain topology to get the elements for.
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements !<On exit, a pointer to the domain topology elements. Must not be associated on entry.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the elements for.
+    TYPE(DomainElementsType), POINTER :: domainElements !<On exit, a pointer to the domain topology elements. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -793,8 +793,8 @@ CONTAINS
   SUBROUTINE DomainTopology_LinesGet(domainTopology,domainLines,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology !<A pointer to the domain topology to get the lines for.
-    TYPE(DOMAIN_LINES_TYPE), POINTER :: domainLines !<On exit, a pointer to the domain topology lines. Must not be associated on entry.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the lines for.
+    TYPE(DomainLinesType), POINTER :: domainLines !<On exit, a pointer to the domain topology lines. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -825,8 +825,8 @@ CONTAINS
   SUBROUTINE DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology !<A pointer to the domain topology to get the nodes for.
-    TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes !<On exit, a pointer to the domain topology nodes. Must not be associated on entry.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the nodes for.
+    TYPE(DomainNodesType), POINTER :: domainNodes !<On exit, a pointer to the domain topology nodes. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -858,9 +858,9 @@ CONTAINS
   SUBROUTINE DomainTopology_LocalElementBasisGet(domainTopology,localElementNumber,basis,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology !<A pointer to the domain topology to get the element basis for
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the element basis for
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The element local number to get the basis for
-    TYPE(BASIS_TYPE), POINTER, INTENT(OUT) :: basis !<On return, a pointer to the basis for the element.
+    TYPE(BasisType), POINTER, INTENT(OUT) :: basis !<On return, a pointer to the basis for the element.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -869,10 +869,10 @@ CONTAINS
     ENTERS("DomainTopology_LocalElementBasisGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
-    IF(localElementNumber<=0.OR.localElementNumber>domainTopology%elements%TOTAL_NUMBER_OF_ELEMENTS) THEN
+    IF(localElementNumber<=0.OR.localElementNumber>domainTopology%elements%totalNumberOfElements) THEN
       localError="The local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
         & " is invalid. The local number must be >= 1 and <= "// &
-        & TRIM(NumberToVString(domainTopology%elements%TOTAL_NUMBER_OF_ELEMENTS,"*",err,error))//"."
+        & TRIM(NumberToVString(domainTopology%elements%totalNumberOfElements,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)
@@ -902,8 +902,8 @@ CONTAINS
   SUBROUTINE DomainTopology_FacesGet(domainTopology,domainFaces,err,error,*)
 
     !Argument variables
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology !<A pointer to the domain topology to get the faces for.
-    TYPE(DOMAIN_FACES_TYPE), POINTER :: domainFaces !<On exit, a pointer to the domain topology faces. Must not be associated on entry.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the faces for.
+    TYPE(DomainFacesType), POINTER :: domainFaces !<On exit, a pointer to the domain topology faces. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -934,9 +934,9 @@ CONTAINS
   SUBROUTINE Mesh_DecompositionGet(mesh,userNumber,decomposition,err,error,*)
 
     !Argument variables
-    TYPE(MESH_TYPE), POINTER :: mesh !<A pointer to the mesh to get the decomposition for
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the decomposition for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the decomposition to get.
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition !<On exit, a pointer to the decomposition for the mesh. Must not be associated on entry.
+    TYPE(DecompositionType), POINTER :: decomposition !<On exit, a pointer to the decomposition for the mesh. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -945,14 +945,14 @@ CONTAINS
     ENTERS("Mesh_DecompositionGet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*998)
-    IF(.NOT.mesh%MESH_FINISHED) CALL FlagError("Mesh has not been finished.",err,error,*998)
+    IF(.NOT.mesh%meshFinished) CALL FlagError("Mesh has not been finished.",err,error,*998)
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
     
     NULLIFY(decomposition)
     CALL Decomposition_UserNumberFind(userNumber,mesh,decomposition,err,error,*999)
     IF(.NOT.ASSOCIATED(decomposition)) THEN
       localError="A decomposition with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on mesh number "//TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//"."
+        & " do not exist on mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -972,7 +972,7 @@ CONTAINS
   SUBROUTINE Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*)
 
     !Argument variables
-    TYPE(MESH_TYPE), POINTER :: mesh !<A pointer to the mesh to get the elements for
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the elements for
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the elements for
     TYPE(MeshElementsType), POINTER :: meshElements !<On return, a pointer to the mesh elements
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -986,14 +986,14 @@ CONTAINS
     IF(ASSOCIATED(meshElements)) CALL FlagError("Elements is already associated.",err,error,*998)
     IF(meshComponentNumber<=0.OR.meshComponentNumber>mesh%NUMBER_OF_COMPONENTS) THEN
       localError="The specified mesh component number of "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
-        & " is invalid for mesh number "//TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))// &
+        & " is invalid for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))// &
         & ". The component number must be between 1 and "//TRIM(NumberToVString(mesh%NUMBER_OF_COMPONENTS,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ASSOCIATED(mesh%topology(meshComponentNumber)%ptr)) THEN
       localError="The mesh topology is not associated for mesh component number "// &
         & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of mesh number "// &
-        & TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -1001,7 +1001,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(meshElements)) THEN
       localError="The mesh topology elements is not associated for mesh component number "// &
         & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of mesh number "// &
-        & TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
@@ -1021,7 +1021,7 @@ CONTAINS
   SUBROUTINE Mesh_MeshNodesGet(mesh,meshComponentNumber,meshNodes,err,error,*)
 
     !Argument variables
-    TYPE(MESH_TYPE), POINTER :: mesh !<A pointer to the mesh to get the nodes for
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the nodes for
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the nodes for
     TYPE(MeshNodesType), POINTER :: meshNodes !<On return, a pointer to the mesh nodes. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -1035,14 +1035,14 @@ CONTAINS
     IF(ASSOCIATED(meshNodes)) CALL FlagError("Nodes is already associated.",err,error,*998)    
     IF(meshComponentNumber<=0.OR.meshComponentNumber>mesh%NUMBER_OF_COMPONENTS) THEN
       localError="The specified mesh component number of "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
-        & " is invalid for mesh number "//TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))// &
+        & " is invalid for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))// &
         & ". The component number must be between 1 and "//TRIM(NumberToVString(mesh%NUMBER_OF_COMPONENTS,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ASSOCIATED(mesh%topology(meshComponentNumber)%ptr)) THEN
       localError="The mesh topology is not associated for mesh component number "// &
         & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of mesh number "// &
-        & TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
@@ -1050,7 +1050,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(meshNodes)) THEN
       localError="The mesh topology nodes is not associated for mesh component number "// &
         & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of mesh number "// &
-        & TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//"."
+        & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
@@ -1070,13 +1070,13 @@ CONTAINS
   SUBROUTINE Mesh_RegionGet(mesh,region,err,error,*)
 
     !Argument variables
-    TYPE(MESH_TYPE), POINTER :: mesh !<A pointer to the mesh to get the region for
-    TYPE(REGION_TYPE), POINTER :: region !<On return, the meshes region. Must not be associated on entry.
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the region for
+    TYPE(RegionType), POINTER :: region !<On return, the meshes region. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(INTERFACE_TYPE), POINTER :: interface
-    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(RegionType), POINTER :: parentRegion
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Mesh_RegionGet",err,error,*999)
@@ -1091,18 +1091,18 @@ CONTAINS
     IF(.NOT.ASSOCIATED(region)) THEN
       interface=>mesh%interface
       IF(ASSOCIATED(interface)) THEN
-        parentRegion=>interface%PARENT_REGION
+        parentRegion=>interface%parentRegion
         IF(ASSOCIATED(parentRegion)) THEN
           region=>parentRegion
         ELSE
           localError="The parent region is not associated for mesh number "// &
-            & TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//" of interface number "// &
-            & TRIM(NumberToVString(interface%USER_NUMBER,"*",err,error))//"."
+            & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//" of interface number "// &
+            & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
         localError="The region or interface is not associated for mesh number "// &
-          & TRIM(NumberToVString(mesh%USER_NUMBER,"*",err,error))//"."
+          & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ENDIF
@@ -1123,8 +1123,8 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the mesh to find
-    TYPE(MESHES_TYPE), POINTER :: meshes !<The list of meshes containing the mesh.
-    TYPE(MESH_TYPE), POINTER :: mesh !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
+    TYPE(MeshesType), POINTER :: meshes !<The list of meshes containing the mesh.
+    TYPE(MeshType), POINTER :: mesh !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1140,9 +1140,9 @@ CONTAINS
     !Get the mesh from the user number
     NULLIFY(mesh)
     IF(ASSOCIATED(meshes%meshes)) THEN
-      DO meshIdx=1,meshes%NUMBER_OF_MESHES
+      DO meshIdx=1,meshes%numberOfMeshes
         IF(ASSOCIATED(meshes%meshes(meshIdx)%ptr)) THEN
-          IF(meshes%meshes(meshIdx)%ptr%USER_NUMBER==userNumber) THEN
+          IF(meshes%meshes(meshIdx)%ptr%userNumber==userNumber) THEN
             mesh=>meshes%meshes(meshIdx)%ptr
             EXIT
           ENDIF
@@ -1170,8 +1170,8 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the mesh to find
-    TYPE(INTERFACE_TYPE), POINTER :: interface !<A pointer to the interface containing the mesh
-    TYPE(MESH_TYPE), POINTER :: mesh !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containing the mesh
+    TYPE(MeshType), POINTER :: mesh !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1199,8 +1199,8 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the mesh to find
-    TYPE(REGION_TYPE), POINTER :: REGION !<The region containing the mesh
-    TYPE(MESH_TYPE), POINTER :: MESH !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
+    TYPE(RegionType), POINTER :: REGION !<The region containing the mesh
+    TYPE(MeshType), POINTER :: MESH !<On return, a pointer to the mesh of the specified user number. In no mesh with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -1227,7 +1227,7 @@ CONTAINS
   SUBROUTINE Mesh_UserNumberGet(mesh,userNumber,err,error,*)
 
     !Argument variables
-    TYPE(MESH_TYPE), POINTER :: mesh !<A pointer to the mesh to get the user number for
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<On exit, the user number of the mesh.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1237,7 +1237,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
 
-    userNumber=mesh%USER_NUMBER
+    userNumber=mesh%userNumber
   
     EXITS("Mesh_UserNumberGet")
     RETURN

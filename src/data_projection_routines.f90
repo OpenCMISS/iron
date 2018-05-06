@@ -387,7 +387,7 @@ CONTAINS
       elementNumber=candidateElements(closestElementIdx)
       elementFaceNumber=candidateElementFaces(closestElementIdx)
       faceNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements%elements( &
-        & elementNumber)%ELEMENT_FACES(elementFaceNumber)
+        & elementNumber)%elementFaces(elementFaceNumber)
       CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
         & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
@@ -415,7 +415,7 @@ CONTAINS
       elementNumber=candidateElements(closestElementIdx)
       elementFaceNumber=candidateElementFaces(closestElementIdx)
       faceNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements%elements( &
-        & elementNumber)%ELEMENT_FACES(elementFaceNumber)          
+        & elementNumber)%elementFaces(elementFaceNumber)          
       CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
         & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
@@ -490,7 +490,7 @@ CONTAINS
       elementNumber=candidateElements(closestElementIdx)
       elementLineNumber=candidateElementLines(closestElementIdx)
       lineNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements%elements( &
-        & elementNumber)%ELEMENT_LINES(elementLineNumber)
+        & elementNumber)%elementLines(elementLineNumber)
       CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolatedPoint% &
         & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
@@ -518,7 +518,7 @@ CONTAINS
       elementNumber=candidateElements(closestElementIdx)
       elementLineNumber=candidateElementLines(closestElementIdx)
       lineNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements%elements( &
-        & elementNumber)%ELEMENT_LINES(elementLineNumber)          
+        & elementNumber)%elementLines(elementLineNumber)          
       CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolatedPoint% &
         & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
@@ -566,7 +566,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("DataProjection_CreateFinish",err,error,*999)
@@ -584,12 +584,12 @@ CONTAINS
     SELECT CASE(dataProjection%projectionType)
     CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
       !Check we have lines calculated
-      IF(.NOT.decomposition%CALCULATE_LINES) &
+      IF(.NOT.decomposition%calculateLines) &
         & CALL FlagError("Need to set the decomposition calculate lines to true for a boundary lines projection type.", &
         & err,error,*999)
     CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
       !Check we have faces calculated
-      IF(.NOT.decomposition%CALCULATE_FACES) &
+      IF(.NOT.decomposition%calculateFaces) &
         & CALL FlagError("Need to set the decomposition calculate faces to true for a boundary faces projection type.", &
         & err,error,*999)
     CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
@@ -628,9 +628,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dataProjectionIdx,dummyErr,insertStatus,numberOfCoordinates
-    TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: dataPointsCoordinateSystem,fieldCoordinateSystem
+    TYPE(CoordinateSystemType), POINTER :: dataPointsCoordinateSystem,fieldCoordinateSystem
     TYPE(DataProjectionPtrType), ALLOCATABLE :: newDataProjections(:)
-    TYPE(DECOMPOSITION_TYPE), POINTER :: fieldDecomposition
+    TYPE(DecompositionType), POINTER :: fieldDecomposition
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: projectionFieldVariable
     TYPE(VARYING_STRING) :: dummyError,localError
     
@@ -1334,24 +1334,24 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
     TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
     TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
-    TYPE(DECOMPOSITION_FACES_TYPE), POINTER :: decompositionFaces
-    TYPE(DECOMPOSITION_LINES_TYPE), POINTER :: decompositionLines
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology    
-    TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
-    TYPE(DOMAIN_FACES_TYPE), POINTER :: domainFaces
-    TYPE(DOMAIN_LINES_TYPE), POINTER :: domainLines
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMappingElements
-    TYPE(DOMAIN_MAPPINGS_TYPE), POINTER :: domainMappings
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionFacesType), POINTER :: decompositionFaces
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology    
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainFacesType), POINTER :: domainFaces
+    TYPE(DomainLinesType), POINTER :: domainLines
+    TYPE(DomainMappingType), POINTER :: domainMappingElements
+    TYPE(DomainMappingsType), POINTER :: domainMappings
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     INTEGER(INTG) :: myComputationalNode,numberOfGroupComputationNodes !<computational node/rank of the current process    
     INTEGER(INTG) :: numberOfDataPoints
     INTEGER(INTG) :: numberOfElements,numberOfFaces,numberOfLines,numberOfCandidates,dataNumberOfCandidates
@@ -1423,9 +1423,9 @@ CONTAINS
     !asked the elements/faces/lines are required to perform projection of points in the current computation
     !node the are all pre-allocated to the maximum array length (i.e., numberOfElements), but only up to the
     !numberOfCandidates'th index are assigned
-    numberOfElements=domainElements%NUMBER_OF_ELEMENTS
-    numberOfFaces=domainFaces%NUMBER_OF_FACES
-    numberOfLines=domainLines%NUMBER_OF_LINES        
+    numberOfElements=domainElements%numberOfElements
+    numberOfFaces=domainFaces%numberOfFaces
+    numberOfLines=domainLines%numberOfLines        
     numberOfCandidates=0
     IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers).AND. &
       & ALLOCATED(dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers)) THEN
@@ -1516,11 +1516,11 @@ CONTAINS
         IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
         ALLOCATE(candidateLinesFaces(numberOfLines),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate candidate lines faces.",err,error,*999)
-        DO elementIdx=1,domainMappingElements%NUMBER_OF_LOCAL
-          IF(decompositionElements%elements(elementIdx)%BOUNDARY_ELEMENT) THEN
-            DO lineFaceIdx=1,SIZE(decompositionElements%elements(elementIdx)%ELEMENT_LINES,1)
-              lineFaceNumber=decompositionElements%elements(elementIdx)%ELEMENT_LINES(lineFaceIdx)
-              IF(decompositionLines%lines(lineFaceNumber)%BOUNDARY_LINE) THEN
+        DO elementIdx=1,domainMappingElements%numberOfLocal
+          IF(decompositionElements%elements(elementIdx)%boundaryElement) THEN
+            DO lineFaceIdx=1,SIZE(decompositionElements%elements(elementIdx)%elementLines,1)
+              lineFaceNumber=decompositionElements%elements(elementIdx)%elementLines(lineFaceIdx)
+              IF(decompositionLines%lines(lineFaceNumber)%boundaryLine) THEN
                 numberOfCandidates=numberOfCandidates+1
                 candidateLinesFaces(numberOfCandidates)=lineFaceIdx
                 candidateElements(numberOfCandidates)=elementIdx
@@ -1537,11 +1537,11 @@ CONTAINS
           IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
           ALLOCATE(candidateLinesFaces(numberOfFaces),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate candidate lines faces.",err,error,*999)
-          DO elementIdx=1,domainMappingElements%NUMBER_OF_LOCAL
-            IF(decompositionElements%elements(elementIdx)%BOUNDARY_ELEMENT) THEN
-              DO lineFaceIdx=1,SIZE(decompositionElements%elements(elementIdx)%ELEMENT_FACES,1)
-                lineFaceNumber=decompositionElements%elements(elementIdx)%ELEMENT_FACES(lineFaceIdx)
-                IF(decompositionFaces%faces(lineFaceNumber)%BOUNDARY_FACE) THEN
+          DO elementIdx=1,domainMappingElements%numberOfLocal
+            IF(decompositionElements%elements(elementIdx)%boundaryElement) THEN
+              DO lineFaceIdx=1,SIZE(decompositionElements%elements(elementIdx)%elementFaces,1)
+                lineFaceNumber=decompositionElements%elements(elementIdx)%elementFaces(lineFaceIdx)
+                IF(decompositionFaces%faces(lineFaceNumber)%boundaryFace) THEN
                   numberOfCandidates=numberOfCandidates+1
                   candidateLinesFaces(numberOfCandidates)=lineFaceIdx
                   candidateElements(numberOfCandidates)=elementIdx
@@ -1557,7 +1557,7 @@ CONTAINS
         IF(dataProjection%numberOfXi==decomposition%numberOfDimensions) THEN
           ALLOCATE(candidateElements(numberOfElements),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
-          DO elementIdx=1,domainMappingElements%NUMBER_OF_LOCAL
+          DO elementIdx=1,domainMappingElements%numberOfLocal
             numberOfCandidates=numberOfCandidates+1
             candidateElements(numberOfCandidates)=elementIdx
           ENDDO !elementIdx
@@ -1743,7 +1743,7 @@ CONTAINS
               & projectedLineFace(dataPointIdx),projectedDistance(1,dataPointIdx),projectedXi(:,dataPointIdx), &
               & projectionVectors(:,dataPointIdx),err,error,*999)
             !Map the element number to global number
-            projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+            projectedElement(dataPointIdx)=domainMappingElements%localToGlobalMap(projectedElement(dataPointIdx))
           ENDIF
         ENDDO !dataPointIdx
       CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
@@ -1758,7 +1758,7 @@ CONTAINS
               & projectedLineFace(dataPointIdx),projectedDistance(1,dataPointIdx),projectedXi(:,dataPointIdx), &
               & projectionVectors(:,dataPointIdx),err,error,*999)
             !Map the element number to global number
-            projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+            projectedElement(dataPointIdx)=domainMappingElements%localToGlobalMap(projectedElement(dataPointIdx))
           ENDIF
         ENDDO !dataPointIdx
       CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
@@ -1774,7 +1774,7 @@ CONTAINS
                 & projectedElement(dataPointIdx),projectedDistance(1,dataPointIdx), &
                 & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx),err,error,*999)
               !Map the element number to global number
-              projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+              projectedElement(dataPointIdx)=domainMappingElements%localToGlobalMap(projectedElement(dataPointIdx))
             ENDIF
           ENDDO !dataPointIdx
         CASE(2) !2D element
@@ -1788,7 +1788,7 @@ CONTAINS
                 & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx), &
                 & err,error,*999)
               !Map the element number to global number                        
-              projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+              projectedElement(dataPointIdx)=domainMappingElements%localToGlobalMap(projectedElement(dataPointIdx))
             ENDIF
           ENDDO !dataPointIdx
         CASE(3) !3D element
@@ -1801,7 +1801,7 @@ CONTAINS
                 & projectedElement(dataPointIdx),projectedDistance(1,dataPointIdx), &
                 & projectedXi(:,dataPointIdx),projectionVectors(:,dataPointIdx),err,error,*999)
               !Map the element number to global number
-              projectedElement(dataPointIdx)=domainMappingElements%LOCAL_TO_GLOBAL_MAP(projectedElement(dataPointIdx))
+              projectedElement(dataPointIdx)=domainMappingElements%localToGlobalMap(projectedElement(dataPointIdx))
             ENDIF
           ENDDO !dataPointIdx
         CASE DEFAULT
@@ -2397,7 +2397,7 @@ CONTAINS
     REAL(DP) :: temp1,temp2,determinant,minEigen,maxEigen,eigenShift
     REAL(DP) :: maximumDelta,minimumDelta,delta !<trust region size
     REAL(DP) :: predictedReduction,predictionAccuracy
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping    
+    TYPE(DomainMappingType), POINTER :: domainMapping    
     
     INTEGER(INTG) :: elementIdx,xiIdx,fixedXiIdx,iterationIdx1,iterationIdx2
     
@@ -2407,7 +2407,7 @@ CONTAINS
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
-    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%MESH_COMPONENT_NUMBER
+    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%meshComponentNumber
     domainMapping=>interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%domain(meshComponentNumber)%ptr% &
       & mappings%elements
     numberOfCoordinates=dataProjection%numberOfCoordinates
@@ -2617,7 +2617,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
    
     !Local Variables
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     LOGICAL :: free,converged,insideRegion
     INTEGER(INTG) :: elementNumber
     INTEGER(INTG) :: meshComponentNumber,numberOfCoordinates
@@ -2639,7 +2639,7 @@ CONTAINS
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
-    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%MESH_COMPONENT_NUMBER
+    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%meshComponentNumber
     domainMapping=>interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%domain(meshComponentNumber)%ptr% &
       & mappings%elements
     numberOfCoordinates=dataProjection%numberOfCoordinates
@@ -2980,7 +2980,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string   
     !Local Variables
-    TYPE(DOMAIN_MAPPING_TYPE), POINTER :: domainMapping
+    TYPE(DomainMappingType), POINTER :: domainMapping
     LOGICAL :: free,converged,insideRegion
     INTEGER(INTG) :: elementNumber,elementFaceNumber,faceNumber
     INTEGER(INTG) :: meshComponentNumber,numberOfCoordinates
@@ -3001,7 +3001,7 @@ CONTAINS
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
-    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%FIELD%decomposition%MESH_COMPONENT_NUMBER
+    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%FIELD%decomposition%meshComponentNumber
     domainMapping=>interpolatedPoint%INTERPOLATION_PARAMETERS%FIELD%decomposition%domain(meshComponentNumber)% &
       & PTR%MAPPINGS%ELEMENTS
     numberOfCoordinates=dataProjection%numberOfCoordinates
@@ -3015,7 +3015,7 @@ CONTAINS
       IF(elementNumber>0) THEN
         elementFaceNumber=candidateElementFaces(elementIdx)
         faceNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements% &
-          & elements(elementNumber)%ELEMENT_FACES(elementFaceNumber)     
+          & elements(elementNumber)%elementFaces(elementFaceNumber)     
         exitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
         converged=.FALSE.
         !start at half the maximumDelta as we do not know if quadratic model is a good approximation yet
@@ -3255,7 +3255,7 @@ CONTAINS
       IF(elementNumber>0) THEN
         elementLineNumber=candidateElementLines(elementIdx)
         lineNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements% &
-          & elements(elementNumber)%ELEMENT_LINES(elementLineNumber)
+          & elements(elementNumber)%elementLines(elementLineNumber)
         exitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
         converged=.FALSE.
         !start at half the maximumDelta as we do not know if quadratic model is a good approximation yet
@@ -3703,8 +3703,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: elementIdx,elementLocalNumber,numberOfCandidates
     LOGICAL :: elementExists,ghostElement
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ProjectionCandidateElementsSet",err,error,*998)
@@ -3777,8 +3777,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dataPointGlobalNumber,dataPointIdx,elementIdx,elementLocalNumber,numberOfCandidates
     LOGICAL :: elementExists,ghostElement
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ProjectionDataCandidateElementsSet",err,error,*999)
@@ -3855,12 +3855,12 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: elementIdx,elementLocalNumber,localFaceNumber,numberOfCandidates
     LOGICAL :: elementExists,ghostElement
-    TYPE(BASIS_TYPE), POINTER :: basis
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
-    TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(BasisType), POINTER :: basis
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ProjectionCandidateFacesSet",err,error,*998)
@@ -3957,12 +3957,12 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dataPointGlobalNumber,dataPointIdx,elementIdx,elementLocalNumber,localFaceNumber,numberOfCandidates
     LOGICAL :: elementExists,ghostElement
-    TYPE(BASIS_TYPE), POINTER :: basis
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
-    TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(BasisType), POINTER :: basis
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ProjectionDataCandidateFacesSet",err,error,*999)
@@ -4062,12 +4062,12 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: elementIdx,elementLocalNumber,localLineNumber,numberOfCandidates
     LOGICAL :: elementExists,ghostElement
-    TYPE(BASIS_TYPE), POINTER :: basis
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
-    TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(BasisType), POINTER :: basis
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ProjectionCandidateLinesSet",err,error,*998)
@@ -4169,12 +4169,12 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dataPointGlobalNumber,dataPointIdx,elementIdx,elementLocalNumber,localLineNumber,numberOfCandidates
     LOGICAL :: elementExists,ghostElement
-    TYPE(BASIS_TYPE), POINTER :: basis
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
-    TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(BasisType), POINTER :: basis
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ProjectionDataCandidateLinesSet",err,error,*999)
@@ -4495,7 +4495,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dataPointGlobalNumber,localElementNumber
     LOGICAL :: elementExists,ghostElement
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DecompositionType), POINTER :: decomposition
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ElementSet",err,error,*999)
@@ -4692,14 +4692,14 @@ CONTAINS
       & localLineFaceNumber,myGroupComputationNodeNumber,normalIdx1,normalIdx2,numberOfGroupComputationNodes,outputID
     REAL(DP) :: distance
     CHARACTER(LEN=MAXSTRLEN) :: analFilename,format1,format2,localString
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
-    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
-    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
-    TYPE(DOMAIN_TYPE), POINTER :: domain
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
-    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FIELD_TYPE), POINTER :: projectionField
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
@@ -4751,7 +4751,7 @@ CONTAINS
     CALL WriteStringValue(outputID,"  Data projection label = ",dataProjection%label,err,error,*999)
     CALL WriteStringValue(outputID,"  Data points number = ",dataPoints%userNumber,err,error,*999)
     CALL WriteStringValue(outputID,"  Data projection type = ",dataProjection%projectionType,err,error,*999)
-    CALL WriteStringValue(outputID,"  Projection field number = ",dataProjection%projectionField%USER_NUMBER,err,error,*999)
+    CALL WriteStringValue(outputID,"  Projection field number = ",dataProjection%projectionField%userNumber,err,error,*999)
     CALL WriteString(outputID,"",err,error,*999)
     CALL WriteStringValue(outputID,"  Number of data points = ",dataPoints%numberOfDataPoints,err,error,*999)
     CALL WriteString(outputID,"",err,error,*999)
@@ -4777,7 +4777,7 @@ CONTAINS
           CALL WriteString(outputID,localString,err,error,*999)
         ELSE
           localElementNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementNumber
-          elementUserNumber=decompositionElements%elements(localElementNumber)%USER_NUMBER
+          elementUserNumber=decompositionElements%elements(localElementNumber)%userNumber
           localLineFaceNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementLineFaceNumber
           distance=dataProjection%dataProjectionResults(dataPointIdx)%distance
           basis=>domainElements%elements(localElementNumber)%basis
