@@ -39,7 +39,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example FluidMechanics/Darcy/Analytic/src/AnalyticExample.f90
+!> \example FluidMechanics/Darcy/Analytic/src/AnalyticExample.F90
 !! Example program to solve an analytic Darcy equation using OpenCMISS calls.
 !!
 !! \htmlinclude FluidMechanics/Darcy/Analytic/history.html

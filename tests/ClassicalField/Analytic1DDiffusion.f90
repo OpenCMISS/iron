@@ -39,7 +39,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example ClassicalField/Diffusion/Analytic1DDiffusion/src/Analytic1DDiffusionExample.f90
+!> \example ClassicalField/Diffusion/Analytic1DDiffusion/src/Analytic1DDiffusionExample.F90
 !! Example program to solve a 1D diffusion equation using OpenCMISS calls.
 !!
 !! \htmlinclude ClassicalField/Diffusion/Analytic1DDiffusion/history.html

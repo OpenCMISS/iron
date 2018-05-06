@@ -34,8 +34,8 @@ def Read(opencmiss, f, startstring_ind, endstring_ind, startleng, endfunc):
 					f.write(joinstring + '\n')
 
 def main() :
-	opencmiss_f = open('../src/opencmiss.f90', 'r')
-	opencmiss_c = open('../src/opencmiss_c.f90', 'r')
+	opencmiss_f = open('../src/opencmiss.F90', 'r')
+	opencmiss_c = open('../src/opencmiss_c.F90', 'r')
 	opencmiss_h = open('../src/opencmiss.h', 'r')
 	f_functions = open('opencmiss_f_functions', 'w+')
 	c_functions = open('opencmiss_c_functions', 'w+')

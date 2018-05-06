@@ -109,7 +109,7 @@ IsEndBinaryFile      Returns whether or not at eof of a binary file
 #endif
 
 /* Item Type defines */
-/*   These should be the same as those in constants.f90 */
+/*   These should be the same as those in constants.F90 */
 #define INTEGERTYPE           1
 #define SHORTINTTYPE          2
 #define LONGINTTYPE           3
@@ -123,7 +123,7 @@ IsEndBinaryFile      Returns whether or not at eof of a binary file
 #define QUADRUPLECOMPLEXTYPE 11
 
 /* Binary file defines */
-/*   These should be the same as those in binary_file.f90 */
+/*   These should be the same as those in binary_file.F90 */
 #define MAXBINFILES 99
 #define SAMEENDIAN 0
 #define FLIPENDIAN 1

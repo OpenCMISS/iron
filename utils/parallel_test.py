@@ -42,7 +42,7 @@ class CmProfile():
         #copy the source file and save settings to keep a record of the test configuration
         settingsdir=self.outputdir+os.sep+'test_settings'
         mkdire(settingsdir)
-        shutil.copy(self.source,settingsdir+'/source.f90')
+        shutil.copy(self.source,settingsdir+'/source.F90')
         settingsfile=open(settingsdir+os.sep+'test_settings.txt','w')
         settingsfile.write('Source file: '+self.source+'\n')
         settingsfile.write('Executable: '+self.executable+'\n')
@@ -233,7 +233,7 @@ if __name__ == "__main__":
     options='10 10 10 1'
     outputdir='laplace_test'
     exampledir=os.environ['OPENCMISS_ROOT']+'/cm/examples/ClassicalField/Laplace/ParallelLaplace/'
-    source=exampledir+'src/ParallelLaplaceExample.f90'
+    source=exampledir+'src/ParallelLaplaceExample.F90'
     executable=exampledir+'bin/x86_64-linux/mpich2/gnu_4.4/ParallelLaplaceExample'
 
     profiler = CmProfile(num_procs,outputdir,source,executable,options)

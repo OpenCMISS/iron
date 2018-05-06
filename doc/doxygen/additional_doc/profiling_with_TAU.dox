@@ -174,7 +174,7 @@ When calls are nested, a hierarchical structure forms and profile data can be vi
     CALL TAU_STATIC_PHASE_STOP('Next Phase')
 \endcode
 
-About 150 calls of this format are currently present in OpenCMISS, but all scenarios have not been captured. If you encounter unallocated time (time allocated to the parent phase), this will likely be because functions you have used which have not been implemented with TAU and you will need to implement these types of TAU calls in these functions yourself (usually in opencmiss.f90).
+About 150 calls of this format are currently present in OpenCMISS, but all scenarios have not been captured. If you encounter unallocated time (time allocated to the parent phase), this will likely be because functions you have used which have not been implemented with TAU and you will need to implement these types of TAU calls in these functions yourself (usually in opencmiss.F90).
 
 \section dynamicphases Dynamic Phases
 Dynamic phases allow the user to embed loop counters in the phase name. This is useful if you want to compare time spent in each loop or time spent in a routine across each iteration. An example of this is given below. An example of this can be found in OpenCMISS in LaplaceEquation_FiniteElementCalculate.
