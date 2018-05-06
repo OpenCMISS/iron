@@ -7811,7 +7811,7 @@ CONTAINS
 
   !>Sets a PETSc option (so that they can be set from python when we don't have the command line.)
   SUBROUTINE cmfe_PetscOptionsSetValue(name,VALUE,err)
-    !DLLEXPORT(cmfe_WorkingRealPrecisionGet)
+    !DLLEXPORT(cmfe_PetscOptionsSetValue)
 
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: name !<The name of the PETSc option
@@ -21473,7 +21473,7 @@ CONTAINS
   !>Set the data projection candidate faces for data points in a boundary faces projection type in a region specified by user number
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111(regionUserNumber,dataPointsUserNumber, &
     & dataProjectionUserNumber,dataPointUserNumbers,candidateElementUserNumbers,candidateFaceNormals,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateFacesSetRegNum111)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateFacesSetRegNum111)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection
@@ -21870,7 +21870,7 @@ CONTAINS
 
   !>Set the data projection candidate lines for a boundary lines projection type in a region specified by object
   SUBROUTINE cmfe_DataProjection_ProjectionCandidateLinesSetObj(dataProjection,candidateElementUserNumbers,candidateLineNormals,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateLineSetObj)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionCandidateLinesSetObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
@@ -22286,7 +22286,7 @@ CONTAINS
   !>Set the data projection candidate lines for data points for a boundary lines projection type in a region specified by object
   SUBROUTINE cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111(dataProjection,dataPointUserNumbers, &
     & candidateElementUserNumbers,candidateLineNormals,err)
-    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLineSetObj111)
+    !DLLEXPORT(cmfe_DataProjection_ProjectionDataCandidateLinesSetObj111)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
@@ -22619,7 +22619,7 @@ CONTAINS
 
   !>Outputs the analysis of data projection results for a data projection identified by an object.
   SUBROUTINE cmfe_DataProjection_ResultAnalysisOutputObj(dataProjection,filename,err)
-    !DLLEXPORT(cmfe_DataProjection_ResultDistanceGetObj)
+    !DLLEXPORT(cmfe_DataProjection_ResultAnalysisOutputObj)
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<A pointer to the data projection to output the result analysis for.
@@ -57972,7 +57972,7 @@ CONTAINS
 
   !>Get the user number of the given region.
   SUBROUTINE cmfe_Region_UserNumberGet(region,userNumber,err)
-    !DLLEXPORT(cmfe_UserNumberGetRegion)
+    !DLLEXPORT(cmfe_Region_UserNumberGet)
     !Argument variables
     TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<The region's user number
@@ -57997,7 +57997,7 @@ CONTAINS
 
   !>Get the user number of the given mesh.
   SUBROUTINE cmfe_Mesh_UserNumberGet(mesh,userNumber,err)
-    !DLLEXPORT(cmfe_UserNumberGetMesh)
+    !DLLEXPORT(cmfe_Mesh_UserNumberGet)
     !Argument variables
     TYPE(cmfe_MeshType), INTENT(IN) :: mesh !<The mesh to get the user number for
     INTEGER(INTG), INTENT(OUT) :: userNumber !<The mesh's user number
