@@ -87,6 +87,8 @@ MODULE BasisAccessRoutines
   PUBLIC BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES,BASIS_DEFAULT_QUADRATURE_SCHEME,BASIS_LOW_QUADRATURE_SCHEME, &
     & BASIS_MID_QUADRATURE_SCHEME,BASIS_HIGH_QUADRATURE_SCHEME
 
+  PUBLIC Basis_AssertIsFinished,Basis_AssertNotFinished
+
   PUBLIC Basis_BasisFunctionsGet
 
   PUBLIC Basis_ContextGet
@@ -112,6 +114,68 @@ MODULE BasisAccessRoutines
 CONTAINS
 
   !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a basis has been finished
+  SUBROUTINE Basis_AssertIsFinished(basis,err,error,*)
+
+    !Argument Variables
+    TYPE(BasisType), POINTER, INTENT(INOUT) :: basis !<The basis to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Basis_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+
+    IF(.NOT.basis%basisFinished) THEN
+      localError="Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Basis_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("Basis_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a basis has not been finished
+  SUBROUTINE Basis_AssertNotFinished(basis,err,error,*)
+
+    !Argument Variables
+    TYPE(BasisType), POINTER, INTENT(INOUT) :: basis !<The basis to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Basis_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
+
+    IF(basis%basisFinished) THEN
+      localError="Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & " has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Basis_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("Basis_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_AssertNotFinished
+
+  !
   !================================================================================================================================
   !
 
@@ -129,8 +193,7 @@ CONTAINS
     ENTERS("Basis_BasisFunctionsGet",err,error,*998)
 
     IF(ASSOCIATED(basisFunctions)) CALL FlagError("Basis functions is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)    
-    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*998)
     
     basisFunctions=>basis%basisFunctions
     IF(.NOT.ASSOCIATED(basisFunctions)) THEN
@@ -302,8 +365,7 @@ CONTAINS
     
     ENTERS("Basis_LocalFaceNumberGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(normalXiDirection < -basis%numberOfXiCoordinates .OR. normalXiDirection > basis%numberOfXiCoordinates) THEN
       localError="The specified normal xi direction of "//TRIM(NumberToVString(normalXiDirection,"*",err,error))// &
         & " is invalid the normal xi direction must be >= "// &
@@ -346,8 +408,7 @@ CONTAINS
     
     ENTERS("Basis_LocalLineNumberGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(.NOT.SIZE(normalXiDirections,1)==2) THEN
       localError="The specified number of normal xi directions of "// &
         & TRIM(NumberToVString(SIZE(normalXiDirections,1),"*",err,error))//" is invalid. There should be 2 normal xi directions."
@@ -404,8 +465,7 @@ CONTAINS
     ENTERS("Basis_QuadratureSchemeGet",err,error,*998)
 
     IF(ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
     IF(quadratureSchemeIdx<1.OR.quadratureSchemeIdx>BASIS_NUMBER_OF_QUADRATURE_SCHEME_TYPES) THEN
       localError="The specified quadrature scheme index of "//TRIM(NumberToVString(quadratureSchemeIdx,"*",err,error))// &
         & " is invalid. The quadrature scheme index should be >= 1 and <= "// &

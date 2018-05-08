@@ -57,7 +57,7 @@ MODULE REGION_ROUTINES
   USE INTERFACE_ROUTINES
   USE ISO_VARYING_STRING
   USE KINDS
-  USE MESH_ROUTINES
+  USE MeshRoutines
   USE NodeRoutines
   USE RegionAccessRoutines
   USE STRINGS
@@ -156,15 +156,9 @@ CONTAINS
      
     ENTERS("REGION_CREATE_FINISH",err,error,*999)
 
-    IF(ASSOCIATED(REGION)) THEN
-      IF(REGION%regionFinished) THEN
-        CALL FlagError("Region has already been finished.",err,error,*999)
-      ELSE
-        REGION%regionFinished=.TRUE.
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",err,error,*999)
-    ENDIF
+    CALL Region_AssertNotFinished(region,err,error,*999)
+    
+    REGION%regionFinished=.TRUE.
     
     IF(DIAGNOSTICS1) THEN
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Region : ",REGION%userNumber,err,error,*999)      
@@ -551,16 +545,10 @@ CONTAINS
 
     ENTERS("REGION_LABEL_SET_C",err,error,*999)
 
-    IF(ASSOCIATED(REGION)) THEN
-      IF(REGION%regionFinished) THEN
-        CALL FlagError("Region has been finished.",err,error,*999)
-      ELSE
-        REGION%label=LABEL
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",err,error,*999)
-    ENDIF
+    CALL Region_AssertNotFinished(region,err,error,*999)
     
+    REGION%label=LABEL
+        
     EXITS("REGION_LABEL_SET_C")
     RETURN
 999 ERRORSEXITS("REGION_LABEL_SET_C",err,error)
@@ -583,15 +571,9 @@ CONTAINS
 
     ENTERS("REGION_LABEL_SET_VS",err,error,*999)
 
-    IF(ASSOCIATED(REGION)) THEN
-      IF(REGION%regionFinished) THEN
-        CALL FlagError("Region has been finished.",err,error,*999)
-      ELSE
-        REGION%label=LABEL
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",err,error,*999)
-    ENDIF
+    CALL Region_AssertNotFinished(region,err,error,*999)
+    
+    REGION%label=LABEL
     
     EXITS("REGION_LABEL_SET_VS")
     RETURN

@@ -77,6 +77,8 @@ MODULE OpenCMISS_Iron
  USE DataPointAccessRoutines
  USE DataProjectionRoutines
  USE DataProjectionAccessRoutines
+ USE DecompositionRoutines
+ USE DecompositionAccessRoutines
  USE DistributedMatrixVector
  USE EquationsRoutines
  USE EquationsSetConstants
@@ -107,7 +109,7 @@ MODULE OpenCMISS_Iron
  USE ISO_C_BINDING
  USE ISO_VARYING_STRING
  USE Kinds
- USE MESH_ROUTINES
+ USE MeshRoutines
  USE MeshAccessRoutines
  USE NodeRoutines
  USE PROBLEM_CONSTANTS
@@ -196,6 +198,12 @@ MODULE OpenCMISS_Iron
    PRIVATE
    TYPE(DecompositionType), POINTER :: decomposition
  END TYPE cmfe_DecompositionType
+
+ !>Contains information on the decomposer.
+ TYPE cmfe_DecomposerType
+   PRIVATE
+   TYPE(DecomposerType), POINTER :: decomposer
+ END TYPE cmfe_DecomposerType
 
  !>Contains information about the equations in an equations set.
  TYPE cmfe_EquationsType
@@ -389,7 +397,7 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_DecompositionType,cmfe_Decomposition_Finalise,cmfe_Decomposition_Initialise
 
- PUBLIC cmfe_Decomposition_CalculateFacesSet,cmfe_Decomposition_CalculateLinesSet
+ PUBLIC cmfe_DecomposerType,cmfe_Decomposer_Finalise,cmfe_Decomposer_Initialise
 
  PUBLIC cmfe_DistributedMatrixType,cmfe_DistributedVectorType
 
@@ -5379,14 +5387,6 @@ MODULE OpenCMISS_Iron
  !> \addtogroup OpenCMISS_MeshConstants OpenCMISS::Iron::Mesh::Constants
  !> \brief Mesh constants.
  !>@{
- !> \addtogroup OpenCMISS_DecompositionTypes OpenCMISS::Iron::Mesh::DecompositionTypes
- !> \brief The Decomposition types parameters
- !> \see OpenCMISS::Iron::Mesh,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_ALL_TYPE = DECOMPOSITION_ALL_TYPE !<The decomposition contains all elements. \see OpenCMISS_DecompositionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_CALCULATED_TYPE = DECOMPOSITION_CALCULATED_TYPE !<The element decomposition is calculated by graph partitioning. \see OpenCMISS_DecompositionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_USER_DEFINED_TYPE = DECOMPOSITION_USER_DEFINED_TYPE !<The user will set the element decomposition. \see OpenCMISS_DecompositionTypes,OpenCMISS
- !>@}
  !> \addtogroup OpenCMISS_MeshBoundaryTypes OpenCMISS::Iron::Mesh::MeshBoundaryTypes
  !> \brief The boundary type parameters for a mesh domain
  !> \see OpenCMISS::Iron::Mesh,OpenCMISS
@@ -5401,97 +5401,6 @@ MODULE OpenCMISS_Iron
  !Module variables
 
  !Interfaces
-
- !>Finishes the creation of a domain decomposition. \see OpenCMISS::Iron::cmfe_Decomposition_CreateStart
- INTERFACE cmfe_Decomposition_CreateFinish
-   MODULE PROCEDURE cmfe_Decomposition_CreateFinishNumber
-   MODULE PROCEDURE cmfe_Decomposition_CreateFinishObj
- END INTERFACE cmfe_Decomposition_CreateFinish
-
- !>Start the creation of a domain decomposition for a given mesh. \see OpenCMISS::Iron::cmfe_Decomposition_CreateStart
- INTERFACE cmfe_Decomposition_CreateStart
-   MODULE PROCEDURE cmfe_Decomposition_CreateStartNumber
-   MODULE PROCEDURE cmfe_Decomposition_CreateStartObj
- END INTERFACE cmfe_Decomposition_CreateStart
-
- !>Destroys a domain decomposition.
- INTERFACE cmfe_Decomposition_Destroy
-   MODULE PROCEDURE cmfe_Decomposition_DestroyNumber
-   MODULE PROCEDURE cmfe_Decomposition_DestroyObj
- END INTERFACE cmfe_Decomposition_Destroy
-
- !>Calculates the element domains for the decomposition of a mesh.
- INTERFACE cmfe_Decomposition_ElementDomainCalculate
-   MODULE PROCEDURE cmfe_Decomposition_ElementDomainCalculateNumber
-   MODULE PROCEDURE cmfe_Decomposition_ElementDomainCalculateObj
- END INTERFACE cmfe_Decomposition_ElementDomainCalculate
-
- !>Returns the domain for a given element in a decomposition of a mesh.
- INTERFACE cmfe_Decomposition_ElementDomainGet
-   MODULE PROCEDURE cmfe_Decomposition_ElementDomainGetNumber
-   MODULE PROCEDURE cmfe_Decomposition_ElementDomainGetObj
- END INTERFACE cmfe_Decomposition_ElementDomainGet
-
- !>Sets/changes the domain for a given element in a decomposition of a mesh.
- INTERFACE cmfe_Decomposition_ElementDomainSet
-   MODULE PROCEDURE cmfe_Decomposition_ElementDomainSetNumber
-   MODULE PROCEDURE cmfe_Decomposition_ElementDomainSetObj
- END INTERFACE cmfe_Decomposition_ElementDomainSet
-
- !>Returns the mesh component number used for the decomposition of a mesh.
- INTERFACE cmfe_Decomposition_MeshComponentGet
-   MODULE PROCEDURE cmfe_Decomposition_MeshComponentGetNumber
-   MODULE PROCEDURE cmfe_Decomposition_MeshComponentGetObj
- END INTERFACE cmfe_Decomposition_MeshComponentGet
-
- !>Sets/changes the mesh component number used for the decomposition of a mesh.
- INTERFACE cmfe_Decomposition_MeshComponentSet
-   MODULE PROCEDURE cmfe_Decomposition_MeshComponentSetNumber
-   MODULE PROCEDURE cmfe_Decomposition_MeshComponentSetObj
- END INTERFACE cmfe_Decomposition_MeshComponentSet
-
- !>Returns the number of domains used for the decomposition of a mesh.
- INTERFACE cmfe_Decomposition_NumberOfDomainsGet
-   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsGetNumber
-   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsGetObj
- END INTERFACE cmfe_Decomposition_NumberOfDomainsGet
-
- !>Sets/changes the number of domains used for the decomposition of a mesh.
- INTERFACE cmfe_Decomposition_NumberOfDomainsSet
-   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsSetNumber
-   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsSetObj
- END INTERFACE cmfe_Decomposition_NumberOfDomainsSet
-
- !>Returns the type of decomposition.
- INTERFACE cmfe_Decomposition_TypeGet
-   MODULE PROCEDURE cmfe_Decomposition_TypeGetNumber
-   MODULE PROCEDURE cmfe_Decomposition_TypeGetObj
- END INTERFACE cmfe_Decomposition_TypeGet
-
- !>Sets/changes the type of decomposition.
- INTERFACE cmfe_Decomposition_TypeSet
-   MODULE PROCEDURE cmfe_Decomposition_TypeSetNumber
-   MODULE PROCEDURE cmfe_Decomposition_TypeSetObj
- END INTERFACE cmfe_Decomposition_TypeSet
-
- !>Sets/changes the work group for a decomposition.
- INTERFACE cmfe_Decomposition_WorkGroupSet
-   MODULE PROCEDURE cmfe_Decomposition_WorkGroupSetNumber
-   MODULE PROCEDURE cmfe_Decomposition_WorkGroupSetObj
- END INTERFACE cmfe_Decomposition_WorkGroupSet
-
- !>Sets/changes whether lines should be calculated for the decomposition.
- INTERFACE cmfe_Decomposition_CalculateLinesSet
-   MODULE PROCEDURE cmfe_Decomposition_CalculateLinesSetNumber
-   MODULE PROCEDURE cmfe_Decomposition_CalculateLinesSetObj
- END INTERFACE cmfe_Decomposition_CalculateLinesSet
-
- !>Sets/changes whether faces should be calculated for the decomposition.
- INTERFACE cmfe_Decomposition_CalculateFacesSet
-   MODULE PROCEDURE cmfe_Decomposition_CalculateFacesSetNumber
-   MODULE PROCEDURE cmfe_Decomposition_CalculateFacesSetObj
- END INTERFACE cmfe_Decomposition_CalculateFacesSet
-
  !>Finishes the creation of a mesh. \see OpenCMISS::Iron::cmfe_Mesh_CreateStart
  INTERFACE cmfe_Mesh_CreateFinish
    MODULE PROCEDURE cmfe_Mesh_CreateFinishNumber
@@ -5679,62 +5588,8 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_MeshNodes_NumberOfNodesGetNumber
    MODULE PROCEDURE cmfe_MeshNodes_NumberOfNodesGetObj
  END INTERFACE cmfe_MeshNodes_NumberOfNodesGet
-
- !>Returns the domain for a given element in a decomposition of a mesh.
- INTERFACE cmfe_Decomposition_NodeDomainGet
-   MODULE PROCEDURE cmfe_Decomposition_NodeDomainGetNumber
-   MODULE PROCEDURE cmfe_Decomposition_NodeDomainGetObj
- END INTERFACE cmfe_Decomposition_NodeDomainGet
-
- !>Calculates the decomposition topology for data points .
- INTERFACE cmfe_Decomposition_TopologyDataProjectionCalculate
-   MODULE PROCEDURE cmfe_Decomposition_TopologyDataProjectionCalculateObj
- END INTERFACE cmfe_Decomposition_TopologyDataProjectionCalculate
-
- !>Gets the local data point number for data points projected on an element
- INTERFACE cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
-   MODULE PROCEDURE cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj
- END INTERFACE cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
-
- !>Gets the user data point number for data points projected on an element
- INTERFACE cmfe_Decomposition_TopologyElementDataPointUserNumberGet
-   MODULE PROCEDURE cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj
- END INTERFACE cmfe_Decomposition_TopologyElementDataPointUserNumberGet
-
- !>Gets the number of data points projected on an element
- INTERFACE cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
-   MODULE PROCEDURE cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj
- END INTERFACE cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
-
- PUBLIC CMFE_DECOMPOSITION_ALL_TYPE,CMFE_DECOMPOSITION_CALCULATED_TYPE,CMFE_DECOMPOSITION_USER_DEFINED_TYPE
-
+ 
  PUBLIC CMFE_MESH_OFF_DOMAIN_BOUNDARY,CMFE_MESH_ON_DOMAIN_BOUNDARY
-
- PUBLIC cmfe_Decomposition_CreateFinish,cmfe_Decomposition_CreateStart
-
- PUBLIC cmfe_Decomposition_TopologyDataProjectionCalculate
-
- PUBLIC cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
-
- PUBLIC cmfe_Decomposition_TopologyElementDataPointUserNumberGet
-
- PUBLIC cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
-
- PUBLIC cmfe_Decomposition_Destroy
-
- PUBLIC cmfe_Decomposition_ElementDomainCalculate
-
- PUBLIC cmfe_Decomposition_ElementDomainGet,cmfe_Decomposition_ElementDomainSet
-
- PUBLIC cmfe_Decomposition_MeshComponentGet,cmfe_Decomposition_MeshComponentSet
-
- PUBLIC cmfe_Decomposition_NumberOfDomainsGet,cmfe_Decomposition_NumberOfDomainsSet
-
- PUBLIC cmfe_Decomposition_TypeGet,cmfe_Decomposition_TypeSet
-
- PUBLIC cmfe_Decomposition_WorkGroupSet
-
- PUBLIC cmfe_Decomposition_NodeDomainGet
 
  PUBLIC cmfe_Mesh_CreateFinish,cmfe_Mesh_CreateStart
 
@@ -5777,6 +5632,202 @@ MODULE OpenCMISS_Iron
  PUBLIC cmfe_Mesh_SurroundingElementsCalculateSet
 
  PUBLIC cmfe_Mesh_TopologyDataPointsCalculateProjection
+
+!==================================================================================================================================
+!
+! DecompositionRoutines
+!
+!==================================================================================================================================
+
+ !> \addtogroup OpenCMISS_DecompositionConstants OpenCMISS::Iron::Decomposition::Constants
+ !> \brief Decomposition constants.
+ !>@{
+ !> \addtogroup OpenCMISS_DecompositionTypes OpenCMISS::Iron::Decomposition::DecompositionTypes
+ !> \brief The Decomposition types parameters
+ !> \see OpenCMISS::Iron::Decomposition,OpenCMISS
+ !>@{
+ INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_ALL_TYPE = DECOMPOSITION_ALL_TYPE !<The decomposition contains all elements. \see OpenCMISS_DecompositionTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_CALCULATED_TYPE = DECOMPOSITION_CALCULATED_TYPE !<The element decomposition is calculated by graph partitioning. \see OpenCMISS_DecompositionTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSITION_USER_DEFINED_TYPE = DECOMPOSITION_USER_DEFINED_TYPE !<The user will set the element decomposition. \see OpenCMISS_DecompositionTypes,OpenCMISS
+ !>@}
+ !>@}
+
+ !>Finishes the creation of a decomposer. \see OpenCMISS::Iron::cmfe_Decomposer_CreateStart
+ INTERFACE cmfe_Decomposer_CreateFinish
+   MODULE PROCEDURE cmfe_Decomposer_CreateFinishNumber
+   MODULE PROCEDURE cmfe_Decomposer_CreateFinishObj
+ END INTERFACE cmfe_Decomposer_CreateFinish
+
+ !>Start the creation of a decomposer. \see OpenCMISS::Iron::cmfe_Decomposer_CreateFinish
+ INTERFACE cmfe_Decomposer_CreateStart
+   MODULE PROCEDURE cmfe_Decomposer_CreateStartNumber
+   MODULE PROCEDURE cmfe_Decomposer_CreateStartObj
+ END INTERFACE cmfe_Decomposer_CreateStart
+
+ !>Adds a decomposition to a decomposer.
+ INTERFACE cmfe_Decomposer_DecompositionAdd
+   MODULE PROCEDURE cmfe_Decomposer_DecompositionAddNumber
+   MODULE PROCEDURE cmfe_Decomposer_DecompositionAddObj
+ END INTERFACE cmfe_Decomposer_DecompositionAdd
+
+ !>Destroys a decomposer.
+ INTERFACE cmfe_Decomposer_Destroy
+   MODULE PROCEDURE cmfe_Decomposer_DestroyNumber
+   MODULE PROCEDURE cmfe_Decomposer_DestroyObj
+ END INTERFACE cmfe_Decomposer_Destroy
+
+ !>Finishes the creation of a domain decomposition. \see OpenCMISS::Iron::cmfe_Decomposition_CreateStart
+ INTERFACE cmfe_Decomposition_CreateFinish
+   MODULE PROCEDURE cmfe_Decomposition_CreateFinishNumber
+   MODULE PROCEDURE cmfe_Decomposition_CreateFinishObj
+ END INTERFACE cmfe_Decomposition_CreateFinish
+
+ !>Start the creation of a domain decomposition for a given mesh. \see OpenCMISS::Iron::cmfe_Decomposition_CreateFinish
+ INTERFACE cmfe_Decomposition_CreateStart
+   MODULE PROCEDURE cmfe_Decomposition_CreateStartNumber
+   MODULE PROCEDURE cmfe_Decomposition_CreateStartObj
+ END INTERFACE cmfe_Decomposition_CreateStart
+
+ !>Destroys a domain decomposition.
+ INTERFACE cmfe_Decomposition_Destroy
+   MODULE PROCEDURE cmfe_Decomposition_DestroyNumber
+   MODULE PROCEDURE cmfe_Decomposition_DestroyObj
+ END INTERFACE cmfe_Decomposition_Destroy
+
+ !>Calculates the element domains for the decomposition of a mesh.
+ INTERFACE cmfe_Decomposition_ElementDomainCalculate
+   MODULE PROCEDURE cmfe_Decomposition_ElementDomainCalculateNumber
+   MODULE PROCEDURE cmfe_Decomposition_ElementDomainCalculateObj
+ END INTERFACE cmfe_Decomposition_ElementDomainCalculate
+
+ !>Returns the domain for a given element in a decomposition of a mesh.
+ INTERFACE cmfe_Decomposition_ElementDomainGet
+   MODULE PROCEDURE cmfe_Decomposition_ElementDomainGetNumber
+   MODULE PROCEDURE cmfe_Decomposition_ElementDomainGetObj
+ END INTERFACE cmfe_Decomposition_ElementDomainGet
+
+ !>Sets/changes the domain for a given element in a decomposition of a mesh.
+ INTERFACE cmfe_Decomposition_ElementDomainSet
+   MODULE PROCEDURE cmfe_Decomposition_ElementDomainSetNumber
+   MODULE PROCEDURE cmfe_Decomposition_ElementDomainSetObj
+ END INTERFACE cmfe_Decomposition_ElementDomainSet
+
+ !>Returns the mesh component number used for the decomposition of a mesh.
+ INTERFACE cmfe_Decomposition_MeshComponentGet
+   MODULE PROCEDURE cmfe_Decomposition_MeshComponentGetNumber
+   MODULE PROCEDURE cmfe_Decomposition_MeshComponentGetObj
+ END INTERFACE cmfe_Decomposition_MeshComponentGet
+
+ !>Sets/changes the mesh component number used for the decomposition of a mesh.
+ INTERFACE cmfe_Decomposition_MeshComponentSet
+   MODULE PROCEDURE cmfe_Decomposition_MeshComponentSetNumber
+   MODULE PROCEDURE cmfe_Decomposition_MeshComponentSetObj
+ END INTERFACE cmfe_Decomposition_MeshComponentSet
+
+ !>Returns the number of domains used for the decomposition of a mesh.
+ INTERFACE cmfe_Decomposition_NumberOfDomainsGet
+   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsGetNumber
+   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsGetObj
+ END INTERFACE cmfe_Decomposition_NumberOfDomainsGet
+
+ !>Sets/changes the number of domains used for the decomposition of a mesh.
+ INTERFACE cmfe_Decomposition_NumberOfDomainsSet
+   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsSetNumber
+   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsSetObj
+ END INTERFACE cmfe_Decomposition_NumberOfDomainsSet
+
+ !>Returns the type of decomposition.
+ INTERFACE cmfe_Decomposition_TypeGet
+   MODULE PROCEDURE cmfe_Decomposition_TypeGetNumber
+   MODULE PROCEDURE cmfe_Decomposition_TypeGetObj
+ END INTERFACE cmfe_Decomposition_TypeGet
+
+ !>Sets/changes the type of decomposition.
+ INTERFACE cmfe_Decomposition_TypeSet
+   MODULE PROCEDURE cmfe_Decomposition_TypeSetNumber
+   MODULE PROCEDURE cmfe_Decomposition_TypeSetObj
+ END INTERFACE cmfe_Decomposition_TypeSet
+
+ !>Sets/changes the work group for a decomposition.
+ INTERFACE cmfe_Decomposition_WorkGroupSet
+   MODULE PROCEDURE cmfe_Decomposition_WorkGroupSetNumber
+   MODULE PROCEDURE cmfe_Decomposition_WorkGroupSetObj
+ END INTERFACE cmfe_Decomposition_WorkGroupSet
+
+ !>Sets/changes whether lines should be calculated for the decomposition.
+ INTERFACE cmfe_Decomposition_CalculateLinesSet
+   MODULE PROCEDURE cmfe_Decomposition_CalculateLinesSetNumber
+   MODULE PROCEDURE cmfe_Decomposition_CalculateLinesSetObj
+ END INTERFACE cmfe_Decomposition_CalculateLinesSet
+
+ !>Sets/changes whether faces should be calculated for the decomposition.
+ INTERFACE cmfe_Decomposition_CalculateFacesSet
+   MODULE PROCEDURE cmfe_Decomposition_CalculateFacesSetNumber
+   MODULE PROCEDURE cmfe_Decomposition_CalculateFacesSetObj
+ END INTERFACE cmfe_Decomposition_CalculateFacesSet
+
+ !>Returns the domain for a given element in a decomposition of a mesh.
+ INTERFACE cmfe_Decomposition_NodeDomainGet
+   MODULE PROCEDURE cmfe_Decomposition_NodeDomainGetNumber
+   MODULE PROCEDURE cmfe_Decomposition_NodeDomainGetObj
+ END INTERFACE cmfe_Decomposition_NodeDomainGet
+
+ !>Calculates the decomposition topology for data points .
+ INTERFACE cmfe_Decomposition_TopologyDataProjectionCalculate
+   MODULE PROCEDURE cmfe_Decomposition_TopologyDataProjectionCalculateObj
+ END INTERFACE cmfe_Decomposition_TopologyDataProjectionCalculate
+
+ !>Gets the local data point number for data points projected on an element
+ INTERFACE cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
+   MODULE PROCEDURE cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj
+ END INTERFACE cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
+
+ !>Gets the user data point number for data points projected on an element
+ INTERFACE cmfe_Decomposition_TopologyElementDataPointUserNumberGet
+   MODULE PROCEDURE cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj
+ END INTERFACE cmfe_Decomposition_TopologyElementDataPointUserNumberGet
+
+ !>Gets the number of data points projected on an element
+ INTERFACE cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
+   MODULE PROCEDURE cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj
+ END INTERFACE cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
+
+ PUBLIC CMFE_DECOMPOSITION_ALL_TYPE,CMFE_DECOMPOSITION_CALCULATED_TYPE,CMFE_DECOMPOSITION_USER_DEFINED_TYPE
+
+ PUBLIC cmfe_Decomposer_CreateFinish,cmfe_Decomposer_CreateStart
+
+ PUBLIC cmfe_Decomposer_DecompositionAdd
+
+ PUBLIC cmfe_Decomposer_Destroy
+
+ PUBLIC cmfe_Decomposition_CreateFinish,cmfe_Decomposition_CreateStart
+
+ PUBLIC cmfe_Decomposition_CalculateFacesSet,cmfe_Decomposition_CalculateLinesSet
+
+ PUBLIC cmfe_Decomposition_Destroy
+
+ PUBLIC cmfe_Decomposition_ElementDomainCalculate
+
+ PUBLIC cmfe_Decomposition_ElementDomainGet,cmfe_Decomposition_ElementDomainSet
+
+ PUBLIC cmfe_Decomposition_MeshComponentGet,cmfe_Decomposition_MeshComponentSet
+
+ PUBLIC cmfe_Decomposition_NodeDomainGet
+ 
+ PUBLIC cmfe_Decomposition_NumberOfDomainsGet,cmfe_Decomposition_NumberOfDomainsSet
+
+ PUBLIC cmfe_Decomposition_TopologyDataProjectionCalculate
+
+ PUBLIC cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
+
+ PUBLIC cmfe_Decomposition_TopologyElementDataPointUserNumberGet
+
+ PUBLIC cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
+
+ PUBLIC cmfe_Decomposition_TypeGet,cmfe_Decomposition_TypeSet
+
+ PUBLIC cmfe_Decomposition_WorkGroupSet
+
 
 !==================================================================================================================================
 !
@@ -8625,6 +8676,56 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a cmfe_DecomposerType object.
+  SUBROUTINE cmfe_Decomposer_Finalise(cmfe_Decomposer,err)
+    !DLLEXPORT(cmfe_Decomposer_Finalise)
+
+    !Argument variables
+    TYPE(cmfe_DecomposerType), INTENT(OUT) :: cmfe_Decomposer !<The cmfe_DecomposerType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposer_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(cmfe_Decomposer%decomposer)) CALL Decomposer_Destroy(cmfe_Decomposer%decomposer,err,error,*999)
+
+    EXITS("cmfe_Decomposer_Finalise")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_Finalise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a cmfe_DecomposerType object.
+  SUBROUTINE cmfe_Decomposer_Initialise(cmfe_Decomposer,err)
+    !DLLEXPORT(cmfe_Decomposer_Initialise)
+
+    !Argument variables
+    TYPE(cmfe_DecomposerType), INTENT(OUT) :: cmfe_Decomposer !<The cmfe_DecomposerType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposer_Initialise",err,error,*999)
+
+    NULLIFY(cmfe_Decomposer%decomposer)
+
+    EXITS("cmfe_Decomposer_Initialise")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_Initialise",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_Initialise
 
   !
   !================================================================================================================================
@@ -47370,9 +47471,286 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! MESH_ROUTINES
+!! DecompositionRoutines
 !!
 !!==================================================================================================================================
+
+  !>Finishes the creation of a decomposer identified by a user number.
+  SUBROUTINE cmfe_Decomposer_CreateFinishNumber(contextUserNumber,regionUserNumber,decomposerUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposer_CreateFinishNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the decomposer.
+    INTEGER(INTG), INTENT(IN) :: decomposerUserNumber !<The user number of the decomposer to finish.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecomposerType), POINTER :: decomposer
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Decomposer_CreateFinishNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(decomposer)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_DecomposerGet(region,decomposerUserNumber,decomposer,err,error,*999)
+    CALL Decomposer_CreateFinish(decomposer,err,error,*999)
+
+    EXITS("cmfe_Decomposer_CreateFinishNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_CreateFinishNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_CreateFinishNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the creation of a decomposer identified by an object.
+  SUBROUTINE cmfe_Decomposer_CreateFinishObj(decomposer,err)
+    !DLLEXPORT(cmfe_Decomposer_CreateFinishObj)
+
+    !Argument variables
+    TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to finish creating.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposer_CreateFinishObj",err,error,*999)
+
+    CALL Decomposer_CreateFinish(decomposer%decomposer,err,error,*999)
+
+    EXITS("cmfe_Decomposer_CreateFinishObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_CreateFinishObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_CreateFinishObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Starts the creation of a decomposer identified by a user number.
+  SUBROUTINE cmfe_Decomposer_CreateStartNumber(decomposerUserNumber,contextUserNumber,regionUserNumber,workGroupUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposer_CreateStartNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: decomposerUserNumber !<The user number of the decomposer to create.
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region to create the decomposer for.
+    INTEGER(INTG), INTENT(IN) :: workGroupUserNumber !<The user number of the work group to create the decomposer with.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecomposerType), POINTER :: decomposer
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+    TYPE(WorkGroupType), POINTER :: workGroup
+
+    ENTERS("cmfe_Decomposer_CreateStartNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(computationEnvironment)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(workGroup)
+    NULLIFY(decomposer)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+    CALL Decomposer_CreateStart(decomposerUserNumber,region,workGroup,decomposer,err,error,*999)
+
+    EXITS("cmfe_Decomposer_CreateStartNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_CreateStartNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_CreateStartNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Starts the creation of a decomposer identified by an object.
+  SUBROUTINE cmfe_Decomposer_CreateStartObj(decomposerUserNumber,region,workGroup,decomposer,err)
+    !DLLEXPORT(cmfe_Decomposer_CreateStartObj)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: decomposerUserNumber !<The user number of the decomposer to create.
+    TYPE(cmfe_RegionType), INTENT(IN) :: region !<The region to create the decomposer for.
+    TYPE(cmfe_WorkGroupType), INTENT(IN) :: workGroup !<The work group to create the decomposer with.
+    TYPE(cmfe_DecomposerType), INTENT(INOUT) :: decomposer !<On return, the created decomposer.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposer_CreateStartObj",err,error,*999)
+
+    CALL Decomposer_CreateStart(decomposERUserNumber,region%region,workGroup%workGroup,decomposer%decomposer,err,error,*999)
+
+    EXITS("cmfe_Decomposer_CreateStartObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_CreateStartObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_CreateStartObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a decomposition to a decomposer identified by a user number.
+  SUBROUTINE cmfe_Decomposer_DecompositionAddNumber(contextUserNumber,regionUserNumber,decomposerUserNumber,meshUserNumber, &
+    & decompositionUserNumber,decompositionIndex,err)
+    !DLLEXPORT(cmfe_Decomposer_DecompositionAddNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the decomposer.
+    INTEGER(INTG), INTENT(IN) :: decomposerUserNumber !<The user number of the decomposer to add the decomposition for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh of the decomposition to add to the decomposer.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to add to the decomposer.
+    INTEGER(INTG), INTENT(OUT) :: decompositionIndex !<On return, the index of the added decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecomposerType), POINTER :: decomposer
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Decomposer_DecompositionAddNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(decomposer)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_DecomposerGet(region,decomposerUserNumber,decomposer,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err,error,*999)
+
+    EXITS("cmfe_Decomposer_DecompositionAddNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_DecompositionAddNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_DecompositionAddNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a decomposition to a decomposer identified by an object.
+  SUBROUTINE cmfe_Decomposer_DecompositionAddObj(decomposer,decomposition,decompositionIndex,err)
+    !DLLEXPORT(cmfe_Decomposition_DecompositionAddObj)
+
+    !Argument variables
+    TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to add the decomposition to.
+    TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to add to the decomposer
+    INTEGER(INTG), INTENT(OUT) :: decompositionIndex !<On return, the index of the added decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposer_DecompositionAddObj",err,error,*999)
+
+    CALL Decomposer_DecompositionAdd(decomposer%decomposer,decomposition%decomposition,decompositionIndex,err,error,*999)
+
+    EXITS("cmfe_Decomposer_DecompositionAddObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_DecompositionAddObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_DecompositionAddObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroys a decomposer identified by a user number.
+  SUBROUTINE cmfe_Decomposer_DestroyNumber(contextUserNumber,regionUserNumber,decomposerUserNumber,err)
+    !DLLEXPORT(cmfe_Decomposer_DestroyNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the decomposer.
+    INTEGER(INTG), INTENT(IN) :: decomposerUserNumber !<The user number of the decomposer to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecomposerType), POINTER :: decomposer
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Decomposer_DestroyNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(decomposer)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_DecomposerGet(region,decomposerUserNumber,decomposer,err,error,*999)
+    CALL Decomposer_Destroy(decomposer,err,error,*999)
+
+    EXITS("cmfe_Decomposer_DestroyNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_DestroyNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_DestroyNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroys a decomposer identified by an object.
+  SUBROUTINE cmfe_Decomposer_DestroyObj(decomposer,err)
+    !DLLEXPORT(cmfe_Decomposition_DestroyObj)
+
+    !Argument variables
+    TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposer_DestroyObj",err,error,*999)
+
+    CALL Decomposer_Destroy(decomposer%decomposer,err,error,*999)
+
+    EXITS("cmfe_Decomposer_DestroyObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_DestroyObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_DestroyObj
+
+  !
+  !================================================================================================================================
+  !
 
   !>Finishes the creation of a domain decomposition for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_CreateFinishNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber,err)
@@ -48661,9 +49039,12 @@ CONTAINS
 
   END SUBROUTINE cmfe_Decomposition_NodeDomainGetObj
 
-  !
-  !================================================================================================================================
-  !
+
+!!==================================================================================================================================
+!!
+!! MESH_ROUTINES
+!!
+!!==================================================================================================================================
 
   !>Finishes the creation of a mesh for a mesh identified by a user number.
   SUBROUTINE cmfe_Mesh_CreateFinishNumber(contextUserNumber,regionUserNumber,meshUserNumber,err)

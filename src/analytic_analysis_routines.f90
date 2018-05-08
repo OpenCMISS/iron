@@ -50,6 +50,7 @@ MODULE ANALYTIC_ANALYSIS_ROUTINES
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
+  USE DecompositionAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT

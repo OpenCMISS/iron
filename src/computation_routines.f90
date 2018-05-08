@@ -86,7 +86,7 @@ MODULE ComputationRoutines
   END INTERFACE WorkGroup_LabelSet
   
   PUBLIC Computation_Initialise,Computation_Finalise
-  
+
   PUBLIC WorkGroup_CreateFinish,WorkGroup_CreateStart
 
   PUBLIC WorkGroup_Destroy
@@ -655,8 +655,7 @@ CONTAINS
 
     ENTERS("WorkGroup_CreateFinish",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
-    IF(workGroup%workGroupFinished) CALL FlagError("Work group has already been finished.",err,error,*999)
+    CALL WorkGroup_AssertNotFinished(workGroup,err,error,*999)
     NULLIFY(parentWorkGroup)
     CALL WorkGroup_ParentWorkGroupGet(workGroup,parentWorkGroup,err,error,*999)
     IF(.NOT.ALLOCATED(parentWorkGroup%availableRanks)) &
@@ -1007,8 +1006,7 @@ CONTAINS
 
     ENTERS("WorkGroup_NumberOfGroupNodesSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
-    IF(workGroup%workGroupFinished) CALL FlagError("Work group has already been finished.",err,error,*999)
+    CALL WorkGroup_AssertNotFinished(workGroup,err,error,*999)
     NULLIFY(parentWorkGroup)
     CALL WorkGroup_ParentWorkGroupGet(workGroup,parentWorkGroup,err,error,*999)
     IF(numberOfGroupComputationNodes<1.OR.numberOfGroupComputationNodes>parentWorkGroup%numberOfAvailableRanks) THEN

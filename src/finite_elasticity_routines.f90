@@ -55,6 +55,8 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES  
   USE CoordinateSystemAccessRoutines
+  USE DecompositionRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
@@ -75,8 +77,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE Lapack
   USE Maths 
   USE MatrixVector
-  USE MESH_ROUTINES
-  USE MeshAccessRoutines
+  USE MeshRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif

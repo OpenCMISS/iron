@@ -54,14 +54,14 @@ MODULE DataProjectionRoutines
   USE CoordinateSystemAccessRoutines
   USE DataPointAccessRoutines
   USE DataProjectionAccessRoutines
+  USE DecompositionRoutines
+  USE DecompositionAccessRoutines
   USE DOMAIN_MAPPINGS
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
-  USE MESH_ROUTINES
-  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif

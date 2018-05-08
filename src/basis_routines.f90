@@ -154,9 +154,9 @@ MODULE BasisRoutines
 
   !Interfaces
 
-  INTERFACE Basis_CollapsedXiGet
-    MODULE PROCEDURE BASIS_COLLAPSED_XI_GET
-  END INTERFACE Basis_CollapsedXiGet
+  INTERFACE BASIS_COLLAPSED_XI_GET
+    MODULE PROCEDURE Basis_CollapsedXiGet
+  END INTERFACE BASIS_COLLAPSED_XI_GET
   
   !>Sets/changes the collapsed Xi flags for a basis.
   INTERFACE BASIS_COLLAPSED_XI_SET
@@ -215,9 +215,9 @@ MODULE BasisRoutines
     MODULE PROCEDURE BASIS_LOCAL_NODE_XI_CALCULATE
   END INTERFACE Basis_LocalNodeXiCalculate
 
-  INTERFACE Basis_InterpolationXiGet
-    MODULE PROCEDURE BASIS_INTERPOLATION_XI_GET
-  END INTERFACE Basis_InterpolationXiGet
+  INTERFACE BASIS_INTERPOLATION_XI_GET
+    MODULE PROCEDURE Basis_InterpolationXiGet
+  END INTERFACE BASIS_INTERPOLATION_XI_GET
   
   !>Sets/changes the interpolation type in each Xi direction for a basis
   INTERFACE BASIS_INTERPOLATION_XI_SET
@@ -274,9 +274,9 @@ MODULE BasisRoutines
     MODULE PROCEDURE Basis_QuadratureTypeSet
   END INTERFACE BASIS_QUADRATURE_TYPE_SET
   
-  INTERFACE Basis_TypeGet
-    MODULE PROCEDURE BASIS_TYPE_GET
-  END INTERFACE Basis_TypeGet
+  INTERFACE BASIS_TYPE_GET
+    MODULE PROCEDURE Basis_TypeGet
+  END INTERFACE BASIS_TYPE_GET
   
   !>Sets/changes the type for a basis.
   INTERFACE BASIS_TYPE_SET
@@ -485,8 +485,7 @@ CONTAINS
     
     ENTERS("Basis_CreateFinish",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(basis%basisFinished) CALL FlagError("Basis has already been finished.",err,error,*999)
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
     
     SELECT CASE(basis%type)
     CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
@@ -917,445 +916,439 @@ CONTAINS
         
     ENTERS("Basis_BoundaryXiToXi",err,error,*999)
 
-    IF(ASSOCIATED(basis)) THEN
-      IF(basis%basisFinished) THEN
-        numberOfBoundaryXi=SIZE(boundaryXi,1)
-        numberOfXi=basis%numberOfXi
-        IF(numberOfBoundaryXi<=numberOfXi) THEN
-          IF(SIZE(fullXi,1)>=numberOfXi) THEN
-            IF(numberOfBoundaryXi==numberOfXi) THEN
-              !Basis is of the same dimension as the boundary so just copy over
-              fullXi(1:numberOfXi)=boundaryXi(1:numberOfXi)
-            ELSE
-              SELECT CASE(numberOfBoundaryXi)
-              CASE(1)
-                !On a line
-                IF(localLineFaceNumber>=1.AND.localLineFaceNumber<=basis%numberOfLocalLines) THEN
-                  SELECT CASE(basis%type)
-                  CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-                    SELECT CASE(numberOfXi)
-                    CASE(2)
-                      !2D element
-                      normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
-                      SELECT CASE(normalXi1)
-                      CASE(-2)
-                        fullXi(1)=boundaryXi(1)
-                        fullXi(2)=0.0_DP
-                      CASE(-1)
-                        fullXi(1)=0.0_DP
-                        fullXi(2)=boundaryXi(1)
-                      CASE(1)
-                        fullXi(1)=1.0_DP
-                        fullXi(2)=boundaryXi(1)
-                      CASE(2)
-                        fullXi(1)=boundaryXi(1)
-                        fullXi(2)=1.0_DP
-                      CASE DEFAULT
-                        localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                          & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                          & " on a Lagrange-Hermite basis with two xi directions."
-                        CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    CASE(3)
-                      !3D element
-                      normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
-                      normalXi2=basis%localLineXiNormals(2,localLineFaceNumber)
-                      SELECT CASE(normalXi1)
-                      CASE(-3)
-                        SELECT CASE(normalXi2)
-                        CASE(-2)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=0.0_DP
-                        CASE(-1)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=0.0_DP
-                        CASE(1)
-                          fullXi(1)=1.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=0.0_DP
-                        CASE(2)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=1.0_DP
-                          fullXi(3)=0.0_DP
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a Lagrange-Hermite basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE(-2)
-                        SELECT CASE(normalXi2)
-                        CASE(-3)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=0.0_DP
-                        CASE(-1)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(1)
-                          fullXi(1)=1.0_DP
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(3)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=1.0_DP
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a Lagrange-Hermite basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE(-1)
-                       SELECT CASE(normalXi2)
-                        CASE(-3)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=0.0_DP
-                        CASE(-2)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(2)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=1.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(3)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=1.0_DP
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a Lagrange-Hermite basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE(1)
-                        SELECT CASE(normalXi2)
-                        CASE(-3)
-                          fullXi(1)=1.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=0.0_DP
-                        CASE(-2)
-                          fullXi(1)=1.0_DP
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(2)
-                          fullXi(1)=1.0_DP
-                          fullXi(2)=1.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(3)
-                          fullXi(1)=1.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=1.0_DP
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a Lagrange-Hermite basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE(2)
-                        SELECT CASE(normalXi2)
-                        CASE(-3)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=1.0_DP
-                          fullXi(3)=0.0_DP
-                        CASE(-1)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=1.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(1)
-                          fullXi(1)=1.0_DP
-                          fullXi(2)=1.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(3)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=1.0_DP
-                          fullXi(3)=1.0_DP
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a Lagrange-Hermite basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE(3)
-                        SELECT CASE(normalXi2)
-                        CASE(-2)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=1.0_DP
-                        CASE(-1)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=1.0_DP
-                        CASE(1)
-                          fullXi(1)=1.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=1.0_DP
-                        CASE(2)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=1.0_DP
-                          fullXi(3)=1.0_DP
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a Lagrange-Hermite basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE DEFAULT
-                        localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                          & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                          & " on a basis with two xi directions."
-                        CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    CASE DEFAULT
-                      localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
-                        & " is invalid."
-                      CALL FlagError(localError,err,error,*999)
-                    END SELECT
-                  CASE(BASIS_SIMPLEX_TYPE)
-                    SELECT CASE(numberOfXi)
-                    CASE(2)
-                      !2D element
-                      normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
-                      SELECT CASE(normalXi1)
-                      CASE(1)
-                        fullXi(1)=0.0_DP
-                        fullXi(2)=boundaryXi(1)
-                      CASE(2)
-                        fullXi(1)=boundaryXi(1)
-                        fullXi(2)=0.0_DP
-                      CASE(3)
-                        fullXi(1)=boundaryXi(1)
-                        fullXi(2)=1.0_DP-boundaryXi(1)
-                      CASE DEFAULT
-                        localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                          & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                          & " on a simplex basis with two xi directions."
-                        CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    CASE(3)
-                      !3D element
-                      normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
-                      normalXi2=basis%localLineXiNormals(2,localLineFaceNumber)
-                      SELECT CASE(normalXi1)
-                      CASE(1)
-                        SELECT CASE(normalXi2)
-                        CASE(2)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(3)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=0.0_DP
-                        CASE(4)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=1.0_DP-boundaryXi(1)
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a simplex basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE(2)
-                        SELECT CASE(normalXi2)
-                        CASE(1)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=boundaryXi(1)
-                        CASE(3)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=0.0_DP
-                        CASE(4)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=1.0_DP-boundaryXi(1)
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a simplex basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE(3)
-                        SELECT CASE(normalXi2)
-                        CASE(1)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=0.0_DP
-                        CASE(2)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=0.0_DP
-                        CASE(4)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=1.0_DP-boundaryXi(1)
-                          fullXi(3)=0.0_DP
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a simplex basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE(4)
-                        SELECT CASE(normalXi2)
-                        CASE(1)
-                          fullXi(1)=0.0_DP
-                          fullXi(2)=boundaryXi(1)
-                          fullXi(3)=1.0_DP-boundaryXi(1)
-                        CASE(2)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=0.0_DP
-                          fullXi(3)=1.0_DP-boundaryXi(1)
-                        CASE(3)
-                          fullXi(1)=boundaryXi(1)
-                          fullXi(2)=1.0_DP-boundaryXi(1)
-                          fullXi(3)=0.0_DP
-                        CASE DEFAULT
-                          localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
-                            & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                            & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                            & " on a simplex basis with three xi directions."
-                          CALL FlagError(localError,err,error,*999)
-                        END SELECT
-                      CASE DEFAULT
-                        localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                          & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                          & " on a simplex basis with three xi directions."
-                        CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    CASE DEFAULT
-                      localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
-                        & " is invalid."
-                      CALL FlagError(localError,err,error,*999)
-                    END SELECT
-                  CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
-                    & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
-                    CALL FlagError("Not implemented.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    
+    numberOfBoundaryXi=SIZE(boundaryXi,1)    
+    numberOfXi=basis%numberOfXi
+    IF(numberOfBoundaryXi<=numberOfXi) THEN
+      IF(SIZE(fullXi,1)>=numberOfXi) THEN
+        IF(numberOfBoundaryXi==numberOfXi) THEN
+          !Basis is of the same dimension as the boundary so just copy over
+          fullXi(1:numberOfXi)=boundaryXi(1:numberOfXi)
+        ELSE
+          SELECT CASE(numberOfBoundaryXi)
+          CASE(1)
+            !On a line
+            IF(localLineFaceNumber>=1.AND.localLineFaceNumber<=basis%numberOfLocalLines) THEN
+              SELECT CASE(basis%TYPE)
+              CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+                SELECT CASE(numberOfXi)
+                CASE(2)
+                  !2D element
+                  normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
+                  SELECT CASE(normalXi1)
+                  CASE(-2)
+                    fullXi(1)=boundaryXi(1)
+                    fullXi(2)=0.0_DP
+                  CASE(-1)
+                    fullXi(1)=0.0_DP
+                    fullXi(2)=boundaryXi(1)
+                  CASE(1)
+                    fullXi(1)=1.0_DP
+                    fullXi(2)=boundaryXi(1)
+                  CASE(2)
+                    fullXi(1)=boundaryXi(1)
+                    fullXi(2)=1.0_DP
                   CASE DEFAULT
-                    localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
-                      & " for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" is invalid."
+                    localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                      & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                          & " on a Lagrange-Hermite basis with two xi directions."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
-                ELSE
-                  localError="The specified local line/face number of "// &
-                    & TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                    & " is invalid. The local line number must be >=1 and <= "// &
-                    & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)
-                ENDIF
-              CASE(2)
-                !On a face
-                IF(localLineFaceNumber>=1.AND.localLineFaceNumber<=basis%numberOfLocalFaces) THEN
-                  normalXi1=basis%localFaceXiNormal(localLineFaceNumber)
-                  SELECT CASE(basis%type)
-                  CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)                    
-                    SELECT CASE(normalXi1)
-                    CASE(-3)
-                      fullXi(1)=boundaryXi(1)
-                      fullXi(2)=boundaryXi(2)
-                      fullXi(3)=0.0_DP
+                CASE(3)
+                  !3D element
+                  normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
+                  normalXi2=basis%localLineXiNormals(2,localLineFaceNumber)
+                  SELECT CASE(normalXi1)
+                  CASE(-3)
+                    SELECT CASE(normalXi2)
                     CASE(-2)
                       fullXi(1)=boundaryXi(1)
                       fullXi(2)=0.0_DP
-                      fullXi(3)=boundaryXi(2)
+                      fullXi(3)=0.0_DP
                     CASE(-1)
                       fullXi(1)=0.0_DP
                       fullXi(2)=boundaryXi(1)
-                      fullXi(3)=boundaryXi(2)
+                      fullXi(3)=0.0_DP
                     CASE(1)
                       fullXi(1)=1.0_DP
                       fullXi(2)=boundaryXi(1)
-                      fullXi(3)=boundaryXi(2)
+                      fullXi(3)=0.0_DP
                     CASE(2)
                       fullXi(1)=boundaryXi(1)
                       fullXi(2)=1.0_DP
-                      fullXi(3)=boundaryXi(2)
-                    CASE(3)
-                      fullXi(1)=boundaryXi(1)
-                      fullXi(2)=boundaryXi(2)
-                      fullXi(3)=1.0_DP
+                      fullXi(3)=0.0_DP
                     CASE DEFAULT
-                      localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                        & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
                         & " on a Lagrange-Hermite basis with three xi directions."
                       CALL FlagError(localError,err,error,*999)
                     END SELECT
-                  CASE(BASIS_SIMPLEX_TYPE)
-                    SELECT CASE(normalXi1)
-                    CASE(1)
-                      fullXi(1)=0.0_DP
-                      fullXi(2)=boundaryXi(1)
-                      fullXi(3)=boundaryXi(2)
-                    CASE(2)
+                  CASE(-2)
+                    SELECT CASE(normalXi2)
+                    CASE(-3)
                       fullXi(1)=boundaryXi(1)
                       fullXi(2)=0.0_DP
-                      fullXi(3)=1-boundaryXi(1)-boundaryXi(2)
+                      fullXi(3)=0.0_DP
+                    CASE(-1)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(1)
+                      fullXi(1)=1.0_DP
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=boundaryXi(1)
                     CASE(3)
                       fullXi(1)=boundaryXi(1)
-                      fullXi(2)=boundaryXi(2)
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=1.0_DP
+                    CASE DEFAULT
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a Lagrange-Hermite basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(-1)
+                    SELECT CASE(normalXi2)
+                    CASE(-3)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=0.0_DP
+                    CASE(-2)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(2)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=1.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(3)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=1.0_DP
+                    CASE DEFAULT
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a Lagrange-Hermite basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(1)
+                    SELECT CASE(normalXi2)
+                    CASE(-3)
+                      fullXi(1)=1.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=0.0_DP
+                    CASE(-2)
+                      fullXi(1)=1.0_DP
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(2)
+                      fullXi(1)=1.0_DP
+                      fullXi(2)=1.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(3)
+                      fullXi(1)=1.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=1.0_DP
+                    CASE DEFAULT
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a Lagrange-Hermite basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(2)
+                    SELECT CASE(normalXi2)
+                    CASE(-3)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=1.0_DP
+                      fullXi(3)=0.0_DP
+                    CASE(-1)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=1.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(1)
+                      fullXi(1)=1.0_DP
+                      fullXi(2)=1.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(3)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=1.0_DP
+                      fullXi(3)=1.0_DP
+                    CASE DEFAULT
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a Lagrange-Hermite basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(3)
+                    SELECT CASE(normalXi2)
+                    CASE(-2)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=1.0_DP
+                    CASE(-1)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=1.0_DP
+                    CASE(1)
+                      fullXi(1)=1.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=1.0_DP
+                    CASE(2)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=1.0_DP
+                      fullXi(3)=1.0_DP
+                    CASE DEFAULT
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a Lagrange-Hermite basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE DEFAULT
+                    localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                      & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                      & " on a basis with two xi directions."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                CASE DEFAULT
+                  localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              CASE(BASIS_SIMPLEX_TYPE)
+                SELECT CASE(numberOfXi)
+                CASE(2)
+                  !2D element
+                  normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
+                  SELECT CASE(normalXi1)
+                  CASE(1)
+                    fullXi(1)=0.0_DP
+                    fullXi(2)=boundaryXi(1)
+                  CASE(2)
+                    fullXi(1)=boundaryXi(1)
+                    fullXi(2)=0.0_DP
+                  CASE(3)
+                    fullXi(1)=boundaryXi(1)
+                    fullXi(2)=1.0_DP-boundaryXi(1)
+                  CASE DEFAULT
+                    localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                      & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                      & " on a simplex basis with two xi directions."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                CASE(3)
+                  !3D element
+                  normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
+                  normalXi2=basis%localLineXiNormals(2,localLineFaceNumber)
+                  SELECT CASE(normalXi1)
+                  CASE(1)
+                    SELECT CASE(normalXi2)
+                    CASE(2)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(3)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
                       fullXi(3)=0.0_DP
                     CASE(4)
-                      fullXi(1)=boundaryXi(1)
-                      fullXi(2)=1.0_DP-boundaryXi(1)-boundaryXi(2)
-                      fullXi(3)=boundaryXi(2)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=1.0_DP-boundaryXi(1)
                     CASE DEFAULT
-                      localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
-                        & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
                         & " on a simplex basis with three xi directions."
                       CALL FlagError(localError,err,error,*999)
                     END SELECT
-                  CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
-                    & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
-                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(2)
+                    SELECT CASE(normalXi2)
+                    CASE(1)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=boundaryXi(1)
+                    CASE(3)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=0.0_DP
+                    CASE(4)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=1.0_DP-boundaryXi(1)
+                    CASE DEFAULT
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a simplex basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(3)
+                    SELECT CASE(normalXi2)
+                    CASE(1)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=0.0_DP
+                    CASE(2)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=0.0_DP
+                    CASE(4)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=1.0_DP-boundaryXi(1)
+                      fullXi(3)=0.0_DP
+                    CASE DEFAULT
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a simplex basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                  CASE(4)
+                    SELECT CASE(normalXi2)
+                    CASE(1)
+                      fullXi(1)=0.0_DP
+                      fullXi(2)=boundaryXi(1)
+                      fullXi(3)=1.0_DP-boundaryXi(1)
+                    CASE(2)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=0.0_DP
+                      fullXi(3)=1.0_DP-boundaryXi(1)
+                    CASE(3)
+                      fullXi(1)=boundaryXi(1)
+                      fullXi(2)=1.0_DP-boundaryXi(1)
+                      fullXi(3)=0.0_DP
+                    CASE DEFAULT
+                      localError="The second normal xi direction of "//TRIM(NumberToVString(normalXi2,"*",err,error))// &
+                        & " with a first normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                        & " is invalid for local line number "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                        & " on a simplex basis with three xi directions."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
                   CASE DEFAULT
-                    localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
-                      & " for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" is invalid."
+                    localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                      & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                      & " on a simplex basis with three xi directions."
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
-                ELSE
-                  localError="The specified local line/face number of "// &
-                    & TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
-                    & " is invalid. The local face number must be >=1 and <= "// &
-                    & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//"."
+                CASE DEFAULT
+                  localError="The number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
+                    & " is invalid."
                   CALL FlagError(localError,err,error,*999)
-                ENDIF
+                END SELECT
+              CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+                & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+                CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
-                localError="Invalid number of boundary xi directions. The number of boundary xi directions of "// &
-                  & TRIM(NumberToVString(numberOfBoundaryXi,"*",err,error))//" must be <= the number of basis xi directions of "// &
-                  & TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+                localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
+                  & " for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
+            ELSE
+              localError="The specified local line/face number of "// &
+                & TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                & " is invalid. The local line number must be >=1 and <= "// &
+                & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
             ENDIF
-          ELSE
-            localError="The size of the full xi array of "//TRIM(NumberToVString(SIZE(fullXi,1),"*",err,error))// &
-              & " must be >= the number of basis xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+          CASE(2)
+            !On a face
+            IF(localLineFaceNumber>=1.AND.localLineFaceNumber<=basis%numberOfLocalFaces) THEN
+              normalXi1=basis%localFaceXiNormal(localLineFaceNumber)
+              SELECT CASE(basis%TYPE)
+              CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)                    
+                SELECT CASE(normalXi1)
+                CASE(-3)
+                  fullXi(1)=boundaryXi(1)
+                  fullXi(2)=boundaryXi(2)
+                  fullXi(3)=0.0_DP
+                CASE(-2)
+                  fullXi(1)=boundaryXi(1)
+                  fullXi(2)=0.0_DP
+                  fullXi(3)=boundaryXi(2)
+                CASE(-1)
+                  fullXi(1)=0.0_DP
+                  fullXi(2)=boundaryXi(1)
+                  fullXi(3)=boundaryXi(2)
+                CASE(1)
+                  fullXi(1)=1.0_DP
+                  fullXi(2)=boundaryXi(1)
+                  fullXi(3)=boundaryXi(2)
+                CASE(2)
+                  fullXi(1)=boundaryXi(1)
+                  fullXi(2)=1.0_DP
+                  fullXi(3)=boundaryXi(2)
+                CASE(3)
+                  fullXi(1)=boundaryXi(1)
+                  fullXi(2)=boundaryXi(2)
+                  fullXi(3)=1.0_DP
+                CASE DEFAULT
+                  localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                    & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                    & " on a Lagrange-Hermite basis with three xi directions."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              CASE(BASIS_SIMPLEX_TYPE)
+                SELECT CASE(normalXi1)
+                CASE(1)
+                  fullXi(1)=0.0_DP
+                  fullXi(2)=boundaryXi(1)
+                  fullXi(3)=boundaryXi(2)
+                CASE(2)
+                  fullXi(1)=boundaryXi(1)
+                  fullXi(2)=0.0_DP
+                  fullXi(3)=1-boundaryXi(1)-boundaryXi(2)
+                CASE(3)
+                  fullXi(1)=boundaryXi(1)
+                  fullXi(2)=boundaryXi(2)
+                  fullXi(3)=0.0_DP
+                CASE(4)
+                  fullXi(1)=boundaryXi(1)
+                  fullXi(2)=1.0_DP-boundaryXi(1)-boundaryXi(2)
+                  fullXi(3)=boundaryXi(2)
+                CASE DEFAULT
+                  localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
+                    & " is invalid for a local line "//TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                    & " on a simplex basis with three xi directions."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              CASE(BASIS_SERENDIPITY_TYPE,BASIS_AUXILLIARY_TYPE,BASIS_B_SPLINE_TP_TYPE, &
+                & BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE DEFAULT
+                localError="The basis type of "//TRIM(NumberToVString(basis%TYPE,"*",err,error))// &
+                  & " for basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ELSE
+              localError="The specified local line/face number of "// &
+                & TRIM(NumberToVString(localLineFaceNumber,"*",err,error))// &
+                & " is invalid. The local face number must be >=1 and <= "// &
+                & TRIM(NumberToVString(basis%numberOfLocalFaces,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          CASE DEFAULT
+            localError="Invalid number of boundary xi directions. The number of boundary xi directions of "// &
+              & TRIM(NumberToVString(numberOfBoundaryXi,"*",err,error))//" must be <= the number of basis xi directions of "// &
+              & TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ELSE
-          localError="The size of the boundary xi array of "//TRIM(NumberToVString(numberOfBoundaryXi,"*",err,error))// &
-            & " is invalid. The size must be >= 1 and <= 2."
-          CALL FlagError(localError,err,error,*999)          
+          END SELECT
         ENDIF
       ELSE
-        CALL FlagError("Basis has not been finished.",err,error,*999)
+        localError="The size of the full xi array of "//TRIM(NumberToVString(SIZE(fullXi,1),"*",err,error))// &
+          & " must be >= the number of basis xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      localError="The size of the boundary xi array of "//TRIM(NumberToVString(numberOfBoundaryXi,"*",err,error))// &
+        & " is invalid. The size must be >= 1 and <= 2."
+      CALL FlagError(localError,err,error,*999)          
     ENDIF
     
     EXITS("Basis_BoundaryXiToXi")
@@ -1390,8 +1383,7 @@ CONTAINS
     localLineFaceNumber=0
     boundaryXi=0.0_DP
     
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
     numberOfXi=basis%numberOfXi
     numberOfXiCoordinates=basis%numberOfXiCoordinates
     IF(SIZE(fullXi,1)<numberOfXi) THEN
@@ -2189,110 +2181,97 @@ CONTAINS
   !
   
   !>Gets/changes the interpolation type in each xi directions for a basis identified by a pointer.
-  SUBROUTINE BASIS_INTERPOLATION_XI_GET(BASIS,INTERPOLATION_XI,err,error,*)
+  SUBROUTINE Basis_InterpolationXiGet(basis,interpolationXi,err,error,*)
 
     !Argument variables
-    TYPE(BasisType), POINTER :: BASIS !<A pointer to the basis to get the interpolation xi
-    INTEGER(INTG), INTENT(OUT) :: INTERPOLATION_XI(:) !<On return, the interpolation xi parameters for each Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the interpolation xi
+    INTEGER(INTG), INTENT(OUT) :: interpolationXi(:) !<On return, the interpolation xi parameters for each Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("BASIS_INTERPOLATION_XI_GET",err,error,*999)
+    ENTERS("Basis_InterpolationXiGet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        IF(SIZE(INTERPOLATION_XI,1)>=SIZE(BASIS%interpolationXi,1)) THEN
-          INTERPOLATION_XI=BASIS%interpolationXi
-        ELSE
-          LOCAL_ERROR="The size of INTERPOLATION_XI is too small. The supplied size is "// &
-            & TRIM(NumberToVString(SIZE(INTERPOLATION_XI,1),"*",err,error))//" and it needs to be >= "// &
-            & TRIM(NumberToVString(SIZE(BASIS%interpolationXi,1),"*",err,error))//"."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Basis has not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(SIZE(interpolationXi,1)<SIZE(basis%interpolationXi,1)) THEN
+      localError="The size of interpolation xi is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(interpolationXi,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(SIZE(basis%interpolationXi,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("BASIS_INTERPOLATION_XI_GET")
+    interpolationXi(1:SIZE(basis%interpolationXi,1))=basis%interpolationXi(1:SIZE(basis%interpolationXi,1))
+    
+    EXITS("Basis_InterpolationXiGet")
     RETURN
-999 ERRORSEXITS("BASIS_INTERPOLATION_XI_GET",err,error)
-    RETURN
-  END SUBROUTINE BASIS_INTERPOLATION_XI_GET
-  
+999 ERRORSEXITS("Basis_InterpolationXiGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_InterpolationXiGet  
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_BasisInterpolationXiSet
-  SUBROUTINE Basis_InterpolationXiSet(BASIS,INTERPOLATION_XI,err,error,*)
+  SUBROUTINE Basis_InterpolationXiSet(basis,interpolationXi,err,error,*)
 
     !Argument variables
-    TYPE(BasisType), POINTER :: BASIS !<A pointer to the basis to set the interpolation xi
-    INTEGER(INTG), INTENT(IN) :: INTERPOLATION_XI(:) !<The interpolation xi parameters for each Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to set the interpolation xi
+    INTEGER(INTG), INTENT(IN) :: interpolationXi(:) !<The interpolation xi parameters for each Xi direction \see BASIS_ROUTINES_InterpolationSpecifications
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: ni,LAST_INTERP
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: xiIdx,lastInterpolation
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Basis_InterpolationXiSet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        CALL FlagError("Basis has been finished",err,error,*999)
-      ELSE
-        IF(SIZE(INTERPOLATION_XI,1)==BASIS%numberOfXi) THEN
-          !Check the input values
-          SELECT CASE(BASIS%TYPE)
-          CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-            DO ni=1,BASIS%numberOfXi
-              SELECT CASE(INTERPOLATION_XI(ni))
-              CASE(BASIS_LINEAR_LAGRANGE_INTERPOLATION,BASIS_QUADRATIC_LAGRANGE_INTERPOLATION,BASIS_CUBIC_LAGRANGE_INTERPOLATION, &
-                & BASIS_CUBIC_HERMITE_INTERPOLATION,BASIS_QUADRATIC1_HERMITE_INTERPOLATION,BASIS_QUADRATIC2_HERMITE_INTERPOLATION)
-                !Do nothing
-              CASE DEFAULT
-                LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(INTERPOLATION_XI(ni),"*",err,error))// &
-                  & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid for a Lagrange-Hermite TP basis."
-                CALL FlagError(LOCAL_ERROR,err,error,*999)
-              END SELECT
-            ENDDO !ni
-          CASE(BASIS_SIMPLEX_TYPE)
-            LAST_INTERP=INTERPOLATION_XI(1)
-            DO ni=1,BASIS%numberOfXi
-              SELECT CASE(INTERPOLATION_XI(ni))
-              CASE(BASIS_LINEAR_SIMPLEX_INTERPOLATION,BASIS_QUADRATIC_SIMPLEX_INTERPOLATION,BASIS_CUBIC_SIMPLEX_INTERPOLATION)
-                IF(INTERPOLATION_XI(ni)/=LAST_INTERP) THEN
-                  CALL FlagError("The interpolation xi value must be the same for all xi directions for a simplex basis.", &
-                    & err,error,*999)
-                ENDIF
-              CASE DEFAULT
-                LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(INTERPOLATION_XI(ni),"*",err,error))// &
-                  & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid for a simplex basis."
-                CALL FlagError(LOCAL_ERROR,err,error,*999)
-              END SELECT
-            ENDDO !ni
-          CASE DEFAULT
-            CALL FlagError("Invalid basis type or not implemented",err,error,*999)
-          END SELECT
-          !Set the interpolation xi
-          BASIS%interpolationXi(1:BASIS%numberOfXi)=INTERPOLATION_XI(1:BASIS%numberOfXi)
-        ELSE
-          LOCAL_ERROR="The size of the interpolation xi array ("// &
-            & TRIM(NumberToVString(SIZE(INTERPOLATION_XI,1),"*",err,error))//") does not match the number of xi directions ("// &
-            & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//") for basis number "// &
-            & TRIM(NumberToVString(BASIS%userNumber,"*",err,error))//"."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
+    IF(SIZE(interpolationXi,1)<BASIS%numberOfXi) THEN
+      localError="The size of the specified interpolation xi array of "// &
+        & TRIM(NumberToVString(SIZE(interpolationXi,1),"*",err,error))//" does not match the number of xi directions of "// &
+        & TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" for basis number "// &
+        & TRIM(NumberToVString(basis%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    !Check the input values
+    SELECT CASE(basis%type)
+    CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+      DO xiIdx=1,basis%numberOfXi
+        SELECT CASE(interpolationXi(xiIdx))
+        CASE(BASIS_LINEAR_LAGRANGE_INTERPOLATION,BASIS_QUADRATIC_LAGRANGE_INTERPOLATION,BASIS_CUBIC_LAGRANGE_INTERPOLATION, &
+          & BASIS_CUBIC_HERMITE_INTERPOLATION,BASIS_QUADRATIC1_HERMITE_INTERPOLATION,BASIS_QUADRATIC2_HERMITE_INTERPOLATION)
+          !Do nothing
+        CASE DEFAULT
+          localError="Interpolation xi value "//TRIM(NumberToVString(interpolationXi(xiIdx),"*",err,error))// &
+            & " for xi direction "//TRIM(NumberToVString(xiIdx,"*",err,error))//" is invalid for a Lagrange-Hermite TP basis."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDDO !xiIdx
+    CASE(BASIS_SIMPLEX_TYPE)
+      lastInterpolation=interpolationXi(1)
+      DO xiIdx=1,basis%numberOfXi
+        SELECT CASE(interpolationXi(xiIdx))
+        CASE(BASIS_LINEAR_SIMPLEX_INTERPOLATION,BASIS_QUADRATIC_SIMPLEX_INTERPOLATION,BASIS_CUBIC_SIMPLEX_INTERPOLATION)
+          IF(interpolationXi(xiIdx)/=lastInterpolation) THEN
+            CALL FlagError("The interpolation xi value must be the same for all xi directions for a simplex basis.", &
+              & err,error,*999)
+          ENDIF
+        CASE DEFAULT
+          localError="Interpolation xi value "//TRIM(NumberToVString(interpolationXi(xiIdx),"*",err,error))// &
+            & " for xi direction "//TRIM(NumberToVString(xiIdx,"*",err,error))//" is invalid for a simplex basis."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDDO !xiIdx
+    CASE DEFAULT
+      CALL FlagError("Invalid basis type or not implemented",err,error,*999)
+    END SELECT
+    
+    !Set the interpolation xi
+    basis%interpolationXi(1:basis%numberOfXi)=interpolationXi(1:basis%numberOfXi)
     
     EXITS("Basis_InterpolationXiSet")
     RETURN
@@ -3422,59 +3401,53 @@ CONTAINS
     
     ENTERS("BASIS_LOCAL_NODE_XI_CALCULATE",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        IF(LOCAL_NODE_NUMBER>0.AND.LOCAL_NODE_NUMBER<=BASIS%numberOfNodes) THEN
-          IF(SIZE(XI,1)>=BASIS%numberOfXi) THEN
-            SELECT CASE(BASIS%TYPE)
-            CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-              DO xi_idx=1,BASIS%numberOfXi
-                XI(xi_idx)=REAL(BASIS%nodePositionIndex(LOCAL_NODE_NUMBER,xi_idx)-1,DP)/ &
-                  & REAL(BASIS%numberOfNodesXiC(xi_idx)-1,DP)
-              ENDDO !xi_idx
-            CASE(BASIS_SIMPLEX_TYPE)
-              DO xi_idx=1,BASIS%numberOfXi
-                XI(xi_idx)=REAL(BASIS%numberOfNodesXiC(xi_idx)-BASIS%nodePositionIndex(LOCAL_NODE_NUMBER,xi_idx),DP)/ &
-                  & REAL(BASIS%numberOfNodesXiC(xi_idx)-1,DP)
-              ENDDO !xi_idx
-            CASE(BASIS_SERENDIPITY_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(BASIS_AUXILLIARY_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(BASIS_B_SPLINE_TP_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="The basis type of "//TRIM(NumberToVString(BASIS%TYPE,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-          ELSE
-            LOCAL_ERROR="The size of the specified xic array of "//TRIM(NumberToVString(SIZE(XI,1),"*",err,error))// &
-              & " is invalid. The size of the xi array must be >= "// &
-              & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//"."            
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The specified local node number of "//TRIM(NumberToVString(LOCAL_NODE_NUMBER,"*",err,error))// &
-            & " is invalid. The local node number must be > 0 and <= "// &
-            & TRIM(NumberToVString(BASIS%numberOfNodes,"*",err,error))//"."
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(LOCAL_NODE_NUMBER>0.AND.LOCAL_NODE_NUMBER<=BASIS%numberOfNodes) THEN
+      IF(SIZE(XI,1)>=BASIS%numberOfXi) THEN
+        SELECT CASE(BASIS%TYPE)
+        CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+          DO xi_idx=1,BASIS%numberOfXi
+            XI(xi_idx)=REAL(BASIS%nodePositionIndex(LOCAL_NODE_NUMBER,xi_idx)-1,DP)/ &
+              & REAL(BASIS%numberOfNodesXiC(xi_idx)-1,DP)
+          ENDDO !xi_idx
+        CASE(BASIS_SIMPLEX_TYPE)
+          DO xi_idx=1,BASIS%numberOfXi
+            XI(xi_idx)=REAL(BASIS%numberOfNodesXiC(xi_idx)-BASIS%nodePositionIndex(LOCAL_NODE_NUMBER,xi_idx),DP)/ &
+              & REAL(BASIS%numberOfNodesXiC(xi_idx)-1,DP)
+          ENDDO !xi_idx
+        CASE(BASIS_SERENDIPITY_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(BASIS_AUXILLIARY_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(BASIS_B_SPLINE_TP_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          LOCAL_ERROR="The basis type of "//TRIM(NumberToVString(BASIS%TYPE,"*",err,error))// &
+            & " is invalid."
           CALL FlagError(LOCAL_ERROR,err,error,*999)
-        ENDIF
+        END SELECT
       ELSE
-        CALL FlagError("Basis has not been finished.",err,error,*999)
+        LOCAL_ERROR="The size of the specified xic array of "//TRIM(NumberToVString(SIZE(XI,1),"*",err,error))// &
+          & " is invalid. The size of the xi array must be >= "// &
+          & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//"."            
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",err,error,*999)
+      LOCAL_ERROR="The specified local node number of "//TRIM(NumberToVString(LOCAL_NODE_NUMBER,"*",err,error))// &
+        & " is invalid. The local node number must be > 0 and <= "// &
+        & TRIM(NumberToVString(BASIS%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(LOCAL_ERROR,err,error,*999)
     ENDIF
     
     EXITS("BASIS_LOCAL_NODE_XI_CALCULATE")
     RETURN
 999 ERRORSEXITS("BASIS_LOCAL_NODE_XI_CALCULATE",err,error)
     RETURN 1
+    
   END SUBROUTINE BASIS_LOCAL_NODE_XI_CALCULATE
 
   !
@@ -3521,8 +3494,7 @@ CONTAINS
     
     ENTERS("Basis_NumberOfXiGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(.NOT.basis%basisFinished) CALL FlagError("Basis has not been finished.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
     
     numberOfXi=basis%numberOfXi
    
@@ -3551,8 +3523,7 @@ CONTAINS
     
     ENTERS("Basis_NumberOfXiSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(basis)) CALL FlagError("Basis is not associated.",err,error,*999)
-    IF(basis%basisFinished) CALL FlagError("Basis has already been finished.",err,error,*999)
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
     IF(numberOfXi<1.OR.numberOfXi>3) THEN
       localError="The specified number of xi directions of "//TRIM(NumberToVString(numberOfXi,"*",err,error))// &
         & " is invalid. The number of xi directions must be >= 1 and <=3."
@@ -4188,35 +4159,27 @@ CONTAINS
     
     ENTERS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-          IF(SIZE(QUADRATURE_NUMBER_OF_GAUSS_XI,1)>=SIZE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI,1)) THEN
-            QUADRATURE_NUMBER_OF_GAUSS_XI=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI
-          ELSE
-            LOCAL_ERROR="The size of QUADRATURE_NUMBER_OF_GAUSS_XI is too small. The supplied size is "// &
-              & TRIM(NumberToVString(SIZE(QUADRATURE_NUMBER_OF_GAUSS_XI,1),"*",err,error))//" and it needs to be >= "// &
-              & TRIM(NumberToVString(SIZE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI,1),"*",err,error))//"."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
-        ENDIF
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
+      IF(SIZE(QUADRATURE_NUMBER_OF_GAUSS_XI,1)>=SIZE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI,1)) THEN
+        QUADRATURE_NUMBER_OF_GAUSS_XI=BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI
       ELSE
-        CALL FlagError("Basis has not finished.",err,error,*999)
+        LOCAL_ERROR="The size of QUADRATURE_NUMBER_OF_GAUSS_XI is too small. The supplied size is "// &
+          & TRIM(NumberToVString(SIZE(QUADRATURE_NUMBER_OF_GAUSS_XI,1),"*",err,error))//" and it needs to be >= "// &
+          & TRIM(NumberToVString(SIZE(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI,1),"*",err,error))//"."
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      CALL FlagError("Quadrature basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET")
     RETURN
 999 ERRORSEXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET",err,error)
-    RETURN
+    RETURN 1
+    
   END SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_GET
     
-  !
-  !================================================================================================================================
   !
   !================================================================================================================================
   !
@@ -4235,79 +4198,73 @@ CONTAINS
     
     ENTERS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        CALL FlagError("Basis has been finished.",err,error,*999)
-      ELSE
-        IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN          
-          IF(SIZE(NUMBER_OF_GAUSS_XI,1)==BASIS%numberOfXi) THEN
-            IF(ANY(NUMBER_OF_GAUSS_XI<1)) CALL FlagError("Invalid number of gauss values.",err,error,*999)
-            BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%numberOfXi)=NUMBER_OF_GAUSS_XI(1:BASIS%numberOfXi)
-            !Check the number of gauss points is sufficient for the interpolation order and flag a warning if not
-            DO ni=1,BASIS%numberOfXi
-              SELECT CASE(BASIS%interpolationXi(ni))
-              CASE(BASIS_LINEAR_LAGRANGE_INTERPOLATION)
-                IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
-                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))// &
-                    & " Gauss points are insufficient for linear Lagrange interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
-                ENDIF
-              CASE(BASIS_QUADRATIC_LAGRANGE_INTERPOLATION)
-                IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
-                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
-                    & " Gauss points are insufficient for quadratic Lagrange interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
-                ENDIF
-              CASE(BASIS_CUBIC_LAGRANGE_INTERPOLATION)
-                IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<3) THEN
-                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
-                    & " Gauss points are insufficient for cubic Lagrange interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
-                ENDIF
-               CASE(BASIS_QUADRATIC1_HERMITE_INTERPOLATION,BASIS_QUADRATIC2_HERMITE_INTERPOLATION)
-                IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
-                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
-                    & " Gauss points are insufficient for quadratic Hermite interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
-                ENDIF
-              CASE(BASIS_CUBIC_HERMITE_INTERPOLATION)
-                IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<3) THEN
-                  LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
-                    & " Gauss points are insufficient for cubic Hermite interpolation."
-                  CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
-                ENDIF
-              CASE(BASIS_LINEAR_SIMPLEX_INTERPOLATION)
-                LOCAL_WARNING="For simplex elements please set quadrature order rather than number of gauss points."
-                CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
-              CASE(BASIS_QUADRATIC_SIMPLEX_INTERPOLATION)
-                LOCAL_WARNING="For simplex elements please set quadrature order rather than number of gauss points."
-                CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
-              CASE DEFAULT
-                LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(BASIS%interpolationXi(ni),"*",err,error))// &
-                  & " is invalid for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//"."
-                CALL FlagError(LOCAL_ERROR,err,error,*999)
-              END SELECT
-            ENDDO !xi
-          ELSE
-            LOCAL_ERROR="The size of the number of Gauss array ("// &
-              & TRIM(NumberToVString(SIZE(NUMBER_OF_GAUSS_XI,1),"*",err,error))// &
-              & ") does not match the number of xi directions ("// &
-              & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//") for basis number "// &
-              & TRIM(NumberToVString(BASIS%userNumber,"*",err,error))//"."
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
+    IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN          
+      IF(SIZE(NUMBER_OF_GAUSS_XI,1)==BASIS%numberOfXi) THEN
+        IF(ANY(NUMBER_OF_GAUSS_XI<1)) CALL FlagError("Invalid number of gauss values.",err,error,*999)
+        BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(1:BASIS%numberOfXi)=NUMBER_OF_GAUSS_XI(1:BASIS%numberOfXi)
+        !Check the number of gauss points is sufficient for the interpolation order and flag a warning if not
+        DO ni=1,BASIS%numberOfXi
+          SELECT CASE(BASIS%interpolationXi(ni))
+          CASE(BASIS_LINEAR_LAGRANGE_INTERPOLATION)
+            IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
+              LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))// &
+                & " Gauss points are insufficient for linear Lagrange interpolation."
+              CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
+            ENDIF
+          CASE(BASIS_QUADRATIC_LAGRANGE_INTERPOLATION)
+            IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
+              LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
+                & " Gauss points are insufficient for quadratic Lagrange interpolation."
+              CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
+            ENDIF
+          CASE(BASIS_CUBIC_LAGRANGE_INTERPOLATION)
+            IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<3) THEN
+              LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
+                & " Gauss points are insufficient for cubic Lagrange interpolation."
+              CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
+            ENDIF
+          CASE(BASIS_QUADRATIC1_HERMITE_INTERPOLATION,BASIS_QUADRATIC2_HERMITE_INTERPOLATION)
+            IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<2) THEN
+              LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
+                & " Gauss points are insufficient for quadratic Hermite interpolation."
+              CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
+            ENDIF
+          CASE(BASIS_CUBIC_HERMITE_INTERPOLATION)
+            IF(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni)<3) THEN
+              LOCAL_WARNING=TRIM(NumberToVString(BASIS%QUADRATURE%NUMBER_OF_GAUSS_XI(ni),"*",err,error))//&
+                & " Gauss points are insufficient for cubic Hermite interpolation."
+              CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
+            ENDIF
+          CASE(BASIS_LINEAR_SIMPLEX_INTERPOLATION)
+            LOCAL_WARNING="For simplex elements please set quadrature order rather than number of gauss points."
+            CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
+          CASE(BASIS_QUADRATIC_SIMPLEX_INTERPOLATION)
+            LOCAL_WARNING="For simplex elements please set quadrature order rather than number of gauss points."
+            CALL FLAG_WARNING(LOCAL_WARNING,err,error,*999)
+          CASE DEFAULT
+            LOCAL_ERROR="Interpolation xi value "//TRIM(NumberToVString(BASIS%interpolationXi(ni),"*",err,error))// &
+              & " is invalid for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//"."
             CALL FlagError(LOCAL_ERROR,err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
-        ENDIF
+          END SELECT
+        ENDDO !xi
+      ELSE
+        LOCAL_ERROR="The size of the number of Gauss array ("// &
+          & TRIM(NumberToVString(SIZE(NUMBER_OF_GAUSS_XI,1),"*",err,error))// &
+          & ") does not match the number of xi directions ("// &
+          & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//") for basis number "// &
+          & TRIM(NumberToVString(BASIS%userNumber,"*",err,error))//"."
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      CALL FlagError("Quadrature basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET")
     RETURN
 999 ERRORSEXITS("BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET",err,error)
     RETURN 1
+    
   END SUBROUTINE BASIS_QUADRATURE_NUMBER_OF_GAUSS_XI_SET
   !
   !================================================================================================================================
@@ -4329,43 +4286,37 @@ CONTAINS
     
     ENTERS("BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-          QUADRATURE_SCHEME=>BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(SCHEME)%PTR
-          IF(ASSOCIATED(QUADRATURE_SCHEME)) THEN
-            IF(SIZE(GAUSS_XI)==BASIS%numberOfXi) THEN
-              IF(GAUSS_POINT>0.AND.GAUSS_POINT<=QUADRATURE_SCHEME%NUMBER_OF_GAUSS) THEN
-                GAUSS_XI(:)=QUADRATURE_SCHEME%GAUSS_POSITIONS(:,GAUSS_POINT)
-              ELSE
-                LOCAL_ERROR="The specified Gauss point number of "// & 
-                  & TRIM(NumberToVString(GAUSS_POINT,"*",err,error))//" is invalid for the specified "// &
-                  & "quadrature scheme of the specified element for this field which has "// &
-                  & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//" Gauss points."
-                CALL FlagError(LOCAL_ERROR,err,error,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The number of xi values to return is invalid and needs to be "// &
-                & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//" for the specified basis."
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
+      QUADRATURE_SCHEME=>BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(SCHEME)%PTR
+      IF(ASSOCIATED(QUADRATURE_SCHEME)) THEN
+        IF(SIZE(GAUSS_XI)==BASIS%numberOfXi) THEN
+          IF(GAUSS_POINT>0.AND.GAUSS_POINT<=QUADRATURE_SCHEME%NUMBER_OF_GAUSS) THEN
+            GAUSS_XI(:)=QUADRATURE_SCHEME%GAUSS_POSITIONS(:,GAUSS_POINT)
           ELSE
-            CALL FlagError("The specified quadrature scheme is not associated for this basis.",err,error,*999)
+            LOCAL_ERROR="The specified Gauss point number of "// & 
+              & TRIM(NumberToVString(GAUSS_POINT,"*",err,error))//" is invalid for the specified "// &
+              & "quadrature scheme of the specified element for this field which has "// &
+              & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//" Gauss points."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
           ENDIF
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
+          LOCAL_ERROR="The number of xi values to return is invalid and needs to be "// &
+            & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//" for the specified basis."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not finished.",err,error,*999)
+        CALL FlagError("The specified quadrature scheme is not associated for this basis.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      CALL FlagError("Quadrature basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET")
     RETURN
 999 ERRORSEXITS("BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET",err,error)
-    RETURN
+    RETURN 1
+    
   END SUBROUTINE BASIS_QUADRATURE_SINGLE_GAUSS_XI_GET
 
   !
@@ -4389,55 +4340,49 @@ CONTAINS
     
     ENTERS("BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-          QUADRATURE_SCHEME=>BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(SCHEME)%PTR
-          IF(ASSOCIATED(QUADRATURE_SCHEME)) THEN
-            IF(SIZE(GAUSS_XI,1)==BASIS%numberOfXi) THEN
-              IF(SIZE(GAUSS_POINTS)==0) THEN !Return all Gauss point xi locations.
-                IF(SIZE(GAUSS_XI,2)==QUADRATURE_SCHEME%NUMBER_OF_GAUSS) THEN
-                  GAUSS_XI=QUADRATURE_SCHEME%GAUSS_POSITIONS
-                ELSE
-                  LOCAL_ERROR="The number of Gauss Points to return the xi values for is invalid and needs to be "// &
-                    & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//"."
-                  CALL FlagError(LOCAL_ERROR,err,error,*999)
-                ENDIF
-              ELSE !Return only specified Gauss point xi locations.
-                DO Gauss_point=1,SIZE(GAUSS_POINTS)
-                  IF(GAUSS_POINTS(Gauss_point)>0.AND.GAUSS_POINTS(Gauss_point)<=QUADRATURE_SCHEME%NUMBER_OF_GAUSS) THEN
-                    GAUSS_XI(:,Gauss_point)=QUADRATURE_SCHEME%GAUSS_POSITIONS(:,GAUSS_POINTS(Gauss_point))
-                  ELSE
-                    LOCAL_ERROR="The specified Gauss point number of "// & 
-                      & TRIM(NumberToVString(GAUSS_POINTS(Gauss_point),"*",err,error))//" is invalid for the specified "// &
-                      & "quadrature scheme of the specified element for this field which has "// &
-                      & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//" Gauss points."
-                    CALL FlagError(LOCAL_ERROR,err,error,*999)
-                  ENDIF
-                ENDDO
-              ENDIF
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
+      QUADRATURE_SCHEME=>BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(SCHEME)%PTR
+      IF(ASSOCIATED(QUADRATURE_SCHEME)) THEN
+        IF(SIZE(GAUSS_XI,1)==BASIS%numberOfXi) THEN
+          IF(SIZE(GAUSS_POINTS)==0) THEN !Return all Gauss point xi locations.
+            IF(SIZE(GAUSS_XI,2)==QUADRATURE_SCHEME%NUMBER_OF_GAUSS) THEN
+              GAUSS_XI=QUADRATURE_SCHEME%GAUSS_POSITIONS
             ELSE
-              LOCAL_ERROR="The number of xi values to return is invalid and needs to be "// &
-                & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//" for the specified basis."
+              LOCAL_ERROR="The number of Gauss Points to return the xi values for is invalid and needs to be "// &
+                & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//"."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
-          ELSE
-            CALL FlagError("The specified quadrature scheme is not associated for this basis.",err,error,*999)
+          ELSE !Return only specified Gauss point xi locations.
+            DO Gauss_point=1,SIZE(GAUSS_POINTS)
+              IF(GAUSS_POINTS(Gauss_point)>0.AND.GAUSS_POINTS(Gauss_point)<=QUADRATURE_SCHEME%NUMBER_OF_GAUSS) THEN
+                GAUSS_XI(:,Gauss_point)=QUADRATURE_SCHEME%GAUSS_POSITIONS(:,GAUSS_POINTS(Gauss_point))
+              ELSE
+                LOCAL_ERROR="The specified Gauss point number of "// & 
+                  & TRIM(NumberToVString(GAUSS_POINTS(Gauss_point),"*",err,error))//" is invalid for the specified "// &
+                  & "quadrature scheme of the specified element for this field which has "// &
+                  & TRIM(NumberToVString(QUADRATURE_SCHEME%NUMBER_OF_GAUSS,"*",err,error))//" Gauss points."
+                CALL FlagError(LOCAL_ERROR,err,error,*999)
+              ENDIF
+            ENDDO
           ENDIF
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
+          LOCAL_ERROR="The number of xi values to return is invalid and needs to be "// &
+            & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//" for the specified basis."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         ENDIF
       ELSE
-        CALL FlagError("Basis has not finished.",err,error,*999)
+        CALL FlagError("The specified quadrature scheme is not associated for this basis.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      CALL FlagError("Quadrature basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET")
     RETURN
 999 ERRORSEXITS("BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET",err,error)
-    RETURN
+    RETURN 1
+    
   END SUBROUTINE BASIS_QUADRATURE_MULTIPLE_GAUSS_XI_GET
 
   !
@@ -4456,24 +4401,18 @@ CONTAINS
     
     ENTERS("BASIS_QUADRATURE_ORDER_GET",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-          QUADRATURE_ORDER=BASIS%QUADRATURE%GAUSS_ORDER
-        ELSE
-          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Basis has not finished.",err,error,*999)
-      ENDIF
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
+      QUADRATURE_ORDER=BASIS%QUADRATURE%GAUSS_ORDER
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      CALL FlagError("Quadrature basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("BASIS_QUADRATURE_ORDER_GET")
     RETURN
 999 ERRORSEXITS("BASIS_QUADRATURE_ORDER_GET",err,error)
-    RETURN
+    RETURN 1
+    
   END SUBROUTINE BASIS_QUADRATURE_ORDER_GET
 
   !
@@ -4493,28 +4432,21 @@ CONTAINS
     
     ENTERS("Basis_QuadratureOrderSet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        CALL FlagError("Basis has been finished",err,error,*999)
-      ELSE
-        IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-          IF(BASIS%TYPE==BASIS_SIMPLEX_TYPE) THEN !Relax this i.e., use this to set gauss points in each direction for LHTP's???
-            IF(ORDER>1.AND.ORDER<=5) THEN
-              BASIS%QUADRATURE%GAUSS_ORDER=ORDER
-            ELSE
-              LOCAL_ERROR="An order value of "//TRIM(NumberToVString(ORDER,"*",err,error))// &
-                & " is invalid. You must specify and order between 1 and 5."
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Can only set the quadrature order for simplex basis types.",err,error,*999)
-          ENDIF
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
+    IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
+      IF(BASIS%TYPE==BASIS_SIMPLEX_TYPE) THEN !Relax this i.e., use this to set gauss points in each direction for LHTP's???
+        IF(ORDER>1.AND.ORDER<=5) THEN
+          BASIS%QUADRATURE%GAUSS_ORDER=ORDER
         ELSE
-          CALL FlagError("Quadrature basis is not associated.",err,error,*999)
+          LOCAL_ERROR="An order value of "//TRIM(NumberToVString(ORDER,"*",err,error))// &
+            & " is invalid. You must specify and order between 1 and 5."
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         ENDIF
+      ELSE
+        CALL FlagError("Can only set the quadrature order for simplex basis types.",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      CALL FlagError("Quadrature basis is not associated.",err,error,*999)
     ENDIF
       
     EXITS("Basis_QuadratureOrderSet")
@@ -4540,24 +4472,18 @@ CONTAINS
     
     ENTERS("BASIS_QUADRATURE_TYPE_GET",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-          QUADRATURE_TYPE=BASIS%QUADRATURE%TYPE
-        ELSE
-          CALL FlagError("Basis quadrature basis is not associated.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Basis has not finished.",err,error,*999)
-      ENDIF
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
+      QUADRATURE_TYPE=BASIS%QUADRATURE%TYPE
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      CALL FlagError("Basis quadrature basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("BASIS_QUADRATURE_TYPE_GET")
     RETURN
 999 ERRORSEXITS("BASIS_QUADRATURE_TYPE_GET",err,error)
-    RETURN
+    RETURN 1
+    
   END SUBROUTINE BASIS_QUADRATURE_TYPE_GET
 
   !
@@ -4577,30 +4503,23 @@ CONTAINS
     
     ENTERS("Basis_QuadratureTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        CALL FlagError("Basis has been finished.",err,error,*999)
-      ELSE
-        IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
-          SELECT CASE(TYPE)
-          CASE(BASIS_GAUSS_LEGENDRE_QUADRATURE)
-            BASIS%QUADRATURE%TYPE=BASIS_GAUSS_LEGENDRE_QUADRATURE
-          CASE(BASIS_GAUSS_LAGUERRE_QUADRATURE)
-            BASIS%QUADRATURE%TYPE=BASIS_GAUSS_LAGUERRE_QUADRATURE
-            CALL FlagError("Gauss Laguerre quadrature is not implemented.",err,error,*999)
-          CASE(BASIS_GUASS_HERMITE_QUADRATURE)
-            BASIS%QUADRATURE%TYPE=BASIS_GUASS_HERMITE_QUADRATURE
-            CALL FlagError("Gauss Hermite quadrature is not implemented.",err,error,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="Quadrature type "//TRIM(NumberToVString(TYPE,"*",err,error))//" is invalid."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Basis quadrature basis is not associated.",err,error,*999)
-        ENDIF
-      ENDIF
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
+    IF(ASSOCIATED(BASIS%QUADRATURE%BASIS)) THEN
+      SELECT CASE(TYPE)
+      CASE(BASIS_GAUSS_LEGENDRE_QUADRATURE)
+        BASIS%QUADRATURE%TYPE=BASIS_GAUSS_LEGENDRE_QUADRATURE
+      CASE(BASIS_GAUSS_LAGUERRE_QUADRATURE)
+        BASIS%QUADRATURE%TYPE=BASIS_GAUSS_LAGUERRE_QUADRATURE
+        CALL FlagError("Gauss Laguerre quadrature is not implemented.",err,error,*999)
+      CASE(BASIS_GUASS_HERMITE_QUADRATURE)
+        BASIS%QUADRATURE%TYPE=BASIS_GUASS_HERMITE_QUADRATURE
+        CALL FlagError("Gauss Hermite quadrature is not implemented.",err,error,*999)
+      CASE DEFAULT
+        LOCAL_ERROR="Quadrature type "//TRIM(NumberToVString(TYPE,"*",err,error))//" is invalid."
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
+      END SELECT
     ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+      CALL FlagError("Basis quadrature basis is not associated.",err,error,*999)
     ENDIF
     
     EXITS("Basis_QuadratureTypeSet")
@@ -4624,16 +4543,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     ENTERS("Basis_QuadratureLocalFaceGaussEvaluateSet",err,error,*999)
+
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
     
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        CALL FlagError("Basis has been finished.",err,error,*999)
-      ELSE
-        BASIS%QUADRATURE%EVALUATE_FACE_GAUSS=FACE_GAUSS_EVALUATE
-      ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
-    ENDIF
+    BASIS%QUADRATURE%EVALUATE_FACE_GAUSS=FACE_GAUSS_EVALUATE
     
     EXITS("Basis_QuadratureLocalFaceGaussEvaluateSet")
     RETURN
@@ -6257,73 +6170,62 @@ CONTAINS
   !
   
   !>get the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisTypeGet
-  SUBROUTINE BASIS_TYPE_GET(BASIS,TYPE,err,error,*)
+  SUBROUTINE Basis_TypeGet(basis,TYPE,err,error,*)
 
     !Argument variables
-    TYPE(BasisType), POINTER :: BASIS !<A pointer to the basis to get
-    INTEGER(INTG), INTENT(OUT) :: TYPE !<On return, the type of the specified basis. \see BASIS_ROUTINES_BasisTypes
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get
+    INTEGER(INTG), INTENT(OUT) :: type !<On return, the type of the specified basis. \see BASIS_ROUTINES_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("BASIS_TYPE_GET",err,error,*999)
+    ENTERS("Basis_TypeGet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        TYPE=BASIS%TYPE
-      ELSE
-        CALL FlagError("Basis has not been finished yet",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated",err,error,*999)
-    ENDIF
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
     
-    EXITS("BASIS_TYPE_GET")
+    type=basis%type
+    
+    EXITS("Basis_TypeGet")
     RETURN
-999 ERRORSEXITS("BASIS_TYPE_GET",err,error)
-    RETURN
-  END SUBROUTINE BASIS_TYPE_GET
+999 ERRORSEXITS("Basis_TypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_TypeGet
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisTypeGet
-  SUBROUTINE Basis_TypeSet(BASIS,TYPE,err,error,*)
+  SUBROUTINE Basis_TypeSet(basis,type,err,error,*)
 
     !Argument variables
-    TYPE(BasisType), POINTER :: BASIS !<A pointer to the basis to set
-    INTEGER(INTG), INTENT(IN) :: TYPE !<The type of the basis to be set. \see BASIS_ROUTINES_BasisTypes
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to set
+    INTEGER(INTG), INTENT(IN) :: type !<The type of the basis to be set. \see BASIS_ROUTINES_BasisTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Basis_TypeSet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        CALL FlagError("Basis has been finished",err,error,*999)
-      ELSE
-        SELECT CASE(TYPE)
-        CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
-          BASIS%TYPE=BASIS_LAGRANGE_HERMITE_TP_TYPE
-        CASE(BASIS_SIMPLEX_TYPE)
-          !Reset the quadrature
-          CALL BASIS_QUADRATURE_FINALISE(BASIS,err,error,*999)
-          !Change the default parameters for the old basis
-          BASIS%TYPE=BASIS_SIMPLEX_TYPE
-          BASIS%interpolationXi(1:BASIS%numberOfXi)=BASIS_LINEAR_SIMPLEX_INTERPOLATION
-          NULLIFY(BASIS%QUADRATURE%BASIS)
-          CALL BASIS_QUADRATURE_INITIALISE(BASIS,err,error,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="Basis type "//TRIM(NumberToVString(TYPE,"*",err,error))//" is invalid or not implemented"
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated",err,error,*999)
-    ENDIF
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
+    
+    SELECT CASE(type)
+    CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
+      basis%type=BASIS_LAGRANGE_HERMITE_TP_TYPE
+    CASE(BASIS_SIMPLEX_TYPE)
+      !Reset the quadrature
+      CALL BASIS_QUADRATURE_FINALISE(basis,err,error,*999)
+      !Change the default parameters for the old basis
+      basis%type=BASIS_SIMPLEX_TYPE
+      basis%interpolationXi(1:BASIS%numberOfXi)=BASIS_LINEAR_SIMPLEX_INTERPOLATION
+      NULLIFY(basis%quadrature%basis)
+      CALL BASIS_QUADRATURE_INITIALISE(basis,err,error,*999)
+    CASE DEFAULT
+      localError="Basis type "//TRIM(NumberToVString(type,"*",err,error))//" is invalid or not implemented"
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     
     EXITS("Basis_TypeSet")
     RETURN
@@ -6337,40 +6239,34 @@ CONTAINS
   !
   
   !>Gets the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_BasisCollapsedXiGet
-  SUBROUTINE BASIS_COLLAPSED_XI_GET(BASIS,COLLAPSED_XI,err,error,*)
+  SUBROUTINE Basis_CollapsedXiGet(basis,collapsedXi,err,error,*)
 
     !Argument variables
-    TYPE(BasisType), POINTER :: BASIS !<A pointer to the basis
-    INTEGER(INTG), INTENT(OUT) :: COLLAPSED_XI(:) !<COLLAPSED_XI(ni). On return, the collapse parameter for each Xi direction. \see BASIS_ROUTINES_XiCollapse
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis
+    INTEGER(INTG), INTENT(OUT) :: collapsedXi(:) !<collapsedXi(xiIdx). On return, the collapse parameter for each Xi direction. \see BASIS_ROUTINES_XiCollapse
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("BASIS_COLLAPSED_XI_GET",err,error,*999)
+    ENTERS("Basis_CollapsedXiGet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        IF(SIZE(COLLAPSED_XI,1)>=SIZE(BASIS%collapsedXi)) THEN
-          COLLAPSED_XI=BASIS%collapsedXi
-        ELSE
-          LOCAL_ERROR="The size of COLLAPSED_XI is too small. The supplied size is "// &
-            & TRIM(NumberToVString(SIZE(COLLAPSED_XI,1),"*",err,error))//" and it needs to be >= "// &
-            & TRIM(NumberToVString(SIZE(BASIS%collapsedXi,1),"*",err,error))//"."
-          CALL FlagError(LOCAL_ERROR,err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Basis has not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Basis is not associated.",err,error,*999)
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+    IF(SIZE(collapsedXi,1)<SIZE(basis%collapsedXi)) THEN
+      localError="The size of collapsed xi is too small. The supplied size is "// &
+        & TRIM(NumberToVString(SIZE(collapsedXi,1),"*",err,error))//" and it needs to be >= "// &
+        & TRIM(NumberToVString(SIZE(basis%collapsedXi,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("BASIS_COLLAPSED_XI_GET")
+    collapsedXi=basis%collapsedXi
+    
+    EXITS("Basis_CollapsedXiGet")
     RETURN
-999 ERRORSEXITS("BASIS_COLLAPSED_XI_GET",err,error)
-    RETURN
-  END SUBROUTINE BASIS_COLLAPSED_XI_GET
+999 ERRORSEXITS("Basis_CollapsedXiGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_CollapsedXiGet
 
   !
   !================================================================================================================================
@@ -6390,33 +6286,64 @@ CONTAINS
     
     ENTERS("Basis_CollapsedXiSet",err,error,*999)
 
-    IF(ASSOCIATED(BASIS)) THEN
-      IF(BASIS%basisFinished) THEN
-        CALL FlagError("Basis has been finished",err,error,*999)
-      ELSE
-        IF(BASIS%TYPE==BASIS_LAGRANGE_HERMITE_TP_TYPE) THEN
-          IF(BASIS%numberOfXi>1) THEN
-            IF(SIZE(COLLAPSED_XI,1)==BASIS%numberOfXi) THEN
-              NUMBER_COLLAPSED=0
-              DO ni1=1,BASIS%numberOfXi
-                SELECT CASE(COLLAPSED_XI(ni1))
-                CASE(BASIS_XI_COLLAPSED)
-                  NUMBER_COLLAPSED=NUMBER_COLLAPSED+1
-                  COLLAPSED_XI_DIR(NUMBER_COLLAPSED)=ni1
-                CASE(BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED)
-                  !Do nothing
-                CASE DEFAULT
-                  LOCAL_ERROR="Collapsed xi value "//TRIM(NumberToVString(COLLAPSED_XI(ni1),"*",err,error))// &
-                    & " in xi direction "//TRIM(NumberToVString(ni1,"*",err,error))//" is invalid"
+    CALL Basis_AssertNotFinished(basis,err,error,*999)
+    IF(BASIS%TYPE==BASIS_LAGRANGE_HERMITE_TP_TYPE) THEN
+      IF(BASIS%numberOfXi>1) THEN
+        IF(SIZE(COLLAPSED_XI,1)==BASIS%numberOfXi) THEN
+          NUMBER_COLLAPSED=0
+          DO ni1=1,BASIS%numberOfXi
+            SELECT CASE(COLLAPSED_XI(ni1))
+            CASE(BASIS_XI_COLLAPSED)
+              NUMBER_COLLAPSED=NUMBER_COLLAPSED+1
+              COLLAPSED_XI_DIR(NUMBER_COLLAPSED)=ni1
+            CASE(BASIS_COLLAPSED_AT_XI0,BASIS_COLLAPSED_AT_XI1,BASIS_NOT_COLLAPSED)
+              !Do nothing
+            CASE DEFAULT
+              LOCAL_ERROR="Collapsed xi value "//TRIM(NumberToVString(COLLAPSED_XI(ni1),"*",err,error))// &
+                & " in xi direction "//TRIM(NumberToVString(ni1,"*",err,error))//" is invalid"
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
+            END SELECT
+          ENDDO !ni1
+          IF(NUMBER_COLLAPSED>0) THEN
+            IF(NUMBER_COLLAPSED<BASIS%numberOfXi) THEN
+              IF(BASIS%numberOfXi==2) THEN
+                !Two dimensional collapsed basis
+                ni1=COLLAPSED_XI_DIR(1)
+                ni2=OTHER_XI_DIRECTIONS2(ni1)
+                IF(COLLAPSED_XI(ni2)==BASIS_COLLAPSED_AT_XI0) THEN
+                  IF(BASIS%interpolationXi(ni2)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
+                    & BASIS%interpolationXi(ni2)=BASIS_QUADRATIC1_HERMITE_INTERPOLATION
+                ELSE IF(COLLAPSED_XI(ni2)==BASIS_COLLAPSED_AT_XI1) THEN
+                  IF(BASIS%interpolationXi(ni2)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
+                    & BASIS%interpolationXi(ni2)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
+                ELSE
+                  LOCAL_ERROR="Invalid collapsing of a two dimensional basis. Xi direction "// &
+                    & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed so xi direction "// &
+                    & TRIM(NumberToVString(ni2,"*",err,error))//" must be collapsed at an end"
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
-                END SELECT
-              ENDDO !ni1
-              IF(NUMBER_COLLAPSED>0) THEN
-                IF(NUMBER_COLLAPSED<BASIS%numberOfXi) THEN
-                  IF(BASIS%numberOfXi==2) THEN
-                    !Two dimensional collapsed basis
-                    ni1=COLLAPSED_XI_DIR(1)
-                    ni2=OTHER_XI_DIRECTIONS2(ni1)
+                ENDIF
+              ELSE
+                !Three dimensional collapsed basis
+                IF(NUMBER_COLLAPSED==1) THEN
+                  !One collapse - wedge element
+                  ni1=COLLAPSED_XI_DIR(1)
+                  ni2=OTHER_XI_DIRECTIONS3(ni1,2,1)
+                  ni3=OTHER_XI_DIRECTIONS3(ni1,3,1)
+                  IF(COLLAPSED_XI(ni2)==BASIS_NOT_COLLAPSED) THEN
+                    IF(COLLAPSED_XI(ni3)==BASIS_COLLAPSED_AT_XI0) THEN
+                      IF(BASIS%interpolationXi(ni3)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
+                        & BASIS%interpolationXi(ni3)=BASIS_QUADRATIC1_HERMITE_INTERPOLATION
+                    ELSE IF(COLLAPSED_XI(ni3)==BASIS_COLLAPSED_AT_XI1) THEN
+                      IF(BASIS%interpolationXi(ni3)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
+                        & BASIS%interpolationXi(ni3)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
+                    ELSE
+                      LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
+                        & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed and xi direction "// &
+                        & TRIM(NumberToVString(ni2,"*",err,error))//" is not collapsed so xi direction "// &
+                        & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
+                      CALL FlagError(LOCAL_ERROR,err,error,*999)
+                    ENDIF
+                  ELSE IF(COLLAPSED_XI(ni3)==BASIS_NOT_COLLAPSED) THEN
                     IF(COLLAPSED_XI(ni2)==BASIS_COLLAPSED_AT_XI0) THEN
                       IF(BASIS%interpolationXi(ni2)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
                         & BASIS%interpolationXi(ni2)=BASIS_QUADRATIC1_HERMITE_INTERPOLATION
@@ -6424,106 +6351,68 @@ CONTAINS
                       IF(BASIS%interpolationXi(ni2)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
                         & BASIS%interpolationXi(ni2)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
                     ELSE
-                      LOCAL_ERROR="Invalid collapsing of a two dimensional basis. Xi direction "// &
-                        & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed so xi direction "// &
+                      LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
+                        & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed and xi direction "// &
+                        & TRIM(NumberToVString(ni3,"*",err,error))//" is not collapsed so xi direction "// &
                         & TRIM(NumberToVString(ni2,"*",err,error))//" must be collapsed at an end"
                       CALL FlagError(LOCAL_ERROR,err,error,*999)
                     ENDIF
                   ELSE
-                    !Three dimensional collapsed basis
-                    IF(NUMBER_COLLAPSED==1) THEN
-                      !One collapse - wedge element
-                      ni1=COLLAPSED_XI_DIR(1)
-                      ni2=OTHER_XI_DIRECTIONS3(ni1,2,1)
-                      ni3=OTHER_XI_DIRECTIONS3(ni1,3,1)
-                      IF(COLLAPSED_XI(ni2)==BASIS_NOT_COLLAPSED) THEN
-                        IF(COLLAPSED_XI(ni3)==BASIS_COLLAPSED_AT_XI0) THEN
-                          IF(BASIS%interpolationXi(ni3)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
-                            & BASIS%interpolationXi(ni3)=BASIS_QUADRATIC1_HERMITE_INTERPOLATION
-                        ELSE IF(COLLAPSED_XI(ni3)==BASIS_COLLAPSED_AT_XI1) THEN
-                          IF(BASIS%interpolationXi(ni3)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
-                            & BASIS%interpolationXi(ni3)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
-                        ELSE
-                          LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
-                            & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed and xi direction "// &
-                            & TRIM(NumberToVString(ni2,"*",err,error))//" is not collapsed so xi direction "// &
-                            & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
-                          CALL FlagError(LOCAL_ERROR,err,error,*999)
-                        ENDIF
-                      ELSE IF(COLLAPSED_XI(ni3)==BASIS_NOT_COLLAPSED) THEN
-                        IF(COLLAPSED_XI(ni2)==BASIS_COLLAPSED_AT_XI0) THEN
-                          IF(BASIS%interpolationXi(ni2)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
-                            & BASIS%interpolationXi(ni2)=BASIS_QUADRATIC1_HERMITE_INTERPOLATION
-                        ELSE IF(COLLAPSED_XI(ni2)==BASIS_COLLAPSED_AT_XI1) THEN
-                          IF(BASIS%interpolationXi(ni2)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
-                            & BASIS%interpolationXi(ni2)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
-                        ELSE
-                          LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
-                            & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed and xi direction "// &
-                            & TRIM(NumberToVString(ni3,"*",err,error))//" is not collapsed so xi direction "// &
-                            & TRIM(NumberToVString(ni2,"*",err,error))//" must be collapsed at an end"
-                          CALL FlagError(LOCAL_ERROR,err,error,*999)
-                        ENDIF
-                      ELSE
-                        LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
-                          & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed so one of xi directions "// &
-                          & TRIM(NumberToVString(ni2,"*",err,error))//" or "// &
-                          & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
-                        CALL FlagError(LOCAL_ERROR,err,error,*999)
-                      ENDIF
-                    ELSE
-                      !Two collapses - pyramid element
-                      ni1=COLLAPSED_XI_DIR(1)
-                      ni2=COLLAPSED_XI_DIR(2)
-                      ni3=OTHER_XI_DIRECTIONS3(ni1,ni2,2)
-                      IF(COLLAPSED_XI(ni3)==BASIS_COLLAPSED_AT_XI0) THEN
-                        IF(BASIS%interpolationXi(ni3)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
-                          & BASIS%interpolationXi(ni3)=BASIS_QUADRATIC1_HERMITE_INTERPOLATION
-                      ELSE IF(COLLAPSED_XI(ni3)==BASIS_COLLAPSED_AT_XI1) THEN
-                        IF(BASIS%interpolationXi(ni3)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
-                          & BASIS%interpolationXi(ni3)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
-                      ELSE
-                        LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi directions "// &
-                          & TRIM(NumberToVString(ni1,"*",err,error))//" and "// &
-                          & TRIM(NumberToVString(ni2,"*",err,error))//" are collapsed so xi direction "// &
-                          & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
-                        CALL FlagError(LOCAL_ERROR,err,error,*999)
-                      ENDIF
-                    ENDIF
+                    LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi direction "// &
+                      & TRIM(NumberToVString(ni1,"*",err,error))//" is collapsed so one of xi directions "// &
+                      & TRIM(NumberToVString(ni2,"*",err,error))//" or "// &
+                      & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
+                    CALL FlagError(LOCAL_ERROR,err,error,*999)
                   ENDIF
                 ELSE
-                  LOCAL_ERROR="Invalid collapsing of basis. The number of collapsed directions ("// &
-                    & TRIM(NumberToVString(NUMBER_COLLAPSED,"*",err,error))// &
-                    & ") must be less than the number of xi directions ("// &
-                    & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//")"
-                  CALL FlagError(LOCAL_ERROR,err,error,*999)
-                ENDIF
-              ELSE
-                !No collapses in any xi direction - Reset interpolation_xi if necessary
-                DO ni1=1,BASIS%numberOfXi
-                  IF(BASIS%interpolationXi(ni1)==BASIS_QUADRATIC1_HERMITE_INTERPOLATION.OR. &
-                    & BASIS%interpolationXi(ni1)==BASIS_QUADRATIC2_HERMITE_INTERPOLATION) THEN
-                    BASIS%interpolationXi(ni1)=BASIS_CUBIC_HERMITE_INTERPOLATION                  
+                  !Two collapses - pyramid element
+                  ni1=COLLAPSED_XI_DIR(1)
+                  ni2=COLLAPSED_XI_DIR(2)
+                  ni3=OTHER_XI_DIRECTIONS3(ni1,ni2,2)
+                  IF(COLLAPSED_XI(ni3)==BASIS_COLLAPSED_AT_XI0) THEN
+                    IF(BASIS%interpolationXi(ni3)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
+                      & BASIS%interpolationXi(ni3)=BASIS_QUADRATIC1_HERMITE_INTERPOLATION
+                  ELSE IF(COLLAPSED_XI(ni3)==BASIS_COLLAPSED_AT_XI1) THEN
+                    IF(BASIS%interpolationXi(ni3)==BASIS_CUBIC_HERMITE_INTERPOLATION) &
+                      & BASIS%interpolationXi(ni3)=BASIS_QUADRATIC2_HERMITE_INTERPOLATION
+                  ELSE
+                    LOCAL_ERROR="Invalid collapsing of a three dimensional basis. Xi directions "// &
+                      & TRIM(NumberToVString(ni1,"*",err,error))//" and "// &
+                      & TRIM(NumberToVString(ni2,"*",err,error))//" are collapsed so xi direction "// &
+                      & TRIM(NumberToVString(ni3,"*",err,error))//" must be collapsed at an end"
+                    CALL FlagError(LOCAL_ERROR,err,error,*999)
                   ENDIF
-                ENDDO
+                ENDIF
               ENDIF
-              BASIS%collapsedXi(1:BASIS%numberOfXi)=COLLAPSED_XI(1:BASIS%numberOfXi)
             ELSE
-              LOCAL_ERROR="The size of the xi collapsed array ("// &
-                & TRIM(NumberToVString(SIZE(COLLAPSED_XI,1),"*",err,error))//") does not match the number of xi directions ("// &
-                & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//") for basis number "// &
-                & TRIM(NumberToVString(BASIS%userNumber,"*",err,error))
+              LOCAL_ERROR="Invalid collapsing of basis. The number of collapsed directions ("// &
+                & TRIM(NumberToVString(NUMBER_COLLAPSED,"*",err,error))// &
+                & ") must be less than the number of xi directions ("// &
+                & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//")"
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             ENDIF
-          ELSE          
-            CALL FlagError("Can not collapse a basis with only 1 xi direction",err,error,*999)
+          ELSE
+            !No collapses in any xi direction - Reset interpolation_xi if necessary
+            DO ni1=1,BASIS%numberOfXi
+              IF(BASIS%interpolationXi(ni1)==BASIS_QUADRATIC1_HERMITE_INTERPOLATION.OR. &
+                & BASIS%interpolationXi(ni1)==BASIS_QUADRATIC2_HERMITE_INTERPOLATION) THEN
+                BASIS%interpolationXi(ni1)=BASIS_CUBIC_HERMITE_INTERPOLATION                  
+              ENDIF
+            ENDDO
           ENDIF
+          BASIS%collapsedXi(1:BASIS%numberOfXi)=COLLAPSED_XI(1:BASIS%numberOfXi)
         ELSE
-          CALL FlagError("Can only set collapsed xi directions for a Lagrange Hermite tensor product basis type",err,error,*999)
+          LOCAL_ERROR="The size of the xi collapsed array ("// &
+            & TRIM(NumberToVString(SIZE(COLLAPSED_XI,1),"*",err,error))//") does not match the number of xi directions ("// &
+            & TRIM(NumberToVString(BASIS%numberOfXi,"*",err,error))//") for basis number "// &
+            & TRIM(NumberToVString(BASIS%userNumber,"*",err,error))
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
         ENDIF
+      ELSE          
+        CALL FlagError("Can not collapse a basis with only 1 xi direction",err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Basis is not associated",err,error,*999)
+      CALL FlagError("Can only set collapsed xi directions for a Lagrange Hermite tensor product basis type",err,error,*999)
     ENDIF
     
     EXITS("Basis_CollapsedXiSet")

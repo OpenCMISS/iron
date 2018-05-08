@@ -55,6 +55,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE ComputationAccessRoutines
   USE Constants
   USE COORDINATE_ROUTINES
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE ELASTICITY_ROUTINES

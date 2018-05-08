@@ -58,6 +58,8 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE COORDINATE_ROUTINES
+  USE DecompositionRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines
@@ -80,8 +82,6 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE Lapack
   USE Maths
   USE MatrixVector
-  USE MESH_ROUTINES
-  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif

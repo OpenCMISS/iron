@@ -64,6 +64,7 @@ MODULE CMISS_CELLML
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
+  USE DecompositionAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING

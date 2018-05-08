@@ -84,6 +84,8 @@ MODULE ComputationAccessRoutines
 
   PUBLIC ComputationEnvironment_WorldWorkGroupGet
 
+  PUBLIC WorkGroup_AssertIsFinished,WorkGroup_AssertNotFinished
+  
   PUBLIC WorkGroup_ComputationEnvironmentGet
 
   PUBLIC WorkGroup_ContextGet
@@ -225,6 +227,68 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ComputationEnvironment_WorldWorkGroupGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a work group has been finished
+  SUBROUTINE WorkGroup_AssertIsFinished(workGroup,err,error,*)
+
+    !Argument Variables
+    TYPE(WorkGroupType), POINTER, INTENT(INOUT) :: workGroup !<The work group to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("WorkGroup_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+
+    IF(.NOT.workGroup%workGroupFinished) THEN
+      localError="Work group number "//TRIM(NumberToVString(workGroup%userNumber,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("WorkGroup_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("WorkGroup_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a work group has not been finished
+  SUBROUTINE WorkGroup_AssertNotFinished(workGroup,err,error,*)
+
+    !Argument Variables
+    TYPE(WorkGroupType), POINTER, INTENT(INOUT) :: workGroup !<The work group to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("WorkGroup_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
+
+    IF(workGroup%workGroupFinished) THEN
+      localError="Work group number "//TRIM(NumberToVString(workGroup%userNumber,"*",err,error))// &
+        & " has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("WorkGroup_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("WorkGroup_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE WorkGroup_AssertNotFinished
 
   !
   !================================================================================================================================

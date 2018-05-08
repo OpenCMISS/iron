@@ -53,6 +53,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE ComputationAccessRoutines
   USE CONSTANTS
   USE COORDINATE_ROUTINES
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsAccessRoutines

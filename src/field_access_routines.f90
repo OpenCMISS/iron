@@ -217,6 +217,8 @@ MODULE FieldAccessRoutines
     & FIELD_INPUT_VEL2_SET_TYPE,FIELD_INPUT_VEL3_SET_TYPE,FIELD_INPUT_LABEL_SET_TYPE,FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE, &
     & FIELD_INTEGRATED_NEUMANN_SET_TYPE,FIELD_UPWIND_VALUES_SET_TYPE,FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE
 
+  PUBLIC Field_AssertIsFinished,Field_AssertNotFinished
+  
   PUBLIC Field_ComponentInterpolationGet
  
   PUBLIC Field_CoordinateSystemGet  
@@ -248,6 +250,68 @@ MODULE FieldAccessRoutines
   PUBLIC Fields_RegionGet
 
 CONTAINS
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a field has been finished
+  SUBROUTINE Field_AssertIsFinished(field,err,error,*)
+
+    !Argument Variables
+    TYPE(FIELD_TYPE), POINTER, INTENT(INOUT) :: field !<The work group to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Field_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    IF(.NOT.field%field_Finished) THEN
+      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Field_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("Field_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a field has not been finished
+  SUBROUTINE Field_AssertNotFinished(field,err,error,*)
+
+    !Argument Variables
+    TYPE(FIELD_TYPE), POINTER, INTENT(INOUT) :: field !<The work group to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Field_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    IF(field%field_Finished) THEN
+      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+        & " has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Field_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("Field_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_AssertNotFinished
 
   !
   !================================================================================================================================

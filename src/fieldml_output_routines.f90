@@ -50,6 +50,8 @@ MODULE FIELDML_OUTPUT_ROUTINES
   USE COORDINATE_ROUTINES
   USE CONSTANTS
   USE ComputationAccessRoutines
+  USE DecompositionRoutines
+  USE DecompositionAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE FIELDML_API
@@ -58,7 +60,7 @@ MODULE FIELDML_OUTPUT_ROUTINES
   USE ISO_VARYING_STRING
   USE KINDS
   USE LISTS
-  USE MESH_ROUTINES
+  USE MeshRoutines
   USE MeshAccessRoutines
   USE NodeRoutines
   USE REGION_ROUTINES

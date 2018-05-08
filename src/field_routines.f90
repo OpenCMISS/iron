@@ -52,6 +52,8 @@ MODULE FIELD_ROUTINES
   USE Constants
   USE COORDINATE_ROUTINES
   USE CmissMPI
+  USE DecompositionRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE FieldAccessRoutines
@@ -60,13 +62,9 @@ MODULE FIELD_ROUTINES
   USE ISO_VARYING_STRING
   USE Lists
   USE Maths
-  USE MESH_ROUTINES
-  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE MESH_ROUTINES
-  USE MeshAccessRoutines
   USE Strings
   USE Types
 

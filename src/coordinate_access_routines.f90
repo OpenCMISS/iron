@@ -72,6 +72,8 @@ MODULE CoordinateSystemAccessRoutines
     MODULE PROCEDURE CoordinateSystem_UserNumberFind
   END INTERFACE COORDINATE_SYSTEM_USER_NUMBER_FIND
 
+  PUBLIC CoordinateSystem_AssertIsFinished,CoordinateSystem_AssertNotFinished
+
   PUBLIC CoordinateSystem_CoordinateSystemsGet
   
   PUBLIC CoordinateSystem_DimensionGet
@@ -87,6 +89,68 @@ MODULE CoordinateSystemAccessRoutines
   PUBLIC CoordinateSystems_WorldCoordinateSystemGet
   
 CONTAINS
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a coordinate system has been finished
+  SUBROUTINE CoordinateSystem_AssertIsFinished(coordinateSystem,err,error,*)
+
+    !Argument Variables
+    TYPE(CoordinateSystemType), POINTER, INTENT(INOUT) :: coordinateSystem !<The coordinate system to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("CoordinateSystem_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
+
+    IF(.NOT.coordinateSystem%coordinateSystemFinished) THEN
+      localError="Coordinate system number "//TRIM(NumberToVString(coordinateSystem%userNumber,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("CoordinateSystem_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("CoordinateSystem_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a coordinate system has not been finished
+  SUBROUTINE CoordinateSystem_AssertNotFinished(coordinateSystem,err,error,*)
+
+    !Argument Variables
+    TYPE(CoordinateSystemType), POINTER, INTENT(INOUT) :: coordinateSystem !<The coordinate system to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("CoordinateSystem_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is not associated.",err,error,*999)
+
+    IF(coordinateSystem%coordinateSystemFinished) THEN
+      localError="Coordinate system number "//TRIM(NumberToVString(coordinateSystem%userNumber,"*",err,error))// &
+        & " has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("CoordinateSystem_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("CoordinateSystem_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_AssertNotFinished
 
   !
   !================================================================================================================================

@@ -50,6 +50,8 @@ MODULE GENERATED_MESH_ROUTINES
   USE ComputationAccessRoutines
   USE Constants
   USE COORDINATE_ROUTINES
+  USE DecompositionRoutines
+  USE DecompositionAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE GeneratedMeshAccessRoutines
@@ -57,7 +59,7 @@ MODULE GENERATED_MESH_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
   USE Maths
-  USE MESH_ROUTINES
+  USE MeshRoutines
   USE MeshAccessRoutines
   USE NodeRoutines
   USE Strings

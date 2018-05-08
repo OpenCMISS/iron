@@ -1189,7 +1189,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DecompositionsType), POINTER :: decompositions !<A pointer to the decompositions for this decomposition.
     TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh for this decomposition.
     TYPE(RegionType), POINTER :: region !<A pointer to the region containing the mesh. If the mesh is in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
-    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containing the mesh. If the mesh is in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
+    TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface containing the mesh. If the mesh is in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer for this decomposition.
     INTEGER(INTG) :: numberOfDimensions !<The number of dimensions (Xi directions) for this decomposition/mesh.
     INTEGER(INTG) :: numberOfComponents !<The number of mesh components in this decomposition/mesh.
     INTEGER(INTG) :: meshComponentNumber !<The component number (index) of the mesh component that this decomposition belongs to (i.e., was generated from).
@@ -3932,7 +3933,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>A buffer type to allow for an array of pointers to a RegionType.
   TYPE RegionPtrType
-    TYPE(RegionType), POINTER :: PTR !<The pointer to the region.
+    TYPE(RegionType), POINTER :: ptr !<The pointer to the region.
   END TYPE RegionPtrType
      
   !>Contains information for a region. \see OpenCMISS::Iron::cmfe_RegionType
@@ -3946,6 +3947,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes defined on the region.
     TYPE(MeshesType), POINTER :: meshes !<A pointer to the meshes defined on the region.
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes defined on the region.
+    TYPE(DecomposersType), POINTER :: decomposers !<A pointer to the decomposers defined on the region.
     TYPE(FIELDS_TYPE), POINTER :: fields !<A pointer to the fields defined on the region.
     TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer to the equation sets defined on the region.
     TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: CELLML_ENVIRONMENTS !<A pointer to the CellML environments for the region.

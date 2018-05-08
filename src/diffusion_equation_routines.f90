@@ -52,6 +52,8 @@ MODULE DIFFUSION_EQUATION_ROUTINES
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
+  USE DecompositionRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsRoutines

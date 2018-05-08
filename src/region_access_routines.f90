@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -47,6 +47,7 @@ MODULE RegionAccessRoutines
   USE BaseRoutines
   USE CellMLAccessRoutines
   USE DataPointAccessRoutines
+  USE DecompositionAccessRoutines
   USE EquationsSetAccessRoutines
   USE FieldAccessRoutines
   USE GeneratedMeshAccessRoutines
@@ -83,6 +84,8 @@ MODULE RegionAccessRoutines
     MODULE PROCEDURE Region_UserNumberFind
   END INTERFACE REGION_USER_NUMBER_FIND
 
+  PUBLIC Region_AssertIsFinished,Region_AssertNotFinished
+  
   PUBLIC Region_CellMLGet
 
   PUBLIC Region_ContextGet
@@ -93,6 +96,10 @@ MODULE RegionAccessRoutines
   
   PUBLIC Region_DataPointsGet
 
+  PUBLIC Region_DecomposerGet
+  
+  PUBLIC Region_DecomposersGet
+  
   PUBLIC Region_EquationsSetGet
 
   PUBLIC Region_FieldGet
@@ -102,6 +109,8 @@ MODULE RegionAccessRoutines
   PUBLIC Region_Get
 
   PUBLIC Region_InterfaceGet
+
+  PUBLIC Region_IsSubRegion
 
   PUBLIC Region_MeshGet
 
@@ -122,6 +131,68 @@ MODULE RegionAccessRoutines
 CONTAINS
 
   !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a region has been finished
+  SUBROUTINE Region_AssertIsFinished(region,err,error,*)
+
+    !Argument Variables
+    TYPE(RegionType), POINTER, INTENT(INOUT) :: region !<The work group to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+
+    IF(.NOT.region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("Region_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a region has not been finished
+  SUBROUTINE Region_AssertNotFinished(region,err,error,*)
+
+    !Argument Variables
+    TYPE(RegionType), POINTER, INTENT(INOUT) :: region !<The work group to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
+
+    IF(region%regionFinished) THEN
+      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
+        & " has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("Region_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_AssertNotFinished
+
+  !
   !================================================================================================================================
   !
 
@@ -140,13 +211,8 @@ CONTAINS
     ENTERS("Region_CellMLGet",err,error,*998)
 
     IF(ASSOCIATED(cellml)) CALL FlagError("CellML is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
+    CALL Region_AssertIsFinished(region,err,error,*998)
+     
     NULLIFY(cellml)
     CALL CellML_UserNumberFind(userNumber,region,cellml,err,error,*999)
     IF(.NOT.ASSOCIATED(cellml)) THEN
@@ -218,16 +284,11 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("Region_CoordinateSystemGet",ERR,ERROR,*998)
+    ENTERS("Region_CoordinateSystemGet",err,error,*998)
 
     !Check input arguments
-    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",err,error,*998)
+    CALL Region_AssertIsFinished(region,err,error,*998)
 
     coordinateSystem=>region%coordinateSystem
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
@@ -263,12 +324,7 @@ CONTAINS
     ENTERS("Region_DataPointsGet",err,error,*998)
 
     IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL Region_AssertIsFinished(region,err,error,*998)
     IF(.NOT.ASSOCIATED(region%dataPointSets)) THEN
       localError="Region data point sets is not associated for region number "// &
         & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
@@ -295,6 +351,78 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the decomposer for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_DecomposerGet
+  SUBROUTINE Region_DecomposerGet(region,userNumber,decomposer,err,error,*)
+
+    !Argument variables
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the decomposer for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the decomposer to get.
+    TYPE(DecomposerType), POINTER :: decomposer !<On exit, a pointer to the decomposer for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_DecomposerGet",err,error,*998)
+
+    IF(ASSOCIATED(decomposer)) CALL FlagError("Decomposer is already associated.",err,error,*998)
+    CALL Region_AssertIsFinished(region,err,error,*999)
+    
+    NULLIFY(decomposer)
+    CALL Decomposer_UserNumberFind(userNumber,region,decomposer,err,error,*999)
+    IF(.NOT.ASSOCIATED(decomposer)) THEN
+      localError="A decomposer with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " does not exist on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Region_DecomposerGet")
+    RETURN
+999 NULLIFY(decomposer)
+998 ERRORSEXITS("Region_DecomposerGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_DecomposerGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the decomposers for a region. 
+  SUBROUTINE Region_DecomposersGet(region,decomposers,err,error,*)
+
+    !Argument variables
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the decomposers for
+    TYPE(DecomposersType), POINTER :: decomposers !<On exit, a pointer to the decomposers for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_DecomposersGet",err,error,*998)
+
+    IF(ASSOCIATED(decomposers)) CALL FlagError("Decomposers is already associated.",err,error,*998)
+    CALL Region_AssertIsFinished(region,err,error,*998)
+
+    decomposers=>region%decomposers
+    IF(.NOT.ASSOCIATED(decomposers)) THEN
+      localError="The decomposers for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("Region_DecomposersGet")
+    RETURN
+999 NULLIFY(decomposers)
+998 ERRORSEXITS("Region_DecomposersGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_DecomposersGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the equations set for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_EquationsSetGet
   SUBROUTINE Region_EquationsSetGet(region,userNumber,equationsSet,err,error,*)
 
@@ -310,12 +438,7 @@ CONTAINS
     ENTERS("Region_EquationsSetGet",err,error,*998)
 
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL Region_AssertIsFinished(region,err,error,*998)
     
     NULLIFY(equationsSet)
     CALL EquationsSet_UserNumberFind(userNumber,region,equationsSet,err,error,*999)
@@ -352,12 +475,7 @@ CONTAINS
     ENTERS("Region_FieldGet",err,error,*998)
 
     IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL Region_AssertIsFinished(region,err,error,*998)
     
     NULLIFY(field)
     CALL Field_UserNumberFind(userNumber,region,field,err,error,*999)
@@ -394,12 +512,7 @@ CONTAINS
     ENTERS("Region_GeneratedMeshGet",err,error,*998)
 
     IF(ASSOCIATED(generatedMesh)) CALL FlagError("Generated mesh is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL Region_AssertIsFinished(region,err,error,*998)
     
     NULLIFY(generatedMesh)
     CALL GeneratedMesh_UserNumberFind(userNumber,region,generatedMesh,err,error,*999)
@@ -466,14 +579,9 @@ CONTAINS
  
     ENTERS("Region_InterfaceGet",err,error,*998)
 
-    IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
+    IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*998)
+    CALL Region_AssertIsFinished(region,err,error,*998)
+     
     NULLIFY(interface)
     CALL Interface_UserNumberFind(userNumber,region,interface,err,error,*999)
     IF(.NOT.ASSOCIATED(interface)) THEN
@@ -494,6 +602,45 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns if a region is a sub-region (or the same region) of another region.
+  SUBROUTINE Region_IsSubRegion(region,subRegion,isSubRegion,err,error,*)
+
+    !Argument variables
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to check the sub-region for
+    TYPE(RegionType), POINTER :: subRegion !<A pointer to the sub-region to region for
+    LOGICAL, INTENT(OUT) :: isSubRegion !<On return, is .TRUE. if sub-region is either the same as region or a sub-region of region, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(RegionType), POINTER :: parentRegion
+ 
+    ENTERS("Region_IsSubRegion",err,error,*999)
+
+    isSubRegion=.FALSE.
+    CALL Region_AssertIsFinished(region,err,error,*999)
+    CALL Region_AssertIsFinished(subRegion,err,error,*999)
+    
+    parentRegion=>subRegion
+    DO WHILE(ASSOCIATED(parentRegion))
+      IF(ASSOCIATED(region,parentRegion)) THEN
+        isSubRegion=.TRUE.
+        EXIT
+      ELSE
+        parentRegion=>parentRegion%parentRegion
+      ENDIF
+    ENDDO
+    
+    EXITS("Region_IsSubRegion")
+    RETURN
+999 ERRORSEXITS("Region_IsSubRegion",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_IsSubRegion
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the mesh for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_MeshGet
   SUBROUTINE Region_MeshGet(region,userNumber,mesh,err,error,*)
 
@@ -509,12 +656,7 @@ CONTAINS
     ENTERS("Region_MeshGet",err,error,*998)
 
     IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL Region_AssertIsFinished(region,err,error,*998)
     
     NULLIFY(mesh)
     CALL Mesh_UserNumberFind(userNumber,region,mesh,err,error,*999)
@@ -536,7 +678,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the nodes for a region. \see OPENCMISS::Iron::cmfe_RegionNodesGet
+  !>Returns a pointer to the nodes for a region. \see OPENCMISS::Iron::cmfe_Region_NodesGet
   SUBROUTINE Region_NodesGet(region,nodes,err,error,*)
 
     !Argument variables
@@ -550,12 +692,7 @@ CONTAINS
     ENTERS("Region_NodesGet",err,error,*998)
 
     IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(.NOT.region%regionFinished) THEN
-      localError="Region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL Region_AssertIsFinished(region,err,error,*998)
 
     nodes=>region%nodes
     IF(.NOT.ASSOCIATED(nodes)) THEN
