@@ -791,8 +791,8 @@ CONTAINS
             DO versionIdx=1,domain%topology%nodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
               CALL Field_ParameterSetGetNode(solidDependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & versionIdx,derivativeIdx,solidNode,componentIdx,VALUE,err,error,*999)
-              CALL Field_ParameterSetUpdateNode(interfaceGeometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,&
-                & versionIdx,derivativeIdx,nodeIdx,componentIdx,VALUE,err,error,*999)
+              CALL Field_ParameterSetUpdateLocalNode(interfaceGeometricField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,componentIdx,VALUE,err,error,*999)
             ENDDO !versionIdx
           ENDDO !derivativeIdx
         ENDDO !nodeIdx
