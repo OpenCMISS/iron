@@ -3,7 +3,7 @@
 
 ! ******************************************************************************
 ! *                                                                            *
-! * iso_varying_string.f90                                                     *
+! * iso_varying_string.F90                                                     *
 ! *                                                                            *
 ! * Copyright (c) 2003, Rich Townsend <rhdt@bartol.udel.edu>                   *
 ! * All rights reserved.                                                       *

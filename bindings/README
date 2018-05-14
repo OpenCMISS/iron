@@ -4,7 +4,7 @@ cd iron/bindings
 
 and
 
-python generate_bindings .. C opencmiss_iron.h opencmiss_iron_c.f90
+python generate_bindings .. C opencmiss_iron.h opencmiss_iron_c.F90
 
 for C bindings and
 

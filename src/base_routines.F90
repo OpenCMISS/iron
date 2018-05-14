@@ -806,7 +806,7 @@ CONTAINS
     timingAllSubroutines=.TRUE.
     timingFromSubroutine=.FALSE.
     timingFileOpen=.FALSE.
-    !Initialise loose tolerance here rather than in constants.f90
+    !Initialise loose tolerance here rather than in constants.F90
     LOOSE_TOLERANCE=SQRT(EPSILON(1.0_DP))
     LOOSE_TOLERANCE_SP=SQRT(EPSILON(1.0_SP))
     !Setup the random seeds based on the time

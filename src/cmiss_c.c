@@ -249,7 +249,7 @@ static void cmfe_FatalHandler(int sig
   /* There is an issue with signal handling in a library such as OpenCMISS. The best option would be to 
      jump back to where the user called an OpenCMISS routine and let them process the error if that is 
      what they wish. This, however, would require setting the long jump buffer at each entry point to the 
-     OpenCMISS library. This could be done by modifying enters in opencmiss.f90 but may cause performance
+     OpenCMISS library. This could be done by modifying enters in opencmiss.F90 but may cause performance
      problems (probably not too bad as the major computations are inside the library rather than at the 
      interface). For now just stop the program on a signal. */
 
