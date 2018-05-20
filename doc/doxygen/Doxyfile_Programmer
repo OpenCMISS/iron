@@ -581,9 +581,9 @@ INPUT_ENCODING         = UTF-8
 # and *.h) to filter out the source-files in the directories. If left 
 # blank the following patterns are tested: 
 # *.c *.cc *.cxx *.cpp *.c++ *.java *.ii *.ixx *.ipp *.i++ *.inl *.h *.hh *.hxx 
-# *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.py *.f90
+# *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.py *.F90
 
-FILE_PATTERNS          = *.f90 \
+FILE_PATTERNS          = *.F90 \
                          *.c \
                          *.h \
                          *.dox
@@ -637,7 +637,7 @@ EXAMPLE_PATH           = ../../examples \
 # and *.h) to filter out the source-files in the directories. If left 
 # blank all files are included.
 
-EXAMPLE_PATTERNS       = *.f90 \
+EXAMPLE_PATTERNS       = *.F90 \
                          *.html
 
 # If the EXAMPLE_RECURSIVE tag is set to YES then subdirectories will be 

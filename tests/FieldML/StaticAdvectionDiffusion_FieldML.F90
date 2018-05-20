@@ -39,7 +39,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example ClassicalField/AdvectionDiffusion/StaticAdvectionDiffusion_FieldML/src/StaticAdvectionDiffusion_FieldMLExample.f90
+!> \example ClassicalField/AdvectionDiffusion/StaticAdvectionDiffusion_FieldML/src/StaticAdvectionDiffusion_FieldMLExample.F90
 !! Example program to solve a diffusion equation using OpenCMISS calls.
 !!
 !! \htmlinclude ClassicalField/AdvectionDiffusion/StaticAdvectionDiffusion_FieldML/history.html

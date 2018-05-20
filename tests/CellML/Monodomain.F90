@@ -39,7 +39,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example Bioelectrics/Monodomain/src/MonodomainExample.f90
+!> \example Bioelectrics/Monodomain/src/MonodomainExample.F90
 !! Example program to solve a Monodomain equation using OpenCMISS calls.
 !! \par Latest Builds:
 !! \li <a href='http://autotest.bioeng.auckland.ac.nz/opencmiss-build/logs_x86_64-linux/Bioelectrics/Monodomain/build-intel'>Linux Intel Build</a>

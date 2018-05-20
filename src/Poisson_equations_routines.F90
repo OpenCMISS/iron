@@ -3430,7 +3430,7 @@ CONTAINS
 
           rhsVector=>vectorMatrices%rhsVector
           sourceVector=>vectorMatrices%sourceVector
-          sourceVector%updateVector=.TRUE. !TODO -- maybe done somewhere else (greped at equations_matrices_routines.f90)?, check when time dependency is included
+          sourceVector%updateVector=.TRUE. !TODO -- maybe done somewhere else (greped at equations_matrices_routines.F90)?, check when time dependency is included
           
           vectorMapping=>vectorEquations%vectorMapping
           linearMapping=>vectorMapping%linearMapping

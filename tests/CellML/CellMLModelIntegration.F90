@@ -39,7 +39,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example cellml/model-integration/Fortran/FortranExample.f90
+!> \example cellml/model-integration/Fortran/FortranExample.F90
 !! Example program to integrate a CellML model using OpenCMISS.
 !! \par Latest Builds:
 !! \li <a href='http://autotest.bioeng.auckland.ac.nz/opencmiss-build/logs_x86_64-linux/Bioelectrics/Monodomain/build-intel'>Linux Intel Build</a>

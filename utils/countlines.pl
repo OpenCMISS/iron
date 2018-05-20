@@ -3,11 +3,11 @@
 
 # Do svn operations to produce blame files
 
-#  while (glob("*.f90 *.c *.h"))
+#  while (glob("*.F90 *.c *.h"))
 #    {
 #      $infilename = $_;
 #      print "infilename = $infilename \n";
-#      @fileparts = split /.f90/, $infilename;
+#      @fileparts = split /.F90/, $infilename;
 #      $outfilename = @fileparts[0].".svnblame";
 #      $command = "rm -rf $outfilename";
 #      system( $command );

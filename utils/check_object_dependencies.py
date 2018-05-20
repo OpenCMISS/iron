@@ -17,7 +17,7 @@ source_to_object = {}
 modules_from_source = []
 
 # Read source files and get module names and modules used
-fortran_files = [f for f in os.listdir('src') if f.endswith('.f90')]
+fortran_files = [f for f in os.listdir('src') if f.endswith('.F90')]
 source_modules = {}
 for fname in fortran_files:
     module_name_found = False
@@ -87,7 +87,7 @@ extra_dependencies = {}
 for object in objects.keys():
     (source_file, dependencies) = objects[object]
     print('* %s' % source_file)
-    if not source_file.endswith('.f90'):
+    if not source_file.endswith('.F90'):
         print("  Skipping non Fortran file.")
         continue
     try:
@@ -104,17 +104,17 @@ for object in objects.keys():
             dependency_sources.append(objects[d][0])
         except KeyError:
             # Dependency not listed as a target itself
-            if os.path.isfile('src/' + d + '.f90'):
-                dependency_sources.append(d + '.f90')
+            if os.path.isfile('src/' + d + '.F90'):
+                dependency_sources.append(d + '.F90')
             else:
                 print("  Skipping dependency %s" % d)
     # convert the list of source file dependencies to module names,
     # skipping non-fortran files
     dependency_modules = set([
         source_to_module[d].lower() for d in dependency_sources
-        if d.endswith('.f90')])
+        if d.endswith('.F90')])
     for d in dependency_sources:
-        if not d.endswith('.f90'):
+        if not d.endswith('.F90'):
             print("  Can't check dependency %s" % d)
     not_in_source = dependency_modules - modules_used
     not_in_makefile = modules_used - dependency_modules

@@ -23,9 +23,9 @@ if (WITH_C_BINDINGS)
     # Generate the c files
     file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/opencmiss") # need this sub-path as the include directive is 
     set(OPENCMISS_H "${CMAKE_CURRENT_BINARY_DIR}/opencmiss/iron.h")
-    set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/iron_c.f90")
+    set(OPENCMISS_C_F90 "${CMAKE_CURRENT_BINARY_DIR}/iron_c.F90")
     add_custom_command(OUTPUT ${OPENCMISS_C_F90} ${OPENCMISS_H}
-        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
+        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.F90 # Need to re-build if that file changes!
         COMMAND "${Python_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
     )
@@ -100,7 +100,7 @@ if (WITH_Python_BINDINGS)
     # iron_generated.i is included by iron.i later
     set(SWIG_IFACE "${CMAKE_CURRENT_BINARY_DIR}/iron_generated.i")
     add_custom_command(OUTPUT ${SWIG_IFACE}
-        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
+        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.F90 # Need to re-build if that file changes!
         COMMAND "${Python_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" SWIG "${SWIG_IFACE}"
         COMMENT "Generating swig interface file for Iron"
         WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
@@ -195,7 +195,7 @@ if (WITH_Python_BINDINGS)
     
     set(IRON_PY ${CMAKE_CURRENT_BINARY_DIR}/iron.py) # see python.py script in generate_bindings for iron.py name
     add_custom_command(OUTPUT ${IRON_PY}
-        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.f90 # Need to re-build if that file changes!
+        DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.F90 # Need to re-build if that file changes!
         COMMAND "${Python_EXECUTABLE}" generate_bindings 
             "${Iron_SOURCE_DIR}" Python ${IRON_PYTHON_MODULE} "${CMAKE_CURRENT_BINARY_DIR}"
         COMMENT "Generating Python binding script"

@@ -39,7 +39,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example ClassicalField/Helmholtz/AnalyticHelmholtz/src/AnalyticHelmholtzExample.f90
+!> \example ClassicalField/Helmholtz/AnalyticHelmholtz/src/AnalyticHelmholtzExample.F90
 !! Example illustrating the use of OpenCMISS to solve the Helmholtz problem and check with its Analytic Solution.
 !! 
 !! \htmlinclude ClassicalField/Helmholtz/AnalyticHelmholtz/history.html

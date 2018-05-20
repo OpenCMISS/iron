@@ -993,7 +993,7 @@ CONTAINS
 
     IF(ASSOCIATED(NODES)) THEN
       IF(NODES%INTERFACE%MESH_CONNECTIVITY%MESH_CONNECTIVITY_FINISHED) THEN
-        PRINT *, 'CHECK how to circumvent! interface_routines.f90:1133'
+        PRINT *, 'CHECK how to circumvent! interface_routines.F90:1133'
         CALL FlagError("Interface mesh connectivity has already been finished.",err,error,*999)
       ELSE
         !Default to two coupled meshes
