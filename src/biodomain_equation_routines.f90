@@ -2364,12 +2364,12 @@ CONTAINS
                 CALL FlagError("Not implemented.",err,error,*999)
               ELSE
                 !Use the conductivity tensor in geometric coordinates
-                DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                   CONDUCTIVITY(nj,nj)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(nj+2,1)
                 ENDDO !nj
               ENDIF
               !Compute basis dPhi/dx terms
-              DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+              DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   DPHIDX(nj,ms)=0.0_DP
                   DO ni=1,DEPENDENT_BASIS%numberOfXi
@@ -2381,19 +2381,19 @@ CONTAINS
               ENDDO !nj            
               !Loop over field components
               mhs=0          
-              DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,FIELD_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       SUM=0.0_DP
                       IF(stiffnessMatrix%updateMatrix) THEN
-                        DO ni=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
-                          DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO ni=1,GEOMETRIC_VARIABLE%numberOfComponents
+                          DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                             SUM=SUM+CONDUCTIVITY(ni,nj)*DPHIDX(ni,mhs)*DPHIDX(nj,nhs)
                           ENDDO !nj
                         ENDDO !ni

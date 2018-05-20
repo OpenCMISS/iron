@@ -154,7 +154,7 @@ CONTAINS
                 FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(dependentField,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS !u,v,w
+                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents !u,v,w
                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
@@ -1413,7 +1413,7 @@ CONTAINS
                       variable_type=EQUATIONS_SET_ALE_PPE%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
                       FIELD_VARIABLE=>EQUATIONS_SET_ALE_PPE%GEOMETRY%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                           DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                           IF(ASSOCIATED(DOMAIN)) THEN
                             IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
@@ -3380,7 +3380,7 @@ CONTAINS
               & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
             !Loop over field components
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
@@ -3388,7 +3388,7 @@ CONTAINS
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       DO ni=1,DEPENDENT_BASIS%numberOfXi
@@ -3556,14 +3556,14 @@ CONTAINS
             IF(equationsMatrix%updateMatrix) THEN          
               !Loop over field components
               mhs=0          
-              DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,FIELD_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS
                   mhs=mhs+1
                   !Loop over field components
                   nhs=0
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS
                       nhs=nhs+1
                       
@@ -3593,14 +3593,14 @@ CONTAINS
             IF(sourceVector%updateVector) THEN
               !Loop over field components
               mhs=0          
-              DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,FIELD_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS
                   mhs=mhs+1
                   !Loop over field components
                   nhs=0
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS
                       nhs=nhs+1
                       
@@ -3630,7 +3630,7 @@ CONTAINS
             IF(rhsVector%updateVector) THEN
               !Loop over field components
               mhs=0          
-              DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,FIELD_VARIABLE%numberOfComponents
                 !Loop over vector rows
                 DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS
                   mhs=mhs+1            
@@ -3662,13 +3662,13 @@ CONTAINS
             
             !calculate the matrix-vector-product         
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element matrix / source-vector rows
               DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS
                 mhs=mhs+1
                 nhs=0
                 !Loop over element matrix columns / Vm-vector entries (summation)
-                DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO nh=1,FIELD_VARIABLE%numberOfComponents
                   DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS
                     nhs=nhs+1
                     sourceVector%elementVector%vector(mhs)=sourceVector%elementVector%vector(mhs)+MATRIX_K_I(mhs,nhs)*Vm(nhs)
@@ -3866,7 +3866,7 @@ CONTAINS
               & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
@@ -3874,7 +3874,7 @@ CONTAINS
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       PHINS=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
@@ -3999,14 +3999,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
@@ -4135,17 +4135,17 @@ CONTAINS
                 & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
               !Find material parameters and u value at this Gauss point
               C_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+3,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+3,NO_PART_DERIV)
               U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_VAR_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
               !Loop over field components
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   !Loop over element columns
-                  DO nh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,DEPENDENT_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       VALUE=-2.0_DP*C_PARAM*QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
@@ -4197,19 +4197,19 @@ CONTAINS
                 & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
               !Find material parameter and u value at this Gauss point
               B_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+2,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+2,NO_PART_DERIV)
               C_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+3,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+3,NO_PART_DERIV)
               U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_VAR_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
               !Loop over field components
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   !Loop over element columns
-                  DO nh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,DEPENDENT_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       VALUE=-B_PARAM*C_PARAM*QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
@@ -4339,19 +4339,19 @@ CONTAINS
             IF(equationsMatrix%firstAssembly) THEN
               IF(equationsMatrix%updateMatrix) THEN
                 B_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                  & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+2,NO_PART_DERIV)
+                  & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+2,NO_PART_DERIV)
                 mhs=0
-                DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
                     nhs=0
                     !Loop over element columns
-                    DO nh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO nh=1,DEPENDENT_VARIABLE%numberOfComponents
                       DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                         nhs=nhs+1
                         SUM1=0.0_DP
-                        DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                           PGMJ(nj)=0.0_DP
                           PGNJ(nj)=0.0_DP
                           DO ni=1,GEOMETRIC_BASIS%numberOfXi
@@ -4378,9 +4378,9 @@ CONTAINS
             IF(rhsVector%firstAssembly) THEN
               IF(rhsVector%updateVector) THEN
                 A_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                  & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+1,NO_PART_DERIV)
+                  & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+1,NO_PART_DERIV)
                 mhs=0
-                DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
@@ -4392,11 +4392,11 @@ CONTAINS
             ENDIF
             IF(nonlinearMatrices%updateResidual) THEN
               C_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+3,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+3,NO_PART_DERIV)
               U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
                 & VALUES(1,NO_PART_DERIV)
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
@@ -4452,17 +4452,17 @@ CONTAINS
             IF(equationsMatrix%firstAssembly) THEN
               IF(equationsMatrix%updateMatrix) THEN
                 mhs=0
-                DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
                     nhs=0
                     !Loop over element columns
-                    DO nh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO nh=1,DEPENDENT_VARIABLE%numberOfComponents
                       DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                         nhs=nhs+1
                         SUM1=0.0_DP
-                        DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                           PGMJ(nj)=0.0_DP
                           PGNJ(nj)=0.0_DP
                           DO ni=1,GEOMETRIC_BASIS%numberOfXi
@@ -4486,9 +4486,9 @@ CONTAINS
             IF(rhsVector%firstAssembly) THEN
               IF(rhsVector%updateVector) THEN
                 A_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                  & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+1,NO_PART_DERIV)
+                  & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+1,NO_PART_DERIV)
                 mhs=0
-                DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
@@ -4500,9 +4500,9 @@ CONTAINS
             ENDIF
             IF(nonlinearMatrices%updateResidual) THEN
               B_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+2,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+2,NO_PART_DERIV)
               C_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+3,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+3,NO_PART_DERIV)
               U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
                 & VALUES(1,NO_PART_DERIV)
 !!TODO: Handle floating point exceptions better
@@ -4512,7 +4512,7 @@ CONTAINS
                 CALL FlagError(localError,err,error,*999)
               ENDIF
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1

@@ -2011,9 +2011,9 @@ CONTAINS
           SELECT CASE(EQUATIONS_SET_SUBTYPE)
           CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
              & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-            NUMBER_OF_VEL_PRESS_COMPONENTS = FIELD_VARIABLE%NUMBER_OF_COMPONENTS - 1  !last component: mass increase
+            NUMBER_OF_VEL_PRESS_COMPONENTS = FIELD_VARIABLE%numberOfComponents - 1  !last component: mass increase
           CASE DEFAULT
-            NUMBER_OF_VEL_PRESS_COMPONENTS = FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            NUMBER_OF_VEL_PRESS_COMPONENTS = FIELD_VARIABLE%numberOfComponents
           END SELECT
 
           !---------------------------------------------------------------------------------------------------------
@@ -2226,7 +2226,7 @@ CONTAINS
 
             !Loop over element rows
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
 
               MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
               DEPENDENT_BASIS_1 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
@@ -2245,7 +2245,7 @@ CONTAINS
 
                   !Loop over element columns
                   nhs=0
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
 
                     MESH_COMPONENT_2 = FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                     DEPENDENT_BASIS_2 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
@@ -2265,7 +2265,7 @@ CONTAINS
                       CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
                         !-------------------------------------------------------------------------------------------------------------
                         !velocity test function, velocity trial function
-                        IF(mh==nh.AND.nh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                        IF(mh==nh.AND.nh<FIELD_VARIABLE%numberOfComponents) THEN
 
                           SUM = 0.0_DP
 
@@ -2280,7 +2280,7 @@ CONTAINS
                             & SUM * RWG
                         !-------------------------------------------------------------------------------------------------------------
                         !mass-increase test function, velocity trial function
-                        ELSE IF(mh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS.AND.nh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                        ELSE IF(mh==FIELD_VARIABLE%numberOfComponents.AND.nh<FIELD_VARIABLE%numberOfComponents) THEN
 
                           SUM = 0.0_DP
 
@@ -2307,7 +2307,7 @@ CONTAINS
                         !dampingMatrix
                         IF(dampingMatrix%updateMatrix) THEN
                           !MASS-INCREASE test function, mass-increase trial function
-                          IF(mh==nh.AND.nh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                          IF(mh==nh.AND.nh==FIELD_VARIABLE%numberOfComponents) THEN
                             PGM=QUADRATURE_SCHEME_1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                             PGN=QUADRATURE_SCHEME_2%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
 
@@ -2321,7 +2321,7 @@ CONTAINS
                           END IF
 
 !                           !Try out adding the inertia term ...
-!                           IF(mh==nh.AND.mh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+!                           IF(mh==nh.AND.mh<FIELD_VARIABLE%numberOfComponents) THEN
 !                             PGM=QUADRATURE_SCHEME_1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
 !                             PGN=QUADRATURE_SCHEME_2%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
 !
@@ -2338,7 +2338,7 @@ CONTAINS
                       ! matrices for multi-compartment poroelastic equations
                       CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
                         !velocity test function, velocity trial function
-                        IF(mh==nh.AND.nh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                        IF(mh==nh.AND.nh<FIELD_VARIABLE%numberOfComponents) THEN
 
                           SUM = 0.0_DP
 
@@ -2353,7 +2353,7 @@ CONTAINS
                             & SUM * RWG
                         !-------------------------------------------------------------------------------------------------------------
                         !mass-increase test function, velocity trial function
-                        ELSE IF(mh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS.AND.nh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                        ELSE IF(mh==FIELD_VARIABLE%numberOfComponents.AND.nh<FIELD_VARIABLE%numberOfComponents) THEN
 
                           SUM = 0.0_DP
 
@@ -2380,7 +2380,7 @@ CONTAINS
                         !dampingMatrix
                         IF(dampingMatrix%updateMatrix) THEN
                           !MASS-INCREASE test function, mass-increase trial function
-                          IF(mh==nh.AND.nh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                          IF(mh==nh.AND.nh==FIELD_VARIABLE%numberOfComponents) THEN
                             PGM=QUADRATURE_SCHEME_1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                             PGN=QUADRATURE_SCHEME_2%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
 
@@ -2394,7 +2394,7 @@ CONTAINS
                           END IF
 
 !                           !Try out adding the inertia term ...
-!                           IF(mh==nh.AND.mh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+!                           IF(mh==nh.AND.mh<FIELD_VARIABLE%numberOfComponents) THEN
 !                             PGM=QUADRATURE_SCHEME_1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
 !                             PGN=QUADRATURE_SCHEME_2%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
 !
@@ -2538,7 +2538,7 @@ CONTAINS
                         !-------------------------------------------------------------------------------------------------------------
                         !For the INRIA model, and: mass-increase test function, pressure trial function
                         ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
-                          & mh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS.AND.nh==NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
+                          & mh==FIELD_VARIABLE%numberOfComponents.AND.nh==NUMBER_OF_VEL_PRESS_COMPONENTS) THEN
 
                           SUM = 0.0_DP
 
@@ -2553,7 +2553,7 @@ CONTAINS
                         !-------------------------------------------------------------------------------------------------------------
                         !For the INRIA model, and: mass-increase test function, mass-increase trial function
                         ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
-                          & mh==nh.AND.nh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                          & mh==nh.AND.nh==FIELD_VARIABLE%numberOfComponents) THEN
 
                           SUM = 0.0_DP
 
@@ -2592,7 +2592,7 @@ CONTAINS
                         ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE) THEN
                           IF(dampingMatrix%updateMatrix) THEN
                             !pressure test function, mass-increase trial function
-                            IF(mh==NUMBER_OF_VEL_PRESS_COMPONENTS.AND.nh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                            IF(mh==NUMBER_OF_VEL_PRESS_COMPONENTS.AND.nh==FIELD_VARIABLE%numberOfComponents) THEN
                               PGM=QUADRATURE_SCHEME_1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                               PGN=QUADRATURE_SCHEME_2%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)
 
@@ -2624,7 +2624,7 @@ CONTAINS
 
                     !-----------------------------------------------------------------------------------------------------------------
                     !velocity test function
-                    IF( mh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS ) THEN
+                    IF( mh<FIELD_VARIABLE%numberOfComponents ) THEN
 
                       SUM = 0.0_DP
 
@@ -2640,7 +2640,7 @@ CONTAINS
 
                     !-----------------------------------------------------------------------------------------------------------------
                     !mass-increase test function
-                    ELSE IF( mh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS ) THEN
+                    ELSE IF( mh==FIELD_VARIABLE%numberOfComponents ) THEN
 
                       SUM = 0.0_DP
 
@@ -2662,7 +2662,7 @@ CONTAINS
                   CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
                     !-----------------------------------------------------------------------------------------------------------------
                     !velocity test function
-                    IF( mh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS ) THEN
+                    IF( mh<FIELD_VARIABLE%numberOfComponents ) THEN
 
                       SUM = 0.0_DP
 
@@ -2682,7 +2682,7 @@ CONTAINS
 
                     !-----------------------------------------------------------------------------------------------------------------
                     !mass-increase test function
-                    ELSE IF( mh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS ) THEN
+                    ELSE IF( mh==FIELD_VARIABLE%numberOfComponents ) THEN
 
                       SUM = 0.0_DP
 
@@ -2745,7 +2745,7 @@ CONTAINS
                     !-------------------------------------------------------------------------------------------------------------
                     !For the INRIA model, and: mass-increase test function
                     ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE.AND. &
-                      & mh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                      & mh==FIELD_VARIABLE%numberOfComponents) THEN
 
                       SUM = 0.0_DP
 
@@ -2793,7 +2793,7 @@ CONTAINS
 
               !Loop over element rows
               mhs=0
-              DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS !field_variable is the variable associated with the equations set under consideration
+              DO mh=1,FIELD_VARIABLE%numberOfComponents !field_variable is the variable associated with the equations set under consideration
 
                 MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                 DEPENDENT_BASIS_1 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
@@ -2817,7 +2817,7 @@ CONTAINS
 
                       !Loop over element columns
                       nhs=0
-                      DO nh=1,FIELD_VARIABLES(num_var_count)%ptr%NUMBER_OF_COMPONENTS
+                      DO nh=1,FIELD_VARIABLES(num_var_count)%ptr%numberOfComponents
 
                         MESH_COMPONENT_2 = FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                         DEPENDENT_BASIS_2 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
@@ -2875,7 +2875,7 @@ CONTAINS
                 & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3) THEN
 
                 mhs=0
-                DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,FIELD_VARIABLE%numberOfComponents
                   MESH_COMPONENT_1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                   DEPENDENT_BASIS_1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
                     & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -2962,7 +2962,7 @@ CONTAINS
 !
 !               !Loop over element rows
 !               mhs=0
-!               DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+!               DO mh=1,FIELD_VARIABLE%numberOfComponents
 !
 !                 MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
 !                 DEPENDENT_BASIS_1 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
@@ -2981,8 +2981,8 @@ CONTAINS
 !
 !                       !Loop over element columns
 !                       nhs=0
-! !                       DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-!                       DO nh=1,FIELD_VARIABLES(imatrix)%ptr%NUMBER_OF_COMPONENTS
+! !                       DO nh=1,FIELD_VARIABLE%numberOfComponents
+!                       DO nh=1,FIELD_VARIABLES(imatrix)%ptr%numberOfComponents
 !
 !                         MESH_COMPONENT_2 = FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
 !                         DEPENDENT_BASIS_2 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
@@ -3032,7 +3032,7 @@ CONTAINS
           IF(DIAGNOSTICS5) THEN
             IF( ELEMENT_NUMBER == 1 ) THEN
               NDOFS = 0
-              DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,FIELD_VARIABLE%numberOfComponents
                 MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                 DEPENDENT_BASIS_1 => dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
                   & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -3055,7 +3055,7 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               MESH_COMPONENT_1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
               DEPENDENT_BASIS_1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
@@ -3066,7 +3066,7 @@ CONTAINS
                 IF(ASSOCIATED(stiffnessMatrix).AND.ASSOCIATED(dampingMatrix)) THEN
                   IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                     !Loop over element columns
-                    DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO nh=1,FIELD_VARIABLE%numberOfComponents
                       MESH_COMPONENT_2=FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                       DEPENDENT_BASIS_2=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
                         & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -3251,7 +3251,7 @@ CONTAINS
             pointMetrics=>equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr
             CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_VOLUME_TYPE,pointMetrics,err,error,*999)
 
-            DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS-1
+            DO componentIdx=1,dependentVariable%numberOfComponents-1
               normalProjection=DOT_PRODUCT(pointMetrics%GU(normalComponentIdx,:),pointMetrics%DX_DXI(componentIdx,:))
               IF(face%xiNormalDirection<0) THEN
                 normalProjection=-normalProjection
@@ -5511,7 +5511,7 @@ CONTAINS
                 FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
@@ -5621,7 +5621,7 @@ CONTAINS
                 FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                     BOUND_COUNT=0
                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -5762,7 +5762,7 @@ CONTAINS
                               DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
                                 SELECT CASE(EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE)
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1)
-                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%NUMBER_OF_COMPONENTS==3) THEN
+                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%numberOfComponents==3) THEN
 !POLYNOM
                                     SELECT CASE(variable_type)
                                       CASE(FIELD_U_VARIABLE_TYPE)
@@ -5821,7 +5821,7 @@ CONTAINS
 
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2)
-                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%NUMBER_OF_COMPONENTS==3) THEN
+                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%numberOfComponents==3) THEN
 !EXPONENTIAL
                                     SELECT CASE(variable_type)
                                       CASE(FIELD_U_VARIABLE_TYPE)
@@ -5896,7 +5896,7 @@ CONTAINS
 
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3)
-                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%NUMBER_OF_COMPONENTS==3) THEN
+                                  IF(numberOfDimensions==2.AND.FIELD_VARIABLE%numberOfComponents==3) THEN
 !SINUS/COSINUS
                                     SELECT CASE(variable_type)
                                       CASE(FIELD_U_VARIABLE_TYPE)
@@ -5967,7 +5967,7 @@ CONTAINS
                                   ENDIF
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1)
-                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%NUMBER_OF_COMPONENTS==4) THEN
+                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%numberOfComponents==4) THEN
 !POLYNOM
                                     SELECT CASE(variable_type)
                                       CASE(FIELD_U_VARIABLE_TYPE)
@@ -6030,7 +6030,7 @@ CONTAINS
 
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2)
-                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%NUMBER_OF_COMPONENTS==4) THEN
+                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%numberOfComponents==4) THEN
 !EXPONENTIAL
                                     SELECT CASE(variable_type)
                                       CASE(FIELD_U_VARIABLE_TYPE)
@@ -6109,7 +6109,7 @@ CONTAINS
                                   ENDIF
 
                                 CASE(EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3)
-                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%NUMBER_OF_COMPONENTS==4) THEN
+                                  IF(numberOfDimensions==3.AND.FIELD_VARIABLE%numberOfComponents==4) THEN
   !SINE/COSINE
                                     SELECT CASE(variable_type)
                                       CASE(FIELD_U_VARIABLE_TYPE)
@@ -6963,7 +6963,7 @@ CONTAINS
                               variable_type=FIELD_V_VARIABLE_TYPE
                               FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-!                                DO component_idx=4,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+!                                DO component_idx=4,FIELD_VARIABLE%numberOfComponents
 
 
                                CALL Field_ParametersToFieldParametersCopy(DEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, &
@@ -7088,7 +7088,7 @@ CONTAINS
 !                       variable_type=FIELD_U_VARIABLE_TYPE
 !                       FIELD_VARIABLE=>sourceField%VARIABLE_TYPE_MAP(variable_type)%ptr
 !                       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-!                         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+!                         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
 !                           IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
 !                             DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
 !                             IF(ASSOCIATED(DOMAIN)) THEN

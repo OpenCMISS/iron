@@ -453,7 +453,7 @@ MODULE Types
 
   !>Contains information on the dofs for a mesh.
   TYPE MeshDofsType
-    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology !<The pointer to the mesh component topology for the dofs information.
+    TYPE(MeshTopologyType), POINTER :: meshTopology !<The pointer to the mesh component topology for the dofs information.
     INTEGER(INTG) :: numberOfDofs !<The number of dofs in the mesh.
   END TYPE MeshDofsType
 
@@ -480,10 +480,10 @@ MODULE Types
 
   !>Contains the information for the elements of a mesh.
   TYPE MeshElementsType
-    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology !<The pointer to the mesh component topology for the elements information.
+    TYPE(MeshTopologyType), POINTER :: meshTopology !<The pointer to the mesh component topology for the elements information.
     INTEGER(INTG) :: numberOfElements !< The number of elements in the mesh.
     LOGICAL :: elementsFinished !<Is .TRUE. if the mesh elements have finished being created, .FALSE. if not.
-    TYPE(MeshElementType), POINTER :: elements(:) !<elements(elementIdx). The pointer to the array of information for the elements of this mesh. elements(elementIdx) contains the information for the elementIdx'th global element of the mesh. \todo Should this be allocatable.
+    TYPE(MeshElementType), ALLOCATABLE :: elements(:) !<elements(elementIdx). The array of information for the elements of this mesh. elements(elementIdx) contains the information for the elementIdx'th global element of the mesh. 
     TYPE(TREE_TYPE), POINTER :: elementsTree !<A tree mapping the mesh global element number to the mesh user element number.
   END TYPE MeshElementsType
 
@@ -504,15 +504,15 @@ MODULE Types
     INTEGER(INTG) :: numberOfDerivatives !<The number of global derivatives at the node for the mesh. Old CMISS name NKT(nj,np).
     TYPE(MeshNodeDerivativeType), ALLOCATABLE :: derivatives(:) !<derivatives(derivativeIdx). Contains information on the derivativeIdx'th derivative of the node.
     INTEGER(INTG) :: numberOfSurroundingElements !<The number of elements surrounding the node in the mesh. Old CMISS name NENP(np,0,0:nr).
-    INTEGER(INTG), POINTER :: surroundingElements(:) !<surroudingElements(localElementIdx). The global element number of the localElementIdx'th element that is surrounding the node. Old CMISS name NENP(np,nep,0:nr). \todo Change this to allocatable.
+    INTEGER(INTG), ALLOCATABLE :: surroundingElements(:) !<surroudingElements(localElementIdx). The global element number of the localElementIdx'th element that is surrounding the node. Old CMISS name NENP(np,nep,0:nr). 
     LOGICAL :: boundaryNode !<Is .TRUE. if the mesh node is on the boundary of the mesh, .FALSE. if not.
   END TYPE MeshNodeType
 
   !>Contains the information for the nodes of a mesh.
   TYPE MeshNodesType
-    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology !<The pointer to the mesh component topology for the nodes information.
+    TYPE(MeshTopologyType), POINTER :: meshTopology !<The pointer to the mesh component topology for the nodes information.
     INTEGER(INTG) :: numberOfnodes !<The number of nodes in the mesh.
-    TYPE(MeshNodeType), ALLOCATABLE :: nodes(:) !<nodes(nodeIdx). The pointer to the array of topology information for the nodes of the mesh. node(nodeIdx) contains the topological information for the nodeIdx'th global node of the mesh. \todo Should this be allocatable???
+    TYPE(MeshNodeType), ALLOCATABLE :: nodes(:) !<nodes(nodeIdx). The pointer to the array of topology information for the nodes of the mesh. node(nodeIdx) contains the topological information for the nodeIdx'th global node of the mesh. 
     TYPE(TREE_TYPE), POINTER :: nodesTree !<A tree mapping the mesh global number to the region nodes global number.
   END TYPE MeshNodesType
   
@@ -537,26 +537,26 @@ MODULE Types
   
   !<Contains the information for the data points of a mesh
   TYPE MeshDataPointsType
-    TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology !<The pointer to the mesh component topology for the data information.
+    TYPE(MeshTopologyType), POINTER :: meshTopology !<The pointer to the mesh component topology for the data information.
     INTEGER(INTG) :: totalNumberOfProjectedData !<Number of projected data in this mesh
     TYPE(MeshDataPointType), ALLOCATABLE :: dataPoints(:) !<dataPoints(dataPointIdx). Information of the projected data points
-    TYPE(MeshElementDataPointsType), ALLOCATABLE :: elementDataPoint(:) !<elementDataPoint(elementIdx). Information of the projected data on the elements 
+    TYPE(MeshElementDataPointsType), ALLOCATABLE :: elementDataPoints(:) !<elementDataPoints(elementIdx). Information of the projected data on the elements 
   END TYPE MeshDataPointsType
 
   !>Contains information on the (global) topology of a mesh.
-  TYPE MeshComponentTopologyType
+  TYPE MeshTopologyType
     TYPE(MeshType), POINTER :: mesh !<Pointer to the parent mesh.
     INTEGER(INTG) :: meshComponentNumber !<The mesh component number for this mesh topology.
     TYPE(MeshNodesType), POINTER :: nodes !<Pointer to the nodes within the mesh topology.
     TYPE(MeshElementsType), POINTER :: elements !<Pointer to the elements within the mesh topology.
     TYPE(MeshDofsType), POINTER :: dofs !<Pointer to the dofs within the mesh topology.
     TYPE(MeshDataPointsType), POINTER :: dataPoints !<Pointer to the data points within the mesh topology
-  END TYPE MeshComponentTopologyType
+  END TYPE MeshTopologyType
 
-  !>A buffer type to allow for an array of pointers to a MeshComponentTopologyType.
-  TYPE MeshComponentTopologyPtrType
-    TYPE(MeshComponentTopologyType), POINTER :: ptr !<The pointer to the mesh topology.
-  END TYPE MeshComponentTopologyPtrType
+  !>A buffer type to allow for an array of pointers to a MeshTopologyType.
+  TYPE MeshTopologyPtrType
+    TYPE(MeshTopologytype), POINTER :: ptr !<The pointer to the mesh topology.
+  END TYPE MeshTopologyPtrType
 
   !>Embedded mesh types
   TYPE EMBEDDING_XI_TYPE
@@ -587,13 +587,13 @@ MODULE Types
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containing the mesh. If the mesh is in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
     TYPE(GeneratedMeshType), POINTER :: generatedMesh !<A pointer to the generated mesh generate this mesh.
     INTEGER(INTG) :: numberOfDimensions !<The number of dimensions (Xi directions) for this mesh.
-    INTEGER(INTG) :: NUMBER_OF_COMPONENTS !<The number of mesh components in this mesh.
+    INTEGER(INTG) :: numberOfComponents !<The number of mesh components in this mesh.
     LOGICAL :: MESH_EMBEDDED !<Is .TRUE. if the mesh is embedded in another mesh, .FALSE. if not.
     TYPE(MeshType), POINTER :: EMBEDDING_MESH !<If this mesh is embedded the pointer to the mesh that this mesh is embedded in. IF the mesh is not embedded the pointer is NULL.
     INTEGER(INTG) :: NUMBER_OF_EMBEDDED_MESHES !<The number of meshes that are embedded in this mesh.
     TYPE(MeshPtrType), POINTER :: EMBEDDED_MESHES(:) !<EMBEDDED_MESHES(mesh_idx). A pointer to the mesh_idx'th mesh that is embedded in this mesh.
     INTEGER(INTG) :: numberOfElements
-    TYPE(MeshComponentTopologyPtrType), POINTER :: topology(:) !<TOPOLOGY(meshComponentIdx). A pointer to the topology meshComponentIdx'th mesh component. \todo Change to allocatable?
+    TYPE(MeshTopologyPtrType), ALLOCATABLE :: topology(:) !<TOPOLOGY(meshComponentIdx). A pointer to the topology meshComponentIdx'th mesh component. \todo Change to allocatable?
     TYPE(DecompositionsType), POINTER :: decompositions !<A pointer to the decompositions for this mesh.
     LOGICAL :: surroundingElementsCalculate !<Boolean flag to determine whether surrounding elements should be calculated.
   END TYPE MeshType
@@ -608,7 +608,7 @@ MODULE Types
     TYPE(RegionType), POINTER :: region !<A pointer to the region containg the meshes. If the meshes are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containg the meshes. If the meshes are in a region rather than an interface then this pointer will be NULL and the region pointer should be used.
     INTEGER(INTG) :: numberOfMeshes !<The number of meshes defined on the region.
-    TYPE(MeshPtrType), POINTER :: meshes(:) !<meshes(meshesIdx). The array of pointers to the meshes.
+    TYPE(MeshPtrType), ALLOCATABLE :: meshes(:) !<meshes(meshesIdx). The array of pointers to the meshes.
   END TYPE MeshesType
 
   PUBLIC MeshDofsType
@@ -619,7 +619,7 @@ MODULE Types
 
   PUBLIC MeshElementDataPointsType,MeshDataPointType,MeshDataPointsType
 
-  PUBLIC MeshComponentTopologyType,MeshComponentTopologyPtrType
+  PUBLIC MeshTopologytype,MeshTopologyPtrType
 
   PUBLIC EMBEDDING_XI_TYPE,EMBEDDING_GAUSSPOINT_TYPE,MESH_EMBEDDING_TYPE
 
@@ -707,7 +707,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information on the degrees-of-freedom (dofs) for a domain.
   TYPE DomainDOFsType
-    TYPE(DomainType), POINTER :: domain !<A pointer to the domain.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer back to the domain topology.
     INTEGER(INTG) :: numberOfDofs !<The number of degrees-of-freedom (excluding ghost dofs) in the domain.
     INTEGER(INTG) :: totalNumberOfDofs !<The total number of degrees-of-freedom (including ghost dofs) in the domain.
     INTEGER(INTG) :: numberOfGlobalDofs !<The number of global degrees-of-freedom in the domains.
@@ -731,7 +731,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains the topology information for the lines of a domain.
   TYPE DomainLinesType
-    TYPE(DomainType), POINTER :: domain !<The pointer to the domain for this lines topology information.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<The pointer back to the domain topology.
     INTEGER(INTG) :: numberOfLines !<The number of lines in this domain topology.
     TYPE(DomainLineType), ALLOCATABLE :: lines(:) !<lines(lineIdx). The pointer to the array of topology information for the lines of this domain. lines(lineIdx) contains the topological information for the lineIdx'th local line of the domain.
   END TYPE DomainLinesType
@@ -753,7 +753,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains the topology information for the faces of a domain.
   TYPE DomainFacesType
-    TYPE(DomainType), POINTER :: domain !<The pointer to the domain for this faces topology information.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<The pointer back to the domain topology.
     INTEGER(INTG) :: numberOfFaces !<The number of faces in this domain topology.
     TYPE(DomainFaceType), ALLOCATABLE :: faces(:) !<faces(faceIdx). The pointer to the array of topology information for the faces of this domain. facecs(faceIdx) contains the topological information for the faceIdx'th local face of the domain.
   END TYPE DomainFacesType
@@ -769,11 +769,11 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains the topology information for the elements of a domain.
   TYPE DomainElementsType
-    TYPE(DomainType), POINTER :: domain !<The pointer to the domain for this elements topology information.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<The pointer back to the domain topology.
     INTEGER(INTG) :: numberOfElements !<The number of elements (excluding ghost elements) in this domain topology.
     INTEGER(INTG) :: totalNumberOfElements !<The total number of elements (including ghost elements) in this domain topology.
     INTEGER(INTG) :: numberOfGlobalElements !<The number of global elements in this domain topology.
-    TYPE(DomainElementType), POINTER :: elements(:) !<elements(elementIdx). The pointer to the array of topology information for the elements of this domain. elements(elementIdx) contains the topological information for the elementIdx'th local elements of the domain. \todo Change this to allocatable???
+    TYPE(DomainElementType), ALLOCATABLE :: elements(:) !<elements(elementIdx). The pointer to the array of topology information for the elements of this domain. elements(elementIdx) contains the topological information for the elementIdx'th local elements of the domain.
     INTEGER(INTG) :: maximumNumberOfElementParameters !<The maximum number of element parameters (ns) for all the elements in the domain.
   END TYPE DomainElementsType
 
@@ -795,7 +795,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfDerivatives !<The number of global derivatives at the node for the domain. Old CMISS name NKT(nj,np)
     TYPE(DomainNodeDerivativeType), ALLOCATABLE :: derivatives(:) !<derivatives(derivativeIdx). Derivative information for derivativeIdx'th derivative at the node
     INTEGER(INTG) :: numberOfSurroundingElements !<The number of elements surrounding the node in the domain. Old CMISS name NENP(np,0,0:nr).
-    INTEGER(INTG), POINTER :: surroundingElements(:) !<surroundingElements(surroundingElementIdx). The local element number of the surroundingElementIdx'th element that is surrounding the node. Old CMISS name NENP(np,nep,0:nr). \todo Change this to allocatable.
+    INTEGER(INTG), ALLOCATABLE :: surroundingElements(:) !<surroundingElements(surroundingElementIdx). The local element number of the surroundingElementIdx'th element that is surrounding the node. Old CMISS name NENP(np,nep,0:nr).
     INTEGER(INTG) :: numberOfNodeLines !<The number of lines surrounding the node in the domain.
     INTEGER(INTG), ALLOCATABLE :: nodeLines(:) !<nodeLines(lineIdx). The local line number of the lineIdx'th line that is surrounding the node.
     INTEGER(INTG) :: numberOfNodeFaces !<The number of faces surrounding the node in the domain.
@@ -805,12 +805,12 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains the topology information for the nodes of a domain
   TYPE DomainNodesType
-    TYPE(DomainType), POINTER :: domain !<The pointer to the domain for this nodes topology information.
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<The pointer back to the domain topology
     INTEGER(INTG) :: numberOfNodes !<The number of nodes (excluding ghost nodes) in this domain topology.
     INTEGER(INTG) :: totalNumberOfNodes !<The total number of nodes (including ghost nodes) in this domain topology.
     INTEGER(INTG) :: numberOfGlobalNodes !<The number of global nodes in this domain topology.
     INTEGER(INTG) :: maximumNumberOfDerivatives !<The maximum number of derivatives over the nodes in this domain topology.
-    TYPE(DomainNodeType), POINTER :: nodes(:) !<nodes(nodeIdx). The pointer to the array of topology information for the nodes of this domain. nodes(nodeIdx) contains the topological information for the nodeIdx'th local node of the domain. \todo Change this to allocatable???
+    TYPE(DomainNodeType), ALLOCATABLE :: nodes(:) !<nodes(nodeIdx). The pointer to the array of topology information for the nodes of this domain. nodes(nodeIdx) contains the topological information for the nodeIdx'th local node of the domain.
     TYPE(TREE_TYPE), POINTER :: nodesTree !<A tree mapping the domain local number to the region nodes user number.
   END TYPE DomainNodesType
 
@@ -1050,7 +1050,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DomainMappingType), POINTER :: dofs !<Pointer to the dof mappings for the domain decomposition.
   END TYPE DomainMappingsType
   
-  !>A pointer to the domain decomposition for this domain.
+  !>Contains information for a domain.
   TYPE DomainType
     TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the domain decomposition for this domain.
     TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh for this domain.
@@ -1092,7 +1092,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains the topology information for the lines of a decomposition.
   TYPE DecompositionLinesType
-    TYPE(DecompositionType), POINTER :: decomposition !<The pointer to the decomposition for this lines topology information.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<The pointer back to the decomposition topology.
     INTEGER(INTG) :: numberOfLines !<The number of lines in this decomposition topology.
     TYPE(DecompositionLineType), ALLOCATABLE :: lines(:) !<(lineIdx). The pointer to the array of topology information for the lines of this decomposition. lines(lineIdx) contains the topological information for the lineIdx'th local line of the decomposition.
   END TYPE DecompositionLinesType
@@ -1111,7 +1111,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains the topology information for the faces of a decomposition.
   TYPE DecompositionFacesType
-    TYPE(DecompositionType), POINTER :: decomposition !<The pointer to the decomposition for this faces topology information.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<The pointer back to the decomposition topology.
     INTEGER(INTG) :: numberOfFaces !<The number of faces in this decomposition topology.
     TYPE(DecompositionFaceType), ALLOCATABLE :: faces(:) !<faces(faceIdx). The pointer to the array of topology information for the faces of this decomposition. faces(faceIdx) contains the topological information for the faceIdx'th local face of the decomposition.
   END TYPE DecompositionFacesType
@@ -1137,11 +1137,11 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains the topology information for the elements of a decomposition.
   TYPE DecompositionElementsType
-    TYPE(DecompositionType), POINTER :: decomposition !<The pointer to the decomposition for this elements topology information.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<The pointer back to the decomposition topology.
     INTEGER(INTG) :: numberOfElements !<The number of elements excluding ghost elements in this decomposition topology.
     INTEGER(INTG) :: totalNumberOfElements !<The total number of elements in this decomposition topology.
     INTEGER(INTG) :: numberOfGlobalElements !<The number of global elements in this decomposition topology.
-    TYPE(DecompositionElementType), POINTER :: elements(:) !<elements(elementIdx). The pointer to the array of topology information for the elements of this decomposition. elements(elementIdx) contains the topological information for the elementIdx'th local element of the decomposition. \todo Change this to allocatable???
+    TYPE(DecompositionElementType), ALLOCATABLE :: elements(:) !<elements(elementIdx). The pointer to the array of topology information for the elements of this decomposition. elements(elementIdx) contains the topological information for the elementIdx'th local element of the decomposition. 
     TYPE(TREE_TYPE), POINTER :: elementsTree !<A tree mapping the decomposition local element number to the decomposition user element number.
   END TYPE DecompositionElementsType
   
@@ -1161,14 +1161,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains data point decompostion topology   
   TYPE DecompositionDataPointsType
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION !<The pointer to the decomposition for this data points topology information.
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<The pointer back to the decomposition topology.
     INTEGER(INTG) :: numberOfDataPoints !<The number of data points excluding ghost data points in this decomposition topology.
     INTEGER(INTG) :: totalNumberOfDataPoints !<Number of projected data in this decomposition topology.
     INTEGER(INTG) :: numberOfGlobalDataPoints !<Number of global projected data 
     INTEGER(INTG), ALLOCATABLE :: numberOfDomainLocal(:) !<numberOfDomainLocal(compDomainIdx). Number of local data points in each computation domain 
     INTEGER(INTG), ALLOCATABLE :: numberOfDomainGhost(:) !<numberOfDomainGhost(compDomainIdx). Number of ghost data points in each computation domain 
     INTEGER(INTG), ALLOCATABLE :: numberOfElementDataPoints(:) !<numberOfElementDataPoints(elementIdx). Number of data points in each global element
-    TYPE(DecompositionElementDataPointsType), ALLOCATABLE :: elementDataPoint(:) !<elementDataPoint(elementIdx). Information of the projected data on the elements for decomposition of data points
+    TYPE(DecompositionElementDataPointsType), ALLOCATABLE :: elementDataPoints(:) !<elementDataPoints(elementIdx). Information of the projected data on the elements for decomposition of data points
     TYPE(TREE_TYPE), POINTER :: dataPointsTree !<A tree mapping the domain local number to the region data point user number.
   END TYPE DecompositionDataPointsType
 
@@ -1201,7 +1201,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfElements !<The number of elements in the decomposition
     INTEGER(INTG), ALLOCATABLE :: elementDomain(:) !<elementDomain(elementIdx). The domain number that the elementIdx'th global element is in for the decomposition. Note: the domain numbers start at 0 and go up to the numberOfDomains-1.
     TYPE(DecompositionTopologyType), POINTER :: topology !<A pointer to the topology for this decomposition.
-    TYPE(DomainPtrType), POINTER :: domain(:) !<domain(meshComponentIdx). A pointer to the domain for mesh component for the domain associated with the computation node. \todo Change this to allocatable???
+    TYPE(DomainPtrType), ALLOCATABLE :: domain(:) !<domain(meshComponentIdx). A pointer to the domain for mesh component for the domain associated with the computation node. 
     LOGICAL :: calculateFaces !<Boolean flag to determine whether faces should be calculated
     LOGICAL :: calculateLines !<Boolean flag to determine whether lines should be calculated
   END TYPE DecompositionType
@@ -1467,7 +1467,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: totalNumberOfDofs !<Number of local degrees of freedom for this field variable (including ghosted dofs). Old CMISS name NYNR(0,0,nc,nr,nx).
     INTEGER(INTG) :: numberOfGlobalDofs !<Number of global degrees of freedom for this field variable. Old CMISS name NYNR(0,0,nc,nr,nx).
     TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING !<Domain mapping for this variable. 
-    INTEGER(INTG) :: NUMBER_OF_COMPONENTS !<The number of components in the field variable.
+    INTEGER(INTG) :: numberOfComponents !<The number of components in the field variable.
     TYPE(FIELD_VARIABLE_COMPONENT_TYPE), ALLOCATABLE :: COMPONENTS(:) !<COMPONENTS(component_idx). The array of field variable components.
     TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE) :: DOF_TO_PARAM_MAP !<The mappings for the field dofs to the field parameters
     TYPE(FIELD_PARAMETER_SETS_TYPE) :: PARAMETER_SETS !<The parameter sets for the field variable
@@ -1498,8 +1498,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL, ALLOCATABLE :: DATA_TYPES_LOCKED(:) !<DATA_TYPES_LOCKED(variable_type_idx). Is .TRUE. if the data type for the variable_type_idx'th variable type has been locked, .FALSE. if not.
     INTEGER(INTG), ALLOCATABLE :: DOF_ORDER_TYPES(:) !<DOF_ORDER_TYPES(variable_type_idx). The cache of the variable dof order type for the variable_type_idx'th variable type of the field. \see FIELD_ROUTINES_DataTypes
     LOGICAL, ALLOCATABLE :: DOF_ORDER_TYPES_LOCKED(:) !<DOF_ORDER_TYPES_LOCKED(variable_type_idx). Is .TRUE. if the dof order type for the variable_type_idx'th variable type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_COMPONENTS(:) !<NUMBER_OF_COMPONENTS(variable_type_idx). The number of components in the field for the variable_type_idx'th field variable type.
-    LOGICAL, ALLOCATABLE :: NUMBER_OF_COMPONENTS_LOCKED(:) !<NUMBER_OF_COMPONENTS_LOCKED(variable_type_idx). Is .TRUE. if the number of components has been locked for the variable_type_idx'th variable type, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: numberOfComponents(:) !<numberOfComponents(variable_type_idx). The number of components in the field for the variable_type_idx'th field variable type.
+    LOGICAL, ALLOCATABLE :: numberOfComponentsLocked(:) !<numberOfComponentsLocked(variable_type_idx). Is .TRUE. if the number of components has been locked for the variable_type_idx'th variable type, .FALSE. if not.
     TYPE(VARYING_STRING), ALLOCATABLE :: COMPONENT_LABELS(:,:) !<COMPONENT_LABELS(component_idx,variable_type_idx). The cache of the component label for the given component and variable type of the field.
     LOGICAL, ALLOCATABLE :: COMPONENT_LABELS_LOCKED(:,:) !<COMPONENT_LABELS_LOCKED(component_idx,variable_type_idx). Is .TRUE. if the component label of the component_idx'th component of the variable_type_idx'th varible type has been locked, .FALSE. if not.
     INTEGER(INTG), ALLOCATABLE :: interpolationTypes(:,:) !<interpolationTypes(component_idx,variable_type_idx). The cache of the interpolation type for the given component and variable type of the field. \see FIELD_ROUTINES_InterpolationTypes
@@ -2637,7 +2637,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: LAGRANGE_FINISHED !<Is .TRUE. if the interface Lagrange field has finished being created, .FALSE. if not.
     LOGICAL :: LAGRANGE_FIELD_AUTO_CREATED !<Is .TRUE. if the Lagrange field has been auto created, .FALSE. if not.
     TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD !<A pointer to the lagrange field.
-    INTEGER(INTG) :: NUMBER_OF_COMPONENTS !<The number of components in the Lagrange field.
+    INTEGER(INTG) :: numberOfComponents !<The number of components in the Lagrange field.
   END TYPE INTERFACE_LAGRANGE_TYPE
 
   !>Contains information about the dependent field information for an interface condition. 

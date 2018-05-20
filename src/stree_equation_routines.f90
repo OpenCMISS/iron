@@ -854,7 +854,7 @@ CONTAINS
         & dependentFieldVariable,BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
       IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
         IF(ASSOCIATED(dependentFieldVariable)) THEN
-          DO componentIdx=1,dependentFieldVariable%NUMBER_OF_COMPONENTS
+          DO componentIdx=1,dependentFieldVariable%numberOfComponents
             IF(dependentFieldVariable%COMPONENTS(componentIdx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
               domain=>dependentFieldVariable%COMPONENTS(componentIdx)%DOMAIN
               IF(ASSOCIATED(domain)) THEN

@@ -239,7 +239,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsMappingRHS_RHSVariableGet",err,error,*998)
 

@@ -1798,7 +1798,7 @@ CONTAINS
               ELSE
                 CALL FlagError("Solver equations is not associated.",ERR,ERROR,*999)
               ENDIF
-              DO component_idx=1,GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%NUMBER_OF_COMPONENTS
+              DO component_idx=1,GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%numberOfComponents
                 !check for identical interpolation of the fields
                 GEOMETRIC_FIELD_INTERPOLATION=GEOMETRIC_FIELD_MONODOMAIN%VARIABLES(1)%COMPONENTS(component_idx)%interpolationType
                 DEPENDENT_FIELD_INTERPOLATION=DEPENDENT_FIELD_ELASTICITY%VARIABLES(1)%COMPONENTS(component_idx)%interpolationType

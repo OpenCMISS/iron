@@ -745,7 +745,7 @@ CONTAINS
       & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
       LOCAL_ERROR="Analytic Jacobian has not been validated for the Mooney-Rivlin equations, please use finite differences instead."
       CALL FlagWarning(LOCAL_ERROR,ERR,ERROR,*999)
-      PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+      PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
       P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       !Form of constitutive model is:
       ! W=c1*(I1-3)+c2*(I2-3)+p/2*(I3-1)
@@ -766,7 +766,7 @@ CONTAINS
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
         CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
-        DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO i=1,FIELD_VARIABLE%numberOfComponents
           dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -804,7 +804,7 @@ CONTAINS
 
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
-      PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+      PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
       P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       B=[2.0_DP*C(2),2.0_DP*C(3),2.0_DP*C(3),C(4),C(4),C(3)] ![2*b_f,2*b_t,2*b_t,b_ft,b_ft,b_t]
       E=[0.5_DP*(AZL(1,1)-1.0_DP),0.5_DP*(AZL(2,2)-1.0_DP),0.5_DP*(AZL(3,3)-1.0_DP),AZL(2,1),AZL(3,1),AZL(3,2)] !(Modified) strain tensor in Voigt form.
@@ -815,7 +815,7 @@ CONTAINS
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE) THEN
         !add active contraction stress values
         CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
-        DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO i=1,FIELD_VARIABLE%numberOfComponents
           dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -948,7 +948,7 @@ CONTAINS
           FIELD_VARIABLE=>nonlinearMapping%residualVariables(1)%ptr
           FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
 
-          PRESSURE_COMPONENT=FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+          PRESSURE_COMPONENT=FIELD_VARIABLE%numberOfComponents
 
           BOUNDARY_CONDITIONS=>EQUATIONS_SET%BOUNDARY_CONDITIONS
           CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,EQUATIONS_SET%equations%vectorEquations%vectorMapping% &
@@ -988,7 +988,7 @@ CONTAINS
           
           SUM_ELEMENT_PARAMETERS=0
           !Loop over geometric dependent basis functions.
-          DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+          DO nh=1,FIELD_VARIABLE%numberOfComponents
             meshComponentNumber=FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
             DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr% &
               & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -1520,7 +1520,7 @@ CONTAINS
         DEPENDENT_BASIS=>DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS       
         DEPENDENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
         DEPENDENT_NUMBER_OF_GAUSS_POINTS=DEPENDENT_QUADRATURE_SCHEME%NUMBER_OF_GAUSS
-        DEPENDENT_NUMBER_OF_COMPONENTS=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+        DEPENDENT_NUMBER_OF_COMPONENTS=DEPENDENT_FIELD%VARIABLES(var1)%numberOfComponents
         GEOMETRIC_BASIS=>GEOMETRIC_FIELD%DECOMPOSITION%DOMAIN(GEOMETRIC_FIELD%decomposition%meshComponentNumber)%ptr% &
           & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
 
@@ -1908,7 +1908,7 @@ CONTAINS
             IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
               IF(numberOfDimensions == 3) THEN
                 THICKNESS = MATERIALS_INTERPOLATED_POINT%VALUES(MATERIALS_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS% &
-                  & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
+                  & FIELD_VARIABLE%numberOfComponents,1)
               ENDIF
             ENDIF
 
@@ -1957,7 +1957,7 @@ CONTAINS
 
             !Hydrostatic pressure component (skip for membrane problems)
             IF (EQUATIONS_SET_SUBTYPE /= EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
-              HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+              HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%numberOfComponents
               DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(HYDROSTATIC_PRESSURE_COMPONENT)% &
                 & interpolationType
               IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
@@ -2037,7 +2037,7 @@ CONTAINS
             Jzxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
             
             HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
-              & NUMBER_OF_COMPONENTS
+              & numberOfComponents
             P=DEPENDENT_INTERPOLATED_POINT%VALUES(HYDROSTATIC_PRESSURE_COMPONENT,1)
             
             CALL FiniteElasticity_GaussGrowthTensor(EQUATIONS_SET,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
@@ -2081,7 +2081,7 @@ CONTAINS
                   CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                     & MATERIALS_INTERPOLATED_POINT,err,error,*999)
                   THICKNESS = MATERIALS_INTERPOLATED_POINT%VALUES(MATERIALS_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS% &
-                    & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
+                    & FIELD_VARIABLE%numberOfComponents,1)
                 ENDIF
               ENDIF
             ENDIF
@@ -2122,11 +2122,11 @@ CONTAINS
             !Hydrostatic pressure component (skip for membrane problems)
             IF (EQUATIONS_SET_SUBTYPE /= EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
               IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
-                HYDROSTATIC_PRESSURE_COMPONENT=GEOMETRIC_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+                HYDROSTATIC_PRESSURE_COMPONENT=GEOMETRIC_FIELD%VARIABLES(var1)%numberOfComponents
                 DEPENDENT_COMPONENT_INTERPOLATION_TYPE=GEOMETRIC_FIELD%VARIABLES(var1)%COMPONENTS( &
                   & HYDROSTATIC_PRESSURE_COMPONENT)%interpolationType
               ELSE
-                HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+                HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%numberOfComponents
                 DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS( &
                   & HYDROSTATIC_PRESSURE_COMPONENT)%interpolationType
               ENDIF
@@ -2360,7 +2360,7 @@ CONTAINS
             Jzxi=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN
             
             HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
-              & NUMBER_OF_COMPONENTS
+              & numberOfComponents
             P=DEPENDENT_INTERPOLATED_POINT%VALUES(HYDROSTATIC_PRESSURE_COMPONENT,1)
             
             CALL FiniteElasticity_GaussGrowthTensor(EQUATIONS_SET,numberOfDimensions,dZdNu,growthValues,Fg,Fe,Jg,Je, &
@@ -2444,7 +2444,7 @@ CONTAINS
                   CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
                     & MATERIALS_INTERPOLATED_POINT,err,error,*999)
                   THICKNESS = MATERIALS_INTERPOLATED_POINT%VALUES(MATERIALS_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS% &
-                    & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
+                    & FIELD_VARIABLE%numberOfComponents,1)
                 ENDIF
               ENDIF
             ENDIF
@@ -2508,11 +2508,11 @@ CONTAINS
             !Hydrostatic pressure component (skip for membrane problems)
             IF (EQUATIONS_SET_SUBTYPE /= EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
               IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
-                HYDROSTATIC_PRESSURE_COMPONENT=GEOMETRIC_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+                HYDROSTATIC_PRESSURE_COMPONENT=GEOMETRIC_FIELD%VARIABLES(var1)%numberOfComponents
                 DEPENDENT_COMPONENT_INTERPOLATION_TYPE=GEOMETRIC_FIELD%VARIABLES(var1)%COMPONENTS( &
                   & HYDROSTATIC_PRESSURE_COMPONENT)%interpolationType
               ELSE
-                HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+                HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%numberOfComponents
                 DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS( &
                   & HYDROSTATIC_PRESSURE_COMPONENT)%interpolationType
               ENDIF
@@ -2563,7 +2563,7 @@ CONTAINS
         CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
           & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
 
-          hydrostaticPressureComponent=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+          hydrostaticPressureComponent=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
           CALL IdentityMatrix(ITens,err,error,*999)
           !Get time step 
           dt=EQUATIONS_SET%deltaTime         
@@ -3086,7 +3086,7 @@ CONTAINS
               & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE)
               P=DEPENDENT_INTERPOLATED_POINT%VALUES(hydrostaticPressureComponent,1)
               !Hydrostatic pressure component
-              hydrostaticPressureComponent=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+              hydrostaticPressureComponent=DEPENDENT_FIELD%VARIABLES(var1)%numberOfComponents
               dependentComponentInterpolationType=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(hydrostaticPressureComponent)% &
                 & interpolationType
               tempTerm1=gaussWeight*(J-1.0_DP)
@@ -3215,7 +3215,7 @@ CONTAINS
             IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
               IF(numberOfDimensions == 3) THEN
                 THICKNESS = MATERIALS_INTERPOLATED_POINT%VALUES(MATERIALS_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS% &
-                  & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,1)
+                  & FIELD_VARIABLE%numberOfComponents,1)
               ENDIF
             ENDIF
 
@@ -3244,7 +3244,7 @@ CONTAINS
 
             !Hydrostatic pressure component (skip for membrane problems)
             IF (EQUATIONS_SET_SUBTYPE /= EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
-              HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%NUMBER_OF_COMPONENTS
+              HYDROSTATIC_PRESSURE_COMPONENT=DEPENDENT_FIELD%VARIABLES(var1)%numberOfComponents
               DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(component_idx)%interpolationType
               IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
                 COMPONENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(HYDROSTATIC_PRESSURE_COMPONENT)%DOMAIN% &
@@ -3420,7 +3420,7 @@ CONTAINS
           CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
             & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
           mhs=0          
-          DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+          DO mh=1,FIELD_VARIABLE%numberOfComponents
             !Loop over element rows
             DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(FIELD_VAR_TYPE)%COMPONENTS(mh)%interpolationType
             IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
@@ -3453,7 +3453,7 @@ CONTAINS
       IF(elementNumber == 1) THEN
         NDOFS = 0
         FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLES(var1) ! 'U' variable
-        DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO mh=1,FIELD_VARIABLE%numberOfComponents
           SELECT CASE(FIELD_VARIABLE%COMPONENTS(mh)%interpolationType)
           CASE(FIELD_NODE_BASED_INTERPOLATION)
             MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
@@ -3788,7 +3788,7 @@ CONTAINS
     CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
     NULLIFY(independentField)
     CALL EquationsSet_IndependentFieldExists(equationsSet,independentField,err,error,*999)
-    dependentNumberOfComponents=residualVariable%NUMBER_OF_COMPONENTS
+    dependentNumberOfComponents=residualVariable%numberOfComponents
 
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
@@ -4053,11 +4053,11 @@ CONTAINS
           NULLIFY(dataPoints)
           CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
 
-          numberOfDataPoints=dataPoints%elementDataPoint(elementNumber)%numberOfProjectedData
+          numberOfDataPoints=dataPoints%elementDataPoints(elementNumber)%numberOfProjectedData
 
           DO dataPointIdx=1,numberOfDataPoints
             
-            dataPointNumber=dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%globalNumber
+            dataPointNumber=dataPoints%elementDataPoints(elementNumber)%dataIndices(dataPointIdx)%globalNumber
             xi(1:numberOfXi)=dataProjection%dataProjectionResults(dataPointNumber)%elementXi(1:numberOfXi)
             CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),geometricInterpolatedPoint,err,error,*999)
             CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpolatedPointMetrics,err,error,*999)
@@ -4323,6 +4323,7 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
@@ -4390,8 +4391,10 @@ CONTAINS
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
     NULLIFY(domainTopology)
     CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(domainElements)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
     NULLIFY(elementBasis)
-    CALL DomainTopology_ElementBasisGet(domainTopology,userElementNumber,elementBasis,err,error,*999)
+    CALL DomainElements_BasisGet(domainElements,userElementNumber,elementBasis,err,error,*999)
     numberOfXi=elementBasis%numberOfXi
     
     IF(.NOT.ASSOCIATED(equations%interpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)    
@@ -4572,7 +4575,10 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpolatedPointMetrics, &
       & dependentInterpolatedPointMetrics
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(BasisType), POINTER :: elementBasis
     LOGICAL :: userElementExists,ghostElement
@@ -4616,18 +4622,21 @@ CONTAINS
     END IF
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
-    decomposition=>dependentField%decomposition
-    CALL DECOMPOSITION_MESH_COMPONENT_NUMBER_GET(decomposition,meshComponentNumber,err,error,*999)
-    decompositionTopology=>decomposition%topology
-    domainTopology=>decomposition%domain(meshComponentNumber)%ptr%topology
-    CALL DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS(decompositionTopology,userElementNumber, &
-      & userElementExists,localElementNumber,ghostElement,err,error,*999)
-    IF(.NOT.userElementExists) THEN
-      CALL FlagError("The specified user element number of "// &
-        & TRIM(NumberToVstring(userElementNumber,"*",err,error))// &
-        & " does not exist in the decomposition for the dependent field.",err,error,*999)
-    END IF
-    CALL DomainTopology_ElementBasisGet(domainTopology,userElementNumber,elementBasis,err,error,*999)
+    CALL Decomposition_MeshComponentNumberGet(decomposition,meshComponentNumber,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_LocalElementNumberGet(decompositionElements,userElementNumber,localElementNumber, &
+      & ghostElement,err,error,*999)
+    NULLIFY(domain)
+    CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+    NULLIFY(domainTopology)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(domainElements)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+    NULLIFY(elementBasis)
+    CALL DomainElements_BasisGet(domainElements,userElementNumber,elementBasis,err,error,*999)
 
     !Get the interpolation parameters for this element
     CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,localElementNumber, &
@@ -5268,7 +5277,7 @@ CONTAINS
     CALL MatrixProduct(DZDNUT,DZDNU,AZL,err,error,*999)
     CALL Determinant(DZDNU,Jznu,err,error,*999)
 
-    PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+    PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
     P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,1)
 
     CALL INVERT(AZL,AZU,I3,ERR,ERROR,*999)
@@ -6521,7 +6530,7 @@ CONTAINS
 !        !for better generality we could set up 3 components in independent field for 3 different active stress components,
 !        !but only one component is implemented so far for fibre active tension.
 !        CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
-!        DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+!        DO i=1,FIELD_VARIABLE%numberOfComponents
 !          dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
 !            & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
 !          CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -6531,10 +6540,10 @@ CONTAINS
 !      ENDIF
       !PIOLA_TENSOR = PIOLA_TENSOR + 2.0_DP*p*Jznu*AZU   ! is Jznu required here, or is it omitted everywhere else?
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
-        PRESSURE_COMPONENT=GEOMETRIC_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        PRESSURE_COMPONENT=GEOMETRIC_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
         P=GEOMETRIC_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       ELSE
-        PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
         P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       ENDIF 
       PIOLA_TENSOR = PIOLA_TENSOR + P*AZU   ! is Jznu required here, or is it omitted everywhere else?
@@ -6543,7 +6552,7 @@ CONTAINS
       !the active stress is stored inside the independent field that has been set up in the user program.
       !for generality we could set up 3 components in independent field for 3 different active stress components
         CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
-        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
           dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -6781,7 +6790,7 @@ CONTAINS
       !the active stress is stored inside the independent field that has been set up in the user program.
       !for generality we could set up 3 components in independent field for 3 different active stress components
         CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
-        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
           dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -6994,7 +7003,7 @@ CONTAINS
     CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
       & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
-      PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+      PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
       P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       !Form of constitutive model is:
       !W=c1*(I1-3)+c2*(I2-3)+p/2*(I3-1)
@@ -7015,7 +7024,7 @@ CONTAINS
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
         CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
-        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
           dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -7033,10 +7042,10 @@ CONTAINS
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
-        PRESSURE_COMPONENT=GEOMETRIC_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        PRESSURE_COMPONENT=GEOMETRIC_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
         P=GEOMETRIC_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       ELSE
-        PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
         P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       ENDIF
       B=[2.0_DP*C(2),2.0_DP*C(3),2.0_DP*C(3),C(4),C(4),C(3)] ![2*b_f,2*b_t,2*b_t,b_ft,b_ft,b_t]
@@ -7050,7 +7059,7 @@ CONTAINS
         !Be aware for modified DZDNU, should active contraction be added here? Normally should be okay as modified DZDNU and DZDNU
         !converge during the Newton iteration.
         CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
-        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
           dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
             & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &

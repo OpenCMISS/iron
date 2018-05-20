@@ -266,14 +266,14 @@ CONTAINS
 
             !Loop over field components
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(nonlinearMatrices%updateResidual) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       DO ni=1,DEPENDENT_BASIS%numberOfXi
@@ -306,7 +306,7 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_V_VARIABLE_TYPE)%ptr,err,error,*999)
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1

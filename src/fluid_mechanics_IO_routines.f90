@@ -445,20 +445,20 @@ CONTAINS
     NumberOfFields=2
     NumberOfDimensions=REGION%coordinateSystem%numberOfDimensions
 !     NumberOfVariableComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-!       & variables(1)%number_of_components
+!       & variables(1)%numberOfComponents
     NumberOfVariableComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-      & variables(var_idx)%number_of_components
+      & variables(var_idx)%numberOfComponents
     NULLIFY(MATERIAL_FIELD)
     NumberOfMaterialComponents=0
     IF(ASSOCIATED(REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials)) THEN
       MATERIAL_FIELD=>REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field
       IF(ASSOCIATED(MATERIAL_FIELD)) THEN
-        NumberOfMaterialComponents=MATERIAL_FIELD%variables(1)%number_of_components
+        NumberOfMaterialComponents=MATERIAL_FIELD%variables(1)%numberOfComponents
         NumberOfFields=NumberOfFields+1
       ENDIF
     ENDIF
     NumberOfElements=REGION%meshes%meshes(1)%ptr%numberOfElements
-    NumberOfMeshComponents=REGION%meshes%meshes(1)%ptr%number_of_components
+    NumberOfMeshComponents=REGION%meshes%meshes(1)%ptr%numberOfComponents
 !     IF(.NOT.ALLOCATED(NodesPerElement)) ALLOCATE(NodesPerElement(NumberOfMeshComponents))
 
     IF(.NOT.ALLOCATED(NodesPerElement)) ALLOCATE(NodesPerElement(MAX(NumberOfMeshComponents,NumberOfElements)))
@@ -572,7 +572,7 @@ CONTAINS
       CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(SOURCE_FIELD,SOURCE_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
       CALL FIELD_INTERPOLATED_POINTS_INITIALISE(SOURCE_INTERPOLATION_PARAMETERS,SOURCE_INTERPOLATED_POINT,ERR,ERROR,*999)
       NumberOfSourceComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field% &
-        & variables(1)%number_of_components
+        & variables(1)%numberOfComponents
 
       NumberOfFields = NumberOfFields + 1
     END IF
@@ -1129,14 +1129,14 @@ CONTAINS
     NumberOfFields=3
     NumberOfDimensions=REGION%coordinateSystem%numberOfDimensions
 !     NumberOfVariableComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-!       & variables(1)%number_of_components
+!       & variables(1)%numberOfComponents
     NumberOfVariableComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-      & variables(var_idx)%number_of_components
+      & variables(var_idx)%numberOfComponents
 
     NumberOfMaterialComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-      & variables(1)%number_of_components
+      & variables(1)%numberOfComponents
     NumberOfElements=REGION%meshes%meshes(1)%ptr%numberOfElements
-    NumberOfMeshComponents=REGION%meshes%meshes(1)%ptr%number_of_components
+    NumberOfMeshComponents=REGION%meshes%meshes(1)%ptr%numberOfComponents
 !     IF(.NOT.ALLOCATED(NodesPerElement)) ALLOCATE(NodesPerElement(NumberOfMeshComponents))
 
     IF(.NOT.ALLOCATED(NodesPerElement)) ALLOCATE(NodesPerElement(MAX(NumberOfMeshComponents,NumberOfElements)))
@@ -1876,14 +1876,14 @@ CONTAINS
     NumberOfFields=3
     NumberOfDimensions=REGION%coordinateSystem%numberOfDimensions
 !     NumberOfVariableComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-!       & variables(1)%number_of_components
+!       & variables(1)%numberOfComponents
     NumberOfVariableComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-      & variables(var_idx)%number_of_components
+      & variables(var_idx)%numberOfComponents
 
     NumberOfMaterialComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%materials%materials_field% &
-      & variables(1)%number_of_components
+      & variables(1)%numberOfComponents
     NumberOfElements=REGION%meshes%meshes(1)%ptr%numberOfElements
-    NumberOfMeshComponents=REGION%meshes%meshes(1)%ptr%number_of_components
+    NumberOfMeshComponents=REGION%meshes%meshes(1)%ptr%numberOfComponents
 !     IF(.NOT.ALLOCATED(NodesPerElement)) ALLOCATE(NodesPerElement(NumberOfMeshComponents))
 
     IF(.NOT.ALLOCATED(NodesPerElement)) ALLOCATE(NodesPerElement(MAX(NumberOfMeshComponents,NumberOfElements)))

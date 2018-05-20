@@ -48,6 +48,7 @@ MODULE DecompositionAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
+  USE Trees
   USE Types
   
 #include "macros.h"  
@@ -103,13 +104,21 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC Decomposition_WorkGroupGet
 
-  PUBLIC DecompositionTopology_DataPointsGet
+  PUBLIC DecompositionDataPoints_DataPointCheckExists
 
-  PUBLIC DecompositionTopology_ElementsGet
+  PUBLIC DecompositionDataPoints_LocalDataPointNumberGet
 
-  PUBLIC DecompositionTopology_FacesGet
+  PUBLIC DecompositionElements_ElementCheckExists
+
+  PUBLIC DecompositionElements_LocalElementNumberGet
+
+  PUBLIC DecompositionTopology_DecompositionDataPointsGet
+
+  PUBLIC DecompositionTopology_DecompositionElementsGet
+
+  PUBLIC DecompositionTopology_DecompositionFacesGet
   
-  PUBLIC DecompositionTopology_LinesGet
+  PUBLIC DecompositionTopology_DecompositionLinesGet
 
   PUBLIC Domain_MappingsGet
 
@@ -125,16 +134,19 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainMappings_NodesGet
 
-  PUBLIC DomainTopology_ElementsGet
+  PUBLIC DomainNodes_LocalNodeNumberGet
 
-  PUBLIC DomainTopology_FacesGet
+  PUBLIC DomainNodes_NodeCheckExists
 
-  PUBLIC DomainTopology_LinesGet
+  PUBLIC DomainTopology_DomainElementsGet
+
+  PUBLIC DomainTopology_DomainFacesGet
+
+  PUBLIC DomainTopology_DomainLinesGet
   
   PUBLIC DomainTopology_LocalElementBasisGet
 
-  PUBLIC DomainTopology_NodesGet
-  
+  PUBLIC DomainTopology_DomainNodesGet
   
 CONTAINS
 
@@ -420,7 +432,7 @@ CONTAINS
     ELSE
       meshComponent=meshComponentNumber
     ENDIF
-    IF(.NOT.ASSOCIATED(decomposition%domain)) CALL FlagError("Decomposition domain is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(decomposition%domain)) CALL FlagError("Decomposition domain is not allocated.",err,error,*999)
     domain=>decomposition%domain(meshComponent)%ptr
     
     !Check domain is associated.
@@ -637,8 +649,190 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks that a user data point number exists. 
+  SUBROUTINE DecompositionDataPoints_DataPointCheckExists(decompositionDataPoints,userDataPointNumber,userDataPointExists, &
+    & localDataPointNumber,ghostDataPoint,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints !<A pointer to the decomposition data points to check the data point exists on
+    INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to check if it exists
+    LOGICAL, INTENT(OUT) :: userDataPointExists !<On exit, is .TRUE. if the data point user number exists in the decomposition topology, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: localDataPointNumber !<On exit, if the data point exists the local number corresponding to the user data point number. If the data point does not exist then local number will be 0.
+    LOGICAL, INTENT(OUT) :: ghostDataPoint !<On exit, is .TRUE. if the local data point (if it exists) is a ghost data point, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+
+    ENTERS("DecompositionDataPoints_DataPointCheckExists",ERR,error,*999)
+
+    userDataPointExists=.FALSE.
+    localDataPointNumber=0
+    ghostDataPoint=.FALSE.
+    IF(.NOT.ASSOCIATED(decompositionDataPoints)) CALL FlagError("Decomposition data points is not associated.",err,error,*999)
+    
+    NULLIFY(treeNode)
+    CALL Tree_Search(decompositionDataPoints%dataPointsTree,userDataPointNumber,treeNode,err,error,*999)
+    IF(ASSOCIATED(treeNode)) THEN
+      CALL Tree_NodeValueGet(decompositionDataPoints%dataPointsTree,treeNode,localDataPointNumber,err,error,*999)
+      userDataPointExists=.TRUE.
+      ghostDataPoint=localDataPointNumber>decompositionDataPoints%numberOfDataPoints
+    ENDIF
+ 
+    EXITS("DecompositionDataPoints_DataPointCheckExists")
+    RETURN
+999 ERRORS("DecompositionDataPoints_DataPointCheckExists",err,error)
+    EXITS("DecompositionDataPoints_DataPointCheckExists")
+    RETURN 1
+
+  END SUBROUTINE DecompositionDataPoints_DataPointCheckExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a local data point number that corresponds to a user data point number from a decomposition. An error will be raised if the user data point number does not exist.
+  SUBROUTINE DecompositionDataPoints_LocalDataPointNumberGet(decompositionDataPoints,userDataPointNumber,localDataPointNumber, &
+    & ghostDataPoint,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints !<A pointer to the decomposition data points to get the data point on
+    INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to get
+    INTEGER(INTG), INTENT(OUT) :: localDataPointNumber !<On exit, the local number corresponding to the user data point number.
+    LOGICAL, INTENT(OUT) :: ghostDataPoint !<On exit, is .TRUE. if the local data point is a ghost data point, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: dataPointExists
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecompositionDataPoints_LocalDataPointNumberGet",err,error,*999)
+
+    CALL DecompositionDataPoints_DataPointCheckExists(decompositionDataPoints,userDataPointNumber,dataPointExists, &
+      & localDataPointNumber,ghostDataPoint,err,error,*999)
+    IF(.NOT.dataPointExists) THEN
+      decompositionTopology=>decompositionDataPoints%decompositionTopology
+      IF(ASSOCIATED(decompositionTopology)) THEN
+        decomposition=>decompositionTopology%decomposition
+        IF(ASSOCIATED(decomposition)) THEN
+          localError="The user data point number "//TRIM(NumberToVString(userDataPointNumber,"*",err,error))// &
+          & " does not exist in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ELSE
+          localError="The user element number "//TRIM(NumberToVString(userDataPointNumber,"*",err,error))//" does not exist."
+        ENDIF
+      ELSE
+        localError="The user data point number "//TRIM(NumberToVString(userDataPointNumber,"*",err,error))//" does not exist."
+      ENDIF
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("DecompositionDataPoints_LocalDataPointNumberGet")
+    RETURN
+999 ERRORS("DecompositionDataPoints_LocalDataPointNumberGet",err,error)
+    EXITS("DecompositionDataPoints_LocalDataPointNumberGet")
+    RETURN 1
+
+  END SUBROUTINE DecompositionDataPoints_LocalDataPointNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks that a user element number exists in a decomposition. 
+  SUBROUTINE DecompositionElements_ElementCheckExists(decompositionElements,userElementNumber,elementExists,localElementNumber, &
+    & ghostElement,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to check the element exists on
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to check if it exists
+    LOGICAL, INTENT(OUT) :: elementExists !<On exit, is .TRUE. if the element user number exists in the decomposition topology, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: localElementNumber !<On exit, if the element exists the local number corresponding to the user element number. If the element does not exist then local number will be 0.
+    LOGICAL, INTENT(OUT) :: ghostElement !<On exit, is .TRUE. if the local element (if it exists) is a ghost element, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+
+    ENTERS("DecompositionElements_ElementCheckExists",err,error,*999)
+
+    elementExists=.FALSE.
+    localElementNumber=0
+    ghostElement=.FALSE.
+    IF(.NOT.ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is not associated.",err,error,*999)
+
+    NULLIFY(treeNode)
+    CALL Tree_Search(decompositionElements%elementsTree,userElementNumber,treeNode,err,error,*999)
+    IF(ASSOCIATED(treeNode)) THEN
+      CALL Tree_NodeValueGet(decompositionElements%elementsTree,treeNode,localElementNumber,err,error,*999)
+      elementExists=.TRUE.
+      ghostElement=localElementNumber>decompositionElements%numberOfElements
+    ENDIF
+
+    EXITS("DecompositionElements_ElementCheckExists")
+    RETURN
+999 ERRORSEXITS("DecompositionElements_ElementCheckExists",err,error)
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_ElementCheckExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a local element number that corresponds to a user element number from a decomposition. An error will be raised if the user element number does not exist.
+  SUBROUTINE DecompositionElements_LocalElementNumberGet(decompositionElements,userElementNumber,localElementNumber,ghostElement, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the element on
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get
+    INTEGER(INTG), INTENT(OUT) :: localElementNumber !<On exit, the local number corresponding to the user element number.
+    LOGICAL, INTENT(OUT) :: ghostElement !<On exit, is .TRUE. if the local element is a ghost element, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: elementExists
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecompositionElements_LocalElementNumberGet",err,error,*999)
+
+    CALL DecompositionElements_ElementCheckExists(decompositionElements,userElementNumber,elementExists,localElementNumber, &
+      & ghostElement,err,error,*999)
+    IF(.NOT.elementExists) THEN
+      decompositionTopology=>decompositionElements%decompositionTopology
+      IF(ASSOCIATED(decompositionTopology)) THEN
+        decomposition=>decompositionTopology%decomposition
+        IF(ASSOCIATED(decomposition)) THEN
+          localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+            & " does not exist in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ELSE
+          localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))//" does not exist."
+        ENDIF
+      ELSE
+        localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))//" does not exist."
+      ENDIF
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("DecompositionElements_LocalElementNumberGet")
+    RETURN
+999 ERRORSEXITS("DecompositionElements_LocalElementNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_LocalElementNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets elements from a decomposition topology.
-  SUBROUTINE DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*)
+  SUBROUTINE DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*)
 
     !Argument variables
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the elements for.
@@ -647,31 +841,32 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DecompositionTopology_ElementsGet",err,error,*999)
+    ENTERS("DecompositionTopology_DecompositionElementsGet",err,error,*998)
 
     !Check input arguments
-    IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*999)
-    IF(ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is already associated.",err,error,*999)
+    IF(ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*998)
 
     !Get the decomposition elements
     decompositionElements=>decompositionTopology%elements
-
     !Check decomposition elements is associated.
     IF(.NOT.ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition topology elements is not associated.",err,error,*999)
     
-    EXITS("DecompositionTopology_ElementsGet")
+    EXITS("DecompositionTopology_DecompositionElementsGet")
     RETURN
-999 ERRORSEXITS("DecompositionTopology_ElementsGet",err,error)
+999 NULLIFY(decompositionElements)
+998 ERRORS("DecompositionTopology_DecompositionElementsGet",err,error)
+    EXITS("DecompositionTopology_DecompositionElementsGet")
     RETURN 1
     
-  END SUBROUTINE DecompositionTopology_ElementsGet
+  END SUBROUTINE DecompositionTopology_DecompositionElementsGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets data points from a decomposition topology.
-  SUBROUTINE DecompositionTopology_DataPointsGet(decompositionTopology,decompositionDataPoints,err,error,*)
+  SUBROUTINE DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionDataPoints,err,error,*)
 
     !Argument variables
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the data points for.
@@ -680,7 +875,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DecompositionTopology_DataPointsGet",err,error,*998)
+    ENTERS("DecompositionTopology_DecompositionDataPointsGet",err,error,*998)
 
     !Check input arguments
     IF(ASSOCIATED(decompositionDataPoints)) CALL FlagError("Decomposition data points is already associated.",err,error,*998)
@@ -692,20 +887,21 @@ CONTAINS
     IF(.NOT.ASSOCIATED(decompositionDataPoints)) &
       & CALL FlagError("Decomposition topology data points is not associated.",err,error,*999)
     
-    EXITS("DecompositionTopology_DataPointsGet")
+    EXITS("DecompositionTopology_DecompositionDataPointsGet")
     RETURN
 999 NULLIFY(decompositionDataPoints)
-998 ERRORSEXITS("DecompositionTopology_DataPointsGet",err,error)
+998 ERRORS("DecompositionTopology_DecompositionDataPointsGet",err,error)
+    EXITS("DecompositionTopology_DecompositionDataPointsGet")
     RETURN 1
     
-  END SUBROUTINE DecompositionTopology_DataPointsGet
+  END SUBROUTINE DecompositionTopology_DecompositionDataPointsGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets faces from a decomposition topology.
-  SUBROUTINE DecompositionTopology_FacesGet(decompositionTopology,decompositionFaces,err,error,*)
+  SUBROUTINE DecompositionTopology_DecompositionFacesGet(decompositionTopology,decompositionFaces,err,error,*)
 
     !Argument variables
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the faces for.
@@ -714,31 +910,31 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DecompositionTopology_FacesGet",err,error,*999)
+    ENTERS("DecompositionTopology_DecompositionFacesGet",err,error,*998)
 
     !Check input arguments
+    IF(ASSOCIATED(decompositionFaces)) CALL FlagError("Decomposition faces is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition is not associated.",err,error,*999)
-    IF(ASSOCIATED(decompositionFaces)) CALL FlagError("Decomposition faces is already associated.",err,error,*999)
 
     !Get the decomposition faces
     decompositionFaces=>decompositionTopology%faces
-
     !Check decomposition faces is associated.
     IF(.NOT.ASSOCIATED(decompositionFaces)) CALL FlagError("Decomposition topology faces is not associated.",err,error,*999)
     
-    EXITS("DecompositionTopology_FacesGet")
+    EXITS("DecompositionTopology_DecompositionFacesGet")
     RETURN
-999 ERRORSEXITS("DecompositionTopology_FacesGet",err,error)
+999 NULLIFY(decompositionFaces)
+998 ERRORSEXITS("DecompositionTopology_DecompositionFacesGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DecompositionTopology_FacesGet
+  END SUBROUTINE DecompositionTopology_DecompositionFacesGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets lines from a decomposition topology.
-  SUBROUTINE DecompositionTopology_LinesGet(decompositionTopology,decompositionLines,err,error,*)
+  SUBROUTINE DecompositionTopology_DecompositionLinesGet(decompositionTopology,decompositionLines,err,error,*)
 
     !Argument variables
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the lines for.
@@ -747,7 +943,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DecompositionTopology_LinesGet",err,error,*999)
+    ENTERS("DecompositionTopology_DecompositionLinesGet",err,error,*999)
 
     !Check input arguments
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition is not associated.",err,error,*999)
@@ -759,12 +955,12 @@ CONTAINS
     !Check decomposition lines is associated.
     IF(.NOT.ASSOCIATED(decompositionLines)) CALL FlagError("Decomposition topology lines is not associated.",err,error,*999)
     
-    EXITS("DecompositionTopology_LinesGet")
+    EXITS("DecompositionTopology_DecompositionLinesGet")
     RETURN
-999 ERRORSEXITS("DecompositionTopology_LinesGet",err,error)
+999 ERRORSEXITS("DecompositionTopology_DecompositionLinesGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DecompositionTopology_LinesGet
+  END SUBROUTINE DecompositionTopology_DecompositionLinesGet
   
   !  
   !================================================================================================================================
@@ -792,7 +988,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(domainElements%elements)) CALL FlagError("Domain elements elements is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainElements%elements)) CALL FlagError("Domain elements elements is not allocated.",err,error,*999)
       
     basis=>domainElements%elements(localElementNumber)%basis
     IF(.NOT.ASSOCIATED(basis)) THEN
@@ -1026,8 +1222,104 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Checks that a user node number exists in domain nodes. 
+  SUBROUTINE DomainNodes_NodeCheckExists(domainNodes,userNodeNumber,nodeExists,localNodeNumber,ghostNode,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to check the node exists on
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to check if it exists
+    LOGICAL, INTENT(OUT) :: nodeExists !<On exit, is .TRUE. if the node user number exists in the domain nodes topolgoy (even if it is a ghost node), .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<On exit, if the node exists the local number corresponding to the user node number. If the node does not exist then global number will be 0.
+    LOGICAL, INTENT(OUT) :: ghostNode !<On exit, is .TRUE. if the local node (if it exists) is a ghost node, .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    
+    ENTERS("DomainNodes_NodeCheckExists",err,error,*999)
+
+    nodeExists=.FALSE.
+    localNodeNumber=0
+    ghostNode=.FALSE.
+    NULLIFY(treeNode)
+    CALL Tree_Search(domainNodes%nodesTree,userNodeNumber,treeNode,err,error,*999)
+    IF(ASSOCIATED(treeNode)) THEN
+      CALL Tree_NodeValueGet(domainNodes%nodesTree,treeNode,localNodeNumber,err,error,*999)
+      nodeExists=.TRUE.
+      ghostNode=localNodeNumber>domainNodes%numberOfNodes
+    ENDIF
+    
+    EXITS("DomainNodes_NodeCheckExists")
+    RETURN
+999 ERRORSEXITS("DomainNodes_NodeCheckExists",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainNodes_NodeCheckExists
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a local node number that corresponds to a user node number from a domain. An error will be raised if the user node number does not exist.
+  SUBROUTINE DomainNodes_LocalNodeNumberGet(domainNodes,userNodeNumber,localNodeNumber,ghostNode,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the node on
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get
+    INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<On exit, the local number corresponding to the user node number.
+    LOGICAL, INTENT(OUT) :: ghostNode !<On exit, is .TRUE. if the local node is a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: meshComponentNumber
+    LOGICAL :: nodeExists
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DomainNodes_LocalNodeNumberGet",err,error,*999)
+
+    CALL DomainNodes_NodeCheckExists(domainNodes,userNodeNumber,nodeExists,localNodeNumber,ghostNode,err,error,*999)
+    IF(.NOT.nodeExists) THEN
+      domainTopology=>domainNodes%domainTopology
+      IF(ASSOCIATED(domainTopology)) THEN
+        domain=>domainTopology%domain
+        IF(ASSOCIATED(domain)) THEN
+          meshComponentNumber=domain%meshComponentNumber
+          decomposition=>domain%decomposition
+          IF(ASSOCIATED(decomposition)) THEN
+            localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
+              & " does not exist in the domain from mesh component number "// &
+              & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//" of decomposition number "// &
+              & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//"."
+          ELSE
+            localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
+              & " does not exist in the domain from mesh component number "// &
+              & TRIM(NumberToVString(meshComponentNumber,"*",err,error))//"."
+          ENDIF
+        ELSE
+          localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist."
+        ENDIF
+      ELSE
+        localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist."        
+      ENDIF
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("DomainNodes_LocalNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_LocalNodeNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_LocalNodeNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets elements from a domain topology.
-  SUBROUTINE DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*)
+  SUBROUTINE DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*)
 
     !Argument variables
     TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the elements for.
@@ -1036,7 +1328,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainTopology_ElementsGet",err,error,*999)
+    ENTERS("DomainTopology_DomainElementsGet",err,error,*999)
 
     !Check input arguments
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
@@ -1047,19 +1339,19 @@ CONTAINS
     !Check domain elements is associated.
     IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain topology elements is not associated.",err,error,*999)
     
-    EXITS("DomainTopology_ElementsGet")
+    EXITS("DomainTopology_DomainElementsGet")
     RETURN
-999 ERRORSEXITS("DomainTopology_ElementsGet",err,error)
+999 ERRORSEXITS("DomainTopology_DomainElementsGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainTopology_ElementsGet
+  END SUBROUTINE DomainTopology_DomainElementsGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets lines from a domain topology.
-  SUBROUTINE DomainTopology_LinesGet(domainTopology,domainLines,err,error,*)
+  SUBROUTINE DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*)
 
     !Argument variables
     TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the lines for.
@@ -1068,7 +1360,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainTopology_LinesGet",err,error,*999)
+    ENTERS("DomainTopology_DomainLinesGet",err,error,*999)
 
     !Check input arguments
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
@@ -1079,19 +1371,19 @@ CONTAINS
     !Check domain lines is associated.
     IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain topology lines is not associated.",err,error,*999)
     
-    EXITS("DomainTopology_LinesGet")
+    EXITS("DomainTopology_DomainLinesGet")
     RETURN
-999 ERRORSEXITS("DomainTopology_LinesGet",err,error)
+999 ERRORSEXITS("DomainTopology_DomainLinesGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainTopology_LinesGet
+  END SUBROUTINE DomainTopology_DomainLinesGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets nodes from a domain topology.
-  SUBROUTINE DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*)
+  SUBROUTINE DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*)
 
     !Argument variables
     TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the nodes for.
@@ -1100,7 +1392,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainTopology_NodesGet",err,error,*999)
+    ENTERS("DomainTopology_DomainNodesGet",err,error,*999)
 
     !Check input arguments
     IF(ASSOCIATED(domainNodes)) CALL FlagError("Domain lines is already associated.",err,error,*998)
@@ -1111,13 +1403,13 @@ CONTAINS
     !Check domain nodes is associated.
     IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain topology nodes is not associated.",err,error,*999)
     
-    EXITS("DomainTopology_NodesGet")
+    EXITS("DomainTopology_DomainNodesGet")
     RETURN
 999 NULLIFY(domainNodes)
-998 ERRORSEXITS("DomainTopology_NodesGet",err,error)
+998 ERRORSEXITS("DomainTopology_DomainNodesGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainTopology_NodesGet
+  END SUBROUTINE DomainTopology_DomainNodesGet
 
   !
   !================================================================================================================================
@@ -1146,7 +1438,7 @@ CONTAINS
     ENDIF
     IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(domainTopology%elements)) CALL FlagError("Domain topology elements is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(domainTopology%elements%elements)) &
+    IF(.NOT.ALLOCATED(domainTopology%elements%elements)) &
       & CALL FlagError("Domain topology elements elements is not associated.",err,error,*999)
        
     basis=>domainTopology%elements%elements(localElementNumber)%basis
@@ -1168,7 +1460,7 @@ CONTAINS
   !
 
   !>Gets faces from a domain topology.
-  SUBROUTINE DomainTopology_FacesGet(domainTopology,domainFaces,err,error,*)
+  SUBROUTINE DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*)
 
     !Argument variables
     TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the faces for.
@@ -1177,7 +1469,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainTopology_FacesGet",err,error,*999)
+    ENTERS("DomainTopology_DomainFacesGet",err,error,*999)
 
     !Check input arguments
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
@@ -1188,12 +1480,12 @@ CONTAINS
     !Check domain faces is associated.
     IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain topology faces is not associated.",err,error,*999)
     
-    EXITS("DomainTopology_FacesGet")
+    EXITS("DomainTopology_DomainFacesGet")
     RETURN
-999 ERRORSEXITS("DomainTopology_FacesGet",err,error)
+999 ERRORSEXITS("DomainTopology_DomainFacesGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainTopology_FacesGet
+  END SUBROUTINE DomainTopology_DomainFacesGet
 
   !
   !================================================================================================================================

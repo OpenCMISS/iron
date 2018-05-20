@@ -763,7 +763,7 @@ CONTAINS
                                             IF(ERR/=0) CALL FlagError("Could not allocate transpose row indices.",ERR,ERROR,*999)
                                           ENDIF
                                           !Loop over the number of components in the Lagrange multipler variable
-                                          DO column_component_idx=1,COLUMN_VARIABLE%NUMBER_OF_COMPONENTS
+                                          DO column_component_idx=1,COLUMN_VARIABLE%numberOfComponents
                                             IF(COLUMN_VARIABLE%COMPONENTS(column_component_idx)%interpolationType== &
                                               & FIELD_NODE_BASED_INTERPOLATION) THEN
                                               !Loop over the elements in the interface mesh
@@ -786,7 +786,7 @@ CONTAINS
                                                       & DERIVATIVES(column_derivative)%VERSIONS(column_version)
                                                     global_column=COLUMN_DOFS_DOMAIN_MAPPING%localToGlobalMap(local_column)
                                                     !Loop over the components in the dependent variable
-                                                    DO row_component_idx=1,ROW_VARIABLE%NUMBER_OF_COMPONENTS
+                                                    DO row_component_idx=1,ROW_VARIABLE%numberOfComponents
                                                       SELECT CASE(ROW_VARIABLE%COMPONENTS(row_component_idx)%interpolationType)
                                                       CASE(FIELD_CONSTANT_INTERPOLATION)
                                                         local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)%PARAM_TO_DOF_MAP% &

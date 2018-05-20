@@ -155,7 +155,7 @@ CONTAINS
               variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
               FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                   IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                     IF(ASSOCIATED(DOMAIN)) THEN
@@ -373,7 +373,7 @@ CONTAINS
                 FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
@@ -1178,8 +1178,8 @@ CONTAINS
         FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
         !Note that the dimension/number of components for FIELD_U_VARIABLE_TYPE has to be the same as the FIELD_DELUDELN_VARIABLE_TYPE
         !& Number of Geometric field components = number of dependent field component
-        NUMBER_OF_DEPENDENT_COMPONENTS=geometricField%VARIABLE_TYPE_MAP(1)%ptr%NUMBER_OF_COMPONENTS
-        !NUMBER_OF_GEOMETRIC_COMPONENTS=dependentField%VARIABLE_TYPE_MAP(1)%ptr%NUMBER_OF_COMPONENTS
+        NUMBER_OF_DEPENDENT_COMPONENTS=geometricField%VARIABLE_TYPE_MAP(1)%ptr%numberOfComponents
+        !NUMBER_OF_GEOMETRIC_COMPONENTS=dependentField%VARIABLE_TYPE_MAP(1)%ptr%numberOfComponents
         !!TODO:: Use highest interpolation scheme's guass points. Warn if Gauss Points insufficient
         !Create an array of Bases with each component 
         DO ns=1,NUMBER_OF_DEPENDENT_COMPONENTS

@@ -195,7 +195,7 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_GET(FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,ANALYTIC_VALUES, &
                     & ERR,ERROR,*999)
                   !Loop over the components
-                  DO component_idx=1,FIELD%VARIABLES(var_idx)%NUMBER_OF_COMPONENTS
+                  DO component_idx=1,FIELD%VARIABLES(var_idx)%numberOfComponents
                     MESH_COMPONENT=FIELD_VARIABLE%COMPONENTS(component_idx)%meshComponentNumber
                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                     IF(ASSOCIATED(DOMAIN)) THEN
@@ -519,16 +519,16 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_RESTORE(FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,ANALYTIC_VALUES, &
                     & ERR,ERROR,*999)
                   !Allocated the integral errors
-                  ALLOCATE(INTEGRAL_ERRORS(6,FIELD_VARIABLE%NUMBER_OF_COMPONENTS),STAT=ERR)
+                  ALLOCATE(INTEGRAL_ERRORS(6,FIELD_VARIABLE%numberOfComponents),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate integral errors.",ERR,ERROR,*999)
-                  ALLOCATE(GHOST_INTEGRAL_ERRORS(6,FIELD_VARIABLE%NUMBER_OF_COMPONENTS),STAT=ERR)
+                  ALLOCATE(GHOST_INTEGRAL_ERRORS(6,FIELD_VARIABLE%numberOfComponents),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate ghost integral errors.",ERR,ERROR,*999)
                   CALL ANALYTIC_ANALYSIS_INTEGRAL_ERRORS(FIELD_VARIABLE,INTEGRAL_ERRORS,GHOST_INTEGRAL_ERRORS,ERR,ERROR,*999)
                   IF(numberOfGroupComputationNodes>1) THEN
                     CALL WRITE_STRING(OUTPUT_ID,"Local Integral errors:",ERR,ERROR,*999)
                     LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       VALUES(1)=INTEGRAL_ERRORS(1,component_idx)
                       VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
                       VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
@@ -546,7 +546,7 @@ CONTAINS
                     ENDDO !component_idx
                     LOCAL_STRING="Component#             Numerical      Analytic           NID        NID(%)"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       VALUES(1)=INTEGRAL_ERRORS(5,component_idx)
                       VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
                       VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
@@ -563,7 +563,7 @@ CONTAINS
                     CALL WRITE_STRING(OUTPUT_ID,"Local + Ghost Integral errors:",ERR,ERROR,*999)
                     LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       VALUES(1)=INTEGRAL_ERRORS(1,component_idx)+GHOST_INTEGRAL_ERRORS(1,component_idx)
                       VALUES(2)=INTEGRAL_ERRORS(3,component_idx)+GHOST_INTEGRAL_ERRORS(3,component_idx)
                       VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
@@ -581,7 +581,7 @@ CONTAINS
                     ENDDO !component_idx
                     LOCAL_STRING="Component#             Numerical      Analytic           NID        NID(%)"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       VALUES(1)=INTEGRAL_ERRORS(5,component_idx)+GHOST_INTEGRAL_ERRORS(5,component_idx)
                       VALUES(2)=INTEGRAL_ERRORS(3,component_idx)+GHOST_INTEGRAL_ERRORS(3,component_idx)
                       VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
@@ -596,12 +596,12 @@ CONTAINS
                       CALL WRITE_STRING_VECTOR(OUTPUT_ID,1,1,4,4,4,VALUES,FIRST_FORMAT,"(20X,4(2X,E12.5))",ERR,ERROR,*999)
                     ENDDO !component_idx
                     !Collect the values across the ranks
-                    CALL MPI_ALLREDUCE(MPI_IN_PLACE,INTEGRAL_ERRORS,6*FIELD_VARIABLE%NUMBER_OF_COMPONENTS,MPI_DOUBLE_PRECISION, &
+                    CALL MPI_ALLREDUCE(MPI_IN_PLACE,INTEGRAL_ERRORS,6*FIELD_VARIABLE%numberOfComponents,MPI_DOUBLE_PRECISION, &
                       & MPI_SUM,groupCommunicator,MPI_IERROR)
                     CALL WRITE_STRING(OUTPUT_ID,"Global Integral errors:",ERR,ERROR,*999)
                     LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,ERR,ERROR,*999)
                       VALUES(1)=INTEGRAL_ERRORS(1,component_idx)
                       VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
@@ -619,7 +619,7 @@ CONTAINS
                     ENDDO !component_idx
                     LOCAL_STRING="Component#             Numerical      Analytic           NID        NID(%)"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       VALUES(1)=INTEGRAL_ERRORS(5,component_idx)
                       VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
                       VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
@@ -637,7 +637,7 @@ CONTAINS
                     CALL WRITE_STRING(OUTPUT_ID,"Integral errors:",ERR,ERROR,*999)
                     LOCAL_STRING="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       VALUES(1)=INTEGRAL_ERRORS(1,component_idx)
                       VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
                       VALUES(3)=ANALYTIC_ANALYSIS_PERCENTAGE_ERROR(VALUES(1),VALUES(2))
@@ -655,7 +655,7 @@ CONTAINS
                     ENDDO !component_idx
                     LOCAL_STRING="Component#             Numerical      Analytic           NID        NID(%)"
                     CALL WRITE_STRING(OUTPUT_ID,LOCAL_STRING,ERR,ERROR,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       VALUES(1)=INTEGRAL_ERRORS(5,component_idx)
                       VALUES(2)=INTEGRAL_ERRORS(3,component_idx)
                       VALUES(3)=ANALYTIC_ANALYSIS_NID_ERROR(VALUES(1),VALUES(2))
@@ -828,8 +828,8 @@ CONTAINS
     INTEGRAL_ERRORS=0.0_DP
     GHOST_INTEGRAL_ERRORS=0.0_DP
     IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-      IF(SIZE(INTEGRAL_ERRORS,1)>=6.AND.SIZE(INTEGRAL_ERRORS,2)>=FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
-        IF(SIZE(GHOST_INTEGRAL_ERRORS,1)>=6.AND.SIZE(GHOST_INTEGRAL_ERRORS,2)>=FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+      IF(SIZE(INTEGRAL_ERRORS,1)>=6.AND.SIZE(INTEGRAL_ERRORS,2)>=FIELD_VARIABLE%numberOfComponents) THEN
+        IF(SIZE(GHOST_INTEGRAL_ERRORS,1)>=6.AND.SIZE(GHOST_INTEGRAL_ERRORS,2)>=FIELD_VARIABLE%numberOfComponents) THEN
           variable_type=FIELD_VARIABLE%VARIABLE_TYPE
           DEPENDENT_FIELD=>FIELD_VARIABLE%FIELD
           IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
@@ -864,7 +864,7 @@ CONTAINS
                         & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                       RWG=GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
                         & QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
-                      DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                      DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                         DOMAIN_ELEMENTS3=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS
                         BASIS=>DOMAIN_ELEMENTS3%ELEMENTS(element_idx)%BASIS
                         NUMERICAL_INT=0.0_DP
@@ -917,7 +917,7 @@ CONTAINS
                         & GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
                       RWG=GEOMETRIC_INTERP_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN* &
                         & QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
-                      DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                      DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                         DOMAIN_ELEMENTS3=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS
                         BASIS=>DOMAIN_ELEMENTS3%ELEMENTS(element_idx)%BASIS
                         NUMERICAL_INT=0.0_DP
@@ -976,14 +976,14 @@ CONTAINS
           LOCAL_ERROR="Invalid size for GHOST_INTEGRAL_ERRORS. The size is ("// &
             & TRIM(NUMBER_TO_VSTRING(SIZE(GHOST_INTEGRAL_ERRORS,1),"*",ERR,ERROR))//","// &
             & TRIM(NUMBER_TO_VSTRING(SIZE(GHOST_INTEGRAL_ERRORS,2),"*",ERR,ERROR))//") and it needs to be at least (6,"// &
-            & TRIM(NUMBER_TO_VSTRING(FIELD_VARIABLE%NUMBER_OF_COMPONENTS,"*",ERR,ERROR))//")."
+            & TRIM(NUMBER_TO_VSTRING(FIELD_VARIABLE%numberOfComponents,"*",ERR,ERROR))//")."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
       ELSE
         LOCAL_ERROR="Invalid size for INTEGRAL_ERRORS. The size is ("// &
           & TRIM(NUMBER_TO_VSTRING(SIZE(INTEGRAL_ERRORS,1),"*",ERR,ERROR))//","// &
           & TRIM(NUMBER_TO_VSTRING(SIZE(INTEGRAL_ERRORS,2),"*",ERR,ERROR))//") and it needs to be at least (6,"// &
-          & TRIM(NUMBER_TO_VSTRING(FIELD_VARIABLE%NUMBER_OF_COMPONENTS,"*",ERR,ERROR))//")."
+          & TRIM(NUMBER_TO_VSTRING(FIELD_VARIABLE%numberOfComponents,"*",ERR,ERROR))//")."
         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
     ELSE

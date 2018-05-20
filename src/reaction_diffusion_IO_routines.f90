@@ -130,7 +130,7 @@ CONTAINS
     NodesInMeshComponent = REGION%meshes%meshes(1)%ptr%topology(1)%ptr%nodes%numberOfNodes
     NumberOfElements = COMPUTATION_DOMAIN%TOPOLOGY%ELEMENTS%numberOfElements
     NumberOfVariableComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-      & variables(1)%number_of_components
+      & variables(1)%numberOfComponents
     NumberOfOutputFields=2
     !determine if there is a source field
     OUTPUT_SOURCE = .FALSE.
@@ -143,7 +143,7 @@ CONTAINS
 
     IF( OUTPUT_SOURCE ) THEN
       NumberOfSourceComponents=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%source%source_field% &
-        & variables(1)%number_of_components
+        & variables(1)%numberOfComponents
       NumberOfOutputFields = NumberOfOutputFields + 1
     !  CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(SOURCE_FIELD,SOURCE_INTERPOLATION_PARAMETERS,ERR,ERROR,*999)
     !  CALL FIELD_INTERPOLATED_POINTS_INITIALISE(SOURCE_INTERPOLATION_PARAMETERS,SOURCE_INTERPOLATED_POINT,ERR,ERROR,*999)

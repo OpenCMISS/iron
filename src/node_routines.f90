@@ -48,6 +48,7 @@ MODULE NodeRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE Kinds
+  USE NodeAccessRoutines
   USE Strings
   USE Trees
   USE Types
@@ -65,10 +66,6 @@ MODULE NodeRoutines
   !Module variables
 
   !Interfaces
-
-  INTERFACE NODE_CHECK_EXISTS
-    MODULE PROCEDURE Node_CheckExists
-  END INTERFACE NODE_CHECK_EXISTS
 
   INTERFACE NODES_CREATE_START
     MODULE PROCEDURE Nodes_CreateStartRegion
@@ -125,10 +122,6 @@ MODULE NodeRoutines
     MODULE PROCEDURE Nodes_UserNumberSet
   END INTERFACE NODES_USER_NUMBER_SET
 
-  PUBLIC NODE_CHECK_EXISTS
-
-  PUBLIC Node_CheckExists
-
   PUBLIC NODES_CREATE_FINISH,NODES_CREATE_START
 
   PUBLIC Nodes_CreateFinish,Nodes_CreateStart
@@ -152,43 +145,6 @@ MODULE NodeRoutines
 
 CONTAINS
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Checks that a user node number is defined on the specified region.
-  SUBROUTINE Node_CheckExists(nodes,userNumber,nodeExists,globalNumber,err,error,*)
-
-    !Argument variables
-    TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes to check
-    INTEGER(INTG), INTENT(IN) :: userNumber !<The user node number to check if it exists
-    LOGICAL, INTENT(OUT) :: nodeExists !<On exit, is .TRUE. if the node user number exists in the region, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: globalNumber !<On exit, if the node exists the global number corresponding to the user node number. If the node does not exist then global number will be 0.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
-   
-    ENTERS("Node_CheckExists",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Nodes is not associated.",err,error,*999)
-
-    nodeExists=.FALSE.
-    globalNumber=0
-    NULLIFY(treeNode)
-    CALL Tree_Search(nodes%nodesTree,userNumber,treeNode,err,error,*999)
-    IF(ASSOCIATED(treeNode)) THEN
-      CALL Tree_NodeValueGet(nodes%nodesTree,treeNode,globalNumber,err,error,*999)
-      nodeExists=.TRUE.
-    ENDIF
-
-    EXITS("Node_CheckExists")
-    RETURN
-999 ERRORSEXITS("Node_CheckExists",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Node_CheckExists
-  
   !
   !================================================================================================================================
   !

@@ -197,7 +197,7 @@ CONTAINS
         NULLIFY(dependentVariable)
         CALL Field_VariableGet(dependentField,variableType,dependentVariable,err,error,*999)
         CALL Field_ParameterSetEnsureCreated(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        DO componentidx=1,dependentVariable%NUMBER_OF_COMPONENTS
+        DO componentidx=1,dependentVariable%numberOfComponents
           IF(dependentVariable%components(componentIdx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
             NULLIFY(domain)
             CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
@@ -252,7 +252,7 @@ CONTAINS
         NULLIFY(dependentVariable)
         CALL Field_VariableGet(dependentField,variableType,dependentVariable,err,error,*999)
         CALL Field_ParameterSetEnsureCreated(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        DO componentIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+        DO componentIdx=1,dependentVariable%numberOfComponents
           IF(dependentVariable%components(componentIdx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
             NULLIFY(domain)
             CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
@@ -3241,7 +3241,7 @@ CONTAINS
 !                               variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
 !                               FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
 !                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-!                                 DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+!                                 DO component_idx=1,FIELD_VARIABLE%numberOfComponents
 !                                   IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== & 
 !                                     & FIELD_NODE_BASED_INTERPOLATION) THEN
 !                                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -3362,7 +3362,7 @@ CONTAINS
 !                               variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
 !                               FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
 !                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-!                                 DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+!                                 DO component_idx=1,FIELD_VARIABLE%numberOfComponents
 !                                   IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== & 
 !                                     & FIELD_NODE_BASED_INTERPOLATION) THEN
 !                                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -3586,7 +3586,7 @@ CONTAINS
           CALL BoundaryConditions_VariableGet(boundaryConditions,dynamicVariable,boundaryConditionsVariable,err,error,*999)
           dynamicVariableType=dynamicVariable%VARIABLE_TYPE
           analyticFunctionType=equationsSet%analytic%ANALYTIC_FUNCTION_TYPE          
-          DO componentIdx=1,dynamicVariable%NUMBER_OF_COMPONENTS
+          DO componentIdx=1,dynamicVariable%numberOfComponents
             IF(dynamicVariable%components(componentIdx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
               NULLIFY(domain)
               CALL FieldVariable_DomainGet(dynamicVariable,componentIdx,domain,err,error,*999)
@@ -3636,7 +3636,7 @@ CONTAINS
             CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
             NULLIFY(sourceVariable)
             CALL Field_VariableGet(sourceField,FIELD_U_VARIABLE_TYPE,sourceVariable,err,error,*999)
-            DO componentIdx=1,sourceVariable%NUMBER_OF_COMPONENTS
+            DO componentIdx=1,sourceVariable%numberOfComponents
               IF(sourceVariable%components(componentIdx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                 NULLIFY(domain)
                 CALL FieldVariable_DomainGet(dynamicVariable,componentIdx,domain,err,error,*999)
@@ -4476,19 +4476,19 @@ CONTAINS
               & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       IF(stiffnessMatrix%updateMatrix) THEN
                         SUM=0.0_DP
-                        DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                           PGMJ(nj)=0.0_DP
                           PGNJ(nj)=0.0_DP
                           DO ni=1,DEPENDENT_BASIS%numberOfXi                          
@@ -4512,7 +4512,7 @@ CONTAINS
                         ELSEIF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE .OR. &
                           & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE) THEN
                           A_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                            & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS,NO_PART_DERIV)
+                            & VALUES(GEOMETRIC_VARIABLE%numberOfComponents,NO_PART_DERIV)
                           stiffnessMatrix%elementMatrix%matrix(mhs,nhs)=stiffnessMatrix%elementMatrix%matrix(mhs,nhs)+SUM*RWG- &
                             & A_PARAM*QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
                             & QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ns,NO_PART_DERIV,ng)*RWG
@@ -4536,7 +4536,7 @@ CONTAINS
               IF(sourceVector%updateVector) THEN
                 C_PARAM=equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1, NO_PART_DERIV)
                 mhs=0
-                DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,FIELD_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
@@ -4561,7 +4561,7 @@ CONTAINS
                 !                     C_PARAM_2_T= equations%interpolation%dependentInterpPoint(FIELD_V_VARIABLE_TYPE)%ptr%VALUES(1, NO_PART_DERIV)!<This is the value of the solution from the diffusion equation at time T
                 !                     C_PARAM=C_PARAM_1_T+C_PARAM_1_TPLUSONE+C_PARAM_2_T
                 mhs=0
-                DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,FIELD_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
@@ -4589,7 +4589,7 @@ CONTAINS
                 write(*,*) ADVEC_DIFF_DEPENDENT_PREVIOUS_INTERPOLATED_POINT%VALUES(1,NO_PART_DERIV)
                 C_PARAM=0.5_DP*ADVEC_DIFF_DEPENDENT_PREVIOUS_INTERPOLATED_POINT%VALUES(1,NO_PART_DERIV)
                 mhs=0
-                DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,FIELD_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
@@ -4607,14 +4607,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       IF(stiffnessMatrix%updateMatrix) THEN
@@ -4724,19 +4724,19 @@ CONTAINS
               & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       IF(stiffnessMatrix%updateMatrix) THEN
                         SUM=0.0_DP
-                        DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                           PGMJ(nj)=0.0_DP
                           PGNJ(nj)=0.0_DP
                           DO ni=1,DEPENDENT_BASIS%numberOfXi                          
@@ -4771,7 +4771,7 @@ CONTAINS
             IF(sourceVector%updateVector) THEN
               C_PARAM=equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1, NO_PART_DERIV)
               mhs=0
-              DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,FIELD_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
@@ -4785,7 +4785,7 @@ CONTAINS
 
             !Loop over element rows
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS !field_variable is the variable associated with the equations set under consideration
+            DO mh=1,FIELD_VARIABLE%numberOfComponents !field_variable is the variable associated with the equations set under consideration
 
               MESH_COMPONENT_1 = FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
               DEPENDENT_BASIS_1 => DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
@@ -4809,8 +4809,8 @@ CONTAINS
 
                       !                       !Loop over element columns
                       nhs=0
-                      ! !                       DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-                      DO nh=1,FIELD_VARIABLES(num_var_count)%ptr%NUMBER_OF_COMPONENTS
+                      ! !                       DO nh=1,FIELD_VARIABLE%numberOfComponents
+                      DO nh=1,FIELD_VARIABLES(num_var_count)%ptr%numberOfComponents
 
                         MESH_COMPONENT_2 = FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                         DEPENDENT_BASIS_2 => DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_2)%ptr% &
@@ -4861,14 +4861,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       IF(stiffnessMatrix%updateMatrix) THEN
@@ -5347,17 +5347,17 @@ CONTAINS
                 & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
               !Find material parameters and u value at this Gauss point
               B_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+2,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+2,NO_PART_DERIV)
               U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_VAR_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
               !Loop over field components
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   !Loop over element columns
-                  DO nh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,DEPENDENT_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       VALUE=-2.0_DP*B_PARAM*QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
@@ -5409,19 +5409,19 @@ CONTAINS
                 & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
               !Find material parameter and u value at this Gauss point
               B_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+2,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+2,NO_PART_DERIV)
               C_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+3,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+3,NO_PART_DERIV)
               U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_VAR_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
               !Loop over field components
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
                   nhs=0
                   !Loop over element columns
-                  DO nh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,DEPENDENT_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       VALUE=-B_PARAM*C_PARAM*QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)* &
@@ -5561,21 +5561,21 @@ CONTAINS
             !Loop over field components
             IF(stiffnessMatrix%firstAssembly.OR.dampingMatrix%firstAssembly.OR.rhsVector%firstAssembly) THEN
               B_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+2,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+2,NO_PART_DERIV)
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
                   IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                     nhs=0
                     !Loop over element columns
-                    DO nh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO nh=1,DEPENDENT_VARIABLE%numberOfComponents
                       DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                         nhs=nhs+1
                         IF(stiffnessMatrix%updateMatrix) THEN
                           SUM1=0.0_DP
-                          DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                          DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                             PGMJ(nj)=0.0_DP
                             PGNJ(nj)=0.0_DP
                             DO ni=1,GEOMETRIC_BASIS%numberOfXi
@@ -5609,9 +5609,9 @@ CONTAINS
             IF(rhsVector%firstAssembly) THEN
               IF(rhsVector%updateVector) THEN
                 A_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                  & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+1,NO_PART_DERIV)
+                  & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+1,NO_PART_DERIV)
                 mhs=0
-                DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
@@ -5623,11 +5623,11 @@ CONTAINS
             ENDIF
             IF(nonlinearMatrices%updateResidual) THEN
               C_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+3,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+3,NO_PART_DERIV)
               U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
                 & VALUES(1,NO_PART_DERIV)
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
@@ -5683,19 +5683,19 @@ CONTAINS
             !Loop over field components
             IF(stiffnessMatrix%firstAssembly.OR.dampingMatrix%firstAssembly.OR.rhsVector%firstAssembly) THEN
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1
                   IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                     nhs=0
                     !Loop over element columns
-                    DO nh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO nh=1,DEPENDENT_VARIABLE%numberOfComponents
                       DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                         nhs=nhs+1
                         IF(stiffnessMatrix%updateMatrix) THEN
                           SUM1=0.0_DP
-                          DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                          DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                             PGMJ(nj)=0.0_DP
                             PGNJ(nj)=0.0_DP
                             DO ni=1,GEOMETRIC_BASIS%numberOfXi
@@ -5727,9 +5727,9 @@ CONTAINS
             IF(rhsVector%firstAssembly) THEN
               IF(rhsVector%updateVector) THEN
                 A_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                  & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+1,NO_PART_DERIV)
+                  & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+1,NO_PART_DERIV)
                 mhs=0
-                DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                   !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
@@ -5741,9 +5741,9 @@ CONTAINS
             ENDIF
             IF(nonlinearMatrices%updateResidual) THEN
               B_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+2,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+2,NO_PART_DERIV)
               C_PARAM=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VALUES(GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+3,NO_PART_DERIV)
+                & VALUES(GEOMETRIC_VARIABLE%numberOfComponents+3,NO_PART_DERIV)
               U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
                 & VALUES(1,NO_PART_DERIV)
 !!TODO: Handle floating point exceptions better
@@ -5753,7 +5753,7 @@ CONTAINS
                 CALL FlagError(localError,err,error,*999)
               ENDIF
               mhs=0
-              DO mh=1,DEPENDENT_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,DEPENDENT_VARIABLE%numberOfComponents
                 !Loop over element rows
                 DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                   mhs=mhs+1

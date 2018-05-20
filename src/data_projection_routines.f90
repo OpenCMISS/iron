@@ -1408,7 +1408,7 @@ CONTAINS
     CALL Domain_MappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(domainMappingElements)
     CALL DomainMappings_ElementsGet(domainMappings,domainMappingElements,err,error,*999)
-    IF(.NOT.ASSOCIATED(domainElements%elements)) CALL FlagError("Domain elements elements is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainElements%elements)) CALL FlagError("Domain elements elements is not allocated.",err,error,*999)
     
     numberOfDataPoints=dataPoints%numberOfDataPoints
     NULLIFY(workGroup)

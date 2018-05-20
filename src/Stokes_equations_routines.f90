@@ -1482,7 +1482,7 @@ CONTAINS
                   & independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                   W_VALUE(1)=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
                   W_VALUE(2)=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(2,NO_PART_DERIV)
-                  IF(FIELD_VARIABLE%NUMBER_OF_COMPONENTS==4) THEN
+                  IF(FIELD_VARIABLE%numberOfComponents==4) THEN
                     W_VALUE(3)=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,NO_PART_DERIV)
                   END IF
               ELSE
@@ -1501,7 +1501,7 @@ CONTAINS
                 & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE) THEN
                 !Loop over field components
                 mhs=0
-                DO mh=1,(FIELD_VARIABLE%NUMBER_OF_COMPONENTS-1)
+                DO mh=1,(FIELD_VARIABLE%numberOfComponents-1)
                   MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                   DEPENDENT_BASIS1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT1)%ptr% &
                     & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -1513,7 +1513,7 @@ CONTAINS
                     nhs=0
                     IF(updateStiffnessMatrix.OR.updateDampingMatrix) THEN
                       !Loop over element columns
-                      DO nh=1,(FIELD_VARIABLE%NUMBER_OF_COMPONENTS)
+                      DO nh=1,(FIELD_VARIABLE%numberOfComponents)
 
                         MESH_COMPONENT2=FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                         DEPENDENT_BASIS2=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT2)%ptr% &
@@ -1562,7 +1562,7 @@ CONTAINS
                           IF(updateStiffnessMatrix) THEN
 
                             IF(EQUATIONS_SET%SPECIFICATION(3)/=EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE) THEN
-                              IF(nh<FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                              IF(nh<FIELD_VARIABLE%numberOfComponents) THEN
                                 SUM=0.0_DP
                                 !Calculate SUM
                                 DO mi=1,DEPENDENT_BASIS1%numberOfXi
@@ -1600,7 +1600,7 @@ CONTAINS
                           IF(updateStiffnessMatrix) THEN
 
                             !LAPLACE TYPE
-                            IF(nh==FIELD_VARIABLE%NUMBER_OF_COMPONENTS) THEN
+                            IF(nh==FIELD_VARIABLE%numberOfComponents) THEN
                               SUM=0.0_DP
                               !Calculate SUM
                               DO ni=1,DEPENDENT_BASIS1%numberOfXi
@@ -1645,7 +1645,7 @@ CONTAINS
                     & EQUATIONS_SET%ANALYTIC%ANALYTIC_FUNCTION_TYPE==EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5) THEN
 
                     mhs=0
-                    DO mh=1,(FIELD_VARIABLE%NUMBER_OF_COMPONENTS-1)
+                    DO mh=1,(FIELD_VARIABLE%numberOfComponents-1)
                       MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                       DEPENDENT_BASIS1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT1)%ptr% &
                         & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -1779,7 +1779,7 @@ CONTAINS
               CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
                 & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
               mhs=0
-              DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+              DO mh=1,FIELD_VARIABLE%numberOfComponents
                 !Loop over element rows
                 MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                 DEPENDENT_BASIS1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT1)%ptr% &
@@ -1789,7 +1789,7 @@ CONTAINS
                   nhs=0
                    IF(updateStiffnessMatrix.OR.updateDampingMatrix) THEN
                     !Loop over element columns
-                    DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO nh=1,FIELD_VARIABLE%numberOfComponents
                       MESH_COMPONENT2=FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                       DEPENDENT_BASIS2=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT2)%ptr% &
                         & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -2076,7 +2076,7 @@ CONTAINS
                                 variable_type=dependentField%VARIABLES(variable_idx)%variable_TYPE
                                 FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
                                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== &
                                       & FIELD_NODE_BASED_INTERPOLATION) THEN
                                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -2236,7 +2236,7 @@ CONTAINS
                                                   CALL STOKES_EQUATION_ANALYTIC_FUNCTIONS(VALUE,X,MU_PARAM,RHO_PARAM,CURRENT_TIME, &
                                                     & variable_type, &
                                                     & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,numberOfDimensions, &
-                                                    & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,component_idx,err,error,*999)
+                                                    & FIELD_VARIABLE%numberOfComponents,component_idx,err,error,*999)
                                                   !Default to version 1 of each node derivative
                                                   local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                                     & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
@@ -2338,7 +2338,7 @@ CONTAINS
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%variable_TYPE
                             FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                             IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                              DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                              DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                 DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                                 IF(ASSOCIATED(DOMAIN)) THEN
                                   IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
@@ -2419,7 +2419,7 @@ CONTAINS
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%variable_TYPE
                             FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                             IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                              DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                              DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                 DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                                 IF(ASSOCIATED(DOMAIN)) THEN
                                   IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
@@ -2498,7 +2498,7 @@ CONTAINS
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%variable_TYPE
                             FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                             IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                              DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                              DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                 DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                                 IF(ASSOCIATED(DOMAIN)) THEN
                                   IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
@@ -2676,7 +2676,7 @@ CONTAINS
                       variable_type=EQUATIONS_SET_ALE_STOKES%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%variable_TYPE
                       FIELD_VARIABLE=>EQUATIONS_SET_ALE_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                           DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                           IF(ASSOCIATED(DOMAIN)) THEN
                             IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
@@ -2787,7 +2787,7 @@ CONTAINS
                         variable_type=EQUATIONS_SET_ALE_STOKES%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%variable_TYPE
                         FIELD_VARIABLE=>EQUATIONS_SET_ALE_STOKES%GEOMETRY%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                         IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                          DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                          DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                             DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                             IF(ASSOCIATED(DOMAIN)) THEN
                               IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
@@ -2916,7 +2916,7 @@ CONTAINS
                             variable_type=EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLES(variable_idx)%variable_TYPE
                             FIELD_VARIABLE=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
                             IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                              DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                              DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                 DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                                 IF(ASSOCIATED(DOMAIN)) THEN
                                   IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
@@ -3194,7 +3194,7 @@ CONTAINS
                 FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(dependentField,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                     BOUND_COUNT=0
                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -3344,7 +3344,7 @@ CONTAINS
                                 ENDIF
                                 CALL STOKES_EQUATION_ANALYTIC_FUNCTIONS(VALUE,X,MU_PARAM,RHO_PARAM,CURRENT_TIME,variable_type, &
                                   & GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE,numberOfDimensions, &
-                                  & FIELD_VARIABLE%NUMBER_OF_COMPONENTS,component_idx,err,error,*999)
+                                  & FIELD_VARIABLE%numberOfComponents,component_idx,err,error,*999)
                                 !Default to version 1 of each node derivative
                                 local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
                                   & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)

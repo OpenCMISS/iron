@@ -1524,6 +1524,8 @@ CONTAINS
 
     !Locals
     TYPE(MeshType), POINTER :: MESH
+    TYPE(MeshNodesType), POINTER :: meshNodes
+    TYPE(MeshTopologyType), POINTER :: meshTopology
     INTEGER(INTG) :: TYPE_COMPONENT_HANDLE, REAL_1D_HANDLE, NODE_COUNT, INDEX_HANDLE, RESOURCE_HANDLE, SOURCE_HANDLE
     INTEGER(INTG) :: VERSION_NUMBER,COMPONENT_COUNT, I, J, INTERPOLATION_TYPE, GLOBAL_NODE_NUMBER, RANK
     INTEGER(INTG), ALLOCATABLE :: MESH_COMPONENT_NUMBERS(:)
@@ -1537,7 +1539,7 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(VARYING_STRING) :: ARRAY_LOCATION
     TYPE(WorkGroupType), POINTER :: workGroup
-    INTEGER(INTG) :: myGroupComputationNodeNumber,nodeDomain,meshComponentNumber
+    INTEGER(INTG) :: myGroupComputationNodeNumber,nodeDomain,meshComponentNumber,meshNodeNumber
 
     ENTERS( "FIELDML_OUTPUT_ADD_FIELD_NODE_DOFS", ERR, ERROR, *999 )
     
@@ -1626,15 +1628,18 @@ CONTAINS
     NULLIFY(workGroup)
     CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
     CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
-
-    OFFSETS(:) = 0
+     OFFSETS(:) = 0
     SIZES(1) = 1
     SIZES(2) = COMPONENT_COUNT
     DO I = 1, NODE_COUNT
       DO J = 1, COMPONENT_COUNT
         DVALUE = 0
         IF( IS_NODE_BASED(J) ) THEN
-          CALL MeshTopology_NodeCheckExists( MESH, MESH_COMPONENT_NUMBERS(J), I, NODE_EXISTS, GLOBAL_NODE_NUMBER, &
+          NULLIFY(meshTopology)
+          CALL Mesh_MeshTopologyGet(mesh,MESH_COMPONENT_NUMBERS(J),meshTopology,err,error,*999)
+          NULLIFY(meshNodes)
+          CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*999)
+          CALL MeshNodes_NodeCheckExists( meshNodes, I, NODE_EXISTS, GLOBAL_NODE_NUMBER,meshNodeNumber, &
             & ERR, ERROR, *999 )
           IF( NODE_EXISTS ) THEN
             !Default to version 1 of each node derivative (value hardcoded in loop)

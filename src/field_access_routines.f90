@@ -45,6 +45,7 @@
 MODULE FieldAccessRoutines
   
   USE BaseRoutines
+  USE DecompositionAccessRoutines
   USE Kinds
   USE ISO_VARYING_STRING
   USE Strings
@@ -163,6 +164,29 @@ MODULE FieldAccessRoutines
   INTEGER(INTG), PARAMETER :: FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE=38 !<Stores upwind values associated with a field from previous timestep. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
   !>@}
 
+  !> \addtogroup FIELD_ROUTINES_InterpolationTypes FIELD_ROUTINES::InterpolationTypes
+  !> \brief Field interpolation parameters
+  !> \see FIELD_ROUTINES,OPENCMISS_FieldInterpolationTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: FIELD_CONSTANT_INTERPOLATION=1 !<Constant interpolation. One parameter for the field \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_ELEMENT_BASED_INTERPOLATION=2 !<Element based interpolation. Parameters are different in each element \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_NODE_BASED_INTERPOLATION=3 !<Node based interpolation. Parameters are nodal based and a basis function is used \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_GRID_POINT_BASED_INTERPOLATION=4 !<Grid point based interpolation. Parameters are different at each grid point \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_GAUSS_POINT_BASED_INTERPOLATION=5 !<Gauss point based interpolation. Parameters are different at each Gauss point \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_DATA_POINT_BASED_INTERPOLATION=6 !<data point based interpolation. Parameters are different at each data point \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
+  !>@}
+   
+  !> \addtogroup FIELD_ROUTINES_DataTypes FIELD_ROUTINES::DataTypes
+  !> \brief Field data types
+  !> \see FIELD_ROUTINES,OPENCMISS_FieldDataTypes
+  !>@{
+  INTEGER(INTG), PARAMETER :: FIELD_INTG_TYPE=1 !<Integer field data type \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_SP_TYPE=2 !<Single precision real field data type \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_DP_TYPE=3 !<Double precision real field data type \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
+  INTEGER(INTG), PARAMETER :: FIELD_L_TYPE=4 !<Logical field data type \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
+  !>@}
+   
+  
   !Module types
 
   !Module variables
@@ -217,6 +241,11 @@ MODULE FieldAccessRoutines
     & FIELD_INPUT_VEL2_SET_TYPE,FIELD_INPUT_VEL3_SET_TYPE,FIELD_INPUT_LABEL_SET_TYPE,FIELD_IMPERMEABLE_FLAG_VALUES_SET_TYPE, &
     & FIELD_INTEGRATED_NEUMANN_SET_TYPE,FIELD_UPWIND_VALUES_SET_TYPE,FIELD_PREVIOUS_UPWIND_VALUES_SET_TYPE
 
+  PUBLIC FIELD_CONSTANT_INTERPOLATION,FIELD_ELEMENT_BASED_INTERPOLATION,FIELD_NODE_BASED_INTERPOLATION, &
+    & FIELD_GRID_POINT_BASED_INTERPOLATION,FIELD_GAUSS_POINT_BASED_INTERPOLATION,FIELD_DATA_POINT_BASED_INTERPOLATION
+
+  PUBLIC FIELD_INTG_TYPE,FIELD_SP_TYPE,FIELD_DP_TYPE,FIELD_L_TYPE
+  
   PUBLIC Field_AssertIsFinished,Field_AssertNotFinished
   
   PUBLIC Field_ComponentInterpolationGet
@@ -224,6 +253,8 @@ MODULE FieldAccessRoutines
   PUBLIC Field_CoordinateSystemGet  
 
   PUBLIC FIELD_COORDINATE_SYSTEM_GET
+
+  PUBLIC Field_CreateValuesCacheGet
 
   PUBLIC Field_DataProjectionGet
 
@@ -237,16 +268,48 @@ MODULE FieldAccessRoutines
 
   PUBLIC FIELD_USER_NUMBER_FIND
 
+  PUBLIC FieldInterpolatedPoint_InterpolationParametersGet
+
+  PUBLIC FieldInterpolatedPointMetrics_InterpolatedPointGet
+
+  PUBLIC FieldInterpolationParameters_FieldVariableGet
+
   PUBLIC Field_VariableGet
+
+  PUBLIC FieldVariable_AssertIsINTGData,FieldVariable_AssertIsSPData,FieldVariable_AssertIsDPData,FieldVariable_AssertIsLData
+  
+  PUBLIC FieldVariable_AssertComponentNumberOK
+  
+  PUBLIC FieldVariable_ComponentDomainGet
 
   PUBLIC FieldVariable_ComponentInterpolationGet
 
   PUBLIC FieldVariable_DomainGet
 
+  PUBLIC FieldVariable_DomainMappingGet
+
   PUBLIC FieldVariable_FieldGet
 
-  PUBLIC FieldVariable_ParameterSetGet
+  PUBLIC FieldVariable_ConstantDOFGet
+  
+  PUBLIC FieldVariable_LocalElementDOFGet
 
+  PUBLIC FieldVariable_UserElementDOFGet
+
+  PUBLIC FieldVariable_LocalNodeDOFGet
+
+  PUBLIC FieldVariable_UserNodeDOFGet
+
+  PUBLIC FieldVariable_LocalGaussDOFGet
+
+  PUBLIC FieldVariable_UserGaussDOFGet
+
+  PUBLIC FieldVariable_LocalDataDOFGet
+
+  PUBLIC FieldVariable_UserDataDOFGet
+
+  PUBLIC FieldVariable_ParameterSetGet
+  
   PUBLIC Fields_RegionGet
 
 CONTAINS
@@ -259,7 +322,7 @@ CONTAINS
   SUBROUTINE Field_AssertIsFinished(field,err,error,*)
 
     !Argument Variables
-    TYPE(FIELD_TYPE), POINTER, INTENT(INOUT) :: field !<The work group to assert the finished status for
+    TYPE(FIELD_TYPE), POINTER, INTENT(INOUT) :: field !<The field to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -290,7 +353,7 @@ CONTAINS
   SUBROUTINE Field_AssertNotFinished(field,err,error,*)
 
     !Argument Variables
-    TYPE(FIELD_TYPE), POINTER, INTENT(INOUT) :: field !<The work group to assert the finished status for
+    TYPE(FIELD_TYPE), POINTER, INTENT(INOUT) :: field !<The field to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -329,16 +392,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ComponentInterpolationGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
-    IF(.NOT.field%FIELD_FINISHED) THEN
-      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
     CALL FieldVariable_ComponentInterpolationGet(fieldVariable,componentNumber,interpolationType,err,error,*999)   
@@ -412,6 +469,42 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the create values cache from a field.
+  SUBROUTINE Field_CreateValuesCacheGet(field,createValuesCache,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_TYPE), POINTER :: field !<The field to get the create values cache for.
+    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache !<On exit, a pointer to the create values cache for the field. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Field_CreateValuesCacheGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(createValuesCache)) CALL FlagError("Create values cache is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+
+    createValuesCache=>field%CREATE_VALUES_CACHE
+    IF(.NOT.ASSOCIATED(createValuesCache)) THEN
+      localError="Create values cache is not associated for field "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Field_CreateValuesCacheGet")
+    RETURN
+999 NULLIFY(createValuesCache)
+998 ERRORSEXITS("Field_CreateValuesCacheGet",err,error)
+    RETURN 1
+    
+    
+  END SUBROUTINE Field_CreateValuesCacheGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a data project from a field.
   SUBROUTINE Field_DataProjectionGet(field,dataProjection,err,error,*)
 
@@ -440,7 +533,6 @@ CONTAINS
 999 NULLIFY(dataProjection)
 998 ERRORSEXITS("Field_DataProjectionGet",err,error)
     RETURN 1
-    
     
   END SUBROUTINE Field_DataProjectionGet
 
@@ -637,6 +729,275 @@ CONTAINS
   END SUBROUTINE Field_UserNumberFindRegion
 
   !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to interpolation parameters for a field interpolated point
+  SUBROUTINE FieldInterpolatedPoint_InterpolationParametersGet(interpolatedPoint,interpolationParameters,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<A pointer to the interpolated point to get the interpolation parameters for.
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: interpolationParameters !<On exit, a pointer to the interpolation parameters for the interpolated point. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldInterpolatedPoint_InterpolationParametersGet",err,error,*998)
+
+    IF(ASSOCIATED(interpolationParameters)) CALL FlagError("Interpolation parameters is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interpolatedPoint)) CALL FlagError("Field interpolated point is not associated.",err,error,*999)
+
+    interpolationParameters=>interpolatedPoint%interpolationParameters
+    IF(.NOT.ASSOCIATED(interpolationParameters)) &
+      & CALL FlagError("Interpolation parameters is not associated for the interpolated point.",err,error,*999)
+
+    EXITS("FieldInterpolatedPoint_InterpolationParametersGet")
+    RETURN
+999 NULLIFY(interpolationParameters)
+998 ERRORSEXITS("FieldInterpolatedPoint_InterpolationParametersGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldInterpolatedPoint_InterpolationParametersGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to interpolated point for a field interpolated point metrics
+  SUBROUTINE FieldInterpolatedPointMetrics_InterpolatedPointGet(interpolatedPointMetrics,interpolatedPoint,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: interpolatedPointMetrics !<A pointer to the interpolated point metrics to get the interpolated point for.
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<On exit, a pointer to the interpolated point for the interpolated point metrics. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldInterpolatedPointMetrics_InterpolatedPointGet",err,error,*998)
+
+    IF(ASSOCIATED(interpolationPoint)) CALL FlagError("Interpolated point is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interpolatedPointMetrics)) &
+      & CALL FlagError("Field interpolated point metrics is not associated.",err,error,*999)
+
+    interpolatedPoint=>interpolatedPointMetrics%interpolatedPoint
+    IF(.NOT.ASSOCIATED(interpolatedPoint)) &
+      & CALL FlagError("Interpolated point is not associated for the interpolated point metrics.",err,error,*999)
+
+    EXITS("FieldInterpolatedPointMetrics_InterpolatedPointGet")
+    RETURN
+999 NULLIFY(interpolatedPoint)
+998 ERRORSEXITS("FieldInterpolatedPointMetrics_InterpolatedPointGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldInterpolatedPointMetrics_InterpolatedPointGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to a field variable for a field interpolation parameters
+  SUBROUTINE FieldInterpolationParameters_FieldVariableGet(interpolationParameters,fieldVariable,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: interpolationParameters !<A pointer to the interpolation parameters to get the field variable for.
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<On exit, a pointer to the field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldInterpolationParameters_FieldVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interpolationParameters)) CALL FlagError("Field interpolation parameters is not associated.",err,error,*999)
+
+    fieldVariable=>interpolationParameters%fieldVariable
+    IF(.NOT.ASSOCIATED(fieldVariable)) &
+      & CALL FlagError("The field variable is not associated for the interpolation parameters.",err,error,*999)
+
+    EXITS("FieldInterpolationParameters_FieldVariableGet")
+    RETURN
+999 NULLIFY(fieldVariable)
+998 ERRORSEXITS("FieldInterpolationParameters_FieldVariableGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldInterpolationParameters_FieldVariableGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a field variable has integer data type
+  SUBROUTINE FieldVariable_AssertIsINTGData(fieldVariable,err,error,*)
+
+    !Argument Variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER, INTENT(INOUT) :: fieldVariable !<The field variable to assert the integer data type for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("FieldVariable_AssertIsINTGData",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+
+    IF(fieldVariable%DATA_TYPE/=FIELD_INTG_TYPE) THEN
+      localError="The field variable data type of "//TRIM(NumberToVString(fieldVariable%DATA_TYPE,"*",err,error))// &
+        & " does not correspond to the required integer data type for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("FieldVariable_AssertIsINTGData")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AssertIsINTGData",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_AssertIsINTGData
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a field variable has single precision real data type
+  SUBROUTINE FieldVariable_AssertIsSPData(fieldVariable,err,error,*)
+
+    !Argument Variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER, INTENT(INOUT) :: fieldVariable !<The field variable to assert the single precision data type for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("FieldVariable_AssertIsSPData",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+
+    IF(fieldVariable%DATA_TYPE/=FIELD_SP_TYPE) THEN
+      localError="The field variable data type of "//TRIM(NumberToVString(fieldVariable%DATA_TYPE,"*",err,error))// &
+        & " does not correspond to the required single precision real data type for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("FieldVariable_AssertIsSPData")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AssertIsSPData",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_AssertIsSPData
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a field variable has double precision real data type
+  SUBROUTINE FieldVariable_AssertIsDPData(fieldVariable,err,error,*)
+
+    !Argument Variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER, INTENT(INOUT) :: fieldVariable !<The field variable to assert the double precision data type for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("FieldVariable_AssertIsDPData",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+
+    IF(fieldVariable%DATA_TYPE/=FIELD_DP_TYPE) THEN
+      localError="The field variable data type of "//TRIM(NumberToVString(fieldVariable%DATA_TYPE,"*",err,error))// &
+        & " does not correspond to the required double precision real data type for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("FieldVariable_AssertIsDPData")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AssertIsDPData",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_AssertIsDPData
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a field variable has logical data type
+  SUBROUTINE FieldVariable_AssertIsLData(fieldVariable,err,error,*)
+
+    !Argument Variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER, INTENT(INOUT) :: fieldVariable !<The field variable to assert the logical data type for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("FieldVariable_AssertIsLData",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+
+    IF(fieldVariable%DATA_TYPE/=FIELD_L_TYPE) THEN
+      localError="The field variable data type of "//TRIM(NumberToVString(fieldVariable%DATA_TYPE,"*",err,error))// &
+        & " does not correspond to the required logical data type for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("FieldVariable_AssertIsLData")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AssertIsLData",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_AssertIsLData
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that the component number of a field variable is valid.
+  SUBROUTINE FieldVariable_AssertComponentNumberOK(fieldVariable,componentNumber,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to assert the component number for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number to assert
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_AssertComponentNumberOK",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified component number of "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &        
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//". The field variable component must be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("FieldVariable_AssertComponentNumberOK")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AssertComponentNumberOK",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_AssertComponentNumberOK
+
   !
   !================================================================================================================================
   !
@@ -657,10 +1018,6 @@ CONTAINS
 
     IF(ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
-    IF(.NOT.field%FIELD_FINISHED) THEN
-      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//" has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
     IF(variableType<0.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The field variable type must be between 1 and "// &
@@ -687,6 +1044,64 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the domain of the specified field variable component
+  SUBROUTINE FieldVariable_ComponentDomainGet(fieldVariable,componentIdx,domain,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the domain for
+    INTEGER(INTG), INTENT(IN) :: componentIdx !<The component index of the field variable to get the domain for. 
+    TYPE(DomainType), POINTER :: domain  !<On exit, the domain for field variable component. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ComponentDomainGet",err,error,*998)
+
+    IF(ASSOCIATED(domain)) CALL FlagError("Domain is already assocaiated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentIdx<1.OR.componentIdx>fieldVariable%numberOfComponents) THEN
+      localError="The specified component number of "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &        
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//". The field variable component must be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Field variable components have not been allocated"// &
+        & " for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &        
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//".".
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    domain=>fieldVariable%components(componentIdx)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &        
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//".".
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("FieldVariable_ComponentDomainGet")
+    RETURN
+999 NULLIFY(domain)
+998 ERRORSEXITS("FieldVariable_ComponentDomainGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ComponentDomainGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the interpolation type of the specified field variable component
   SUBROUTINE FieldVariable_ComponentInterpolationGet(fieldVariable,componentIdx,interpolationType,err,error,*)
 
@@ -702,18 +1117,18 @@ CONTAINS
     ENTERS("FieldVariable_ComponentInterpolationGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field is not associated.",err,error,*999)
-    IF(componentIdx<1.OR.componentIdx>fieldVariable%NUMBER_OF_COMPONENTS) THEN
+    IF(componentIdx<1.OR.componentIdx>fieldVariable%numberOfComponents) THEN
       IF(ASSOCIATED(fieldVariable%field)) THEN
         localError="The specified component number of "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
           & " is invalid for variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))// &
           & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))// &
           & ". The field variable component must be >= 1 and <= "// &
-          & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//"."
+          & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//"."
       ELSE
         localError="The specified component number of "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
           & " is invalid for variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))// &
           & ". The field variable component must be >= 1 and <= "// &
-          & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//"."
+          & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//"."
       ENDIF
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -754,8 +1169,8 @@ CONTAINS
       IF(.NOT.ASSOCIATED(fieldVariable%field)) CALL FlagError("Field variable field is not associated.",err,error,*999)
       IF(.NOT.ASSOCIATED(fieldVariable%field%decomposition)) &
         & CALL FlagError("Field variable field is not associated.",err,error,*999)
-      IF(.NOT.ASSOCIATED(fieldVariable%field%decomposition%domain)) &
-        & CALL FlagError("Decomposition domain is not associated.",err,error,*999)
+      IF(.NOT.ALLOCATED(fieldVariable%field%decomposition%domain)) &
+        & CALL FlagError("Decomposition domain is not allocated.",err,error,*999)
       domainMeshComponent=fieldVariable%field%decomposition%meshComponentNumber
       IF(domainMeshComponent<1.OR.domainMeshComponent>fieldVariable%field%decomposition%numberOfComponents) THEN
         localError="The domain mesh component of "//TRIM(NumberToVString(domainMeshComponent,"*",err,error))// &
@@ -765,10 +1180,10 @@ CONTAINS
       ENDIF
       domain=>fieldVariable%field%decomposition%domain(domainMeshComponent)%ptr
     ELSE
-      IF(componentIdx<1.OR.componentIdx>fieldVariable%NUMBER_OF_COMPONENTS) THEN
+      IF(componentIdx<1.OR.componentIdx>fieldVariable%numberOfComponents) THEN
         localError="The specified field variable component of "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
           & " is invalid. The field variable component must be >= 1 and <= "// &
-          & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//"."
+          & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
       IF(.NOT.ALLOCATED(fieldVariable%components)) &
@@ -788,6 +1203,1254 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FieldVariable_DomainGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the domain mapping of the specified field variable
+  SUBROUTINE FieldVariable_DomainMappingGet(fieldVariable,domainMapping,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the domain mapping for
+    TYPE(DomainMappingType), POINTER :: domainMapping  !<On exit, a pointer to domain mapping for the field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariable_DomainMappingGet",err,error,*998)
+
+    IF(ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    
+    domainMapping=>fieldVariable%DOMAIN_MAPPING
+    IF(.NOT.ASSOCIATED(domainMapping)) THEN
+      localError="Domain mapping is not associated"// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("FieldVariable_DomainMappingGet")
+    RETURN
+999 NULLIFY(domainMapping)
+998 ERRORSEXITS("FieldVariable_DomainMappingGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_DomainMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a constant DOF
+  SUBROUTINE FieldVariable_ConstantDOFGet(fieldVariable,componentNumber,dofNumber,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ConstantDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_CONSTANT_INTERPOLATION) THEN
+      localError="Cannot index by constant"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        !?
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        localError=localError//" which has element based interpolation."            
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        localError=localError//" which has node based interpolation."
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has Gauss point based interpolation."
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has data point based interpolation."
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+
+    dofNumber=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+
+    EXITS("FieldVariable_ConstantDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ConstantDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ConstantDOFGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a local element DOF
+  SUBROUTINE FieldVariable_LocalElementDOFGet(fieldVariable,localElementNumber,componentNumber,dofNumber,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DomainType), POINTER :: domain
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_LocalElementDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_ELEMENT_BASED_INTERPOLATION) THEN
+      localError="Cannot index by element"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        localError=localError//" which has constant interpolation."            
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        !?
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        localError=localError//" which has node based interpolation."
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has Gauss point based interpolation."
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has data point based interpolation."
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    domain=>fieldVariable%components(componentNumber)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(decomposition)
+    CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,fieldVariable%components(componentNumber)%meshComponentNumber, &
+      & decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)    
+    IF(localElementNumber<1.OR.localElementNumber>decompositionElements%totalNumberOfElements) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//" which has "//TRIM(NumberToVString(decompositionElements%totalNumberOfElements,"*",err,error))// &
+         & " local elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements)) THEN
+      localError="Element parameter to dof map elements is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dofNumber=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(localElementNumber)
+
+    EXITS("FieldVariable_LocalElementDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_LocalElementDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_LocalElementDOFGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a user element DOF
+  SUBROUTINE FieldVariable_UserElementDOFGet(fieldVariable,userElementNumber,componentNumber,dofNumber,ghostDof,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localElementNumber
+    LOGICAL :: userElementExists
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DomainType), POINTER :: domain
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_UserElementDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_ELEMENT_BASED_INTERPOLATION) THEN
+      localError="Cannot index by element"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        localError=localError//" which has constant interpolation."            
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        !?
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        localError=localError//" which has node based interpolation."
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has Gauss point based interpolation."
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has data point based interpolation."
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    domain=>fieldVariable%components(componentNumber)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(decomposition)
+    CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,fieldVariable%components(componentNumber)%meshComponentNumber, &
+      & decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)    
+    CALL DecompositionElements_ElementCheckExists(decompositionElements,userElementNumber,userElementExists,localElementNumber, &
+      & ghostDOF,err,error,*999)
+    IF(.NOT.userElementExists) THEN
+      localError="The specified user element number of "//TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localElementNumber<1.OR.localElementNumber>decompositionElements%totalNumberOfElements) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//" which has "//TRIM(NumberToVString(decompositionElements%totalNumberOfElements,"*",err,error))// &
+         & " local elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements)) THEN
+      localError="Element parameter to dof map elements is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dofNumber=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(localElementNumber)
+
+    EXITS("FieldVariable_UserElementDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_UserElementDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_UserElementDOFGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a local node DOF
+  SUBROUTINE FieldVariable_LocalNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,localNodeNumber,componentNumber, &
+    & dofNumber,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_LocalNodeDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_NODE_BASED_INTERPOLATION) THEN
+      localError="Cannot index by node"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        localError=localError//" which has constant interpolation."            
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        localError=localError//" which has element based interpolation."
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        !?
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has Gauss point based interpolation."
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has data point based interpolation."
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    domain=>fieldVariable%components(componentNumber)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(domainTopology)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(domainNodes)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)    
+    IF(localNodeNumber<1.OR.localNodeNumber>domainNodes%totalNumberOfNodes) THEN
+      localError="The specified local node number of "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//" which has "//TRIM(NumberToVString(domainNodes%totalNumberOfNodes,"*",err,error))//" local nodes."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNodes%nodes)) THEN
+      localError="Domain nodes nodes is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(derivativeNumber<1.OR.derivativeNumber>domainNodes%nodes(localNodeNumber)%numberOfDerivatives) THEN
+      localError="Derivative number "//TRIM(NumberToVString(derivativeNumber,"*",err,error))//" is invalid"// &
+        & " for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//" which has "// &
+        & TRIM(NumberToVString(domainNodes%nodes(localNodeNumber)%numberOfDerivatives,"*",err,error))//" derivatives."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNodes%nodes(localNodeNumber)%derivatives)) THEN
+      localError="Domain nodes derivatives is not allocated "// &
+        & " for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(versionNumber<1.OR.versionNumber>domainNodes%nodes(localNodeNumber)%derivatives(derivativeNumber)%numberOfVersions) THEN
+      localError="Version number "//TRIM(NumberToVString(versionNumber,"*",err,error))//" is invalid"// &
+        & " for derivative number "//TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
+        & " of local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldvariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//" which has a maximum of "//TRIM(NumberToVString(domainNodes%nodes(localNodeNumber)% &
+        & derivatives(derivativeNumber)%numberOfVersions,"*",err,error))//" versions "// &
+        & "(NOTE: version numbers are indexed directly from the value the user specifies during "// &
+        & "element creation and no record is kept of the total number of versions the user sets."// &
+        & "The maximum version number the user sets defines the total number of versions allocated)."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes)) THEN
+      localError="Node parameter to dof map nodes is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(localNodeNumber)% &
+      & derivatives)) THEN
+      localError="Node parameter to dof map nodes derivatives is not allocated "// &
+        & " for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(localNodeNumber)% &
+      & derivatives(derivativeNumber)%versions)) THEN
+      localError="Node parameter to dof map nodes derivatives versions is not allocated "// &
+        & " for derivative number "//TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
+        & " of local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dofNumber=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(localNodeNumber)% &
+      & derivatives(derivativeNumber)%versions(versionNumber)
+
+    EXITS("FieldVariable_LocalNodeDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_LocalNodeDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_LocalNodeDOFGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a user node DOF
+  SUBROUTINE FieldVariable_UserNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
+    & dofNumber,ghostDof,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component.
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localNodeNumber
+    LOGICAL :: userNodeExists
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_UserNodeDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_NODE_BASED_INTERPOLATION) THEN
+      localError="Cannot index by node for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        localError=localError//" which has constant interpolation."            
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        localError=localError//" which has element based interpolation."
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        !?
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has Gauss point based interpolation."
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has data point based interpolation."
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    domain=>fieldVariable%components(componentNumber)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(domainTopology)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(domainNodes)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)    
+    CALL DomainNodes_NodeCheckExists(domainNodes,userNodeNumber,userNodeExists,localNodeNumber,ghostDOF,err,error,*999)
+    IF(.NOT.userNodeExists) THEN
+      localError="The specified user node number of "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localNodeNumber<1.OR.localNodeNumber>domainNodes%totalNumberOfNodes) THEN
+      localError="The specified local node number of "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//" which has "//TRIM(NumberToVString(domainNodes%totalNumberOfNodes,"*",err,error))//" local nodes."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNodes%nodes)) THEN
+      localError="Domain nodes nodes is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(derivativeNumber<1.OR.derivativeNumber>domainNodes%nodes(localNodeNumber)%numberOfDerivatives) THEN
+      localError="Derivative number "//TRIM(NumberToVString(derivativeNumber,"*",err,error))//" is invalid"// &
+        & " for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//" which has "// &
+        & TRIM(NumberToVString(domainNodes%nodes(localNodeNumber)%numberOfDerivatives,"*",err,error))//" derivatives."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNodes%nodes(localNodeNumber)%derivatives)) THEN
+      localError="Domain nodes derivatives is not allocated "// &
+        & " for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(versionNumber<1.OR.versionNumber>domainNodes%nodes(localNodeNumber)%derivatives(derivativeNumber)%numberOfVersions) THEN
+      localError="Version number "//TRIM(NumberToVString(versionNumber,"*",err,error))//" is invalid"// &
+        & " for derivative number "//TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
+        & " of local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldvariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//" which has a maximum of "//TRIM(NumberToVString(domainNodes%nodes(localNodeNumber)% &
+        & derivatives(derivativeNumber)%numberOfVersions,"*",err,error))//" versions "// &
+        & "(NOTE: version numbers are indexed directly from the value the user specifies during "// &
+        & "element creation and no record is kept of the total number of versions the user sets."// &
+        & "The maximum version number the user sets defines the total number of versions allocated)."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes)) THEN
+      localError="Node parameter to dof map nodes is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(localNodeNumber)% &
+      & derivatives)) THEN
+      localError="Node parameter to dof map nodes derivatives is not allocated "// &
+        & " for local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(localNodeNumber)% &
+      & derivatives(derivativeNumber)%versions)) THEN
+      localError="Node parameter to dof map nodes derivatives versions is not allocated "// &
+        & " for derivative number "//TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
+        & " of local node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dofNumber=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(localNodeNumber)% &
+      & derivatives(derivativeNumber)%versions(versionNumber)
+
+    EXITS("FieldVariable_UserNodeDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_UserNodeDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_UserNodeDOFGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a local Gauss DOF
+  SUBROUTINE FieldVariable_LocalGaussDOFGet(fieldVariable,gaussPointNumber,localElementNumber,componentNumber,dofNumber, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DomainType), POINTER :: domain
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_LocalGaussDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_GAUSS_POINT_BASED_INTERPOLATION) THEN
+      localError="Cannot index by Gauss point"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        localError=localError//" which has constant interpolation."            
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        localError=localError//" which has element based interpolation."            
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        localError=localError//" which has node based interpolation."
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        !?
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has data point based interpolation."
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    domain=>fieldVariable%components(componentNumber)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(decomposition)
+    CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,fieldVariable%components(componentNumber)%meshComponentNumber, &
+      & err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)    
+    IF(localElementNumber<1.OR.localElementNumber>decompositionElements%totalNumberOfElements) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//" which has "//TRIM(NumberToVString(decompositionElements%totalNumberOfElements,"*",err,error))// &
+         & " local elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS)) THEN
+      localError="Gauss point parameter to dof map gauss points is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(gaussPointNumber<1.OR.gaussPointNumber>SIZE(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
+      & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
+      localError="The specified Gauss point number of "//TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
+        & " is invalid. The Gauss point number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
+        & GAUSS_POINTS,1),"*",err,error))// &
+        & " for local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dofNumber=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
+      & GAUSS_POINTS(gaussPointNumber,localElementNumber)
+
+    EXITS("FieldVariable_LocalGaussDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_LocalGaussDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_LocalGaussDOFGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a user Gauss point DOF
+  SUBROUTINE FieldVariable_UserGaussDOFGet(fieldVariable,gaussPointNumber,userElementNumber,componentNumber,dofNumber,ghostDof, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localElementNumber
+    LOGICAL :: userElementExists
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DomainType), POINTER :: domain
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_UserGaussDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_ELEMENT_BASED_INTERPOLATION) THEN
+      localError="Cannot index by element"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        localError=localError//" which has constant interpolation."            
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        !?
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        localError=localError//" which has node based interpolation."
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has Gauss point based interpolation."
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has data point based interpolation."
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    domain=>fieldVariable%components(componentNumber)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(decomposition)
+    CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,fieldVariable%components(componentNumber)%meshComponentNumber, &
+      & decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)    
+    CALL DecompositionElements_ElementCheckExists(decompositionElements,userElementNumber,userElementExists,localElementNumber, &
+      & ghostDOF,err,error,*999)
+    IF(.NOT.userElementExists) THEN
+      localError="The specified user element number of "//TRIM(NumberToVString(userElementNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localElementNumber<1.OR.localElementNumber>decompositionElements%totalNumberOfElements) THEN
+      localError="The specified local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//" which has "//TRIM(NumberToVString(decompositionElements%totalNumberOfElements,"*",err,error))// &
+         & " local elements."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS)) THEN
+      localError="Gauss point parameter to dof map gauss points is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(gaussPointNumber<1.OR.gaussPointNumber>SIZE(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP% &
+      & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)) THEN
+      localError="The specified Gauss point number of "//TRIM(NumberToVString(gaussPointNumber,"*",err,error))// &
+        & " is invalid. The Gauss point number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(SIZE(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
+        & GAUSS_POINTS,1),"*",err,error))// &
+        & " for local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+        & " of field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dofNumber=fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
+      & GAUSS_POINTS(gaussPointNumber,localElementNumber)
+
+    EXITS("FieldVariable_UserGaussDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_UserGaussDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_UserGaussDOFGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a local data point DOF
+  SUBROUTINE FieldVariable_LocalDataDOFGet(fieldVariable,localDataPointNumber,componentNumber,dofNumber, err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: localDataPointNumber !<The local data point number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints
+    TYPE(DomainType), POINTER :: domain
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_LocalDataDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_DATA_POINT_BASED_INTERPOLATION) THEN
+      localError="Cannot index by data point"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        localError=localError//" which has constant interpolation."            
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        localError=localError//" which has element based interpolation."            
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        localError=localError//" which has node based interpolation."
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has Gauss point based interpolation."
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        !?
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    domain=>fieldVariable%components(componentNumber)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(decomposition)
+    CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,fieldVariable%components(componentNumber)%meshComponentNumber, &
+      & err,error,*999)
+    NULLIFY(decompositionDataPoints)
+    CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionDataPoints,err,error,*999)    
+    IF(localDataPointNumber<1.OR.localDataPointNumber>decompositionDataPoints%totalNumberOfDataPoints) THEN
+      localError="The specified local data point number of "//TRIM(NumberToVString(localDataPointNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//" which has "// &
+         & TRIM(NumberToVString(decompositionDataPoints%totalNumberOfDataPoints,"*",err,error))// &
+         & " local data points."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS)) THEN
+      localError="Dat point parameter to dof map data points is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dofNumber=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(localDataPointNumber)
+
+    EXITS("FieldVariable_LocalDataDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_LocalDataDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_LocalDataDOFGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the DOF number for a user data point DOF
+  SUBROUTINE FieldVariable_UserDataDOFGet(fieldVariable,userDataPointNumber,componentNumber,dofNumber,ghostDof,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the DOF for
+    INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the DOF for. 
+    INTEGER(INTG), INTENT(OUT) :: dofNumber  !<On exit, the dof number for field variable component. 
+    LOGICAL, INTENT(OUT) :: ghostDOF !<On exit, is .TRUE. if the dof corresponds to a ghost node, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localDataPointNumber
+    LOGICAL :: userDataPointExists
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints
+    TYPE(DomainType), POINTER :: domain
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_UserDataDOFGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(componentNumber<1.OR.componentNumber>fieldVariable%numberOfComponents) THEN
+      localError="The specified field variable component number of "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" is invalid. The component number should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
+        & " for field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="Components is not allocated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_DATA_POINT_BASED_INTERPOLATION) THEN
+      localError="Cannot index by data point"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      SELECT CASE(fieldVariable%components(componentNumber)%interpolationType)
+      CASE(FIELD_CONSTANT_INTERPOLATION)
+        localError=localError//" which has constant interpolation."            
+      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+        localError=localError//" which has element based interpolation."            
+      CASE(FIELD_NODE_BASED_INTERPOLATION)
+        localError=localError//" which has node based interpolation."
+      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has grid point based interpolation."
+      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+        localError=localError//" which has Gauss point based interpolation."
+      CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+        !?
+      CASE DEFAULT
+        localError=localError//" which has unknown interpolation."
+      END SELECT
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    domain=>fieldVariable%components(componentNumber)%domain
+    IF(.NOT.ASSOCIATED(domain)) THEN
+      localError="Domain is not associated"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    NULLIFY(decomposition)
+    CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,fieldVariable%components(componentNumber)%meshComponentNumber, &
+      & decompositionTopology,err,error,*999)
+    NULLIFY(decompositionDataPoints)
+    CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionDataPoints,err,error,*999)    
+    CALL DecompositionDataPoints_DataPointCheckExists(decompositionDataPoints,userDataPointNumber,userDataPointExists, &
+      & localDataPointNumber,ghostDOF,err,error,*999)
+    IF(.NOT.userDataPointExists) THEN
+      localError="The specified user data point number of "//TRIM(NumberToVString(userDataPointNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(localDataPointNumber<1.OR.localDataPointNumber>decompositionDataPoints%totalNumberOfDataPoints) THEN
+      localError="The specified local data point number of "//TRIM(NumberToVString(localDataPointNumber,"*",err,error))// &
+        & " does not exist in the domain"// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+       localError=localError//" which has "// &
+         & TRIM(NumberToVString(decompositionDataPoints%totalNumberOfDataPoints,"*",err,error))// &
+         & " local data points."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components(componentNumber)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS)) THEN
+      localError="Data point parameter to dof map data points is not allocated "// &
+        & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " of field variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+         & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dofNumber=fieldVariable%COMPONENTS(componentNumber)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(localDataPointNumber)  
+
+    EXITS("FieldVariable_UserDataDOFGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_UserDataDOFGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_UserDataDOFGet
 
   !
   !================================================================================================================================
@@ -838,7 +2501,7 @@ CONTAINS
     ENTERS("FieldVariable_ParameterSetGet",err,error,*998)
 
     IF(ASSOCIATED(parameterSet)) CALL FlagError("Field parameter set is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(parameterSetType<0.OR.parameterSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
       localError="The specified parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
         & " is invalid. The parameter set type must be between 1 and "// &

@@ -84,6 +84,8 @@ MODULE InterfaceAccessRoutines
     MODULE PROCEDURE Interface_UserNumberFind
   END INTERFACE INTERFACE_USER_NUMBER_FIND
 
+  PUBLIC Interface_AssertIsFinished,Interface_AssertNotFinished
+
   PUBLIC Interface_CoordinateSystemGet
 
   PUBLIC INTERFACE_COORDINATE_SYSTEM_GET
@@ -100,6 +102,8 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC Interface_MeshConnectivityGet
 
+  PUBLIC Interface_MeshesGet
+
   PUBLIC Interface_NodesGet
 
   PUBLIC INTERFACE_NODES_GET
@@ -111,6 +115,68 @@ MODULE InterfaceAccessRoutines
   PUBLIC INTERFACE_USER_NUMBER_FIND
 
 CONTAINS
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a interface has been finished
+  SUBROUTINE Interface_AssertIsFinished(interface,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceType), POINTER, INTENT(INOUT) :: interface !<The work group to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+
+    IF(.NOT.interface%interfaceFinished) THEN
+      localError="Interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Interface_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("Interface_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a interface has not been finished
+  SUBROUTINE Interface_AssertNotFinished(interface,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceType), POINTER, INTENT(INOUT) :: interface !<The work group to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+
+    IF(interface%interfaceFinished) THEN
+      localError="Interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
+        & " has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Interface_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("Interface_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_AssertNotFinished
 
   !
   !================================================================================================================================
@@ -338,6 +404,36 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Interface_MeshConnectivityGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the meshes for a interface. 
+  SUBROUTINE Interface_MeshesGet(INTERFACE,meshes,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the meshes for
+    TYPE(MeshesType), POINTER :: meshes !<On exit, a pointer to the meshes for the interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Interface_MeshesGet",err,error,*998)
+
+    IF(ASSOCIATED(meshes)) CALL FlagError("Meshes is already associated.",err,error,*998)
+    CALL Interface_AssertIsFinished(interface,err,error,*998)
+ 
+    meshes=>interface%meshes
+    IF(.NOT.ASSOCIATED(meshes)) CALL FlagError("Interface meshes is not associated.",err,error,*999)
+       
+    EXITS("Interface_MeshesGet")
+    RETURN
+999 NULLIFY(meshes)
+998 ERRORSEXITS("Interface_MeshesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_MeshesGet
 
   !
   !================================================================================================================================

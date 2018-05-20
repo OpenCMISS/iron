@@ -8629,7 +8629,7 @@ CONTAINS
             IF(ASSOCIATED(field%GEOMETRIC_FIELD)) THEN
               geometricFieldVariable=>field%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(1)%ptr !only 1 variable for geometric field
               IF(ASSOCIATED(geometricFieldVariable)) THEN
-                numberOfGeoemtricComponents=geometricFieldVariable%NUMBER_OF_COMPONENTS
+                numberOfGeoemtricComponents=geometricFieldVariable%numberOfComponents
                 IF(solver%geometricTransformationSolver%arbitraryPath) THEN !Allocate memory for transformation matrix at each load increment if the transformation is arbitrary at each step
                   ALLOCATE(solver%geometricTransformationSolver%transformationMatrices(numberOfGeoemtricComponents+1, &
                     & numberOfGeoemtricComponents+1,solver%geometricTransformationSolver%numberOfIncrements),STAT=err)

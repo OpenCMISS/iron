@@ -5773,24 +5773,24 @@ MODULE OpenCMISS_Iron
  END INTERFACE cmfe_Decomposition_NodeDomainGet
 
  !>Calculates the decomposition topology for data points .
- INTERFACE cmfe_Decomposition_TopologyDataProjectionCalculate
-   MODULE PROCEDURE cmfe_Decomposition_TopologyDataProjectionCalculateObj
- END INTERFACE cmfe_Decomposition_TopologyDataProjectionCalculate
+ INTERFACE cmfe_Decomposition_DataProjectionCalculate
+   MODULE PROCEDURE cmfe_Decomposition_DataProjectionCalculateObj
+ END INTERFACE cmfe_Decomposition_DataProjectionCalculate
 
  !>Gets the local data point number for data points projected on an element
- INTERFACE cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
-   MODULE PROCEDURE cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj
- END INTERFACE cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
+ INTERFACE cmfe_Decomposition_ElementDataPointLocalNumberGet
+   MODULE PROCEDURE cmfe_Decomposition_ElementDataPointLocalNumberGetObj
+ END INTERFACE cmfe_Decomposition_ElementDataPointLocalNumberGet
 
  !>Gets the user data point number for data points projected on an element
- INTERFACE cmfe_Decomposition_TopologyElementDataPointUserNumberGet
-   MODULE PROCEDURE cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj
- END INTERFACE cmfe_Decomposition_TopologyElementDataPointUserNumberGet
+ INTERFACE cmfe_Decomposition_ElementDataPointUserNumberGet
+   MODULE PROCEDURE cmfe_Decomposition_ElementDataPointUserNumberGetObj
+ END INTERFACE cmfe_Decomposition_ElementDataPointUserNumberGet
 
  !>Gets the number of data points projected on an element
- INTERFACE cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
-   MODULE PROCEDURE cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj
- END INTERFACE cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
+ INTERFACE cmfe_Decomposition_NumberOfElementDataPointsGet
+   MODULE PROCEDURE cmfe_Decomposition_NumberOfElementDataPointsGetObj
+ END INTERFACE cmfe_Decomposition_NumberOfElementDataPointsGet
 
  PUBLIC CMFE_DECOMPOSITION_ALL_TYPE,CMFE_DECOMPOSITION_CALCULATED_TYPE,CMFE_DECOMPOSITION_USER_DEFINED_TYPE
 
@@ -5816,13 +5816,13 @@ MODULE OpenCMISS_Iron
  
  PUBLIC cmfe_Decomposition_NumberOfDomainsGet,cmfe_Decomposition_NumberOfDomainsSet
 
- PUBLIC cmfe_Decomposition_TopologyDataProjectionCalculate
+ PUBLIC cmfe_Decomposition_DataProjectionCalculate
 
- PUBLIC cmfe_Decomposition_TopologyElementDataPointLocalNumberGet
+ PUBLIC cmfe_Decomposition_ElementDataPointLocalNumberGet
 
- PUBLIC cmfe_Decomposition_TopologyElementDataPointUserNumberGet
+ PUBLIC cmfe_Decomposition_ElementDataPointUserNumberGet
 
- PUBLIC cmfe_Decomposition_TopologyNumberOfElementDataPointsGet
+ PUBLIC cmfe_Decomposition_NumberOfElementDataPointsGet
 
  PUBLIC cmfe_Decomposition_TypeGet,cmfe_Decomposition_TypeSet
 
@@ -47828,134 +47828,118 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !> Calculates the decomposition topology for data points
-  SUBROUTINE cmfe_Decomposition_TopologyDataProjectionCalculateObj(decomposition,err)
-    !DLLEXPORT(cmfe_Decomposition_TopologyDataProjectionCalculateObj)
+  !> Calculates the decomposition  for data points
+  SUBROUTINE cmfe_Decomposition_DataProjectionCalculateObj(decomposition,err)
+    !DLLEXPORT(cmfe_Decomposition_DataProjectionCalculateObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_Decomposition_TopologyDataProjectionCalculateObj",err,error,*999)
+    ENTERS("cmfe_Decomposition_DataProjectionCalculateObj",err,error,*999)
 
-    CALL DecompositionTopology_DataProjectionCalculate(decomposition%decomposition%TOPOLOGY,err,error,*999)
+    CALL Decomposition_DataProjectionCalculate(decomposition%decomposition,err,error,*999)
 
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('cmfe_Decomposition_TopologyDataProjectionCalculateObj',err,error,*999)
-#endif
-
-    EXITS("cmfe_Decomposition_TopologyDataProjectionCalculateObj")
+    EXITS("cmfe_Decomposition_DataProjectionCalculateObj")
     RETURN
-999 ERRORS("cmfe_Decomposition_TopologyDataProjectionCalculateObj",err,error)
-    EXITS("cmfe_Decomposition_TopologyDataProjectionCalculateObj")
+999 ERRORS("cmfe_Decomposition_DataProjectionCalculateObj",err,error)
+    EXITS("cmfe_Decomposition_DataProjectionCalculateObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Decomposition_TopologyDataProjectionCalculateObj
+  END SUBROUTINE cmfe_Decomposition_DataProjectionCalculateObj
 
   !
   !================================================================================================================================
   !
 
   !>Gets the local data point number for data points projected on an element
-  SUBROUTINE cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj(decomposition,elementNumber,dataPointIndex, &
+  SUBROUTINE cmfe_Decomposition_ElementDataPointLocalNumberGetObj(decomposition,elementUserNumber,dataPointIndex, &
        & dataPointLocalNumber,err)
-    !DLLEXPORT(cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj)
+    !DLLEXPORT(cmfe_Decomposition_ElementDataPointLocalNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
-    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to get the data point for
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The element number to get the data point for
     INTEGER(INTG), INTENT(IN) :: dataPointIndex !<The data point index to get the number for
     INTEGER(INTG), INTENT(OUT) :: dataPointLocalNumber !<The data point local number to retu
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj",err,error,*999)
+    ENTERS("cmfe_Decomposition_ElementDataPointLocalNumberGetObj",err,error,*999)
 
-    CALL DecompositionTopology_ElementDataPointLocalNumberGet(decomposition%decomposition%TOPOLOGY,elementNumber,dataPointIndex, &
-     & dataPointLocalNumber,err,error,*999)
+    CALL Decomposition_ElementDataPointLocalNumberGet(decomposition%decomposition,elementUserNumber, &
+      & dataPointIndex,dataPointLocalNumber,err,error,*999)
 
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj',err,error,*999)
-#endif
-
-    EXITS("cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj")
+    EXITS("cmfe_Decomposition_ElementDataPointLocalNumberGetObj")
     RETURN
-999 ERRORS("cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj",err,error)
-    EXITS("cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj")
+999 ERRORS("cmfe_Decomposition_ElementDataPointLocalNumberGetObj",err,error)
+    EXITS("cmfe_Decomposition_ElementDataPointLocalNumberGetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Decomposition_TopologyElementDataPointLocalNumberGetObj
+  END SUBROUTINE cmfe_Decomposition_ElementDataPointLocalNumberGetObj
 
   !
   !================================================================================================================================
   !
 
   !>Gets the user data point number for data points projected on an element
-  SUBROUTINE cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj(decomposition,elementNumber,dataPointIndex, &
+  SUBROUTINE cmfe_Decomposition_ElementDataPointUserNumberGetObj(decomposition,elementUserNumber,dataPointIndex, &
        & dataPointUserNumber,err)
-    !DLLEXPORT(cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj)
+    !DLLEXPORT(cmfe_Decomposition_ElementDataPointUserNumberGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
-    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to get the data point for
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The element number to get the data point for
     INTEGER(INTG), INTENT(IN) :: dataPointIndex !<The data point index to get the number for
     INTEGER(INTG), INTENT(OUT) :: dataPointUserNumber !<The data point user number to retu
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj",err,error,*999)
+    ENTERS("cmfe_Decomposition_ElementDataPointUserNumberGetObj",err,error,*999)
 
-    CALL DecompositionTopology_ElementDataPointUserNumberGet(decomposition%decomposition%TOPOLOGY,elementNumber,dataPointIndex, &
-     & dataPointUserNumber,err,error,*999)
+    CALL Decomposition_ElementDataPointUserNumberGet(decomposition%decomposition,elementUserNumber, &
+     & dataPointIndex,dataPointUserNumber,err,error,*999)
 
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj',err,error,*999)
-#endif
-
-    EXITS("cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj")
+    EXITS("cmfe_Decomposition_lementDataPointUserNumberGetObj")
     RETURN
-999 ERRORS("cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj",err,error)
-    EXITS("cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj")
+999 ERRORS("cmfe_Decomposition_ElementDataPointUserNumberGetObj",err,error)
+    EXITS("cmfe_Decomposition_ElementDataPointUserNumberGetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Decomposition_TopologyElementDataPointUserNumberGetObj
+  END SUBROUTINE cmfe_Decomposition_ElementDataPointUserNumberGetObj
 
   !
   !================================================================================================================================
   !
 
   !>Gets the number of data points projected on an element
-  SUBROUTINE cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj(decomposition,elementNumber,numberOfDataPoints,err)
-    !DLLEXPORT(cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj)
+  SUBROUTINE cmfe_Decomposition_NumberOfElementDataPointsGetObj(decomposition,elementUserNumber,numberOfDataPoints,err)
+    !DLLEXPORT(cmfe_Decomposition_NumberOfElementDataPointsGetObj)
 
     !Argument variables
     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
-    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to get the data point for
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The element number to get the data point for
     INTEGER(INTG), INTENT(OUT) :: numberOfDataPoints !<The data point local number to return
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj",err,error,*999)
+    ENTERS("cmfe_Decomposition_NumberOfElementDataPointsGetObj",err,error,*999)
 
-    CALL DecompositionTopology_NumberOfElementDataPointsGet(decomposition%decomposition%TOPOLOGY,elementNumber, &
-     & numberOfDataPoints,err,error,*999)
+    CALL Decomposition_NumberOfElementDataPointsGet(decomposition%decomposition,elementUserNumber, &
+      & numberOfDataPoints,err,error,*999)
 
-#ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP('cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj',err,error,*999)
-#endif
-
-    EXITS("cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj")
+    EXITS("cmfe_Decomposition_NumberOfElementDataPointsGetObj")
     RETURN
-999 ERRORS("cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj",err,error)
-    EXITS("cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj")
+999 ERRORS("cmfe_Decomposition_NumberOfElementDataPointsGetObj",err,error)
+    EXITS("cmfe_Decomposition_NumberOfElementDataPointsGetObj")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Decomposition_TopologyNumberOfElementDataPointsGetObj
+  END SUBROUTINE cmfe_Decomposition_NumberOfElementDataPointsGetObj
 
   !
   !================================================================================================================================
@@ -48209,7 +48193,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_ELEMENT_DOMAIN_GET(decomposition,elementUserNumber,domain,err,error,*999)
+    CALL Decomposition_ElementDomainGet(decomposition,elementUserNumber,domain,err,error,*999)
 
     EXITS("cmfe_Decomposition_ElementDomainGetNumber")
     RETURN
@@ -48236,7 +48220,7 @@ CONTAINS
 
     ENTERS("cmfe_Decomposition_ElementDomainGetObj",err,error,*999)
 
-    CALL DECOMPOSITION_ELEMENT_DOMAIN_GET(decomposition%decomposition,elementUserNumber,domain,err,error,*999)
+    CALL Decomposition_ElementDomainGet(decomposition%decomposition,elementUserNumber,domain,err,error,*999)
 
     EXITS("cmfe_Decomposition_ElementDomainGetObj")
     RETURN
@@ -48282,7 +48266,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_ELEMENT_DOMAIN_SET(decomposition,elementUserNumber,domain,err,error,*999)
+    CALL Decomposition_ElementDomainSet(decomposition,elementUserNumber,domain,err,error,*999)
 
     EXITS("cmfe_Decomposition_ElementDomainSetNumber")
     RETURN
@@ -48309,7 +48293,7 @@ CONTAINS
 
     ENTERS("cmfe_Decomposition_ElementDomainSetObj",err,error,*999)
 
-    CALL DECOMPOSITION_ELEMENT_DOMAIN_SET(decomposition%decomposition,elementUserNumber,domain,err,error,*999)
+    CALL Decomposition_ElementDomainSet(decomposition%decomposition,elementUserNumber,domain,err,error,*999)
 
     EXITS("cmfe_Decomposition_ElementDomainSetObj")
     RETURN
@@ -48857,7 +48841,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_CALCULATE_LINES_SET(decomposition,calculateLinesFlag,err,error,*999)
+    CALL Decomposition_CalculateLinesSet(decomposition,calculateLinesFlag,err,error,*999)
 
     EXITS("cmfe_Decomposition_CalculateLinesSetNumber")
     RETURN
@@ -48883,7 +48867,7 @@ CONTAINS
 
     ENTERS("cmfe_Decomposition_CalculateLinesSetObj",err,error,*999)
 
-    CALL DECOMPOSITION_CALCULATE_LINES_SET(decomposition%decomposition,calculateLinesFlag,err,error,*999)
+    CALL Decomposition_CalculateLinesSet(decomposition%decomposition,calculateLinesFlag,err,error,*999)
 
     EXITS("cmfe_Decomposition_CalculateLinesSetObj")
     RETURN
@@ -48928,7 +48912,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_CALCULATE_FACES_SET(decomposition,calculateFacesFlag,err,error,*999)
+    CALL Decomposition_CalculateFacesSet(decomposition,calculateFacesFlag,err,error,*999)
 
     EXITS("cmfe_Decomposition_CalculateFacesSetNumber")
     RETURN
@@ -48954,7 +48938,7 @@ CONTAINS
 
     ENTERS("cmfe_Decomposition_CalculateFacesSetObj",err,error,*999)
 
-    CALL DECOMPOSITION_CALCULATE_FACES_SET(decomposition%decomposition,calculateFacesFlag,err,error,*999)
+    CALL Decomposition_CalculateFacesSet(decomposition%decomposition,calculateFacesFlag,err,error,*999)
 
     EXITS("cmfe_Decomposition_CalculateFacesSetObj")
     RETURN
@@ -49954,9 +49938,9 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the basis for an element in a mesh identified by an user number. \todo should the global element number be a user number?
+  !>Returns the basis for an element in a mesh identified by an user number.
   SUBROUTINE cmfe_MeshElements_BasisGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,meshComponentNumber, &
-    & globalElementNumber,basisUserNumber,err)
+    & userElementNumber,basisUserNumber,err)
     !DLLEXPORT(cmfe_MeshElements_BasisGetNumber)
 
     !Argument variables
@@ -49964,7 +49948,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the basis for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the basis for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the basis for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to get the basis for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the basis for.
     INTEGER(INTG), INTENT(OUT) :: basisUserNumber !<On return, the user number of the basis for the element.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -49988,7 +49972,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
-    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_BASIS_GET(globalElementNumber,meshElements,basis,err,error,*999)
+    CALL MeshElements_BasisGet(meshElements,userElementNumber,basis,err,error,*999)
     basisUserNumber = basis%userNumber
 
     EXITS("cmfe_MeshElements_BasisGetNumber")
@@ -50003,20 +49987,20 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the basis for an element in a mesh identified by an object. \todo should the global element number be a user number?
-  SUBROUTINE cmfe_MeshElements_BasisGetObj(meshElements,globalElementNumber,basis,err)
+  !>Returns the basis for an element in a mesh identified by an object.
+  SUBROUTINE cmfe_MeshElements_BasisGetObj(meshElements,userElementNumber,basis,err)
     !DLLEXPORT(cmfe_MeshElements_BasisGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to get the basis for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to get the basis for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the basis for.
     TYPE(cmfe_BasisType), INTENT(INOUT) :: basis !<On return, the basis for the element.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_MeshElements_BasisGetObj",err,error,*999)
 
-    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_BASIS_GET(globalElementNumber,meshElements%meshElements,basis%basis,err,error,*999)
+    CALL MeshElements_BasisGet(meshElements%meshElements,userElementNumber,basis%basis,err,error,*999)
 
     EXITS("cmfe_MeshElements_BasisGetObj")
     RETURN
@@ -50030,9 +50014,9 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the basis for an element in a mesh identified by an user number. \todo should the global element number be a user number?
+  !>Sets/changes the basis for an element in a mesh identified by an user number. 
   SUBROUTINE cmfe_MeshElements_BasisSetNumber(contextUserNumber,regionUserNumber,meshUserNumber,meshComponentNumber, &
-    & globalElementNumber,basisUserNumber,err)
+    & userElementNumber,basisUserNumber,err)
     !DLLEXPORT(cmfe_MeshElements_BasisSetNumber)
 
     !Argument variables
@@ -50040,7 +50024,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the basis for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to set the basis for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to set the basis for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to set the basis for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The global element number to set the basis for.
     INTEGER(INTG), INTENT(IN) :: basisUserNumber !<The user number of the basis for the element to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -50068,7 +50052,7 @@ CONTAINS
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
     CALL Basis_Get(basisFunctions,basisUserNumber,basis,err,error,*999)
-    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_BASIS_SET(globalElementNumber,meshElements,basis,err,error,*999)
+    CALL MeshElements_BasisGet(meshElements,userElementNumber,basis,err,error,*999)
 
     EXITS("cmfe_MeshElements_BasisSetNumber")
     RETURN
@@ -50082,20 +50066,20 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the basis for an element in a mesh identified by an object. \todo should the global element number be a user number?
-  SUBROUTINE cmfe_MeshElements_BasisSetObj(meshElements,globalElementNumber,basis,err)
+  !>Sets/changes the basis for an element in a mesh identified by an object. 
+  SUBROUTINE cmfe_MeshElements_BasisSetObj(meshElements,userElementNumber,basis,err)
     !DLLEXPORT(cmfe_MeshElements_BasisSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the basis for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to set the basis for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to set the basis for.
     TYPE(cmfe_BasisType), INTENT(IN) :: basis !<The basis for the element to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_MeshElements_BasisSetObj",err,error,*999)
 
-    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_BASIS_SET(globalElementNumber,meshElements%meshElements,basis%basis,err,error,*999)
+    CALL MeshElements_BasisSet(meshElements%meshElements,userElementNumber,basis%basis,err,error,*999)
 
     EXITS("cmfe_MeshElements_BasisSetObj")
     RETURN
@@ -50111,7 +50095,7 @@ CONTAINS
 
   !>Returns the adjacent element number of a mesh identified by a user number
   SUBROUTINE cmfe_MeshElements_AdjacentElementGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,meshComponentNumber, &
-    & globalElementNumber,adjacentElementXi,adjacentElement,err)
+    & userElementNumber,adjacentElementXi,adjacentUserElement,err)
     !DLLEXPORT(cmfe_MeshElements_AdjacentElementGetNumber)
 
     !Argument variables
@@ -50119,9 +50103,9 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh from which to get the adjacent element from.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh from which to get the adjacent element from.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number from which to get adjacent element number from.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to get the adjacent element number for. !\todo this should be a user number
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the adjacent element number for. !\todo this should be a user number
     INTEGER(INTG), INTENT(IN) :: adjacentElementXi !<The xi coordinate direction to get the adjacent element for. Note that -xiCoordinateDirection gives the adjacent element before the element in the xiCoordinateDirection'th direction and +xiCoordinateDirection gives the adjacent element after the element in the xiCoordinateDirection'th direction. The xiCoordinateDirection=0 index will give the information on the current element.
-    INTEGER(INTG), INTENT(OUT) :: adjacentElement !<On return, the adjacent element number in the specified xi coordinate direction. Return 0 if the specified element has no adjacent elements in the specified xi coordinate direction.
+    INTEGER(INTG), INTENT(OUT) :: adjacentUserElement !<On return, the adjacent element user number in the specified xi coordinate direction. Return 0 if the specified element has no adjacent elements in the specified xi coordinate direction.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -50141,8 +50125,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
-    CALL MESH_TOPOLOGY_ELEMENTS_ADJACENT_ELEMENT_GET(globalElementNumber,meshElements,adjacentElementXi,adjacentElement, &
-      & err,error,*999)
+    CALL MeshElements_AdjacentElementGet(meshElements,userElementNumber,adjacentElementXi,adjacentUserElement,err,error,*999)
 
     EXITS("cmfe_MeshElements_AdjacentElementGetNumber")
     RETURN
@@ -50157,21 +50140,21 @@ CONTAINS
   !
 
   !>Returns the adjacent element number of a mesh identified by an object.
-  SUBROUTINE cmfe_MeshElements_AdjacentElementGetObj(meshElements,globalElementNumber,adjacentElementXi,adjacentElement,err)
+  SUBROUTINE cmfe_MeshElements_AdjacentElementGetObj(meshElements,userElementNumber,adjacentElementXi,adjacentUserElement,err)
     !DLLEXPORT(cmfe_MeshElements_AdjacentElementGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements from which to get the adjacent element for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to get the adjacent element for !\todo this should be a user number
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the adjacent element for !\todo this should be a user number
     INTEGER(INTG), INTENT(IN) :: adjacentElementXi !<The xi coordinate direction to get the adjacent element for  Note that -xiCoordinateDirection gives the adjacent element before the element in the xiCoordinateDirection'th direction and +xiCoordinateDirection gives the adjacent element after the element in the xiCoordinateDirection'th direction. The xiCoordinateDirection=0 index will give the information on the current element.
-    INTEGER(INTG), INTENT(OUT) :: adjacentElement !<On return, the adjacent element number in the specified xi coordinate direction. Return 0 if the specified element has no adjacent elements in the specified xi coordinate direction.
+    INTEGER(INTG), INTENT(OUT) :: adjacentUserElement !<On return, the adjacent element user number in the specified xi coordinate direction. Return 0 if the specified element has no adjacent elements in the specified xi coordinate direction.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_MeshElements_AdjacentElementGetObj",err,error,*999)
 
-    CALL MESH_TOPOLOGY_ELEMENTS_ADJACENT_ELEMENT_GET(globalElementNumber,meshElements%meshElements,adjacentElementXi, &
-      & adjacentElement,err,error,*999)
+    CALL MeshElements_AdjacentElementGet(meshElements%meshElements,userElementNumber,adjacentElementXi,adjacentUserElement, &
+      & err,error,*999)
 
     EXITS("cmfe_MeshElements_AdjacentElementGetObj")
     RETURN
@@ -50258,9 +50241,9 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
+  !>Returns the element nodes for an element in a mesh identified by an user number. 
   SUBROUTINE cmfe_MeshElements_NodesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,meshComponentNumber, &
-    & globalElementNumber,elementUserNodes,err)
+    & userElementNumber,elementUserNodes,err)
     !DLLEXPORT(cmfe_MeshElements_NodesGetNumber)
 
     !Argument variables
@@ -50268,7 +50251,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the element nodes for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the element nodes for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the element nodes for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to get the element nodes for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the element nodes for.
     INTEGER(INTG), INTENT(OUT) :: elementUserNodes(:) !<elementUserNodes(i). On return, the user node number number of the i'th element node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -50288,7 +50271,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
-    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_GET(globalElementNumber,meshElements,elementUserNodes,err,error,*999)
+    CALL MeshElements_NodesGet(meshElements,userElementNumber,elementUserNodes,err,error,*999)
 
     EXITS("cmfe_MeshElements_NodesGetNumber")
     RETURN
@@ -50302,20 +50285,20 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the element nodes for an element in a mesh identified by an object. \todo should the global element number be a user number?
-  SUBROUTINE cmfe_MeshElements_NodesGetObj(meshElements,globalElementNumber,elementUserNodes,err)
+  !>Returns the element nodes for an element in a mesh identified by an object. 
+  SUBROUTINE cmfe_MeshElements_NodesGetObj(meshElements,userElementNumber,elementUserNodes,err)
     !DLLEXPORT(cmfe_MeshElements_NodesGetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to get the element nodes for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to get the element nodes for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the element nodes for.
     INTEGER(INTG), INTENT(OUT) :: elementUserNodes(:) !<elementUserNodes(i). On return, the user node number number of the i'th element node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_MeshElements_NodesGetObj",err,error,*999)
 
-    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_GET(globalElementNumber,meshElements%meshElements,elementUserNodes,err,error,*999)
+    CALL MeshElements_NodesGet(meshElements%meshElements,userElementNumber,elementUserNodes,err,error,*999)
 
     EXITS("cmfe_MeshElements_NodesGetObj")
     RETURN
@@ -50329,9 +50312,9 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
+  !>Sets/changes the element nodes for an element in a mesh identified by an user number. 
   SUBROUTINE cmfe_MeshElements_NodesSetNumber(contextUserNumber,regionUserNumber,meshUserNumber,meshComponentNumber, &
-    & globalElementNumber,elementUserNodes,err)
+    & userElementNumber,elementUserNodes,err)
     !DLLEXPORT(cmfe_MeshElements_NodesSetNumber)
 
     !Argument variables
@@ -50339,7 +50322,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to set the element nodes for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to set the element nodes for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: elementUserNodes(:) !<elementUserNodes(i). The user node number number of the i'th element node to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -50361,7 +50344,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
-    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(globalElementNumber,meshElements,elementUserNodes,err,error,*999)
+    CALL MeshElements_NodesSet(meshElements,userElementNumber,elementUserNodes,err,error,*999)
 
     EXITS("cmfe_MeshElements_NodesSetNumber")
     RETURN
@@ -50375,20 +50358,20 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the element nodes for an element in a mesh identified by an object. \todo should the global element number be a user number?
-  SUBROUTINE cmfe_MeshElements_NodesSetObj(meshElements,globalElementNumber,elementUserNodes,err)
+  !>Sets/changes the element nodes for an element in a mesh identified by an object. 
+  SUBROUTINE cmfe_MeshElements_NodesSetObj(meshElements,userElementNumber,elementUserNodes,err)
     !DLLEXPORT(cmfe_MeshElements_NodesSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the element nodes for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to set the element nodes for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: elementUserNodes(:) !<elementUserNodes(i). The user node number number of the i'th element node to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_MeshElements_NodesSetObj",err,error,*999)
 
-    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(globalElementNumber,meshElements%meshElements,elementUserNodes,err,error,*999)
+    CALL MeshElements_NodeSet(meshElements%meshElements,userElementNumber,elementUserNodes,err,error,*999)
 
     EXITS("cmfe_MeshElements_NodesSetObj")
     RETURN
@@ -50403,8 +50386,8 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
-  SUBROUTINE cmfe_MeshElements_UserNodeVersionSetNumber(contextUserNumber,regionUserNumber,meshUserNumber,globalElementNumber, &
+  !>Sets/changes the element nodes for an element in a mesh identified by an user number. 
+  SUBROUTINE cmfe_MeshElements_UserNodeVersionSetNumber(contextUserNumber,regionUserNumber,meshUserNumber,userElementNumber, &
     & versionNumber,derivativeNumber,userNodeNumber,meshComponentNumber,err)
     !DLLEXPORT(cmfe_MeshElements_UserNodeVersionSetNumber)
 
@@ -50412,7 +50395,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to set the element nodes for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to set the element nodes for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number of the specified element node to set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the specified element node to set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to set a version for.
@@ -50441,22 +50424,8 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
-!!TODO: This check should be moved into the MeshElements_ElementNodeVersionSet routine
-    found=.FALSE.
-    DO localElementNode=1,meshElements%elements(globalElementNumber)%basis%numberOfNodes
-      IF(meshElements%elements(globalElementNumber)%userElementNodes(localElementNode)==userNodeNumber) THEN
-        found=.TRUE.
-        EXIT
-      END IF
-    END DO !localelementnode
-    IF(found) THEN
-      CALL MeshElements_ElementNodeVersionSet(globalElementNumber,meshElements,versionNumber,derivativeNumber, &
-        & localElementNode,err,error,*999)
-    ELSE
-      localError="User node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
-        & " does not exist in element number "//TRIM(NumberToVString(globalElementNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL MeshElements_UserNodeVersionSet(meshElements,userElementNumber,versionNumber,derivativeNumber,userNodeNumber, &
+      & err,error,*999)
 
     EXITS("cmfe_MeshElements_UserNodeVersionSetNumber")
     RETURN
@@ -50470,14 +50439,14 @@ CONTAINS
   !================================================================================================================================
    !
 
-  !>Sets/changes the element nodes for an element in a mesh identified by an object. \todo should the global element number be a user number?
-  SUBROUTINE cmfe_MeshElements_UserNodeVersionSetObj(meshElements,globalElementNumber,versionNumber,derivativeNumber, &
+  !>Sets/changes the element nodes for an element in a mesh identified by an object. 
+  SUBROUTINE cmfe_MeshElements_UserNodeVersionSetObj(meshElements,userElementNumber,versionNumber,derivativeNumber, &
     & userNodeNumber,err)
     !DLLEXPORT(cmfe_MeshElements_UserNodeVersionSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the element nodes for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to set the element nodes for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The global element number to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number of the specified element node to set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the specified element node to set.
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to set a version for.
@@ -50489,21 +50458,8 @@ CONTAINS
 
     ENTERS("cmfe_MeshElements_UserNodeVersionSetObj",err,error,*999)
 
-    FOUND=.FALSE.
-    DO localelementnode=1,meshElements%meshElements%ELEMENTS(globalElementNumber)%basis%numberOfNodes
-      IF(meshElements%meshElements%ELEMENTS(globalElementNumber)%userElementNodes(localelementnode)==userNodeNumber) THEN
-        FOUND=.TRUE.
-        EXIT
-      END IF
-    END DO !localelementnode
-    IF(FOUND) THEN
-      CALL MeshElements_ElementNodeVersionSet(globalElementNumber,meshElements%meshElements,versionNumber, &
-         & derivativeNumber,localelementnode,err,error,*999)
-    ELSE
-      localError="User node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))// &
-        & " does not exist in element number "//TRIM(NumberToVString(globalElementNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    END IF
+    CALL MeshElements_UserNodeVersionSet(meshElements%meshElements,userElementNumber,versionNumber, &
+      & derivativeNumber,userNodeNumber,err,error,*999)
 
     EXITS("cmfe_MeshElements_UserNodeVersionSetObj")
     RETURN
@@ -50517,16 +50473,16 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the element nodes for an element in a mesh identified by an user number. \todo should the global element number be a user number?
+  !>Sets/changes the element nodes for an element in a mesh identified by an user number. 
   SUBROUTINE cmfe_MeshElements_LocalElementNodeVersionSetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
-    & globalElementNumber,versionNumber,derivativeNumber,localElementNodeNumber,meshComponentNumber,err)
+    & userElementNumber,versionNumber,derivativeNumber,localElementNodeNumber,meshComponentNumber,err)
     !DLLEXPORT(cmfe_MeshElements_LocalElementNodeVersionSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to set the element nodes for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to set the element nodes for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number of the specified element node to set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the specified element node to set.
     INTEGER(INTG), INTENT(IN) :: localElementNodeNumber !<The local element node to set a version for.
@@ -50552,7 +50508,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
-    CALL MeshElements_ElementNodeVersionSet(globalElementNumber,meshElements,versionNumber,derivativeNumber, &
+    CALL MeshElements_ElementNodeVersionSet(meshElements,userElementNumber,versionNumber,derivativeNumber, &
       & localElementNodeNumber,err,error,*999)
 
     EXITS("cmfe_MeshElements_LocalElementNodeVersionSetNumber")
@@ -50568,14 +50524,14 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the element nodes for an element in a mesh identified by an object. \todo should the global element number be a user number?
-  SUBROUTINE cmfe_MeshElements_LocalElementNodeVersionSetObj(meshElements,globalElementNumber,versionNumber,derivativeNumber, &
+  !>Sets/changes the element nodes for an element in a mesh identified by an object. 
+  SUBROUTINE cmfe_MeshElements_LocalElementNodeVersionSetObj(meshElements,userElementNumber,versionNumber,derivativeNumber, &
     & localElementNodeNumber,err)
     !DLLEXPORT(cmfe_MeshElements_LocalElementNodeVersionSetObj)
 
     !Argument variables
     TYPE(cmfe_MeshElementsType), INTENT(IN) :: meshElements !<The mesh elements to set the element nodes for.
-    INTEGER(INTG), INTENT(IN) :: globalElementNumber !<The global element number to set the element nodes for.
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to set the element nodes for.
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The version number of the specified element node to set.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the specified element node to set.
     INTEGER(INTG), INTENT(IN) :: localElementNodeNumber !<The local element node to set a version for.
@@ -50584,8 +50540,8 @@ CONTAINS
 
     ENTERS("cmfe_MeshElements_LocalElementNodeVersionSetObj",err,error,*999)
 
-    CALL MeshElements_ElementNodeVersionSet(globalElementNumber,meshElements%meshElements,versionNumber, &
-       & derivativeNumber,localElementNodeNumber,err,error,*999)
+    CALL MeshElements_ElementNodeVersionSet(meshElements%meshElements,userElementNumber,versionNumber, &
+      & derivativeNumber,localElementNodeNumber,err,error,*999)
 
     EXITS("cmfe_MeshElements_LocalElementNodeVersionSetObj")
     RETURN
@@ -50632,7 +50588,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
-    CALL MeshElements_ElementUserNumberGet(elementGlobalNumber,elementUserNumber,meshElements,err,error,*999)
+    CALL MeshElements_ElementUserNumberGet(meshElements,elementGlobalNumber,elementUserNumber,err,error,*999)
 
     EXITS("cmfe_MeshElements_UserNumberGetNumber")
     RETURN
@@ -50659,7 +50615,7 @@ CONTAINS
 
     ENTERS("cmfe_MeshElements_UserNumberGetObj",err,error,*999)
 
-    CALL MeshElements_ElementUserNumberGet(elementGlobalNumber,elementUserNumber,meshElements%meshElements, &
+    CALL MeshElements_ElementUserNumberGet(meshElements%meshElements,elementGlobalNumber,elementUserNumber, &
       & err,error,*999)
 
     EXITS("cmfe_MeshElements_UserNumberGetObj")
@@ -50704,7 +50660,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
-    CALL MeshElements_ElementUserNumberSet(elementGlobalNumber,elementUserNumber,meshElements,err,error,*999)
+    CALL MeshElements_ElementUserNumberSet(meshElements,elementGlobalNumber,elementUserNumber,err,error,*999)
 
     EXITS("cmfe_MeshElements_UserNumberSetNumber")
     RETURN
@@ -50731,7 +50687,7 @@ CONTAINS
 
     ENTERS("cmfe_MeshElements_UserNumberSetObj",err,error,*999)
 
-    CALL MeshElements_ElementUserNumberSet(elementGlobalNumber,elementUserNumber,meshElements%meshElements, &
+    CALL MeshElements_ElementUserNumberSet(meshElements%meshElements,elementGlobalNumber,elementUserNumber, &
       & err,error,*999)
 
     EXITS("cmfe_MeshElements_UserNumberSetObj")
@@ -50833,9 +50789,11 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: nodeExists !<True if the node exists, false otherwise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    INTEGER(INTG) :: meshNodeNumber
+    INTEGER(INTG) :: globalNodeNumber,meshNodeNumber
     TYPE(ContextType), POINTER :: context
     TYPE(MeshType), POINTER :: mesh
+    TYPE(MeshNodesType), POINTER :: meshNodes
+    TYPE(MeshTopologyType), POINTER :: meshTopology
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -50847,11 +50805,15 @@ CONTAINS
     NULLIFY(regions)
     NULLIFY(region)
     NULLIFY(mesh)
+    NULLIFY(meshTopology)
+    NULLIFY(meshNodes)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
-    CALL MeshTopology_NodeCheckExists(Mesh,meshComponentNumber,nodeUserNumber,nodeExists,meshNodeNumber,err,error,*999)
+    CALL Mesh_MeshTopologyGet(mesh,meshComponentNumber,meshTopology,err,error,*999)
+    CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*999)
+    CALL MeshNodes_NodeCheckExists(meshNodes,nodeUserNumber,nodeExists,globalNodeNumber,meshNodeNumber,err,error,*999)
 
     EXITS("cmfe_Mesh_NodeExistsNumber")
     RETURN
@@ -50876,13 +50838,19 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: nodeExists !<True if the node exists, false otherwise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    INTEGER(INTG) :: meshNodeNumber
+    INTEGER(INTG) :: globalNodeNumber,meshNodeNumber
+    TYPE(MeshNodesType), POINTER :: meshNodes
+    TYPE(MeshTopologyType), POINTER :: meshTopology
 
     nodeExists = .FALSE.
 
     ENTERS("cmfe_Mesh_NodeExistsObj",err,error,*999)
 
-    CALL MeshTopology_NodeCheckExists(mesh%mesh,meshComponentNumber,nodeUserNumber,nodeExists,meshNodeNumber,err,error,*999)
+    NULLIFY(meshTopology)
+    NULLIFY(meshNodes)
+    CALL Mesh_MeshTopologyGet(mesh%mesh,meshComponentNumber,meshTopology,err,error,*999)
+    CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*999)
+    CALL MeshNodes_NodeCheckExists(meshNodes,nodeUserNumber,nodeExists,globalNodeNumber,meshNodeNumber,err,error,*999)
 
     EXITS("cmfe_Mesh_NodeExistsObj")
     RETURN
@@ -50910,9 +50878,11 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: elementExists !<True if the element exists, false otherwise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    INTEGER(INTG) :: meshElementNumber
+    INTEGER(INTG) :: globalElementNumber
     TYPE(ContextType), POINTER :: context
     TYPE(MeshType), POINTER :: mesh
+    TYPE(MeshElementsType), POINTER :: meshElements
+    TYPE(MeshTopologyType), POINTER :: meshTopology
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -50924,11 +50894,15 @@ CONTAINS
     NULLIFY(regions)
     NULLIFY(region)
     NULLIFY(mesh)
+    NULLIFY(meshTopology)
+    NULLIFY(meshElements)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
-    CALL MeshTopology_ElementCheckExists(mesh,meshComponentNumber,elementUserNumber,elementExists,meshElementNumber,err,error,*999)
+    CALL Mesh_MeshTopoloyGet(mesh,meshComponentNumber,meshTopology,err,error,*999)
+    CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
+    CALL MeshElements_ElementCheckExists(meshElements,elementUserNumber,elementExists,globalElementNumber,err,error,*999)
 
     EXITS("cmfe_Mesh_ElementExistsNumber")
     RETURN
@@ -50954,14 +50928,19 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
 
     !Local variables
-    INTEGER(INTG) :: meshElementNumber
+    INTEGER(INTG) :: globalElementNumber
+    TYPE(MeshElementsType), POINTER :: meshElements
+    TYPE(MeshTopologyType), POINTER :: meshTopology
 
     ENTERS("cmfe_Mesh_ElementExistsObj",err,error,*999)
 
     elementExists = .FALSE.
+    NULLIFY(meshTopology)
+    CALL Mesh_MeshTopologyGet(mesh%mesh,meshComponentNumber,meshTopology,err,error,*999)
+    NULLIFY(meshElements)
+    CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
 
-    CALL MeshTopology_ElementCheckExists(mesh%mesh,meshComponentNumber,elementUserNumber,elementExists,meshElementNumber, &
-      & err,error,*999)
+    CALL MeshElements_ElementCheckExists(meshElements,elementUserNumber,elementExists,globalElementNumber,err,error,*999)
 
     EXITS("cmfe_Mesh_ElementExistsObj")
     RETURN

@@ -869,7 +869,7 @@ CONTAINS
               IF((coupledMeshElementNumber>0).AND.(coupledMeshElementNumber<= &
                 & interfaceMeshConnectivity%INTERFACE%coupledMeshes(COUPLED_MESH_INDEX)%ptr%numberOfElements))THEN
                 IF((INTERFACE_MESH_COMPONENT_NUMBER>0).AND. &
-                  & (INTERFACE_MESH_COMPONENT_NUMBER<=interfaceMeshConnectivity%interfaceMesh%NUMBER_OF_COMPONENTS)) THEN
+                  & (INTERFACE_MESH_COMPONENT_NUMBER<=interfaceMeshConnectivity%interfaceMesh%numberOfComponents)) THEN
                   IF((INTERFACE_MESH_LOCAL_NODE_NUMBER>0).AND.(INTERFACE_MESH_LOCAL_NODE_NUMBER<= &
                     & interfaceMeshConnectivity%BASIS%numberOfNodes))THEN
                     elementConnectivity=>interfaceMeshConnectivity% &
@@ -1270,7 +1270,7 @@ CONTAINS
         interfacePointsConnectivity%maxNumberOfCoupledElements(coupledMeshIdx)=0; !Initialise the number of coupled mesh elements 
         DO elementIdx=1,SIZE(interfacePointsConnectivity%coupledElements,1) !Number of interface elements
           numberOfElementDataPoints=interfacePointsConnectivity%interfaceMesh%TOPOLOGY(1)%ptr%dataPoints% &
-            & elementDataPoint(elementIdx)%numberOfProjectedData !Get the number of data points in interface mesh element
+            & elementDataPoints(elementIdx)%numberOfProjectedData !Get the number of data points in interface mesh element
           !Set up list
           NULLIFY(elementNumbersList)
           CALL LIST_CREATE_START(elementNumbersList,err,error,*999)
@@ -1279,7 +1279,7 @@ CONTAINS
           CALL LIST_CREATE_FINISH(elementNumbersList,err,error,*999)
           DO dataPointIdx=1,numberOfElementDataPoints
             globalDataPointNumber=interfacePointsConnectivity%interfaceMesh%TOPOLOGY(1)%ptr%dataPoints% &
-              & elementDataPoint(elementIdx)%dataIndices(dataPointIdx)%globalNumber
+              & elementDataPoints(elementIdx)%dataIndices(dataPointIdx)%globalNumber
             globalElementNumber=interfacePointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
               & coupledMeshElementNumber
             CALL LIST_ITEM_ADD(elementNumbersList,globalElementNumber,err,error,*999)
@@ -1553,7 +1553,7 @@ CONTAINS
               !Evaluate data points positions
               dependentFieldFixed=>interfaceCondition%DEPENDENT%FIELD_VARIABLES(fixedBodyIdx)%ptr%FIELD
               IF(ASSOCIATED(dependentFieldFixed)) THEN
-                numberOfGeometricComponents=dependentFieldFixed%GEOMETRIC_FIELD%VARIABLES(1)%NUMBER_OF_COMPONENTS
+                numberOfGeometricComponents=dependentFieldFixed%GEOMETRIC_FIELD%VARIABLES(1)%numberOfComponents
                 CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(dependentFieldFixed,interpolationParameters,err,error,*999, &
                   & FIELD_GEOMETRIC_COMPONENTS_TYPE)
                 CALL FIELD_INTERPOLATED_POINTS_INITIALISE(interpolationParameters,interpolatedPoints,err,error,*999, &

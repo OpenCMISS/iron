@@ -434,7 +434,7 @@ CONTAINS
                 variable_type=dependentField%variables(variable_idx)%VARIABLE_TYPE
                 FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                     IF(ASSOCIATED(DOMAIN)) THEN
                       IF(ASSOCIATED(DOMAIN%TOPOLOGY)) THEN
@@ -2909,7 +2909,7 @@ CONTAINS
       ! distributed out, have to use proper field accessing routines..
       ! so let's just loop over component, node/el, derivative
       column=0  ! element jacobian matrix column number
-      DO componentIdx=1,columnVariable%NUMBER_OF_COMPONENTS
+      DO componentIdx=1,columnVariable%numberOfComponents
         elementsTopology=>columnVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%ELEMENTS
         componentInterpolationType=columnVariable%COMPONENTS(componentIdx)%interpolationType
         SELECT CASE(componentInterpolationType)

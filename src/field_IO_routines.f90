@@ -129,7 +129,7 @@ MODULE FIELD_IO_ROUTINES
   !>contains information for parallel IO, and it is nodal base
   TYPE FIELD_IO_COMPONENT_INFO_SET
     LOGICAL :: SAME_HEADER !< determine whether we have same IO information as the previous one
-    INTEGER(INTG) :: NUMBER_OF_COMPONENTS !< number of components in the component array, COMPONENT(:)
+    INTEGER(INTG) :: numberOfComponents !< number of components in the component array, COMPONENT(:)
     !attention: the pointers in COMPONENTS(:) point to those nodal components which are in the same local domain in current implementation
     !it may be replaced in the future implementation
     TYPE(FIELD_VARIABLE_COMPONENT_PTR_TYPE), ALLOCATABLE:: COMPONENTS(:) !<A array of pointers to those components of the node in this local domain
@@ -2134,8 +2134,8 @@ CONTAINS
     DO idx_elem=1,NUMBER_OF_ELEMENTS
       DO idx_comp=1, NUMBER_OF_MESH_COMPONENTS
         IF(idx_elem/=LIST_ELEMENT_NUMBER(idx_elem)) &
-            & CALL MeshElements_ElementUserNumberSet(idx_elem,LIST_ELEMENT_NUMBER(idx_elem), &
-            & ELEMENTS_PTR(idx_comp)%PTR,ERR,ERROR,*999)
+            & CALL MeshElements_ElementUserNumberSet(ELEMENTS_PTR(idx_comp)%PTR,idx_elem,LIST_ELEMENT_NUMBER(idx_elem), &
+            & ERR,ERROR,*999)
       ENDDO
     ENDDO
 
@@ -2626,15 +2626,15 @@ CONTAINS
     MAX_SIMPLEX_ORDER=1
     NULLIFY(variable_ptr)
 
-    CALL REALLOCATE( GROUP_LOCAL_NUMBER, elementalInfoSet%NUMBER_OF_COMPONENTS, &
+    CALL REALLOCATE( GROUP_LOCAL_NUMBER, elementalInfoSet%numberOfComponents, &
         & "Could not allocate GROUP_LOCAL_NUMBER in exelem header", ERR, ERROR, *999 )
-    CALL REALLOCATE( listScaleBases, elementalInfoSet%NUMBER_OF_COMPONENTS, &
+    CALL REALLOCATE( listScaleBases, elementalInfoSet%numberOfComponents, &
         & "Could not allocate listScaleBases in exelem header", ERR, ERROR, *999 )
-    CALL REALLOCATE( listScaleFields, elementalInfoSet%NUMBER_OF_COMPONENTS, &
+    CALL REALLOCATE( listScaleFields, elementalInfoSet%numberOfComponents, &
         & "Could not allocate listScaleFields in exelem header", ERR, ERROR, *999 )
 
     !collect scale factor information
-    DO comp_idx=1,elementalInfoSet%NUMBER_OF_COMPONENTS
+    DO comp_idx=1,elementalInfoSet%numberOfComponents
       !calculate the number of variables
       IF (.NOT.ASSOCIATED(variable_ptr, TARGET=elementalInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE)) THEN
         NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
@@ -2706,7 +2706,7 @@ CONTAINS
     !fill information into the group of fields and variables
     NULLIFY(variable_ptr)
     NUM_OF_VARIABLES=0
-    DO comp_idx=1,elementalInfoSet%NUMBER_OF_COMPONENTS
+    DO comp_idx=1,elementalInfoSet%numberOfComponents
       !calculate the number of variables
       IF (.NOT.ASSOCIATED(variable_ptr, TARGET=elementalInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE)) THEN
         NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
@@ -2780,7 +2780,7 @@ CONTAINS
     !write out the nodal header
     var_idx=0
     NULLIFY(variable_ptr)
-    DO comp_idx=1,elementalInfoSet%NUMBER_OF_COMPONENTS
+    DO comp_idx=1,elementalInfoSet%numberOfComponents
       component => elementalInfoSet%COMPONENTS(comp_idx)%PTR
 
       !grouping field variables and components together
@@ -3423,7 +3423,7 @@ CONTAINS
           DO nn = 1, BASIS%numberOfNodes
             DO mm = 1, MAX_NODE_ELEMENT%BASIS%numberOfNodes
               NODE_LOCAL_NUMBER = DOMAIN_ELEMENTS%ELEMENTS( local_number )%elementNodes( nn )
-              NODE_USER_NUMBER=DOMAIN_ELEMENTS%DOMAIN%TOPOLOGY%NODES%NODES(NODE_LOCAL_NUMBER)%userNumber
+              NODE_USER_NUMBER=DOMAIN_ELEMENTS%domainTopology%NODES%NODES(NODE_LOCAL_NUMBER)%userNumber
               MAX_ELEMENT_LOCAL_NUMBER = MAX_NODE_ELEMENT%elementNodes( mm )
               MAX_ELEMENT_USER_NUMBER = MAX_ELEMENT_DOMAIN_NODES%NODES(MAX_ELEMENT_LOCAL_NUMBER)%userNumber
               IF( NODE_USER_NUMBER == MAX_ELEMENT_USER_NUMBER ) THEN
@@ -3508,7 +3508,7 @@ CONTAINS
 
     scaleIndex = 1
     firstScaleSet = 1
-    DO componentIndex = 1, components%NUMBER_OF_COMPONENTS
+    DO componentIndex = 1, components%numberOfComponents
       component => components%COMPONENTS( componentIndex )%PTR
       !finding the local numbering through the global to local mapping
 
@@ -3695,7 +3695,7 @@ CONTAINS
       global_number = ELEMENTAL_INFO_SET%LIST_OF_GLOBAL_NUMBER(elem_idx)
 
       IF(.NOT.ALLOCATED(LIST_COMP_SCALE)) THEN
-        ALLOCATE(LIST_COMP_SCALE(components%NUMBER_OF_COMPONENTS),STAT=ERR)
+        ALLOCATE(LIST_COMP_SCALE(components%numberOfComponents),STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate LIST_COMP_SCALE in exelem io",ERR,ERROR,*999)
       ENDIF
 
@@ -3719,7 +3719,7 @@ CONTAINS
       ENDIF
 
       isFirstValueSet = 1
-      DO comp_idx = 1, components%NUMBER_OF_COMPONENTS
+      DO comp_idx = 1, components%numberOfComponents
         component => components%COMPONENTS(comp_idx)%PTR
 
         !finding the local numbering through the global to local mapping
@@ -3971,11 +3971,11 @@ CONTAINS
       global_number1=ELEMENTAL_INFO_SET%LIST_OF_GLOBAL_NUMBER(nn1)
       DO nn2=nn1+1,ELEMENTAL_INFO_SET%NUMBER_OF_ENTRIES
         global_number2=ELEMENTAL_INFO_SET%LIST_OF_GLOBAL_NUMBER(nn2)
-        IF(ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%NUMBER_OF_COMPONENTS== &
-            & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR%NUMBER_OF_COMPONENTS) THEN
+        IF(ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%numberOfComponents== &
+            & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR%numberOfComponents) THEN
           SAME_ELEMENT_INFO=.TRUE.
           !we will check the component (type of component, partial derivative).
-          DO component_idx=1,ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%NUMBER_OF_COMPONENTS
+          DO component_idx=1,ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%numberOfComponents
             !not safe, but it is fast
             !=============================================================================================!
             !        checking according to local memory adddress                          !
@@ -4015,7 +4015,7 @@ CONTAINS
 
           !check whether correspoding two components have the same partial derivatives
           IF(SAME_ELEMENT_INFO) THEN
-            DO component_idx=1,ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%NUMBER_OF_COMPONENTS
+            DO component_idx=1,ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%numberOfComponents
               !finding the local numbering for the NODAL_INFO_SET(nn1)
               DOMAIN_MAPPING_ELEMENTS=>&
                 & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%COMPONENTS(component_idx)%PTR%DOMAIN% &
@@ -4060,7 +4060,7 @@ CONTAINS
 
             ENDDO !component_idx
           ENDIF !SAME_ELEMENT_INFO==.TRUE.
-        ENDIF !LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS==LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn+1)%PTR%NUMBER_OF_COMPONENTS
+        ENDIF !LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents==LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn+1)%PTR%numberOfComponents
 
         !find two elements which have the same output, and then they should put together
         IF(SAME_ELEMENT_INFO) THEN
@@ -4087,16 +4087,16 @@ CONTAINS
     !DO nn=1,LOCAL_PROCESS_NODAL_INFO_SET%NUMBER_OF_ENTRIES
     !   print "(A, I)", "nn=", nn
     !   !temporarily use nk, nu here to save memory
-    !   IF(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS/=1) THEN
+    !   IF(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents/=1) THEN
     !     component_idx=1
-    !     DO WHILE(component_idx<LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS)
+    !     DO WHILE(component_idx<LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents)
     !        !checking the same variable's components
     !       print "(A, I)", "component_idx=", component_idx
-    !       print "(A, I)", "LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS", LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS
+    !       print "(A, I)", "LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents", LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents
     !       DO WHILE(ASSOCIATED(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(component_idx)%PTR%FIELD_VARIABLE, &
     !       & TARGET=LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(component_idx+1)%PTR%FIELD_VARIABLE))
     !          component_idx=component_idx+1
-    !          IF(component_idx>=LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS) THEN
+    !          IF(component_idx>=LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents) THEN
     !             EXIT
     !          ENDIF
     !        ENDDO
@@ -4124,8 +4124,8 @@ CONTAINS
     !        ENDDO
     !        NULLIFY(tmp_ptr)
     !        component_idx=component_idx+1
-    !     ENDDO ! WHILE(component_idx<LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS)
-    !   ENDIF ! LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS/=1
+    !     ENDDO ! WHILE(component_idx<LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents)
+    !   ENDIF ! LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents/=1
     !ENDDO !nn
 
     EXITS("FIELD_IO_ELEMENTAL_INFO_SET_SORT")
@@ -4228,7 +4228,7 @@ CONTAINS
       ENDIF
       DO var_idx=1, FIELD%NUMBER_OF_VARIABLES
         FIELD_VARIABLE=>FIELD%VARIABLES(var_idx)
-        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
           IF(.NOT.ASSOCIATED(FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS)) THEN
             CYCLE
           ENDIF
@@ -4263,7 +4263,7 @@ CONTAINS
     DO nn = 1, ELEMENTAL_INFO_SET%NUMBER_OF_ENTRIES
       ALLOCATE( ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR )
       ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%SAME_HEADER = .FALSE.
-      ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS = 0
+      ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents = 0
       CALL CHECKED_DEALLOCATE( ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS )
     ENDDO
 
@@ -4275,7 +4275,7 @@ CONTAINS
       ENDIF
       DO var_idx=1, FIELD%NUMBER_OF_VARIABLES
         FIELD_VARIABLE=>FIELD%VARIABLES(var_idx)
-        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
           IF(.NOT.ASSOCIATED(FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS)) THEN
             CYCLE
           ENDIF
@@ -4292,11 +4292,11 @@ CONTAINS
             CALL GROW_ARRAY( ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS, 1, &
               & "Could not allocate component buffer in IO", ERR, ERROR, *999 )
             ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS( &
-              & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS+1 &
+              & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents+1 &
               & )%PTR=>FIELD%VARIABLES(var_idx)%COMPONENTS(component_idx)
             !increase number of component
-            ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS=&
-              & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS+1
+            ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents=&
+              & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents+1
           ENDDO !np
         ENDDO !component_idx
       ENDDO !var_idx
@@ -4369,11 +4369,11 @@ CONTAINS
 
     FIELD_IO_COMPARE_INFO_SET_COMPONENTS = .FALSE.
 
-    IF( SET1%NUMBER_OF_COMPONENTS /= SET2%NUMBER_OF_COMPONENTS ) THEN
+    IF( SET1%numberOfComponents /= SET2%numberOfComponents ) THEN
       RETURN
     ENDIF
 
-    DO component_idx = 1, SET1%NUMBER_OF_COMPONENTS
+    DO component_idx = 1, SET1%numberOfComponents
       !!not safe, but it is fast
       !!=============================================================================================!
       !!           checking according to local memory adddress                                       !
@@ -4382,7 +4382,7 @@ CONTAINS
       !IF(SET1%COMPONENTS(component_idx)%PTR/=&
       !  &SET2%COMPONENTS(component_idx)%PTR)
       !THEN
-      !   FIELD_IO_COMPARE_INFO_SETS=.FALSE. !out of loop-component_idx=1,SET1%NUMBER_OF_COMPONENTS
+      !   FIELD_IO_COMPARE_INFO_SETS=.FALSE. !out of loop-component_idx=1,SET1%numberOfComponents
       !   EXIT
       !ENDIF                      NUMBER_OF_NODES
 
@@ -4442,7 +4442,7 @@ CONTAINS
     doesMatch = .TRUE.
 
     !We have a potential match. Do a deeper inspection
-    DO component_idx=1, SET1%NUMBER_OF_COMPONENTS
+    DO component_idx=1, SET1%numberOfComponents
 
       DOMAIN_NODES1=>SET1%COMPONENTS(component_idx)%PTR%DOMAIN%TOPOLOGY%NODES
       FOUND=.FALSE.
@@ -4455,7 +4455,7 @@ CONTAINS
 
       IF( .NOT. FOUND ) THEN
         doesMatch = .FALSE.
-        EXIT !out of loop-component_idx=1,SET1%NUMBER_OF_COMPONENTS
+        EXIT !out of loop-component_idx=1,SET1%numberOfComponents
       ENDIF
 
       DOMAIN_NODES2=>SET2%COMPONENTS(component_idx)%PTR%DOMAIN%TOPOLOGY%NODES
@@ -4469,7 +4469,7 @@ CONTAINS
 
       IF( .NOT. FOUND ) THEN
         doesMatch = .FALSE.
-        EXIT !out of loop-component_idx=1,SET1%NUMBER_OF_COMPONENTS
+        EXIT !out of loop-component_idx=1,SET1%numberOfComponents
       ENDIF
 
       IF(DOMAIN_NODES1%NODES(local_number1)%numberOfDerivatives&
@@ -4497,7 +4497,7 @@ CONTAINS
         DEALLOCATE(array2)
         IF(tmp1/=0) THEN
           doesMatch = .FALSE.
-          EXIT !out of loop-component_idx=1,SET1%NUMBER_OF_COMPONENTS
+          EXIT !out of loop-component_idx=1,SET1%numberOfComponents
         ENDIF
       ELSE
         doesMatch = .FALSE.
@@ -4590,16 +4590,16 @@ CONTAINS
     !DO nn=1,NODAL_INFO_SET%NUMBER_OF_ENTRIES
     !   print "(A, I)", "nn=", nn
     !   !temporarily use nk, nu here to save memory
-    !   IF(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%NUMBER_OF_COMPONENTS/=1) THEN
+    !   IF(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents/=1) THEN
     !     component_idx=1
     !     DO WHILE(component_idx<NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%NUMBER_OF_COMPONNode:ENTS)
     !        !checking the same variable's components
     !       print "(A, I)", "component_idx=", component_idx
-    !       print "(A, I)", "NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%NUMBER_OF_COMPONENTS", NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%NUMBER_OF_COMPONENTS
+    !       print "(A, I)", "NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents", NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents
     !       DO WHILE(ASSOCIATED(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(component_idx)%PTR%FIELD_VARIABLE, &
     !       & TARGET=NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(component_idx+1)%PTR%FIELD_VARIABLE))
     !          component_idx=component_idx+1
-    !          IF(component_idx>=NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%NUMBER_OF_COMPONENTS) THEN
+    !          IF(component_idx>=NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents) THEN
     !             EXIT
     !          ENDIF
     !        ENDDO
@@ -4627,8 +4627,8 @@ CONTAINS
     !        ENDDO
     !        NULLIFY(tmp_ptr)
     !        component_idx=component_idx+1
-    !     ENDDO ! WHILE(component_idx<NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%NUMBER_OF_COMPONENTS)
-    !   ENDIF ! NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%NUMBER_OF_COMPONENTS/=1
+    !     ENDDO ! WHILE(component_idx<NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents)
+    !   ENDIF ! NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents/=1
     !ENDDO !nn
 
     EXITS("FIELD_IO_NODAL_INFO_SET_SORT")
@@ -5014,7 +5014,7 @@ CONTAINS
   !  global_number=NODAL_INFO_SET%LIST_OF_GLOBAL_NUMBER(LOCAL_NODAL_NUMBER)
   !  NULLIFY(field_ptr)
   !  NULLIFY(variable_ptr)
-  !  DO comp_idx=1,NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%NUMBER_OF_COMPONENTS
+  !  DO comp_idx=1,NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%numberOfComponents
   !     !calculate the number of fields
   !     IF (.NOT.ASSOCIATED(field_ptr, target=NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)% &
   !          &COMPONENTS(comp_idx)%PTR%FIELD)) THEN
@@ -5055,7 +5055,7 @@ CONTAINS
   !  NULLIFY(variable_ptr)
   !  GROUP_FIELDS(:)=0 !the item in this arrary is the number of variables in the same field
   !  GROUP_VARIABLES(:)=0 !the item in this arrary is the number of components in the same variable
-  !  DO comp_idx=1,NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%NUMBER_OF_COMPONENTS
+  !  DO comp_idx=1,NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%numberOfComponents
   !     !grouping field variables and components together
   !     IF((.NOT.ASSOCIATED(field_ptr,TARGET=NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)% &
   !          &COMPONENTS(comp_idx)%PTR%FIELD)).AND.(.NOT.ASSOCIATED(variable_ptr,TARGET=NODAL_INFO_SET% &
@@ -5223,7 +5223,7 @@ CONTAINS
     MAX_NUM_OF_NODAL_DERIVATIVES=0
     NULLIFY(field_ptr)
     NULLIFY(variable_ptr)
-    DO comp_idx=1,fieldInfoSet%NUMBER_OF_COMPONENTS
+    DO comp_idx=1,fieldInfoSet%numberOfComponents
       !calculate the number of fields
       IF (.NOT.ASSOCIATED(field_ptr, TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE%FIELD)) THEN
         NUM_OF_FIELDS=NUM_OF_FIELDS+1
@@ -5271,7 +5271,7 @@ CONTAINS
     NULLIFY(variable_ptr)
     GROUP_FIELDS(:)=0 !the item in this arrary is the number of variables in the same field
     GROUP_VARIABLES(:)=0 !the item in this arrary is the number of components in the same variable
-    DO comp_idx=1,fieldInfoSet%NUMBER_OF_COMPONENTS
+    DO comp_idx=1,fieldInfoSet%numberOfComponents
       !grouping field variables and components together
       IF((.NOT.ASSOCIATED(field_ptr,TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE%FIELD)).AND. &
           & (.NOT.ASSOCIATED(variable_ptr,TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE))) THEN !different field and variables
@@ -5299,7 +5299,7 @@ CONTAINS
     comp_idx1=1
     global_var_idx=0
 
-    CALL REALLOCATE( paddingInfo, fieldInfoSet%NUMBER_OF_COMPONENTS + 1, "Cannot allocate padding info", ERR, ERROR, *999 )
+    CALL REALLOCATE( paddingInfo, fieldInfoSet%numberOfComponents + 1, "Cannot allocate padding info", ERR, ERROR, *999 )
 
     ERR = FieldExport_FieldCount( sessionHandle, SUM(GROUP_FIELDS(1:NUM_OF_FIELDS) ) )
     IF(ERR/=0) THEN
@@ -5325,22 +5325,22 @@ CONTAINS
           NULLIFY(COORDINATE_SYSTEM)
           CALL FIELD_COORDINATE_SYSTEM_GET(variable_ptr%FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
           ERR = FieldExport_CoordinateVariable( sessionHandle, cvar_name, global_var_idx, &
-           & COORDINATE_SYSTEM%TYPE, variable_ptr%NUMBER_OF_COMPONENTS )
+           & COORDINATE_SYSTEM%TYPE, variable_ptr%numberOfComponents )
         ELSE
           ERR = FieldExport_Variable( sessionHandle, cvar_name, global_var_idx, variable_ptr%FIELD%TYPE,  &
            & variable_ptr%VARIABLE_TYPE, &
-           & variable_ptr%NUMBER_OF_COMPONENTS )
+           & variable_ptr%numberOfComponents )
         ENDIF
         IF( ERR /= 0 ) THEN
           CALL FlagError( "File write error during field export", ERR, ERROR,*999 )
         ENDIF
 
-        DO comp_idx=1, variable_ptr%NUMBER_OF_COMPONENTS
+        DO comp_idx=1, variable_ptr%numberOfComponents
           !write out the component information
 
           fieldComponent => variable_ptr%COMPONENTS(comp_idx)
 
-          IF( comp_idx1 <= fieldInfoSet%NUMBER_OF_COMPONENTS ) THEN
+          IF( comp_idx1 <= fieldInfoSet%numberOfComponents ) THEN
             !It's possible to run out of node-local components before we've examined all field components.
             component => fieldInfoSet%COMPONENTS(comp_idx1)%PTR
           ENDIF
@@ -5528,7 +5528,7 @@ CONTAINS
       !write out the components' values of this node in this domain
       total_nodal_values = 0
       CALL CHECKED_DEALLOCATE( TOTAL_NODAL_BUFFER )
-      DO comp_idx=1,NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS
+      DO comp_idx=1,NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents
         COMPONENT => NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(comp_idx)%PTR
         NUMBER_VERSIONS = NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENT_VERSIONS(comp_idx)
         DOMAIN_NODES=>COMPONENT%DOMAIN%TOPOLOGY%NODES
@@ -5634,7 +5634,7 @@ CONTAINS
       ENDDO !comp_idx
 
       !Note that paddingInfo's size is one more than the component count
-      DO paddingCount = 1, paddingInfo( NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS + 1 )
+      DO paddingCount = 1, paddingInfo( NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents + 1 )
         NUM_OF_NODAL_DEV = 1
         NODAL_BUFFER(1) = padding(1)
 
@@ -6092,7 +6092,7 @@ CONTAINS
       DO var_idx = 1, FIELD%NUMBER_OF_VARIABLES
         FIELD_VARIABLE => FIELD%VARIABLES( var_idx )
 
-        DO component_idx = 1, FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO component_idx = 1, FIELD_VARIABLE%numberOfComponents
           IF( .NOT.ASSOCIATED( FIELD_VARIABLE%COMPONENTS( component_idx )%DOMAIN%TOPOLOGY%NODES ) ) THEN
             CYCLE
           ENDIF
@@ -6129,7 +6129,7 @@ CONTAINS
     DO nn = 1, NODAL_INFO_SET%NUMBER_OF_ENTRIES
       ALLOCATE( NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR )
       NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%SAME_HEADER = .FALSE.
-      NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS = 0
+      NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents = 0
       CALL CHECKED_DEALLOCATE( NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS )
       CALL CHECKED_DEALLOCATE( NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENT_VERSIONS )
     ENDDO
@@ -6143,7 +6143,7 @@ CONTAINS
 
       DO var_idx=1, FIELD%NUMBER_OF_VARIABLES
         FIELD_VARIABLE => FIELD%VARIABLES( var_idx )
-        DO component_idx = 1, FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+        DO component_idx = 1, FIELD_VARIABLE%numberOfComponents
           IF( FIELD_VARIABLE%COMPONENTS( component_idx )%interpolationType /= FIELD_NODE_BASED_INTERPOLATION ) THEN
             CYCLE
           ENDIF
@@ -6169,14 +6169,14 @@ CONTAINS
                 CALL GROW_ARRAY( NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS, 1, &
                   & "Could not allocate temporary buffer in IO", ERR, ERROR, *999 )
                 NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR &
-                  & %NUMBER_OF_COMPONENTS+1)%PTR=>FIELD%VARIABLES( var_idx )%COMPONENTS( component_idx )
-                NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS = &
-                  & NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS+1
+                  & %numberOfComponents+1)%PTR=>FIELD%VARIABLES( var_idx )%COMPONENTS( component_idx )
+                NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents = &
+                  & NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents+1
                 CALL GROW_ARRAY( NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENT_VERSIONS, 1, &
                   & "Could not allocate temporary buffer in IO", ERR, ERROR, *999 )
                 NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENT_VERSIONS( &
                   & NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR &
-                  & %NUMBER_OF_COMPONENTS) = MAX_NUMBER_VERSIONS
+                  & %numberOfComponents) = MAX_NUMBER_VERSIONS
                 EXIT
               ENDIF
             ENDDO
@@ -6212,7 +6212,7 @@ CONTAINS
     IF(ALLOCATED(LOCAL_PROCESS_INFO_SET%COMPONENT_INFO_SET)) THEN
       DO nn=1, LOCAL_PROCESS_INFO_SET%NUMBER_OF_ENTRIES
         IF(ALLOCATED(LOCAL_PROCESS_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS)) THEN
-          DO ncomp=1, LOCAL_PROCESS_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%NUMBER_OF_COMPONENTS
+          DO ncomp=1, LOCAL_PROCESS_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents
             NULLIFY(LOCAL_PROCESS_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(ncomp)%PTR)
           ENDDO
           CALL CHECKED_DEALLOCATE( LOCAL_PROCESS_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS )

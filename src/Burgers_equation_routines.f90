@@ -179,7 +179,7 @@ CONTAINS
                 FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL Field_ParameterSetEnsureCreated(dependentField,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
@@ -1519,7 +1519,7 @@ CONTAINS
                             variable_type=dependentField%VARIABLES(variable_idx)%VARIABLE_TYPE
                             FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
                             IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                              DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                              DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                 IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== &
                                   & FIELD_NODE_BASED_INTERPOLATION) THEN
                                 DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -2242,7 +2242,7 @@ CONTAINS
             ENDIF
             !Loop over rows
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
               DEPENDENT_BASIS1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT1)%ptr% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -2254,7 +2254,7 @@ CONTAINS
                 nhs=0
                 PHIMS=QUADRATURE_SCHEME1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                 !Loop over element columns
-                DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO nh=1,FIELD_VARIABLE%numberOfComponents
                   MESH_COMPONENT2=FIELD_VARIABLE%COMPONENTS(nh)%meshComponentNumber
                   DEPENDENT_BASIS2=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT2)%ptr% &
                     & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -2275,7 +2275,7 @@ CONTAINS
                     SUM2=0.0_DP
                     IF(nh==mh) THEN
                       !Loop over spatial directions
-                      DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                      DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                         U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_VAR_TYPE)%ptr%VALUES(nj,NO_PART_DERIV)
                         SUM3=0.0_DP
                         DO ni=1,DEPENDENT_BASIS1%numberOfXi
@@ -2464,7 +2464,7 @@ CONTAINS
               ENDIF
             ENDIF
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               MESH_COMPONENT1=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
               DEPENDENT_BASIS1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT1)%ptr% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -2478,7 +2478,7 @@ CONTAINS
                   IF(evaluateStiffness.OR.evaluateDamping) THEN
                     nhs=0
                     !Loop over element columns
-                    DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO nh=1,FIELD_VARIABLE%numberOfComponents
                       MESH_COMPONENT2=FIELD_VARIABLE%COMPONENTS(mh)%meshComponentNumber
                       DEPENDENT_BASIS2=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT2)%ptr% &
                         & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -2522,7 +2522,7 @@ CONTAINS
                 IF(evaluateResidual) THEN
                   PHIMS=QUADRATURE_SCHEME1%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
                   SUM=0.0_DP
-                  DO nj=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nj=1,FIELD_VARIABLE%numberOfComponents
                     U_VALUE=equations%interpolation%dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(nj,NO_PART_DERIV)
                     SUM1=0.0_DP
                     !Calculate SUM
@@ -2545,14 +2545,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
             mhs=0
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(evaluateStiffness.OR.evaluateDamping) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       IF(evaluateStiffness) &

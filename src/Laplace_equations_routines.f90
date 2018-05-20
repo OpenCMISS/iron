@@ -149,7 +149,7 @@ CONTAINS
                 FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(dependentField,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                  DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                     IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                       DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
@@ -516,7 +516,7 @@ CONTAINS
               & quadratureScheme%GAUSS_WEIGHTS(ng)
             !Loop over field components
             mhs=0          
-            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%numberOfComponents
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
               DO ms=1,dependentBasis%numberOfElementParameters
@@ -524,7 +524,7 @@ CONTAINS
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                  DO nh=1,fieldVariable%numberOfComponents
                     DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       DO ni=1,dependentBasis%numberOfXi
@@ -556,14 +556,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
               & dependentInterpParameters(fieldVarType)%ptr,err,error,*999)
             mhs=0          
-            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%numberOfComponents
               !Loop over element rows
               DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                  DO nh=1,fieldVariable%numberOfComponents
                     DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
@@ -678,14 +678,14 @@ CONTAINS
             
             !Loop over field components
             mhs=0          
-            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%numberOfComponents
               !Loop over element rows
               DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1
                 !Loop over field components
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
-                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                  DO nh=1,fieldVariable%numberOfComponents
                     !Loop over element columns
                     DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
@@ -724,14 +724,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
               & dependentInterpParameters(fieldVarType)%ptr,err,error,*999)
             mhs=0          
-            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%numberOfComponents
               !Loop over element rows
               DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                  DO nh=1,fieldVariable%numberOfComponents
                     DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &
@@ -786,14 +786,14 @@ CONTAINS
 
             kValue(1)=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
             kValue(2)=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(2,NO_PART_DERIV)
-            IF(fieldVariable%NUMBER_OF_COMPONENTS==3) THEN
+            IF(fieldVariable%numberOfComponents==3) THEN
               kValue(3)=equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,NO_PART_DERIV)
             END IF 
 
 
             !Loop over field components
             mhs=0          
-            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%numberOfComponents
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
               DO ms=1,dependentBasis%numberOfElementParameters
@@ -801,7 +801,7 @@ CONTAINS
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                  DO nh=1,fieldVariable%numberOfComponents
                     DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       DO ni=1,dependentBasis%numberOfXi
@@ -833,14 +833,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
               & dependentInterpParameters(fieldVarType)%ptr,err,error,*999)
             mhs=0          
-            DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO mh=1,fieldVariable%numberOfComponents
               !Loop over element rows
               DO ms=1,dependentBasis%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                  DO nh=1,fieldVariable%numberOfComponents
                     DO ns=1,dependentBasis%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &

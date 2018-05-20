@@ -154,7 +154,7 @@ CONTAINS
                   FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
                   IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                     CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-                    DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                    DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                       IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                         IF(MATERIALS_VARIABLE%COMPONENTS(1)%interpolationType==FIELD_CONSTANT_INTERPOLATION) THEN
                           local_ny=MATERIALS_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
@@ -383,7 +383,7 @@ CONTAINS
               & QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
@@ -391,7 +391,7 @@ CONTAINS
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       PGM=QUADRATURE_SCHEME%GAUSS_BASIS_FNS(ms,NO_PART_DERIV,ng)
@@ -425,14 +425,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_VAR_TYPE)%PTR,err,error,*999)
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(equationsMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       equationsMatrix%elementMatrix%matrix(mhs,nhs)=equationsMatrix%elementMatrix%matrix(mhs,nhs)* &

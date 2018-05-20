@@ -3256,7 +3256,7 @@ CONTAINS
           IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
             FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR
             IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-              DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+              DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                 FIELD_VARIABLE_COMPONENT=>FIELD_VARIABLE%COMPONENTS(component_idx)
                 MESH_COMPONENT=FIELD_VARIABLE_COMPONENT%meshComponentNumber
                 IF(FIELD_VARIABLE_COMPONENT%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
@@ -3415,7 +3415,7 @@ CONTAINS
     IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
       FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR
       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-        IF(FIELD_VARIABLE%NUMBER_OF_COMPONENTS==3) THEN
+        IF(FIELD_VARIABLE%numberOfComponents==3) THEN
           CALL FIELD_SCALING_TYPE_GET(FIELD,SCALING_TYPE,ERR,ERROR,*999)
           IF(SCALING_TYPE/=FIELD_UNIT_SCALING) &
             & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"  Note: If the cylinder looks wonky, set field scaling to&
@@ -3424,7 +3424,7 @@ CONTAINS
             INTERPOLATION_TYPES(component_idx)=FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType
           ENDDO
           IF(ALL(INTERPOLATION_TYPES==FIELD_NODE_BASED_INTERPOLATION)) THEN
-            DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO component_idx=1,FIELD_VARIABLE%numberOfComponents
               FIELD_VARIABLE_COMPONENT=>FIELD_VARIABLE%COMPONENTS(component_idx)
               MESH_COMPONENT=FIELD_VARIABLE_COMPONENT%meshComponentNumber
               ! calculate the total number of nodes in each xi direction
@@ -3606,7 +3606,7 @@ CONTAINS
     IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
        FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR
        IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-          IF(FIELD_VARIABLE%NUMBER_OF_COMPONENTS==3) THEN
+          IF(FIELD_VARIABLE%numberOfComponents==3) THEN
              MESH_COMPONENT=FIELD_VARIABLE%COMPONENTS(1)%meshComponentNumber
              DO component_idx=2,3
                 IF(FIELD_VARIABLE%COMPONENTS(component_idx)%meshComponentNumber/=MESH_COMPONENT) THEN
@@ -3666,7 +3666,7 @@ CONTAINS
                       RECT_COORDS(1)=0
                       RECT_COORDS(2)=0
                       RECT_COORDS(3)=-ELLIPSOID_EXTENT(1)
-                      DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                      DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                          !Default to version 1 of each node derivative
                          CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                               & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
@@ -3690,7 +3690,7 @@ CONTAINS
                          npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
                          CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                          IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
-                            DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                            DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                     & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
@@ -3713,7 +3713,7 @@ CONTAINS
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
                       CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
-                         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                             local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
@@ -3744,7 +3744,7 @@ CONTAINS
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
                             CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
-                               DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                               DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                   local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
@@ -3771,7 +3771,7 @@ CONTAINS
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
                       CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
-                         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                             local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
@@ -3794,7 +3794,7 @@ CONTAINS
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
                             CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
-                               DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                               DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                   local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
@@ -3824,7 +3824,7 @@ CONTAINS
                       RECT_COORDS(1)=0
                       RECT_COORDS(2)=0
                       RECT_COORDS(3)=-ELLIPSOID_EXTENT(1)
-                      DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                      DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                          CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                               & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                          local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
@@ -3847,7 +3847,7 @@ CONTAINS
                          npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
                          CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                          IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
-                            DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                            DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                     & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
@@ -3870,7 +3870,7 @@ CONTAINS
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
                       CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
-                         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                  & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                             local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)
@@ -3901,7 +3901,7 @@ CONTAINS
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
                             CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
-                               DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                               DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
                                        & component_idx,RECT_COORDS(component_idx),ERR,ERROR,*999)
                                   local_node=DOMAIN%MAPPINGS%NODES%globalToLocalMap(npg)%localNumber(1)

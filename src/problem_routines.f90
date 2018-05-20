@@ -3508,7 +3508,7 @@ CONTAINS
                   dataProjection=>interfaceDatapoints%dataProjections%dataProjections(coupledMeshIdx+1)%PTR
                   DO interfaceElementNumber=1,SIZE(pointsConnectivity%coupledElements,1)
                     decompositionElementData=>interfaceCondition%LAGRANGE%LAGRANGE_FIELD%DECOMPOSITION%TOPOLOGY%dataPoints% &
-                      & elementDataPoint(interfaceElementNumber)
+                      & elementDataPoints(interfaceElementNumber)
                     DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
                       globalDataPointNumber=decompositionElementData%dataIndices(dataPointIdx)%globalNumber
                       WRITE(IUNIT,'(1X,''Node:'',I4)') globalDataPointNumber

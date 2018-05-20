@@ -138,7 +138,7 @@ CONTAINS
   SUBROUTINE Region_AssertIsFinished(region,err,error,*)
 
     !Argument Variables
-    TYPE(RegionType), POINTER, INTENT(INOUT) :: region !<The work group to assert the finished status for
+    TYPE(RegionType), POINTER, INTENT(INOUT) :: region !<The region to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -169,7 +169,7 @@ CONTAINS
   SUBROUTINE Region_AssertNotFinished(region,err,error,*)
 
     !Argument Variables
-    TYPE(RegionType), POINTER, INTENT(INOUT) :: region !<The work group to assert the finished status for
+    TYPE(RegionType), POINTER, INTENT(INOUT) :: region !<The region to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

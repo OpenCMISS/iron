@@ -385,7 +385,7 @@ CONTAINS
                 !Check that the dependent variables have the same number of components
                 FIELD_VARIABLE=>INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                  NUMBER_OF_COMPONENTS=FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  NUMBER_OF_COMPONENTS=FIELD_VARIABLE%numberOfComponents
                   DO variable_idx=2,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
                     FIELD_VARIABLE=>INTERFACE_DEPENDENT%FIELD_VARIABLES(variable_idx)%PTR
                     IF(ASSOCIATED(FIELD_VARIABLE)) THEN
@@ -1470,28 +1470,28 @@ CONTAINS
                 !Default the number of component to be the minimum number of components across all the coupled dependent variables
                 !\todo Check ordering of variable components which are coupled and uncoupled are handled correctly to ensure that
                 !coupled variable components don't have to always come before the uncoupled variable components
-                INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS=0
+                INTERFACE_CONDITION%LAGRANGE%numberOfComponents=0
                 DO dependent_variable_number=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
-                  IF (INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%NUMBER_OF_COMPONENTS< &
-                    & INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS) THEN
-                    INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS= &
-                      & INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%NUMBER_OF_COMPONENTS
-                  ELSEIF (INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS==0) THEN
-                    INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS= &
-                      & INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%NUMBER_OF_COMPONENTS
+                  IF (INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%numberOfComponents< &
+                    & INTERFACE_CONDITION%LAGRANGE%numberOfComponents) THEN
+                    INTERFACE_CONDITION%LAGRANGE%numberOfComponents= &
+                      & INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%numberOfComponents
+                  ELSEIF (INTERFACE_CONDITION%LAGRANGE%numberOfComponents==0) THEN
+                    INTERFACE_CONDITION%LAGRANGE%numberOfComponents= &
+                      & INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%numberOfComponents
                   ENDIF
                 ENDDO
                 ! Remove pressure component from number of coupled components
                 ! INTERFACE_CONDITION_SOLID_FLUID_OPERATOR might not be used as it is equivalent to
                 ! INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR if set up correctly
                 IF (INTERFACE_CONDITION%OPERATOR==INTERFACE_CONDITION_SOLID_FLUID_OPERATOR) THEN
-                  INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS=INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS-1
+                  INTERFACE_CONDITION%LAGRANGE%numberOfComponents=INTERFACE_CONDITION%LAGRANGE%numberOfComponents-1
                 ENDIF
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS,err,error,*999)
+                  & INTERFACE_CONDITION%LAGRANGE%numberOfComponents,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
-                  & INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS,err,error,*999)
-                DO component_idx=1,INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS
+                  & INTERFACE_CONDITION%LAGRANGE%numberOfComponents,err,error,*999)
+                DO component_idx=1,INTERFACE_CONDITION%LAGRANGE%numberOfComponents
                   CALL Field_ComponentInterpolationGet(INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR%FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,interpolation_type,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD, &
@@ -1586,7 +1586,7 @@ CONTAINS
         INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FINISHED=.FALSE.
         INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD_AUTO_CREATED=.FALSE.
         NULLIFY(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD)
-        INTERFACE_CONDITION%LAGRANGE%NUMBER_OF_COMPONENTS=0
+        INTERFACE_CONDITION%LAGRANGE%numberOfComponents=0
       ENDIF
     ELSE
       CALL FlagError("Interface condition is not associated.",err,error,*999)
@@ -1750,8 +1750,8 @@ CONTAINS
                 ELSE
                   !Default the number of component to the first variable of the interface dependent field's number of components, 
                   CALL FIELD_NUMBER_OF_COMPONENTS_SET(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR%NUMBER_OF_COMPONENTS,err,error,*999)
-                  DO component_idx=1,INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR%NUMBER_OF_COMPONENTS
+                    & INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR%numberOfComponents,err,error,*999)
+                  DO component_idx=1,INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR%numberOfComponents
                     CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD, &
                       & FIELD_U_VARIABLE_TYPE,component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                   ENDDO !component_idx

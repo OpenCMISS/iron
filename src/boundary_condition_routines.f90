@@ -2392,8 +2392,8 @@ CONTAINS
             SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%interpolationType)
             CASE(FIELD_NODE_BASED_INTERPOLATION)
               nodeNumber=rhsVariable%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,localDofNyy)
-              IF(.NOT.ASSOCIATED(topology%NODES%NODES)) THEN
-                CALL FlagError("Topology nodes are not associated.",err,error,*999)
+              IF(.NOT.ALLOCATED(topology%NODES%NODES)) THEN
+                CALL FlagError("Topology nodes are not allocated.",err,error,*999)
               END IF
               IF(topology%NODES%NODES(nodeNumber)%boundaryNode) THEN
                 SELECT CASE(rhsVariable%COMPONENTS(componentNumber)%DOMAIN%numberOfDimensions)

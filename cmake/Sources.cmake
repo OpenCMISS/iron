@@ -117,6 +117,7 @@ set(IRON_Fortran_SRC
     multi_physics_routines.f90
     Navier_Stokes_equations_routines.f90
     node_routines.f90
+    node_access_routines.f90
     opencmiss.f90
     opencmiss_iron.f90
     Poiseuille_equations_routines.f90

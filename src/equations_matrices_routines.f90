@@ -633,7 +633,7 @@ CONTAINS
     IF(updateMatrix) THEN
       IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
         !Row and columns variable is the same.
-        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+        DO componentIdx=1,rowsFieldVariable%numberOfComponents
           elementsTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%elements
           DO elementIdx=1,SIZE(rowElementNumbers)
             rowElementNumber=rowElementNumbers(elementIdx)
@@ -683,8 +683,8 @@ CONTAINS
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
               decompositionData=>rowsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
-              DO dataPointIdx=1,decompositionData%elementDataPoint(rowElementNumber)%numberOfProjectedData
-                localDataPointNumber=decompositionData%elementDataPoint(rowElementNumber)%dataIndices(dataPointIdx)%localNumber
+              DO dataPointIdx=1,decompositionData%elementDataPoints(rowElementNumber)%numberOfProjectedData
+                localDataPointNumber=decompositionData%elementDataPoints(rowElementNumber)%dataIndices(dataPointIdx)%localNumber
                 localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
                   & DATA_POINTS(localDataPointNumber)
                 globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
@@ -705,7 +705,7 @@ CONTAINS
       ELSE
         !Row and column variables are different
         !Row mapping
-        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+        DO componentIdx=1,rowsFieldVariable%numberOfComponents
           elementsTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%elements
           DO elementIdx=1,SIZE(rowElementNumbers)
             rowElementNumber=rowElementNumbers(elementIdx)
@@ -746,8 +746,8 @@ CONTAINS
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
               decompositionData=>rowsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
-              DO dataPointIdx=1,decompositionData%elementDataPoint(colElementNumber)%numberOfProjectedData
-                localDataPointNumber=decompositionData%elementDataPoint(colElementNumber)%dataIndices(dataPointIdx)%localNumber
+              DO dataPointIdx=1,decompositionData%elementDataPoints(colElementNumber)%numberOfProjectedData
+                localDataPointNumber=decompositionData%elementDataPoints(colElementNumber)%dataIndices(dataPointIdx)%localNumber
                 localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
                   & DATA_POINTS(localDataPointNumber)
                 globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
@@ -764,7 +764,7 @@ CONTAINS
           ENDDO !elementIdx
         ENDDO !componentIdx
         !Column mapping
-        DO componentIdx=1,colsFieldVariable%NUMBER_OF_COMPONENTS
+        DO componentIdx=1,colsFieldVariable%numberOfComponents
           elementsTopology=>colsFieldVariable%components(componentIdx)%domain%topology%elements
           DO elementIdx=1,SIZE(columnElementNumbers)
             colElementNumber=columnElementNumbers(elementIdx)
@@ -808,8 +808,8 @@ CONTAINS
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
               decompositionData=>colsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
-              DO dataPointIdx=1,decompositionData%elementDataPoint(colElementNumber)%numberOfProjectedData
-                localDataPointNumber=decompositionData%elementDataPoint(colElementNumber)%dataIndices(dataPointIdx)%localNumber
+              DO dataPointIdx=1,decompositionData%elementDataPoints(colElementNumber)%numberOfProjectedData
+                localDataPointNumber=decompositionData%elementDataPoints(colElementNumber)%dataIndices(dataPointIdx)%localNumber
                 localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
                   & DATA_POINTS(localDataPointNumber)
                 globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
@@ -921,13 +921,13 @@ CONTAINS
     IF(ALLOCATED(elementMatrix%matrix)) CALL FlagError("Element matrix already allocated.",err,error,*999)
      
     elementMatrix%maxNumberOfRows=0
-    DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+    DO componentIdx=1,rowsFieldVariable%numberOfComponents
       elementMatrix%maxNumberOfRows=elementMatrix%maxNumberOfRows+ &
         & rowsFieldVariable%components(componentIdx)%maxNumberElementInterpolationParameters
     ENDDO !componentIdx
     elementMatrix%maxNumberOfRows=elementMatrix%maxNumberOfRows*rowsNumberOfElements
     elementMatrix%maxNumberOfColumns=0
-    DO componentIdx=1,columnsFieldVariable%NUMBER_OF_COMPONENTS
+    DO componentIdx=1,columnsFieldVariable%numberOfComponents
       elementMatrix%maxNumberOfColumns=elementMatrix%maxNumberOfColumns+ &
         & columnsFieldVariable%components(componentIdx)%maxNumberElementInterpolationParameters
     ENDDO !componentIdx
@@ -975,7 +975,7 @@ CONTAINS
     !Calculate the rows for the element vector
     elementVector%numberOfRows=0
     IF(updateVector) THEN
-      DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+      DO componentIdx=1,rowsFieldVariable%numberOfComponents
         elementsTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%elements
         IF(elementNumber<1.OR.elementNumber>elementsTopology%totalNumberOfElements) THEN
           localError="Element number "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
@@ -1013,8 +1013,8 @@ CONTAINS
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
           decompositionData=>rowsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
-          DO dataPointIdx=1,decompositionData%elementDataPoint(elementNumber)%numberOfProjectedData
-            localDataPointNumber=decompositionData%elementDataPoint(elementNumber)% &
+          DO dataPointIdx=1,decompositionData%elementDataPoints(elementNumber)%numberOfProjectedData
+            localDataPointNumber=decompositionData%elementDataPoints(elementNumber)% &
               & dataIndices(dataPointIdx)%localNumber
             localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
               & DATA_POINTS(localDataPointNumber)
@@ -1112,7 +1112,7 @@ CONTAINS
     IF(ALLOCATED(elementVector%vector)) CALL FlagError("Element vector vector already allocated.",err,error,*999)
    
     elementVector%maxNumberOfRows = 0
-    DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+    DO componentIdx=1,rowsFieldVariable%numberOfComponents
       elementVector%maxNumberOfRows=elementVector%maxNumberOfRows+ &
         & rowsFieldVariable%components(componentIdx)%maxNumberElementInterpolationParameters
     ENDDO !componentIdx
@@ -1531,7 +1531,7 @@ CONTAINS
     IF(updateMatrix) THEN
       IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
         !Row and columns variable is the same.
-        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+        DO componentIdx=1,rowsFieldVariable%numberOfComponents
           nodesTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%nodes
           IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%totalNumberOfNodes) THEN
             localError="Nodal number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
@@ -1587,7 +1587,7 @@ CONTAINS
       ELSE
         !Row and column variables are different
         !Row mapping
-        DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+        DO componentIdx=1,rowsFieldVariable%numberOfComponents
           nodesTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%nodes
           IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%totalNumberOfNodes) THEN
             localError="Row nodal number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
@@ -1632,7 +1632,7 @@ CONTAINS
           END SELECT
         ENDDO !componentIdx
         !Column mapping
-        DO componentIdx=1,colsFieldVariable%NUMBER_OF_COMPONENTS
+        DO componentIdx=1,colsFieldVariable%numberOfComponents
           nodesTopology=>colsFieldVariable%components(componentIdx)%domain%topology%nodes
           IF(columnNodeNumber<1.OR.columnNodeNumber>nodesTopology%totalNumberOfNodes) THEN
             localError="Column nodal number "//TRIM(NumberToVString(columnNodeNumber,"*",err,error))// &
@@ -1716,7 +1716,7 @@ CONTAINS
     !Calculate the rows for the nodal vector
     nodalVector%numberOfRows=0
     IF(updateVector) THEN
-      DO componentIdx=1,rowsFieldVariable%NUMBER_OF_COMPONENTS
+      DO componentIdx=1,rowsFieldVariable%numberOfComponents
         nodesTopology=>rowsFieldVariable%components(componentIdx)%domain%topology%nodes
         IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%totalNumberOfNodes) THEN
           localError="Node number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
@@ -2038,8 +2038,8 @@ CONTAINS
     IF(ALLOCATED(nodalMatrix%columnDofs)) CALL FlagError("Nodal matrix column dofs already allocated.",err,error,*998)
     IF(ALLOCATED(nodalMatrix%matrix)) CALL FlagError("Nodal matrix already allocated.",err,error,*998)
     
-    nodalMatrix%maxNumberOfRows=rowsFieldVariable%maxNumberNodeInterpolationParameters*rowsFieldVariable%NUMBER_OF_COMPONENTS
-    nodalMatrix%maxNumberOfColumns=colsFieldVariable%maxNumberNodeInterpolationParameters*colsFieldVariable%NUMBER_OF_COMPONENTS
+    nodalMatrix%maxNumberOfRows=rowsFieldVariable%maxNumberNodeInterpolationParameters*rowsFieldVariable%numberOfComponents
+    nodalMatrix%maxNumberOfColumns=colsFieldVariable%maxNumberNodeInterpolationParameters*colsFieldVariable%numberOfComponents
     ALLOCATE(nodalMatrix%rowDofs(nodalMatrix%maxNumberOfRows),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate nodal matrix row dofs.",err,error,*999)
     ALLOCATE(nodalMatrix%columnDofs(nodalMatrix%maxNumberOfColumns),STAT=err)
@@ -2077,7 +2077,7 @@ CONTAINS
     IF(ALLOCATED(nodalVector%rowDofs)) CALL FlagError("Nodal vector row dofs is already allocated.",err,error,*998)
     IF(ALLOCATED(nodalVector%vector)) CALL FlagError("Nodal vector vector already allocated.",err,error,*998)
         
-    nodalVector%maxNumberOfRows=rowsFieldVariable%maxNumberNodeInterpolationParameters*rowsFieldVariable%NUMBER_OF_COMPONENTS
+    nodalVector%maxNumberOfRows=rowsFieldVariable%maxNumberNodeInterpolationParameters*rowsFieldVariable%numberOfComponents
     ALLOCATE(nodalVector%rowDofs(nodalVector%maxNumberOfRows),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate nodal vector row dofs.",err,error,*999)
     ALLOCATE(nodalVector%vector(nodalVector%maxNumberOfRows),STAT=err)
@@ -4338,7 +4338,7 @@ CONTAINS
           !Loop over all elements containing the dof
           DO elementIdx=1,domainNodes%nodes(node)%numberOfSurroundingElements
             element=domainNodes%nodes(node)%surroundingElements(elementIdx)
-            DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO componentIdx=1,fieldVariable%numberOfComponents
               domainElements=>fieldVariable%components(componentIdx)%domain%topology%elements
               basis=>domainElements%elements(element)%basis
               DO localNodeIdx=1,basis%numberOfNodes
@@ -4395,11 +4395,11 @@ CONTAINS
           NULLIFY(columnIndicesLists(localDofIdx)%ptr)
           CALL List_CreateStart(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
           CALL List_DataTypeSet(columnIndicesLists(localDofIdx)%ptr,LIST_INTG_TYPE,err,error,*999)          
-          CALL List_InitialSizeSet(columnIndicesLists(localDofIdx)%ptr,fieldVariable%NUMBER_OF_COMPONENTS* &
+          CALL List_InitialSizeSet(columnIndicesLists(localDofIdx)%ptr,fieldVariable%numberOfComponents* &
             & fieldVariable%maxNumberElementInterpolationParameters,err,error,*999)          
           CALL List_CreateFinish(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
           !Loop over all components, nodes, derivatives and versions
-          DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+          DO componentIdx=1,fieldVariable%numberOfComponents
             numberOfDerivatives=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)%numberOfDerivatives
             DO derivativeIdx=1,numberOfDerivatives
               numberOfVersions=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)% &
@@ -4624,7 +4624,7 @@ CONTAINS
             !Loop over all elements containing the dof
             DO elementIdx=1,domainNodes%nodes(node)%numberOfSurroundingElements
               element=domainNodes%nodes(node)%surroundingElements(elementIdx)
-              DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+              DO componentIdx=1,fieldVariable%numberOfComponents
                 SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
                 CASE(FIELD_CONSTANT_INTERPOLATION)
                   ! do nothing? this will probably never be encountered...?
@@ -4680,7 +4680,7 @@ CONTAINS
             CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr, &
               & rowVariable%components(component)%maxNumberElementInterpolationParameters+1,err,error,*999) ! size = all nodal dofs + itself
             CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
-            DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO componentIdx=1,fieldVariable%numberOfComponents
               domainElements2=>fieldVariable%components(componentIdx)%domain%topology%elements
               basis2=>domainElements2%elements(element)%basis
               SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
@@ -4759,11 +4759,11 @@ CONTAINS
             NULLIFY(columnIndicesLists(localDofIdx)%ptr)
             CALL List_CreateStart(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
             CALL List_DataTypeSet(columnIndicesLists(localDofIdx)%ptr,LIST_INTG_TYPE,err,error,*999)            
-            CALL List_InitialSizeSet(columnIndicesLists(localDofIdx)%ptr,fieldVariable%NUMBER_OF_COMPONENTS* &
+            CALL List_InitialSizeSet(columnIndicesLists(localDofIdx)%ptr,fieldVariable%numberOfComponents* &
               & fieldVariable%maxNumberElementInterpolationParameters,err,error,*999)            
             CALL List_CreateFinish(columnIndicesLists(localDofIdx)%ptr,err,error,*999)
             !Loop over all components,nodes,derivatives, and versions
-            DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+            DO componentIdx=1,fieldVariable%numberOfComponents
               SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
               CASE(FIELD_NODE_BASED_INTERPOLATION)
                 numberOfDerivatives=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)%numberOfDerivatives

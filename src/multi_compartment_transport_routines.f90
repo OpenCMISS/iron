@@ -576,7 +576,7 @@ CONTAINS
                               variable_type=DEPENDENT_FIELD%VARIABLES(2*eqnset_idx-1)%VARIABLE_TYPE
                               FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                   IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== & 
                                     & FIELD_NODE_BASED_INTERPOLATION) THEN
                                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -700,7 +700,7 @@ CONTAINS
                       variable_type=FIELD_U_VARIABLE_TYPE
                       FIELD_VARIABLE=>SOURCE_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
                       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                           IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
                             DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
                             IF(ASSOCIATED(DOMAIN)) THEN

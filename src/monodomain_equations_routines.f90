@@ -440,7 +440,7 @@ CONTAINS
 
             ! basis function chain rule taken out of the inner loop.
             DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
-            DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+            DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
               DPHIDX(nj,ms)=0.0_DP
               DO ni=1,DEPENDENT_BASIS%numberOfXi                          
                 DPHIDX(nj,ms)=DPHIDX(nj,ms) + &
@@ -454,7 +454,7 @@ CONTAINS
             Df = equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(2,NO_PART_DERIV) ! 2 = Df
             Dt = equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3,NO_PART_DERIV) ! 3 = Dt
             fnorm = 0.0
-            DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+            DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
               f(nj) = equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(3+nj,NO_PART_DERIV) ! 4,5[,6] = f
               fnorm = fnorm + f(nj)*f(nj)
             ENDDO
@@ -465,30 +465,30 @@ CONTAINS
             ELSE
               f = f / fnorm
             ENDIF
-            DO ni=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+            DO ni=1,GEOMETRIC_VARIABLE%numberOfComponents
               D(ni,:)  = 0.0
               D(ni,ni) = Dt
-              DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+              DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                 D(ni,nj) = D(ni,nj) + (Df - Dt) * f(ni) * f(nj)
               ENDDO
             ENDDO
 
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                   !Loop over element columns. TODO: use symmetry?
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       IF(stiffnessMatrix%updateMatrix) THEN
                         SUM=0.0_DP
-                        DO ni=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS 
-                        DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                        DO ni=1,GEOMETRIC_VARIABLE%numberOfComponents 
+                        DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                           SUM=SUM + D(ni,nj) * DPHIDX(ni,ms) * DPHIDX(nj,ns)
                         ENDDO !nj
                         ENDDO !ni
@@ -517,14 +517,14 @@ CONTAINS
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,ERR,ERROR,*999)
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1                    
                 nhs=0
                 IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                   !Loop over element columns
-                  DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                  DO nh=1,FIELD_VARIABLE%numberOfComponents
                     DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                       nhs=nhs+1
                       IF(stiffnessMatrix%updateMatrix) THEN

@@ -251,10 +251,10 @@ CONTAINS
               CALL FlagError("Decomposition topology is not associated on the independent field.",err,error,*999)
             ENDIF
             !Loop over data points
-            DO dataPointIdx=1,dataPoints%elementDataPoint(elementNumber)%numberOfProjectedData
-              dataPointUserNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%userNumber
-              dataPointLocalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%localNumber
-              dataPointGlobalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%globalNumber
+            DO dataPointIdx=1,dataPoints%elementDataPoints(elementNumber)%numberOfProjectedData
+              dataPointUserNumber = dataPoints%elementDataPoints(elementNumber)%dataIndices(dataPointIdx)%userNumber
+              dataPointLocalNumber = dataPoints%elementDataPoints(elementNumber)%dataIndices(dataPointIdx)%localNumber
+              dataPointGlobalNumber = dataPoints%elementDataPoints(elementNumber)%dataIndices(dataPointIdx)%globalNumber
               ! Need to use global number to get the correct projection results
               projectionXi(1:numberOfXi) = dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi(1:numberOfXi)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
@@ -275,7 +275,7 @@ CONTAINS
 
               dependentParameterRowIdx=0
               !Loop over element rows
-              DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+              DO dependentComponentRowIdx=1,dependentVariable%numberOfComponents
                 meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr%topology%elements% &
                   & elements(elementNumber)%basis
@@ -286,7 +286,7 @@ CONTAINS
                     & projectionXi,err,error)
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
-                    DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                    DO dependentComponentColumnIdx=1,dependentVariable%numberOfComponents
                       meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
@@ -346,7 +346,7 @@ CONTAINS
 
                   !Loop over field components
                   dependentParameterRowIdx=0
-                  DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                  DO dependentComponentRowIdx=1,dependentVariable%numberOfComponents
                     !Loop over element rows
                     meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%meshComponentNumber
                     dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
@@ -356,7 +356,7 @@ CONTAINS
                       dependentParameterRowIdx=dependentParameterRowIdx+1
                       dependentParameterColumnIdx=0
                       !Loop over element columns
-                      DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                      DO dependentComponentColumnIdx=1,dependentVariable%numberOfComponents
                         meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%meshComponentNumber
                         dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                           & topology%elements%elements(elementNumber)%basis
@@ -483,10 +483,10 @@ CONTAINS
             ! D a t a   P o i n t   V e c t o r    F i t
             !===========================================
             !Loop over data points
-            DO dataPointIdx=1,dataPoints%elementDataPoint(elementNumber)%numberOfProjectedData
-              dataPointUserNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%userNumber
-              dataPointLocalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%localNumber
-              dataPointGlobalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%globalNumber
+            DO dataPointIdx=1,dataPoints%elementDataPoints(elementNumber)%numberOfProjectedData
+              dataPointUserNumber = dataPoints%elementDataPoints(elementNumber)%dataIndices(dataPointIdx)%userNumber
+              dataPointLocalNumber = dataPoints%elementDataPoints(elementNumber)%dataIndices(dataPointIdx)%localNumber
+              dataPointGlobalNumber = dataPoints%elementDataPoints(elementNumber)%dataIndices(dataPointIdx)%globalNumber
               ! Need to use global number to get the correct projection results
               projectionXi(1:numberOfXi) = dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi(1:numberOfXi)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
@@ -513,7 +513,7 @@ CONTAINS
 
               mhs=0
               !Loop over element rows
-              DO mh=1,dependentVariable%NUMBER_OF_COMPONENTS
+              DO mh=1,dependentVariable%numberOfComponents
                 meshComponent1=dependentVariable%components(mh)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr%topology%elements% &
                   & elements(elementNumber)%basis
@@ -523,7 +523,7 @@ CONTAINS
                   PGM=Basis_EvaluateXi(dependentBasisRow,ms,NO_PART_DERIV,projectionXi,err,error)
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
-                    DO nh=1,dependentVariable%NUMBER_OF_COMPONENTS
+                    DO nh=1,dependentVariable%numberOfComponents
                       meshComponent2=dependentVariable%components(nh)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
@@ -578,7 +578,7 @@ CONTAINS
                 & quadratureScheme%GAUSS_WEIGHTS(ng)
 
               mhs=0
-              DO mh=1,dependentVariable%NUMBER_OF_COMPONENTS
+              DO mh=1,dependentVariable%numberOfComponents
                 !Loop over element rows
                 meshComponent1=dependentVariable%components(mh)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr% &
@@ -589,7 +589,7 @@ CONTAINS
                   nhs=0
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
-                    DO nh=1,dependentVariable%NUMBER_OF_COMPONENTS
+                    DO nh=1,dependentVariable%numberOfComponents
                       meshComponent2=dependentVariable%components(nh)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
@@ -607,7 +607,7 @@ CONTAINS
                           & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S1,ng)* &
                           & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,ng))
 
-                        IF(dependentVariable%NUMBER_OF_COMPONENTS > 1) THEN
+                        IF(dependentVariable%numberOfComponents > 1) THEN
                           tension = tension + tauParam*2.0_DP* ( &
                             & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2,ng)* &
                             & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2,ng))
@@ -617,7 +617,7 @@ CONTAINS
                             & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S2,ng)* &
                             & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,ng))
 
-                          IF(dependentVariable%NUMBER_OF_COMPONENTS > 2) THEN
+                          IF(dependentVariable%numberOfComponents > 2) THEN
                             tension = tension + tauParam*2.0_DP* ( &
                               & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3,ng)* &
                               & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3,ng))
@@ -760,7 +760,7 @@ CONTAINS
 
               !Loop over field components
               mhs=0
-              DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+              DO mh=1,fieldVariable%numberOfComponents
                 !Loop over element rows
 !!TODO: CHANGE ELEMENT CALCULATE TO WORK OF ns ???
                 DO ms=1,dependentBasis%numberOfElementParameters
@@ -769,7 +769,7 @@ CONTAINS
                   IF(equationsMatrix%updateMatrix) THEN
 
                     !Loop over element columns
-                    DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                    DO nh=1,fieldVariable%numberOfComponents
                       DO ns=1,dependentBasis%numberOfElementParameters
                         nhs=nhs+1
 
@@ -808,7 +808,7 @@ CONTAINS
             IF(DIAGNOSTICS5) THEN
               IF( elementNumber == 1 ) THEN
                 numberDofs = 0
-                DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                DO mh=1,fieldVariable%numberOfComponents
                   meshComponent1 = fieldVariable%components(mh)%meshComponentNumber
                   dependentBasisRow => dependentField%decomposition%domain(meshComponent1)%ptr% &
                     & topology%elements%elements(elementNumber)%basis
@@ -886,7 +886,7 @@ CONTAINS
                 & quadratureScheme%GAUSS_WEIGHTS(ng)
               !Loop over field components
               mhs=0
-              DO mh=1,fieldVariable%NUMBER_OF_COMPONENTS
+              DO mh=1,fieldVariable%numberOfComponents
                 !Loop over element rows
                 meshComponent1=fieldVariable%components(mh)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr% &
@@ -897,7 +897,7 @@ CONTAINS
                   nhs=0
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
-                    DO nh=1,fieldVariable%NUMBER_OF_COMPONENTS
+                    DO nh=1,fieldVariable%numberOfComponents
                       meshComponent2=fieldVariable%components(nh)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
@@ -1019,7 +1019,7 @@ CONTAINS
                           equationsMatrix%elementMatrix%matrix(mhs,nhs) = &
                             & equationsMatrix%elementMatrix%matrix(mhs,nhs) + sum
 
-                          IF(nh==fieldVariable%NUMBER_OF_COMPONENTS.AND.mh<=numberOfDimensions) THEN
+                          IF(nh==fieldVariable%numberOfComponents.AND.mh<=numberOfDimensions) THEN
                             sum=0.0_DP
                             !Calculate sum
                             DO ni=1,dependentBasisRow%numberOfXi
@@ -1165,7 +1165,7 @@ CONTAINS
 
               dependentParameterRowIdx=0
               !Loop over element rows
-              DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+              DO dependentComponentRowIdx=1,dependentVariable%numberOfComponents
                 meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%meshComponentNumber
                 dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
                   & topology%elements%elements(elementNumber)%basis
@@ -1176,7 +1176,7 @@ CONTAINS
                   phiM=quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,NO_PART_DERIV,gaussPointIdx)
                   IF(equationsMatrix%updateMatrix) THEN
                     !Loop over element columns
-                    DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                    DO dependentComponentColumnIdx=1,dependentVariable%numberOfComponents
                       meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%meshComponentNumber
                       dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                         & topology%elements%elements(elementNumber)%basis
@@ -1285,7 +1285,7 @@ CONTAINS
             & dependentInterpParameters(dependentVariableType)%ptr,err,error,*999)
           dependentParameterRowIdx=0
           !Loop over element rows
-          DO dependentComponentRowIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+          DO dependentComponentRowIdx=1,dependentVariable%numberOfComponents
             meshComponentRow=dependentVariable%components(dependentComponentRowIdx)%meshComponentNumber
             dependentBasisRow=>dependentField%decomposition%domain(meshComponentRow)%ptr% &
               & topology%elements%elements(elementNumber)%basis
@@ -1294,7 +1294,7 @@ CONTAINS
               dependentParameterColumnIdx=0
               IF(equationsMatrix%updateMatrix) THEN
                 !Loop over element columns
-                DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                DO dependentComponentColumnIdx=1,dependentVariable%numberOfComponents
                   meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%meshComponentNumber
                   dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
                     & topology%elements%elements(elementNumber)%basis

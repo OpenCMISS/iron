@@ -880,15 +880,15 @@ CONTAINS
               CALL FlagError("Not implemented.",err,error,*999)
             ELSE
               !Use the diffusivity tensor in geometric coordinates
-              DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS !first three components of material field are the diffusivities
+              DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents !first three components of material field are the diffusivities
                 DIFFUSIVITY(nj,nj)=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(nj,1)
               ENDDO !nj
             ENDIF
             !Get the storage Coefficient, stored in the component after the diffusivities for each dimension
-            component_idx=GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS+1
+            component_idx=GEOMETRIC_VARIABLE%numberOfComponents+1
             STORAGE_COEFFICIENT=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(component_idx,1)
             !Compute basis dPhi/dx terms
-            DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+            DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 DPHIDX(nj,ms)=0.0_DP
                 DO ni=1,DEPENDENT_BASIS%numberOfXi
@@ -900,19 +900,19 @@ CONTAINS
             ENDDO !nj            
             !Loop over field components
             mhs=0          
-            DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+            DO mh=1,FIELD_VARIABLE%numberOfComponents
               !Loop over element rows
               DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                 mhs=mhs+1
                 nhs=0
                 !Loop over element columns
-                DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO nh=1,FIELD_VARIABLE%numberOfComponents
                   DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                     nhs=nhs+1
                     SUM=0.0_DP
                     IF(stiffnessMatrix%updateMatrix) THEN
-                      DO ni=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
-                        DO nj=1,GEOMETRIC_VARIABLE%NUMBER_OF_COMPONENTS
+                      DO ni=1,GEOMETRIC_VARIABLE%numberOfComponents
+                        DO nj=1,GEOMETRIC_VARIABLE%numberOfComponents
                           SUM=SUM+DIFFUSIVITY(ni,nj)*DPHIDX(ni,mhs)*DPHIDX(nj,nhs)
                        ENDDO !nj
                       ENDDO !ni
@@ -933,7 +933,7 @@ CONTAINS
               IF(sourceVector%updateVector) THEN
                 C_PARAM=equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%VALUES(1,NO_PART_DERIV)
                 mhs=0
-                DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO mh=1,FIELD_VARIABLE%numberOfComponents
                 !Loop over element rows
                   DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
                     mhs=mhs+1
@@ -951,14 +951,14 @@ CONTAINS
           CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
             & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
           mhs=0          
-          DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+          DO mh=1,FIELD_VARIABLE%numberOfComponents
             !Loop over element rows
             DO ms=1,DEPENDENT_BASIS%numberOfElementParameters
               mhs=mhs+1                    
               nhs=0
               IF(stiffnessMatrix%updateMatrix.OR.dampingMatrix%updateMatrix) THEN
                 !Loop over element columns
-                DO nh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+                DO nh=1,FIELD_VARIABLE%numberOfComponents
                   DO ns=1,DEPENDENT_BASIS%numberOfElementParameters
                     nhs=nhs+1
                     IF(stiffnessMatrix%updateMatrix) THEN
