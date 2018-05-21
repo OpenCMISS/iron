@@ -39,7 +39,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \example ClassicalField/Laplace/AnalyticLaplace/src/AnalyticLaplaceExample.f90
+!> \example ClassicalField/Laplace/AnalyticLaplace/src/AnalyticLaplaceExample.F90
 !! Example illustrating the use of OpenCMISS to solve the Laplace problem and check with its Analytic Solution.
 !! 
 !! \htmlinclude ClassicalField/Laplace/AnalyticLaplace/history.html

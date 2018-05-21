@@ -24,7 +24,7 @@ while string_f != '':
 		if (string_f==string_c)	:
          		matchC=True
 	if (not matchC):
-		print 'Missing function in opencmiss_c.f90: ', string_f
+		print 'Missing function in opencmiss_c.F90: ', string_f
 		missingfunctions_c.write(string_f)
 		countc = countc + 1
 	matchH = False
@@ -39,9 +39,9 @@ while string_f != '':
 	string_f = f_functions.readline()
 
 if countc ==0:
-	print 'No functions missing in opencmiss_c.f90'
+	print 'No functions missing in opencmiss_c.F90'
 else:
-	print countc, ' functions missing from opencmiss_c.f90'
+	print countc, ' functions missing from opencmiss_c.F90'
 if counth == 0:
 	print 'No functions missing in opencmiss.h' 
 else:

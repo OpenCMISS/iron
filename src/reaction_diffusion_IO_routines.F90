@@ -1,7 +1,7 @@
 !> \file
 !> \author Vijay Rajagopal
 !> \brief This module handles some mesh/parameter input routines and cmgui output routines for reaction diffusion
-!> routines and should be eventually replaces by field_IO_routines.f90
+!> routines and should be eventually replaces by field_IO_routines.F90
 !>
 !> \section LICENSE
 !>

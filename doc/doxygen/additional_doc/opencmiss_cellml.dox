@@ -53,7 +53,7 @@ The \c basicSimulationApplication described above (\ref oc_current_status-backgr
 
 \section oc_current_status-api openCMISS(cm) CellML API
 
-Initially defined in the openCMISS powerpoint presentation and now coded into the \c opencmiss_cellml.f90 module, is the outline of the openCMISS(cm) CellML API. This API defines the openCMISS methods for using CellML models to define a field and will work with the openCMISS(cellml) API to interact with CellML models via the C++ implementation of the CellML API.
+Initially defined in the openCMISS powerpoint presentation and now coded into the \c opencmiss_cellml.F90 module, is the outline of the openCMISS(cm) CellML API. This API defines the openCMISS methods for using CellML models to define a field and will work with the openCMISS(cellml) API to interact with CellML models via the C++ implementation of the CellML API.
 
 \section oc_development Development
 

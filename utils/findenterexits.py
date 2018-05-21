@@ -2,7 +2,7 @@
 
 """
 Find problems with the diagnostics enters, exits and errors in OpenCMISS Fortran source.
-This script will read all *.f90 source files in a given source path and check the following
+This script will read all *.F90 source files in a given source path and check the following
 for subroutines and functions:
  - That the names in ENTERS, EXITS, ERRORS and ERRORS exits macros match the routine name.
  - That each function or subroutine has an ENTERS and an EXITS
@@ -80,7 +80,7 @@ iron_source_path = source_path + os.sep + 'src'
 source_files = [
 	     iron_source_path + os.sep + file_name
              for file_name in os.listdir(iron_source_path)
-             if file_name.endswith('.f90')]
+             if file_name.endswith('.F90')]
 
 startinterface_re = re.compile(r'^\s*INTERFACE\s*!*', re.IGNORECASE)
 endinterface_re = re.compile(r'^\s*END\s*INTERFACE\s*!*', re.IGNORECASE)
