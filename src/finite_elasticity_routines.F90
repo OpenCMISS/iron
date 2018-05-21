@@ -2507,9 +2507,9 @@ CONTAINS
                   & HYDROSTATIC_PRESSURE_COMPONENT)%INTERPOLATION_TYPE
               ENDIF
               IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-                TEMPTERM1=GAUSS_WEIGHT*Jxxi*(Jznu-(Jg-DARCY_VOL_INCREASE))
+                TEMPTERM1=GAUSS_WEIGHT*Jxxi*(Je-(1.0_DP-DARCY_VOL_INCREASE))
               ELSE
-                TEMPTERM1=GAUSS_WEIGHT*Jxxi*(Jznu-Jg)
+                TEMPTERM1=GAUSS_WEIGHT*Jxxi*(Je-1.0_DP)
               ENDIF            
               IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
                 IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE) THEN
@@ -2527,7 +2527,7 @@ CONTAINS
                     nonlinearMatrices%elementResidual%vector(elementDofIdx)= &
                       & nonlinearMatrices%elementResidual%vector(elementDofIdx)+ &
                       & GAUSS_WEIGHT*Jzxi*COMPONENT_QUADRATURE_SCHEME%GAUSS_BASIS_FNS(parameter_idx,1,gauss_idx)* &
-                      & (Je-1.0_DP-DARCY_VOL_INCREASE)
+                      & (Je-(1.0_DP-DARCY_VOL_INCREASE))
                   ELSE
                     nonlinearMatrices%elementResidual%vector(elementDofIdx)= &
                       & nonlinearMatrices%elementResidual%vector(elementDofIdx)+ &
