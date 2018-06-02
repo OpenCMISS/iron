@@ -202,9 +202,9 @@ CONTAINS
             NULLIFY(domain)
             CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
             NULLIFY(domainTopology)
-            CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+            CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
             NULLIFY(domainNodes)
-            CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+            CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
             !Loop over the local nodes excluding the ghosts.
             DO nodeIdx=1,domainNodes%numberOfNodes
 !!TODO \todo We should interpolate the geometric field here and the node position.
@@ -257,9 +257,9 @@ CONTAINS
             NULLIFY(domain)
             CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
             NULLIFY(domainTopology)
-            CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+            CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
             NULLIFY(domainNodes)
-            CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+            CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
             !Loop over the local nodes excluding the ghosts.
             DO nodeIdx=1,domainNodes%numberOfNodes
 !!TODO \todo We should interpolate the geometric field here and the node position.
@@ -3591,9 +3591,9 @@ CONTAINS
               NULLIFY(domain)
               CALL FieldVariable_DomainGet(dynamicVariable,componentIdx,domain,err,error,*999)
               NULLIFY(domainTopology)
-              CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+              CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
               NULLIFY(domainNodes)
-              CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+              CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
               !Loop over the local nodes excluding the ghosts.
               DO nodeIdx=1,domainNodes%numberOfNodes
 !!TODO \todo We should interpolate the geometric field here and the node position.
@@ -3641,9 +3641,9 @@ CONTAINS
                 NULLIFY(domain)
                 CALL FieldVariable_DomainGet(dynamicVariable,componentIdx,domain,err,error,*999)
                 NULLIFY(domainTopology)
-                CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+                CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
                 NULLIFY(domainNodes)
-                CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+                CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
                 !Loop over the local nodes excluding the ghosts.
                 DO nodeIdx=1,domainNodes%numberOfNodes
 !!TODO \todo We should interpolate the geometric field here and the node position.

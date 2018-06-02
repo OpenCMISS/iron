@@ -48,6 +48,7 @@ MODULE MeshAccessRoutines
   USE DecompositionAccessRoutines
   USE Kinds
   USE ISO_VARYING_STRING
+  USE NodeAccessRoutines
   USE Strings
   USE Trees
   USE Types
@@ -60,6 +61,14 @@ MODULE MeshAccessRoutines
 
   !Module parameters
 
+  !> \addtogroup MESH_ROUTINES_MeshBoundaryTypes MESH_ROUTINES::MeshBoundaryTypes
+  !> \brief The types of whether or not a node/element is on a mesh domain boundary.
+  !> \see MESH_ROUTINES
+  !>@{
+  INTEGER(INTG), PARAMETER :: MESH_OFF_DOMAIN_BOUNDARY=0 !<The node/element is not on the mesh domain boundary. \see MESH_ROUTINES_MeshBoundaryTypes,MESH_ROUTINES
+  INTEGER(INTG), PARAMETER :: MESH_ON_DOMAIN_BOUNDARY=1 !<The node/element is on the mesh domain boundary. \see MESH_ROUTINES_MeshBoundaryTypes,MESH_ROUTINES
+  !>@}
+  
   !Module types
 
   !Module variables
@@ -76,9 +85,15 @@ MODULE MeshAccessRoutines
     MODULE PROCEDURE Mesh_UserNumberFindRegion
   END INTERFACE MESH_USER_NUMBER_FIND
 
+  PUBLIC MESH_ON_DOMAIN_BOUNDARY,MESH_OFF_DOMAIN_BOUNDARY
+
   PUBLIC Mesh_AssertIsFinished,Mesh_AssertNotFinished
 
   PUBLIC Mesh_DecompositionGet
+
+  PUBLIC Mesh_DecompositionsGet
+
+  PUBLIC Mesh_MeshesGet
 
   PUBLIC Mesh_MeshElementsGet
 
@@ -109,20 +124,40 @@ MODULE MeshAccessRoutines
   PUBLIC MeshElements_GlobalElementNumberGet
     
   PUBLIC MeshElements_MeshElementGet
+
+  PUBLIC MeshElements_MeshTopologyGet
   
+  PUBLIC MeshElements_UserElementNumberGet
+
   PUBLIC MeshNodes_GlobalNodeNumberGet
   
   PUBLIC MeshNodes_MeshNodeGet
 
   PUBLIC MeshNodes_MeshNodeNumberGet
+
+  PUBLIC MeshNodes_MeshTopologyGet
   
+  PUBLIC MeshNodes_NodeOnBoundaryGet
+
+  PUBLIC MeshNodes_NodeDerivativesGet
+
+  PUBLIC MeshNodes_NodeNumberOfDerivativesGet
+
+  PUBLIC MeshNodes_NodeNumberOfVersionsGet
+
   PUBLIC MeshNodes_NodeCheckExists    
 
-  PUBLIC MeshTopology_ElementCheckExists
-  
-  PUBLIC MeshTopology_MeshElementsGet
+  PUBLIC MeshNodes_NumberOfNodesGet
 
-  PUBLIC MeshTopology_NodeCheckExists
+  PUBLIC MeshNodes_UserNodeNumberGet
+
+  PUBLIC MeshTopology_MeshGet
+
+  PUBLIC MeshTopology_MeshDataPointsGet
+  
+  PUBLIC MeshTopology_MeshDofsGet
+
+  PUBLIC MeshTopology_MeshElementsGet
 
   PUBLIC MeshTopology_MeshNodesGet
 
@@ -275,6 +310,75 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Mesh_DecompositionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the decompositions for a given mesh. 
+  SUBROUTINE Mesh_DecompositionsGet(mesh,decompositions,err,error,*)
+
+    !Argument variables
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the decompositions for
+    TYPE(DecompositionsType), POINTER :: decompositions !<On exit, a pointer to the decompositions for the mesh. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Mesh_DecompositionsGet",err,error,*998)
+
+    IF(ASSOCIATED(decompositions)) CALL FlagError("Decompositions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+
+    decompositions=>mesh%decompositions
+    IF(.NOT.ASSOCIATED(decompositions)) THEN      
+      localError="The decompositions is not associated for mesh number "// &
+        & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Mesh_DecompositionsGet")
+    RETURN
+999 NULLIFY(decompositions)
+998 ERRORSEXITS("Mesh_DecompositionsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Mesh_DecompositionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the meshes for a given mesh. 
+  SUBROUTINE Mesh_MeshesGet(mesh,meshes,err,error,*)
+
+    !Argument variables
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the meshes for
+    TYPE(MeshesType), POINTER :: meshes !<On exit, a pointer to the meshes for the mesh. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Mesh_MeshesGet",err,error,*998)
+
+    IF(ASSOCIATED(meshes)) CALL FlagError("Meshes is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+
+    meshes=>mesh%meshes
+    IF(.NOT.ASSOCIATED(meshes)) THEN      
+      localError="The meshes is not associated for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Mesh_MeshesGet")
+    RETURN
+999 NULLIFY(meshes)
+998 ERRORSEXITS("Mesh_MeshesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Mesh_MeshesGet
 
   !
   !================================================================================================================================
@@ -980,6 +1084,73 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Get the mesh topology for mesh elements 
+  SUBROUTINE MeshElements_MeshTopologyGet(meshElements,meshTopology,err,error,*)
+
+    !Argument variables
+    TYPE(MeshElementsType), POINTER, INTENT(IN) :: meshElements !<A pointer to the mesh elements to get the mesh topology for
+    TYPE(MeshTopologyType), POINTER, INTENT(INOUT) :: meshTopology !<On return, a pointer to the mesh topology for the mesh elements. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("MeshElements_MeshTopologyGet",err,error,*998)
+
+    IF(ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+    
+    meshTopology=>meshElements%meshTopology
+    IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated for the mesh elements.",err,error,*999)
+    
+    EXITS("MeshElements_MeshTopologyGet")
+    RETURN
+999 NULLIFY(meshTopology)
+998 ERRORSEXITS("MeshElements_MeshTopologyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MeshElements_MeshTopologyGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the user element number for an element in mesh elements
+  SUBROUTINE MeshElements_UserElementNumberGet(meshElements,elementNumber,userElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the mesh elements containing the elemnet to get the user number for
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number of the element to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userElementNumber !<On return, the user element number of the specified element
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("MeshElements_UserElementNumberGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshElements)) CALL FlagError("Mesh elements is not associated.",err,error,*999)
+
+    IF(elementNumber<1.OR.elementNumber>meshElements%numberOfElements) THEN
+      localError="The specified mesh element number of "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
+        & " is invalid. The element number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(meshElements%numberOfElements,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(meshElements%elements)) CALL FlagError("Mesh elements elements is not allocated.",err,error,*999)
+    
+    userElementNumber=meshElements%elements(elementNumber)%userNumber
+        
+    EXITS("MeshElemnets_UserElementNumberGet")
+    RETURN
+999 ERRORSEXITS("MeshElements_UserElementNumberGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshElements_UserElementNumberGet
+  
+  !  
+  !================================================================================================================================
+  !
+
   !>Get the mesh node in the mesh nodes identified by its mesh number
   SUBROUTINE MeshNodes_MeshNodeGet(meshNodes,meshNodeNumber,meshNode,err,error,*)
 
@@ -1121,6 +1292,71 @@ CONTAINS
     
   END SUBROUTINE MeshNodes_MeshNodeNumberGet
 
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the mesh topology for mesh nodes 
+  SUBROUTINE MeshNodes_MeshTopologyGet(meshNodes,meshTopology,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER, INTENT(IN) :: meshNodes !<A pointer to the mesh nodes to get the mesh topology for
+    TYPE(MeshTopologyType), POINTER, INTENT(INOUT) :: meshTopology !<On return, a pointer to the mesh topology for the mesh nodes. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("MeshNodes_MeshTopologyGet",err,error,*998)
+
+    IF(ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+    
+    meshTopology=>meshNodes%meshTopology
+    IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated for the mesh nodes.",err,error,*999)
+    
+    EXITS("MeshNodes_MeshTopologyGet")
+    RETURN
+999 NULLIFY(meshTopology)
+998 ERRORSEXITS("MeshNodes_MeshTopologyGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MeshNodes_MeshTopologyGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns if the node in a mesh is on the boundary or not
+  SUBROUTINE MeshNodes_NodeOnBoundaryGet(meshNodes,userNodeNumber,onBoundary,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the nodes to get the boundary type for
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the boundary type for
+    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type of the specified user node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: meshNodeNumber
+ 
+    ENTERS("MeshNodes_NodeOnBoundaryGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes is not allocated.",err,error,*999)
+    
+    CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
+    IF(meshNodes%nodes(meshNodeNumber)%boundaryNode) THEN
+      onBoundary=MESH_ON_DOMAIN_BOUNDARY
+    ELSE
+      onBoundary=MESH_OFF_DOMAIN_BOUNDARY
+    ENDIF
+    
+    EXITS("MeshNodes_NodeOnBoundaryGet")
+    RETURN
+999 ERRORSEXITS("MeshNodes_NodeOnBoundaryGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshNodes_NodeOnBoundaryGet
+  
   !
   !================================================================================================================================
   !
@@ -1159,7 +1395,7 @@ CONTAINS
       NULLIFY(treeNode)
       CALL Tree_Search(meshNodes%nodesTree,globalNodeNumber,treeNode,err,error,*999)
       IF(ASSOCIATED(treeNode)) THEN
-        CALL Tree_NodeValuesGet(meshNodes%nodesTree,treeNode,meshNodeNumber,err,error,*999)
+        CALL Tree_NodeValueGet(meshNodes%nodesTree,treeNode,meshNodeNumber,err,error,*999)
         nodeExists=.TRUE.
       ELSE
         nodeExists=.FALSE.
@@ -1176,74 +1412,242 @@ CONTAINS
   !
   !================================================================================================================================
   !
-
-  !>Returns the mesh for a mesh topology
-  SUBROUTINE MeshTopology_MeshGet(meshTopology,mesh,err,error,*)
+  
+  !>Returns the number of derivatives for a node in a mesh
+  SUBROUTINE MeshNodes_NodeNumberOfDerivativesGet(meshNodes,userNodeNumber,numberOfDerivatives,err,error,*)
 
     !Argument variables
-    TYPE(MeshTopologyType), POINTER :: meshTopology !<A pointer to the mesh topology to get the mesh for
-    TYPE(MeshType), POINTER :: mesh !<On return, the mesh for the mesh topology. Must not be associated on entry.
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the nodes to get the number of derivatives for
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the number of derivatives for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatives !<On return, the number of global derivatives at the specified user node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: meshNodeNumber
+
+    ENTERS("MeshNodes_NodeNumberOfDerivativesGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+    
+    CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
+    
+    numberOfDerivatives=meshNodes%nodes(meshNodeNumber)%numberOfDerivatives
+    
+    EXITS("MeshNodes_NodeNumberOfDerivativesGet")
+    RETURN
+999 ERRORSEXITS("MeshNodes_NodeNumberOfDerivativesGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshNodes_NodeNumberOfDerivativesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the global derivative numbers for a node in mesh nodes
+  SUBROUTINE MeshNodes_NodeDerivativesGet(meshNodes,userNodeNumber,derivatives,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the node to get the derivatives for
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user number of the node to get the derivatives for
+    INTEGER(INTG), INTENT(OUT) :: derivatives(:) !<On return, the global derivatives at the specified node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: derivativeIdx,meshNodeNumber,numberOfDerivatives
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("MeshNodes_NodeDerivativesGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+    
+    CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
+    numberOfDerivatives=meshNodes%nodes(meshNodeNumber)%numberOfDerivatives
+    IF(SIZE(derivatives,1)<numberOfDerivatives) THEN
+      localError="The size of the supplied derivatives array of "// &
+        & TRIM(NumberToVString(SIZE(derivatives,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(numberOfDerivatives,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO derivativeIdx=1,numberOfDerivatives
+      derivatives(derivativeIdx)=meshNodes%nodes(meshNodeNumber)%derivatives(derivativeIdx)%globalDerivativeIndex
+    ENDDO !derivativeIdx
+    
+    EXITS("MeshNodes_NodeDerivativesGet")
+    RETURN
+999 ERRORSEXITS("MeshNodes_NodeDerivativesGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshNodes_NodeDerivativesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of versions for a derivative of a node in mesh nodes
+  SUBROUTINE MeshNodes_NodeNumberOfVersionsGet(meshNodes,derivativeNumber,userNodeNumber,numberOfVersions,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the node to get the number of versions for
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the node to get the number of versions for
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user number of the node to get the number of versions for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVersions !<On return, the number of versions for the specified derivative of the specified node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: meshNodeNumber
+   TYPE(VARYING_STRING) :: localError
+
+    ENTERS("MeshNodes_NodeNumberOfVersionsGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+    CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
+     IF(derivativeNumber<1.OR.derivativeNumber>meshNodes%nodes(meshNodeNumber)%numberOfDerivatives) THEN
+      localError="The specified derivative index of "// &
+        & TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
+        & " is invalid. The derivative index must be >= 1 and <= "// &
+        & TRIM(NumberToVString(meshNodes%nodes(meshNodeNumber)%numberOfDerivatives,"*",err,error))// &
+        & " for user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    numberOfVersions=meshNodes%nodes(meshNodeNumber)%derivatives(derivativeNumber)%numberOfVersions
+    
+    EXITS("MeshNodes_NodeNumberOfVersionsGet")
+    RETURN
+999 ERRORSEXITS("MeshNodes_NodeNumberOfVersionsGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshNodes_NodeNumberOfVersionsGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of nodes for a node in a mesh
+  SUBROUTINE MeshNodes_NumberOfNodesGet(meshNodes,numberOfNodes,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the nodes to get the number of nodes for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On return, the number of nodes in the mesh.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+  
+    ENTERS("MeshNodes_NumberOfNodesGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+    
+    numberOfNodes=meshNodes%numberOfNodes
+    
+    EXITS("MeshNodes_NumberOfNodesGet")
+    RETURN
+999 ERRORSEXITS("MeshNodes_NumberOfNodesGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshNodes_NumberOfNodesGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the user node number for a node in mesh nodes
+  SUBROUTINE MeshNodes_UserNodeNumberGet(meshNodes,meshNodeNumber,userNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the node to get the user number for
+    INTEGER(INTG), INTENT(IN) :: meshNodeNumber !<The mesh number of the node to get the user number for
+    INTEGER(INTG), INTENT(OUT) :: userNodeNumber !<On return, the user node number of the specified node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("MeshNodes_UserNodeNumberGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
+
+    IF(meshNodeNumber<1.OR.meshNodeNumber>meshNodes%numberOfNodes) THEN
+      localError="The specified mesh node number of "//TRIM(NumberToVString(meshNodeNumber,"*",err,error))// &
+        & " is invalid. The mesh node number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(meshNodes%numberOfNodes,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes is not allocated.",err,error,*999)
+    
+    userNodeNumber=meshNodes%nodes(meshNodeNumber)%userNumber
+        
+    EXITS("MeshNodes_UserNodeNumberGet")
+    RETURN
+999 ERRORSEXITS("MeshNodes_UserNodeNumberGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE MeshNodes_UserNodeNumberGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the mesh data points for a mesh topology
+  SUBROUTINE MeshTopology_MeshDataPointsGet(meshTopology,meshDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(MeshTopologyType), POINTER :: meshTopology !<A pointer to the mesh topology to get the mesh data points for
+    TYPE(MeshDataPointsType), POINTER :: meshDataPoints !<On return, the mesh data points for the mesh. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("MeshTopology_MeshGet",err,error,*998)
+    ENTERS("MeshTopology_MeshDataPointsGet",err,error,*998)
 
     !Check input arguments
-    IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*998)
+    IF(ASSOCIATED(meshDataPoints)) CALL FlagError("Mesh data points is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*999)
 
-    mesh=>meshTopology%mesh
-    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated for the mesh topology.",err,error,*999)
+    meshDataPoints=>meshTopology%dataPoints
+    IF(.NOT.ASSOCIATED(meshDataPoints)) CALL FlagError("Mesh data points is not associated for the mesh topology.",err,error,*999)
 
-    EXITS("MeshTopology_MeshGet")
+    EXITS("MeshTopology_MeshDataPointsGet")
     RETURN
-999 NULLIFY(mesh)
-998 ERRORSEXITS("MeshTopology_MeshGet",err,error)
+999 NULLIFY(meshDataPoints)
+998 ERRORSEXITS("MeshTopology_MeshDataPointsGet",err,error)
     RETURN 1
     
-  END SUBROUTINE MeshTopology_MeshGet
+  END SUBROUTINE MeshTopology_MeshDataPointsGet
 
   !
   !================================================================================================================================
   !
 
-  !>Checks that a user element number exists in a mesh elements. 
-  SUBROUTINE MeshTopology_ElementCheckExists(meshTopology,userElementNumber,elementExists,globalElementNumber,err,error,*)
+  !>Returns the mesh dofs for a mesh topology
+  SUBROUTINE MeshTopology_MeshDofsGet(meshTopology,meshDofs,err,error,*)
 
     !Argument variables
-    TYPE(MeshTopologyType), POINTER :: meshTopology !<A pointer to the mesh topology to check the element exists on
-    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to check if it exists
-    LOGICAL, INTENT(OUT) :: elementExists !<On exit, is .TRUE. if the element user number exists in the mesh elements, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: globalElementNumber !<On exit, if the element exists the global number corresponding to the user element number. If the element does not exist then global number will be 0.
+    TYPE(MeshTopologyType), POINTER :: meshTopology !<A pointer to the mesh topology to get the mesh dofs for
+    TYPE(MeshDofsType), POINTER :: meshDofs !<On return, the mesh dofs for the mesh. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
-    
-    ENTERS("MeshTopology_ElementCheckExists",err,error,*999)
 
-    elementExists=.FALSE.
-    globalElementNumber=0
+    ENTERS("MeshTopology_MeshDofsGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(meshDofs)) CALL FlagError("Mesh dofs is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*999)
-    
-    NULLIFY(meshElements)
-    CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
-    NULLIFY(treeNode)
-    CALL Tree_Search(meshElements%elementsTree,userElementNumber,treeNode,err,error,*999)
-    IF(ASSOCIATED(treeNode)) THEN
-      CALL Tree_NodeValueGet(meshElements%elementsTree,treeNode,globalElementNumber,err,error,*999)
-      elementExists=.TRUE.      
-    ENDIF
-    
-    EXITS("MeshTopology_ElementCheckExists")
+
+    meshDofs=>meshTopology%dofs
+    IF(.NOT.ASSOCIATED(meshDofs)) CALL FlagError("Mesh dofs is not associated for the mesh topology.",err,error,*999)
+
+    EXITS("MeshTopology_MeshDofsGet")
     RETURN
-999 ERRORSEXITS("MeshTopology_ElementCheckExists",err,error)
+999 NULLIFY(meshDofs)
+998 ERRORSEXITS("MeshTopology_MeshDofsGet",err,error)
     RETURN 1
     
-  END SUBROUTINE MeshTopology_ElementCheckExists
-  
+  END SUBROUTINE MeshTopology_MeshDofsGet
+
   !
   !================================================================================================================================
   !
@@ -1279,36 +1683,33 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Checks that a user node number exists in a mesh component. 
-  SUBROUTINE MeshTopology_NodeCheckExists(meshTopology,userNodeNumber,nodeExists,globalNodeNumber,meshNodeNumber,err,error,*)
+  !>Returns the mesh for a mesh topology
+  SUBROUTINE MeshTopology_MeshGet(meshTopology,mesh,err,error,*)
 
     !Argument variables
-    TYPE(MeshTopologyType), POINTER :: meshTopology !<A pointer to the mesh topology to check the node exists on
-    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to check if it exists
-    LOGICAL, INTENT(OUT) :: nodeExists !<On exit, is .TRUE. if the node user number exists in the mesh component, .FALSE. if not
-    INTEGER(INTG), INTENT(OUT) :: globalNodeNumber !<On exit, if the node exists the global number corresponding to the user node number. If the node does not exist then global number will be 0.
-    INTEGER(INTG), INTENT(OUT) :: meshNodeNumber !<On exit, if the node exists the mesh number corresponding to the user node number. If the node does not exist then mesh number will be 0.
+    TYPE(MeshTopologyType), POINTER :: meshTopology !<A pointer to the mesh topology to get the mesh for
+    TYPE(MeshType), POINTER :: mesh !<On return, the mesh for the mesh topology. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(MeshNodesType), POINTER :: meshNodes
-    
-    ENTERS("MeshTopology_NodeCheckExists",err,error,*999)
 
-    nodeExists=.FALSE.
-    meshNodeNumber=0
-    IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*999)
-    NULLIFY(meshNodes)
-    CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*999)
-    CALL MeshNodes_NodeCheckExists(meshNodes,userNodeNumber,nodeExists,globalNodeNumber,meshNodeNumber,err,error,*999)
-   
-    EXITS("MeshTopology_NodeCheckExists")
+    ENTERS("MeshTopology_MeshGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(mesh)) CALL FlagError("Mesh is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*998)
+
+    mesh=>meshTopology%mesh
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated for the mesh topology.",err,error,*999)
+
+    EXITS("MeshTopology_MeshGet")
     RETURN
-999 ERRORSEXITS("MeshTopology_NodeCheckExists",err,error)
+999 NULLIFY(mesh)
+998 ERRORSEXITS("MeshTopology_MeshGet",err,error)
     RETURN 1
     
-  END SUBROUTINE MeshTopology_NodeCheckExists
-  
+  END SUBROUTINE MeshTopology_MeshGet
+
   !
   !================================================================================================================================
   !

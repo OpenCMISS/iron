@@ -3328,7 +3328,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
-    TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DistributedMatrix_ValuesAddIntg1",err,error,*999)

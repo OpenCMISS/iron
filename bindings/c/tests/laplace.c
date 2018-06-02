@@ -213,7 +213,7 @@ int main()
   Err = cmfe_Field_Initialise(&GeometricField);
   Err = cmfe_Field_CreateStart(GEOMETRIC_FIELD_USER_NUMBER,Region,GeometricField);
   /* Set the decomposition to use */
-  Err = cmfe_Field_MeshDecompositionSet(GeometricField,Decomposition);
+  Err = cmfe_Field_DecompositionSet(GeometricField,Decomposition);
   /* Set the domain to be used by the field components. */
   Err = cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,1,1);
   Err = cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,2,1);

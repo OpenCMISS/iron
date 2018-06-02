@@ -215,8 +215,7 @@ CONTAINS
     
     ENTERS("DataProjection_AbsoluteToleranceGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     absoluteTolerance=dataProjection%absoluteTolerance       
      
@@ -240,13 +239,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_AbsoluteToleranceSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
-    IF(absoluteTolerance<0.0_DP) &
-      & CALL FlagError("The specified absolute tolerance is invalid. The tolerance must be > 0.0.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
+    IF(absoluteTolerance<0.0_DP) THEN
+      localError="The specified absolute tolerance of "//TRIM(NumberToVString(absoluteTolerance,"*",err,error))// &
+        & " is invalid. The tolerance must be >= 0.0."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
       
     dataProjection%absoluteTolerance=absoluteTolerance
     
@@ -285,8 +287,7 @@ CONTAINS
       
     ENTERS("DataProjection_ClosestElementsFind",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     numberOfCoordinates=dataProjection%numberOfCoordinates
     numberOfClosestCandidates=MIN(numberOfCandidates,SIZE(closestElements,1))
@@ -377,9 +378,8 @@ CONTAINS
       
     ENTERS("DataProjection_ClosestFacesFind",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+   
     numberOfCoordinates=dataProjection%numberOfCoordinates
     numberOfClosestCandidates=MIN(numberOfCandidates,SIZE(closestElements,1))
     !loop through the first few faces
@@ -480,8 +480,7 @@ CONTAINS
       
     ENTERS("DataProjection_ClosestLinesFind",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     numberOfCoordinates=dataProjection%numberOfCoordinates
     numberOfClosestCandidates=MIN(numberOfCandidates,SIZE(closestElements,1))
@@ -571,8 +570,7 @@ CONTAINS
 
     ENTERS("DataProjection_CreateFinish",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has already been finished.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
     NULLIFY(dataPoints)
     CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
     IF(.NOT.dataPoints%dataPointsFinished) &
@@ -614,6 +612,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
   !>Starts the process of creating data projection.
   SUBROUTINE DataProjection_CreateStart(dataProjectionUserNumber,dataPoints,projectionField,projectionVariableType, &
     & dataProjection,err,error,*)
@@ -627,7 +626,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dataProjectionIdx,dummyErr,insertStatus,numberOfCoordinates
+    INTEGER(INTG) :: dataProjectionIdx,dummyErr,numberOfCoordinates
     TYPE(CoordinateSystemType), POINTER :: dataPointsCoordinateSystem,fieldCoordinateSystem
     TYPE(DataProjectionPtrType), ALLOCATABLE :: newDataProjections(:)
     TYPE(DecompositionType), POINTER :: fieldDecomposition
@@ -636,8 +635,7 @@ CONTAINS
     
     ENTERS("DataProjection_CreateStart",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*998)
-    IF(.NOT.dataPoints%dataPointsFinished) CALL FlagError("Data points have not been finished.",err,error,*998)
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
     IF(.NOT.ASSOCIATED(projectionField)) CALL FlagError("Projection field is not associated.",err,error,*998)
     IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
     
@@ -1002,9 +1000,8 @@ CONTAINS
     
     ENTERS("DataProjection_DataProjectionResultsInitialise",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*998)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*998)
-    NULLIFY(dataPoints)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    NULLIFY(dataPoints)    
     CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
     IF(.NOT.dataPoints%dataPointsFinished) CALL FlagError("Data projection data points have not been finished.",err,error,*998)
     IF(.NOT.ALLOCATED(dataPoints%dataPoints)) CALL FlagError("Data points data points have not been allocated.",err,error,*999)
@@ -1375,10 +1372,7 @@ CONTAINS
     
     ENTERS("DataProjection_DataPointsProjectionEvaluate",err,error,*999)
     
-    NULLIFY(interpolationParameters)
-    NULLIFY(interpolatedPoints)
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)      
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     NULLIFY(parameterSet)
     CALL Field_ParameterSetGet(dataProjection%projectionField,dataProjection%projectionVariableType, &
       & projectionFieldSetType,parameterSet,err,error,*999)
@@ -1386,28 +1380,32 @@ CONTAINS
     dataProjection%projectionSetType=projectionFieldSetType
     dataProjectionGlobalNumber=dataProjection%globalNumber
     dataPoints=>dataProjection%dataPoints
+    NULLIFY(interpolationParameters)
     CALL Field_InterpolationParametersInitialise(dataProjection%projectionField,interpolationParameters, &
       & err,error,*998,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+    NULLIFY(interpolatedPoints)
     CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoints,err,error,*998, &
       & FIELD_GEOMETRIC_COMPONENTS_TYPE)
     interpolatedPoint=>interpolatedPoints(dataProjection%projectionVariableType)%ptr
     decomposition=>dataProjection%decomposition
     NULLIFY(decompositionTopology)
-    CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
     NULLIFY(domainTopology)
-    CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
-    CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
     NULLIFY(domainFaces)
-    CALL DomainTopology_FacesGet(domainTopology,domainFaces,err,error,*999)
+    CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
     NULLIFY(domainLines)
-    CALL DomainTopology_LinesGet(domainTopology,domainLines,err,error,*999)
+    CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
     NULLIFY(domainMappings)
-    CALL Domain_MappingsGet(domain,domainMappings,err,error,*999)
+    CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(domainMappingElements)
-    CALL DomainMappings_ElementsGet(domainMappings,domainMappingElements,err,error,*999)
+    CALL DomainMappings_ElementsMappingGet(domainMappings,domainMappingElements,err,error,*999)
     IF(.NOT.ALLOCATED(domainElements%elements)) CALL FlagError("Domain elements elements is not allocated.",err,error,*999)
     
     numberOfDataPoints=dataPoints%numberOfDataPoints
@@ -1440,7 +1438,7 @@ CONTAINS
         !Loop through all candidate element defined by user number
         DO elementIdx=1,SIZE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers,1)
           !Check if element exists on current domain, get local number
-          CALL DecompositionTopology_ElementCheckExists(decompositionTopology,dataProjection% &
+          CALL DecompositionElements_ElementCheckExists(decompositionElements,dataProjection% &
             & dataProjectionCandidates(0)%candidateElementNumbers(elementIdx),elementExists, &
             & localElementNumber,ghostElement,err,error,*999) 
           IF((elementExists).AND.(.NOT.ghostElement)) THEN
@@ -1462,7 +1460,7 @@ CONTAINS
           !Loop through all candidate elements defined by user number
           DO elementIdx=1,SIZE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers,1)
             !Check if element exists on current domain, get local number                      
-            CALL DecompositionTopology_ElementCheckExists(decompositionTopology,dataProjection% &
+            CALL DecompositionElements_ElementCheckExists(decompositionElements,dataProjection% &
               & dataProjectionCandidates(0)%candidateElementNumbers(elementIdx),elementExists, &
               & localElementNumber,ghostElement, &
               & err,error,*999)
@@ -1486,7 +1484,7 @@ CONTAINS
           !Loop through all candidate elements defined by user number                    
           DO elementIdx=1,SIZE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers,1)
             !Check if element exists on current domain, get local number
-            CALL DecompositionTopology_ElementCheckExists(decompositionTopology,dataProjection% &
+            CALL DecompositionElements_ElementCheckExists(decompositionElements,dataProjection% &
               & dataProjectionCandidates(0)%candidateElementNumbers(elementIdx),elementExists, &
               & localElementNumber,ghostElement,err,error,*999)
             IF((elementExists).AND.(.NOT.ghostElement)) THEN
@@ -1505,12 +1503,10 @@ CONTAINS
       END SELECT
     ELSE
       !If user didn't define candidate element number
-      NULLIFY(decompositionElements)
-      CALL DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       SELECT CASE(dataProjection%projectionType)
       CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
         NULLIFY(decompositionLines)
-        CALL DecompositionTopology_LinesGet(decompositionTopology,decompositionLines,err,error,*999)
+        CALL DecompositionTopology_DecompositionLinesGet(decompositionTopology,decompositionLines,err,error,*999)
         !identify all non-ghost boundary lines
         ALLOCATE(candidateElements(numberOfLines),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate candidate elements.",err,error,*999)
@@ -1530,7 +1526,7 @@ CONTAINS
         ENDDO !elementIdx
       CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
         NULLIFY(decompositionFaces)
-        CALL DecompositionTopology_FacesGet(decompositionTopology,decompositionFaces,err,error,*999)                    
+        CALL DecompositionTopology_DecompositionFacesGet(decompositionTopology,decompositionFaces,err,error,*999)
         !Identify all non-ghost boundary faces
         IF(decomposition%numberOfDimensions>=2) THEN
           ALLOCATE(candidateElements(numberOfFaces),STAT=err)
@@ -2041,9 +2037,8 @@ CONTAINS
     
     ENTERS("DataProjection_DataPointsPositionEvaluate",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been evaluated.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
        CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
     NULLIFY(dataPoints)
@@ -2098,8 +2093,7 @@ CONTAINS
     
     ENTERS("DataProjection_MaximumInterationUpdateGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     maximumIterationUpdate=dataProjection%maximumIterationUpdate       
      
@@ -2127,8 +2121,7 @@ CONTAINS
     
     ENTERS("DataProjection_MaximumInterationUpdateSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
     IF((maximumIterationUpdate<0.1_DP).OR.(maximumIterationUpdate>1.0_DP)) THEN
       localError="The specified maximum iteration update of "//TRIM(NumberToVString(maximumIterationUpdate,"*",err,error))// &
         & " is invalid. The value must be >= 0.1 and <= 1.0."
@@ -2161,8 +2154,7 @@ CONTAINS
     
     ENTERS("DataProjection_MaximumNumberOfIterationsGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     maximumNumberOfIterations=dataProjection%maximumNumberOfIterations       
     
@@ -2190,8 +2182,7 @@ CONTAINS
     
     ENTERS("DataProjection_MaximumNumberOfIterationsSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
     IF(maximumNumberOfIterations<1) THEN
       localError="The specified maximum number of iterations of "// &
         & TRIM(NumberToVString(maximumNumberOfIterations,"*",err,error))//" is invalid. The value must be >= 1."
@@ -2242,8 +2233,7 @@ CONTAINS
     
     ENTERS("DataProjection_NewtonElementsEvaluate_1",err,error,*999)
               
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
     numberOfCoordinates=dataProjection%numberOfCoordinates
@@ -2402,9 +2392,8 @@ CONTAINS
     INTEGER(INTG) :: elementIdx,xiIdx,fixedXiIdx,iterationIdx1,iterationIdx2
     
     ENTERS("DataProjection_NewtonElementsEvaluate_2",err,error,*999)
-              
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
     meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%meshComponentNumber
@@ -2635,8 +2624,7 @@ CONTAINS
     
     ENTERS("DataProjection_NewtonElementsEvaluate_3",err,error,*999)
               
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
     meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%meshComponentNumber
@@ -2996,9 +2984,8 @@ CONTAINS
     INTEGER(INTG) :: elementIdx,xiIdx,fixedXiIdx,iterationIdx1,iterationIdx2
     
     ENTERS("DataProjection_NewtonFacesEvaluate",err,error,*999)
-              
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
     meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%FIELD%decomposition%meshComponentNumber
@@ -3240,8 +3227,7 @@ CONTAINS
     
     ENTERS("DataProjection_NewtonLinesEvaluate",err,error,*999)
               
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
     numberOfCoordinates=dataProjection%numberOfCoordinates
@@ -3394,8 +3380,7 @@ CONTAINS
     
     ENTERS("DataProjection_NumberOfClosestElementsGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     numberOfClosestElements=dataProjection%numberOfClosestElements       
     
@@ -3422,8 +3407,7 @@ CONTAINS
     
     ENTERS("DataProjection_NumberOfClosestElementsSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
     IF(numberOfClosestElements<1) CALL FlagError("Data projection number of closest elements must be >= 1.",err,error,*999)
         
     dataProjection%numberOfClosestElements=numberOfClosestElements
@@ -3478,9 +3462,8 @@ CONTAINS
    
     ENTERS("DataProjection_ProjectionCancelByDataPoints1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been evaluated.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
        CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
 
@@ -3527,9 +3510,8 @@ CONTAINS
     
     ENTERS("DataProjection_ProjectionCancelByDistance",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been evaluated.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
        CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
 
@@ -3643,9 +3625,8 @@ CONTAINS
     
     ENTERS("DataProjection_ProjectionCancelByExitTags1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been evaluated.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
        CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
     DO tagIdx=1,SIZE(exitTags,1)
@@ -3704,6 +3685,7 @@ CONTAINS
     INTEGER(INTG) :: elementIdx,elementLocalNumber,numberOfCandidates
     LOGICAL :: elementExists,ghostElement
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
     
@@ -3724,14 +3706,16 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*998)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*998)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*998)
+      NULLIFY(decompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*998)
       IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)) &
         & DEALLOCATE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)
       ALLOCATE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers(SIZE(elementUserNumbers,1)),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate candidiate element numbers.",err,error,*999)
       numberOfCandidates=0
       DO elementIdx=1,SIZE(elementUserNumbers,1)
-        CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+        CALL DecompositionElements_ElementCheckExists(decompositionElements,elementUserNumbers(elementIdx), &
           & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
         IF(elementExists) THEN
           IF(.NOT.ghostElement) THEN
@@ -3778,6 +3762,7 @@ CONTAINS
     INTEGER(INTG) :: dataPointGlobalNumber,dataPointIdx,elementIdx,elementLocalNumber,numberOfCandidates
     LOGICAL :: elementExists,ghostElement
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
     
@@ -3798,7 +3783,9 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+      NULLIFY(decompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       DO dataPointIdx=1,SIZE(dataPointUserNumbers,1)
         CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumbers(dataPointIdx),dataPointGlobalNumber, &
           & err,error,*999)
@@ -3809,7 +3796,7 @@ CONTAINS
         IF(err/=0) CALL FlagError("Could not allocate candidiate element numbers.",err,error,*999)
         numberOfCandidates=0
         DO elementIdx=1,SIZE(elementUserNumbers,1)
-          CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+          CALL DecompositionElements_ElementCheckExists(decompositionElements,elementUserNumbers(elementIdx), &
             & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
           IF(elementExists) THEN
             IF(.NOT.ghostElement) THEN
@@ -3857,6 +3844,7 @@ CONTAINS
     LOGICAL :: elementExists,ghostElement
     TYPE(BasisType), POINTER :: basis
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
@@ -3887,13 +3875,15 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*998)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*998)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*998)
+      NULLIFY(decompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*998)
       NULLIFY(domain)
       CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*998)
       NULLIFY(domainTopology)
-      CALL Domain_TopologyGet(domain,domainTopology,err,error,*998)
+      CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*998)
       NULLIFY(domainElements)
-      CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*998)
+      CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*998)
       IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)) &
         & DEALLOCATE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)
       IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers)) &
@@ -3904,7 +3894,7 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate candidiate local face/line numbers.",err,error,*999)
       numberOfCandidates=0
       DO elementIdx=1,SIZE(elementUserNumbers,1)
-        CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+        CALL DecompositionElements_ElementCheckExists(decompositionElements,elementUserNumbers(elementIdx), &
           & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
         IF(elementExists) THEN
           IF(.NOT.ghostElement) THEN
@@ -3959,6 +3949,7 @@ CONTAINS
     LOGICAL :: elementExists,ghostElement
     TYPE(BasisType), POINTER :: basis
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
@@ -3989,13 +3980,15 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+      NULLIFY(decompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       NULLIFY(domain)
       CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
       NULLIFY(domainTopology)
-      CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+      CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
       NULLIFY(domainElements)
-      CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+      CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
       DO dataPointIdx=1,SIZE(dataPointUserNumbers,1)
         CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumbers(dataPointIdx),dataPointGlobalNumber, &
           & err,error,*999)
@@ -4011,7 +4004,7 @@ CONTAINS
         IF(err/=0) CALL FlagError("Could not allocate candidiate local face/line numbers.",err,error,*999)
         numberOfCandidates=0
         DO elementIdx=1,SIZE(elementUserNumbers,1)
-          CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+          CALL DecompositionElements_ElementCheckExists(decompositionElements,elementUserNumbers(elementIdx), &
             & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
           IF(elementExists) THEN
             IF(.NOT.ghostElement) THEN
@@ -4064,6 +4057,7 @@ CONTAINS
     LOGICAL :: elementExists,ghostElement
     TYPE(BasisType), POINTER :: basis
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
@@ -4099,13 +4093,15 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*998)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*998)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*998)
+      NULLIFY(decompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       NULLIFY(domain)
       CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*998)
       NULLIFY(domainTopology)
-      CALL Domain_TopologyGet(domain,domainTopology,err,error,*998)
+      CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*998)
       NULLIFY(domainElements)
-      CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*998)
+      CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*998)
       IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)) &
         & DEALLOCATE(dataProjection%dataProjectionCandidates(0)%candidateElementNumbers)
       IF(ALLOCATED(dataProjection%dataProjectionCandidates(0)%localFaceLineNumbers)) &
@@ -4116,7 +4112,7 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate candidiate local face/line numbers.",err,error,*999)
       numberOfCandidates=0
       DO elementIdx=1,SIZE(elementUserNumbers,1)
-        CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+        CALL DecompositionElements_ElementCheckExists(decompositionElements,elementUserNumbers(elementIdx), &
           & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
         IF(elementExists) THEN
           IF(.NOT.ghostElement) THEN
@@ -4171,6 +4167,7 @@ CONTAINS
     LOGICAL :: elementExists,ghostElement
     TYPE(BasisType), POINTER :: basis
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
@@ -4206,13 +4203,15 @@ CONTAINS
       NULLIFY(decomposition)
       CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
       NULLIFY(decompositionTopology)
-      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+      NULLIFY(decompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       NULLIFY(domain)
       CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
       NULLIFY(domainTopology)
-      CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+      CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
       NULLIFY(domainElements)
-      CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+      CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
       DO dataPointIdx=1,SIZE(dataPointUserNumbers,1)
         CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumbers(dataPointIdx),dataPointGlobalNumber, &
           & err,error,*999)
@@ -4228,7 +4227,7 @@ CONTAINS
         IF(err/=0) CALL FlagError("Could not allocate candidiate local face/line numbers.",err,error,*999)
         numberOfCandidates=0
         DO elementIdx=1,SIZE(elementUserNumbers,1)
-          CALL DecompositionTopology_ElementCheckExists(decompositionTopology,elementUserNumbers(elementIdx), &
+          CALL DecompositionElements_ElementCheckExists(decompositionElements,elementUserNumbers(elementIdx), &
             & elementExists,elementLocalNumber,ghostElement,err,error,*999)       
           IF(elementExists) THEN
             IF(.NOT.ghostElement) THEN
@@ -4277,8 +4276,7 @@ CONTAINS
     
     ENTERS("DataProjection_ProjectionTypeGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionType=dataProjection%projectionType       
     
@@ -4306,8 +4304,7 @@ CONTAINS
     
     ENTERS("DataProjection_ProjectionTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
 
     dataProjection%projectionType=projectionType
     SELECT CASE(projectionType)
@@ -4360,8 +4357,7 @@ CONTAINS
     
     ENTERS("DataProjection_RelativeToleranceGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     relativeTolerance=dataProjection%relativeTolerance       
    
@@ -4384,12 +4380,17 @@ CONTAINS
     REAL(DP), INTENT(IN) :: relativeTolerance !<the relative tolerance to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables    
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
     ENTERS("DataProjection_RelativeToleranceSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
-    IF(relativeTolerance<0.0_DP) CALL FlagError("Data projection relative tolerance must be a positive real number.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
+    IF(relativeTolerance<0.0_DP) THEN
+      localError="The specified relative tolerance of "//TRIM(NumberToVString(relativeTolerance,"*",err,error))// &
+        & " is invalid. The tolerance must be >= 0.0."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     dataProjection%relativeTolerance=relativeTolerance
     
@@ -4418,8 +4419,7 @@ CONTAINS
     
     ENTERS("DataProjection_StartingXiGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     IF(SIZE(startingXi,1)<SIZE(dataProjection%startingXi,1)) THEN
       localError="The size of the specified starting xi array of "//TRIM(NumberToVString(SIZE(startingXi,1),"*",err,error))// &
         & " is too small. The size must be >= "//TRIM(NumberToVString(SIZE(dataProjection%startingXi,1),"*",err,error))//"."
@@ -4454,8 +4454,7 @@ CONTAINS
     
     ENTERS("DataProjection_StartingXiSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
     IF(SIZE(startingXi,1)/=dataProjection%numberOfXi) THEN
       localError="The size of the specified xi array of "//TRIM(NumberToVString(SIZE(startingXi,1),"*",err,error))// &
         & " is invalid. The size should be "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"."
@@ -4496,6 +4495,8 @@ CONTAINS
     INTEGER(INTG) :: dataPointGlobalNumber,localElementNumber
     LOGICAL :: elementExists,ghostElement
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ElementSet",err,error,*999)
@@ -4503,9 +4504,13 @@ CONTAINS
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     NULLIFY(decomposition)
     CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     
     CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    CALL DecompositionTopology_ElementCheckExists(decomposition%topology,elementUserNumber,elementExists,localElementNumber, &
+    CALL DecompositionElements_ElementCheckExists(decompositionElements,elementUserNumber,elementExists,localElementNumber, &
       & ghostElement,err,error,*999)
     IF(elementExists) THEN
       IF(ghostElement) THEN
@@ -4546,9 +4551,8 @@ CONTAINS
     
     ENTERS("DataProjection_ResultDistanceGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
     projectionDistance=dataProjection%dataProjectionResults(dataPointGlobalNumber)%distance
@@ -4706,9 +4710,8 @@ CONTAINS
         
     ENTERS("DataProjection_ResultAnalysisOutput",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     NULLIFY(dataPoints)
     CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
@@ -4717,15 +4720,15 @@ CONTAINS
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(projectionField,decomposition,err,error,*999)
     NULLIFY(decompositionTopology)
-    CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
-    CALL DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
     NULLIFY(domainTopology)
-    CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
-    CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
     NULLIFY(workGroup)
     CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
     CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
@@ -4877,9 +4880,8 @@ CONTAINS
    
     ENTERS("DataProjection_ResultElementNumberGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
     projectionElementNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementNumber
@@ -4910,9 +4912,8 @@ CONTAINS
     
     ENTERS("DataProjection_ResultElementFaceNumberGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     !Check if boundary faces projection type was set
     IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) THEN
@@ -4948,9 +4949,8 @@ CONTAINS
     
     ENTERS("DataProjection_ResultElementLineNumberGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     !Check if boundary lines projection type was set
     IF(dataProjection%projectionType==DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE) THEN
@@ -4985,9 +4985,8 @@ CONTAINS
     
     ENTERS("DataProjection_ResultExitTagGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     
     CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
     projectionExitTag=dataProjection%dataProjectionResults(dataPointGlobalNumber)%exitTag
@@ -5018,9 +5017,8 @@ CONTAINS
     
     ENTERS("DataProjection_ResultXiGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     IF(SIZE(projectionXi,1)<dataProjection%numberOfXi) THEN
       localError="The specified projection xi has size of "//TRIM(NumberToVString(SIZE(projectionXi,1),"*",err,error))// &
         & " but it needs to have size of >= "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"." 
@@ -5057,9 +5055,8 @@ CONTAINS
     
     ENTERS("DataProjection_ResultXiSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertNotFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertNotProjected(dataProjection,err,error,*999)
     IF(SIZE(projectionXi,1)/=dataProjection%numberOfXi) THEN
       localError="The specified projection xi has size of "//TRIM(NumberToVString(SIZE(projectionXi,1),"*",err,error))// &
         & "but it needs to have size of "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"."
@@ -5098,9 +5095,8 @@ CONTAINS
     
     ENTERS("DataProjection_ResultProjectionVectorGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+    CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
+    CALL DataProjection_AssertIsProjected(dataProjection,err,error,*999)
     IF(SIZE(projectionVector,1)<dataProjection%numberOfCoordinates) THEN
       localError="The specified projection vector has a size of "// &
         & TRIM(NumberToVString(SIZE(projectionVector,1),"*",err,error))//" but it needs to have size of "// &

@@ -97,7 +97,6 @@ MODULE DecompositionRoutines
   PUBLIC Decomposition_CalculateLinesSet,Decomposition_CalculateFacesSet
 
   PUBLIC Decomposition_CreateStart,Decomposition_CreateFinish
-
   PUBLIC Decomposition_Destroy
 
   PUBLIC Decomposition_ElementBasisGet
@@ -731,7 +730,7 @@ CONTAINS
     NULLIFY(decompositionTopology)
     CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
-    CALL DecompositionTopology_DecompositionElements(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     CALL DecompositionElements_LocalElementNumberGet(decompositionElements,elementUserNumber,elementLocalNumber, &
       & ghostElement,err,error,*999)
     NULLIFY(domain)
@@ -1030,7 +1029,7 @@ CONTAINS
 
     ENTERS("Decomposition_ElementDomainSet",err,error,*999)
 
-    CALL Deomposition_AssertNotFinished(decomposition,err,error,*999)
+    CALL Decomposition_AssertNotFinished(decomposition,err,error,*999)
     NULLIFY(mesh)
     CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
     NULLIFY(meshTopology)
@@ -1397,7 +1396,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
 
     NULLIFY(decompositionTopology)
-    CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     !Calculate the elements topology
     CALL DecompositionTopology_ElementsCalculate(decompositionTopology,err,error,*999)
     !Calculate the line topology
@@ -1414,6 +1413,57 @@ CONTAINS
 999 ERRORSEXITS("Decomposition_TopologyCalculate",err,error)
     RETURN 1
   END SUBROUTINE Decomposition_TopologyCalculate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises the element data points for a decomposition element.
+  SUBROUTINE DecompositionElementDataPoints_Finalise(elementDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementDataPointsType) :: elementDataPoints !<The element data points to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionElementDataPoints_Finalise",err,error,*999)
+
+    elementDataPoints%numberOfProjectedData=0
+    elementDataPoints%globalElementNumber=0
+    IF(ALLOCATED(elementDataPoints%dataIndices)) DEALLOCATE(elementDataPoints%dataIndices)
+    
+    EXITS("DecompositionElementDataPoints_Finalise")
+    RETURN
+999 ERRORSEXITS("DecompositionElementDataPoints_Finalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecompositionElementDataPoints_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the element data points for a decomposition element.
+  SUBROUTINE DecompositionElementDataPoints_Initialise(elementDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementDataPointsType) :: elementDataPoints !<The element data points to intialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionElementDataPoints_Initialise",err,error,*999)
+
+    elementDataPoints%numberOfProjectedData=0
+    elementDataPoints%globalElementNumber=0
+    
+    EXITS("DecompositionElementDataPoints_Initialise")
+    RETURN
+999 ERRORSEXITS("DecompositionElementDataPoints_Initialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecompositionElementDataPoints_Initialise
 
   !
   !================================================================================================================================
@@ -1445,7 +1495,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*999)
     NULLIFY(decompositionData)
-    CALL DecompositionTopology_DataPointsGet(decompositionTopology,decompositionData,err,error,*999)
+    CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionData,err,error,*999)
     NULLIFY(decomposition)
     CALL DecompositionTopology_DecompositionGet(decompositionTopology,decomposition,err,error,*999)
     CALL WorkGroup_GroupCommunicatorGet(decomposition%workGroup,groupCommunicator,err,error,*999)
@@ -1463,7 +1513,7 @@ CONTAINS
     NULLIFY(meshTopology)
     CALL Mesh_MeshTopologyGet(mesh,meshComponentNumber,meshTopology,err,error,*999)
     NULLIFY(meshData)
-    CALL MeshTopology_DataPointsGet(meshTopology,meshData,err,error,*999)
+    CALL MeshTopology_MeshDataPointsGet(meshTopology,meshData,err,error,*999)
     CALL WorkGroup_NumberOfGroupNodesGet(decomposition%workGroup,numberOfComputationNodes,err,error,*999)
     CALL WorkGroup_GroupNodeNumberGet(decomposition%workGroup,myGroupComputationNodeNumber,err,error,*999)
     ALLOCATE(decompositionData%numberOfDomainLocal(0:numberOfComputationNodes-1),STAT=err)
@@ -1484,7 +1534,8 @@ CONTAINS
     ENDDO !globalElementIdx
     localData=0;
     DO localElementIdx=1,decompositionElements%totalNumberOfElements
-      globalElement=decompositionElements%ELEMENTS(localElementIdx)%globalNumber
+      CALL DecompositionElementDataPoints_Initialise(decompositionData%elementDataPoints(localElementIdx),err,error,*999)
+      globalElement=decompositionElements%elements(localElementIdx)%globalNumber
       decompositionData%elementDataPoints(localElementIdx)%numberOfProjectedData= &
         & meshData%elementDataPoints(globalElement)%numberOfProjectedData
       decompositionData%elementDataPoints(localElementIdx)%globalElementNumber=globalElement
@@ -1591,7 +1642,7 @@ CONTAINS
     CALL DecompositionElements_LocalElementNumberGet(decompositionElements,elementUserNumber,elementLocalNumber, &
       & ghostElement,err,error,*999)
     NULLIFY(decompositionData)
-    CALL DecompositionTopology_DataPointsGet(decompositionTopology,decompositionData,err,error,*999)
+    CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionData,err,error,*999)
     numberOfDataPoints = decompositionData%elementDataPoints(elementLocalNumber)%numberOfProjectedData
     IF(dataPointIndex<=0.OR.dataPointIndex>numberOfDataPoints) THEN
      localError="Element data point index "//TRIM(NumberToVString(dataPointIndex,"*",err,error))// &
@@ -1637,7 +1688,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
 
     NULLIFY(decompositionTopology)
-    CALL Decomposition_DecompositionTopology(decomposition,decompositionTopology,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     NULLIFY(decompositionData)
@@ -1686,7 +1737,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
     
     NULLIFY(decompositionTopology)
-    CALL Decomposition_DecompositionTopology(decomposition,decompositionTopology,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(decompositionElements)
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     NULLIFY(decompositionData)
@@ -2326,6 +2377,80 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Finalise the data point data structures for a decomposition topology.
+  SUBROUTINE DecompositionTopology_DataPointsFinalise(decompositionDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints !<A pointer to the decomposition data points to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: elementIdx
+
+    ENTERS("DecompositionTopology_DataPointsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(decompositionDataPoints)) THEN
+      IF(ALLOCATED(decompositionDataPoints%numberOfDomainLocal)) DEALLOCATE(decompositionDataPoints%numberOfDomainLocal)
+      IF(ALLOCATED(decompositionDataPoints%numberOfDomainGhost)) DEALLOCATE(decompositionDataPoints%numberOfDomainGhost)
+      IF(ALLOCATED(decompositionDataPoints%numberOfElementDataPoints)) &
+        & DEALLOCATE(decompositionDataPoints%numberOfElementDataPoints)
+      DO elementIdx=1,SIZE(decompositionDataPoints%elementDataPoints,1)
+        CALL DecompositionElementDataPoints_Finalise(decompositionDataPoints%elementDataPoints(elementIdx),err,error,*999)
+      ENDDO !elementIdx
+      IF(ALLOCATED(decompositionDataPoints%elementDataPoints)) DEALLOCATE(decompositionDataPoints%elementDataPoints)
+      IF(ASSOCIATED(decompositionDataPoints%dataPointsTree)) &
+        & CALL Tree_Destroy(decompositionDataPoints%dataPointsTree,err,error,*999)
+      DEALLOCATE(decompositionDataPoints)
+    ENDIF
+
+    EXITS("DecompositionTopology_DataPointsFinalise")
+    RETURN
+999 ERRORSEXITS("DecompositionTopology_DataPointsFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecompositionTopology_DataPointsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises the data point data structures for a decomposition topology.
+  SUBROUTINE DecompositionTopology_DataPointsInitialise(decompositionTopology,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to initialise the lines for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("DecompositionTopology_DataPointsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*998)
+    IF(ASSOCIATED(decompositionTopology%dataPoints)) &
+      & CALL FlagError("Decomposition already has topology data points associated.",err,error,*998)
+     
+    ALLOCATE(decompositionTopology%dataPoints,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate topology data points.",err,error,*999)
+    decompositionTopology%dataPoints%numberOfDataPoints=0
+    decompositionTopology%dataPoints%totalNumberOfDataPoints=0
+    decompositionTopology%dataPoints%numberOfGlobalDataPoints=0
+    NULLIFY(decompositionTopology%dataPoints%dataPointsTree)
+    decompositionTopology%dataPoints%decompositionTopology=>decompositionTopology
+
+    EXITS("DecompositionTopology_DataPointsInitialise")
+    RETURN
+999 CALL DecompositionTopology_DataPointsFinalise(decompositionTopology%dataPoints,dummyErr,dummyError,*998)
+998 ERRORSEXITS("DecompositionTopology_DataPointsInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecompositionTopology_DataPointsInitialise
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finalises a line in the given decomposition topology and deallocates all memory.
   SUBROUTINE DecompositionLine_Finalise(decompositionLine,err,error,*)
 
@@ -2891,43 +3016,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the line data structures for a decomposition topology.
-  SUBROUTINE DecompositionTopology_DataPointsInitialise(decompositionTopology,err,error,*)
-
-    !Argument variables
-    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to initialise the lines for
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dummyErr
-    TYPE(VARYING_STRING) :: dummyError
-
-    ENTERS("DecompositionTopology_DataPointsInitialise",err,error,*998)
-
-    IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*998)
-    IF(ASSOCIATED(decompositionTopology%dataPoints)) &
-      & CALL FlagError("Decomposition already has topology data points associated.",err,error,*998)
-     
-    ALLOCATE(decompositionTopology%dataPoints,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate topology data points.",err,error,*999)
-    decompositionTopology%dataPoints%numberOfDataPoints=0
-    decompositionTopology%dataPoints%totalNumberOfDataPoints=0
-    decompositionTopology%dataPoints%numberOfGlobalDataPoints=0
-    NULLIFY(decompositionTopology%dataPoints%dataPointsTree)
-    decompositionTopology%dataPoints%decompositionTopology=>decompositionTopology
-
-    EXITS("DecompositionTopology_DataPointsInitialise")
-    RETURN
-999 CALL DecompositionTopology_DataPointsFinalise(decompositionTopology%dataPoints,dummyErr,dummyError,*998)
-998 ERRORSEXITS("DecompositionTopology_DataPointsInitialise",err,error)
-    RETURN 1
-    
-  END SUBROUTINE DecompositionTopology_DataPointsInitialise
-
-  !
-  !================================================================================================================================
-  !
-
   !>Finalises a decompositio face in the given decomposition topology and deallocates all memory.
   SUBROUTINE DecompositionFace_Finalise(decompositionFace,err,error,*)
 
@@ -3020,9 +3108,9 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*999)
     NULLIFY(decompositionElements)
-    CALL DecompositionTopology_DecompositionElements(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     NULLIFY(decompositionFaces)
-    CALL DecompositionTopology_DecompositionFaces(decompositionTopology,decompositionFaces,err,error,*999)
+    CALL DecompositionTopology_DecompositionFacesGet(decompositionTopology,decompositionFaces,err,error,*999)
     NULLIFY(decomposition)
     CALL DecompositionTopology_DecompositionGet(decompositionTopology,decomposition,err,error,*999)
     
@@ -4205,7 +4293,7 @@ CONTAINS
     NULLIFY(nodesMapping)
     CALL DomainMappings_NodesMappingGet(domainMappings,nodesMapping,err,error,*999)
     NULLIFY(elementsMapping)
-    CALL DomainMappings_ElementMappingGet(domainMappings,elementsMapping,err,error,*999)
+    CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
     NULLIFY(dofsMapping)
     CALL DomainMappings_DofsMappingGet(domainMappings,dofsMapping,err,error,*999)
     NULLIFY(decomposition)
@@ -4791,7 +4879,7 @@ CONTAINS
     NULLIFY(nodesMapping)
     CALL DomainMappings_NodesMappingGet(domainMappings,nodesMapping,err,error,*999)
     NULLIFY(dofsMapping)
-    CALL DomainMapppings_DofsMappingGet(domainMappings,dofsMapping,err,error,*999)
+    CALL DomainMappings_DofsMappingGet(domainMappings,dofsMapping,err,error,*999)
     
     ALLOCATE(domainElements%elements(elementsMapping%totalNumberOfLocal),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate domain elements elements.",err,error,*999)

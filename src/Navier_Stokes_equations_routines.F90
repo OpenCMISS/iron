@@ -7138,8 +7138,8 @@ CONTAINS
                           READ(10,*) fittedNodes
                           DO nodeIdx=1, numberOfFittedNodes
                             userNodeNumber=INT(fittedNodes(nodeIdx),INTG)
-                            CALL DOMAIN_TOPOLOGY_NODE_CHECK_EXISTS(domain%Topology,userNodeNumber,nodeExists, &
-                              & localNodeNumber,ghostNode,err,error,*999)
+                            CALL DomainNodes_NodeCheckExists(DOMAIN_NODES,userNodeNumber,nodeExists,localNodeNumber,ghostNode, &
+                              & err,error,*999)
                             IF(nodeExists .AND. .NOT. ghostNode) THEN
                               ! Node found on this computation node
                               READ(10,*) (componentValues(componentIdx), componentIdx=1,numberOfDimensions)
@@ -7784,7 +7784,7 @@ CONTAINS
                                 READ(10,*) fittedNodes
                                 DO nodeIdx=1, numberOfFittedNodes
                                   userNodeNumber=INT(fittedNodes(nodeIdx),INTG)
-                                  CALL DOMAIN_TOPOLOGY_NODE_CHECK_EXISTS(domain%Topology,userNodeNumber,nodeExists, &
+                                  CALL DomainNodes_NodeCheckExists(DOMAIN_NODES,userNodeNumber,nodeExists, &
                                     & localNodeNumber,ghostNode,err,error,*999)
                                   IF(nodeExists .AND. .NOT. ghostNode) THEN
                                     ! Node found on this computation node
@@ -8856,9 +8856,9 @@ CONTAINS
               NULLIFY(domain)
               CALL FieldVariable_DomainGet(fluidGeometricVariable,componentIdx,domain,err,error,*999)
               NULLIFY(domainTopology)
-              CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+              CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
               NULLIFY(domainNodes)
-              CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+              CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
               !Loop over the local nodes excluding the ghosts.
               DO nodeIdx=1,domainNodes%numberOfNodes
                 DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
@@ -8925,9 +8925,9 @@ CONTAINS
               NULLIFY(domain)
               CALL FieldVariable_DomainGet(fluidGeometricVariable,componentIdx,domain,err,error,*999)
               NULLIFY(domainTopology)
-              CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+              CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
               NULLIFY(domainNodes)
-              CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+              CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
               !Loop over the local nodes excluding the ghosts.
               DO nodeIdx=1,domainNodes%numberOfNodes
                 DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
@@ -9062,9 +9062,9 @@ CONTAINS
                   NULLIFY(domain)
                   CALL FieldVariable_DomainGet(interfaceGeometricVariable,componentIdx,domain,err,error,*999)
                   NULLIFY(domainTopology)
-                  CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+                  CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
                   NULLIFY(domainNodes)
-                  CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+                  CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
                   DO nodeIdx=1,domainNodes%totalNumberOfNodes
                     solidNode=interfaceNodes%coupledNodes(1,nodeIdx)
                     fluidNode=interfaceNodes%coupledNodes(2,nodeIdx)
@@ -9094,9 +9094,9 @@ CONTAINS
                 NULLIFY(domain)
                 CALL FieldVariable_DomainGet(fluidGeometricVariable,componentIdx,domain,err,error,*999)
                 NULLIFY(domainTopology)
-                CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+                CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
                 NULLIFY(domainNodes)
-                CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+                CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
                 !Loop over the local nodes excluding the ghosts.
                 DO nodeIdx=1,domainNodes%numberOfNodes
                   DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
@@ -14070,23 +14070,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(DomainMappingType), POINTER :: elementsMapping
-    TYPE(VARYING_STRING) :: localError
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dependentVariable
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(BasisType), POINTER :: dependentBasis
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: dependentInterpolatedPoint
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: dependentInterpolationParameters
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpolatedPoint
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
-    TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(FIELD_TYPE), POINTER :: materialsField
     INTEGER(INTG) :: elementIdx,decompositionLocalElementNumber
     INTEGER(INTG) :: gaussIdx
     INTEGER(INTG) :: meshComponentNumber,numberOfDimensions,i,j,userElementNumber
@@ -14095,6 +14078,25 @@ CONTAINS
     REAL(DP) :: dUdXi(3,3),dXidX(3,3),dUdX(3,3),dUdXTrans(3,3),D(3,3),velocityGauss(3)
     REAL(DP) :: shearRateDefault
     LOGICAL :: ghostElement,elementExists,defaultUpdate
+    TYPE(BasisType), POINTER :: dependentBasis
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainMappingType), POINTER :: elementsMapping
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FIELD_TYPE), POINTER :: materialsField
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: dependentInterpolatedPoint
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: dependentInterpolationParameters
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpolatedPoint
+    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dependentVariable
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("NavierStokes_ShearRateCalculate",err,error,*999)
 
@@ -14128,7 +14130,14 @@ CONTAINS
       dependentVariable=>nonlinearMapping%residualVariables(1)%ptr
       meshComponentNumber=dependentVariable%COMPONENTS(1)%meshComponentNumber
       !Get the mesh decomposition and mapping
-      decomposition=>dependentVariable%FIELD%DECOMPOSITION
+      NULLIFY(dependentField)
+      CALL FieldVariable_FieldGet(dependentVariable,dependentField,err,error,*999)
+      NULLIFY(decomposition)
+      CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
+      NULLIFY(decompositionTopology)
+      CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+      NULLIFY(decompositionElements)
+      CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       elementsMapping=>decomposition%DOMAIN(decomposition%meshComponentNumber)%ptr%MAPPINGS%ELEMENTS
       fieldVariable=>nonlinearMapping%residualVariables(1)%ptr
       numberOfDimensions=fieldVariable%numberOfComponents - 1
@@ -14146,7 +14155,7 @@ CONTAINS
         !Check computation node for elementIdx
         elementExists=.FALSE.
         ghostElement=.TRUE.
-        CALL DECOMPOSITION_TOPOLOGY_ELEMENT_CHECK_EXISTS(decomposition%TOPOLOGY, &
+        CALL DecompositionElements_ElementCheckExists(decompositionElements, &
           & userElementNumber,elementExists,decompositionLocalElementNumber,ghostElement,err,error,*999)
         IF(ghostElement) THEN
           CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"Ghost: ",userElementNumber,err,error,*999)
@@ -15495,21 +15504,21 @@ CONTAINS
         CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,1,dependentVariable,err,error,*999)
         CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
         meshComponentNumber=dependentVariable%COMPONENTS(1)%meshComponentNumber
-        CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+        CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
         CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
-        CALL Domain_MappingsGet(domain,domainMappings,err,error,*999)
-        CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
-        CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
-        CALL DomainMappings_NodesGet(domainMappings,nodesMappings,err,error,*999)
-        CALL DomainTopology_NodesGet(domainTopology,domainNodes,err,error,*999)
+        CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+        CALL DomainMappings_NodesMappingGet(domainMappings,nodesMappings,err,error,*999)
+        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
         numberOfDimensions=dependentVariable%numberOfComponents-1
 
         IF(numberOfDimensions==2) THEN
           IF(.NOT.decomposition%calculateLines) CALL FlagError("Decomposition calculate lines is not set.",err,error,*999)
-          CALL DomainTopology_LinesGet(domainTopology,domainLines,err,error,*999)
+          CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
         ELSE IF(numberOfDimensions==3) THEN
           IF(.NOT.decomposition%calculateFaces) CALL FlagError("Decomposition calculate faces is not set.",err,error,*999)
-          CALL DomainTopology_FacesGet(domainTopology,domainFaces,err,error,*999)
+          CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
         ELSE
           localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)

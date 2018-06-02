@@ -90,13 +90,15 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC Decomposition_CoordinateSystemGet
 
+  PUBLIC Decomposition_DecompositionsGet
+
   PUBLIC Decomposition_DomainGet
 
   PUBLIC Decomposition_MeshGet
 
   PUBLIC Decomposition_RegionGet
   
-  PUBLIC Decomposition_TopologyGet
+  PUBLIC Decomposition_DecompositionTopologyGet
   
   PUBLIC Decomposition_UserNumberFind
 
@@ -112,6 +114,8 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DecompositionElements_LocalElementNumberGet
 
+  PUBLIC DecompositionTopology_DecompositionGet
+
   PUBLIC DecompositionTopology_DecompositionDataPointsGet
 
   PUBLIC DecompositionTopology_DecompositionElementsGet
@@ -120,23 +124,37 @@ MODULE DecompositionAccessRoutines
   
   PUBLIC DecompositionTopology_DecompositionLinesGet
 
-  PUBLIC Domain_MappingsGet
+  PUBLIC Domain_DecompositionGet
 
-  PUBLIC Domain_TopologyGet
+  PUBLIC Domain_DomainMappingsGet
+
+  PUBLIC Domain_DomainTopologyGet
 
   PUBLIC DomainElements_BasisGet
 
+  PUBLIC DomainFaces_BasisGet
+
   PUBLIC DomainFaces_FaceGet
 
-  PUBLIC DomainLines_LineGet
-  
-  PUBLIC DomainMappings_ElementsGet
+  PUBLIC DomainLines_BasisGet
 
-  PUBLIC DomainMappings_NodesGet
+  PUBLIC DomainLines_LineGet
+
+  PUBLIC DomainMappings_DofsMappingGet
+  
+  PUBLIC DomainMappings_DomainGet
+  
+  PUBLIC DomainMappings_ElementsMappingGet
+
+  PUBLIC DomainMappings_NodesMappingGet
 
   PUBLIC DomainNodes_LocalNodeNumberGet
 
   PUBLIC DomainNodes_NodeCheckExists
+
+  PUBLIC DomainTopology_DomainGet
+
+  PUBLIC DomainTopology_DomainDofsGet
 
   PUBLIC DomainTopology_DomainElementsGet
 
@@ -401,6 +419,40 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the decompositions from a decomposition. 
+  SUBROUTINE Decomposition_DecompositionsGet(decomposition,decompositions,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionType), POINTER :: decomposition !<The decomposition to get the decompositions for.
+    TYPE(DecompositionsType), POINTER :: decompositions !<On exit, a pointer to the decompositions for the decomposition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Decomposition_DecompositionsGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decompositions)) CALL FlagError("Decompositions is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+
+    !Get the decompositions
+    decompositions=>decomposition%decompositions
+    
+    !Check decompositions is associated.
+    IF(.NOT.ASSOCIATED(decompositions)) CALL FlagError("Decomposition decompositions is not associated.",err,error,*999)
+    
+    EXITS("Decomposition_DecompositionsGet")
+    RETURN
+999 NULLIFY(decompositions)
+998 ERRORSEXITS("Decomposition_DecompositionsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_DecompositionsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a domain from a decomposition and a mesh component. If mesh component is 0 then the mesh component used for the decomposition is used. 
   SUBROUTINE Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*)
 
@@ -531,7 +583,7 @@ CONTAINS
   !
 
   !>Gets a decomposition topology from a decomposition.
-  SUBROUTINE Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*)
+  SUBROUTINE Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*)
 
     !Argument variables
     TYPE(DecompositionType), POINTER :: decomposition !<The decomposition to get the domain for.
@@ -541,7 +593,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
  
-    ENTERS("Decomposition_TopologyGet",err,error,*999)
+    ENTERS("Decomposition_DecompositionTopologyGet",err,error,*999)
 
     !Check input arguments
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
@@ -556,12 +608,12 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("Decomposition_TopologyGet")
+    EXITS("Decomposition_DecompositionTopologyGet")
     RETURN
-999 ERRORSEXITS("Decomposition_TopologyGet",err,error)
+999 ERRORSEXITS("Decomposition_DecompositionTopologyGet",err,error)
     RETURN 1
     
-  END SUBROUTINE Decomposition_TopologyGet
+  END SUBROUTINE Decomposition_DecompositionTopologyGet
 
   !
   !================================================================================================================================
@@ -900,6 +952,40 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the decomposition from a decomposition topology.
+  SUBROUTINE DecompositionTopology_DecompositionGet(decompositionTopology,decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology !<A pointer to the decomposition topology to get the decomposition for.
+    TYPE(DecompositionType), POINTER :: decomposition !<On exit, a pointer to the decomposition topology decomposition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DecompositionTopology_DecompositionGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decompositionTopology)) CALL FlagError("Decomposition topology is not associated.",err,error,*999)
+
+    !Get the decomposition data points
+    decomposition=>decompositionTopology%decomposition
+    !Check decomposition is associated.
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition topology decomposition is not associated.",err,error,*999)
+    
+    EXITS("DecompositionTopology_DecompositionGet")
+    RETURN
+999 NULLIFY(decomposition)
+998 ERRORS("DecompositionTopology_DecompositionGet",err,error)
+    EXITS("DecompositionTopology_DecompositionGet")
+    RETURN 1
+    
+  END SUBROUTINE DecompositionTopology_DecompositionGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets faces from a decomposition topology.
   SUBROUTINE DecompositionTopology_DecompositionFacesGet(decompositionTopology,decompositionFaces,err,error,*)
 
@@ -1004,6 +1090,50 @@ CONTAINS
     
   END SUBROUTINE DomainElements_BasisGet
 
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the basis for a face in the domain faces identified by its local number
+  SUBROUTINE DomainFaces_BasisGet(domainFaces,localFaceNumber,basis,err,error,*)
+
+    !Argument variables
+    TYPE(DomainFacesType), POINTER :: domainFaces !<A pointer to the domain faces to get the face basis for
+    INTEGER(INTG), INTENT(IN) :: localFaceNumber !<The face local number to get the basis for
+    TYPE(BasisType), POINTER, INTENT(OUT) :: basis !<On return, a pointer to the basis for the face. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DomainFaces_BasisGet",err,error,*998)
+
+    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainFaces)) CALL FlagError("Domain faces is not associated.",err,error,*999)
+    
+    IF(localFaceNumber<=0.OR.localFaceNumber>domainFaces%numberOfFaces) THEN
+      localError="The local face number of "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is invalid. The local number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainFaces%numberOfFaces,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainFaces%faces)) CALL FlagError("Domain faces faces is not allocated.",err,error,*999)
+      
+    basis=>domainFaces%faces(localFaceNumber)%basis
+    IF(.NOT.ASSOCIATED(basis)) THEN
+      localError="The basis for local face number "//TRIM(NumberToVString(localFaceNumber,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DomainFaces_BasisGet")
+    RETURN
+999 NULLIFY(basis)
+998 ERRORSEXITS("DomainFaces_BasisGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainFaces_BasisGet
+
   !
   !================================================================================================================================
   !
@@ -1046,6 +1176,50 @@ CONTAINS
     
   END SUBROUTINE DomainFaces_FaceGet    
   
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the basis for a line in the domain lines identified by its local number
+  SUBROUTINE DomainLines_BasisGet(domainLines,localLineNumber,basis,err,error,*)
+
+    !Argument variables
+    TYPE(DomainLinesType), POINTER :: domainLines !<A pointer to the domain lines to get the line basis for
+    INTEGER(INTG), INTENT(IN) :: localLineNumber !<The line local number to get the basis for
+    TYPE(BasisType), POINTER, INTENT(OUT) :: basis !<On return, a pointer to the basis for the line. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DomainLiness_BasisGet",err,error,*998)
+
+    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainLines)) CALL FlagError("Domain lines is not associated.",err,error,*999)
+    
+    IF(localLineNumber<=0.OR.localLineNumber>domainLines%numberOfLines) THEN
+      localError="The local line number of "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is invalid. The local number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainLines%numberOfLines,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainLines%lines)) CALL FlagError("Domain lines lines is not allocated.",err,error,*999)
+      
+    basis=>domainLines%lines(localLineNumber)%basis
+    IF(.NOT.ASSOCIATED(basis)) THEN
+      localError="The basis for local line number "//TRIM(NumberToVString(localLineNumber,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DomainLines_BasisGet")
+    RETURN
+999 NULLIFY(basis)
+998 ERRORSEXITS("DomainLines_BasisGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainLines_BasisGet
+
   !
   !================================================================================================================================
   !
@@ -1092,8 +1266,42 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets a domain decomposition for a domain.
+  SUBROUTINE Domain_DecompositionGet(domain,decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DomainType), POINTER :: domain !<The domain to get the decomposition for.
+    TYPE(DecompositionType), POINTER :: decomposition !<On exit, a pointer to the domain decomposition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Domain_DecompositionGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
+
+    !Get the domain decomposition
+    decomposition=>domain%decomposition
+
+    !Check decomposition is associated.
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+    
+    EXITS("Domain_DecompositionGet")
+    RETURN
+999 NULLIFY(decomposition)
+998 ERRORSEXITS("Domain_DecompositionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Domain_DecompositionGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a domain mappings from a domain.
-  SUBROUTINE Domain_MappingsGet(domain,domainMappings,err,error,*)
+  SUBROUTINE Domain_DomainMappingsGet(domain,domainMappings,err,error,*)
 
     !Argument variables
     TYPE(DomainType), POINTER :: domain !<The domain to get the mappings for.
@@ -1102,7 +1310,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("Domain_MappingsGet",err,error,*999)
+    ENTERS("Domain_DomainMappingsGet",err,error,*999)
 
     !Check input arguments
     IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
@@ -1114,19 +1322,19 @@ CONTAINS
     !Check domain mappings is associated.
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
     
-    EXITS("Domain_MappingsGet")
+    EXITS("Domain_DomainMappingsGet")
     RETURN
-999 ERRORSEXITS("Domain_MappingsGet",err,error)
+999 ERRORSEXITS("Domain_DomainMappingsGet",err,error)
     RETURN 1
     
-  END SUBROUTINE Domain_MappingsGet
+  END SUBROUTINE Domain_DomainMappingsGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets a domain topology from a domain.
-  SUBROUTINE Domain_TopologyGet(domain,domainTopology,err,error,*)
+  SUBROUTINE Domain_DomainTopologyGet(domain,domainTopology,err,error,*)
 
     !Argument variables
     TYPE(DomainType), POINTER :: domain !<The domain to get the topologya for.
@@ -1135,7 +1343,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("Domain_TopologyGet",err,error,*999)
+    ENTERS("Domain_DomainTopologyGet",err,error,*999)
 
     !Check input arguments
     IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
@@ -1147,19 +1355,85 @@ CONTAINS
     !Check domain topology is associated.
     IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
     
-    EXITS("Domain_TopologyGet")
+    EXITS("Domain_DomainTopologyGet")
     RETURN
-999 ERRORSEXITS("Domain_TopologyGet",err,error)
+999 ERRORSEXITS("Domain_DomainTopologyGet",err,error)
     RETURN 1
     
-  END SUBROUTINE Domain_TopologyGet
+  END SUBROUTINE Domain_DomainTopologyGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets dofs from a domain mappings.
+  SUBROUTINE DomainMappings_DofsMappingGet(domainMappings,domainDofs,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingsType), POINTER :: domainMappings !<A pointer to the domain mappings to get the dofs for.
+    TYPE(DomainMappingType), POINTER :: domainDofs !<On exit, a pointer to the domain mapping dofs. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DomainMappings_DofsMappingGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(domainDofs)) CALL FlagError("Domain mapping dofs is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
+
+    !Get the domain dofs
+    domainDofs=>domainMappings%dofs
+    !Check domain dofs is associated.
+    IF(.NOT.ASSOCIATED(domainDofs)) CALL FlagError("Domain mappings dofs is not associated.",err,error,*999)
+    
+    EXITS("DomainMappings_DofsMappingGet")
+    RETURN
+999 NULLIFY(domainDofs)
+998 ERRORSEXITS("DomainMappings_DofsMappingGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMappings_DofsMappingGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the domain from a domain mappings.
+  SUBROUTINE DomainMappings_DomainGet(domainMappings,domain,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingsType), POINTER :: domainMappings !<A pointer to the domain mappings to get the domain for.
+    TYPE(DomainType), POINTER :: domain !<On exit, a pointer to the domain mapping domain. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DomainMappings_DomainGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(domain)) CALL FlagError("Domain is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
+
+    !Get the domain
+    domain=>domainMappings%domain
+    !Check domain is associated.
+    IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain mappings domain is not associated.",err,error,*999)
+    
+    EXITS("DomainMappings_DomainGet")
+    RETURN
+999 NULLIFY(domain)
+998 ERRORSEXITS("DomainMappings_DomainGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainMappings_DomainGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets elements from a domain mappings.
-  SUBROUTINE DomainMappings_ElementsGet(domainMappings,domainElements,err,error,*)
+  SUBROUTINE DomainMappings_ElementsMappingGet(domainMappings,domainElements,err,error,*)
 
     !Argument variables
     TYPE(DomainMappingsType), POINTER :: domainMappings !<A pointer to the domain mappings to get the elements for.
@@ -1168,30 +1442,31 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainMappings_ElementsGet",err,error,*999)
+    ENTERS("DomainMappings_ElementsMappingGet",err,error,*998)
 
     !Check input arguments
+    IF(ASSOCIATED(domainElements)) CALL FlagError("Domain mapping elements is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
-    IF(ASSOCIATED(domainElements)) CALL FlagError("Domain mapping elements is already associated.",err,error,*999)
 
     !Get the domain elements
     domainElements=>domainMappings%elements
     !Check domain elements is associated.
     IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain mappings elements is not associated.",err,error,*999)
     
-    EXITS("DomainMappings_ElementsGet")
+    EXITS("DomainMappings_ElementsMappingGet")
     RETURN
-999 ERRORSEXITS("DomainMappings_ElementsGet",err,error)
+999 NULLIFY(domainElements)
+998 ERRORSEXITS("DomainMappings_ElementsMappingGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainMappings_ElementsGet
+  END SUBROUTINE DomainMappings_ElementsMappingGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets nodes from a domain mappings.
-  SUBROUTINE DomainMappings_NodesGet(domainMappings,domainNodes,err,error,*)
+  SUBROUTINE DomainMappings_NodesMappingGet(domainMappings,domainNodes,err,error,*)
 
     !Argument variables
     TYPE(DomainMappingsType), POINTER :: domainMappings !<A pointer to the domain mappings to get the nodes for.
@@ -1200,23 +1475,24 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("DomainMappings_NodesGet",err,error,*999)
+    ENTERS("DomainMappings_NodesMappingGet",err,error,*998)
 
     !Check input arguments
+    IF(ASSOCIATED(domainNodes)) CALL FlagError("Domain mapping nodes is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
-    IF(ASSOCIATED(domainNodes)) CALL FlagError("Domain mapping nodes is already associated.",err,error,*999)
 
     !Get the domain nodes
     domainNodes=>domainMappings%nodes
     !Check domain nodes is associated.
     IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain mappings nodes is not associated.",err,error,*999)
     
-    EXITS("DomainMappings_NodesGet")
+    EXITS("DomainMappings_NodesMappingGet")
     RETURN
-999 ERRORSEXITS("DomainMappings_NodesGet",err,error)
+999 NULLIFY(domainNodes)
+998 ERRORSEXITS("DomainMappings_NodesMappingGet",err,error)
     RETURN 1
     
-  END SUBROUTINE DomainMappings_NodesGet
+  END SUBROUTINE DomainMappings_NodesMappingGet
 
   !
   !================================================================================================================================
@@ -1318,6 +1594,72 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the domain from a domain topology.
+  SUBROUTINE DomainTopology_DomainGet(domainTopology,domain,err,error,*)
+
+    !Argument variables
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the domain for.
+    TYPE(DomainType), POINTER :: domain !<On exit, a pointer to the domain topology domain. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DomainTopology_DomainGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(domain)) CALL FlagError("Domain is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
+
+    !Get the domain
+    domain=>domainTopology%domain
+    !Check domain is associated.
+    IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain topology domain is not associated.",err,error,*999)
+    
+    EXITS("DomainTopology_DomainGet")
+    RETURN
+999 NULLIFY(domain)
+998 ERRORSEXITS("DomainTopology_DomainGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainTopology_DomainGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets dofs from a domain topology.
+  SUBROUTINE DomainTopology_DomainDofsGet(domainTopology,domainDofs,err,error,*)
+
+    !Argument variables
+    TYPE(DomainTopologyType), POINTER :: domainTopology !<A pointer to the domain topology to get the dofs for.
+    TYPE(DomainDofsType), POINTER :: domainDofs !<On exit, a pointer to the domain topology dofs. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("DomainTopology_DomainDofsGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(domainDofs)) CALL FlagError("Domain dofs is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
+
+    !Get the domain dofs
+    domainDofs=>domainTopology%dofs
+    !Check domain dofs is associated.
+    IF(.NOT.ASSOCIATED(domainDofs)) CALL FlagError("Domain topology dofs is not associated.",err,error,*999)
+    
+    EXITS("DomainTopology_DomainDofsGet")
+    RETURN
+999 NULLIFY(domainDofs)
+998 ERRORSEXITS("DomainTopology_DomainDofsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainTopology_DomainDofsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets elements from a domain topology.
   SUBROUTINE DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*)
 
@@ -1331,8 +1673,8 @@ CONTAINS
     ENTERS("DomainTopology_DomainElementsGet",err,error,*999)
 
     !Check input arguments
-    IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain is not associated.",err,error,*999)
     IF(ASSOCIATED(domainElements)) CALL FlagError("Domain elements is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain topology is not associated.",err,error,*999)
 
     !Get the domain elements
     domainElements=>domainTopology%elements

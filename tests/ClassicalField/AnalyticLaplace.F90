@@ -488,7 +488,7 @@ CONTAINS
     CALL cmfe_Field_Initialise(GEOMETRIC_FIELD,Err)
     CALL cmfe_Field_CreateStart(1,REGION,GEOMETRIC_FIELD,Err)
     !Set the decomposition to use
-    CALL cmfe_Field_MeshDecompositionSet(GEOMETRIC_FIELD,DECOMPOSITION,Err)
+    CALL cmfe_Field_DecompositionSet(GEOMETRIC_FIELD,DECOMPOSITION,Err)
     !Set the domain to be used by the field components
     !NB these are needed now as the default mesh component number is 1
     CALL cmfe_Field_ComponentMeshComponentSet(GEOMETRIC_FIELD,CMFE_FIELD_U_VARIABLE_TYPE,1,1,Err)

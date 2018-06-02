@@ -3127,104 +3127,107 @@ CONTAINS
     ENTERS("BASIS_LHTP_BASIS_EVALUATE_DP",err,error,*999)
     
     BASIS_LHTP_BASIS_EVALUATE_DP=1.0_DP
-    IF(ASSOCIATED(BASIS)) THEN
-      DO ni=1,BASIS%numberOfXi
-        IF(BASIS%nodeAtCollapse(NODE_NUMBER).AND.BASIS%collapsedXi(ni)==BASIS_XI_COLLAPSED) THEN
-          !We are at a collapsed node in the collapsed xi direction. Sum the basis functions in the collapsed xi direction.
-          SUM=0.0_DP
-          SELECT CASE(BASIS%interpolationType(ni))
-          CASE(BASIS_LAGRANGE_INTERPOLATION)
-            SELECT CASE(BASIS%interpolationOrder(ni))
-            CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
-              DO nn=1,2
-                SUM=SUM+LAGRANGE_LINEAR_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
-              ENDDO !nn
-            CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
-              DO nn=1,3
-                SUM=SUM+LAGRANGE_QUADRATIC_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
-              ENDDO !nn
-            CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
-              DO nn=1,4
-                SUM=SUM+LAGRANGE_CUBIC_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
-              ENDDO !nn
-            CASE DEFAULT
-              LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%interpolationOrder(ni),"*",err,error))// &
-                & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-          CASE(BASIS_HERMITE_INTERPOLATION)
-            SELECT CASE(BASIS%interpolationOrder(ni))
-            CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
-              DO nn=1,2
-                SUM=SUM+HERMITE_CUBIC_EVALUATE(nn,BASIS%derivativeOrderIndex(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
-                  & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
-              ENDDO !nn
-            CASE DEFAULT
-              LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%interpolationOrder(ni),"*",err,error))// &
-                & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-            IF(ERR/=0) GOTO 999
-          CASE DEFAULT
-            LOCAL_ERROR="Interpolation type value "//TRIM(NumberToVString(BASIS%interpolationType(ni),"*",err,error))// &
-              & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-          BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP*SUM
-        ELSE
-          SELECT CASE(BASIS%interpolationType(ni))
-          CASE(BASIS_LAGRANGE_INTERPOLATION)
-            SELECT CASE(BASIS%interpolationOrder(ni))
-            CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
-              BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
-                & LAGRANGE_LINEAR_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
-            CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
-              BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
-                & LAGRANGE_QUADRATIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
-            CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
-              BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
-                & LAGRANGE_CUBIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
-            CASE DEFAULT
-              LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%interpolationOrder(ni),"*",err,error))// &
-                & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-          CASE(BASIS_HERMITE_INTERPOLATION)
-            SELECT CASE(BASIS%interpolationOrder(ni))
-            CASE(BASIS_QUADRATIC1_INTERPOLATION_ORDER)
-              BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
-                & HERMITE_QUADRATIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
-                & BASIS%derivativeOrderIndex(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),1,XI(ni),err,error)
-            CASE(BASIS_QUADRATIC2_INTERPOLATION_ORDER)
-              BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
-                & HERMITE_QUADRATIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
-                & BASIS%derivativeOrderIndex(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),2,XI(ni),err,error)
-            CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
-              BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
-                & HERMITE_CUBIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
-                & BASIS%derivativeOrderIndex(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
-                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
-            CASE DEFAULT
-              LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%interpolationOrder(ni),"*",err,error))// &
-                & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-            IF(ERR/=0) GOTO 999
-          CASE DEFAULT
-            LOCAL_ERROR="Interpolation type value "//TRIM(NumberToVString(BASIS%interpolationType(ni),"*",err,error))// &
-              & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        ENDIF
-      ENDDO !ni
-    ELSE
-      CALL FlagError("Basis is not associated",err,error,*999)
+    IF(.NOT.ASSOCIATED(BASIS)) CALL FlagError("Basis is not associated.",err,error,*999)
+    IF(SIZE(xi,1)<basis%numberOfXi) THEN
+      LOCAL_ERROR="The size of the supplied xi array of "//TRIM(NumberToVString(SIZE(xi,1),"*",err,error))// &
+        & " is invalid. Basis number "//TRIM(NumberToVString(basis%userNumber,"*",err,error))// &
+        & " has "//TRIM(NumberToVString(basis%numberOfXi,"*",err,error))//" xi directions."
+      CALL FlagError(LOCAL_ERROR,err,error,*999)
     ENDIF
+    DO ni=1,BASIS%numberOfXi
+      IF(BASIS%nodeAtCollapse(NODE_NUMBER).AND.BASIS%collapsedXi(ni)==BASIS_XI_COLLAPSED) THEN
+        !We are at a collapsed node in the collapsed xi direction. Sum the basis functions in the collapsed xi direction.
+        SUM=0.0_DP
+        SELECT CASE(BASIS%interpolationType(ni))
+        CASE(BASIS_LAGRANGE_INTERPOLATION)
+          SELECT CASE(BASIS%interpolationOrder(ni))
+          CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
+            DO nn=1,2
+              SUM=SUM+LAGRANGE_LINEAR_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
+            ENDDO !nn
+          CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
+            DO nn=1,3
+              SUM=SUM+LAGRANGE_QUADRATIC_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
+            ENDDO !nn
+          CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
+            DO nn=1,4
+              SUM=SUM+LAGRANGE_CUBIC_EVALUATE(nn,PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
+            ENDDO !nn
+          CASE DEFAULT
+            LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%interpolationOrder(ni),"*",err,error))// &
+              & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
+          END SELECT
+        CASE(BASIS_HERMITE_INTERPOLATION)
+          SELECT CASE(BASIS%interpolationOrder(ni))
+          CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
+            DO nn=1,2
+              SUM=SUM+HERMITE_CUBIC_EVALUATE(nn,BASIS%derivativeOrderIndex(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
+                & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
+            ENDDO !nn
+          CASE DEFAULT
+            LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%interpolationOrder(ni),"*",err,error))// &
+              & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
+          END SELECT
+          IF(ERR/=0) GOTO 999
+        CASE DEFAULT
+          LOCAL_ERROR="Interpolation type value "//TRIM(NumberToVString(BASIS%interpolationType(ni),"*",err,error))// &
+            & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
+        END SELECT
+        BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP*SUM
+      ELSE
+        SELECT CASE(BASIS%interpolationType(ni))
+        CASE(BASIS_LAGRANGE_INTERPOLATION)
+          SELECT CASE(BASIS%interpolationOrder(ni))
+          CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
+            BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
+              & LAGRANGE_LINEAR_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
+              & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
+          CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
+            BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
+              & LAGRANGE_QUADRATIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
+              & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
+          CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
+            BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
+              & LAGRANGE_CUBIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
+              & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
+          CASE DEFAULT
+            LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%interpolationOrder(ni),"*",err,error))// &
+              & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
+          END SELECT
+        CASE(BASIS_HERMITE_INTERPOLATION)
+          SELECT CASE(BASIS%interpolationOrder(ni))
+          CASE(BASIS_QUADRATIC1_INTERPOLATION_ORDER)
+            BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
+              & HERMITE_QUADRATIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
+              & BASIS%derivativeOrderIndex(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
+              & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),1,XI(ni),err,error)
+          CASE(BASIS_QUADRATIC2_INTERPOLATION_ORDER)
+            BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
+              & HERMITE_QUADRATIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
+              & BASIS%derivativeOrderIndex(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
+              & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),2,XI(ni),err,error)
+          CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
+            BASIS_LHTP_BASIS_EVALUATE_DP=BASIS_LHTP_BASIS_EVALUATE_DP* &
+              & HERMITE_CUBIC_EVALUATE(BASIS%nodePositionIndex(NODE_NUMBER,ni), &
+              & BASIS%derivativeOrderIndex(DERIVATIVE_NUMBER,NODE_NUMBER,ni), &
+              & PARTIAL_DERIVATIVE_INDEX(PARTIAL_DERIV_INDEX,ni),XI(ni),err,error)
+          CASE DEFAULT
+            LOCAL_ERROR="Interpolation order value "//TRIM(NumberToVString(BASIS%interpolationOrder(ni),"*",err,error))// &
+              & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
+          END SELECT
+          IF(ERR/=0) GOTO 999
+        CASE DEFAULT
+          LOCAL_ERROR="Interpolation type value "//TRIM(NumberToVString(BASIS%interpolationType(ni),"*",err,error))// &
+            & " for xi direction "//TRIM(NumberToVString(ni,"*",err,error))//" is invalid"
+          CALL FlagError(LOCAL_ERROR,err,error,*999)
+        END SELECT
+      ENDIF
+    ENDDO !ni
 
     EXITS("BASIS_LHTP_BASIS_EVALUATE_DP")
     RETURN

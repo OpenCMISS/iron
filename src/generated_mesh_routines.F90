@@ -1544,16 +1544,16 @@ CONTAINS
               CALL Nodes_CreateFinish(NODES,ERR,ERROR,*999)
               !Create the mesh
               IF(ASSOCIATED(REGION)) THEN
-                CALL MESH_CREATE_START(MESH_USER_NUMBER,REGION,REGULAR_MESH%MESH_DIMENSION,GENERATED_MESH%MESH, &
+                CALL Mesh_CreateStart(MESH_USER_NUMBER,REGION,REGULAR_MESH%MESH_DIMENSION,GENERATED_MESH%MESH, &
                   & ERR,ERROR,*999)
               ELSE
-                CALL MESH_CREATE_START(MESH_USER_NUMBER,INTERFACE,REGULAR_MESH%MESH_DIMENSION,GENERATED_MESH%MESH, &
+                CALL Mesh_CreateStart(MESH_USER_NUMBER,INTERFACE,REGULAR_MESH%MESH_DIMENSION,GENERATED_MESH%MESH, &
                   & ERR,ERROR,*999)
               ENDIF
               !Set the number of mesh components
-              CALL MESH_NUMBER_OF_COMPONENTS_SET(GENERATED_MESH%MESH,NUM_BASES,ERR,ERROR,*999)
+              CALL Mesh_NumberOfComponentsSet(GENERATED_MESH%MESH,NUM_BASES,ERR,ERROR,*999)
               !Create the elements
-              CALL MESH_NUMBER_OF_ELEMENTS_SET(GENERATED_MESH%MESH,TOTAL_NUMBER_OF_ELEMENTS,ERR,ERROR,*999)
+              CALL Mesh_NumberOfElementsSet(GENERATED_MESH%MESH,TOTAL_NUMBER_OF_ELEMENTS,ERR,ERROR,*999)
               DO basis_idx=1,NUM_BASES
                 BASIS=>REGULAR_MESH%BASES(basis_idx)%PTR
                 !Get number of nodes in each xi direction for this basis
@@ -1561,7 +1561,7 @@ CONTAINS
                   totalNumberOfNodesXi(ni)=(BASIS%numberOfNodesXiC(ni)-1)*REGULAR_MESH%NUMBER_OF_ELEMENTS_XI(ni)+1
                 ENDDO
                 NULLIFY(MESH_ELEMENTS)
-                CALL MESH_TOPOLOGY_ELEMENTS_CREATE_START(GENERATED_MESH%MESH,basis_idx,BASIS,MESH_ELEMENTS,ERR,ERROR,*999)
+                CALL MeshElements_CreateStart(GENERATED_MESH%MESH,basis_idx,BASIS,MESH_ELEMENTS,ERR,ERROR,*999)
                 !Set the elements for the regular mesh
                 IF (ALLOCATED(ELEMENT_NODES)) DEALLOCATE(ELEMENT_NODES)
                 ALLOCATE(ELEMENT_NODES(BASIS%numberOfNodes),STAT=ERR)
@@ -1615,7 +1615,7 @@ CONTAINS
                               ENDIF
                               CALL GeneratedMesh_RegularComponentNodesToUserNumbers(REGULAR_MESH%generatedMesh, &
                                 & basis_idx,ELEMENT_NODES,ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                              CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                              CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                 & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                             ELSE
                               !Simplex elements
@@ -1630,7 +1630,7 @@ CONTAINS
                                 ENDDO !nn1
                                 CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                     & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                     & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                               CASE(2)
                                 !Triangular element
@@ -1646,7 +1646,7 @@ CONTAINS
                                   ELEMENT_NODES(3)=np+1+totalNumberOfNodesXi(1)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Second sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+2
@@ -1655,7 +1655,7 @@ CONTAINS
                                   ELEMENT_NODES(3)=np+totalNumberOfNodesXi(1)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                 CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
                                   !First sub-element
@@ -1668,7 +1668,7 @@ CONTAINS
                                   ELEMENT_NODES(6)=np+1+totalNumberOfNodesXi(1)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Second sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+2
@@ -1680,7 +1680,7 @@ CONTAINS
                                   ELEMENT_NODES(6)=np+totalNumberOfNodesXi(1)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
                                   !First sub-element
@@ -1697,7 +1697,7 @@ CONTAINS
                                   ELEMENT_NODES(10)=np+2+totalNumberOfNodesXi(1)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Second sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+2
@@ -1713,7 +1713,7 @@ CONTAINS
                                   ELEMENT_NODES(10)=np+1+2*totalNumberOfNodesXi(1)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                 CASE DEFAULT
                                   LOCAL_ERROR="The simplex basis interpolation order of "// &
@@ -1742,7 +1742,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Second sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+2
@@ -1753,7 +1753,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Third sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+3
@@ -1764,7 +1764,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Fourth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+4
@@ -1775,7 +1775,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Fifth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+5
@@ -1787,7 +1787,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Sixth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+6
@@ -1799,7 +1799,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                 CASE(BASIS_QUADRATIC_INTERPOLATION_ORDER)
                                   !First sub-element
@@ -1820,7 +1820,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Second sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+2
@@ -1840,7 +1840,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Third sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+3
@@ -1860,7 +1860,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Fourth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+4
@@ -1880,7 +1880,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Fifth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+5
@@ -1903,7 +1903,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Sixth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+6
@@ -1926,7 +1926,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                 CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
                                   !First sub-element
@@ -1963,7 +1963,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Second sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+2
@@ -1999,7 +1999,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Third sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+3
@@ -2036,7 +2036,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Fourth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+4
@@ -2072,7 +2072,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Fifth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+5
@@ -2114,7 +2114,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   !Sixth sub-element
                                   ne=(grid_ne-1)*ELEMENT_FACTOR+6
@@ -2156,7 +2156,7 @@ CONTAINS
                                     & totalNumberOfNodesXi(2)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(REGULAR_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                       & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                 CASE DEFAULT
                                   LOCAL_ERROR="The simplex basis interpolation order of "// &
@@ -2177,10 +2177,10 @@ CONTAINS
                     ENDDO !ne1
                   ENDDO !ne2
                 ENDDO !ne3
-                CALL MESH_TOPOLOGY_ELEMENTS_CREATE_FINISH(MESH_ELEMENTS,ERR,ERROR,*999)
+                CALL MeshElements_CreateFinish(MESH_ELEMENTS,ERR,ERROR,*999)
               ENDDO !basis_idx
               !Finish the mesh
-              CALL MESH_CREATE_FINISH(GENERATED_MESH%MESH,ERR,ERROR,*999)
+              CALL Mesh_CreateFinish(GENERATED_MESH%MESH,ERR,ERROR,*999)
             CASE DEFAULT
               CALL FlagError("Basis type is either invalid or not implemented.",ERR,ERROR,*999)
             END SELECT
@@ -2289,10 +2289,10 @@ CONTAINS
                         !Finish the nodes creation
                         CALL Nodes_CreateFinish(NODES,ERR,ERROR,*999)
                         !Create the mesh
-                        CALL MESH_CREATE_START(MESH_USER_NUMBER,GENERATED_MESH%REGION, &
+                        CALL Mesh_CreateStart(MESH_USER_NUMBER,GENERATED_MESH%REGION, &
                           & SIZE(NUMBER_ELEMENTS_XI,1), GENERATED_MESH%MESH,ERR,ERROR,*999)
                         !Create the elements
-                        CALL MESH_NUMBER_OF_COMPONENTS_SET(GENERATED_MESH%MESH,SIZE(ELLIPSOID_MESH%BASES)/2,ERR,ERROR,*999)
+                        CALL Mesh_NumberOfComponentsSet(GENERATED_MESH%MESH,SIZE(ELLIPSOID_MESH%BASES)/2,ERR,ERROR,*999)
                         DO mc=1,SIZE(ELLIPSOID_MESH%BASES),2
                           IF((ELLIPSOID_MESH%BASES(mc)%PTR%numberOfCollapsedXi==0).AND. &
                               & (ELLIPSOID_MESH%BASES(mc+1)%PTR%numberOfCollapsedXi>0))THEN
@@ -2322,7 +2322,7 @@ CONTAINS
                                   & numberOfNodesXiC, ELLIPSOID_MESH%ELLIPSOID_EXTENT, totalNumberOfNodes, &
                                   & TOTAL_NUMBER_OF_ELEMENTS, NIDX,CORNER_NODES,EIDX,DELTA,DELTAi,ERR,ERROR,*999)
                               IF(mc==1) THEN
-                                CALL MESH_NUMBER_OF_ELEMENTS_SET(GENERATED_MESH%MESH,TOTAL_NUMBER_OF_ELEMENTS, &
+                                CALL Mesh_NumberOfElementsSet(GENERATED_MESH%MESH,TOTAL_NUMBER_OF_ELEMENTS, &
                                   & ERR,ERROR,*999)
                               ENDIF
 
@@ -2330,7 +2330,7 @@ CONTAINS
                               !TODO we finish create after the nodes are initialised?
 
                               NULLIFY(MESH_ELEMENTS)
-                              CALL MESH_TOPOLOGY_ELEMENTS_CREATE_START(GENERATED_MESH%MESH,mc/2+1,BASIS1,MESH_ELEMENTS, &
+                              CALL MeshElements_CreateStart(GENERATED_MESH%MESH,mc/2+1,BASIS1,MESH_ELEMENTS, &
                                   ERR, ERROR,*999)
                               !Set the elements for the ellipsoid mesh
                               IF(ALLOCATED(WALL_ELEMENT_NODES)) DEALLOCATE(WALL_ELEMENT_NODES)
@@ -2378,10 +2378,10 @@ CONTAINS
                                     ENDDO ! nn2
                                   ENDDO ! nn3
                                   ne=ne+1
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_BASIS_SET(ne,MESH_ELEMENTS,BASIS2,ERR,ERROR,*999)
+                                  CALL MeshElements_ElementBasisSet(MESH_ELEMENTS,ne,BASIS2,ERR,ERROR,*999)
                                   CALL COMPONENT_NODES_TO_USER_NUMBERS(ELLIPSOID_MESH%generatedMesh,mc,APEX_ELEMENT_NODES, &
                                       & APEX_ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                  CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                  CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                     APEX_ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                 ENDDO ! ne1
                                 !wall elements
@@ -2407,12 +2407,12 @@ CONTAINS
                                     ne=ne+1
                                     CALL COMPONENT_NODES_TO_USER_NUMBERS(ELLIPSOID_MESH%generatedMesh,mc,WALL_ELEMENT_NODES, &
                                         & WALL_ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS, &
+                                    CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne, &
                                         & WALL_ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
                                   ENDDO ! ne1
                                 ENDDO ! ne2
                               ENDDO ! ne3
-                              CALL MESH_TOPOLOGY_ELEMENTS_CREATE_FINISH(MESH_ELEMENTS,ERR,ERROR,*999)
+                              CALL MeshElements_CreateFinish(MESH_ELEMENTS,ERR,ERROR,*999)
                             ELSE
                               CALL FlagError("The number of xi directions of the given basis does not match the size of &
                                 &the number of elements for the mesh.",ERR,ERROR,*999)
@@ -2424,7 +2424,7 @@ CONTAINS
                           END SELECT
                         ENDDO
                         !Finish the mesh
-                        CALL MESH_CREATE_FINISH(GENERATED_MESH%MESH,ERR,ERROR,*999)
+                        CALL Mesh_CreateFinish(GENERATED_MESH%MESH,ERR,ERROR,*999)
                       ELSE
                         CALL FlagError("An ellipsoid mesh requires a collapsed basis for each basis,"// &
                             & " so there must be n*2 bases.",ERR,ERROR,*999)
@@ -2525,9 +2525,9 @@ CONTAINS
                       IF(ERR/=0) CALL FlagError("Could not allocate number of elements xi.",ERR,ERROR,*999)
                       NUMBER_ELEMENTS_XI(1:SIZE(CYLINDER_MESH%NUMBER_OF_ELEMENTS_XI))= &
                         & CYLINDER_MESH%NUMBER_OF_ELEMENTS_XI(1:SIZE(CYLINDER_MESH%NUMBER_OF_ELEMENTS_XI))
-                      CALL MESH_CREATE_START(MESH_USER_NUMBER,GENERATED_MESH%REGION,SIZE(NUMBER_ELEMENTS_XI,1), &
+                      CALL Mesh_CreateStart(MESH_USER_NUMBER,GENERATED_MESH%REGION,SIZE(NUMBER_ELEMENTS_XI,1), &
                         & GENERATED_MESH%MESH,ERR,ERROR,*999)
-                      CALL MESH_NUMBER_OF_COMPONENTS_SET(GENERATED_MESH%MESH,SIZE(CYLINDER_MESH%BASES),ERR,ERROR,*999)
+                      CALL Mesh_NumberOfComponentsSet(GENERATED_MESH%MESH,SIZE(CYLINDER_MESH%BASES),ERR,ERROR,*999)
                       !Calculate number of nodes
                       CORNER_NUMBER_OF_NODES=(NUMBER_ELEMENTS_XI(3)+1)*NUMBER_ELEMENTS_XI(2)*(NUMBER_ELEMENTS_XI(1)+1)
                       totalNumberOfNodes=CORNER_NUMBER_OF_NODES
@@ -2548,7 +2548,7 @@ CONTAINS
                       CALL Nodes_CreateFinish(NODES,ERR,ERROR,*999)
                       !Set the total number of elements
                       TOTAL_NUMBER_OF_ELEMENTS=NUMBER_ELEMENTS_XI(1)*NUMBER_ELEMENTS_XI(2)*NUMBER_ELEMENTS_XI(3)
-                      CALL MESH_NUMBER_OF_ELEMENTS_SET(GENERATED_MESH%MESH,TOTAL_NUMBER_OF_ELEMENTS,ERR,ERROR,*999)
+                      CALL Mesh_NumberOfElementsSet(GENERATED_MESH%MESH,TOTAL_NUMBER_OF_ELEMENTS,ERR,ERROR,*999)
                       DO basis_idx=1,SIZE(CYLINDER_MESH%BASES)
                         BASIS=>CYLINDER_MESH%BASES(basis_idx)%PTR
                         IF(ASSOCIATED(BASIS)) THEN
@@ -2575,7 +2575,7 @@ CONTAINS
                               IF(ERR/=0) CALL FlagError("Could not allocate element nodes.",ERR,ERROR,*999)
                               !Create the elements
                               NULLIFY(MESH_ELEMENTS)
-                              CALL MESH_TOPOLOGY_ELEMENTS_CREATE_START(GENERATED_MESH%MESH,basis_idx,BASIS,MESH_ELEMENTS, &
+                              CALL MeshElements_CreateStart(GENERATED_MESH%MESH,basis_idx,BASIS,MESH_ELEMENTS, &
                                   & ERR,ERROR,*999)
                               ! calculate element topology (nodes per each element)
                               ! the idea is to translate given (r,theta,z) to NIDX equivalents, which include interior nodes
@@ -2606,12 +2606,12 @@ CONTAINS
                                     ne=ne+1
                                     CALL COMPONENT_NODES_TO_USER_NUMBERS(CYLINDER_MESH%generatedMesh,basis_idx,ELEMENT_NODES, &
                                         & ELEMENT_NODES_USER_NUMBERS,ERR,ERROR,*999)
-                                    CALL MESH_TOPOLOGY_ELEMENTS_ELEMENT_NODES_SET(ne,MESH_ELEMENTS,ELEMENT_NODES_USER_NUMBERS, &
+                                    CALL MeshElements_ElementNodesSet(MESH_ELEMENTS,ne,ELEMENT_NODES_USER_NUMBERS, &
                                         & ERR,ERROR,*999)
                                   ENDDO ! ne1
                                 ENDDO ! ne2
                               ENDDO ! ne3
-                              CALL MESH_TOPOLOGY_ELEMENTS_CREATE_FINISH(MESH_ELEMENTS,ERR,ERROR,*999)
+                              CALL MeshElements_CreateFinish(MESH_ELEMENTS,ERR,ERROR,*999)
                             ELSE
                               CALL FlagError("The number of xi directions of the given basis does not match the size of &
                                 &the number of elements for the mesh.",ERR,ERROR,*999)
@@ -2626,7 +2626,7 @@ CONTAINS
                         ENDIF
                       ENDDO
                       !Finish the mesh
-                      CALL MESH_CREATE_FINISH(GENERATED_MESH%MESH,ERR,ERROR,*999)
+                      CALL Mesh_CreateFinish(GENERATED_MESH%MESH,ERR,ERROR,*999)
                     ELSE
                       CALL FlagError("Bases are not allocated.",ERR,ERROR,*999)
                     ENDIF
@@ -3321,8 +3321,7 @@ CONTAINS
                       NODE_USER_NUMBER=COMPONENT_NODE_TO_USER_NUMBER(REGULAR_MESH%generatedMesh,MESH_COMPONENT, &
                         & component_node,ERR,ERROR)
                     END IF
-                    CALL DOMAIN_TOPOLOGY_NODE_CHECK_EXISTS(FIELD_VARIABLE_COMPONENT%DOMAIN%TOPOLOGY, &
-                      & NODE_USER_NUMBER,NODE_EXISTS,node_idx,GHOST_NODE,ERR,ERROR,*999)
+                    CALL DomainNodes_NodeCheckExists(DOMAIN_NODES,NODE_USER_NUMBER,NODE_EXISTS,node_idx,GHOST_NODE,ERR,ERROR,*999)
                     IF(NODE_EXISTS.AND..NOT.GHOST_NODE) THEN
                       node_position_idx(3)=(component_node-1)/(totalNumberOfNodesXi(2)*totalNumberOfNodesXi(1))+1
                       node_position_idx(2)=MOD(component_node-1,totalNumberOfNodesXi(2)*totalNumberOfNodesXi(1))/ &
@@ -3661,7 +3660,7 @@ CONTAINS
                    !apex node
                    np=1
                    npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                   CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                   CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                    IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                       RECT_COORDS(1)=0
                       RECT_COORDS(2)=0
@@ -3688,7 +3687,7 @@ CONTAINS
                          RECT_COORDS(3)=alpha*(cosh(xi)*cos(nu))
                          np=np+1
                          npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                         CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                          IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                             DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
@@ -3711,7 +3710,7 @@ CONTAINS
                       RECT_COORDS(3)=-ELLIPSOID_EXTENT(1)-(k-1)*(DELTAi(3))
                       np=np+1
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                      CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                      CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
@@ -3742,7 +3741,7 @@ CONTAINS
                             RECT_COORDS(3)=z*(1+2*t/(ELLIPSOID_EXTENT(1))**2)
                             np=np+1
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                            CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                            CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
@@ -3769,7 +3768,7 @@ CONTAINS
                       RECT_COORDS(3)=-alpha
                       np=np+1
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                      CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                      CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
@@ -3792,7 +3791,7 @@ CONTAINS
                             RECT_COORDS(3)=alpha*cos(nu)
                             np=np+1
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                            CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                            CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
@@ -3819,7 +3818,7 @@ CONTAINS
                    !apex node
                    np=1
                    npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                   CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                   CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                    IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                       RECT_COORDS(1)=0
                       RECT_COORDS(2)=0
@@ -3845,7 +3844,7 @@ CONTAINS
                          RECT_COORDS(3)=alpha*(sinh(xi)*sin(nu))
                          np=np+1
                          npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                         CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                         CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                          IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                             DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
@@ -3868,7 +3867,7 @@ CONTAINS
                       RECT_COORDS(3)=-ELLIPSOID_EXTENT(1)-(k-1)*(DELTAi(3))
                       np=np+1
                       npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                      CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                      CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                       IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                          DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                             CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
@@ -3899,7 +3898,7 @@ CONTAINS
                             RECT_COORDS(3)=z*(1+2*t/(ELLIPSOID_EXTENT(1))**2)
                             np=np+1
                             npg=COMPONENT_NODE_TO_USER_NUMBER(ELLIPSOID_MESH%generatedMesh,basis_idx,np,ERR,ERROR)
-                            CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
+                            CALL Decomposition_NodeDomainGet(DECOMPOSITION,npg,MESH_COMPONENT,DOMAIN_NUMBER,ERR,ERROR,*999)
                             IF(DOMAIN_NUMBER==MY_COMPUTATION_NODE) THEN
                                DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                   CALL FIELD_PARAMETER_SET_UPDATE_NODE(FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,1,npg, &
@@ -4234,7 +4233,7 @@ CONTAINS
 !         !Below, there is an issue:
 !         !  BASIS=>ELLIPSOID_MESH%BASES(MESH_COMPONENT)%PTR does not account for the fact that:
 !         !  in 'GENERATED_MESH_ELLIPSOID_CREATE_FINISH' the following is done:
-!         !  CALL MESH_NUMBER_OF_COMPONENTS_SET(GENERATED_MESH%MESH,SIZE(ELLIPSOID_MESH%BASES)/2,ERR,ERROR,*999)
+!         !  CALL Mesh_NumberOfComponentsSet(GENERATED_MESH%MESH,SIZE(ELLIPSOID_MESH%BASES)/2,ERR,ERROR,*999)
 !         !A temporary work around is the following (although this bug may need to be fixed in several places):
 !
 !         IF(MESH_COMPONENT==2) THEN

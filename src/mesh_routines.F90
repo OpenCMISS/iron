@@ -50,10 +50,12 @@ MODULE MeshRoutines
   USE Constants
   USE ContextAccessRoutines
   USE COORDINATE_ROUTINES
+  USE CoordinateSystemAccessRoutines
   USE DataProjectionAccessRoutines
   USE DecompositionRoutines
   USE Kinds
   USE INPUT_OUTPUT
+  USE InterfaceAccessRoutines
   USE ISO_VARYING_STRING
   USE Lists
   USE MeshAccessRoutines
@@ -78,13 +80,6 @@ MODULE MeshRoutines
 
   !Module parameters
 
-  !> \addtogroup MESH_ROUTINES_MeshBoundaryTypes MESH_ROUTINES::MeshBoundaryTypes
-  !> \brief The types of whether or not a node/element is on a mesh domain boundary.
-  !> \see MESH_ROUTINES
-  !>@{
-  INTEGER(INTG), PARAMETER :: MESH_OFF_DOMAIN_BOUNDARY=0 !<The node/element is not on the mesh domain boundary. \see MESH_ROUTINES_MeshBoundaryTypes,MESH_ROUTINES
-  INTEGER(INTG), PARAMETER :: MESH_ON_DOMAIN_BOUNDARY=1 !<The node/element is on the mesh domain boundary. \see MESH_ROUTINES_MeshBoundaryTypes,MESH_ROUTINES
-  !>@}
   !Module types
 
   !Module variables
@@ -102,8 +97,6 @@ MODULE MeshRoutines
     MODULE PROCEDURE Meshes_InitialiseInterface
     MODULE PROCEDURE Meshes_InitialiseRegion
   END INTERFACE Meshes_Initialise
-
-  PUBLIC MESH_ON_DOMAIN_BOUNDARY,MESH_OFF_DOMAIN_BOUNDARY
 
   PUBLIC Mesh_CreateStart,Mesh_CreateFinish
 
@@ -135,16 +128,6 @@ MODULE MeshRoutines
   
   PUBLIC MeshElements_ElementsUserNumbersAllSet
 
-  PUBLIC MeshNodes_NodeOnBoundaryGet
-
-  PUBLIC MeshNodes_NodeDerivativesGet
-
-  PUBLIC MeshNodes_NodeNumberOfDerivativesGet
-
-  PUBLIC MeshNodes_NodeNumberOfVersionsGet
-
-  PUBLIC MeshNodes_NumberOfNodesGet
-
   PUBLIC MeshTopology_DataPointsCalculateProjection
 
   PUBLIC MeshTopology_NodesDestroy
@@ -153,7 +136,7 @@ MODULE MeshRoutines
 
   PUBLIC MESH_EMBEDDING_SET_GAUSS_POINT_DATA
 
-  PUBLIC MESHES_INITIALISE,Meshes_Finalise
+  PUBLIC Meshes_Initialise,Meshes_Finalise
 
 CONTAINS
 
@@ -347,7 +330,7 @@ CONTAINS
     ENDIF
     NULLIFY(coordinateSystem)
     CALL Interface_CoordinateSystemGet(interface,coordinateSystem,err,error,*999)
-    CALL CoordinateSystem_DimensionsGet(coordinateSystem,numberOfInterfaceDimensions,err,error,*999)
+    CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfInterfaceDimensions,err,error,*999)
     IF(numberOfMeshDimensions>numberOfInterfaceDimensions) THEN
       localError="The specified number of mesh dimensions of "//TRIM(NumberToVString(numberOfMeshDimensions,"*",err,error))// &
         & " is invalid for the number of interface dimensions of "// &
@@ -358,7 +341,7 @@ CONTAINS
 
     NULLIFY(meshes)
     CALL Interface_MeshesGet(interface,meshes,err,error,*999)
-    CALL Mesh_UserNumberFindGeneric(userNumber,meshes,mesh,err,error,*999)
+    CALL Mesh_UserNumberFind(userNumber,interface,mesh,err,error,*999)
     IF(ASSOCIATED(mesh)) THEN
       localError="Mesh number "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " has already been created on interface number "// &
@@ -408,7 +391,7 @@ CONTAINS
     ENDIF
     NULLIFY(coordinateSystem)
     CALL Region_CoordinateSystemGet(region,coordinateSystem,err,error,*999)
-    CALL CoordinateSystem_DimensionsGet(coordinateSystem,numberOfRegionDimensions,err,error,*999)
+    CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfRegionDimensions,err,error,*999)
     IF(numberOfMeshDimensions>numberOfRegionDimensions) THEN
       localError="The specified number of mesh dimensions of "//TRIM(NumberToVString(numberOfMeshDimensions,"*",err,error))// &
         & " is invalid for the number of region dimensions of "// &
@@ -419,7 +402,7 @@ CONTAINS
     
     NULLIFY(meshes)
     CALL Region_MeshesGet(region,meshes,err,error,*999)
-    CALL Mesh_UserNumberFindGeneric(userNumber,meshes,mesh,err,error,*999)
+    CALL Mesh_UserNumberFind(userNumber,region,mesh,err,error,*999)
     IF(ASSOCIATED(mesh)) THEN
       localError="Mesh number "//TRIM(NumberToVString(userNumber,"*",err,error))// &
         & " has already been created on region number "// &
@@ -1472,8 +1455,10 @@ CONTAINS
       ENDIF
     ENDDO !localNodeIdx
     IF(elementNodesOK) THEN
-      meshElements%elements(globalElementNumber)%userElementNodes=userElementNodes
-      meshElements%elements(globalElementNumber)%globalElementNodes=globalElementNodes
+      meshElements%elements(globalElementNumber)%userElementNodes(1:basis%numberOfNodes)= &
+        & userElementNodes(1:basis%numberOfNodes)
+      meshElements%elements(globalElementNumber)%globalElementNodes(1:basis%numberOfNodes)= &
+        & globalElementNodes(1:basis%numberOfNodes)      
     ELSE
       IF(numberOfBadNodes==1) THEN
         IF(ASSOCIATED(region)) THEN
@@ -1974,6 +1959,34 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Finalises mesh data points and deallocates all memory.
+  SUBROUTINE MeshTopology_DataPointsFinalise(meshDataPoints,err,error,*)
+
+    !Argument variables
+    TYPE(MeshDataPointsType), POINTER :: meshDataPoints !<A pointer to the mesh data points to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("MeshTopology_DataPointsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(meshDataPoints)) THEN
+      IF(ALLOCATED(meshDataPoints%dataPoints)) DEALLOCATE(meshDataPoints%dataPoints)
+      IF(ALLOCATED(meshDataPoints%elementDataPoints)) DEALLOCATE(meshDataPoints%elementDataPoints)
+      DEALLOCATE(meshDataPoints)
+    ENDIF
+    
+    EXITS("MeshTopology_DataPointsFinalise")
+    RETURN
+999 ERRORSEXITS("MeshTopology_DataPointsFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE MeshTopology_DataPointsFinalise
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Initialises the elements in a given mesh topology.
   SUBROUTINE MeshTopology_DataPointsInitialise(meshTopology,err,error,*)
 
@@ -2175,7 +2188,7 @@ CONTAINS
     !\TODO: need to be changed once the data points topology is moved under meshTopologyType.    
     CALL Mesh_MeshTopologyGet(mesh,1,meshTopology,err,error,*999)
     NULLIFY(meshDataPoints)
-    CALL MeshTopology_DataPointsGet(meshTopology,meshDataPoints,err,error,*999)    
+    CALL MeshTopology_MeshDataPointsGet(meshTopology,meshDataPoints,err,error,*999)    
     NULLIFY(meshElements)
     CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
     !Extract the global number of the data projection 
@@ -2529,7 +2542,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*998)
     ENDIF
     NULLIFY(meshElements)
-    CALL MeshTopology_ElementsGet(meshTopology,meshElements,err,error,*999)
+    CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
     NULLIFY(nodes)
     CALL Mesh_NodesGet(mesh,nodes,err,error,*999)
     !Work out what nodes are in the mesh
@@ -2711,7 +2724,7 @@ CONTAINS
     DO nodeIdx=1,meshNodes%numberOfNodes
       !Calculate the number of derivatives and versions at each node. This needs to be calculated by looking at the
       !mesh elements as we may have an adjacent element in another domain with a higher order basis also with versions.
-      CALL MeshNodes_UserNodeGet(meshNodes,nodeIdx,nodeUserNumber,err,error,*999)
+      CALL MeshNodes_UserNodeNumberGet(meshNodes,nodeIdx,nodeUserNumber,err,error,*999)
       NULLIFY(nodeDerivativeList)
       CALL List_CreateStart(nodeDerivativeList,err,error,*999)
       CALL List_DataTypeSet(nodeDerivativeList,LIST_INTG_TYPE,err,error,*999)
@@ -2792,146 +2805,6 @@ CONTAINS
    
   END SUBROUTINE MeshTopology_NodesDerivativesCalculate
 
-  !
-  !================================================================================================================================
-  !
-  
-  !>Returns the number of derivatives for a node in a mesh
-  SUBROUTINE MeshNodes_NodeNumberOfDerivativesGet(meshNodes,userNodeNumber,numberOfDerivatives,err,error,*)
-
-    !Argument variables
-    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the nodes to get the number of derivatives for
-    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the number of derivatives for
-    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatives !<On return, the number of global derivatives at the specified user node number.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: meshNodeNumber
-
-    ENTERS("MeshNodes_NodeNumberOfDerivativesGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
-    
-    CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
-    
-    numberOfDerivatives=meshNodes%nodes(meshNodeNumber)%numberOfDerivatives
-    
-    EXITS("MeshNodes_NodeNumberOfDerivativesGet")
-    RETURN
-999 ERRORSEXITS("MeshNodes_NodeNumberOfDerivativesGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE MeshNodes_NodeNumberOfDerivativesGet
-  
-  !
-  !================================================================================================================================
-  !
-  
-  !>Returns the global derivative numbers for a node in mesh nodes
-  SUBROUTINE MeshNodes_NodeDerivativesGet(meshNodes,userNodeNumber,derivatives,err,error,*)
-
-    !Argument variables
-    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the node to get the derivatives for
-    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user number of the node to get the derivatives for
-    INTEGER(INTG), INTENT(OUT) :: derivatives(:) !<On return, the global derivatives at the specified node
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: derivativeIdx,meshNodeNumber,numberOfDerivatives
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("MeshNodes_NodeDerivativesGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
-    
-    CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
-    numberOfDerivatives=meshNodes%nodes(meshNodeNumber)%numberOfDerivatives
-    IF(SIZE(derivatives,1)<numberOfDerivatives) THEN
-      localError="The size of the supplied derivatives array of "// &
-        & TRIM(NumberToVString(SIZE(derivatives,1),"*",err,error))// &
-        & " is too small. The size should be >= "// &
-        & TRIM(NumberToVString(numberOfDerivatives,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
-    DO derivativeIdx=1,numberOfDerivatives
-      derivatives(derivativeIdx)=meshNodes%nodes(meshNodeNumber)%derivatives(derivativeIdx)%globalDerivativeIndex
-    ENDDO !derivativeIdx
-    
-    EXITS("MeshNodes_NodeDerivativesGet")
-    RETURN
-999 ERRORSEXITS("MeshNodes_NodeDerivativesGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE MeshNodes_NodeDerivativesGet
-  
-  !
-  !================================================================================================================================
-  !
-  
-  !>Returns the number of versions for a derivative of a node in mesh nodes
-  SUBROUTINE MeshNodes_NodeNumberOfVersionsGet(meshNodes,derivativeNumber,userNodeNumber,numberOfVersions,err,error,*)
-
-    !Argument variables
-    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the node to get the number of versions for
-    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number of the node to get the number of versions for
-    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user number of the node to get the number of versions for
-    INTEGER(INTG), INTENT(OUT) :: numberOfVersions !<On return, the number of versions for the specified derivative of the specified node
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: meshNodeNumber
-   TYPE(VARYING_STRING) :: localError
-
-    ENTERS("MeshNodes_NodeNumberOfVersionsGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
-    CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
-     IF(derivativeNumber<1.OR.derivativeNumber>meshNodes%nodes(meshNodeNumber)%numberOfDerivatives) THEN
-      localError="The specified derivative index of "// &
-        & TRIM(NumberToVString(derivativeNumber,"*",err,error))// &
-        & " is invalid. The derivative index must be >= 1 and <= "// &
-        & TRIM(NumberToVString(meshNodes%nodes(meshNodeNumber)%numberOfDerivatives,"*",err,error))// &
-        & " for user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
-    numberOfVersions=meshNodes%nodes(meshNodeNumber)%derivatives(derivativeNumber)%numberOfVersions
-    
-    EXITS("MeshNodes_NodeNumberOfVersionsGet")
-    RETURN
-999 ERRORSEXITS("MeshNodes_NodeNumberOfVersionsGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE MeshNodes_NodeNumberOfVersionsGet
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the number of nodes for a node in a mesh
-  SUBROUTINE MeshNodes_NumberOfNodesGet(meshNodes,numberOfNodes,err,error,*)
-
-    !Argument variables
-    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the nodes to get the number of nodes for
-    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On return, the number of nodes in the mesh.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-  
-    ENTERS("MeshNodes_NumberOfNodesGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
-    
-    numberOfNodes=meshNodes%numberOfNodes
-    
-    EXITS("MeshNodes_NumberOfNodesGet")
-    RETURN
-999 ERRORSEXITS("MeshNodes_NumberOfNodesGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE MeshNodes_NumberOfNodesGet
-  
   !
   !================================================================================================================================
   !
@@ -3038,41 +2911,6 @@ CONTAINS
    
   END SUBROUTINE MeshTopology_NodesVersionCalculate
 
-  !
-  !================================================================================================================================
-  !
-  
-  !>Returns if the node in a mesh is on the boundary or not
-  SUBROUTINE MeshNodes_NodeOnBoundaryGet(meshNodes,userNodeNumber,onBoundary,err,error,*)
-
-    !Argument variables
-    TYPE(MeshNodesType), POINTER :: meshNodes !<A pointer to the mesh nodes containing the nodes to get the boundary type for
-    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the boundary type for
-    INTEGER(INTG), INTENT(OUT) :: onBoundary !<On return, the boundary type of the specified user node number.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: meshNodeNumber
- 
-    ENTERS("MeshNodes_NodeOnBoundaryGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(meshNodes)) CALL FlagError("Mesh nodes is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(meshNodes%nodes)) CALL FlagError("Mesh nodes nodes is not allocated.",err,error,*999)
-    
-    CALL MeshNodes_MeshNodeNumberGet(meshNodes,userNodeNumber,meshNodeNumber,err,error,*999)
-    IF(meshNodes%nodes(meshNodeNumber)%boundaryNode) THEN
-      onBoundary=MESH_ON_DOMAIN_BOUNDARY
-    ELSE
-      onBoundary=MESH_OFF_DOMAIN_BOUNDARY
-    ENDIF
-    
-    EXITS("MeshNodes_NodeOnBoundaryGet")
-    RETURN
-999 ERRORSEXITS("MeshNodes_NodeOnBoundaryGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE MeshNodes_NodeOnBoundaryGet
-  
   !
   !================================================================================================================================
   !

@@ -1412,8 +1412,8 @@ CONTAINS
               CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
-              CALL Field_MeshDecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+              CALL Field_DecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
                 & err,error,*999)
               CALL Field_GeometricFieldSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,equationsSet%GEOMETRY% &
                 & GEOMETRIC_FIELD,err,error,*999)
@@ -1558,10 +1558,10 @@ CONTAINS
               CALL Field_DependentTypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                 & FIELD_INDEPENDENT_TYPE,err,error,*999)
               !look for decomposition rule already defined
-              CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
                 & err,error,*999)
               !apply decomposition rule found on new created field
-              CALL Field_MeshDecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
+              CALL Field_DecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                 & GEOMETRIC_DECOMPOSITION,err,error,*999)
               !point new field to geometric field
               CALL Field_GeometricFieldSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,equationsSet% &
@@ -1639,10 +1639,10 @@ CONTAINS
                 CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
                   & err,error,*999)
-                CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 !apply decomposition rule found on new created field
-                CALL Field_MeshDecompositionSetAndLock(equationsSet%MATERIALS%MATERIALS_FIELD, &
+                CALL Field_DecompositionSetAndLock(equationsSet%MATERIALS%MATERIALS_FIELD, &
                   & GEOMETRIC_DECOMPOSITION,err,error,*999)
                 !point new field to geometric field
                 CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,equationsSet%GEOMETRY% &
@@ -2264,9 +2264,9 @@ CONTAINS
                 !define new created field to be dependent
                 CALL Field_DependentTypeSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
                 !look for decomposition rule already defined
-                CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
+                CALL Field_DecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
                 !apply decomposition rule found on new created field
-                CALL Field_MeshDecompositionSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,geometricDecomposition,err,error,*999)
+                CALL Field_DecompositionSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,geometricDecomposition,err,error,*999)
                 !point new field to geometric field
                 CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%DEPENDENT_FIELD,equationsSet% &
                   & geometry%GEOMETRIC_FIELD,err,error,*999)
@@ -2457,10 +2457,10 @@ CONTAINS
                     CALL Field_TypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                     CALL Field_DependentTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
                       & err,error,*999)
-                    CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition, &
+                    CALL Field_DecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition, &
                       & err,error,*999)
                     !apply decomposition rule found on new created field
-                    CALL Field_MeshDecompositionSetAndLock(equationsSet%materials%MATERIALS_FIELD,geometricDecomposition, &
+                    CALL Field_DecompositionSetAndLock(equationsSet%materials%MATERIALS_FIELD,geometricDecomposition, &
                       & err,error,*999)
                     !point new field to geometric field
                     CALL Field_GeometricFieldSetAndLock(equationsMaterials%MATERIALS_FIELD,equationsSet%geometry% &
@@ -2553,9 +2553,9 @@ CONTAINS
                 CALL Field_DependentTypeSetAndLock(equationsSet%independent%INDEPENDENT_FIELD, &
                   & FIELD_INDEPENDENT_TYPE,err,error,*999)
                 !look for decomposition rule already defined
-                CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
+                CALL Field_DecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
                 !apply decomposition rule found on new created field
-                CALL Field_MeshDecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,geometricDecomposition, &
+                CALL Field_DecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,geometricDecomposition, &
                   & err,error,*999)
                 !point new field to geometric field
                 CALL Field_GeometricFieldSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,equationsSet% &
@@ -2846,8 +2846,8 @@ CONTAINS
               CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
-              CALL Field_MeshDecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,geometricDecomposition, &
+              CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
+              CALL Field_DecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,geometricDecomposition, &
                 & err,error,*999)
               CALL Field_GeometricFieldSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,equationsSet%GEOMETRY% &
                 & GEOMETRIC_FIELD,err,error,*999)
@@ -3040,10 +3040,10 @@ CONTAINS
                   CALL Field_TypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                   CALL Field_DependentTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
                     & err,error,*999)
-                  CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition, &
+                  CALL Field_DecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition, &
                     & err,error,*999)
                   !apply decomposition rule found on new created field
-                  CALL Field_MeshDecompositionSetAndLock(equationsSet%materials%MATERIALS_FIELD,geometricDecomposition, &
+                  CALL Field_DecompositionSetAndLock(equationsSet%materials%MATERIALS_FIELD,geometricDecomposition, &
                     & err,error,*999)
                   !point new field to geometric field
                   CALL Field_GeometricFieldSetAndLock(equationsMaterials%MATERIALS_FIELD,equationsSet%geometry% &
@@ -3137,9 +3137,9 @@ CONTAINS
                 CALL Field_DependentTypeSetAndLock(equationsSet%independent%INDEPENDENT_FIELD, &
                   & FIELD_INDEPENDENT_TYPE,err,error,*999)
                 !look for decomposition rule already defined
-                CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
+                CALL Field_DecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition,err,error,*999)
                 !apply decomposition rule found on new created field
-                CALL Field_MeshDecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,geometricDecomposition, &
+                CALL Field_DecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,geometricDecomposition, &
                   & err,error,*999)
                 !point new field to geometric field
                 CALL Field_GeometricFieldSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,equationsSet% &
@@ -3464,8 +3464,8 @@ CONTAINS
               CALL Field_LabelSet(equationsSet%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
               CALL Field_TypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
               CALL Field_DependentTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-              CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
-              CALL Field_MeshDecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+              CALL Field_DecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
                 & err,error,*999)
               CALL Field_GeometricFieldSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,equationsSet%GEOMETRY% &
                 & GEOMETRIC_FIELD,err,error,*999)
@@ -3650,10 +3650,10 @@ CONTAINS
               CALL Field_DependentTypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                 & FIELD_INDEPENDENT_TYPE,err,error,*999)
               !look for decomposition rule already defined
-              CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
                 & err,error,*999)
               !apply decomposition rule found on new created field
-              CALL Field_MeshDecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
+              CALL Field_DecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                 & GEOMETRIC_DECOMPOSITION,err,error,*999)
               !point new field to geometric field
               CALL Field_GeometricFieldSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,equationsSet% &
@@ -3728,10 +3728,10 @@ CONTAINS
                 CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
                   & err,error,*999)
-                CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 !apply decomposition rule found on new created field
-                CALL Field_MeshDecompositionSetAndLock(equationsSet%MATERIALS%MATERIALS_FIELD, &
+                CALL Field_DecompositionSetAndLock(equationsSet%MATERIALS%MATERIALS_FIELD, &
                   & GEOMETRIC_DECOMPOSITION,err,error,*999)
                 !point new field to geometric field
                 CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,equationsSet%GEOMETRY% &
@@ -3821,10 +3821,10 @@ CONTAINS
                 CALL Field_DependentTypeSetAndLock(equationsSet%SOURCE%SOURCE_FIELD, &
                       & FIELD_INDEPENDENT_TYPE,err,error,*999)
                 !look for decomposition rule already defined
-                CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 !apply decomposition rule found on new created field
-                CALL Field_MeshDecompositionSetAndLock(equationsSet%SOURCE%SOURCE_FIELD, &
+                CALL Field_DecompositionSetAndLock(equationsSet%SOURCE%SOURCE_FIELD, &
                   & GEOMETRIC_DECOMPOSITION,err,error,*999)
                 !point new field to geometric field
                 CALL Field_GeometricFieldSetAndLock(equationsSet%SOURCE%SOURCE_FIELD,equationsSet% &
@@ -4144,10 +4144,10 @@ CONTAINS
               CALL Field_DependentTypeSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
                 & FIELD_DEPENDENT_TYPE,err,error,*999)
               !look for decomposition rule already defined
-              CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
                 & err,error,*999)
               !apply decomposition rule found on new created field
-              CALL Field_MeshDecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
+              CALL Field_DecompositionSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD, &
                 & GEOMETRIC_DECOMPOSITION,err,error,*999)
               !point new field to geometric field
               CALL Field_GeometricFieldSetAndLock(equationsSet%DEPENDENT%DEPENDENT_FIELD,equationsSet% &
@@ -4268,10 +4268,10 @@ CONTAINS
                 CALL Field_TypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE, &
                   & err,error,*999)
-                CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 !apply decomposition rule found on new created field
-                CALL Field_MeshDecompositionSetAndLock(equationsSet%MATERIALS%MATERIALS_FIELD, &
+                CALL Field_DecompositionSetAndLock(equationsSet%MATERIALS%MATERIALS_FIELD, &
                   & GEOMETRIC_DECOMPOSITION,err,error,*999)
                 !point new field to geometric field
                 CALL Field_GeometricFieldSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,equationsSet%GEOMETRY% &
@@ -4358,10 +4358,10 @@ CONTAINS
               CALL Field_DependentTypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                     & FIELD_INDEPENDENT_TYPE,err,error,*999)
               !look for decomposition rule already defined
-              CALL Field_MeshDecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+              CALL Field_DecompositionGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
                 & err,error,*999)
               !apply decomposition rule found on new created field
-              CALL Field_MeshDecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
+              CALL Field_DecompositionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                 & GEOMETRIC_DECOMPOSITION,err,error,*999)
               !point new field to geometric field
               CALL Field_GeometricFieldSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,equationsSet% &

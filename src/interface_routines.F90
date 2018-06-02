@@ -57,6 +57,7 @@ MODULE INTERFACE_ROUTINES
   USE Kinds
   USE Lists
   USE MeshRoutines
+  USE MeshAccessRoutines
   USE NodeRoutines
   USE Strings
   USE Types
@@ -133,12 +134,10 @@ CONTAINS
     INTEGER(INTG) :: mesh_idx
     LOGICAL :: MESH_ALREADY_COUPLED
     TYPE(MeshType), POINTER :: COUPLED_MESH
-    TYPE(MeshPtrType), POINTER :: newCoupledMeshes(:)
+    TYPE(MeshPtrType), ALLOCATABLE :: newCoupledMeshes(:)
     TYPE(RegionType), POINTER :: COUPLED_MESH_REGION,MESH_REGION
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    NULLIFY(newCoupledMeshes)
-    
     ENTERS("INTERFACE_MESH_ADD",err,error,*999)
 
     IF(ASSOCIATED(INTERFACE)) THEN
@@ -153,7 +152,7 @@ CONTAINS
               IF(ERR/=0) CALL FlagError("Could not allocate new coupled meshes.",err,error,*999)
               !Check that the mesh is not already in the list of meshes for the interface.
               IF(INTERFACE%numberOfCoupledMeshes>0) THEN
-                IF(ASSOCIATED(INTERFACE%coupledMeshes)) THEN
+                IF(ALLOCATED(INTERFACE%coupledMeshes)) THEN
                   MESH_ALREADY_COUPLED=.FALSE.
                   DO mesh_idx=1,INTERFACE%numberOfCoupledMeshes
                     COUPLED_MESH=>INTERFACE%coupledMeshes(mesh_idx)%PTR
@@ -183,14 +182,13 @@ CONTAINS
                       & TRIM(NUMBER_TO_VSTRING(mesh_idx,"*",err,error))//"."
                     CALL FlagError(LOCAL_ERROR,err,error,*999)
                   ENDIF
-                  DEALLOCATE(INTERFACE%coupledMeshes)
                 ELSE
                   CALL FlagError("Interface coupled meshes is not associated.",err,error,*999)
                 ENDIF
               ENDIF
               !Add the mesh to the list of coupled meshes
               newCoupledMeshes(INTERFACE%numberOfCoupledMeshes+1)%PTR=>MESH
-              INTERFACE%coupledMeshes=>newCoupledMeshes
+              CALL MOVE_ALLOC(newCoupledMeshes,interface%coupledMeshes)
               !Increment the number of coupled meshes and return the index
               INTERFACE%numberOfCoupledMeshes=INTERFACE%numberOfCoupledMeshes+1
               MESH_INDEX=INTERFACE%numberOfCoupledMeshes
@@ -210,7 +208,7 @@ CONTAINS
     
     EXITS("INTERFACE_MESH_ADD")
     RETURN
-999 IF(ASSOCIATED(newCoupledMeshes)) DEALLOCATE(newCoupledMeshes)
+999 IF(ALLOCATED(newCoupledMeshes)) DEALLOCATE(newCoupledMeshes)
     ERRORSEXITS("INTERFACE_MESH_ADD",err,error)
     RETURN 1
     
@@ -459,7 +457,7 @@ CONTAINS
     ENTERS("INTERFACE_FINALISE",err,error,*999)
 
     IF(ASSOCIATED(INTERFACE)) THEN
-      IF(ASSOCIATED(INTERFACE%coupledMeshes)) DEALLOCATE(INTERFACE%coupledMeshes)
+      IF(ALLOCATED(INTERFACE%coupledMeshes)) DEALLOCATE(INTERFACE%coupledMeshes)
       IF(ASSOCIATED(INTERFACE%meshConnectivity)) &
          & CALL INTERFACE_MESH_CONNECTIVITY_FINALISE(INTERFACE%meshConnectivity,err,error,*999)
       IF(ASSOCIATED(INTERFACE%pointsConnectivity)) &
@@ -506,7 +504,6 @@ CONTAINS
       NULLIFY(INTERFACE%INTERFACES)
       NULLIFY(INTERFACE%parentRegion)
       INTERFACE%numberOfCoupledMeshes=0
-      NULLIFY(INTERFACE%coupledMeshes)
       NULLIFY(INTERFACE%meshConnectivity)
       NULLIFY(INTERFACE%pointsConnectivity)
       NULLIFY(INTERFACE%NODES)
@@ -1712,6 +1709,9 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dataPointGlobalNumber,elementMeshNumber
     LOGICAL :: dataPointExists,elementExists
+    TYPE(MeshType), POINTER :: coupledMesh
+    TYPE(MeshElementsType), POINTER :: meshElements
+    TYPE(MeshTopologyType), POINTER :: meshTopology
 
     ENTERS("InterfacePointsConnectivity_ElementNumberSet",err,error,*999)
     
@@ -1725,8 +1725,14 @@ CONTAINS
           IF ((coupledMeshIndexNumber<=pointsConnectivity%dataPoints%numberOfDataPoints).OR. &
               & (coupledMeshIndexNumber>0)) THEN
             IF (ALLOCATED(pointsConnectivity%pointsConnectivity)) THEN
-              CALL MeshTopology_ElementCheckExists(pointsConnectivity%INTERFACE%coupledMeshes(coupledMeshIndexNumber)%PTR, &
-                & meshComponentNumber,coupledMeshUserElementNumber,elementExists,elementMeshNumber,err,error,*999) !Make sure user element exists       
+              NULLIFY(coupledMesh)
+              CALL Interface_CoupledMeshGet(pointsConnectivity%INTERFACE,coupledMeshIndexNumber,coupledMesh,err,error,*999)
+              NULLIFY(meshTopology)
+              CALL Mesh_MeshTopologyGet(coupledMesh,meshComponentNumber,meshTopology,err,error,*999)
+              NULLIFY(meshElements)
+              CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
+              CALL MeshElements_ElementCheckExists(meshElements,coupledMeshUserElementNumber,elementExists,elementMeshNumber, &
+                & err,error,*999) !Make sure user element exists       
               IF(elementExists) THEN
                 pointsConnectivity%pointsConnectivity(dataPointGlobalNumber,coupledMeshIndexNumber)%coupledMeshElementNumber= &
                   & elementMeshNumber

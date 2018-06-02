@@ -192,7 +192,7 @@ PROGRAM Analytic1DDiffusionExample
   CALL cmfe_Field_Initialise(GeometricField,err)
   CALL cmfe_Field_CreateStart(GeometricFieldUserNumber,Region,GeometricField,err)
   !Set the decomposition to use
-  CALL cmfe_Field_MeshDecompositionSet(GeometricField,Decomposition,err)
+  CALL cmfe_Field_DecompositionSet(GeometricField,Decomposition,err)
   !Set the domain to be used by the field components.
   CALL cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,err)
   !Finish creating the field

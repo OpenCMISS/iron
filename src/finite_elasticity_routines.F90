@@ -78,6 +78,7 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE Maths 
   USE MatrixVector
   USE MeshRoutines
+  USE MeshAccessRoutines
 #ifndef NOMPIMOD
   USE MPI
 #endif
@@ -166,13 +167,15 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local variables
     INTEGER(INTG) :: node_idx,component_idx,deriv_idx,variable_idx,dim_idx,local_ny,variable_type
-    INTEGER(INTG) :: numberOfDimensions,user_node,global_node,local_node,groupCommuicator
+    INTEGER(INTG) :: numberOfDimensions,user_node,global_node,local_node,groupCommuicator,meshNodeNumber
     REAL(DP) :: X(3),DEFORMED_X(3),P
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
     TYPE(DomainType), POINTER :: DOMAIN,DOMAIN_PRESSURE
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES,DOMAIN_PRESSURE_NODES
     TYPE(DecompositionType), POINTER :: DECOMPOSITION
     TYPE(MeshType), POINTER :: MESH
+    TYPE(MeshNodesType), POINTER :: meshNodes
+    TYPE(MeshTopologyType), POINTER :: meshTopology
     TYPE(GeneratedMeshType), POINTER :: GENERATED_MESH
     TYPE(DomainMappingType), POINTER :: NODES_MAPPING
     TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
@@ -218,6 +221,10 @@ CONTAINS
               IF(ASSOCIATED(DECOMPOSITION)) THEN
                 MESH=>DECOMPOSITION%MESH
                 IF(ASSOCIATED(MESH)) THEN
+                  NULLIFY(meshTopology)
+                  CALL Mesh_MeshTopologyGet(mesh,MESH_COMPONENT,meshTopology,err,error,*999)
+                  NULLIFY(meshNodes)
+                  CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*999)
                   GENERATED_MESH=>MESH%generatedMesh
                   IF(ASSOCIATED(GENERATED_MESH)) THEN
                     NODES_MAPPING=>DECOMPOSITION%DOMAIN(1)%ptr%MAPPINGS%NODES   !HACK - ALL CHECKING INTERMEDIATE SKIPPED
@@ -236,7 +243,7 @@ CONTAINS
                       DO node_idx=1,SIZE(INNER_SURFACE_NODES,1)
                         user_node=INNER_SURFACE_NODES(node_idx)
                         !Need to test if this node is in current decomposition
-                        CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
+                        CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
                           CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
@@ -248,7 +255,7 @@ CONTAINS
                       DO node_idx=1,SIZE(OUTER_SURFACE_NODES,1)
                         user_node=OUTER_SURFACE_NODES(node_idx)
                         !Need to test if this node is in current decomposition
-                        CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
+                        CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
                           CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
@@ -260,9 +267,10 @@ CONTAINS
                       DO node_idx=1,SIZE(TOP_SURFACE_NODES,1)
                         user_node=TOP_SURFACE_NODES(node_idx)
                         !Need to test if this node is in current decomposition
-                        CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
+                        CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
-                          CALL MeshTopology_NodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,err,error,*999)
+                          CALL MeshNodes_NodeCheckExists(meshNodes,user_node,NODE_EXISTS,global_node, &
+                            & meshNodeNumber,err,error,*999)
                           IF(.NOT.NODE_EXISTS) CYCLE
                           CALL DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(NODES_MAPPING,global_node,NODE_EXISTS,local_node,err,error,*999)
                           !Default to version 1 of each node derivative
@@ -278,7 +286,7 @@ CONTAINS
                       DO node_idx=1,SIZE(BOTTOM_SURFACE_NODES,1)
                         user_node=BOTTOM_SURFACE_NODES(node_idx)
                         !Need to check this node exists in the current domain
-                        CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
+                        CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                           !Default to version 1 of each node derivative
                           CALL BOUNDARY_CONDITIONS_SET_NODE(BOUNDARY_CONDITIONS,DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,1,1, &
@@ -291,16 +299,18 @@ CONTAINS
                       Y_FIXED=.FALSE.
                       DO node_idx=1,SIZE(BOTTOM_SURFACE_NODES,1)
                         user_node=BOTTOM_SURFACE_NODES(node_idx)
-                        CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
+                        CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node,1,DOMAIN_NUMBER,err,error,*999)
                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
-                          CALL MeshTopology_NodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,err,error,*999)
+                          CALL MeshNodes_NodeCheckExists(meshNodes,user_node,NODE_EXISTS,global_node,meshNodeNumber, &
+                            & err,error,*999)
                           IF(.NOT.NODE_EXISTS) CYCLE
                           CALL DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(NODES_MAPPING,global_node,NODE_EXISTS,local_node,err,error,*999)
                           !Default to version 1 of each node derivative
                           local_ny=GEOMETRIC_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(local_node)% &
                             & DERIVATIVES(1)%VERSIONS(1)
                           X(1)=GEOMETRIC_PARAMETERS(local_ny)
-                            CALL MeshTopology_NodeCheckExists(MESH,1,user_node,NODE_EXISTS,global_node,err,error,*999)
+                          CALL MeshNodes_NodeCheckExists(meshNodes,user_node,NODE_EXISTS,global_node, &
+                            & meshNodeNumber,err,error,*999)
                             IF(.NOT.NODE_EXISTS) CYCLE
                             CALL DOMAIN_MAPPINGS_GLOBAL_TO_LOCAL_GET(NODES_MAPPING,global_node,NODE_EXISTS,local_node, &
                               & err,error,*999)
@@ -367,8 +377,13 @@ CONTAINS
                             IF(ASSOCIATED(DOMAIN_PRESSURE)) THEN
                               IF(ASSOCIATED(DOMAIN_PRESSURE%TOPOLOGY)) THEN
                                 DOMAIN_PRESSURE_NODES=>DOMAIN_PRESSURE%TOPOLOGY%NODES
-                                  IF(ASSOCIATED(DOMAIN_PRESSURE_NODES)) THEN
-
+                                IF(ASSOCIATED(DOMAIN_PRESSURE_NODES)) THEN
+                                  
+                                  NULLIFY(meshTopology)
+                                  CALL Mesh_MeshTopologyGet(mesh,FIELD_VARIABLE%COMPONENTS(component_idx)% &
+                                    & meshComponentNumber,meshTopology,err,error,*999)
+                                  NULLIFY(meshNodes)
+                                  CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*999)
                                   !Loop over the local nodes excluding the ghosts.
                                   DO node_idx=1,DOMAIN_NODES%numberOfNodes
                                     !!TODO \todo We should interpolate the geometric field here and the node position.
@@ -439,10 +454,10 @@ CONTAINS
                                       ENDDO
                                       !Don't forget the pressure component
                                       user_node=DOMAIN_NODES%NODES(node_idx)%userNumber
-                                      CALL MeshTopology_NodeCheckExists(MESH,DOMAIN_PRESSURE%meshComponentNumber,user_node, &
-                                        & NODE_EXISTS,global_node,err,error,*999)
+                                      CALL MeshNodes_NodeCheckExists(meshNodes,user_node,NODE_EXISTS,global_node, &
+                                        & meshNodeNumber,err,error,*999)
                                       IF(NODE_EXISTS) THEN
-                                        CALL DECOMPOSITION_NODE_DOMAIN_GET(DECOMPOSITION,user_node, &
+                                        CALL Decomposition_NodeDomainGet(DECOMPOSITION,user_node, &
                                           & DOMAIN_PRESSURE%meshComponentNumber,DOMAIN_NUMBER,err,error,*999)
                                         IF(DOMAIN_NUMBER==myGroupComputationNodeNumber) THEN
                                           !\todo: test the domain node mappings pointer properly
@@ -3793,17 +3808,17 @@ CONTAINS
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
     NULLIFY(decompositionTopology)
-    CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
     NULLIFY(domainMappings)
-    CALL Domain_MappingsGet(domain,domainMappings,err,error,*999)
+    CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(elementsMappings)
-    CALL DomainMappings_ElementsGet(domainMappings,elementsMappings,err,error,*999)
+    CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMappings,err,error,*999)
     NULLIFY(domainTopology)
-    CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
-    CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
     
     !Grab interpolation points
     residualVariableType=residualVariable%VARIABLE_TYPE
@@ -4051,7 +4066,7 @@ CONTAINS
           NULLIFY(dataProjection)
           CALL Field_DataProjectionGet(field,dataProjection,err,error,*999)
           NULLIFY(dataPoints)
-          CALL DecompositionTopology_DataPointsGet(decompositionTopology,dataPoints,err,error,*999)
+          CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,dataPoints,err,error,*999)
 
           numberOfDataPoints=dataPoints%elementDataPoints(elementNumber)%numberOfProjectedData
 
@@ -4321,6 +4336,7 @@ CONTAINS
     TYPE(BasisType), POINTER :: elementBasis
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
@@ -4379,8 +4395,10 @@ CONTAINS
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
     NULLIFY(decompositionTopology)
-    CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
-    CALL DecompositionTopology_ElementCheckExists(decompositionTopology,userElementNumber,userElementExists, &
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementCheckExists(decompositionElements,userElementNumber,userElementExists, &
       & localElementNumber,ghostElement,err,error,*999)
     IF(.NOT.userElementExists) THEN
       localError="The specified user element number of "//TRIM(NumberToVstring(userElementNumber,"*",err,error))// &
@@ -4390,7 +4408,7 @@ CONTAINS
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
     NULLIFY(domainTopology)
-    CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(domainElements)
     CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
     NULLIFY(elementBasis)
@@ -7965,8 +7983,8 @@ CONTAINS
                   & DEPENDENT_FIELD,err,error,*999)
                 CALL Field_TypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-                CALL Field_MeshDecompositionGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                CALL Field_MeshDecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                CALL Field_DecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
                   & GEOMETRIC_FIELD,err,error,*999)
@@ -8403,8 +8421,8 @@ CONTAINS
                 CALL Field_LabelSet(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,"Dependent Field",err,error,*999)
                 CALL Field_TypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
-                CALL Field_MeshDecompositionGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
-                CALL Field_MeshDecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL Field_DecompositionGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                CALL Field_DecompositionSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 CALL Field_GeometricFieldSetAndLock(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
                   & GEOMETRIC_FIELD,err,error,*999)

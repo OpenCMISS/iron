@@ -114,6 +114,8 @@ MODULE RegionAccessRoutines
 
   PUBLIC Region_MeshGet
 
+  PUBLIC Region_MeshesGet
+
   PUBLIC Region_NodesGet
 
   PUBLIC REGION_NODES_GET
@@ -674,6 +676,41 @@ CONTAINS
     
   END SUBROUTINE Region_MeshGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the meshes for a region.
+  SUBROUTINE Region_MeshesGet(region,meshes,err,error,*)
+
+    !Argument variables
+    TYPE(RegionType), POINTER :: region !<A pointer to the region to get the meshes for
+    TYPE(MeshesType), POINTER :: meshes !<On exit, a pointer to the meshes for the region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Region_MeshesGet",err,error,*998)
+
+    IF(ASSOCIATED(meshes)) CALL FlagError("Meshes is already associated.",err,error,*998)
+    CALL Region_AssertIsFinished(region,err,error,*999)
+
+    meshes=>region%meshes
+    IF(.NOT.ASSOCIATED(meshes)) THEN
+      localError="The meshes for region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("Region_MeshesGet")
+    RETURN
+999 NULLIFY(meshes)
+998 ERRORSEXITS("Region_MeshesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Region_MeshesGet
+  
   !
   !================================================================================================================================
   !

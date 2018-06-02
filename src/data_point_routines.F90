@@ -228,15 +228,9 @@ CONTAINS
     
     ENTERS("DataPoints_CreateFinish",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        CALL FlagError("Data points have already been finished.",err,error,*999)
-      ELSE
-        dataPoints%dataPointsFinished=.TRUE.
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
-    ENDIF
+    CALL DataPoints_AssertNotFinished(dataPoints,err,error,*999)
+    
+    dataPoints%dataPointsFinished=.TRUE.
     
     IF(diagnostics1) THEN 
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,  "Data points:",err,error,*999)
@@ -742,21 +736,14 @@ CONTAINS
     
     ENTERS("DataPoints_LabelGetC",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
-        cLength=LEN(label)
-        vsLength=LEN_TRIM(dataPoints%dataPoints(globalNumber)%label)
-        IF(cLength>vsLength) THEN
-          label=CHAR(LEN_TRIM(dataPoints%dataPoints(globalNumber)%label))
-        ELSE
-          label=CHAR(dataPoints%dataPoints(globalNumber)%label,cLength)
-        ENDIF
-      ELSE
-        CALL FlagError("Data points have not been finished.",err,error,*999)
-      ENDIF
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+    cLength=LEN(label)
+    vsLength=LEN_TRIM(dataPoints%dataPoints(globalNumber)%label)
+    IF(cLength>vsLength) THEN
+      label=CHAR(LEN_TRIM(dataPoints%dataPoints(globalNumber)%label))
     ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
+      label=CHAR(dataPoints%dataPoints(globalNumber)%label,cLength)
     ENDIF
     
     EXITS("DataPoints_LabelGetC")
@@ -784,17 +771,10 @@ CONTAINS
     
     ENTERS("DataPoints_LabelGetVS",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
-        label=dataPoints%dataPoints(globalNumber)%label
-      ELSE
-        CALL FlagError("Data points have not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
-    ENDIF
-    
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+    label=dataPoints%dataPoints(globalNumber)%label
+     
     EXITS("DataPoints_LabelGetVS")
     RETURN
 999 ERRORSEXITS("DataPoints_LabelGetVS",err,error)    
@@ -820,17 +800,10 @@ CONTAINS
     
     ENTERS("DataPoints_LabelSetC",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        CALL FlagError("Data points have been finished.",err,error,*999)
-      ELSE
-        CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
-        dataPoints%dataPoints(globalNumber)%label=label
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
-    ENDIF
-    
+    CALL DataPoints_AssertNotFinished(dataPoints,err,error,*999)
+    CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+    dataPoints%dataPoints(globalNumber)%label=label
+     
     EXITS("DataPoints_LabelSetC")
     RETURN
 999 ERRORSEXITS("DataPoints_LabelSetC",err,error)    
@@ -857,16 +830,9 @@ CONTAINS
     
     ENTERS("DataPoints_LabelSetVS",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        CALL FlagError("Data points have been finished.",err,error,*999)
-      ELSE
-        CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
-        dataPoints%dataPoints(globalNumber)%label=label
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
-    ENDIF
+    CALL DataPoints_AssertNotFinished(dataPoints,err,error,*999)
+    CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+    dataPoints%dataPoints(globalNumber)%label=label
     
     EXITS("DataPoints_LabelSetVS")
     RETURN
@@ -894,24 +860,16 @@ CONTAINS
     
     ENTERS("DataPoints_PositionGet",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        IF(SIZE(position,1)>=dataPoints%numberOfDimensions) THEN
-          CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
-          position(1:dataPoints%numberOfDimensions)=dataPoints%dataPoints(globalNumber)%position(1:dataPoints%numberOfDimensions)
-        ELSE
-          localError="The size of the specified position array of "//TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
-            & " is too small. The array size needs to be >= "// &
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    IF(SIZE(position,1)<dataPoints%numberOfDimensions) THEN
+      localError="The size of the specified position array of "//TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
+        & " is too small. The array size needs to be >= "// &
             & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Data points have not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-    
+    CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+    position(1:dataPoints%numberOfDimensions)=dataPoints%dataPoints(globalNumber)%position(1:dataPoints%numberOfDimensions)
+   
     EXITS("DataPoints_PositionGet")
     RETURN
 999 ERRORSEXITS("DataPoints_PositionGet",err,error)    
@@ -938,23 +896,15 @@ CONTAINS
    
     ENTERS("DataPoints_PositionSet",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN   
-      IF(dataPoints%dataPointsFinished) THEN
-        CALL FlagError("Data points have been finished.",err,error,*999)
-      ELSE
-        IF(SIZE(position,1)>=dataPoints%numberOfDimensions) THEN
-          CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
-          dataPoints%dataPoints(globalNumber)%position(1:dataPoints%numberOfDimensions)=position(1:dataPoints%numberOfDimensions)
-        ELSE
-          localError="The size of the specified position array of "//TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
-            & " is too small. The array size needs to be >= "// &
-            & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
+    CALL DataPoints_AssertNotFinished(dataPoints,err,error,*999)
+    IF(SIZE(position,1)<dataPoints%numberOfDimensions) THEN
+      localError="The size of the specified position array of "//TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
+        & " is too small. The array size needs to be >= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+    dataPoints%dataPoints(globalNumber)%position(1:dataPoints%numberOfDimensions)=position(1:dataPoints%numberOfDimensions)
     
     EXITS("DataPoints_PositionSet")
     RETURN
@@ -1014,22 +964,14 @@ CONTAINS
     
     ENTERS("DataPoints_UserNumberGet",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        IF(globalNumber>=1.AND.globalNumber<=dataPoints%numberOfDataPoints) THEN
-          userNumber=dataPoints%dataPoints(globalNumber)%userNumber
-        ELSE
-          localError="The specified global data point number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Data points have not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified global data point number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid. The global data point number should be between 1 and "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    userNumber=dataPoints%dataPoints(globalNumber)%userNumber
     
     EXITS("DataPoints_UserNumberGet")
     RETURN
@@ -1058,36 +1000,27 @@ CONTAINS
     
     ENTERS("DataPoints_UserNumberSet",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        CALL FlagError("Data points have been finished.",err,error,*999)
-      ELSE
-        IF(globalNumber>=1.AND.globalNumber<=dataPoints%numberOfDataPoints) THEN
-          !Check the data point user number is not already used
-          CALL DataPoint_CheckExists(dataPoints,userNumber,dataPointExists,otherGlobalNumber,err,error,*999)
-          IF(dataPointExists) THEN
-            IF(otherGlobalNumber/=globalNumber) THEN
-              localError="The specified data point user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-                & " is already used by global data point number "//TRIM(NumberToVString(otherGlobalNumber,"*",err,error))// &
-                & ". User data point numbers must be unique."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
-          ELSE
-            CALL Tree_ItemDelete(dataPoints%dataPointsTree,dataPoints%dataPoints(globalNumber)%userNumber,err,error,*999)
-            CALL Tree_ItemInsert(dataPoints%dataPointsTree,userNumber,globalNumber,insertStatus,err,error,*999)
-            IF(insertStatus/=TREE_NODE_INSERT_SUCESSFUL) CALL FlagError("Unsucessful data points tree insert.",err,error,*999)
-            dataPoints%dataPoints(globalNumber)%userNumber=userNumber
-          ENDIF
-        ELSE
-          localError="The specified global data point number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
-            & " is invalid. The global data point number should be between 1 and "// &
-            & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
+    CALL DataPoints_AssertNotFinished(dataPoints,err,error,*999)
+    IF(globalNumber<1.OR.globalNumber>dataPoints%numberOfDataPoints) THEN
+      localError="The specified global data point number of "//TRIM(NumberToVString(globalNumber,"*",err,error))// &
+        & " is invalid. The global data point number should be between 1 and "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDataPoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    !Check the data point user number is not already used
+    CALL DataPoint_CheckExists(dataPoints,userNumber,dataPointExists,otherGlobalNumber,err,error,*999)
+    IF(dataPointExists) THEN
+      IF(otherGlobalNumber/=globalNumber) THEN
+        localError="The specified data point user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+          & " is already used by global data point number "//TRIM(NumberToVString(otherGlobalNumber,"*",err,error))// &
+          & ". User data point numbers must be unique."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+    CALL Tree_ItemDelete(dataPoints%dataPointsTree,dataPoints%dataPoints(globalNumber)%userNumber,err,error,*999)
+    CALL Tree_ItemInsert(dataPoints%dataPointsTree,userNumber,globalNumber,insertStatus,err,error,*999)
+    IF(insertStatus/=TREE_NODE_INSERT_SUCESSFUL) CALL FlagError("Unsucessful data points tree insert.",err,error,*999)
+    dataPoints%dataPoints(globalNumber)%userNumber=userNumber
     
     EXITS("DataPoints_UserNumberSet")
     RETURN
@@ -1115,24 +1048,16 @@ CONTAINS
     
     ENTERS("DataPoints_WeightsGet",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        IF(SIZE(weights,1)>=dataPoints%numberOfDimensions) THEN
-          CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
-          weights(1:dataPoints%numberOfDimensions)=dataPoints%dataPoints(globalNumber)%weights(1:dataPoints%numberOfDimensions)
-        ELSE
-          localError="The size of the specified weights array of "//TRIM(NumberToVString(SIZE(weights,1),"*",err,error))// &
-            & " is too small. The array size needs to be >= "// &
-            & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Data points have not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    IF(SIZE(weights,1)<dataPoints%numberOfDimensions) THEN
+      localError="The size of the specified weights array of "//TRIM(NumberToVString(SIZE(weights,1),"*",err,error))// &
+        & " is too small. The array size needs to be >= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-    
+    CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+    weights(1:dataPoints%numberOfDimensions)=dataPoints%dataPoints(globalNumber)%weights(1:dataPoints%numberOfDimensions)
+   
     EXITS("DataPoints_WeightsGet")
     RETURN
 999 ERRORSEXITS("DataPoints_WeightsGet",err,error)    
@@ -1159,23 +1084,15 @@ CONTAINS
     
     ENTERS("DataPoints_WeightsSet",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        CALL FlagError("Data points have been finished.",err,error,*999)
-      ELSE
-        IF(SIZE(weights,1)>=dataPoints%numberOfDimensions) THEN
-          CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
-          dataPoints%dataPoints(globalNumber)%weights(1:dataPoints%numberOfDimensions)=weights(1:dataPoints%numberOfDimensions)
-        ELSE
-          localError="The size of the specified weights array of "//TRIM(NumberToVString(SIZE(weights,1),"*",err,error))// &
-            & " is too small. The array size needs to be >= "// &
-            & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
+    CALL DataPoints_AssertNotFinished(dataPoints,err,error,*999)
+    IF(SIZE(weights,1)<dataPoints%numberOfDimensions) THEN
+      localError="The size of the specified weights array of "//TRIM(NumberToVString(SIZE(weights,1),"*",err,error))// &
+        & " is too small. The array size needs to be >= "// &
+        & TRIM(NumberToVString(dataPoints%numberOfDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    CALL DataPoints_GlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*999)
+    dataPoints%dataPoints(globalNumber)%weights(1:dataPoints%numberOfDimensions)=weights(1:dataPoints%numberOfDimensions)
     
     EXITS("DataPoints_WeightsSet")
     RETURN
@@ -1200,31 +1117,22 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataPoints_DataProjectionGet",err,error,*999)
+    ENTERS("DataPoints_DataProjectionGet",err,error,*998)
     
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN 
-        IF(ASSOCIATED(dataProjection)) THEN
-          CALL FlagError("Data projection is already associated.",err,error,*999)
-        ELSE
-          NULLIFY(dataProjection)
-          CALL DataProjection_UserNumberFind(dataPoints,userNumber,dataProjection,err,error,*999)
-          IF(.NOT.ASSOCIATED(dataProjection)) THEN
-            localError="A data projection with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-              & " does not exist."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Data points has not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
-    ENDIF    
+    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    
+    CALL DataProjection_UserNumberFind(dataPoints,userNumber,dataProjection,err,error,*999)
+    IF(.NOT.ASSOCIATED(dataProjection)) THEN
+      localError="A data projection with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     
     EXITS("DataPoints_DataProjectionGet")
     RETURN
-999 ERRORSEXITS("DataPoints_DataProjectionGet",err,error)    
+999 NULLIFY(dataProjection)   
+998 ERRORSEXITS("DataPoints_DataProjectionGet",err,error)    
     RETURN 1
    
   END SUBROUTINE DataPoints_DataProjectionGet
@@ -1247,17 +1155,9 @@ CONTAINS
     
     ENTERS("DataPoints_DataProjectionGlobalNumberGet",err,error,*999)
 
-    IF(ASSOCIATED(dataPoints)) THEN
-      IF(dataPoints%dataPointsFinished) THEN
-        NULLIFY(dataProjection)
-        CALL DataPoints_DataProjectionGet(dataPoints,userNumber,dataProjection,err,error,*999)
-        globalNumber=dataProjection%globalNumber
-      ELSE
-        CALL FlagError("Data points have not been finished.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Data points is not associated.",err,error,*999)
-    ENDIF
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,userNumber,dataProjection,err,error,*999)
+    globalNumber=dataProjection%globalNumber
     
     EXITS("DataPoints_DataProjectionGlobalNumberGet")
     RETURN
@@ -1399,10 +1299,6 @@ CONTAINS
     RETURN 1  
  
   END SUBROUTINE DataPointSets_InitialiseRegion
-
-  !
-  !================================================================================================================================
-  !
 
   !
   !================================================================================================================================

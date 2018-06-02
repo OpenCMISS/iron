@@ -78,6 +78,10 @@ MODULE DataProjectionAccessRoutines
   PUBLIC DATA_PROJECTION_CANCELLED,DATA_PROJECTION_EXIT_TAG_CONVERGED,DATA_PROJECTION_EXIT_TAG_BOUNDS, &
     & DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
 
+  PUBLIC DataProjection_AssertIsFinished,DataProjection_AssertNotFinished
+
+  PUBLIC DataProjection_AssertIsProjected,DataProjection_AssertNotProjected
+
   PUBLIC DataProjection_DataPointsGet
 
   PUBLIC DataProjection_DecompositionGet
@@ -91,6 +95,134 @@ MODULE DataProjectionAccessRoutines
   PUBLIC DataProjection_ResultRMSErrorGet
 
 CONTAINS
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a data projection has been finished
+  SUBROUTINE DataProjection_AssertIsFinished(dataProjection,err,error,*)
+
+    !Argument Variables
+    TYPE(DataProjectionType), POINTER, INTENT(IN) :: dataProjection !<The data projection to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("DataProjection_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+
+    IF(.NOT.dataProjection%dataProjectionFinished) THEN
+      localError="Data projection number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataProjection%projectionField)) localError=localError// &
+        & " for field number "//TRIM(NumberToVString(dataProjection%projectionField%userNumber,"*",err,error))
+      localError=localError//" has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DataProjection_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("DataProjection_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataProjection_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a data projection has not been finished
+  SUBROUTINE DataProjection_AssertNotFinished(dataProjection,err,error,*)
+
+    !Argument Variables
+    TYPE(DataProjectionType), POINTER, INTENT(IN) :: dataProjection !<The data projection to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("DataProjection_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+
+    IF(dataProjection%dataProjectionFinished) THEN
+      localError="Data projection number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataProjection%projectionField)) localError=localError// &
+        & " for field number "//TRIM(NumberToVString(dataProjection%projectionField%userNumber,"*",err,error))
+      localError=localError//" has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DataProjection_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("DataProjection_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataProjection_AssertNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a data projection has been projected
+  SUBROUTINE DataProjection_AssertIsProjected(dataProjection,err,error,*)
+
+    !Argument Variables
+    TYPE(DataProjectionType), POINTER, INTENT(IN) :: dataProjection !<The data projection to assert the projected status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("DataProjection_AssertIsProjected",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+
+    IF(.NOT.dataProjection%dataProjectionProjected) THEN
+      localError="Data projection number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))// &
+        & " has not been projected."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DataProjection_AssertIsProjected")
+    RETURN
+999 ERRORSEXITS("DataProjection_AssertIsProjected",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataProjection_AssertIsProjected
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a data projection has not been projected
+  SUBROUTINE DataProjection_AssertNotProjected(dataProjection,err,error,*)
+
+    !Argument Variables
+    TYPE(DataProjectionType), POINTER, INTENT(IN) :: dataProjection !<The data projection to assert the projected status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("DataProjection_AssertNotProjected",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+
+    IF(dataProjection%dataProjectionProjected) THEN
+      localError="Data projection number "//TRIM(NumberToVString(dataProjection%userNumber,"*",err,error))// &
+        & " has already been projected."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DataProjection_AssertNotProjected")
+    RETURN
+999 ERRORSEXITS("DataProjection_AssertNotProjected",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataProjection_AssertNotProjected
 
   !
   !================================================================================================================================

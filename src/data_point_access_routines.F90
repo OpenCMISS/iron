@@ -64,11 +64,83 @@ MODULE DataPointAccessRoutines
 
   !Interfaces
 
+  PUBLIC DataPoints_AssertIsFinished,DataPoints_AssertNotFinished
+
   PUBLIC DataPoints_CoordinateSystemGet
 
   PUBLIC DataPointSets_UserNumberFind
 
 CONTAINS
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a data points has been finished
+  SUBROUTINE DataPoints_AssertIsFinished(dataPoints,err,error,*)
+
+    !Argument Variables
+    TYPE(DataPointsType), POINTER, INTENT(IN) :: dataPoints !<The data points to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("DataPoints_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+
+    IF(.NOT.dataPoints%dataPointsFinished) THEN
+      localError="Data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) localError=localError// &
+        & " for region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%interface)) localError=localError// &
+        & " for interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+      localError=localError//" has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DataPoints_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("DataPoints_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataPoints_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a data points has not been finished
+  SUBROUTINE DataPoints_AssertNotFinished(dataPoints,err,error,*)
+
+    !Argument Variables
+    TYPE(DataPointsType), POINTER, INTENT(IN) :: dataPoints !<The data points to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("DataPoints_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+
+    IF(dataPoints%dataPointsFinished) THEN
+      localError="Data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) localError=localError// &
+        & " for region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%interface)) localError=localError// &
+        & " for interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+      localError=localError//" has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DataPoints_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("DataPoints_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DataPoints_AssertNotFinished
 
   !
   !================================================================================================================================
@@ -85,11 +157,10 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataPoints_CoordinateSystemGet",err,error,*999)
+    ENTERS("DataPoints_CoordinateSystemGet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
-    IF(.NOT.dataPoints%dataPointsFinished) CALL FlagError("Data points have already been finished.",err,error,*999)
-    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*999)
+    IF(ASSOCIATED(coordinateSystem)) CALL FlagError("Coordinate system is already associated.",ERR,ERROR,*998)
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
 
     IF(ASSOCIATED(dataPoints%region)) THEN
       IF(.NOT.dataPoints%region%regionFinished) CALL FlagError("Data points region has not been finished.",err,error,*999)
@@ -113,7 +184,8 @@ CONTAINS
    
     EXITS("DataPoints_CoordinateSystemGet")
     RETURN
-999 ERRORSEXITS("DataPoints_CoordinateSystemGet",err,error)
+999 NULLIFY(coordinateSystem)
+998 ERRORSEXITS("DataPoints_CoordinateSystemGet",err,error)
     RETURN 1
    
   END SUBROUTINE DataPoints_CoordinateSystemGet

@@ -2735,7 +2735,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(InterfacesType), POINTER :: interfaces !<A pointer back to the parent interfaces
     TYPE(RegionType), POINTER :: parentRegion !<A point to the parent region containing the interface.
     INTEGER(INTG) :: numberOfCoupledMeshes !<The number of coupled meshes in the interface.
-    TYPE(MeshPtrType), POINTER :: coupledMeshes(:) !<coupledMeshes(meshIdx). coupledMeshes(meshIdx)%ptr is the pointer to the meshIdx'th mesh involved in the interface.
+    TYPE(MeshPtrType), ALLOCATABLE :: coupledMeshes(:) !<coupledMeshes(meshIdx). coupledMeshes(meshIdx)%ptr is the pointer to the meshIdx'th mesh involved in the interface.
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity !<A pointer to the meshes connectivity the interface.
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<A pointer to the points connectivity the interface.
     TYPE(DataPointSetsType), POINTER :: dataPointSets  !<A pointer to the data points defined in an interface.

@@ -90,6 +90,8 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC INTERFACE_COORDINATE_SYSTEM_GET
 
+  PUBLIC Interface_CoupledMeshGet
+
   PUBLIC Interface_DataPointsGet
 
   PUBLIC INTERFACE_DATA_POINTS_GET
@@ -213,6 +215,54 @@ CONTAINS
     
   END SUBROUTINE Interface_CoordinateSystemGet
   
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to a coupled mesh in an interface. 
+  SUBROUTINE Interface_CoupledMeshGet(INTERFACE,coupledMeshIndex,coupledMesh,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the coupled mesh for
+    INTEGER(INTG), INTENT(IN) :: coupledMeshIndex !<The index of the coupled mesh to get.
+    TYPE(MeshType), POINTER :: coupledMesh !<On exit, a pointer to the specified coupled mesh for the interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_CoupledMeshGet",err,error,*998)
+
+    IF(ASSOCIATED(coupledMesh)) CALL FlagError("Coupled mesh is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+    IF(coupledMeshIndex<1.OR.coupledMeshIndex>interface%numberOfCoupledMeshes) THEN
+      localError="The specified coupled mesh index of "//TRIM(NumberToVString(coupledMeshIndex,"*",err,error))// &
+        & " is invalid. The coupled mesh index should be >=1 and <= "// &
+        & TRIM(NumberToVString(INTERFACE%numberOfCoupledMeshes,"*",err,error))// &
+        & " for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(INTERFACE%coupledMeshes)) THEN
+      localError="Coupled meshes is not allocated for interface number "// &
+        & TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    coupledMesh=>interface%coupledMeshes(coupledMeshIndex)%ptr
+    IF(.NOT.ASSOCIATED(coupledMesh)) THEN
+      localError="The coupled mesh for coupled mesh index "//TRIM(NumberToVString(coupledMeshIndex,"*",err,error))// &
+        & " is not associated for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("Interface_CoupledMeshGet")
+    RETURN
+999 NULLIFY(coupledMesh)
+998 ERRORSEXITS("Interface_CoupledMeshGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_CoupledMeshGet
+
   !
   !================================================================================================================================
   !

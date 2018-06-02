@@ -1089,8 +1089,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,element,numberOfTimes
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
@@ -1211,8 +1211,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,element,numberOfTimes
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
@@ -1379,8 +1379,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,element,numberOfTimes
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
@@ -1526,8 +1526,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,element,numberOfTimes
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
@@ -2366,89 +2366,6 @@ CONTAINS
 997 ERRORSEXITS("EQUATIONS_SET_CREATE_START",err,error)
     RETURN 1   
   END SUBROUTINE EQUATIONS_SET_CREATE_START
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Destroys an equations set identified by a user number on the give region and deallocates all memory. \see OpenCMISS::cmfe_EquationsSet_Destroy
-  SUBROUTINE EQUATIONS_SET_DESTROY_NUMBER(USER_NUMBER,REGION,err,error,*)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the equations set to destroy
-    TYPE(RegionType), POINTER :: REGION !<The region of the equations set to destroy
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: equations_set_idx,equations_set_position
-    LOGICAL :: FOUND
-    TYPE(VARYING_STRING) :: localError
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: NEW_EQUATIONS_SETS(:)
-
-    NULLIFY(NEW_EQUATIONS_SETS)
-
-    ENTERS("EQUATIONS_SET_DESTROY_NUMBER",err,error,*999)
-
-    IF(ASSOCIATED(REGION)) THEN
-      IF(ASSOCIATED(REGION%EQUATIONS_SETS)) THEN
-        
-        !Find the equations set identified by the user number
-        FOUND=.FALSE.
-        equations_set_position=0
-        DO WHILE(equations_set_position<REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS.AND..NOT.FOUND)
-          equations_set_position=equations_set_position+1
-          IF(REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_position)%ptr%userNumber==USER_NUMBER)FOUND=.TRUE.
-        ENDDO
-        
-        IF(FOUND) THEN
-          
-          EQUATIONS_SET=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_position)%ptr
-          
-          !Destroy all the equations set components
-          CALL EQUATIONS_SET_FINALISE(EQUATIONS_SET,err,error,*999)
-          
-          !Remove the equations set from the list of equations set
-          IF(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS>1) THEN
-            ALLOCATE(NEW_EQUATIONS_SETS(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS-1),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",err,error,*999)
-            DO equations_set_idx=1,REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS
-              IF(equations_set_idx<equations_set_position) THEN
-                NEW_EQUATIONS_SETS(equations_set_idx)%ptr=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr
-              ELSE IF(equations_set_idx>equations_set_position) THEN
-                REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr%globalNumber=REGION%EQUATIONS_SETS% &
-                  & EQUATIONS_SETS(equations_set_idx)%ptr%globalNumber-1
-                NEW_EQUATIONS_SETS(equations_set_idx-1)%ptr=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr
-              ENDIF
-            ENDDO !equations_set_idx
-            IF(ASSOCIATED(REGION%EQUATIONS_SETS%EQUATIONS_SETS)) DEALLOCATE(REGION%EQUATIONS_SETS%EQUATIONS_SETS)
-            REGION%EQUATIONS_SETS%EQUATIONS_SETS=>NEW_EQUATIONS_SETS
-            REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS-1
-          ELSE
-            DEALLOCATE(REGION%EQUATIONS_SETS%EQUATIONS_SETS)
-            REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS=0
-          ENDIF
-          
-        ELSE
-          localError="Equations set number "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))// &
-            & " has not been created on region number "//TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ELSE
-        localError="The equations sets on region number "//TRIM(NumberToVString(REGION%userNumber,"*",err,error))// &
-          & " are not associated."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Region is not associated.",err,error,*998)
-    ENDIF    
-
-    EXITS("EQUATIONS_SET_DESTROY_NUMBER")
-    RETURN
-999 IF(ASSOCIATED(NEW_EQUATIONS_SETS)) DEALLOCATE(NEW_EQUATIONS_SETS)
-998 ERRORSEXITS("EQUATIONS_SET_DESTROY_NUMBER",err,error)
-    RETURN 1   
-  END SUBROUTINE EQUATIONS_SET_DESTROY_NUMBER
   
   !
   !================================================================================================================================
@@ -4685,8 +4602,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,element,numberOfTimes
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
@@ -4806,8 +4723,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,element,numberOfTimes
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
@@ -5051,8 +4968,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,element,numberOfTimes
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
@@ -5172,8 +5089,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,element,numberOfTimes
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: elementsMapping
     TYPE(EquationsType), POINTER :: equations
@@ -5857,7 +5774,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_TimesGet",err,error,*999) 
 
@@ -5888,7 +5804,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_TimesSet",err,error,*999) 
 
@@ -6620,8 +6535,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: numberOfTimes
     INTEGER(INTG) :: nodeIdx,nodeNumber
-    REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: nodalMapping
     TYPE(EquationsType), POINTER :: equations
@@ -6990,8 +6905,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: numberOfTimes
     INTEGER(INTG) :: nodeIdx,nodeNumber
-    REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: nodalMapping
     TYPE(EquationsType), POINTER :: equations
@@ -7109,8 +7024,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: numberOfTimes
     INTEGER(INTG) :: nodeIdx,nodeNumber
-    REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: nodeUserElapsed,nodeSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: nodalMapping
     TYPE(EquationsType), POINTER :: equations
