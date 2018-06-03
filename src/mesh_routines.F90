@@ -800,6 +800,7 @@ CONTAINS
     NULLIFY(meshElements)
     CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
     DO elementIdx=1,meshElements%numberOfElements
+      NULLIFY(basis)
       CALL MeshElements_BasisGet(meshElements,elementIdx,basis,err,error,*999)
       SELECT CASE(basis%type)
       CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
