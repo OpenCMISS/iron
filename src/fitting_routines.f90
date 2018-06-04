@@ -98,6 +98,7 @@ MODULE FittingRoutines
   PUBLIC Fitting_ProblemSpecificationSet
 
   PUBLIC LinearFitting_FiniteElementCalculate
+  PUBLIC NonlinearFitting_FiniteElementResidualEvaluate
 
   PUBLIC Fitting_PreSolve
   PUBLIC Fitting_PostSolve
@@ -1333,6 +1334,59 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE LinearFitting_FiniteElementCalculate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluates the element residual and rhs vectors for the given element number for a fitting class finite element equation set.
+  SUBROUTINE NonlinearFitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
+    INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to evaluate the residual for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+
+    ENTERS("NonlinearFitting_FiniteElementResidualEvaluate",err,error,*999)
+
+    IF(ASSOCIATED(equationsSet)) THEN
+      IF(.NOT.ALLOCATED(equationsSet%SPECIFICATION)) THEN
+        CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+      ELSE IF(SIZE(equationsSet%SPECIFICATION,1)/=4) THEN
+        CALL FlagError("Equations set specification must have four entries for a fitting type equations set.", &
+          & err,error,*999)
+      END IF
+      EQUATIONS=>equationsSet%EQUATIONS
+      IF(ASSOCIATED(EQUATIONS)) THEN
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+        SELECT CASE(equationsSet%SPECIFICATION(3))
+        CASE(EQUATIONS_SET_DIFFUSION_TENSOR_FIBRE_FITTING_SUBTYPE)
+
+        CASE DEFAULT
+          localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%SPECIFICATION(3),"*",err,error))// &
+            & " is not valid for a fitting equation set class."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ELSE
+        CALL FlagError("Equations set equations is not associated.",err,error,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("Equations set is not associated.",err,error,*999)
+    ENDIF
+
+    EXITS("NonlinearFitting_FiniteElementResidualEvaluate")
+    RETURN
+999 ERRORS("NonlinearFitting_FiniteElementResidualEvaluate",err,error)
+    EXITS("NonlinearFitting_FiniteElementResidualEvaluate")
+    RETURN 1
+
+  END SUBROUTINE NonlinearFitting_FiniteElementResidualEvaluate
 
   !
   !================================================================================================================================

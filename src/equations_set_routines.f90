@@ -2598,13 +2598,7 @@ CONTAINS
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       CALL CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_FITTING_CLASS)
-      IF(equationsSet%specification(3)==EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE) THEN
-        CALL LinearFitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
-      ELSE
-        localError="The equations set subtype of "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
-          & " does not equal a standard Galerkin projection subtype."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
+      CALL LinearFitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
       IF(SIZE(equationsSet%specification,1)<2) &
         & CALL FlagError("Equations set specification must have at least two entries for a bioelectrics equation class.", &
@@ -2779,6 +2773,8 @@ CONTAINS
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
           CALL ClassicalField_FiniteElementJacobianEvaluate(equationsSet,elementNumber,err,error,*999)
+        CASE(EQUATIONS_SET_FITTING_CLASS)
+          CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(EQUATIONS_SET_MODAL_CLASS)
@@ -3018,6 +3014,8 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       CALL ClassicalField_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+    CASE(EQUATIONS_SET_FITTING_CLASS)
+      CALL NonlinearFitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_MODAL_CLASS)
