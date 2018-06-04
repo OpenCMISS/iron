@@ -5468,7 +5468,97 @@ CONTAINS
               & " is invalid for a static fitting problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-       CASE DEFAULT
+        CASE DEFAULT
+          localError="The setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+            & " is invalid for a static fitting problem."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ELSEIF(problem%specification(3)==PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE) THEN
+        SELECT CASE(problemSetup%SETUP_TYPE)
+        CASE(PROBLEM_SETUP_INITIAL_TYPE)
+          SELECT CASE(problemSetup%ACTION_TYPE)
+          CASE(PROBLEM_SETUP_START_ACTION)
+            !Do nothing????
+          CASE(PROBLEM_SETUP_FINISH_ACTION)
+            !Do nothing???
+          CASE DEFAULT
+            localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+              & " is invalid for a static nonlinear fitting problem."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(PROBLEM_SETUP_CONTROL_TYPE)
+          SELECT CASE(problemSetup%ACTION_TYPE)
+          CASE(PROBLEM_SETUP_START_ACTION)
+            !Set up a simple control loop
+            CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
+          CASE(PROBLEM_SETUP_FINISH_ACTION)
+            !Finish the control loops
+            controlLoopRoot=>problem%CONTROL_LOOP
+            CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+            CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
+          CASE DEFAULT
+            localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+              & " is invalid for a static fitting problem."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(PROBLEM_SETUP_SOLVERS_TYPE)
+          !Get the control loop
+          controlLoopRoot=>problem%CONTROL_LOOP
+          CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+          SELECT CASE(problemSetup%ACTION_TYPE)
+          CASE(PROBLEM_SETUP_START_ACTION)
+            !Start the solvers creation
+            CALL Solvers_CreateStart(controlLoop,solvers,err,error,*999)
+            CALL Solvers_NumberSet(solvers,1,err,error,*999)
+            !Set the solver to be a nonlinear solver
+            CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+            CALL Solver_TypeSet(solver,SOLVER_NONLINEAR_TYPE,err,error,*999)
+            !Set solver defaults
+            CALL Solver_LibraryTypeSet(solver,SOLVER_PETSC_LIBRARY,err,error,*999)
+          CASE(PROBLEM_SETUP_FINISH_ACTION)
+            !Get the solvers
+            CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+            !Finish the solvers creation
+            CALL Solvers_CreateFinish(solvers,err,error,*999)
+          CASE DEFAULT
+            localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+              & " is invalid for a static fitting problem."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(PROBLEM_SETUP_SOLVER_EQUATIONS_TYPE)
+          SELECT CASE(problemSetup%ACTION_TYPE)
+          CASE(PROBLEM_SETUP_START_ACTION)
+            !Get the control loop
+            controlLoopRoot=>problem%CONTROL_LOOP
+            CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+            !Get the solver
+            CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+            CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+            !Create the solver equations
+            CALL SolverEquations_CreateStart(solver,solverEquations,err,error,*999)
+            CALL SolverEquations_LinearityTypeSet(solverEquations,SOLVER_EQUATIONS_NONLINEAR,err,error,*999)
+            CALL SolverEquations_TimeDependenceTypeSet(solverEquations,SOLVER_EQUATIONS_STATIC,err,error,*999)
+            CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
+          CASE(PROBLEM_SETUP_FINISH_ACTION)
+            !Get the control loop
+            controlLoopRoot=>problem%CONTROL_LOOP
+            CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
+            !Get the solver equations
+            CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+            CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+            CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+            !Finish the solver equations creation
+            CALL SolverEquations_CreateFinish(solverEquations,err,error,*999)
+          CASE DEFAULT
+            localError="The action type of "//TRIM(NumberToVString(problemSetup%ACTION_TYPE,"*",err,error))// &
+              & " for a setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
+              & " is invalid for a static fitting problem."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
           localError="The setup type of "//TRIM(NumberToVString(problemSetup%SETUP_TYPE,"*",err,error))// &
             & " is invalid for a static fitting problem."
           CALL FlagError(localError,err,error,*999)
@@ -5663,6 +5753,7 @@ CONTAINS
         CASE(PROBLEM_DATA_FITTING_TYPE)
           SELECT CASE(problemSubtype)
           CASE(PROBLEM_STATIC_FITTING_SUBTYPE, &
+            & PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE, &
             & PROBLEM_STANDARD_DATA_FITTING_SUBTYPE, &
             & PROBLEM_VECTOR_DATA_FITTING_SUBTYPE, &
             & PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE, &
@@ -5779,6 +5870,8 @@ CONTAINS
             SELECT CASE(problem%specification(3))
             CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
               !Do nothing
+            CASE(PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE)
+              !Do nothing
             CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE)
               !Do nothing
             CASE(PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE)
@@ -5860,6 +5953,8 @@ CONTAINS
             SELECT CASE(problem%specification(3))
             CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
               !Do nothing
+            CASE(PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE)
+              !Do nothing
             CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE,PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE, &
               & PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE)
               !Do nothing
@@ -5938,6 +6033,8 @@ CONTAINS
             ENDIF
             SELECT CASE(problem%specification(3))
             CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
+              !Do nothing
+            CASE(PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE)
               !Do nothing
             CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE,PROBLEM_GENERALISED_DATA_FITTING_SUBTYPE, &
               & PROBLEM_MAT_PROPERTIES_DATA_FITTING_SUBTYPE, &
@@ -6053,6 +6150,8 @@ CONTAINS
             ENDIF
             SELECT CASE(problem%specification(3))
             CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
+              !Do nothing
+            CASE(PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE)
               !Do nothing
             CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE)
               !Do nothing
