@@ -97,7 +97,7 @@ MODULE FittingRoutines
   PUBLIC Fitting_ProblemSetup
   PUBLIC Fitting_ProblemSpecificationSet
 
-  PUBLIC Fitting_FiniteElementCalculate
+  PUBLIC LinearFitting_FiniteElementCalculate
 
   PUBLIC Fitting_PreSolve
   PUBLIC Fitting_PostSolve
@@ -109,7 +109,7 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices and RHS for a Galerkin projection finite element equations set.
-   SUBROUTINE Fitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
+   SUBROUTINE LinearFitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to perform the finite element calculations on
@@ -163,7 +163,7 @@ CONTAINS
     INTEGER(INTG) numberDofs
     INTEGER(INTG) meshComponent1,meshComponent2
 
-    ENTERS("Fitting_FiniteElementCalculate",err,error,*999)
+    ENTERS("LinearFitting_FiniteElementCalculate",err,error,*999)
 
     NULLIFY(dependentBasis,geometricBasis)
     NULLIFY(equations)
@@ -1327,12 +1327,12 @@ CONTAINS
       CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("Fitting_FiniteElementCalculate")
+    EXITS("LinearFitting_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("Fitting_FiniteElementCalculate",err,error)
+999 ERRORSEXITS("LinearFitting_FiniteElementCalculate",err,error)
     RETURN 1
 
-  END SUBROUTINE Fitting_FiniteElementCalculate
+  END SUBROUTINE LinearFitting_FiniteElementCalculate
 
   !
   !================================================================================================================================
