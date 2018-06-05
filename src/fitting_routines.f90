@@ -97,8 +97,8 @@ MODULE FittingRoutines
   PUBLIC Fitting_ProblemSetup
   PUBLIC Fitting_ProblemSpecificationSet
 
-  PUBLIC LinearFitting_FiniteElementCalculate
-  PUBLIC NonlinearFitting_FiniteElementResidualEvaluate
+  PUBLIC Fitting_FiniteElementCalculate
+  PUBLIC Fitting_FiniteElementResidualEvaluate
 
   PUBLIC Fitting_PreSolve
   PUBLIC Fitting_PostSolve
@@ -110,7 +110,7 @@ CONTAINS
   !
 
   !>Calculates the element stiffness matrices and RHS for a Galerkin projection finite element equations set.
-   SUBROUTINE LinearFitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
+   SUBROUTINE Fitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to perform the finite element calculations on
@@ -164,7 +164,7 @@ CONTAINS
     INTEGER(INTG) numberDofs
     INTEGER(INTG) meshComponent1,meshComponent2
 
-    ENTERS("LinearFitting_FiniteElementCalculate",err,error,*999)
+    ENTERS("Fitting_FiniteElementCalculate",err,error,*999)
 
     NULLIFY(dependentBasis,geometricBasis)
     NULLIFY(equations)
@@ -1328,19 +1328,19 @@ CONTAINS
       CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("LinearFitting_FiniteElementCalculate")
+    EXITS("Fitting_FiniteElementCalculate")
     RETURN
-999 ERRORSEXITS("LinearFitting_FiniteElementCalculate",err,error)
+999 ERRORSEXITS("Fitting_FiniteElementCalculate",err,error)
     RETURN 1
 
-  END SUBROUTINE LinearFitting_FiniteElementCalculate
+  END SUBROUTINE Fitting_FiniteElementCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Evaluates the element residual and rhs vectors for the given element number for a fitting class finite element equation set.
-  SUBROUTINE NonlinearFitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*)
+  SUBROUTINE Fitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
@@ -1352,7 +1352,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
 
-    ENTERS("NonlinearFitting_FiniteElementResidualEvaluate",err,error,*999)
+    ENTERS("Fitting_FiniteElementResidualEvaluate",err,error,*999)
 
     IF(ASSOCIATED(equationsSet)) THEN
       IF(.NOT.ALLOCATED(equationsSet%SPECIFICATION)) THEN
@@ -1380,13 +1380,13 @@ CONTAINS
       CALL FlagError("Equations set is not associated.",err,error,*999)
     ENDIF
 
-    EXITS("NonlinearFitting_FiniteElementResidualEvaluate")
+    EXITS("Fitting_FiniteElementResidualEvaluate")
     RETURN
-999 ERRORS("NonlinearFitting_FiniteElementResidualEvaluate",err,error)
-    EXITS("NonlinearFitting_FiniteElementResidualEvaluate")
+999 ERRORS("Fitting_FiniteElementResidualEvaluate",err,error)
+    EXITS("Fitting_FiniteElementResidualEvaluate")
     RETURN 1
 
-  END SUBROUTINE NonlinearFitting_FiniteElementResidualEvaluate
+  END SUBROUTINE Fitting_FiniteElementResidualEvaluate
 
   !
   !================================================================================================================================

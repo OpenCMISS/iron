@@ -2598,7 +2598,7 @@ CONTAINS
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       CALL CLASSICAL_FIELD_FINITE_ELEMENT_CALCULATE(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_FITTING_CLASS)
-      CALL LinearFitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
+      CALL Fitting_FiniteElementCalculate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
       IF(SIZE(equationsSet%specification,1)<2) &
         & CALL FlagError("Equations set specification must have at least two entries for a bioelectrics equation class.", &
@@ -3015,7 +3015,7 @@ CONTAINS
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       CALL ClassicalField_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_FITTING_CLASS)
-      CALL NonlinearFitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+      CALL Fitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_MODAL_CLASS)
