@@ -855,6 +855,12 @@ CONTAINS
                 CALL TREE_NODE_VALUE_GET(MESH_ELEMENTS%ELEMENTS_TREE,TREE_NODE,GLOBAL_ELEMENT_NUMBER,ERR,ERROR,*999)
                 IF(GLOBAL_ELEMENT_NUMBER>0.AND.GLOBAL_ELEMENT_NUMBER<=MESH_TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS) THEN
                   DOMAIN_NUMBER=DECOMPOSITION%ELEMENT_DOMAIN(GLOBAL_ELEMENT_NUMBER)
+                
+                    ! adding an output here!!!
+                    IF (DOMAIN_NUMBER==0) THEN
+                     CALL TREE_OUTPUT(1,MESH_ELEMENTS%ELEMENTS_TREE,ERR,ERROR,*999)
+                    END IF
+
                 ELSE
                   LOCAL_ERROR="Global element number found "//TRIM(NUMBER_TO_VSTRING(GLOBAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                     & " is invalid. The limits are 1 to "// &
@@ -1657,6 +1663,13 @@ CONTAINS
       CALL Tree_NodeValueGet(decompositionElements%ELEMENTS_TREE,treeNode,localElementNumber,err,error,*999)
       elementExists=.TRUE.
       ghostElement=localElementNumber>decompositionElements%NUMBER_OF_ELEMENTS
+
+                    ! how to call the topology tree?...
+                    !IF (DOMAIN_NUMBER==0) THEN
+                    ! PRINT *, "Topology tree "
+                    ! CALL TREE_OUTPUT(1,decompositionElements%ELEMENTS_TREE,ERR,ERROR,*999)
+                    !END IF
+
     ENDIF
     
     EXITS("DecompositionTopology_ElementCheckExists")

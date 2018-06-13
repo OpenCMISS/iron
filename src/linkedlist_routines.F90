@@ -72,7 +72,7 @@ contains
 
 ! -------------------------------------------------------------------
 
-  !> adds all data from one list to another
+  !> adds all data from one list (addlist) to another (list)
   Subroutine LinkedList_Add_List(list,addlist,ERR,ERROR,*)
     type(LinkedList),intent(inout) :: list
     type(LinkedList),intent(in) :: addlist
@@ -157,7 +157,7 @@ contains
           exit
         endif
       else
-        ! there must be only one item in the list?
+        ! there must be only one item in the list(?)!
         data = current%data
         deallocate(list%root)
         list%root => NULL()

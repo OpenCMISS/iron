@@ -100,7 +100,7 @@ MODULE TREES
     INTEGER(INTG) :: INSERT_TYPE !<The insert type for duplicate keys for the tree
     INTEGER(INTG) :: NUMBER_IN_TREE !<The number of items currently in the tree
     TYPE(TREE_NODE_TYPE), POINTER :: ROOT !<The pointer to the root of the tree
-    TYPE(TREE_NODE_TYPE), POINTER :: NIL !<The pointer to the nil of the tree
+    TYPE(TREE_NODE_TYPE), POINTER :: NIL !<The pointer to the nil (= leaves) of the tree
   END TYPE TREE_TYPE
 
   !Module variables
@@ -287,13 +287,13 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Detaches the tree values and returns them as a pointer to the an array
+  !>Detaches the tree values and returns them as a pointer to an array
   SUBROUTINE TREE_DETACH(TREE,NUMBER_IN_TREE,TREE_VALUES,ERR,ERROR,*)
 
     !Argument Variables
     TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to detach
     INTEGER(INTG), INTENT(OUT) :: NUMBER_IN_TREE !<On exit, the number in the array that has been detached
-    INTEGER(INTG), POINTER :: TREE_VALUES(:) !<On exit, a pointer to the dettached tree values. Must not be associated on entry.
+    INTEGER(INTG), POINTER :: TREE_VALUES(:) !<On exit, a pointer to the detached tree values. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
     !Local Variables
@@ -330,7 +330,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Detaches the tree values and returns them as a pointer to the an array and then destroys the tree
+  !>Detaches the tree values and returns them as a pointer to an array and then destroys the tree
   SUBROUTINE TREE_DETACH_AND_DESTROY(TREE,NUMBER_IN_TREE,TREE_VALUES,ERR,ERROR,*)
 
     !Argument Variables
@@ -374,7 +374,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Detaches the tree values in order from the specified tree node and adds them to the tree values array
+  !>Detaches the tree values in order from the specified tree node (eg root) and adds them to the tree values array
   RECURSIVE SUBROUTINE TREE_DETACH_IN_ORDER(TREE,X,COUNT,TREE_VALUES,ERR,ERROR,*)
 
     !Argument Variables
