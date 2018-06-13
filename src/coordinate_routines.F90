@@ -4037,7 +4037,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     REAL(DP) :: angles(3),det,dXdNu2(3,3),dXdNu3(3,3),dXdNuR(3,3),f(3),g(3),h(3), &
-      & Raf(3,3),Rbf(3,3),Rai(3,3),Rbi(3,3),Ras(3,3),Rbs(3,3)
+      & Raf(3,3),Rbf(3,3),Rai(3,3),Rbi(3,3),Ras(3,3),Rbs(3,3),a,b,c,d,s,quaternions(4), Rq(3,3)
+    !LOGICAL :: eulerAnglesFlag, quaternionsFlag
     
     ENTERS("Coordinates_MaterialSystemCalculatedXdNu3D",err,error,*999)
     
@@ -4059,72 +4060,106 @@ CONTAINS
       IF(diagnostics1) THEN
       ENDIF
 
-      !FIBRE ANGLE(alpha) - angles(1) 
-      !In order to rotate reference material CS by alpha(fibre angle) in anti-clockwise  
-      !direction about its axis 3, following steps are performed.
-      !(a) first align reference material direction 3 with Z(spatial) axis by rotating the ref material CS. 
-      !(b) then rotate the aligned material CS by alpha about Z axis in anti-clockwise direction
-      !(c) apply the inverse of step(a) to the CS in (b)
-      !It can be shown that steps (a),(b) and (c) are equivalent to post-multiplying
-      !rotation in (a) by rotation in (b). i.e. Ra*Rb  
-      
-      !The normalised reference material CS contains the transformation(rotation) between 
-      !the spatial CS -> reference material CS. i.e. Raf
-      Raf=dXdNuR
-        
-      !Initialise rotation matrix Rbf
-      CALL IdentityMatrix(Rbf,err,error,*999)
-      !Populate rotation matrix Rbf about axis 3 (Z)
-      Rbf(1,1)=COS(angles(1))
-      Rbf(1,2)=-1.0_DP*SIN(angles(1))
-      Rbf(2,1)=SIN(angles(1))
-      Rbf(2,2)=COS(angles(1))
-        
-      CALL MatrixProduct(Raf,Rbf,dXdNu3,err,error,*999)  
 
-      !IMBRICATION ANGLE (beta) - angles(2)     
-      !In order to rotate alpha-rotated material CS by beta(imbrication angle) in anti-clockwise  
-      !direction about its new axis 2, following steps are performed.
-      !(a) first align new material direction 2 with Y(spatial) axis by rotating the new material CS. 
-      !(b) then rotate the aligned CS by beta about Y axis in anti-clockwise direction
-      !(c) apply the inverse of step(a) to the CS in (b)
-      !As mentioned above, (a),(b) and (c) are equivalent to post-multiplying
-      !rotation in (a) by rotation in (b). i.e. Rai*Rbi  
-      
-      !dXdNu3 contains the transformation(rotation) between 
-      !the spatial CS -> alpha-rotated reference material CS. i.e. Rai
-      Rai=dXdNu3
-      !Initialise rotation matrix Rbi
-      CALL IdentityMatrix(Rbi,err,error,*999)
-      !Populate rotation matrix Rbi about axis 2 (Y). Note the sign change
-      Rbi(1,1)=COS(angles(2))
-      Rbi(1,3)=SIN(angles(2))
-      Rbi(3,1)=-1.0_DP*SIN(angles(2))
-      Rbi(3,3)=COS(angles(2))
-        
-      CALL MatrixProduct(Rai,Rbi,dXdNu2,err,error,*999)  
+      IF(SIZE(angle,1)==3) THEN
 
-      !SHEET ANGLE (gamma) - angles(3)    
-      !In order to rotate alpha-beta-rotated material CS by gama(sheet angle) in anti-clockwise  
-      !direction about its new axis 1, following steps are performed.
-      !(a) first align new material direction 1 with X(spatial) axis by rotating the new material CS. 
-      !(b) then rotate the aligned CS by gama about X axis in anti-clockwise direction
-      !(c) apply the inverse of step(a) to the CS in (b)
-      !Again steps (a),(b) and (c) are equivalent to post-multiplying
-      !rotation in (a) by rotation in (b). i.e. Ras*Rbs  
-      
-      !dXdNu2 contains the transformation(rotation) between 
-      !the spatial CS -> alpha-beta-rotated reference material CS. i.e. Ras
-      Ras=dXdNu2
-      !Initialise rotation matrix Rbs
-      CALL IdentityMatrix(Rbs,err,error,*999)
-      !Populate rotation matrix Rbs about axis 1 (X). 
-      Rbs(2,2)=COS(angles(3))
-      Rbs(2,3)=-1.0_DP*SIN(angles(3))
-      Rbs(3,2)=SIN(angles(3))
-      Rbs(3,3)=COS(angles(3))
-      
-      CALL MatrixProduct(Ras,Rbs,dXdNu,err,error,*999)  
+
+        !FIBRE ANGLE(alpha) - angles(1)
+        !In order to rotate reference material CS by alpha(fibre angle) in anti-clockwise
+        !direction about its axis 3, following steps are performed.
+        !(a) first align reference material direction 3 with Z(spatial) axis by rotating the ref material CS.
+        !(b) then rotate the aligned material CS by alpha about Z axis in anti-clockwise direction
+        !(c) apply the inverse of step(a) to the CS in (b)
+        !It can be shown that steps (a),(b) and (c) are equivalent to post-multiplying
+        !rotation in (a) by rotation in (b). i.e. Ra*Rb
+
+        !The normalised reference material CS contains the transformation(rotation) between
+        !the spatial CS -> reference material CS. i.e. Raf
+        Raf=dXdNuR
+
+        !Initialise rotation matrix Rbf
+        CALL IdentityMatrix(Rbf,err,error,*999)
+        !Populate rotation matrix Rbf about axis 3 (Z)
+        Rbf(1,1)=COS(angles(1))
+        Rbf(1,2)=-1.0_DP*SIN(angles(1))
+        Rbf(2,1)=SIN(angles(1))
+        Rbf(2,2)=COS(angles(1))
+
+        CALL MatrixProduct(Raf,Rbf,dXdNu3,err,error,*999)
+
+        !IMBRICATION ANGLE (beta) - angles(2)
+        !In order to rotate alpha-rotated material CS by beta(imbrication angle) in anti-clockwise
+        !direction about its new axis 2, following steps are performed.
+        !(a) first align new material direction 2 with Y(spatial) axis by rotating the new material CS.
+        !(b) then rotate the aligned CS by beta about Y axis in anti-clockwise direction
+        !(c) apply the inverse of step(a) to the CS in (b)
+        !As mentioned above, (a),(b) and (c) are equivalent to post-multiplying
+        !rotation in (a) by rotation in (b). i.e. Rai*Rbi
+
+        !dXdNu3 contains the transformation(rotation) between
+        !the spatial CS -> alpha-rotated reference material CS. i.e. Rai
+        Rai=dXdNu3
+        !Initialise rotation matrix Rbi
+        CALL IdentityMatrix(Rbi,err,error,*999)
+        !Populate rotation matrix Rbi about axis 2 (Y). Note the sign change
+        Rbi(1,1)=COS(angles(2))
+        Rbi(1,3)=SIN(angles(2))
+        Rbi(3,1)=-1.0_DP*SIN(angles(2))
+        Rbi(3,3)=COS(angles(2))
+
+        CALL MatrixProduct(Rai,Rbi,dXdNu2,err,error,*999)
+
+        !SHEET ANGLE (gamma) - angles(3)
+        !In order to rotate alpha-beta-rotated material CS by gama(sheet angle) in anti-clockwise
+        !direction about its new axis 1, following steps are performed.
+        !(a) first align new material direction 1 with X(spatial) axis by rotating the new material CS.
+        !(b) then rotate the aligned CS by gama about X axis in anti-clockwise direction
+        !(c) apply the inverse of step(a) to the CS in (b)
+        !Again steps (a),(b) and (c) are equivalent to post-multiplying
+        !rotation in (a) by rotation in (b). i.e. Ras*Rbs
+
+        !dXdNu2 contains the transformation(rotation) between
+        !the spatial CS -> alpha-beta-rotated reference material CS. i.e. Ras
+        Ras=dXdNu2
+        !Initialise rotation matrix Rbs
+        CALL IdentityMatrix(Rbs,err,error,*999)
+        !Populate rotation matrix Rbs about axis 1 (X).
+        Rbs(2,2)=COS(angles(3))
+        Rbs(2,3)=-1.0_DP*SIN(angles(3))
+        Rbs(3,2)=SIN(angles(3))
+        Rbs(3,3)=COS(angles(3))
+
+        CALL MatrixProduct(Ras,Rbs,dXdNu,err,error,*999)
+
+      ELSE
+
+        quaternions=0.0_DP
+        quaternions(1:SIZE(angle,1))=angle(1:SIZE(angle,1))
+        a=quaternions(1)
+        b=quaternions(2)
+        c=quaternions(3)
+        d=quaternions(4)
+        s=1/(a**2 + b**2 + c**2 + d**2)
+        CALL IdentityMatrix(Rq,err,error,*999)
+        !Populate rotation matrix Rbf about axis 3 (Z)
+
+        Rq(1,1)=(1-2*s*(c**2+d**2))
+        Rq(1,2)=(2*s*(b*c-a*d))
+        Rq(1,3)=(2*s*(b*d+a*c))
+        Rq(2,1)=(2*s*(b*c+a*d))
+        Rq(2,2)=(1-2*s*(b**2+d**2))
+        Rq(2,3)=(2*s*(c*d-a*b))
+        Rq(3,1)=(2*s*(b*d-a*c))
+        Rq(3,2)=(2*s*(c*d+a*b))
+        Rq(3,3)=(1-2*s*(b**2+c**2))
+
+        !WRITE(*,*) "USING QUATERNIONS"
+
+        CALL MatrixProduct(Rq,dXdNuR,dXdNu,err,error,*999)
+      ENDIF
+
+
+
 
       IF(diagnostics1) THEN
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
