@@ -6077,6 +6077,15 @@ CONTAINS
               & " is not valid for a Galerkin projection type of a data fitting problem."
             CALL FlagError(localError,err,error,*999)
           END SELECT
+        CASE(PROBLEM_FIBRE_FITTING_TYPE)
+          SELECT CASE(problemSubtype)
+          CASE(PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE)
+            !ok
+          CASE DEFAULT
+            localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+              & " is not valid for a Galerkin projection type of a fibre fitting problem."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
         CASE DEFAULT
           localError="The second problem specification of "//TRIM(NumberToVstring(problemType,"*",err,error))// &
             & " is not valid for a data fitting problem."
