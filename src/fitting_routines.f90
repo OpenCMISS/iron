@@ -1398,7 +1398,7 @@ CONTAINS
         CASE(EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE)
 
           SELECT CASE(equationsSet%specification(3))
-          CASE(EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE)
+          CASE(EQUATIONS_SET_DIFFUSION_TENSOR_FIBRE_FITTING_SUBTYPE)
             geometricField=>equations%interpolation%geometricField
             dependentField=>equations%interpolation%dependentField
             independentField=>equations%interpolation%independentField
@@ -1634,7 +1634,7 @@ CONTAINS
 
           CASE DEFAULT
             localError="Equations set subtype "//TRIM(NumberToVString(equationsSet%specification(3),"*",err,error))// &
-              & " is not valid for a Gauss fitting equations set class."
+              & " is not valid for a data fitting equations set class."
             CALL FlagError(localError,err,error,*999)
           END SELECT
 
@@ -5499,6 +5499,8 @@ CONTAINS
       SELECT CASE(problem%specification(3))
       CASE(PROBLEM_STATIC_FITTING_SUBTYPE)
         CALL Fitting_ProblemStaticSetup(problem,problemSetup,err,error,*999)
+      CASE(PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE)
+        CALL Fitting_ProblemStaticSetup(problem,problemSetup,err,error,*999)
       CASE(PROBLEM_STANDARD_DATA_FITTING_SUBTYPE)
         CALL FITTING_PROBLEM_STANDARD_SETUP(problem,problemSetup,err,error,*999)
       CASE(PROBLEM_VECTOR_DATA_FITTING_SUBTYPE)
@@ -6063,7 +6065,6 @@ CONTAINS
         CASE(PROBLEM_DATA_FITTING_TYPE)
           SELECT CASE(problemSubtype)
           CASE(PROBLEM_STATIC_FITTING_SUBTYPE, &
-            & PROBLEM_STATIC_NONLINEAR_FITTING_SUBTYPE, &
             & PROBLEM_STANDARD_DATA_FITTING_SUBTYPE, &
             & PROBLEM_VECTOR_DATA_FITTING_SUBTYPE, &
             & PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE, &
