@@ -3161,7 +3161,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,geometricMeshComponent,geometricScalingType,numberOfComponents,numberOfComponents2, &
-      & numberOfDependentComponents,numberOfIndependentComponents
+      & numberOfDependentComponents,numberOfIndependentComponents,numberOfGeometricComponents
     TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -3860,19 +3860,21 @@ CONTAINS
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-              !If the independent field has been defined check the number of components is the same
-              IF(ASSOCIATED(equationsSet%INDEPENDENT)) THEN
-                IF(ASSOCIATED(equationsSet%INDEPENDENT%INDEPENDENT_FIELD)) THEN
-                  CALL Field_NumberOfComponentsGet(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & numberOfIndependentComponents,err,error,*999)
-                  IF(numberOfComponents /= numberOfIndependentComponents) THEN
-                    localError="The number of components for the specified dependent field of "// &
-                      & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
-                      & " does not match the number of components for the independent field of "// &
-                        & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))//"."
-                    CALL FlagError(localError,err,error,*999)
-                  ENDIF
+              !If the independent field has been defined check it has the correct number of components.
+              IF(ASSOCIATED(equationsSet%GEOMETRY%GEOMETRIC_FIELD)) THEN
+                !Set the number of components for the independent field where the diffusion tensor values are stored.
+                CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  & numberOfGeometricComponents,err,error,*999)
+                IF(numberOfComponents /= numberOfGeometricComponents) THEN
+                  localError="The number of components for the dependent field of "// &
+                    & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+                    & " does not equal the number of geometric components ("// &
+                    & TRIM(NumberToVString(numberOfGeometricComponents,"*",err,error))//" components)."
+                  CALL FlagError(localError,err,error,*999)
                 ENDIF
+              ELSE
+                localError="A geometric field has not been defined for this equation set."
+                CALL FlagError(localError,err,error,*999)
               ENDIF
               CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents2, &
                 & err,error,*999)
@@ -3921,11 +3923,37 @@ CONTAINS
                   IF(ASSOCIATED(equationsSet%INDEPENDENT%INDEPENDENT_FIELD)) THEN
                     CALL Field_NumberOfComponentsGet(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & numberOfIndependentComponents,err,error,*999)
-                    IF(numberOfComponents /= numberOfIndependentComponents) THEN
-                      localError="The number of components for the specified dependent field of "// &
-                        & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
-                        & " does not match the number of components for the independentt field of "// &
-                        & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))//"."
+                    IF(ASSOCIATED(equationsSet%GEOMETRY%GEOMETRIC_FIELD)) THEN
+                      !Set the number of components for the independent field where the diffusion tensor values are stored.
+                      CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & numberOfGeometricComponents,err,error,*999)
+                      IF(numberOfGeometricComponents==1) THEN
+                        IF(numberOfIndependentComponents /= 1) THEN
+                          localError="The number of components for the specified independent field of "// &
+                            & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))// &
+                            & " should equal 1 for a geometric field with "// &
+                            & TRIM(NumberToVString(numberOfGeometricComponents,"*",err,error))//" components."
+                          CALL FlagError(localError,err,error,*999)
+                        ENDIF
+                      ELSEIF(numberOfGeometricComponents==2) THEN
+                        IF(numberOfIndependentComponents /= 3) THEN
+                          localError="The number of components for the specified independent field of "// &
+                            & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))// &
+                            & " should equal 3 for a geometric field with "// &
+                            & TRIM(NumberToVString(numberOfGeometricComponents,"*",err,error))//" components."
+                          CALL FlagError(localError,err,error,*999)
+                        ENDIF
+                      ELSEIF(numberOfGeometricComponents==3) THEN
+                        IF(numberOfIndependentComponents /= 6) THEN
+                          localError="The number of components for the specified independent field of "// &
+                            & TRIM(NumberToVString(numberOfIndependentComponents,"*",err,error))// &
+                            & " should equal 6 for a geometric field with "// &
+                            & TRIM(NumberToVString(numberOfGeometricComponents,"*",err,error))//" components."
+                          CALL FlagError(localError,err,error,*999)
+                        ENDIF
+                      ENDIF
+                    ELSE
+                      localError="A geometric field has not been defined for this equation set."
                       CALL FlagError(localError,err,error,*999)
                     ENDIF
                   ENDIF
@@ -4049,7 +4077,7 @@ CONTAINS
             !-----------------------------------------------------------------
             ! I n d e p e n d e n t   t y p e
             !
-            ! (this field holds the data point based field of vectors to map to the dependent field)
+            ! (this field holds the diffusion tensor values)
             !-----------------------------------------------------------------
             SELECT CASE(equationsSetSetup%ACTION_TYPE)
               !Set start action
@@ -4075,21 +4103,28 @@ CONTAINS
                 !point new field to geometric field
                 CALL Field_GeometricFieldSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,equationsSet% &
                   & geometry%GEOMETRIC_FIELD,err,error,*999)
-                !Create two variables: U for data and V for weights
+                !Create two variables: U for diffusion tensor values and V for weights
                 CALL Field_NumberOfVariablesSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                   & 2,err,error,*999)
                 CALL Field_VariableTypesSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                   & [FIELD_U_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE],err,error,*999)
                 CALL Field_ComponentMeshComponentGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & 1,geometricMeshComponent,err,error,*999)
-                !If the dependent field has been created then use that number of components
-                IF(ASSOCIATED(equationsSet%DEPENDENT%DEPENDENT_FIELD)) THEN
-                  CALL Field_NumberOfComponentsGet(equationsSet%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & numberOfComponents,err,error,*999)
+                IF(ASSOCIATED(equationsSet%GEOMETRY%GEOMETRIC_FIELD)) THEN
+                  !Set the number of components for the independent field where the diffusion tensor values are stored.
+                  CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & numberOfGeometricComponents,err,error,*999)
+                  IF(numberOfGeometricComponents==1) THEN
+                    numberOfComponents=1
+                  ELSEIF(numberOfGeometricComponents==2) THEN
+                    numberOfComponents=3
+                  ELSEIF(numberOfGeometricComponents==3) THEN
+                    numberOfComponents=6
+                  ENDIF
                 ELSE
                   numberOfComponents=1
                 ENDIF
-                ! U Variable: data points
+                ! U Variable: diffusion tensor values
                 CALL Field_DimensionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL Field_DataTypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -4097,7 +4132,7 @@ CONTAINS
                 CALL Field_NumberOfComponentsSet(equationsSet%INDEPENDENT%INDEPENDENT_FIELD, &
                   & FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
                 !Default to the geometric interpolation setup
-                ! V Variable: data point weights
+                ! V Variable: diffusion tensor value weights
                 CALL Field_DimensionSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, &
                   & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL Field_DataTypeSetAndLock(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,FIELD_V_VARIABLE_TYPE, &
@@ -4112,7 +4147,7 @@ CONTAINS
                    & FIELD_V_VARIABLE_TYPE,componentIdx,geometricMeshComponent,err,error,*999)
                 ENDDO !componentIdx
                 SELECT CASE(equationsSet%SOLUTION_METHOD)
-                  !Specify fem solution method
+                !Specify fem solution method
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   DO componentIdx = 1,numberOfComponents
                     CALL Field_ComponentInterpolationSetAndLock(equationsSet%independent%INDEPENDENT_FIELD, &
@@ -4137,17 +4172,38 @@ CONTAINS
                 CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE, &
                   & numberOfComponents,err,error,*999)
-                !If the dependent field has been defined use that number of components
-                IF(ASSOCIATED(equationsSet%dependent%DEPENDENT_FIELD)) THEN
-                  CALL Field_NumberOfComponentsGet(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDependentComponents,err,error,*999)
-                  IF(numberOfComponents /= numberOfDependentComponents) THEN
-                    localError="The number of components for the specified independent field of "// &
-                      & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
-                      & " does not match the number of components for the dependent field of "// &
-                      & TRIM(NumberToVString(numberOfDependentComponents,"*",err,error))//"."
-                    CALL FlagError(localError,err,error,*999)
+                IF(ASSOCIATED(equationsSet%GEOMETRY%GEOMETRIC_FIELD)) THEN
+                  !Set the number of components for the independent field where the diffusion tensor values are stored.
+                  CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & numberOfGeometricComponents,err,error,*999)
+                  IF(numberOfGeometricComponents==1) THEN
+                    IF(numberOfComponents /= 1) THEN
+                      localError="The number of components for the specified independent field of "// &
+                        & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+                        & " should equal 1 for a geometric field with "// &
+                        & TRIM(NumberToVString(numberOfGeometricComponents,"*",err,error))//" components."
+                      CALL FlagError(localError,err,error,*999)
+                    ENDIF
+                  ELSEIF(numberOfGeometricComponents==2) THEN
+                    IF(numberOfComponents /= 3) THEN
+                      localError="The number of components for the specified independent field of "// &
+                        & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+                        & " should equal 3 for a geometric field with "// &
+                        & TRIM(NumberToVString(numberOfGeometricComponents,"*",err,error))//" components."
+                      CALL FlagError(localError,err,error,*999)
+                    ENDIF
+                  ELSEIF(numberOfGeometricComponents==3) THEN
+                    IF(numberOfComponents /= 6) THEN
+                      localError="The number of components for the specified independent field of "// &
+                        & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+                        & " should equal 6 for a geometric field with "// &
+                        & TRIM(NumberToVString(numberOfGeometricComponents,"*",err,error))//" components."
+                      CALL FlagError(localError,err,error,*999)
+                    ENDIF
                   ENDIF
+                ELSE
+                  localError="A geometric field has not been defined for this equation set."
+                  CALL FlagError(localError,err,error,*999)
                 ENDIF
                 ! V (weight) variable
                 CALL Field_DimensionCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
@@ -4171,25 +4227,13 @@ CONTAINS
             CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
               IF(equationsSet%independent%INDEPENDENT_FIELD_AUTO_CREATED) THEN
                 !Check that we have the same number of components as the dependent field
-                IF(ASSOCIATED(equationsSet%dependent%DEPENDENT_FIELD)) THEN
-                  CALL Field_NumberOfComponentsGet(equationsSet%dependent%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & numberOfDependentComponents,err,error,*999)
-                  CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-                  IF(numberOfComponents /= numberOfDependentComponents) THEN
-                    localError="The number of components for the specified independent field of "// &
-                      & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
-                      & " does not match the number of components for the dependentt field of "// &
-                      & TRIM(NumberToVString(numberOfDependentComponents,"*",err,error))//"."
-                    CALL FlagError(localError,err,error,*999)
-                  ENDIF
-                  CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,numberOfComponents2,err,error,*999)
-                  IF(numberOfComponents /= numberOfComponents2) THEN
-                    localError="The number of components for the U variable of the specified independent field of "// &
-                      & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
-                      & " does not match the number of components for the V variable of the field of "// &
-                      & TRIM(NumberToVString(numberOfComponents2,"*",err,error))//"."
-                    CALL FlagError(localError,err,error,*999)
-                  ENDIF
+                CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
+                IF(numberOfComponents /= numberOfComponents2) THEN
+                  localError="The number of components for the U variable of the specified independent field of "// &
+                    & TRIM(NumberToVString(numberOfComponents,"*",err,error))// &
+                    & " does not match the number of components for the V variable of the field of "// &
+                    & TRIM(NumberToVString(numberOfComponents2,"*",err,error))//"."
+                  CALL FlagError(localError,err,error,*999)
                 ENDIF
                 !Specify finish action
                 CALL Field_CreateFinish(equationsSet%INDEPENDENT%INDEPENDENT_FIELD,err,error,*999)
