@@ -1355,8 +1355,10 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -1403,12 +1405,15 @@ CONTAINS
             dependentField=>equations%interpolation%dependentField
             independentField=>equations%interpolation%independentField
             vectorMatrices=>vectorEquations%vectorMatrices
-            linearMatrices=>vectorMatrices%linearMatrices
-            equationsMatrix=>linearMatrices%matrices(1)%ptr
+            nonlinearMatrices=>vectorMatrices%nonlinearMatrices
+            !!!linearMatrices=>vectorMatrices%linearMatrices
+            !!!equationsMatrix=>linearMatrices%matrices(1)%ptr
             rhsVector=>vectorMatrices%rhsVector
             vectorMapping=>vectorEquations%vectorMapping
-            linearMapping=>vectorMapping%linearMapping
-            dependentVariable=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
+            !!!linearMapping=>vectorMapping%linearMapping
+            nonlinearMapping=>vectorMapping%nonlinearMapping
+            dependentVariable=>nonlinearMapping%residualVariables(1)%ptr
+            !!!dependentVariable=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
             dependentVariableType=dependentVariable%VARIABLE_TYPE
             dataVariable=>independentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr
             dataWeightVariable=>independentField%VARIABLE_TYPE_MAP(FIELD_V_VARIABLE_TYPE)%ptr
@@ -1427,9 +1432,11 @@ CONTAINS
             numberOfXi = dependentBasis%NUMBER_OF_XI
 
             !Get data point vector parameters
+            NULLIFY(independentVectorParameters)
             CALL Field_ParameterSetDataGet(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
               & independentVectorParameters,err,error,*999)
             !Get data point weight parameters
+            NULLIFY(independentWeightParameters)
             CALL Field_ParameterSetDataGet(independentField,FIELD_V_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
               & independentWeightParameters,err,error,*999)
 
