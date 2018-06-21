@@ -1489,25 +1489,28 @@ CONTAINS
                   dependentParameterColumnIdx=0
                   basisFunctionRow=Basis_EvaluateXi(dependentBasisRow,dependentElementParameterRowIdx,NO_PART_DERIV, &
                     & projectionXi,err,error)
-                  IF(equationsMatrix%updateMatrix) THEN
-                    !Loop over element columns
-                    DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
-                      meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
-                      dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
-                        & topology%elements%elements(elementNumber)%basis
-                      DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
-                        dependentParameterColumnIdx=dependentParameterColumnIdx+1
-                        !Treat each component as separate and independent so only calculate the diagonal blocks
-                        IF(dependentComponentColumnIdx==dependentComponentRowIdx) THEN
-                          basisFunctionColumn=Basis_EvaluateXi(dependentBasisColumn,dependentElementParameterColumnIdx, &
-                            & NO_PART_DERIV,projectionXi,err,error)
-                          sum = basisFunctionRow*basisFunctionColumn*dataPointWeight(dependentComponentRowIdx)
-                          equationsMatrix%elementMatrix%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
-                            & equationsMatrix%elementMatrix%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
-                        ENDIF
-                      ENDDO !dependentElementParameterColumnIdx
-                    ENDDO !dependentComponentColumnIdx
-                  ENDIF
+                  !!!IF(equationsMatrix%updateMatrix) THEN
+                  !Loop over element columns
+                  sum = 0.0_DP
+                  DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS
+                    meshComponentColumn=dependentVariable%components(dependentComponentColumnIdx)%MESH_COMPONENT_NUMBER
+                    dependentBasisColumn=>dependentField%decomposition%domain(meshComponentColumn)%ptr% &
+                      & topology%elements%elements(elementNumber)%basis
+                    DO dependentElementParameterColumnIdx=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                      dependentParameterColumnIdx=dependentParameterColumnIdx+1
+                      !Treat each component as separate and independent so only calculate the diagonal blocks
+                      IF(dependentComponentColumnIdx==dependentComponentRowIdx) THEN
+                        basisFunctionColumn=Basis_EvaluateXi(dependentBasisColumn,dependentElementParameterColumnIdx, &
+                          & NO_PART_DERIV,projectionXi,err,error)
+                        sum = basisFunctionRow*basisFunctionColumn*dataPointWeight(dependentComponentRowIdx)* &
+                        & equations%interpolation%dependentinterpparameters(1)%ptr%parameters( &
+                        & dependentComponentRowIdx,dependentElementParameterRowIdx)
+                      ENDIF
+                    ENDDO !dependentElementParameterColumnIdx
+                  ENDDO !dependentComponentColumnIdx
+                  nonlinearMatrices%elementResidual%vector(dependentParameterRowIdx) = &
+                  & nonlinearMatrices%elementResidual%vector(dependentParameterRowIdx) + sum
+                  !!!ENDIF
                   IF(rhsVector%updateVector) THEN
                     sum = basisFunctionRow*dataPointVector(dependentComponentRowIdx)*dataPointWeight(dependentComponentRowIdx)
                     rhsVector%elementVector%vector(dependentParameterRowIdx)= &
