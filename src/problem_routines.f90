@@ -1474,6 +1474,8 @@ CONTAINS
                             !Pre residual evaluate not used
                           CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
                             !Pre residual evaluate not used
+                          CASE(PROBLEM_FITTING_CLASS)
+                            !do nothing
                           CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
                             !Pre residual evaluate not used
                           CASE(EQUATIONS_SET_MODAL_CLASS)
@@ -1615,6 +1617,8 @@ CONTAINS
                             !Post residual evaluate not used
                           CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
                             !Post residual evaluate not used
+                          CASE(PROBLEM_FITTING_CLASS)
+                            !do nothing
                           CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
                             !Post residual evaluate not used
                           CASE(EQUATIONS_SET_MODAL_CLASS)
