@@ -4217,9 +4217,9 @@ CONTAINS
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   DO componentIdx=1,numberOfComponents
                     CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,componentIdx, &
-                      & FIELD_GAUSS_POINT_BASED_INTERPOLATION,err,error,*999)
+                      & FIELD_DATA_POINT_BASED_INTERPOLATION,err,error,*999)
                     CALL Field_ComponentInterpolationCheck(equationsSetSetup%FIELD,FIELD_V_VARIABLE_TYPE,componentIdx, &
-                      & FIELD_GAUSS_POINT_BASED_INTERPOLATION,err,error,*999)
+                      & FIELD_DATA_POINT_BASED_INTERPOLATION,err,error,*999)
                   ENDDO !componentIdx
                 CASE DEFAULT
                   localError="The solution method of "//TRIM(NumberToVString(equationsSet%SOLUTION_METHOD, &
