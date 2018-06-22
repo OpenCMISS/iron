@@ -490,7 +490,7 @@ CONTAINS
   SUBROUTINE FIELDML_OUTPUT_GET_VALUE_TYPE( FML_HANDLE, FIELD, VARIABLE_TYPE, DO_IMPORT, TYPE_HANDLE, ERR, ERROR, * )
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: FML_HANDLE !<The FieldML session handle.
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field whose type is to be obtained.
+    TYPE(FieldType), POINTER, INTENT(IN) :: FIELD !<The field whose type is to be obtained.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The OpenCMISS variable type to generate dofs for.
     LOGICAL, INTENT(IN) :: DO_IMPORT !<If true, import the type.
     INTEGER(INTG), INTENT(OUT) :: TYPE_HANDLE !<The FieldML type handle.
@@ -498,7 +498,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Locals
-    INTEGER(INTG) :: FIELDTYPE, SUB_TYPE, COUNT
+    INTEGER(INTG) :: FIELDTYPE_, SUB_TYPE, COUNT
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
     TYPE(RegionType), POINTER :: REGION
     
@@ -506,10 +506,10 @@ CONTAINS
     
     REGION => FIELD%REGION
     
-    CALL FIELD_TYPE_GET( FIELD, FIELDTYPE, ERR, ERROR, *999 )
+    CALL FIELD_TYPE_GET( FIELD, FIELDTYPE_, ERR, ERROR, *999 )
     CALL FIELD_NUMBER_OF_COMPONENTS_GET( FIELD, VARIABLE_TYPE, COUNT, ERR, ERROR, *999 )
 
-    SELECT CASE( FIELDTYPE )
+    SELECT CASE( FIELDTYPE_ )
     CASE( FIELD_GEOMETRIC_TYPE )
       NULLIFY( COORDINATE_SYSTEM )
       CALL REGION_COORDINATE_SYSTEM_GET( REGION, COORDINATE_SYSTEM, ERR, ERROR, *999 )
@@ -1514,7 +1514,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
     INTEGER(INTG), INTENT(IN) :: TYPE_HANDLE !<The FieldML type handle for the field.
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which dof evaluators are to be created.
+    TYPE(FieldType), POINTER, INTENT(IN) :: FIELD !<The field for which dof evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: FIELD_COMPONENT_NUMBERS(:) !<The field component numbers for which dof evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The OpenCMISS variable type to generate dofs for.
     INTEGER(INTG), INTENT(IN) :: SET_TYPE !<The parameter set type.
@@ -1690,7 +1690,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
     INTEGER(INTG), INTENT(IN) :: TYPE_HANDLE !<The FieldML type handle for the field.
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which dof evaluators are to be created.
+    TYPE(FieldType), POINTER, INTENT(IN) :: FIELD !<The field for which dof evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: FIELD_COMPONENT_NUMBERS(:) !<The field component numbers for which dof evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The OpenCMISS variable type to generate dofs for.
     INTEGER(INTG), INTENT(IN) :: SET_TYPE !<The parameter set type.
@@ -1827,7 +1827,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
     INTEGER(INTG), INTENT(IN) :: TYPE_HANDLE !<The FieldML type handle for the field.
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which dof evaluators are to be created.
+    TYPE(FieldType), POINTER, INTENT(IN) :: FIELD !<The field for which dof evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: FIELD_COMPONENT_NUMBERS(:) !<The field component numbers for which dof evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The OpenCMISS variable type to generate dofs for.
     INTEGER(INTG), INTENT(IN) :: SET_TYPE !<The parameter set type.
@@ -2142,7 +2142,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: TYPE_HANDLE !<The FieldML type handle for the field.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which dof components are to be created.
+    TYPE(FieldType), POINTER, INTENT(IN) :: FIELD !<The field for which dof components are to be created.
     INTEGER(INTG), INTENT(IN) :: FIELD_COMPONENT_NUMBERS(:) !<The field component numbers for which evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The OpenCMISS variable type to generate dofs for.
     INTEGER(INTG), INTENT(IN) :: SET_TYPE !<The parameter set type.
@@ -2263,7 +2263,7 @@ CONTAINS
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which evaluators are to be created.
+    TYPE(FieldType), POINTER, INTENT(IN) :: FIELD !<The field for which evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The OpenCMISS variable type to generate dofs for.
     INTEGER(INTG), INTENT(IN) :: SET_TYPE !<The parameter set type.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
@@ -2299,7 +2299,7 @@ CONTAINS
     TYPE(FIELDML_IO_TYPE), POINTER :: FIELDML_INFO !<The FieldML parsing state.
     TYPE(VARYING_STRING), INTENT(IN) :: BASE_NAME !<The root name of the basis evaluator.
     TYPE(VARYING_STRING), INTENT(IN) :: DOF_FORMAT !<The name of the format to use when writing dof data.
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<The field for which evaluators are to be created.
+    TYPE(FieldType), POINTER, INTENT(IN) :: FIELD !<The field for which evaluators are to be created.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The OpenCMISS variable type to generate dofs for.
     INTEGER(INTG), INTENT(IN) :: SET_TYPE !<The parameter set type.
     INTEGER(INTG), INTENT(IN) :: TYPE_HANDLE !<The FieldML type handle for the field.

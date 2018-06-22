@@ -881,13 +881,13 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE Field_ParameterSetUpdateElementDataPointDP
   END INTERFACE Field_ParameterSetUpdateElementDataPoint
 
-  !>Interpolates the given parameter set at a specified xi location for the specified element and derviative. \todo Update FIELD_INTERPOLATED_POINT_TYPE to include VALUES array for other data types eg sp/int and then add ability to FIELD_PARAMETER_SET_INTERPOLATE_XI with these data types
+  !>Interpolates the given parameter set at a specified xi location for the specified element and derviative. \todo Update FieldInterpolatedPointType to include VALUES array for other data types eg sp/int and then add ability to FIELD_PARAMETER_SET_INTERPOLATE_XI with these data types
   INTERFACE Field_ParameterSetInterpolateXi
     MODULE PROCEDURE Field_ParameterSetInterpolateXiDP0
     MODULE PROCEDURE Field_ParameterSetInterpolateXiDP1
   END INTERFACE Field_ParameterSetInterpolateXi
 
-  !>Interpolates the given parameter set at the specified gauss point number for the specified element and derviative. \todo Update FIELD_INTERPOLATED_POINT_TYPE to include VALUES array for other data types eg sp/int and then add ability to FIELD_PARAMETER_SET_INTERPOLATE_XI with these data types
+  !>Interpolates the given parameter set at the specified gauss point number for the specified element and derviative. \todo Update FieldInterpolatedPointType to include VALUES array for other data types eg sp/int and then add ability to FIELD_PARAMETER_SET_INTERPOLATE_XI with these data types
   INTERFACE Field_ParameterSetInterpolateGauss
     MODULE PROCEDURE Field_ParameterSetInterpolateGaussDP0
     MODULE PROCEDURE Field_ParameterSetInterpolateGaussDP1
@@ -1231,14 +1231,14 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_INTERPOLATION_CHECK(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTERPOLATION_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the interpolation for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the interpolation for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type of the field variable component to check \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number of the field variable component to check
     INTEGER(INTG), INTENT(IN) :: INTERPOLATION_TYPE !<The interpolation type of the field variable component to check \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_INTERPOLATION_CHECK",err,error,*999)
@@ -1249,62 +1249,62 @@ CONTAINS
     IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
       SELECT CASE(INTERPOLATION_TYPE)
       CASE(FIELD_CONSTANT_INTERPOLATION)
-        IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType/=FIELD_CONSTANT_INTERPOLATION) THEN
+        IF(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType/=FIELD_CONSTANT_INTERPOLATION) THEN
           localError="Invalid interpolation type. The interpolation type for component number "// &
             & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
             & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
             & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-            & TRIM(NumberToVString(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
+            & TRIM(NumberToVString(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
             & " which is not constant interpolation."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-        IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType/=FIELD_ELEMENT_BASED_INTERPOLATION) THEN
+        IF(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType/=FIELD_ELEMENT_BASED_INTERPOLATION) THEN
           localError="Invalid interpolation type. The interpolation type for component number "// &
             & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
             & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
             & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-            & TRIM(NumberToVString(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
+            & TRIM(NumberToVString(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
             & " which is not element based interpolation."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       CASE(FIELD_NODE_BASED_INTERPOLATION)
-        IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType/=FIELD_NODE_BASED_INTERPOLATION) THEN
+        IF(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType/=FIELD_NODE_BASED_INTERPOLATION) THEN
           localError="Invalid interpolation type. The interpolation type for component number "// &
             & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
             & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
             & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-            & TRIM(NumberToVString(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
+            & TRIM(NumberToVString(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
             & " which is not node based interpolation."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-        IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType/=FIELD_GRID_POINT_BASED_INTERPOLATION) THEN
+        IF(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType/=FIELD_GRID_POINT_BASED_INTERPOLATION) THEN
           localError="Invalid interpolation type. The interpolation type for component number "// &
             & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
             & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
             & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-            & TRIM(NumberToVString(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
+            & TRIM(NumberToVString(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
             & " which is not grid point based interpolation."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-        IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType/=FIELD_GAUSS_POINT_BASED_INTERPOLATION) THEN
+        IF(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType/=FIELD_GAUSS_POINT_BASED_INTERPOLATION) THEN
           localError="Invalid interpolation type. The interpolation type for component number "// &
             & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
             & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
             & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-            & TRIM(NumberToVString(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
+            & TRIM(NumberToVString(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
             & " which is not Gauss point based interpolation."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-        IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType/=FIELD_DATA_POINT_BASED_INTERPOLATION) THEN
+        IF(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType/=FIELD_DATA_POINT_BASED_INTERPOLATION) THEN
           localError="Invalid interpolation type. The interpolation type for component number "// &
             & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
             & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
             & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-            & TRIM(NumberToVString(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
+            & TRIM(NumberToVString(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
             & " which is not data point based interpolation."
           CALL FlagError(localError,err,error,*999)
         ENDIF
@@ -1337,7 +1337,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_INTERPOLATION_SET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTERPOLATION_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the interpolation for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the interpolation for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type of the field variable component to set \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number of the field variable component to set
     INTEGER(INTG), INTENT(IN) :: INTERPOLATION_TYPE !<The interpolation type to set \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
@@ -1349,11 +1349,11 @@ CONTAINS
     ENTERS("FIELD_COMPONENT_INTERPOLATION_SET",err,error,*999)
 
     CALL Field_AssertNotFinished(field,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN          
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN          
       IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-        IF(ANY(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES==VARIABLE_TYPE)) THEN
-          IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD%CREATE_VALUES_CACHE%numberOfComponents(VARIABLE_TYPE)) THEN
-            IF(FIELD%CREATE_VALUES_CACHE%interpolationTypesLocked(COMPONENT_NUMBER,VARIABLE_TYPE)) THEN
+        IF(ANY(FIELD%createValuesCache%variableTypes==VARIABLE_TYPE)) THEN
+          IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD%createValuesCache%numberOfComponents(VARIABLE_TYPE)) THEN
+            IF(FIELD%createValuesCache%interpolationTypesLocked(COMPONENT_NUMBER,VARIABLE_TYPE)) THEN
               localError="The interpolation type has been locked for component number "// &
                 & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))//" of variable type "// &
                 & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
@@ -1362,17 +1362,17 @@ CONTAINS
             ELSE
               SELECT CASE(INTERPOLATION_TYPE)                
               CASE(FIELD_CONSTANT_INTERPOLATION)
-                FIELD%CREATE_VALUES_CACHE%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
+                FIELD%createValuesCache%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                FIELD%CREATE_VALUES_CACHE%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
+                FIELD%createValuesCache%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
               CASE(FIELD_NODE_BASED_INTERPOLATION)
-                FIELD%CREATE_VALUES_CACHE%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
+                FIELD%createValuesCache%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
               CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                FIELD%CREATE_VALUES_CACHE%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
+                FIELD%createValuesCache%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
               CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                FIELD%CREATE_VALUES_CACHE%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
+                FIELD%createValuesCache%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
               CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-                FIELD%CREATE_VALUES_CACHE%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
+                FIELD%createValuesCache%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)=INTERPOLATION_TYPE
               CASE DEFAULT
                 localError="The specified interpolation type of "// &
                   & TRIM(NumberToVString(INTERPOLATION_TYPE,"*",err,error))//" is invalid."
@@ -1383,7 +1383,7 @@ CONTAINS
             localError="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
               & " is invalid for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
               & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" which has "// &
-              & TRIM(NumberToVString(FIELD%CREATE_VALUES_CACHE%numberOfComponents(VARIABLE_TYPE),"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%createValuesCache%numberOfComponents(VARIABLE_TYPE),"*",err,error))// &
               & " components."
             CALL FlagError(localError,err,error,*999)
           ENDIF
@@ -1419,7 +1419,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTERPOLATION_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the interpolation for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the interpolation for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type of the field variable component to set \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number of the field variable component to set
     INTEGER(INTG), INTENT(IN) :: INTERPOLATION_TYPE !<The interpolation type to set \see FIELD_ROUTINES_InterpolationTypes,FIELD_ROUTINES
@@ -1431,8 +1431,8 @@ CONTAINS
     ENTERS("FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK",err,error,*999)
 
     CALL FIELD_COMPONENT_INTERPOLATION_SET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,INTERPOLATION_TYPE,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-      FIELD%CREATE_VALUES_CACHE%interpolationTypesLocked(COMPONENT_NUMBER,VARIABLE_TYPE)=.TRUE.
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+      FIELD%createValuesCache%interpolationTypesLocked(COMPONENT_NUMBER,VARIABLE_TYPE)=.TRUE.
     ELSE
       localError="Field create values cache is not associated for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -1454,7 +1454,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_DOF_GET_CONSTANT(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LOCAL_DOF,GLOBAL_DOF,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the dof for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the dof for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the dof for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get the dof for
     INTEGER(INTG), INTENT(OUT) :: LOCAL_DOF !<On exit, the local dof corresponding to the constant
@@ -1463,7 +1463,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_COMPONENT_DOF_GET_CONSTANT",err,error,*999)
 
@@ -1491,7 +1491,7 @@ CONTAINS
     & globalDof,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the dof for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the dof for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the dof for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The user data point number to get the dof for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The field component number to get the dof for
@@ -1502,7 +1502,7 @@ CONTAINS
     !Local Variables
     LOGICAL :: ghostDof
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_componentDofGetUserDataPoint",err,error,*999)
 
@@ -1530,7 +1530,7 @@ CONTAINS
     & GLOBAL_DOF,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the dof for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the dof for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the dof for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The user element number to get the dof for
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get the dof for
@@ -1541,7 +1541,7 @@ CONTAINS
     !Local Variables
     LOGICAL :: GHOST_DOF
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_COMPONENT_DOF_GET_USER_ELEMENT",err,error,*999)
 
@@ -1568,7 +1568,7 @@ CONTAINS
     & COMPONENT_NUMBER,LOCAL_DOF,GLOBAL_DOF,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the dof for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the dof for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the dof for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The version number to get the dof for
     INTEGER(INTG), INTENT(IN) :: DERIVATIVE_NUMBER !<The derivative number to get the dof for
@@ -1581,7 +1581,7 @@ CONTAINS
     !Local Variables
     LOGICAL :: GHOST_DOF
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_COMPONENT_DOF_GET_USER_NODE",err,error,*999)
 
@@ -1608,7 +1608,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_LABEL_GET_C(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the label for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the label for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get
     CHARACTER(LEN=*), INTENT(OUT) :: LABEL !<On return, the field variable label
@@ -1616,7 +1616,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: C_LENGTH,VS_LENGTH
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_LABEL_GET_C",err,error,*999)
@@ -1625,11 +1625,11 @@ CONTAINS
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
     IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
       C_LENGTH=LEN(LABEL)
-      VS_LENGTH=LEN_TRIM(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%COMPONENT_LABEL)
+      VS_LENGTH=LEN_TRIM(FIELD_VARIABLE%components(COMPONENT_NUMBER)%componentLabel)
       IF(C_LENGTH>VS_LENGTH) THEN
-        LABEL=CHAR(LEN_TRIM(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%COMPONENT_LABEL))
+        LABEL=CHAR(LEN_TRIM(FIELD_VARIABLE%components(COMPONENT_NUMBER)%componentLabel))
       ELSE
-        LABEL=CHAR(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%COMPONENT_LABEL,C_LENGTH)
+        LABEL=CHAR(FIELD_VARIABLE%components(COMPONENT_NUMBER)%componentLabel,C_LENGTH)
       ENDIF
     ELSE
       localError="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
@@ -1655,14 +1655,14 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_LABEL_GET_VS(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the label for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the label for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get
     TYPE(VARYING_STRING), INTENT(OUT) :: LABEL !<On return, the field variable label
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_LABEL_GET_VS",err,error,*999)
@@ -1670,7 +1670,7 @@ CONTAINS
     CALL Field_AssertIsFinished(field,err,error,*999)
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
     IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
-      LABEL=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%COMPONENT_LABEL
+      LABEL=FIELD_VARIABLE%components(COMPONENT_NUMBER)%componentLabel
     ELSE
       localError="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
         & " is invalid for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
@@ -1695,7 +1695,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_LABEL_SET_C(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get
     CHARACTER(LEN=*), INTENT(IN) :: LABEL !<The label to set/change
@@ -1707,24 +1707,24 @@ CONTAINS
     ENTERS("FIELD_COMPONENT_LABEL_SET_C",err,error,*999)
 
     CALL Field_AssertNotFinished(field,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN
       IF(VARIABLE_TYPE>0.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-        IF(ANY(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES==VARIABLE_TYPE)) THEN              
-          IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD%CREATE_VALUES_CACHE%numberOfComponents(VARIABLE_TYPE)) THEN
-            IF(FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS_LOCKED(COMPONENT_NUMBER,VARIABLE_TYPE)) THEN
+        IF(ANY(FIELD%createValuesCache%variableTypes==VARIABLE_TYPE)) THEN              
+          IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD%createValuesCache%numberOfComponents(VARIABLE_TYPE)) THEN
+            IF(FIELD%createValuesCache%componentLabelsLocked(COMPONENT_NUMBER,VARIABLE_TYPE)) THEN
               localError="The component label has been locked for component number "// &
                 & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))//" of variable type "// &
                 & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
                 & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
               CALL FlagError(localError,err,error,*999)
             ELSE
-              FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS(COMPONENT_NUMBER,VARIABLE_TYPE)=LABEL
+              FIELD%createValuesCache%componentLabels(COMPONENT_NUMBER,VARIABLE_TYPE)=LABEL
             ENDIF
           ELSE
             localError="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
               & " is invalid for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
               & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" which has "// &
-              & TRIM(NumberToVString(FIELD%CREATE_VALUES_CACHE%numberOfComponents(VARIABLE_TYPE),"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%createValuesCache%numberOfComponents(VARIABLE_TYPE),"*",err,error))// &
               & " components."
             CALL FlagError(localError,err,error,*999)
           ENDIF
@@ -1760,7 +1760,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_LABEL_SET_VS(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get
     TYPE(VARYING_STRING), INTENT(IN) :: LABEL !<The label to set/change
@@ -1772,24 +1772,24 @@ CONTAINS
     ENTERS("FIELD_COMPONENT_LABEL_SET_VS",err,error,*999)
 
     CALL Field_AssertNotFinished(field,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN
       IF(VARIABLE_TYPE>0.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-        IF(ANY(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES==VARIABLE_TYPE)) THEN              
-          IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD%CREATE_VALUES_CACHE%numberOfComponents(VARIABLE_TYPE)) THEN
-            IF(FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS_LOCKED(COMPONENT_NUMBER,VARIABLE_TYPE)) THEN
+        IF(ANY(FIELD%createValuesCache%variableTypes==VARIABLE_TYPE)) THEN              
+          IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD%createValuesCache%numberOfComponents(VARIABLE_TYPE)) THEN
+            IF(FIELD%createValuesCache%componentLabelsLocked(COMPONENT_NUMBER,VARIABLE_TYPE)) THEN
               localError="The component label has been locked for component number "// &
                 & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))//" of variable type "// &
                 & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
                 & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
               CALL FlagError(localError,err,error,*999)
             ELSE
-              FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS(COMPONENT_NUMBER,VARIABLE_TYPE)=LABEL
+              FIELD%createValuesCache%componentLabels(COMPONENT_NUMBER,VARIABLE_TYPE)=LABEL
             ENDIF
           ELSE
             localError="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
               & " is invalid for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
               & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" which has "// &
-              & TRIM(NumberToVString(FIELD%CREATE_VALUES_CACHE%numberOfComponents(VARIABLE_TYPE),"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%createValuesCache%numberOfComponents(VARIABLE_TYPE),"*",err,error))// &
               & " components."
             CALL FlagError(localError,err,error,*999)
           ENDIF
@@ -1825,7 +1825,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_LABEL_SET_AND_LOCK_C(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the label for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the label for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get
     CHARACTER(LEN=*), INTENT(IN) :: LABEL !<The label to set/change 
@@ -1837,8 +1837,8 @@ CONTAINS
     ENTERS("FIELD_COMPONENT_LABEL_SET_AND_LOCK_C",err,error,*999)
 
     CALL FIELD_COMPONENT_LABEL_SET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-      FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS_LOCKED(COMPONENT_NUMBER,VARIABLE_TYPE)=.TRUE.
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+      FIELD%createValuesCache%componentLabelsLocked(COMPONENT_NUMBER,VARIABLE_TYPE)=.TRUE.
     ELSE
       localError="Field create values cache is not associated for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -1860,7 +1860,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_LABEL_SET_AND_LOCK_VS(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the label for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the label for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get
     TYPE(VARYING_STRING), INTENT(IN) :: LABEL !<The label to set/change 
@@ -1872,8 +1872,8 @@ CONTAINS
     ENTERS("FIELD_COMPONENT_LABEL_SET_AND_LOCK_VS",err,error,*999)
 
     CALL FIELD_COMPONENT_LABEL_SET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,LABEL,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-      FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS_LOCKED(COMPONENT_NUMBER,VARIABLE_TYPE)=.TRUE.
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+      FIELD%createValuesCache%componentLabelsLocked(COMPONENT_NUMBER,VARIABLE_TYPE)=.TRUE.
     ELSE
       localError="Field create values cache is not associated for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -1895,14 +1895,14 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_MESH_COMPONENT_CHECK(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,MESH_COMPONENT,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the mesh component for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the mesh component for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to check the field variable component for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to check the field variable component for
     INTEGER(INTG), INTENT(IN) :: MESH_COMPONENT !<The mesh component to check for the specified field variable component
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_MESH_COMPONENT_CHECK",err,error,*999)
@@ -1911,12 +1911,12 @@ CONTAINS
     NULLIFY(FIELD_VARIABLE)
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
     IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
-      IF(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%meshComponentNumber/=MESH_COMPONENT) THEN
+      IF(FIELD_VARIABLE%components(COMPONENT_NUMBER)%meshComponentNumber/=MESH_COMPONENT) THEN
         localError="Invalid mesh component number. The mesh component number for component number "// &
           & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
           & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
           & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-          & TRIM(NumberToVString(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
+          & TRIM(NumberToVString(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
           & " which is does correspond to the specified mesh component number of "// &
           & TRIM(NumberToVString(MESH_COMPONENT,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
@@ -1945,14 +1945,14 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_MESH_COMPONENT_GET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,MESH_COMPONENT,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the mesh component for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the mesh component for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the field variable component for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to get the field variable component for
     INTEGER(INTG), INTENT(OUT) :: MESH_COMPONENT !<On return, the mesh component to get for the specified field variable component
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_MESH_COMPONENT_GET",err,error,*999)
@@ -1961,7 +1961,7 @@ CONTAINS
     NULLIFY(FIELD_VARIABLE)
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
     IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
-      MESH_COMPONENT=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%meshComponentNumber
+      MESH_COMPONENT=FIELD_VARIABLE%components(COMPONENT_NUMBER)%meshComponentNumber
     ELSE
       localError="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
         & " is invalid for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
@@ -1986,7 +1986,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_MESH_COMPONENT_SET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,meshComponentNumber,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the mesh component for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the mesh component for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to set the mesh component for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to set the mesh component for
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component to set for the specified field variable component
@@ -1994,7 +1994,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(MeshType), POINTER :: mesh
     TYPE(VARYING_STRING) :: localError
 
@@ -2008,7 +2008,7 @@ CONTAINS
     NULLIFY(createValuesCache)
     CALL Field_CreateValuesCacheGet(field,createValuesCache,err,error,*999)
     IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-      IF(ANY(createValuesCache%VARIABLE_TYPES==VARIABLE_TYPE)) THEN
+      IF(ANY(createValuesCache%variableTypes==VARIABLE_TYPE)) THEN
         IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=createValuesCache%numberOfComponents(VARIABLE_TYPE)) THEN
           IF(createValuesCache%meshComponentNumberLocked(COMPONENT_NUMBER,VARIABLE_TYPE)) THEN
             localError="The mesh component has been locked for component number "// &
@@ -2050,7 +2050,7 @@ CONTAINS
           localError="Component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))// &
             & " is invalid for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
             & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" which has "// &
-            & TRIM(NumberToVString(FIELD%CREATE_VALUES_CACHE%numberOfComponents(VARIABLE_TYPE),"*",err,error))// &
+            & TRIM(NumberToVString(FIELD%createValuesCache%numberOfComponents(VARIABLE_TYPE),"*",err,error))// &
             & " components."
           CALL FlagError(localError,err,error,*999)
         ENDIF
@@ -2081,7 +2081,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_MESH_COMPONENT_SET_AND_LOCK(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,meshComponentNumber,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the mesh component for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the mesh component for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to set the mesh component for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to set the mesh component for
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component to set for the specified field variable component
@@ -2093,8 +2093,8 @@ CONTAINS
     ENTERS("FIELD_COMPONENT_MESH_COMPONENT_SET_AND_LOCK",err,error,*999)
 
     CALL FIELD_COMPONENT_MESH_COMPONENT_SET(FIELD,VARIABLE_TYPE,COMPONENT_NUMBER,meshComponentNumber,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-      FIELD%CREATE_VALUES_CACHE%meshComponentNumberLocked(COMPONENT_NUMBER,VARIABLE_TYPE)=.TRUE.
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+      FIELD%createValuesCache%meshComponentNumberLocked(COMPONENT_NUMBER,VARIABLE_TYPE)=.TRUE.
     ELSE
       localError="Field create values cache is not associated for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -2117,7 +2117,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_VALUES_INITIALISE_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the values for 
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the values for 
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to intialise \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to initialise \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to initialise
@@ -2131,8 +2131,8 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
     TYPE(DomainElementsType), POINTER :: DOMAIN_ELEMENTS
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_VALUES_INITIALISE_INTG",err,error,*999)
@@ -2151,9 +2151,9 @@ CONTAINS
     CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,err,error,*999)
     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
     !and not worry about updating the field parameter set.
-    SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType)
+    SELECT CASE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType)
     CASE(FIELD_CONSTANT_INTERPOLATION)
-      field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+      field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%constantParam2DOFMap
       FIELD_PARAMETERS(field_dof)=VALUE
     CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
       NULLIFY(COMPONENT_DOMAIN)
@@ -2163,7 +2163,7 @@ CONTAINS
       NULLIFY(DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(DOMAIN_TOPOLOGY,DOMAIN_ELEMENTS,err,error,*999)
       DO element_idx=1,DOMAIN_ELEMENTS%totalNumberOfElements
-        field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)
+        field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%elementParam2DOFMap%ELEMENTS(element_idx)
         FIELD_PARAMETERS(field_dof)=VALUE
       ENDDO !element_idx
     CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -2174,11 +2174,11 @@ CONTAINS
       NULLIFY(DOMAIN_NODES)
       CALL DomainTopology_DomainNodesGet(DOMAIN_TOPOLOGY,DOMAIN_NODES,err,error,*999)
       DO node_idx=1,DOMAIN_NODES%totalNumberOfNodes
-        DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-          DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-            field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
-            partial_deriv_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
+        DO derivative_idx=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+          DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+            field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+              & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
+            partial_deriv_idx=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
             SELECT CASE(partial_deriv_idx)
             CASE(NO_PART_DERIV)
               FIELD_PARAMETERS(field_dof)=VALUE
@@ -2221,13 +2221,13 @@ CONTAINS
       CALL Domain_DomainTopologyGet(COMPONENT_DOMAIN,DOMAIN_TOPOLOGY,err,error,*999)
       NULLIFY(DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(DOMAIN_TOPOLOGY,DOMAIN_ELEMENTS,err,error,*999)
-      !GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_point_idx,element_idx)=variable_local_ny
-      MAX_NGP=SIZE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-        & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)
+      !gaussPointParam2DOFMap%gaussPoints(gauss_point_idx,element_idx)=variable_local_ny
+      MAX_NGP=SIZE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+        & gaussPointParam2DOFMap%gaussPoints,1)
       DO element_idx=1,DOMAIN_ELEMENTS%totalNumberOfElements
         DO gauss_point_idx=1,MAX_NGP ! could be just element's gauss_point_idx
-          field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-            & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_point_idx,element_idx)
+          field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+            & gaussPointParam2DOFMap%gaussPoints(gauss_point_idx,element_idx)
           FIELD_PARAMETERS(field_dof)=VALUE
         ENDDO !gauss_point_idx
       ENDDO !element_idx
@@ -2260,7 +2260,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_VALUES_INITIALISE_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the values for 
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the values for 
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to intiialise \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to initialise \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to initialise
@@ -2274,8 +2274,8 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
     TYPE(DomainElementsType), POINTER :: DOMAIN_ELEMENTS
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_VALUES_INITIALISE_SP",err,error,*999)
@@ -2294,9 +2294,9 @@ CONTAINS
     CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,err,error,*999)
     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
     !and not worry about updating the field parameter set.
-    SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType)
+    SELECT CASE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType)
     CASE(FIELD_CONSTANT_INTERPOLATION)
-      field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+      field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%constantParam2DOFMap
       FIELD_PARAMETERS(field_dof)=VALUE
     CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
       NULLIFY(COMPONENT_DOMAIN)
@@ -2306,8 +2306,8 @@ CONTAINS
       NULLIFY(DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(DOMAIN_TOPOLOGY,DOMAIN_ELEMENTS,err,error,*999)
       DO element_idx=1,DOMAIN_ELEMENTS%totalNumberOfElements
-        field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-          & ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)
+        field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+          & elementParam2DOFMap%ELEMENTS(element_idx)
         FIELD_PARAMETERS(field_dof)=VALUE
       ENDDO !element_idx
     CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -2318,11 +2318,11 @@ CONTAINS
       NULLIFY(DOMAIN_NODES)
       CALL DomainTopology_DomainNodesGet(DOMAIN_TOPOLOGY,DOMAIN_NODES,err,error,*999)
       DO node_idx=1,DOMAIN_NODES%totalNumberOfNodes
-        DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-          DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-            field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
-            partial_deriv_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
+        DO derivative_idx=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+          DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+            field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+              & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
+            partial_deriv_idx=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
             SELECT CASE(partial_deriv_idx)
             CASE(NO_PART_DERIV)
               FIELD_PARAMETERS(field_dof)=VALUE
@@ -2365,12 +2365,12 @@ CONTAINS
       CALL Domain_DomainTopologyGet(COMPONENT_DOMAIN,DOMAIN_TOPOLOGY,err,error,*999)
       NULLIFY(DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(DOMAIN_TOPOLOGY,DOMAIN_ELEMENTS,err,error,*999)
-      !GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_point_idx,element_idx)=variable_local_ny
-      MAX_NGP=SIZE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)
+      !gaussPointParam2DOFMap%gaussPoints(gauss_point_idx,element_idx)=variable_local_ny
+      MAX_NGP=SIZE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
       DO element_idx=1,DOMAIN_ELEMENTS%totalNumberOfElements
         DO gauss_point_idx=1,MAX_NGP ! could be just element's gauss_point_idx
-          field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-            & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_point_idx,element_idx)
+          field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+            & gaussPointParam2DOFMap%gaussPoints(gauss_point_idx,element_idx)
           FIELD_PARAMETERS(field_dof)=VALUE
         ENDDO !gauss_point_idx
       ENDDO !element_idx
@@ -2401,7 +2401,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_VALUES_INITIALISE_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the values for 
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the values for 
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to intiialise \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to initialise \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to initialise
@@ -2419,8 +2419,8 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionDataPointsType), POINTER :: decompositionData
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_VALUES_INITIALISE_DP",err,error,*999)
@@ -2439,9 +2439,9 @@ CONTAINS
     CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,err,error,*999)
     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
     !and not worry about updating the field parameter set.
-    SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType)
+    SELECT CASE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType)
     CASE(FIELD_CONSTANT_INTERPOLATION)
-      field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+      field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%constantParam2DOFMap
       FIELD_PARAMETERS(field_dof)=VALUE
     CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
       NULLIFY(COMPONENT_DOMAIN)
@@ -2451,7 +2451,7 @@ CONTAINS
       NULLIFY(DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(DOMAIN_TOPOLOGY,DOMAIN_ELEMENTS,err,error,*999)
       DO elementIdx=1,DOMAIN_ELEMENTS%totalNumberOfElements
-        field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(elementIdx)
+        field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%elementParam2DOFMap%ELEMENTS(elementIdx)
         FIELD_PARAMETERS(field_dof)=VALUE
       ENDDO !elementIdx
     CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -2462,11 +2462,11 @@ CONTAINS
       NULLIFY(DOMAIN_NODES)
       CALL DomainTopology_DomainNodesGet(DOMAIN_TOPOLOGY,DOMAIN_NODES,err,error,*999)
       DO node_idx=1,DOMAIN_NODES%totalNumberOfNodes
-        DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-          DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-            field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
-            partial_deriv_idx= DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
+        DO derivative_idx=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+          DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+            field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+              & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
+            partial_deriv_idx= DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
             SELECT CASE(partial_deriv_idx)
             CASE(NO_PART_DERIV)
               FIELD_PARAMETERS(field_dof)=VALUE
@@ -2509,12 +2509,12 @@ CONTAINS
       CALL Domain_DomainTopologyGet(COMPONENT_DOMAIN,DOMAIN_TOPOLOGY,err,error,*999)
       NULLIFY(DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(DOMAIN_TOPOLOGY,DOMAIN_ELEMENTS,err,error,*999)
-      !GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_point_idx,elementIdx)=variable_local_ny
-      MAX_NGP=SIZE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)
+      !gaussPointParam2DOFMap%gaussPoints(gauss_point_idx,elementIdx)=variable_local_ny
+      MAX_NGP=SIZE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
       DO elementIdx=1,DOMAIN_ELEMENTS%totalNumberOfElements
         DO gauss_point_idx=1,MAX_NGP ! could be just element's gauss_point_idx
-          field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-            & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_point_idx,elementIdx)
+          field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+            & gaussPointParam2DOFMap%gaussPoints(gauss_point_idx,elementIdx)
           FIELD_PARAMETERS(field_dof)=VALUE
         ENDDO !gauss_point_idx
       ENDDO !elementIdx
@@ -2534,8 +2534,8 @@ CONTAINS
       DO elementIdx=1,DOMAIN_ELEMENTS%totalNumberOfElements
         DO dataPointIdx=1,decompositionData%elementDataPoints(elementIdx)%numberOfProjectedData
           localDataPointNumber=decompositionData%elementDataPoints(elementIdx)%dataIndices(dataPointIdx)%localNumber
-          field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-            & DATA_POINTS(localDataPointNumber)
+          field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%dataPointParam2DOFMap% &
+            & dataPoints(localDataPointNumber)
           FIELD_PARAMETERS(field_dof)=VALUE
         ENDDO !dataPointIdx                             
       ENDDO !elementIdx
@@ -2566,7 +2566,7 @@ CONTAINS
   SUBROUTINE FIELD_COMPONENT_VALUES_INITIALISE_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the values for 
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the values for 
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to intiialise \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to initialise \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number to initialise
@@ -2580,8 +2580,8 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
     TYPE(DomainElementsType), POINTER :: DOMAIN_ELEMENTS
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_COMPONENT_VALUES_INITIALISE_L",err,error,*999)
@@ -2599,9 +2599,9 @@ CONTAINS
     CALL DistributedVector_DataGet(PARAMETER_SET%PARAMETERS,FIELD_PARAMETERS,err,error,*999)
     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
     !and not worry about updating the field parameter set.
-    SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType)
+    SELECT CASE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType)
     CASE(FIELD_CONSTANT_INTERPOLATION)
-      field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+      field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap%constantParam2DOFMap
       FIELD_PARAMETERS(field_dof)=VALUE
     CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
       NULLIFY(COMPONENT_DOMAIN)
@@ -2611,8 +2611,8 @@ CONTAINS
       NULLIFY(DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(DOMAIN_TOPOLOGY,DOMAIN_ELEMENTS,err,error,*999)
       DO element_idx=1,DOMAIN_ELEMENTS%totalNumberOfElements
-        field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-          & ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)
+        field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+          & elementParam2DOFMap%ELEMENTS(element_idx)
         FIELD_PARAMETERS(field_dof)=VALUE
       ENDDO !element_idx
     CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -2623,11 +2623,11 @@ CONTAINS
       NULLIFY(DOMAIN_NODES)
       CALL DomainTopology_DomainNodesGet(DOMAIN_TOPOLOGY,DOMAIN_NODES,err,error,*999)
       DO node_idx=1,DOMAIN_NODES%totalNumberOfNodes
-        DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-          DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-            field_dof=FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
-            partial_deriv_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
+        DO derivative_idx=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+          DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+            field_dof=FIELD_VARIABLE%components(COMPONENT_NUMBER)%paramToDOFMap% &
+              & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
+            partial_deriv_idx=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
             SELECT CASE(partial_deriv_idx)
             CASE(NO_PART_DERIV)
               FIELD_PARAMETERS(field_dof)=VALUE
@@ -2694,13 +2694,13 @@ CONTAINS
   SUBROUTINE FIELD_DATA_TYPE_CHECK(FIELD,VARIABLE_TYPE,DATA_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the data type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the data type for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to check \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type of the field variable to check \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_DATA_TYPE_CHECK",err,error,*999)
@@ -2710,38 +2710,38 @@ CONTAINS
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
     SELECT CASE(DATA_TYPE)              
     CASE(FIELD_INTG_TYPE)
-      IF(FIELD_VARIABLE%DATA_TYPE/=FIELD_INTG_TYPE) THEN
+      IF(FIELD_VARIABLE%dataType/=FIELD_INTG_TYPE) THEN
         localError="Invalid data type. The data type for variable type "// &
           & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-          & TRIM(NumberToVString(FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FIELD_VARIABLE%dataType,"*",err,error))// &
           & " which is not an integer data type."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     CASE(FIELD_SP_TYPE)
-      IF(FIELD_VARIABLE%DATA_TYPE/=FIELD_SP_TYPE) THEN
+      IF(FIELD_VARIABLE%dataType/=FIELD_SP_TYPE) THEN
         localError="Invalid data type. The data type for variable type "// &
           & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-          & TRIM(NumberToVString(FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FIELD_VARIABLE%dataType,"*",err,error))// &
           & " which is not a single precision data type."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     CASE(FIELD_DP_TYPE)
-      IF(FIELD_VARIABLE%DATA_TYPE/=FIELD_DP_TYPE) THEN
+      IF(FIELD_VARIABLE%dataType/=FIELD_DP_TYPE) THEN
         localError="Invalid data type. The data type for variable type "// &
           & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-          & TRIM(NumberToVString(FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FIELD_VARIABLE%dataType,"*",err,error))// &
           & " which is not a double precision data type."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     CASE(FIELD_L_TYPE)
-      IF(FIELD_VARIABLE%DATA_TYPE/=FIELD_L_TYPE) THEN
+      IF(FIELD_VARIABLE%dataType/=FIELD_L_TYPE) THEN
         localError="Invalid data type. The data type for variable type "// &
           & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-          & TRIM(NumberToVString(FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FIELD_VARIABLE%dataType,"*",err,error))// &
           & " which is not a logical data type."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -2766,13 +2766,13 @@ CONTAINS
   SUBROUTINE FIELD_DATA_TYPE_GET(FIELD,VARIABLE_TYPE,DATA_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the data type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the data type for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: DATA_TYPE !<On return, the data type of the field variable \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_DATA_TYPE_GET",err,error,*999)
 
@@ -2780,7 +2780,7 @@ CONTAINS
     NULLIFY(FIELD_VARIABLE)
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
 
-    DATA_TYPE=FIELD_VARIABLE%DATA_TYPE
+    DATA_TYPE=FIELD_VARIABLE%dataType
 
     EXITS("FIELD_DATA_TYPE_GET")
     RETURN
@@ -2797,7 +2797,7 @@ CONTAINS
   SUBROUTINE FIELD_DATA_TYPE_SET(FIELD,VARIABLE_TYPE,DATA_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the interpolation for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the interpolation for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type of the field variable component to set \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type to set \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2808,10 +2808,10 @@ CONTAINS
     ENTERS("FIELD_DATA_TYPE_SET",err,error,*999)
 
     CALL Field_AssertNotFinished(field,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN          
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN          
       IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN            
-        IF(ANY(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES==VARIABLE_TYPE)) THEN
-          IF(FIELD%CREATE_VALUES_CACHE%DATA_TYPES_LOCKED(VARIABLE_TYPE)) THEN
+        IF(ANY(FIELD%createValuesCache%variableTypes==VARIABLE_TYPE)) THEN
+          IF(FIELD%createValuesCache%dataTypesLocked(VARIABLE_TYPE)) THEN
             localError="The data type has been locked for variable type "// &
               & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
@@ -2819,13 +2819,13 @@ CONTAINS
           ELSE
             SELECT CASE(DATA_TYPE)                
             CASE(FIELD_INTG_TYPE)
-              FIELD%CREATE_VALUES_CACHE%DATA_TYPES(VARIABLE_TYPE)=FIELD_INTG_TYPE
+              FIELD%createValuesCache%dataTypes(VARIABLE_TYPE)=FIELD_INTG_TYPE
             CASE(FIELD_SP_TYPE)
-              FIELD%CREATE_VALUES_CACHE%DATA_TYPES(VARIABLE_TYPE)=FIELD_SP_TYPE
+              FIELD%createValuesCache%dataTypes(VARIABLE_TYPE)=FIELD_SP_TYPE
             CASE(FIELD_DP_TYPE)
-              FIELD%CREATE_VALUES_CACHE%DATA_TYPES(VARIABLE_TYPE)=FIELD_DP_TYPE
+              FIELD%createValuesCache%dataTypes(VARIABLE_TYPE)=FIELD_DP_TYPE
             CASE(FIELD_L_TYPE)
-              FIELD%CREATE_VALUES_CACHE%DATA_TYPES(VARIABLE_TYPE)=FIELD_L_TYPE
+              FIELD%createValuesCache%dataTypes(VARIABLE_TYPE)=FIELD_L_TYPE
             CASE DEFAULT
               localError="The specified data type of "//TRIM(NumberToVString(DATA_TYPE,"*",err,error))// &
                 & " is invalid."
@@ -2862,7 +2862,7 @@ CONTAINS
   SUBROUTINE FIELD_DATA_TYPE_SET_AND_LOCK(FIELD,VARIABLE_TYPE,DATA_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the interpolation for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the interpolation for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type of the field variable component to set \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type to set \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2874,8 +2874,8 @@ CONTAINS
 
     CALL FIELD_DATA_TYPE_SET(FIELD,VARIABLE_TYPE,DATA_TYPE,err,error,*999)
     IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-        FIELD%CREATE_VALUES_CACHE%DATA_TYPES_LOCKED(VARIABLE_TYPE)=.TRUE.
+      IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+        FIELD%createValuesCache%dataTypesLocked(VARIABLE_TYPE)=.TRUE.
       ELSE
         localError="Field create values cache is not associated for field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -2899,13 +2899,13 @@ CONTAINS
   SUBROUTINE FIELD_DOF_ORDER_TYPE_CHECK(FIELD,VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the DOF order type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the DOF order type for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to check \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DOF_ORDER_TYPE !<The DOF order type of the field variable to check \see FIELD_ROUTINES_DOFOrderTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_DOF_ORDER_TYPE_CHECK",err,error,*999)
@@ -2915,20 +2915,20 @@ CONTAINS
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
     SELECT CASE(DOF_ORDER_TYPE)              
     CASE(FIELD_SEPARATED_COMPONENT_DOF_ORDER)
-      IF(FIELD_VARIABLE%DOF_ORDER_TYPE/=FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
+      IF(FIELD_VARIABLE%dofOrderType/=FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
         localError="Invalid DOF order type. The DOF order type for variable type "// &
           & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-          & TRIM(NumberToVString(FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FIELD_VARIABLE%dataType,"*",err,error))// &
           & " which is not a separated component DOF order type."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     CASE(FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER)
-      IF(FIELD_VARIABLE%DOF_ORDER_TYPE/=FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER) THEN
+      IF(FIELD_VARIABLE%dofOrderType/=FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER) THEN
         localError="Invalid DOF order type. The DOF order type for variable type "// &
           & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-          & TRIM(NumberToVString(FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FIELD_VARIABLE%dataType,"*",err,error))// &
           & " which is not a contiguous component DOF order type."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -2953,13 +2953,13 @@ CONTAINS
   SUBROUTINE FIELD_DOF_ORDER_TYPE_GET(FIELD,VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the DOF order type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the DOF order type for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: DOF_ORDER_TYPE !<On return, the DOF order type of the field variable \see FIELD_ROUTINES_DOFOrderTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_DOF_ORDER_TYPE_GET",err,error,*999)
 
@@ -2967,7 +2967,7 @@ CONTAINS
     NULLIFY(FIELD_VARIABLE)
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
 
-    DOF_ORDER_TYPE=FIELD_VARIABLE%DOF_ORDER_TYPE
+    DOF_ORDER_TYPE=FIELD_VARIABLE%dofOrderType
 
     EXITS("FIELD_DOF_ORDER_TYPE_GET")
     RETURN
@@ -2984,7 +2984,7 @@ CONTAINS
   SUBROUTINE FIELD_DOF_ORDER_TYPE_SET(FIELD,VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the DOF order type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the DOF order type for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to set \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DOF_ORDER_TYPE !<The DOF order type to set \see FIELD_ROUTINES_DOFOrderTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -2997,10 +2997,10 @@ CONTAINS
     ENTERS("FIELD_DOF_ORDER_TYPE_SET",err,error,*999)
 
     CALL Field_AssertNotFinished(field,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN          
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN          
       IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN            
-        IF(ANY(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES==VARIABLE_TYPE)) THEN
-          IF(FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED(VARIABLE_TYPE)) THEN
+        IF(ANY(FIELD%createValuesCache%variableTypes==VARIABLE_TYPE)) THEN
+          IF(FIELD%createValuesCache%dofOrderTypesLocked(VARIABLE_TYPE)) THEN
             localError="The DOF order type has been locked for variable type "// &
               & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
@@ -3008,24 +3008,24 @@ CONTAINS
           ELSE
             SELECT CASE(DOF_ORDER_TYPE)                
             CASE(FIELD_SEPARATED_COMPONENT_DOF_ORDER)
-              FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES(VARIABLE_TYPE)=FIELD_SEPARATED_COMPONENT_DOF_ORDER
+              FIELD%createValuesCache%dofOrderTypes(VARIABLE_TYPE)=FIELD_SEPARATED_COMPONENT_DOF_ORDER
             CASE(FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER)
               SAME_INTERPOLATION=.TRUE.
               SAME_MESH_COMPONENT=.TRUE.
-              DO component_idx=2,FIELD%CREATE_VALUES_CACHE%numberOfComponents(VARIABLE_TYPE)
-                IF(FIELD%CREATE_VALUES_CACHE%interpolationTypes(component_idx,VARIABLE_TYPE)/= &
-                  & FIELD%CREATE_VALUES_CACHE%interpolationTypes(1,VARIABLE_TYPE)) THEN
+              DO component_idx=2,FIELD%createValuesCache%numberOfComponents(VARIABLE_TYPE)
+                IF(FIELD%createValuesCache%interpolationTypes(component_idx,VARIABLE_TYPE)/= &
+                  & FIELD%createValuesCache%interpolationTypes(1,VARIABLE_TYPE)) THEN
                   SAME_INTERPOLATION=.FALSE.
                   EXIT
                 ENDIF
-                IF(FIELD%CREATE_VALUES_CACHE%meshComponentNumber(component_idx,VARIABLE_TYPE)/= &
-                  & FIELD%CREATE_VALUES_CACHE%meshComponentNumber(1,VARIABLE_TYPE)) THEN
+                IF(FIELD%createValuesCache%meshComponentNumber(component_idx,VARIABLE_TYPE)/= &
+                  & FIELD%createValuesCache%meshComponentNumber(1,VARIABLE_TYPE)) THEN
                   SAME_MESH_COMPONENT=.FALSE.
                   EXIT
                 ENDIF
               ENDDO !component_idx
               IF(SAME_INTERPOLATION.AND.SAME_MESH_COMPONENT) THEN
-                FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES(VARIABLE_TYPE)=FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER
+                FIELD%createValuesCache%dofOrderTypes(VARIABLE_TYPE)=FIELD_CONTIGUOUS_COMPONENT_DOF_ORDER
               ELSE
                 CALL FlagError("Invalid field variable component set. For continguous component DOF "// &
                   & "ordering the field variable components must have the same interpolation type and mesh components.", &
@@ -3067,7 +3067,7 @@ CONTAINS
   SUBROUTINE FIELD_DOF_ORDER_TYPE_SET_AND_LOCK(FIELD,VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the DOF order for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the DOF order for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to set \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DOF_ORDER_TYPE !<The DOF order type to set \see FIELD_ROUTINES_DOFOrderTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -3078,8 +3078,8 @@ CONTAINS
     ENTERS("FIELD_DOF_ORDER_TYPE_SET_AND_LOCK",err,error,*999)
 
     CALL FIELD_DOF_ORDER_TYPE_SET(FIELD,VARIABLE_TYPE,DOF_ORDER_TYPE,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-      FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED(VARIABLE_TYPE)=.TRUE.
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+      FIELD%createValuesCache%dofOrderTypesLocked(VARIABLE_TYPE)=.TRUE.
     ELSE
       localError="Field create values cache is not associated for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -3102,14 +3102,14 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_COMPONENT_FINALISE(FIELD_VARIABLE_COMPONENT,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE) :: FIELD_VARIABLE_COMPONENT !<The field variable component to finalise
+    TYPE(FieldVariableComponentType) :: FIELD_VARIABLE_COMPONENT !<The field variable component to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("FIELD_VARIABLE_COMPONENT_FINALISE",err,error,*999)
 
-    FIELD_VARIABLE_COMPONENT%COMPONENT_LABEL=""
+    FIELD_VARIABLE_COMPONENT%componentLabel=""
     CALL FieldVariableComponent_ParameterToDofMapFinalise(FIELD_VARIABLE_COMPONENT,err,error,*999)
 
     EXITS("FIELD_VARIABLE_COMPONENT_FINALISE")
@@ -3127,7 +3127,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_COMPONENT_INITIALISE(FIELD_VARIABLE,COMPONENT_NUMBER,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE !<A pointer to the field variable to initialise the component for
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE !<A pointer to the field variable to initialise the component for
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field component number of the field variable component
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3142,8 +3142,8 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(FIELD_TYPE), POINTER :: FIELD
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldType), POINTER :: FIELD
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: DUMMY_ERROR,localError
 
     ENTERS("FIELD_VARIABLE_COMPONENT_INITIALISE",err,error,*998)
@@ -3155,10 +3155,10 @@ CONTAINS
     CALL FieldVariable_FieldGet(FIELD_VARIABLE,FIELD,err,error,*999)
     NULLIFY(createValuesCache)
     CALL Field_CreateValuesCacheGet(field,createValuesCache,err,error,*999)
-    VARIABLE_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+    VARIABLE_TYPE=FIELD_VARIABLE%variableType
     CALL FieldVariable_AssertComponentNumberOK(FIELD_VARIABLE,COMPONENT_NUMBER,err,error,*999)
-    FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%COMPONENT_NUMBER=COMPONENT_NUMBER
-    FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%FIELD_VARIABLE=>FIELD_VARIABLE
+    FIELD_VARIABLE%components(COMPONENT_NUMBER)%componentNumber=COMPONENT_NUMBER
+    FIELD_VARIABLE%components(COMPONENT_NUMBER)%fieldVariable=>FIELD_VARIABLE
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(field,decomposition,err,error,*999)
     COMP_NUMBER=createValuesCache%meshComponentNumber(COMPONENT_NUMBER,VARIABLE_TYPE)
@@ -3171,12 +3171,12 @@ CONTAINS
         & TRIM(NumberToVString(decomposition%numberOfComponents,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%meshComponentNumber=COMP_NUMBER
-    FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%DOMAIN=>DECOMPOSITION%DOMAIN(COMP_NUMBER)%PTR
-    FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%COMPONENT_LABEL=""
-    FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%COMPONENT_LABEL= &
-      & createValuesCache%COMPONENT_LABELS(COMPONENT_NUMBER,VARIABLE_TYPE)
-    FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType= &
+    FIELD_VARIABLE%components(COMPONENT_NUMBER)%meshComponentNumber=COMP_NUMBER
+    FIELD_VARIABLE%components(COMPONENT_NUMBER)%DOMAIN=>DECOMPOSITION%DOMAIN(COMP_NUMBER)%ptr
+    FIELD_VARIABLE%components(COMPONENT_NUMBER)%componentLabel=""
+    FIELD_VARIABLE%components(COMPONENT_NUMBER)%componentLabel= &
+      & createValuesCache%componentLabels(COMPONENT_NUMBER,VARIABLE_TYPE)
+    FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType= &
       createValuesCache%interpolationTypes(COMPONENT_NUMBER,VARIABLE_TYPE)
     NULLIFY(domain)
     CALL FieldVariable_ComponentDomainGet(FIELD_VARIABLE,COMPONENT_NUMBER,domain,err,error,*999)
@@ -3186,30 +3186,30 @@ CONTAINS
     CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
     NULLIFY(domainNodes)
     CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-    SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType)
+    SELECT CASE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType)
     CASE(FIELD_CONSTANT_INTERPOLATION)
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters=1
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=0
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters=1
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=0
     CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters=1
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=0
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters=1
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=0
     CASE(FIELD_NODE_BASED_INTERPOLATION)
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters=-1
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters=-1
       DO ne=1,domainelements%totalNumberOfElements
         NULLIFY(basis)
         CALL DomainElements_BasisGet(domainElements,ne,basis,err,error,*999)
-        IF(BASIS%numberOfElementParameters>FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)% &
-          & maxNumberElementInterpolationParameters) FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)% &
+        IF(BASIS%numberOfElementParameters>FIELD_VARIABLE%components(COMPONENT_NUMBER)% &
+          & maxNumberElementInterpolationParameters) FIELD_VARIABLE%components(COMPONENT_NUMBER)% &
           & maxNumberElementInterpolationParameters=BASIS%numberOfElementParameters
       ENDDO !ne
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=-1
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=-1
       DO nodeIdx=1,domainNodes%totalNumberOfNodes
         numParameters=0
-        DO derivativeIdx=1,domainNodes%NODES(nodeIdx)%numberOfDerivatives
-          numParameters=numParameters+domainNodes%NODES(nodeIdx)%DERIVATIVES(derivativeIdx)%numberOfVersions
+        DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
+          numParameters=numParameters+domainNodes%nodes(nodeIdx)%DERIVATIVES(derivativeIdx)%numberOfVersions
         ENDDO !derivativeIdx
-        IF(numParameters>FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters) &
-          & FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=numParameters
+        IF(numParameters>FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters) &
+          & FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=numParameters
       ENDDO !nodeIdx
     CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
       CALL FlagError("Not implemented.",err,error,*999)             
@@ -3218,11 +3218,11 @@ CONTAINS
       DO ne=1,domainElements%totalNumberOfElements
         NULLIFY(basis)
         CALL DomainElements_BasisGet(domainElements,ne,basis,err,error,*999)
-        NGP = BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
+        NGP = BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%NUMBER_OF_GAUSS
         IF(NGP > MAXINTERP) MAXINTERP = NGP
       ENDDO
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters = MAXINTERP
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters = 0
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters = MAXINTERP
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters = 0
     CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
       NULLIFY(decomposition)
       CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
@@ -3232,16 +3232,16 @@ CONTAINS
       CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       NULLIFY(decompositionDataPoints)
       CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionDataPoints,err,error,*999)
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters=-1
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters=-1
       DO ne=1,domainElements%totalNumberOfElements
         globalElementNumber=decompositionElements%ELEMENTS(ne)%globalNumber
         IF(decompositionDataPoints%numberOfElementDataPoints(globalElementNumber)> &
-          & FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters) THEN
-          FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters= &
+          & FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters) THEN
+          FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberElementInterpolationParameters= &
             &  decompositionDataPoints%numberOfElementDataPoints(globalElementNumber)
         ENDIF
       ENDDO
-      FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=0
+      FIELD_VARIABLE%components(COMPONENT_NUMBER)%maxNumberNodeInterpolationParameters=0
     CASE DEFAULT
       localError="The interpolation type of "//TRIM(NumberToVString(FIELD_VARIABLE% &
         & COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
@@ -3249,11 +3249,11 @@ CONTAINS
         & " of variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is invalid."
     END SELECT
-    CALL FieldVariableComponent_ParameterToDofMapInitialise(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER),err,error,*999)
+    CALL FieldVariableComponent_ParameterToDofMapInitialise(FIELD_VARIABLE%components(COMPONENT_NUMBER),err,error,*999)
 
     EXITS("FIELD_VARIABLE_COMPONENT_INITIALISE")
     RETURN
-999 CALL FIELD_VARIABLE_COMPONENT_FINALISE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER),DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL FIELD_VARIABLE_COMPONENT_FINALISE(FIELD_VARIABLE%components(COMPONENT_NUMBER),DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("FIELD_VARIABLE_COMPONENT_INITIALISE",err,error)
     RETURN 1
 
@@ -3267,29 +3267,29 @@ CONTAINS
   SUBROUTINE FieldVariableComponent_ParameterToDofMapFinalise(FIELD_VARIABLE_COMPONENT,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE) :: FIELD_VARIABLE_COMPONENT !<The field variable component to finialise the parameter to dof map for
+    TYPE(FieldVariableComponentType) :: FIELD_VARIABLE_COMPONENT !<The field variable component to finialise the parameter to dof map for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("FieldVariableComponent_ParameterToDofMapFinalise",err,error,*999)
 
-    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES))  &
-      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES)
-    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS))  &
-      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS)
-    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%GRID_POINT_PARAM2DOF_MAP%GRID_POINTS))  &
-      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%GRID_POINT_PARAM2DOF_MAP%GRID_POINTS)
-    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS))  &
-      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS)
-    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS))  &
-      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS)
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%numberOfElementParameters=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%GRID_POINT_PARAM2DOF_MAP%NUMBER_OF_GRID_POINT_PARAMETERS=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%NUMBER_OF_DATA_POINT_PARAMETERS=0
+    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%paramToDOFMap%nodeParam2DOFMap%NODES))  &
+      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%paramToDOFMap%nodeParam2DOFMap%NODES)
+    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%paramToDOFMap%elementParam2DOFMap%ELEMENTS))  &
+      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%paramToDOFMap%elementParam2DOFMap%ELEMENTS)
+    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%paramToDOFMap%gridPointParam2DOFMap%gridPoints))  &
+      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%paramToDOFMap%gridPointParam2DOFMap%gridPoints)
+    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints))  &
+      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints)
+    IF(ALLOCATED(FIELD_VARIABLE_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%dataPoints))  &
+      & DEALLOCATE(FIELD_VARIABLE_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%dataPoints)
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%numberOfConstantParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%elementParam2DOFMap%numberOfElementParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%nodeParam2DOFMap%numberOfNodeParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%gridPointParam2DOFMap%numberOfGridPointParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%numberOfGridPointParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%numberOfDataPointParameters=0
 
     EXITS("FieldVariableComponent_ParameterToDofMapFinalise")
     RETURN
@@ -3307,19 +3307,19 @@ CONTAINS
   SUBROUTINE FieldVariableComponent_ParameterToDofMapInitialise(FIELD_VARIABLE_COMPONENT,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE) :: FIELD_VARIABLE_COMPONENT !<The field variable component to initialise the parameter to dof map for
+    TYPE(FieldVariableComponentType) :: FIELD_VARIABLE_COMPONENT !<The field variable component to initialise the parameter to dof map for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("FieldVariableComponent_ParameterToDofMapInitialise",err,error,*999)
 
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%numberOfElementParameters=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%GRID_POINT_PARAM2DOF_MAP%NUMBER_OF_GRID_POINT_PARAMETERS=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS=0
-    FIELD_VARIABLE_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%NUMBER_OF_DATA_POINT_PARAMETERS=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%numberOfConstantParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%nodeParam2DOFMap%numberOfNodeParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%elementParam2DOFMap%numberOfElementParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%gridPointParam2DOFMap%numberOfGridPointParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%numberOfGridPointParameters=0
+    FIELD_VARIABLE_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%numberOfDataPointParameters=0
 
     EXITS("FieldVariableComponent_ParameterToDofMapInitialise")
     RETURN
@@ -3337,7 +3337,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_COMPONENTS_FINALISE(FIELD_VARIABLE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_TYPE) :: FIELD_VARIABLE !<The field variable to finalise the field variable components for
+    TYPE(FieldVariableType) :: FIELD_VARIABLE !<The field variable to finalise the field variable components for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3347,7 +3347,7 @@ CONTAINS
 
     IF(ALLOCATED(FIELD_VARIABLE%COMPONENTS)) THEN
       DO component_idx=1,SIZE(FIELD_VARIABLE%COMPONENTS,1)
-        CALL FIELD_VARIABLE_COMPONENT_FINALISE(FIELD_VARIABLE%COMPONENTS(component_idx),err,error,*999)
+        CALL FIELD_VARIABLE_COMPONENT_FINALISE(FIELD_VARIABLE%components(component_idx),err,error,*999)
       ENDDO !component_idx
       DEALLOCATE(FIELD_VARIABLE%COMPONENTS)
     ENDIF
@@ -3367,14 +3367,14 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_COMPONENTS_INITIALISE(FIELD,VARIABLE_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the field variable components for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the field variable components for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to initialise the field variable components for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,dummyErr
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache 
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache 
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("FIELD_VARIABLE_COMPONENTS_INITIALISE",err,error,*998)
@@ -3385,7 +3385,7 @@ CONTAINS
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*998)
     IF(ALLOCATED(FIELD_VARIABLE%COMPONENTS)) CALL FlagError("Field variable already has allocated components.",err,error,*998)
 
-    ALLOCATE(FIELD_VARIABLE%COMPONENTS(FIELD_VARIABLE%numberOfComponents),STAT=err)
+    ALLOCATE(FIELD_VARIABLE%components(FIELD_VARIABLE%numberOfComponents),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate field variable components.",err,error,*999)
     DO component_idx=1,FIELD_VARIABLE%numberOfComponents
       CALL FIELD_VARIABLE_COMPONENT_INITIALISE(FIELD_VARIABLE,component_idx,err,error,*999)
@@ -3407,13 +3407,13 @@ CONTAINS
   SUBROUTINE FIELD_CREATE_FINISH(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to finish the creation of
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to finish the creation of
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,parameterSetIdx,scalingIdx,variableIdx
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_TYPE), POINTER :: geometricField
+    TYPE(FieldType), POINTER :: geometricField
 
     ENTERS("FIELD_CREATE_FINISH",err,error,*999)
 
@@ -3428,8 +3428,8 @@ CONTAINS
     !Check geometric field
     NULLIFY(geometricField)
     CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
-    CALL FIELD_CREATE_VALUES_CACHE_FINALISE(FIELD%CREATE_VALUES_CACHE,err,error,*999)
-    FIELD%FIELD_FINISHED=.TRUE.
+    CALL FIELD_CREATE_VALUES_CACHE_FINALISE(FIELD%createValuesCache,err,error,*999)
+    FIELD%fieldFinished=.TRUE.
     !Calculate dof mappings
     CALL FIELD_MAPPINGS_CALCULATE(FIELD,err,error,*999)
     !Set up the geometric parameters
@@ -3447,64 +3447,64 @@ CONTAINS
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Label = ",FIELD%LABEL,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Dependent type = ",FIELD%DEPENDENT_TYPE,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field type = ",FIELD%TYPE,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of variables = ",FIELD%NUMBER_OF_VARIABLES,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of variables = ",FIELD%numberOfVariables,err,error,*999)
       IF(DIAGNOSTICS2) THEN
-        DO variableIdx=1,FIELD%NUMBER_OF_VARIABLES
+        DO variableIdx=1,FIELD%numberOfVariables
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable : ",variableIdx,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable Type = ",variableIdx,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable Label = ",FIELD%VARIABLES(variableIdx)%VARIABLE_LABEL, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable Label = ",FIELD%variables(variableIdx)%variableLabel, &
             & err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Dimension = ",FIELD%VARIABLES(variableIdx)%DIMENSION, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Dimension = ",FIELD%variables(variableIdx)%DIMENSION, &
             & err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Data type = ",FIELD%VARIABLES(variableIdx)%DATA_TYPE, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Data type = ",FIELD%variables(variableIdx)%dataType, &
             & err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      DOF order type = ",FIELD%VARIABLES(variableIdx)%DOF_ORDER_TYPE, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      DOF order type = ",FIELD%variables(variableIdx)%dofOrderType, &
             & err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Max num element interpolation parameters = ",FIELD% &
             & VARIABLES(variableIdx)%maxNumberElementInterpolationParameters,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Max num node interpolation parameters = ",FIELD% &
             & VARIABLES(variableIdx)%maxNumberNodeInterpolationParameters,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of DOFs = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of DOFs = ",FIELD%variables(variableIdx)% &
             & numberOfDofs,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Total number of DOFs = ",FIELD%variables(variableIdx)% &
             & totalNumberOfDofs,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of global DOFs = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of global DOFs = ",FIELD%variables(variableIdx)% &
             & numberOfGlobalDofs,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of components = ",FIELD%VARIABLES(variableIdx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of components = ",FIELD%variables(variableIdx)% &
             & numberOfComponents,err,error,*999)
           IF(DIAGNOSTICS3) THEN
-            DO componentIdx=1,FIELD%VARIABLES(variableIdx)%numberOfComponents
+            DO componentIdx=1,FIELD%variables(variableIdx)%numberOfComponents
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Component : ",componentIdx,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Component label = ",FIELD%VARIABLES(variableIdx)% &
-                COMPONENTS(componentIdx)%COMPONENT_LABEL,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Interpolation type = ",FIELD%VARIABLES(variableIdx)% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Component label = ",FIELD%variables(variableIdx)% &
+                COMPONENTS(componentIdx)%componentLabel,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Interpolation type = ",FIELD%variables(variableIdx)% &
                 COMPONENTS(componentIdx)%interpolationType,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Mesh component number = ",FIELD%VARIABLES(variableIdx)% &
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Mesh component number = ",FIELD%variables(variableIdx)% &
                 COMPONENTS(componentIdx)%meshComponentNumber,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Scaling index = ",FIELD%VARIABLES(variableIdx)% &
-                COMPONENTS(componentIdx)%SCALING_INDEX,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Scaling index = ",FIELD%variables(variableIdx)% &
+                COMPONENTS(componentIdx)%scalingIndex,err,error,*999)
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Max num element interpolation parameters = ",FIELD% &
-                & VARIABLES(variableIdx)%COMPONENTS(componentIdx)%maxNumberElementInterpolationParameters,err,error,*999)
+                & VARIABLES(variableIdx)%components(componentIdx)%maxNumberElementInterpolationParameters,err,error,*999)
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Max num node interpolation parameters = ",FIELD% &
-                & VARIABLES(variableIdx)%COMPONENTS(componentIdx)%maxNumberNodeInterpolationParameters,err,error,*999)         
+                & VARIABLES(variableIdx)%components(componentIdx)%maxNumberNodeInterpolationParameters,err,error,*999)         
             ENDDO !componentIdx
           ENDIF
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameter sets = ",FIELD%VARIABLES(variableIdx)% &
-            & PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameter sets = ",FIELD%variables(variableIdx)% &
+            & parameterSets%numberOfParameterSets,err,error,*999)
           IF(DIAGNOSTICS3) THEN
-            DO parameterSetIdx=1,FIELD%VARIABLES(variableIdx)%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS
+            DO parameterSetIdx=1,FIELD%variables(variableIdx)%parameterSets%numberOfParameterSets
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Parameter set index : ",parameterSetIdx,err,error,*999)
-              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Set type : ",FIELD%VARIABLES(variableIdx)% &
-                & PARAMETER_SETS%PARAMETER_SETS(parameterSetIdx)%PTR%SET_TYPE,err,error,*999)
+              CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Set type : ",FIELD%variables(variableIdx)% &
+                & parameterSets%parameterSets(parameterSetIdx)%ptr%setType,err,error,*999)
             ENDDO !parameterSetIdx
           ENDIF
         ENDDO !variableIdx
       ENDIF
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Scaling type = ",FIELD%SCALINGS%SCALING_TYPE,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of scaling indices = ",FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES, &
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Scaling type = ",FIELD%SCALINGS%scalingType,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of scaling indices = ",FIELD%SCALINGS%numberOfScalingIndices, &
         & err,error,*999)
       IF(DIAGNOSTICS2) THEN
-        DO scalingIdx=1,FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES
+        DO scalingIdx=1,FIELD%SCALINGS%numberOfScalingIndices
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Scaling index : ",scalingIdx,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Mesh component number : ",FIELD%SCALINGS%SCALINGS(scalingIdx)% &
             & meshComponentNumber,err,error,*999)
@@ -3527,15 +3527,15 @@ CONTAINS
   SUBROUTINE FIELD_CREATE_START_GENERIC(FIELDS,USER_NUMBER,FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields
+    TYPE(FieldsType), POINTER :: FIELDS !<A pointer to the fields
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number for the field to create
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<On return, a pointer to the field. Must not be associated on entry
+    TYPE(FieldType), POINTER :: FIELD !<On return, a pointer to the field. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: field_no
-    TYPE(FIELD_TYPE), POINTER :: NEW_FIELD
-    TYPE(FIELD_PTR_TYPE), POINTER :: NEW_FIELDS(:)
+    TYPE(FieldType), POINTER :: NEW_FIELD
+    TYPE(FieldPtrType), POINTER :: NEW_FIELDS(:)
 
     NULLIFY(NEW_FIELD)
     NULLIFY(NEW_FIELDS)
@@ -3548,28 +3548,28 @@ CONTAINS
       ELSE
         !Set default field properties
         CALL FIELD_INITIALISE(NEW_FIELD,err,error,*999)
-        NEW_FIELD%globalNumber=FIELDS%NUMBER_OF_FIELDS+1
+        NEW_FIELD%globalNumber=FIELDS%numberOfFields+1
         NEW_FIELD%userNumber=USER_NUMBER
         NEW_FIELD%LABEL="Field "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))
         IF(err/=0) GOTO 999
         NEW_FIELD%FIELDS=>FIELDS
         NULLIFY(NEW_FIELD%REGION)
         NULLIFY(NEW_FIELD%INTERFACE)
-        NEW_FIELD%GEOMETRIC_FIELD=>NEW_FIELD
-        NEW_FIELD%NUMBER_OF_VARIABLES=1
-        NEW_FIELD%SCALINGS%SCALING_TYPE=FIELD_ARITHMETIC_MEAN_SCALING
-        NEW_FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES=0
-        NULLIFY(NEW_FIELD%CREATE_VALUES_CACHE)
+        NEW_FIELD%geometricField=>NEW_FIELD
+        NEW_FIELD%numberOfVariables=1
+        NEW_FIELD%SCALINGS%scalingType=FIELD_ARITHMETIC_MEAN_SCALING
+        NEW_FIELD%SCALINGS%numberOfScalingIndices=0
+        NULLIFY(NEW_FIELD%createValuesCache)
         !Add new field into list of fields 
-        ALLOCATE(NEW_FIELDS(FIELDS%NUMBER_OF_FIELDS+1),STAT=err)
+        ALLOCATE(NEW_FIELDS(FIELDS%numberOfFields+1),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new fields.",err,error,*999)
-        DO field_no=1,FIELDS%NUMBER_OF_FIELDS
-          NEW_FIELDS(field_no)%PTR=>FIELDS%FIELDS(field_no)%PTR
+        DO field_no=1,FIELDS%numberOfFields
+          NEW_FIELDS(field_no)%ptr=>FIELDS%FIELDS(field_no)%ptr
         ENDDO !field_no
-        NEW_FIELDS(FIELDS%NUMBER_OF_FIELDS+1)%PTR=>NEW_FIELD
+        NEW_FIELDS(FIELDS%numberOfFields+1)%ptr=>NEW_FIELD
         IF(ASSOCIATED(FIELDS%FIELDS)) DEALLOCATE(FIELDS%FIELDS)
         FIELDS%FIELDS=>NEW_FIELDS
-        FIELDS%NUMBER_OF_FIELDS=FIELDS%NUMBER_OF_FIELDS+1
+        FIELDS%numberOfFields=FIELDS%numberOfFields+1
         FIELD=>NEW_FIELD
       ENDIF
     ELSE
@@ -3597,14 +3597,14 @@ CONTAINS
   !>- TYPE: 1 (FIELD_GEOMETRIC_TYPE)
   !>- NUMBER_OF_VARIABLES: 1
   !>- GEOMETRIC_FIELD: itself
-  !>- SCALINGS%SCALING_TYPE: 3 (FIELD_ARITHMETIC_MEAN_SCALING)
+  !>- SCALINGS%scalingType: 3 (FIELD_ARITHMETIC_MEAN_SCALING)
   !>\todo Add in FIELD_INITIALISE
   SUBROUTINE FIELD_CREATE_START_INTERFACE(USER_NUMBER,INTERFACE,FIELD,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number for the field
     TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface in which to create the field
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<On return, a pointer to the field being created. Must not be associated on entry.
+    TYPE(FieldType), POINTER :: FIELD !<On return, a pointer to the field being created. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3650,14 +3650,14 @@ CONTAINS
   !>- TYPE: 1 (FIELD_GEOMETRIC_TYPE)
   !>- NUMBER_OF_VARIABLES: 1
   !>- GEOMETRIC_FIELD: itself
-  !>- SCALINGS%SCALING_TYPE: 3 (FIELD_ARITHMETIC_MEAN_SCALING)
+  !>- SCALINGS%scalingType: 3 (FIELD_ARITHMETIC_MEAN_SCALING)
   !>\todo Add in FIELD_INITIALISE
   SUBROUTINE FIELD_CREATE_START_REGION(USER_NUMBER,REGION,FIELD,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number for the field
     TYPE(RegionType), POINTER :: REGION !<A pointer to the region in which to create the field
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<On return, a pointer to the field being created
+    TYPE(FieldType), POINTER :: FIELD !<On return, a pointer to the field being created
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3700,7 +3700,7 @@ CONTAINS
   SUBROUTINE FIELD_CREATE_VALUES_CACHE_FINALISE(CREATE_VALUES_CACHE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE !<A pointer to the create values cache to finalise
+    TYPE(FieldCreateValuesCacheType), POINTER :: CREATE_VALUES_CACHE !<A pointer to the create values cache to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3709,31 +3709,31 @@ CONTAINS
     ENTERS("FIELD_CREATE_VALUES_CACHE_FINALISE",err,error,*999)
 
     IF(ASSOCIATED(CREATE_VALUES_CACHE)) THEN
-      IF(ALLOCATED(CREATE_VALUES_CACHE%VARIABLE_TYPES)) DEALLOCATE(CREATE_VALUES_CACHE%VARIABLE_TYPES)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%VARIABLE_LABELS)) THEN
-        DO variable_idx=1,SIZE(CREATE_VALUES_CACHE%VARIABLE_LABELS,1)
-          CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)=""
+      IF(ALLOCATED(CREATE_VALUES_CACHE%variableTypes)) DEALLOCATE(CREATE_VALUES_CACHE%variableTypes)
+      IF(ALLOCATED(CREATE_VALUES_CACHE%variableLabels)) THEN
+        DO variable_idx=1,SIZE(CREATE_VALUES_CACHE%variableLabels,1)
+          CREATE_VALUES_CACHE%variableLabels(variable_idx)=""
         ENDDO !variable_idx
-        DEALLOCATE(CREATE_VALUES_CACHE%VARIABLE_LABELS)
+        DEALLOCATE(CREATE_VALUES_CACHE%variableLabels)
       ENDIF
-      IF(ALLOCATED(CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED)) DEALLOCATE(CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED)
+      IF(ALLOCATED(CREATE_VALUES_CACHE%variableLabelsLocked)) DEALLOCATE(CREATE_VALUES_CACHE%variableLabelsLocked)
       IF(ALLOCATED(CREATE_VALUES_CACHE%DIMENSION)) DEALLOCATE(CREATE_VALUES_CACHE%DIMENSION)
       IF(ALLOCATED(CREATE_VALUES_CACHE%DIMENSION_LOCKED)) DEALLOCATE(CREATE_VALUES_CACHE%DIMENSION_LOCKED)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%DATA_TYPES)) DEALLOCATE(CREATE_VALUES_CACHE%DATA_TYPES)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%DATA_TYPES_LOCKED)) DEALLOCATE(CREATE_VALUES_CACHE%DATA_TYPES_LOCKED)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%DOF_ORDER_TYPES)) DEALLOCATE(CREATE_VALUES_CACHE%DOF_ORDER_TYPES)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED)) DEALLOCATE(CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED)
+      IF(ALLOCATED(CREATE_VALUES_CACHE%dataTypes)) DEALLOCATE(CREATE_VALUES_CACHE%dataTypes)
+      IF(ALLOCATED(CREATE_VALUES_CACHE%dataTypesLocked)) DEALLOCATE(CREATE_VALUES_CACHE%dataTypesLocked)
+      IF(ALLOCATED(CREATE_VALUES_CACHE%dofOrderTypes)) DEALLOCATE(CREATE_VALUES_CACHE%dofOrderTypes)
+      IF(ALLOCATED(CREATE_VALUES_CACHE%dofOrderTypesLocked)) DEALLOCATE(CREATE_VALUES_CACHE%dofOrderTypesLocked)
       IF(ALLOCATED(CREATE_VALUES_CACHE%numberOfComponents)) DEALLOCATE(CREATE_VALUES_CACHE%numberOfComponents)
       IF(ALLOCATED(CREATE_VALUES_CACHE%numberOfComponentsLocked)) DEALLOCATE(CREATE_VALUES_CACHE%numberOfComponentsLocked)
-      IF(ALLOCATED(CREATE_VALUES_CACHE%COMPONENT_LABELS)) THEN
-        DO variable_idx=1,SIZE(CREATE_VALUES_CACHE%COMPONENT_LABELS,2)
-          DO component_idx=1,SIZE(CREATE_VALUES_CACHE%COMPONENT_LABELS,1)
-            CREATE_VALUES_CACHE%COMPONENT_LABELS(component_idx,variable_idx)=""
+      IF(ALLOCATED(CREATE_VALUES_CACHE%componentLabels)) THEN
+        DO variable_idx=1,SIZE(CREATE_VALUES_CACHE%componentLabels,2)
+          DO component_idx=1,SIZE(CREATE_VALUES_CACHE%componentLabels,1)
+            CREATE_VALUES_CACHE%componentLabels(component_idx,variable_idx)=""
           ENDDO !component_idx
         ENDDO !variable_idx
-        DEALLOCATE(CREATE_VALUES_CACHE%COMPONENT_LABELS)
+        DEALLOCATE(CREATE_VALUES_CACHE%componentLabels)
       ENDIF
-      IF(ALLOCATED(CREATE_VALUES_CACHE%COMPONENT_LABELS_LOCKED)) DEALLOCATE(CREATE_VALUES_CACHE%COMPONENT_LABELS_LOCKED)
+      IF(ALLOCATED(CREATE_VALUES_CACHE%componentLabelsLocked)) DEALLOCATE(CREATE_VALUES_CACHE%componentLabelsLocked)
       IF(ALLOCATED(CREATE_VALUES_CACHE%interpolationTypes)) DEALLOCATE(CREATE_VALUES_CACHE%interpolationTypes)
       IF(ALLOCATED(CREATE_VALUES_CACHE%interpolationTypesLocked)) DEALLOCATE(CREATE_VALUES_CACHE%interpolationTypesLocked)
       IF(ALLOCATED(CREATE_VALUES_CACHE%meshComponentNumber)) DEALLOCATE(CREATE_VALUES_CACHE%meshComponentNumber)
@@ -3756,7 +3756,7 @@ CONTAINS
   SUBROUTINE FIELD_CREATE_VALUES_CACHE_INITIALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the create values cache for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the create values cache for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3768,10 +3768,10 @@ CONTAINS
     ENTERS("FIELD_CREATE_VALUES_CACHE_INITIALISE",err,error,*998)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
+      IF(ASSOCIATED(FIELD%createValuesCache)) THEN
         CALL FlagError("Create values cache is already associated.",err,error,*998)
       ELSE
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE,STAT=err)
+        ALLOCATE(FIELD%createValuesCache,STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate create values cache.",err,error,*999)
         SELECT CASE(FIELD%TYPE)
         CASE(FIELD_GEOMETRIC_TYPE,FIELD_FIBRE_TYPE,FIELD_GEOMETRIC_GENERAL_TYPE)
@@ -3785,83 +3785,83 @@ CONTAINS
             & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         END SELECT
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES(FIELD%NUMBER_OF_VARIABLES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%variableTypes(FIELD%numberOfVariables),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache variable types.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%variableLabels(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache variable labels.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%variableLabelsLocked(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache variable labels locked.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%DIMENSION(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%DIMENSION(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache dimension.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%DIMENSION_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%DIMENSION_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache dimension locked.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%DATA_TYPES(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%dataTypes(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache data types.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%DATA_TYPES_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%dataTypesLocked(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache data types locked.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%dofOrderTypes(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache DOF order types.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%dofOrderTypesLocked(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache DOF order types locked.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%numberOfComponents(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%numberOfComponents(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache number of components.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%numberOfComponentsLocked(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%numberOfComponentsLocked(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache number of components locked.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%componentLabels(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache component labels.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS_LOCKED(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%componentLabelsLocked(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache component labels locked.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%interpolationTypes(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%interpolationTypes(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache interpolation type.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%interpolationTypesLocked(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%interpolationTypesLocked(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache interpolation type locked.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%meshComponentNumber(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(FIELD%createValuesCache%meshComponentNumber(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache mesh component type.",err,error,*999)
-        ALLOCATE(FIELD%CREATE_VALUES_CACHE%meshComponentNumberLocked(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES), &
+        ALLOCATE(FIELD%createValuesCache%meshComponentNumberLocked(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES), &
           & STAT=err)
         IF(err/=0) CALL FlagError("Could not allocated create values cache mesh component type locked.",err,error,*999)
-        FIELD%CREATE_VALUES_CACHE%LABEL_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%DECOMPOSITION_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%DEPENDENT_TYPE_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%DIMENSION_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%NUMBER_OF_VARIABLES_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%GEOMETRIC_FIELD_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%SCALING_TYPE_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%TYPE_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES=0
-        FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS=""
-        FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%DIMENSION=0
-        FIELD%CREATE_VALUES_CACHE%DIMENSION_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%DATA_TYPES=0
-        FIELD%CREATE_VALUES_CACHE%DATA_TYPES_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES=0
-        FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%numberOfComponents=0
-        FIELD%CREATE_VALUES_CACHE%numberOfComponentsLocked=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS=""
-        FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS_LOCKED=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%interpolationTypes=0
-        FIELD%CREATE_VALUES_CACHE%interpolationTypesLocked=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%meshComponentNumber=0
-        FIELD%CREATE_VALUES_CACHE%meshComponentNumberLocked=.FALSE.
-        FIELD%CREATE_VALUES_CACHE%DataProjectionLocked=.FALSE.
-        DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
-          FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES(variable_idx)=variable_idx
+        FIELD%createValuesCache%LABEL_LOCKED=.FALSE.
+        FIELD%createValuesCache%DECOMPOSITION_LOCKED=.FALSE.
+        FIELD%createValuesCache%DEPENDENT_TYPE_LOCKED=.FALSE.
+        FIELD%createValuesCache%DIMENSION_LOCKED=.FALSE.
+        FIELD%createValuesCache%numberOfVariablesLocked=.FALSE.
+        FIELD%createValuesCache%geometricFieldLocked=.FALSE.
+        FIELD%createValuesCache%scalingTypeLocked=.FALSE.
+        FIELD%createValuesCache%TYPE_LOCKED=.FALSE.
+        FIELD%createValuesCache%variableTypes=0
+        FIELD%createValuesCache%variableTypesLocked=.FALSE.
+        FIELD%createValuesCache%variableLabels=""
+        FIELD%createValuesCache%variableLabelsLocked=.FALSE.
+        FIELD%createValuesCache%DIMENSION=0
+        FIELD%createValuesCache%DIMENSION_LOCKED=.FALSE.
+        FIELD%createValuesCache%dataTypes=0
+        FIELD%createValuesCache%dataTypesLocked=.FALSE.
+        FIELD%createValuesCache%dofOrderTypes=0
+        FIELD%createValuesCache%dofOrderTypesLocked=.FALSE.
+        FIELD%createValuesCache%numberOfComponents=0
+        FIELD%createValuesCache%numberOfComponentsLocked=.FALSE.
+        FIELD%createValuesCache%componentLabels=""
+        FIELD%createValuesCache%componentLabelsLocked=.FALSE.
+        FIELD%createValuesCache%interpolationTypes=0
+        FIELD%createValuesCache%interpolationTypesLocked=.FALSE.
+        FIELD%createValuesCache%meshComponentNumber=0
+        FIELD%createValuesCache%meshComponentNumberLocked=.FALSE.
+        FIELD%createValuesCache%DataProjectionLocked=.FALSE.
+        DO variable_idx=1,FIELD%numberOfVariables
+          FIELD%createValuesCache%variableTypes(variable_idx)=variable_idx
           SELECT CASE(variable_idx)
           CASE(FIELD_U_VARIABLE_TYPE)
             SELECT CASE(FIELD%TYPE)
             CASE(FIELD_GEOMETRIC_TYPE)
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="Coordinate"
+              FIELD%createValuesCache%variableLabels(variable_idx)="Coordinate"
             CASE(FIELD_FIBRE_TYPE)
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="Fibre"
+              FIELD%createValuesCache%variableLabels(variable_idx)="Fibre"
             CASE(FIELD_MATERIAL_TYPE)
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="Material"              
+              FIELD%createValuesCache%variableLabels(variable_idx)="Material"              
             CASE(FIELD_GENERAL_TYPE)
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U"
+              FIELD%createValuesCache%variableLabels(variable_idx)="U"
             CASE(FIELD_GEOMETRIC_GENERAL_TYPE)
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U"
+              FIELD%createValuesCache%variableLabels(variable_idx)="U"
             CASE DEFAULT
               localError="The field type of "//TRIM(NumberToVString(FIELD%TYPE,"*",err,error))// &
                 & " is invalid for field number "// &
@@ -3869,113 +3869,113 @@ CONTAINS
               CALL FlagError(localError,err,error,*999)
             END SELECT
           CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U/del n"
           CASE(FIELD_DELUDELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U/del t"
           CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U/del t^2"
           CASE(FIELD_V_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="V"
+            FIELD%createValuesCache%variableLabels(variable_idx)="V"
           CASE(FIELD_DELVDELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del V/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del V/del n"
           CASE(FIELD_DELVDELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del V/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del V/del t"
           CASE(FIELD_DEL2VDELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 V/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 V/del t^2"
           CASE(FIELD_U1_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U1"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U1"
           CASE(FIELD_DELU1DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U1/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U1/del n"
           CASE(FIELD_DELU1DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U1/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U1/del t"
           CASE(FIELD_DEL2U1DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U1/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U1/del t^2"
           CASE(FIELD_U2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U2"
           CASE(FIELD_DELU2DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U2/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U2/del n"
           CASE(FIELD_DELU2DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U2/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U2/del t"
           CASE(FIELD_DEL2U2DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U2/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U2/del t^2"
           CASE(FIELD_U3_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U3"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U3"
           CASE(FIELD_DELU3DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U3/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U3/del n"
           CASE(FIELD_DELU3DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U3/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U3/del t"
           CASE(FIELD_DEL2U3DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U3/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U3/del t^2"
           CASE(FIELD_U4_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U4"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U4"
           CASE(FIELD_DELU4DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U4/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U4/del n"
           CASE(FIELD_DELU4DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U4/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U4/del t"
           CASE(FIELD_DEL2U4DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U4/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U4/del t^2"
           CASE(FIELD_U5_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U5"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U5"
           CASE(FIELD_DELU5DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U5/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U5/del n"
           CASE(FIELD_DELU5DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U5/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U5/del t"
           CASE(FIELD_DEL2U5DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U5/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U5/del t^2"
           CASE(FIELD_U6_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U6"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U6"
           CASE(FIELD_DELU6DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U6/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U6/del n"
           CASE(FIELD_DELU6DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U6/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U6/del t"
           CASE(FIELD_DEL2U6DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U6/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U6/del t^2"
           CASE(FIELD_U7_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U7"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U7"
           CASE(FIELD_DELU7DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U7/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U7/del n"
           CASE(FIELD_DELU7DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U7/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U7/del t"
           CASE(FIELD_DEL2U7DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U7/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U7/del t^2"
           CASE(FIELD_U8_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U8"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U8"
           CASE(FIELD_DELU8DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U8/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U8/del n"
           CASE(FIELD_DELU8DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U8/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U8/del t"
           CASE(FIELD_DEL2U8DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U8/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U8/del t^2"
           CASE(FIELD_U9_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U9"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U9"
           CASE(FIELD_DELU9DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U9/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U9/del n"
           CASE(FIELD_DELU9DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U9/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U9/del t"
           CASE(FIELD_DEL2U9DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U/9del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U/9del t^2"
           CASE(FIELD_U10_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="U10"
+            FIELD%createValuesCache%variableLabels(variable_idx)="U10"
           CASE(FIELD_DELU10DELN_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U10/del n"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U10/del n"
           CASE(FIELD_DELU10DELT_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del U10/del t"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del U10/del t"
           CASE(FIELD_DEL2U10DELT2_VARIABLE_TYPE)
-            FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_idx)="del^2 U10/del t^2"
+            FIELD%createValuesCache%variableLabels(variable_idx)="del^2 U10/del t^2"
           CASE DEFAULT
             localError="The variable type of "//TRIM(NumberToVString(variable_idx,"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-          FIELD%CREATE_VALUES_CACHE%DIMENSION(variable_idx)=FIELD_VECTOR_DIMENSION_TYPE
-          FIELD%CREATE_VALUES_CACHE%DATA_TYPES(variable_idx)=FIELD_DP_TYPE
-          FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES(variable_idx)=FIELD_SEPARATED_COMPONENT_DOF_ORDER
-          FIELD%CREATE_VALUES_CACHE%numberOfComponents(variable_idx)=NUMBER_OF_COMPONENTS
+          FIELD%createValuesCache%DIMENSION(variable_idx)=FIELD_VECTOR_DIMENSION_TYPE
+          FIELD%createValuesCache%dataTypes(variable_idx)=FIELD_DP_TYPE
+          FIELD%createValuesCache%dofOrderTypes(variable_idx)=FIELD_SEPARATED_COMPONENT_DOF_ORDER
+          FIELD%createValuesCache%numberOfComponents(variable_idx)=NUMBER_OF_COMPONENTS
           DO component_idx=1,NUMBER_OF_COMPONENTS
-            FIELD%CREATE_VALUES_CACHE%COMPONENT_LABELS(component_idx,variable_idx)= &
+            FIELD%createValuesCache%componentLabels(component_idx,variable_idx)= &
               & TRIM(NumberToVString(component_idx,"*",err,error))
             IF(err/=0) GOTO 999
-            FIELD%CREATE_VALUES_CACHE%interpolationTypes(component_idx,variable_idx)=FIELD_NODE_BASED_INTERPOLATION
-            FIELD%CREATE_VALUES_CACHE%meshComponentNumber(component_idx,variable_idx)=1
+            FIELD%createValuesCache%interpolationTypes(component_idx,variable_idx)=FIELD_NODE_BASED_INTERPOLATION
+            FIELD%createValuesCache%meshComponentNumber(component_idx,variable_idx)=1
           ENDDO !component_idx
         ENDDO !variable_idx
       ENDIF
@@ -3985,7 +3985,7 @@ CONTAINS
 
     EXITS("FIELD_CREATE_VALUES_CACHE_INITIALISE")
     RETURN
-999 CALL FIELD_CREATE_VALUES_CACHE_FINALISE(FIELD%CREATE_VALUES_CACHE,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL FIELD_CREATE_VALUES_CACHE_FINALISE(FIELD%createValuesCache,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("FIELD_CREATE_VALUES_CACHE_INITIALISE",err,error)
     RETURN 1
 
@@ -4001,14 +4001,14 @@ CONTAINS
   SUBROUTINE Field_GeometricGeneralFieldGet(field,geometricField,generalFound,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: field !<A pointer to the field to get the geometric field for
-    TYPE(FIELD_TYPE), POINTER, INTENT(OUT) :: geometricField !<On return, a pointer to the geometric field. Must not be associated on entry.
+    TYPE(FieldType), POINTER, INTENT(IN) :: field !<A pointer to the field to get the geometric field for
+    TYPE(FieldType), POINTER, INTENT(OUT) :: geometricField !<On return, a pointer to the geometric field. Must not be associated on entry.
     LOGICAL, INTENT(OUT) :: generalFound !<On return, true if we found a geometric general field, otherwise false.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: fieldIdx
-    TYPE(FIELD_TYPE), POINTER :: otherField
+    TYPE(FieldType), POINTER :: otherField
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_GeometricGeneralFieldGet",err,error,*999)
@@ -4017,7 +4017,7 @@ CONTAINS
 
     ! Check input parameters
     IF(ASSOCIATED(field)) THEN
-      IF(field%field_finished) THEN
+      IF(field%fieldFinished) THEN
         IF(.NOT.ASSOCIATED(field%fields)) THEN
           CALL FlagError("Field fields are not associated.",err,error,*999)
         END IF
@@ -4035,10 +4035,10 @@ CONTAINS
 
     generalFound=.FALSE.
     ! Find the geometric general field associated with this field
-    DO fieldIdx=1,field%fields%number_of_fields
+    DO fieldIdx=1,field%fields%numberOfFields
       otherField=>field%fields%fields(fieldIdx)%ptr
       IF(ASSOCIATED(otherField)) THEN
-        IF(otherField%TYPE==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
+        IF(otherField%type==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
           geometricField=>otherField
           generalFound=.TRUE.
         END IF
@@ -4051,8 +4051,8 @@ CONTAINS
     IF(.NOT.generalFound) THEN
       ! We couldn't find a geometric general field.
       ! Just return the undeformed geometric field.
-      IF(ASSOCIATED(field%geometric_field)) THEN
-        geometricField=>field%geometric_field
+      IF(ASSOCIATED(field%geometricField)) THEN
+        geometricField=>field%geometricField
       ELSE
         CALL FlagError("Geometric general field not found and geometric field is not associated.",err,error,*999)
       END IF
@@ -4073,7 +4073,7 @@ CONTAINS
   SUBROUTINE FIELD_DEPENDENT_TYPE_CHECK(FIELD,DEPENDENT_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the dependent type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the dependent type for
     INTEGER(INTG), INTENT(IN) :: DEPENDENT_TYPE !<The dependent type to check \see FIELD_ROUTINES_DependentTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4121,7 +4121,7 @@ CONTAINS
   SUBROUTINE FIELD_DEPENDENT_TYPE_GET(FIELD,DEPENDENT_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the dependent type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the dependent type for
     INTEGER(INTG), INTENT(OUT) :: DEPENDENT_TYPE !<On return, the dependent type to get \see FIELD_ROUTINES_DependentTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4148,12 +4148,12 @@ CONTAINS
   SUBROUTINE FIELD_DEPENDENT_TYPE_SET(FIELD,DEPENDENT_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the dependent type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the dependent type for
     INTEGER(INTG), INTENT(IN) :: DEPENDENT_TYPE !<The dependent type to set/change \see FIELD_ROUTINES_DependentTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_DEPENDENT_TYPE_SET",err,error,*999)
@@ -4191,12 +4191,12 @@ CONTAINS
   SUBROUTINE FIELD_DEPENDENT_TYPE_SET_AND_LOCK(FIELD,DEPENDENT_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the dependent type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the dependent type for
     INTEGER(INTG), INTENT(IN) :: DEPENDENT_TYPE !<The dependent type to set/change \see FIELD_ROUTINES_DependentTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache 
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache 
 
     ENTERS("FIELD_DEPENDENT_TYPE_SET_AND_LOCK",err,error,*999)
 
@@ -4221,17 +4221,17 @@ CONTAINS
   SUBROUTINE FIELD_DESTROY(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to destroy
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to destroy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: field_idx,field_position,field_position2
-    TYPE(FIELD_TYPE), POINTER :: FIELD2,GEOMETRIC_FIELD
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS
-    TYPE(FIELD_PTR_TYPE), POINTER :: NEW_FIELDS(:),NEW_FIELDS_USING(:)
+    TYPE(FieldType), POINTER :: FIELD2,GEOMETRIC_FIELD
+    TYPE(FieldsType), POINTER :: FIELDS
+    TYPE(FieldPtrType), POINTER :: NEW_FIELDS(:),newFieldsUsing(:)
 
     NULLIFY(NEW_FIELDS)
-    NULLIFY(NEW_FIELDS_USING)
+    NULLIFY(newFieldsUsing)
 
     ENTERS("FIELD_DESTROY",err,error,*999)
 
@@ -4239,56 +4239,56 @@ CONTAINS
       FIELDS=>FIELD%FIELDS
       IF(ASSOCIATED(FIELDS)) THEN
         field_position=FIELD%globalNumber
-        GEOMETRIC_FIELD=>FIELD%GEOMETRIC_FIELD
+        GEOMETRIC_FIELD=>FIELD%geometricField
         IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-          IF(ASSOCIATED(GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS)) THEN
+          IF(ASSOCIATED(GEOMETRIC_FIELD%geometricFieldParameters)) THEN
             !Delete this field from the list of fields using the geometric field.
             field_position2=0
-            DO field_idx=1,GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING
-              FIELD2=>GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING(field_idx)%PTR
+            DO field_idx=1,GEOMETRIC_FIELD%geometricFieldParameters%numberOfFieldsUsing
+              FIELD2=>GEOMETRIC_FIELD%geometricFieldParameters%fieldsUsing(field_idx)%ptr
               IF(FIELD2%userNumber==FIELD%userNumber) THEN
                 field_position2=field_idx
                 EXIT
               ENDIF
             ENDDO !field_idx
             IF(field_position2/=0) THEN
-              ALLOCATE(NEW_FIELDS_USING(GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING+1),STAT=err)
+              ALLOCATE(newFieldsUsing(GEOMETRIC_FIELD%geometricFieldParameters%numberOfFieldsUsing+1),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate new fields using.",err,error,*999)
-              DO field_idx=1,GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING
+              DO field_idx=1,GEOMETRIC_FIELD%geometricFieldParameters%numberOfFieldsUsing
                 IF(field_idx<field_position2) THEN
-                  NEW_FIELDS_USING(field_idx)%PTR=>GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING(field_idx)%PTR
+                  newFieldsUsing(field_idx)%ptr=>GEOMETRIC_FIELD%geometricFieldParameters%fieldsUsing(field_idx)%ptr
                 ELSE IF(field_idx>field_position2) THEN
-                  NEW_FIELDS_USING(field_idx-1)%PTR=>GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING(field_idx)%PTR
+                  newFieldsUsing(field_idx-1)%ptr=>GEOMETRIC_FIELD%geometricFieldParameters%fieldsUsing(field_idx)%ptr
                 ENDIF
               ENDDO !field_idx
-              GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING=GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS% &
-                & NUMBER_OF_FIELDS_USING-1
-              IF(ASSOCIATED(GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING)) &
-                & DEALLOCATE(GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING)
-              GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING=>NEW_FIELDS_USING
+              GEOMETRIC_FIELD%geometricFieldParameters%numberOfFieldsUsing=GEOMETRIC_FIELD%geometricFieldParameters% &
+                & numberOfFieldsUsing-1
+              IF(ASSOCIATED(GEOMETRIC_FIELD%geometricFieldParameters%fieldsUsing)) &
+                & DEALLOCATE(GEOMETRIC_FIELD%geometricFieldParameters%fieldsUsing)
+              GEOMETRIC_FIELD%geometricFieldParameters%fieldsUsing=>newFieldsUsing
             ELSE
               !??? Error
             ENDIF
           ENDIF
         ENDIF
         CALL FIELD_FINALISE(FIELD,err,error,*999)
-        IF(FIELDS%NUMBER_OF_FIELDS>1) THEN
-          ALLOCATE(NEW_FIELDS(FIELDS%NUMBER_OF_FIELDS-1),STAT=err)
+        IF(FIELDS%numberOfFields>1) THEN
+          ALLOCATE(NEW_FIELDS(FIELDS%numberOfFields-1),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate new fields.",err,error,*999)
-          DO field_idx=1,FIELDS%NUMBER_OF_FIELDS
+          DO field_idx=1,FIELDS%numberOfFields
             IF(field_idx<field_position) THEN
-              NEW_FIELDS(field_idx)%PTR=>FIELDS%FIELDS(field_idx)%PTR
+              NEW_FIELDS(field_idx)%ptr=>FIELDS%FIELDS(field_idx)%ptr
             ELSE IF(field_idx>field_position) THEN
-              FIELDS%FIELDS(field_idx)%PTR%globalNumber=FIELDS%FIELDS(field_idx)%PTR%globalNumber-1
-              NEW_FIELDS(field_idx-1)%PTR=>FIELDS%FIELDS(field_idx)%PTR
+              FIELDS%FIELDS(field_idx)%ptr%globalNumber=FIELDS%FIELDS(field_idx)%ptr%globalNumber-1
+              NEW_FIELDS(field_idx-1)%ptr=>FIELDS%FIELDS(field_idx)%ptr
             ENDIF
           ENDDO !field_no
           DEALLOCATE(FIELDS%FIELDS)
           FIELDS%FIELDS=>NEW_FIELDS
-          FIELDS%NUMBER_OF_FIELDS=FIELDS%NUMBER_OF_FIELDS-1
+          FIELDS%numberOfFields=FIELDS%numberOfFields-1
         ELSE
           DEALLOCATE(FIELDS%FIELDS)
-          FIELDS%NUMBER_OF_FIELDS=0
+          FIELDS%numberOfFields=0
         ENDIF
       ELSE
         CALL FlagError("Field fields is not associated.",err,error,*999)
@@ -4300,7 +4300,7 @@ CONTAINS
     EXITS("FIELD_DESTROY")
     RETURN
 999 IF(ASSOCIATED(NEW_FIELDS)) DEALLOCATE(NEW_FIELDS)
-    IF(ASSOCIATED(NEW_FIELDS_USING)) DEALLOCATE(NEW_FIELDS_USING)
+    IF(ASSOCIATED(newFieldsUsing)) DEALLOCATE(newFieldsUsing)
     ERRORSEXITS("FIELD_DESTROY",err,error)
     RETURN 1
 
@@ -4314,13 +4314,13 @@ CONTAINS
   SUBROUTINE FIELD_DIMENSION_CHECK(FIELD,VARIABLE_TYPE,DIMENSION_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to check \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: DIMENSION_TYPE !<The field dimension to check \see FIELD_ROUTINES_DimensionTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_DIMENSION_CHECK",err,error,*999)
@@ -4377,13 +4377,13 @@ CONTAINS
   SUBROUTINE FIELD_DIMENSION_GET(FIELD,VARIABLE_TYPE,DIMENSION,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(OUT) :: DIMENSION !<On return, the field dimension to get \see FIELD_ROUTINES_DimensionTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_DIMENSION_GET",err,error,*999)
 
@@ -4408,7 +4408,7 @@ CONTAINS
   SUBROUTINE FIELD_DIMENSION_SET(FIELD,VARIABLE_TYPE,FIELD_DIMENSION,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_DIMENSION !<The field dimension to set/change \see FIELD_ROUTINES_DimensionTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -4416,11 +4416,11 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: NUMBER_OF_COMPONENTS,NEW_NUMBER_OF_COMPONENTS,variable_idx
     INTEGER(INTG), ALLOCATABLE :: NEW_INTERPOLATION_TYPE(:,:),NEW_meshComponentNumber(:,:)
-    LOGICAL, ALLOCATABLE :: NEW_COMPONENT_LABELS_LOCKED(:,:),NEW_INTERPOLATION_TYPE_LOCKED(:,:), &
+    LOGICAL, ALLOCATABLE :: NEW_componentLabelsLocked(:,:),NEW_INTERPOLATION_TYPE_LOCKED(:,:), &
       & NEW_meshComponentNumberLocked(:,:)
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError
-    TYPE(VARYING_STRING), ALLOCATABLE :: NEW_COMPONENT_LABELS(:,:)
+    TYPE(VARYING_STRING), ALLOCATABLE :: NEW_componentLabels(:,:)
 
     ENTERS("FIELD_DIMENSION_SET",err,error,*999)
 
@@ -4428,7 +4428,7 @@ CONTAINS
     NULLIFY(createValuesCache)
     CALL Field_CreateValuesCacheGet(field,createValuesCache,err,error,*999)
     IF(VARIABLE_TYPE>0.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-      IF(ANY(createValuesCache%VARIABLE_TYPES==VARIABLE_TYPE)) THEN
+      IF(ANY(createValuesCache%variableTypes==VARIABLE_TYPE)) THEN
         IF(createValuesCache%DIMENSION_LOCKED(VARIABLE_TYPE)) THEN
           localError="The field dimension has been locked for for variable type "// &
             & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
@@ -4448,9 +4448,9 @@ CONTAINS
                   ENDIF
                 ENDIF
               ENDDO
-              ALLOCATE(NEW_COMPONENT_LABELS(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+              ALLOCATE(NEW_componentLabels(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate new component labels.",err,error,*999)
-              ALLOCATE(NEW_COMPONENT_LABELS_LOCKED(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+              ALLOCATE(NEW_componentLabelsLocked(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate new component labels locked.",err,error,*999)
               ALLOCATE(NEW_INTERPOLATION_TYPE(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate new interpolation type.",err,error,*999)
@@ -4460,10 +4460,10 @@ CONTAINS
               IF(err/=0) CALL FlagError("Could not allocate new mesh component number.",err,error,*999)
               ALLOCATE(NEW_meshComponentNumberLocked(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate new mesh component number locked.",err,error,*999)
-              NEW_COMPONENT_LABELS(1:NEW_NUMBER_OF_COMPONENTS,:)= &
-                & createValuesCache%COMPONENT_LABELS(1:NEW_NUMBER_OF_COMPONENTS,:)
-              NEW_COMPONENT_LABELS_LOCKED(1:NEW_NUMBER_OF_COMPONENTS,:)= &
-                & createValuesCache%COMPONENT_LABELS_LOCKED(1:NEW_NUMBER_OF_COMPONENTS,:)
+              NEW_componentLabels(1:NEW_NUMBER_OF_COMPONENTS,:)= &
+                & createValuesCache%componentLabels(1:NEW_NUMBER_OF_COMPONENTS,:)
+              NEW_componentLabelsLocked(1:NEW_NUMBER_OF_COMPONENTS,:)= &
+                & createValuesCache%componentLabelsLocked(1:NEW_NUMBER_OF_COMPONENTS,:)
               NEW_INTERPOLATION_TYPE(1:NEW_NUMBER_OF_COMPONENTS,:)= &
                 & createValuesCache%interpolationTypes(1:NEW_NUMBER_OF_COMPONENTS,:)
               NEW_INTERPOLATION_TYPE_LOCKED(1:NEW_NUMBER_OF_COMPONENTS,:)= &
@@ -4473,8 +4473,8 @@ CONTAINS
               NEW_meshComponentNumberLocked(1:NEW_NUMBER_OF_COMPONENTS,:)= &
                 & createValuesCache%meshComponentNumberLocked(1:NEW_NUMBER_OF_COMPONENTS,:)
 
-              CALL MOVE_ALLOC(NEW_COMPONENT_LABELS,createValuesCache%COMPONENT_LABELS)
-              CALL MOVE_ALLOC(NEW_COMPONENT_LABELS_LOCKED,createValuesCache%COMPONENT_LABELS_LOCKED)
+              CALL MOVE_ALLOC(NEW_componentLabels,createValuesCache%componentLabels)
+              CALL MOVE_ALLOC(NEW_componentLabelsLocked,createValuesCache%componentLabelsLocked)
               CALL MOVE_ALLOC(NEW_INTERPOLATION_TYPE,createValuesCache%interpolationTypes)
               CALL MOVE_ALLOC(NEW_INTERPOLATION_TYPE_LOCKED,createValuesCache%interpolationTypesLocked)
               CALL MOVE_ALLOC(NEW_meshComponentNumber,createValuesCache%meshComponentNumber)
@@ -4508,8 +4508,8 @@ CONTAINS
 
     EXITS("FIELD_DIMENSION_SET")
     RETURN
-999 IF(ALLOCATED(NEW_COMPONENT_LABELS)) DEALLOCATE(NEW_COMPONENT_LABELS)
-    IF(ALLOCATED(NEW_COMPONENT_LABELS_LOCKED)) DEALLOCATE(NEW_COMPONENT_LABELS_LOCKED)
+999 IF(ALLOCATED(NEW_componentLabels)) DEALLOCATE(NEW_componentLabels)
+    IF(ALLOCATED(NEW_componentLabelsLocked)) DEALLOCATE(NEW_componentLabelsLocked)
     IF(ALLOCATED(NEW_INTERPOLATION_TYPE)) DEALLOCATE(NEW_INTERPOLATION_TYPE)
     IF(ALLOCATED(NEW_INTERPOLATION_TYPE_LOCKED)) DEALLOCATE(NEW_INTERPOLATION_TYPE_LOCKED)
     IF(ALLOCATED(NEW_meshComponentNumber)) DEALLOCATE(NEW_meshComponentNumber)
@@ -4527,13 +4527,13 @@ CONTAINS
   SUBROUTINE FIELD_DIMENSION_SET_AND_LOCK(FIELD,VARIABLE_TYPE,FIELD_DIMENSION,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_DIMENSION !<The field dimension to set/change \see FIELD_ROUTINES_DimensionTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
 
     ENTERS("FIELD_DIMENSION_SET_AND_LOCK",err,error,*999)
 
@@ -4558,7 +4558,7 @@ CONTAINS
   SUBROUTINE FIELD_FINALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to finalise
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4569,9 +4569,9 @@ CONTAINS
       FIELD%LABEL=""
       CALL FIELD_SCALINGS_FINALISE(FIELD,err,error,*999)
       CALL FIELD_VARIABLES_FINALISE(FIELD,err,error,*999)
-      CALL FIELD_CREATE_VALUES_CACHE_FINALISE(FIELD%CREATE_VALUES_CACHE,err,error,*999)
-      CALL FIELD_GEOMETRIC_PARAMETERS_FINALISE(FIELD%GEOMETRIC_FIELD_PARAMETERS,err,error,*999)
-      IF(ALLOCATED(FIELD%VARIABLE_TYPE_MAP)) DEALLOCATE(FIELD%VARIABLE_TYPE_MAP)
+      CALL FIELD_CREATE_VALUES_CACHE_FINALISE(FIELD%createValuesCache,err,error,*999)
+      CALL FIELD_GEOMETRIC_PARAMETERS_FINALISE(FIELD%geometricFieldParameters,err,error,*999)
+      IF(ALLOCATED(FIELD%variableTypeMap)) DEALLOCATE(FIELD%variableTypeMap)
       DEALLOCATE(FIELD)     
     ENDIF
 
@@ -4590,7 +4590,7 @@ CONTAINS
   SUBROUTINE FIELD_INITIALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the new field to initialise. Must not be associated on entry.
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the new field to initialise. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4607,20 +4607,20 @@ CONTAINS
       FIELD%globalNumber=0
       FIELD%userNumber=0
       FIELD%LABEL=""
-      FIELD%FIELD_FINISHED=.FALSE.
+      FIELD%fieldFinished=.FALSE.
       NULLIFY(FIELD%FIELDS)
       NULLIFY(FIELD%REGION)
       FIELD%TYPE=FIELD_GEOMETRIC_TYPE
       FIELD%DEPENDENT_TYPE=FIELD_INDEPENDENT_TYPE
       NULLIFY(FIELD%DECOMPOSITION)
-      FIELD%NUMBER_OF_VARIABLES=0
-      NULLIFY(FIELD%GEOMETRIC_FIELD)
-      NULLIFY(FIELD%GEOMETRIC_FIELD_PARAMETERS)
-      NULLIFY(FIELD%CREATE_VALUES_CACHE)
-      ALLOCATE(FIELD%VARIABLE_TYPE_MAP(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+      FIELD%numberOfVariables=0
+      NULLIFY(FIELD%geometricField)
+      NULLIFY(FIELD%geometricFieldParameters)
+      NULLIFY(FIELD%createValuesCache)
+      ALLOCATE(FIELD%variableTypeMap(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate field variable type map.",err,error,*999)
       DO variable_type_idx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-        NULLIFY(FIELD%VARIABLE_TYPE_MAP(variable_type_idx)%PTR)
+        NULLIFY(FIELD%variableTypeMap(variable_type_idx)%ptr)
       ENDDO !variable_type_idx
     ENDIF
 
@@ -4636,15 +4636,15 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates a field at a gauss point to give an interpolated point. PARTIAL_DERIVATIVE_TYPE controls which partial derivatives are evaluated. If it is NO_PART_DERIV then only the field values are interpolated. If it is FIRST_PART_DERIV then the field values and first partial derivatives are interpolated. If it is SECOND_PART_DERIV the the field values and first and second partial derivatives are evaluated. Old CMISS name XEXG, ZEXG
-  SUBROUTINE FIELD_INTERPOLATE_GAUSS(PARTIAL_DERIVATIVE_TYPE,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATED_POINT, &
+  !>Interpolates a field at a gauss point to give an interpolated point. partialDerivativeType controls which partial derivatives are evaluated. If it is NO_PART_DERIV then only the field values are interpolated. If it is FIRST_PART_DERIV then the field values and first partial derivatives are interpolated. If it is SECOND_PART_DERIV the the field values and first and second partial derivatives are evaluated. Old CMISS name XEXG, ZEXG
+  SUBROUTINE FIELD_INTERPOLATE_GAUSS(partialDerivativeType,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATED_POINT, &
     & err,error,*,componentType)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_TYPE !<The partial derivative type of the provided field interpolation
+    INTEGER(INTG), INTENT(IN) :: partialDerivativeType !<The partial derivative type of the provided field interpolation
     INTEGER(INTG), INTENT(IN) :: QUADRATURE_SCHEME !<The quadrature scheme of the Gauss points \see BASIS_ROUTINES_QuadratureSchemes,BASIS_ROUTINES
     INTEGER(INTG), INTENT(IN) :: GAUSS_POINT_NUMBER !<The number of the Gauss point to interpolate the field at
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !<The pointer to the interpolated point which will contain the field interpolation information at the specified Gauss point
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT !<The pointer to the interpolated point which will contain the field interpolation information at the specified Gauss point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
@@ -4652,9 +4652,9 @@ CONTAINS
     INTEGER(INTG) :: component_idx,ni,nu
     INTEGER(INTG) :: startComponentIdx,endComponentIdx
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_TYPE), POINTER :: field,geometricField
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldType), POINTER :: field,geometricField
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_INTERPOLATE_GAUSS",err,error,*999)
@@ -4710,17 +4710,17 @@ CONTAINS
       startComponentIdx=1
       endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
-    SELECT CASE(PARTIAL_DERIVATIVE_TYPE)
+    SELECT CASE(partialDerivativeType)
     CASE(NO_PART_DERIV)
       DO component_idx=startComponentidx,endComponentIdx
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)              
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           INTERPOLATED_POINT%VALUES(component_idx,1)=BASIS_INTERPOLATE_GAUSS(INTERPOLATION_PARAMETERS%BASES( &
-            & component_idx)%PTR,NO_PART_DERIV,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATION_PARAMETERS% &
+            & component_idx)%ptr,NO_PART_DERIV,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATION_PARAMETERS% &
             & PARAMETERS(:,component_idx),err,error)
           IF(err/=0) GOTO 999
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -4736,17 +4736,17 @@ CONTAINS
         CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
           & err,error,*999)
       ENDDO! component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=NO_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=NO_PART_DERIV
     CASE(FIRST_PART_DERIV)
       DO component_idx=startComponentidx,endComponentIdx
-        SELECT CASE(INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           !Handle the first case of no partial derivative
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -4758,7 +4758,7 @@ CONTAINS
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -4767,16 +4767,16 @@ CONTAINS
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
           INTERPOLATED_POINT%VALUES(component_idx,1)=BASIS_INTERPOLATE_GAUSS(INTERPOLATION_PARAMETERS%BASES( &
-            & component_idx)%PTR,NO_PART_DERIV,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATION_PARAMETERS% &
+            & component_idx)%ptr,NO_PART_DERIV,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATION_PARAMETERS% &
             & PARAMETERS(:,component_idx),err,error)
           IF(err/=0) GOTO 999
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=BASIS_INTERPOLATE_GAUSS(INTERPOLATION_PARAMETERS% &
-              & BASES(component_idx)%PTR,nu,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER, &
+              & BASES(component_idx)%ptr,nu,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER, &
               & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
             IF(err/=0) GOTO 999
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -4792,17 +4792,17 @@ CONTAINS
             & " is invalid for component index "//TRIM(NumberToVString(component_idx,"*",err,error))//"."
         END SELECT
       ENDDO! component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=FIRST_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=FIRST_PART_DERIV
     CASE(SECOND_PART_DERIV)
       DO component_idx=startComponentidx,endComponentIdx
-        SELECT CASE(INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           !Handle the first case of no partial derivative
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
               & err,error,*999)
@@ -4813,15 +4813,15 @@ CONTAINS
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
               & err,error,*999)
           ENDDO !nu
         CASE(FIELD_NODE_BASED_INTERPOLATION)              
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             INTERPOLATED_POINT%VALUES(component_idx,nu)=BASIS_INTERPOLATE_GAUSS(INTERPOLATION_PARAMETERS% &
-              & BASES(component_idx)%PTR,nu,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER, &
+              & BASES(component_idx)%ptr,nu,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER, &
               & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
             IF(err/=0) GOTO 999
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -4837,9 +4837,9 @@ CONTAINS
             & " is invalid for component index "//TRIM(NumberToVString(component_idx,"*",err,error))//"."
         END SELECT
       ENDDO !component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=SECOND_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=SECOND_PART_DERIV
     CASE DEFAULT
-      localError="The partial derivative type of "//TRIM(NumberToVString(PARTIAL_DERIVATIVE_TYPE,"*",err,error))// &
+      localError="The partial derivative type of "//TRIM(NumberToVString(partialDerivativeType,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -4856,15 +4856,15 @@ CONTAINS
   !
 
   !>Interpolates a field to give the physical value of the field at a node. Note that as we are at a node then we do not have any xi directions and thus we can not talk about gradients of the field wrt to xi. Because derviatives of fields can be discountinuous at a node the average derivative over all the elements surrounding the node is calculated.
-  SUBROUTINE FIELD_INTERPOLATE_NODE(PHYSICAL_DERIVATIVE_TYPE,PARAMETER_SET_TYPE,COMPONENT_NUMBER,NODE_NUMBER, &
+  SUBROUTINE FIELD_INTERPOLATE_NODE(physicalDerivativeType,PARAMETER_SET_TYPE,COMPONENT_NUMBER,NODE_NUMBER, &
     & PHYSICAL_POINT,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: PHYSICAL_DERIVATIVE_TYPE !<The physical derivative type of the field interpolation \see CONSTANTS_PhysicalDerivativeConstants
+    INTEGER(INTG), INTENT(IN) :: physicalDerivativeType !<The physical derivative type of the field interpolation \see CONSTANTS_PhysicalDerivativeConstants
     INTEGER(INTG), INTENT(IN) :: PARAMETER_SET_TYPE !<The parameter set of the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The component number to field that contains the node 
     INTEGER(INTG), INTENT(IN) :: NODE_NUMBER !<The node number in the component to interpolate the field at
-    TYPE(FIELD_PHYSICAL_POINT_TYPE), POINTER :: PHYSICAL_POINT !<The pointer to the physical point for the field. On return it will contain the values.
+    TYPE(FieldPhysicalPointType), POINTER :: PHYSICAL_POINT !<The pointer to the physical point for the field. On return it will contain the values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4877,32 +4877,32 @@ CONTAINS
     TYPE(DomainElementsType), POINTER :: ELEM_TOPOLOGY
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     TYPE(DomainTopologyType), POINTER :: DOMAIN_TOPOLOGY
-    TYPE(FIELD_TYPE), POINTER :: FIELD
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: FIELD_INTERPOLATED_POINT,GEOMETRIC_INTERPOLATED_POINT
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: FIELD_INTERPOLATION_PARAMETERS,GEOMETRIC_INTERPOLATION_PARAMETERS
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
+    TYPE(FieldType), POINTER :: FIELD
+    TYPE(FieldInterpolatedPointType), POINTER :: FIELD_INTERPOLATED_POINT,GEOMETRIC_INTERPOLATED_POINT
+    TYPE(FieldInterpolationParametersType), POINTER :: FIELD_INTERPOLATION_PARAMETERS,GEOMETRIC_INTERPOLATION_PARAMETERS
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_INTERPOLATE_NODE",err,error,*999)
 
     IF(ASSOCIATED(PHYSICAL_POINT)) THEN
-      FIELD_INTERPOLATED_POINT=>PHYSICAL_POINT%FIELD_INTERPOLATED_POINT
+      FIELD_INTERPOLATED_POINT=>PHYSICAL_POINT%fieldInterpolatedPoint
       IF(ASSOCIATED(FIELD_INTERPOLATED_POINT)) THEN
-        GEOMETRIC_INTERPOLATED_POINT=>PHYSICAL_POINT%GEOMETRIC_INTERPOLATED_POINT
+        GEOMETRIC_INTERPOLATED_POINT=>PHYSICAL_POINT%geometricInterpolatedPoint
         IF(ASSOCIATED(GEOMETRIC_INTERPOLATED_POINT)) THEN
-          FIELD_INTERPOLATION_PARAMETERS=>FIELD_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS
+          FIELD_INTERPOLATION_PARAMETERS=>FIELD_INTERPOLATED_POINT%interpolationParameters
           IF(ASSOCIATED(FIELD_INTERPOLATION_PARAMETERS)) THEN
-            GEOMETRIC_INTERPOLATION_PARAMETERS=>GEOMETRIC_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS
+            GEOMETRIC_INTERPOLATION_PARAMETERS=>GEOMETRIC_INTERPOLATED_POINT%interpolationParameters
             IF(ASSOCIATED(GEOMETRIC_INTERPOLATION_PARAMETERS)) THEN
-              FIELD_VARIABLE=>FIELD_INTERPOLATION_PARAMETERS%FIELD_VARIABLE
+              FIELD_VARIABLE=>FIELD_INTERPOLATION_PARAMETERS%fieldVariable
               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                GEOMETRIC_VARIABLE=>GEOMETRIC_INTERPOLATION_PARAMETERS%FIELD_VARIABLE
+                GEOMETRIC_VARIABLE=>GEOMETRIC_INTERPOLATION_PARAMETERS%fieldVariable
                 IF(ASSOCIATED(GEOMETRIC_VARIABLE)) THEN
                   FIELD=>FIELD_VARIABLE%FIELD
                   IF(ASSOCIATED(FIELD)) THEN            
                     CALL FIELD_COORDINATE_SYSTEM_GET(FIELD,COORDINATE_SYSTEM,err,error,*999)            
                     IF(COMPONENT_NUMBER>0.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
-                      DOMAIN=>FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%DOMAIN
+                      DOMAIN=>FIELD_VARIABLE%components(COMPONENT_NUMBER)%DOMAIN
                       IF(ASSOCIATED(DOMAIN)) THEN
                         NULLIFY(DOMAIN_TOPOLOGY)
                         CALL Domain_DomainTopologyGet(DOMAIN,DOMAIN_TOPOLOGY,err,error,*999)
@@ -4912,15 +4912,15 @@ CONTAINS
                         CALL DomainTopology_DomainElementsGet(DOMAIN_TOPOLOGY,ELEM_TOPOLOGY,err,error,*999)
                         IF(NODE_NUMBER>0.AND.NODE_NUMBER<=DOMAIN_NODES%numberOfNodes) THEN
                           PHYSICAL_POINT%VALUES=0.0_DP
-                          IF(PHYSICAL_DERIVATIVE_TYPE==NO_PHYSICAL_DERIV) THEN
+                          IF(physicalDerivativeType==NO_PHYSICAL_DERIV) THEN
                             numberOfSurroundingElements=1
                           ELSE
-                            numberOfSurroundingElements=DOMAIN_NODES%NODES(NODE_NUMBER)%numberOfSurroundingElements
+                            numberOfSurroundingElements=DOMAIN_NODES%nodes(NODE_NUMBER)%numberOfSurroundingElements
                             PHYSICAL_POINT%VALUES=0.0_DP
                           ENDIF
                           !Loop over the elements surrounding the node
                           DO elem_idx=1,numberOfSurroundingElements
-                            element=DOMAIN_NODES%NODES(NODE_NUMBER)%surroundingElements(elem_idx)
+                            element=DOMAIN_NODES%nodes(NODE_NUMBER)%surroundingElements(elem_idx)
                             CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(PARAMETER_SET_TYPE,element, &
                               & FIELD_INTERPOLATION_PARAMETERS,err,error,*999)
                             NULLIFY(BASIS)
@@ -4934,10 +4934,10 @@ CONTAINS
                             ENDDO
                             IF(LOCAL_NODE_NUMBER/=0) THEN
                               CALL BASIS_LOCAL_NODE_XI_CALCULATE(BASIS,LOCAL_NODE_NUMBER,XI,err,error,*999)  
-                              SELECT CASE(PHYSICAL_DERIVATIVE_TYPE)
+                              SELECT CASE(physicalDerivativeType)
                               CASE(NO_PHYSICAL_DERIV)
                                 DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                                  SELECT CASE(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType)
+                                  SELECT CASE(FIELD_VARIABLE%components(component_idx)%interpolationType)
                                   CASE(FIELD_CONSTANT_INTERPOLATION)
                                     PHYSICAL_POINT%VALUES(component_idx)=FIELD_INTERPOLATION_PARAMETERS% &
                                       & PARAMETERS(1,component_idx)
@@ -4946,7 +4946,7 @@ CONTAINS
                                       & PARAMETERS(1,component_idx)
                                   CASE(FIELD_NODE_BASED_INTERPOLATION)
                                     PHYSICAL_POINT%VALUES(component_idx)=BASIS_INTERPOLATE_XI( &
-                                      & FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR,NO_PART_DERIV, &
+                                      & FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr,NO_PART_DERIV, &
                                       & XI,FIELD_INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
                                     IF(err/=0) GOTO 999
                                   CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -4957,15 +4957,15 @@ CONTAINS
                                     CALL FlagError("Not implemented.",err,error,*999)
                                   CASE DEFAULT
                                     localError="The field component interpolation type of "// &
-                                      & TRIM(NumberToVString(FIELD_VARIABLE%COMPONENTS(component_idx)% &
+                                      & TRIM(NumberToVString(FIELD_VARIABLE%components(component_idx)% &
                                       & interpolationType,"*",err,error))//" is invalid for component index "// &
                                       & TRIM(NumberToVString(component_idx,"*",err,error))//"."
                                   END SELECT
                                 ENDDO! component_idx
-                                PHYSICAL_POINT%PHYSICAL_DERIVATIVE_TYPE=NO_PHYSICAL_DERIV
+                                PHYSICAL_POINT%physicalDerivativeType=NO_PHYSICAL_DERIV
                               CASE(GRADIENT_PHYSICAL_DERIV)
                                 DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                                  SELECT CASE(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType)
+                                  SELECT CASE(FIELD_VARIABLE%components(component_idx)%interpolationType)
                                   CASE(FIELD_CONSTANT_INTERPOLATION)
                                     !There is no gradient for constant interpolation
                                     PHYSICAL_POINT%VALUES(component_idx)=0.0_DP                                            
@@ -4976,11 +4976,11 @@ CONTAINS
                                     CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element, &
                                       & GEOMETRIC_INTERPOLATION_PARAMETERS,err,error,*999)
                                     !Now process all the first partial derivatives
-                                    DO xi_idx=1,FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+                                    DO xi_idx=1,FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
                                       partial_deriv_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx)
                                       !Interpolate the field
                                       FIELD_INTERPOLATED_POINT%VALUES(component_idx,partial_deriv_idx) = &
-                                        & BASIS_INTERPOLATE_XI(FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR, &
+                                        & BASIS_INTERPOLATE_XI(FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr, &
                                         & partial_deriv_idx,XI,FIELD_INTERPOLATION_PARAMETERS%PARAMETERS(:, &
                                         & component_idx),err,error)
                                       IF(err/=0) GOTO 999
@@ -5006,7 +5006,7 @@ CONTAINS
                                   CASE DEFAULT
                                     localError="The field component interpolation type of "// &
                                       & TRIM(NumberToVString(FIELD_INTERPOLATION_PARAMETERS% &
-                                      & FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType,"*",err,error))// &
+                                      & fieldVariable%components(component_idx)%interpolationType,"*",err,error))// &
                                       & " is invalid for component index "// &
                                       & TRIM(NumberToVString(component_idx,"*",err,error))//"."
                                   END SELECT
@@ -5014,17 +5014,17 @@ CONTAINS
                                 !Form the physical derivative
                                 CALL INVERT(DX_DXI,DXI_DX,DET_DX_DXI,err,error,*999)
                                 DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                                  DO xi_idx=1,FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+                                  DO xi_idx=1,FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
                                     partial_deriv_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx)
                                     PHYSICAL_POINT%VALUES(component_idx)=PHYSICAL_POINT%VALUES(component_idx)+ &
                                       & FIELD_INTERPOLATED_POINT%VALUES(component_idx,partial_deriv_idx)* &
                                       & DXI_DX(xi_idx,component_idx)
                                   ENDDO !xi_idx
                                 ENDDO !component_idx
-                                PHYSICAL_POINT%PHYSICAL_DERIVATIVE_TYPE=GRADIENT_PHYSICAL_DERIV
+                                PHYSICAL_POINT%physicalDerivativeType=GRADIENT_PHYSICAL_DERIV
                               CASE DEFAULT
                                 localError="The physical derivative type of "// &
-                                  & TRIM(NumberToVString(PHYSICAL_DERIVATIVE_TYPE,"*",err,error))//" is invalid."
+                                  & TRIM(NumberToVString(physicalDerivativeType,"*",err,error))//" is invalid."
                                 CALL FlagError(localError,err,error,*999)
                               END SELECT
                             ELSE
@@ -5034,10 +5034,10 @@ CONTAINS
                               CALL FlagError(localError,err,error,*999)
                             ENDIF
                           ENDDO !elem_idx
-                          IF(PHYSICAL_DERIVATIVE_TYPE==NO_PHYSICAL_DERIV) THEN
+                          IF(physicalDerivativeType==NO_PHYSICAL_DERIV) THEN
                             !Now calculate the average of the interpolated physical point
                             DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-                              SELECT CASE(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType)
+                              SELECT CASE(FIELD_VARIABLE%components(component_idx)%interpolationType)
                               CASE(FIELD_CONSTANT_INTERPOLATION)
                                 !Do nothing
                               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
@@ -5054,7 +5054,7 @@ CONTAINS
                               CASE DEFAULT
                                 localError="The field component interpolation type of "// &
                                   & TRIM(NumberToVString(FIELD_INTERPOLATION_PARAMETERS% &
-                                  & FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType,"*",err,error))// &
+                                  & fieldVariable%components(component_idx)%interpolationType,"*",err,error))// &
                                   & " is invalid for component index "// &
                                   & TRIM(NumberToVString(component_idx,"*",err,error))//"."
                               END SELECT
@@ -5112,17 +5112,17 @@ CONTAINS
   !
 
   !>Interpolates a field to give the physical value of the field at a node in another field. Note that as we are at a node then we do not have any xi directions and thus we can not talk about gradients of the field wrt to xi. Because derviatives of fields can be discountinuous at a node the average derivative over all the elements surrounding the node is calculated.
-  SUBROUTINE FIELD_INTERPOLATE_FIELD_NODE(PHYSICAL_DERIVATIVE_TYPE,PARAMETER_SET_TYPE,FIELD,VARIABLE_TYPE,COMPONENT_NUMBER, &
+  SUBROUTINE FIELD_INTERPOLATE_FIELD_NODE(physicalDerivativeType,PARAMETER_SET_TYPE,FIELD,VARIABLE_TYPE,COMPONENT_NUMBER, &
     & NODE_NUMBER,PHYSICAL_POINT,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: PHYSICAL_DERIVATIVE_TYPE !<The physical derivative type of the field interpolation \see CONSTANTS_PhysicalDerivativeConstants
+    INTEGER(INTG), INTENT(IN) :: physicalDerivativeType !<The physical derivative type of the field interpolation \see CONSTANTS_PhysicalDerivativeConstants
     INTEGER(INTG), INTENT(IN) :: PARAMETER_SET_TYPE !<The parameter set of the field to interpolate.
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<The field containing the node to interpolate at.
+    TYPE(FieldType), POINTER :: FIELD !<The field containing the node to interpolate at.
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The variable type containing the node to interpolate at
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The component number to field that contains the node to interpolate at
     INTEGER(INTG), INTENT(IN) :: NODE_NUMBER !<The node number in the field variable component to interpolate the field at
-    TYPE(FIELD_PHYSICAL_POINT_TYPE), POINTER :: PHYSICAL_POINT !<The pointer to the physical point for the field. On return it will contain the values.
+    TYPE(FieldPhysicalPointType), POINTER :: PHYSICAL_POINT !<The pointer to the physical point for the field. On return it will contain the values.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -5135,26 +5135,26 @@ CONTAINS
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_TYPE), POINTER :: INTERP_FIELD
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: FIELD_INTERPOLATED_POINT,GEOMETRIC_INTERPOLATED_POINT
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: FIELD_INTERPOLATION_PARAMETERS,GEOMETRIC_INTERPOLATION_PARAMETERS
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,INTERP_VARIABLE,GEOMETRIC_VARIABLE
+    TYPE(FieldType), POINTER :: INTERP_FIELD
+    TYPE(FieldInterpolatedPointType), POINTER :: FIELD_INTERPOLATED_POINT,GEOMETRIC_INTERPOLATED_POINT
+    TYPE(FieldInterpolationParametersType), POINTER :: FIELD_INTERPOLATION_PARAMETERS,GEOMETRIC_INTERPOLATION_PARAMETERS
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,INTERP_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_INTERPOLATE_FIELD_NODE",err,error,*999)
 
     IF(ASSOCIATED(PHYSICAL_POINT)) THEN
-      FIELD_INTERPOLATED_POINT=>PHYSICAL_POINT%FIELD_INTERPOLATED_POINT
+      FIELD_INTERPOLATED_POINT=>PHYSICAL_POINT%fieldInterpolatedPoint
       IF(ASSOCIATED(FIELD_INTERPOLATED_POINT)) THEN
-        GEOMETRIC_INTERPOLATED_POINT=>PHYSICAL_POINT%GEOMETRIC_INTERPOLATED_POINT
+        GEOMETRIC_INTERPOLATED_POINT=>PHYSICAL_POINT%geometricInterpolatedPoint
         IF(ASSOCIATED(GEOMETRIC_INTERPOLATED_POINT)) THEN
-          FIELD_INTERPOLATION_PARAMETERS=>FIELD_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS
+          FIELD_INTERPOLATION_PARAMETERS=>FIELD_INTERPOLATED_POINT%interpolationParameters
           IF(ASSOCIATED(FIELD_INTERPOLATION_PARAMETERS)) THEN
-            GEOMETRIC_INTERPOLATION_PARAMETERS=>GEOMETRIC_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS
+            GEOMETRIC_INTERPOLATION_PARAMETERS=>GEOMETRIC_INTERPOLATED_POINT%interpolationParameters
             IF(ASSOCIATED(GEOMETRIC_INTERPOLATION_PARAMETERS)) THEN
-              INTERP_VARIABLE=>FIELD_INTERPOLATION_PARAMETERS%FIELD_VARIABLE
+              INTERP_VARIABLE=>FIELD_INTERPOLATION_PARAMETERS%fieldVariable
               IF(ASSOCIATED(INTERP_VARIABLE)) THEN
-                GEOMETRIC_VARIABLE=>GEOMETRIC_INTERPOLATION_PARAMETERS%FIELD_VARIABLE
+                GEOMETRIC_VARIABLE=>GEOMETRIC_INTERPOLATION_PARAMETERS%fieldVariable
                 IF(ASSOCIATED(GEOMETRIC_VARIABLE)) THEN
                   INTERP_FIELD=>INTERP_VARIABLE%FIELD
                   IF(ASSOCIATED(INTERP_FIELD)) THEN
@@ -5164,7 +5164,7 @@ CONTAINS
                       NULLIFY(FIELD_VARIABLE)
                       CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
                       IF(COMPONENT_NUMBER>0.AND.COMPONENT_NUMBER<=FIELD_VARIABLE%numberOfComponents) THEN
-                        DOMAIN=>FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%DOMAIN
+                        DOMAIN=>FIELD_VARIABLE%components(COMPONENT_NUMBER)%DOMAIN
                         IF(ASSOCIATED(DOMAIN)) THEN
                           NULLIFY(domainTopology)
                           CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
@@ -5174,16 +5174,16 @@ CONTAINS
                           CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
                           IF(NODE_NUMBER>0.AND.NODE_NUMBER<=domainNodes%numberOfNodes) THEN
                             PHYSICAL_POINT%VALUES=0.0_DP
-                            IF(PHYSICAL_DERIVATIVE_TYPE==NO_PHYSICAL_DERIV) THEN
+                            IF(physicalDerivativeType==NO_PHYSICAL_DERIV) THEN
                               numberOfSurroundingElements=1
                             ELSE
-                              numberOfSurroundingElements=domainNodes%NODES(NODE_NUMBER)% &
+                              numberOfSurroundingElements=domainNodes%nodes(NODE_NUMBER)% &
                                 & numberOfSurroundingElements
                               PHYSICAL_POINT%VALUES=0.0_DP
                             ENDIF
                             !Loop over the elements surrounding the node
                             DO elem_idx=1,numberOfSurroundingElements
-                              element=domainNodes%NODES(NODE_NUMBER)%surroundingElements(elem_idx)
+                              element=domainNodes%nodes(NODE_NUMBER)%surroundingElements(elem_idx)
                               CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(PARAMETER_SET_TYPE,element, &
                                 & FIELD_INTERPOLATION_PARAMETERS,err,error,*999)
                               NULLIFY(basis)
@@ -5197,10 +5197,10 @@ CONTAINS
                               ENDDO
                               IF(LOCAL_NODE_NUMBER/=0) THEN
                                 CALL BASIS_LOCAL_NODE_XI_CALCULATE(BASIS,LOCAL_NODE_NUMBER,XI,err,error,*999)  
-                                SELECT CASE(PHYSICAL_DERIVATIVE_TYPE)
+                                SELECT CASE(physicalDerivativeType)
                                 CASE(NO_PHYSICAL_DERIV)
                                   DO component_idx=1,INTERP_VARIABLE%numberOfComponents
-                                    SELECT CASE(INTERP_VARIABLE%COMPONENTS(component_idx)%interpolationType)
+                                    SELECT CASE(INTERP_VARIABLE%components(component_idx)%interpolationType)
                                     CASE(FIELD_CONSTANT_INTERPOLATION)
                                       PHYSICAL_POINT%VALUES(component_idx)=FIELD_INTERPOLATION_PARAMETERS% &
                                         & PARAMETERS(1,component_idx)
@@ -5209,7 +5209,7 @@ CONTAINS
                                         & PARAMETERS(1,component_idx)
                                     CASE(FIELD_NODE_BASED_INTERPOLATION)
                                       PHYSICAL_POINT%VALUES(component_idx)=BASIS_INTERPOLATE_XI( &
-                                        & FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR,NO_PART_DERIV, &
+                                        & FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr,NO_PART_DERIV, &
                                         & XI,FIELD_INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
                                       IF(err/=0) GOTO 999
                                     CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -5220,15 +5220,15 @@ CONTAINS
                                       CALL FlagError("Not implemented.",err,error,*999)
                                     CASE DEFAULT
                                       localError="The field component interpolation type of "// &
-                                        & TRIM(NumberToVString(INTERP_VARIABLE%COMPONENTS(component_idx)% &
+                                        & TRIM(NumberToVString(INTERP_VARIABLE%components(component_idx)% &
                                         & interpolationType,"*",err,error))//" is invalid for component index "// &
                                         & TRIM(NumberToVString(component_idx,"*",err,error))//"."
                                     END SELECT
                                   ENDDO! component_idx
-                                  PHYSICAL_POINT%PHYSICAL_DERIVATIVE_TYPE=NO_PHYSICAL_DERIV
+                                  PHYSICAL_POINT%physicalDerivativeType=NO_PHYSICAL_DERIV
                                 CASE(GRADIENT_PHYSICAL_DERIV)
                                   DO component_idx=1,INTERP_VARIABLE%numberOfComponents
-                                    SELECT CASE(INTERP_VARIABLE%COMPONENTS(component_idx)%interpolationType)
+                                    SELECT CASE(INTERP_VARIABLE%components(component_idx)%interpolationType)
                                     CASE(FIELD_CONSTANT_INTERPOLATION)
                                       !There is no gradient for constant interpolation
                                       PHYSICAL_POINT%VALUES(component_idx)=0.0_DP
@@ -5239,11 +5239,11 @@ CONTAINS
                                       CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element, &
                                         & GEOMETRIC_INTERPOLATION_PARAMETERS,err,error,*999)
                                       !Now process all the first partial derivatives
-                                      DO xi_idx=1,FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+                                      DO xi_idx=1,FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
                                         partial_deriv_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx)
                                         !Interpolate the field
                                         FIELD_INTERPOLATED_POINT%VALUES(component_idx,partial_deriv_idx) = &
-                                          & BASIS_INTERPOLATE_XI(FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR, &
+                                          & BASIS_INTERPOLATE_XI(FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr, &
                                           & partial_deriv_idx,XI,FIELD_INTERPOLATION_PARAMETERS%PARAMETERS(:, &
                                           & component_idx),err,error)
                                         IF(err/=0) GOTO 999
@@ -5269,7 +5269,7 @@ CONTAINS
                                     CASE DEFAULT
                                       localError="The field component interpolation type of "// &
                                         & TRIM(NumberToVString(FIELD_INTERPOLATION_PARAMETERS% &
-                                        & FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType,"*",err,error))// &
+                                        & fieldVariable%components(component_idx)%interpolationType,"*",err,error))// &
                                         & " is invalid for component index "// &
                                         & TRIM(NumberToVString(component_idx,"*",err,error))//"."
                                     END SELECT
@@ -5277,17 +5277,17 @@ CONTAINS
                                   !Form the physical derivative
                                   CALL INVERT(DX_DXI,DXI_DX,DET_DX_DXI,err,error,*999)
                                   DO component_idx=1,INTERP_VARIABLE%numberOfComponents
-                                    DO xi_idx=1,FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+                                    DO xi_idx=1,FIELD_INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
                                       partial_deriv_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx)
                                       PHYSICAL_POINT%VALUES(component_idx)=PHYSICAL_POINT%VALUES(component_idx)+ &
                                         & FIELD_INTERPOLATED_POINT%VALUES(component_idx,partial_deriv_idx)* &
                                         & DXI_DX(xi_idx,component_idx)
                                     ENDDO !xi_idx
                                   ENDDO !component_idx
-                                  PHYSICAL_POINT%PHYSICAL_DERIVATIVE_TYPE=GRADIENT_PHYSICAL_DERIV
+                                  PHYSICAL_POINT%physicalDerivativeType=GRADIENT_PHYSICAL_DERIV
                                 CASE DEFAULT
                                   localError="The physical derivative type of "// &
-                                    & TRIM(NumberToVString(PHYSICAL_DERIVATIVE_TYPE,"*",err,error))//" is invalid."
+                                    & TRIM(NumberToVString(physicalDerivativeType,"*",err,error))//" is invalid."
                                   CALL FlagError(localError,err,error,*999)
                                 END SELECT
                               ELSE
@@ -5297,10 +5297,10 @@ CONTAINS
                                 CALL FlagError(localError,err,error,*999)
                               ENDIF
                             ENDDO !elem_idx
-                            IF(PHYSICAL_DERIVATIVE_TYPE==NO_PHYSICAL_DERIV) THEN
+                            IF(physicalDerivativeType==NO_PHYSICAL_DERIV) THEN
                               !Now calculate the average of the interpolated physical point
                               DO component_idx=1,INTERP_VARIABLE%numberOfComponents
-                                SELECT CASE(INTERP_VARIABLE%COMPONENTS(component_idx)%interpolationType)
+                                SELECT CASE(INTERP_VARIABLE%components(component_idx)%interpolationType)
                                 CASE(FIELD_CONSTANT_INTERPOLATION)
                                   !Do nothing
                                 CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
@@ -5316,7 +5316,7 @@ CONTAINS
                                   CALL FlagError("Not implemented.",err,error,*999)
                                 CASE DEFAULT
                                   localError="The field component interpolation type of "// &
-                                    & TRIM(NumberToVString(INTERP_VARIABLE%COMPONENTS(component_idx)% &
+                                    & TRIM(NumberToVString(INTERP_VARIABLE%components(component_idx)% &
                                     & interpolationType,"*",err,error))// &
                                     & " is invalid for component index "// &
                                     & TRIM(NumberToVString(component_idx,"*",err,error))//"."
@@ -5378,25 +5378,25 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates a field at a face gauss point to give an interpolated point. PARTIAL_DERIVATIVE_TYPE controls which partial derivatives are evaluated. If it is NO_PART_DERIV then only the field values are interpolated. If it is FIRST_PART_DERIV then the field values and first partial derivatives are interpolated. If it is SECOND_PART_DERIV the the field values and first and second partial derivatives are evaluated.
-  SUBROUTINE FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(PARTIAL_DERIVATIVE_TYPE,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER, &
+  !>Interpolates a field at a face gauss point to give an interpolated point. partialDerivativeType controls which partial derivatives are evaluated. If it is NO_PART_DERIV then only the field values are interpolated. If it is FIRST_PART_DERIV then the field values and first partial derivatives are interpolated. If it is SECOND_PART_DERIV the the field values and first and second partial derivatives are evaluated.
+  SUBROUTINE FIELD_INTERPOLATE_LOCAL_FACE_GAUSS(partialDerivativeType,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER, &
     & GAUSS_POINT_NUMBER,INTERPOLATED_POINT,err,error,*,componentType)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_TYPE !<The partial derivative type of the provided field interpolation
+    INTEGER(INTG), INTENT(IN) :: partialDerivativeType !<The partial derivative type of the provided field interpolation
     INTEGER(INTG), INTENT(IN) :: QUADRATURE_SCHEME !<The quadrature scheme of the Gauss points \see BASIS_ROUTINES_QuadratureSchemes,BASIS_ROUTINES
     INTEGER(INTG), INTENT(IN) :: LOCAL_FACE_NUMBER !<The index number of the face to interpolate on
     INTEGER(INTG), INTENT(IN) :: GAUSS_POINT_NUMBER !<The number of the face Gauss point to interpolate the field at
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !<The pointer to the interpolated point which will contain the field interpolation information at the specified Gauss point
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT !<The pointer to the interpolated point which will contain the field interpolation information at the specified Gauss point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
     !Local Variables
     INTEGER(INTG) :: component_idx,ni,nu,startComponentIdx,endComponentIdx
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_TYPE), POINTER :: field,geometricField
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldType), POINTER :: field,geometricField
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_INTERPOLATE_LOCAL_FACE_GAUSS",err,error,*999)
@@ -5452,20 +5452,20 @@ CONTAINS
       startComponentIdx=1
       endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
-    SELECT CASE(PARTIAL_DERIVATIVE_TYPE)
+    SELECT CASE(partialDerivativeType)
     CASE(NO_PART_DERIV)
       DO component_idx=startComponentIdx,endComponentIdx
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)              
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           !                 INTERPOLATED_POINT%VALUES(component_idx,1)=BASIS_INTERPOLATE_GAUSS(INTERPOLATION_PARAMETERS%BASES( &
-          !                   & component_idx)%PTR,NO_PART_DERIV,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATION_PARAMETERS% &
+          !                   & component_idx)%ptr,NO_PART_DERIV,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATION_PARAMETERS% &
           !                   & PARAMETERS(:,component_idx),err,error)
           INTERPOLATED_POINT%VALUES(component_idx,1)=BASIS_INTERPOLATE_LOCAL_FACE_GAUSS(INTERPOLATION_PARAMETERS%BASES( &
-            & component_idx)%PTR,NO_PART_DERIV,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER, &
+            & component_idx)%ptr,NO_PART_DERIV,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER, &
             & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
           IF(err/=0) GOTO 999
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -5482,17 +5482,17 @@ CONTAINS
         CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
           & err,error,*999)
       ENDDO! component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=NO_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=NO_PART_DERIV
     CASE(FIRST_PART_DERIV)
       DO component_idx=startComponentIdx,endComponentIdx
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           !Handle the first case of no partial derivative
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -5504,7 +5504,7 @@ CONTAINS
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -5513,22 +5513,22 @@ CONTAINS
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
           !                 INTERPOLATED_POINT%VALUES(component_idx,1)=BASIS_INTERPOLATE_GAUSS(INTERPOLATION_PARAMETERS%BASES( &
-          !                   & component_idx)%PTR,NO_PART_DERIV,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATION_PARAMETERS% &
+          !                   & component_idx)%ptr,NO_PART_DERIV,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER,INTERPOLATION_PARAMETERS% &
           !                   & PARAMETERS(:,component_idx),err,error)
           INTERPOLATED_POINT%VALUES(component_idx,1)=BASIS_INTERPOLATE_LOCAL_FACE_GAUSS(INTERPOLATION_PARAMETERS%BASES( &
-            & component_idx)%PTR,NO_PART_DERIV,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER, &
+            & component_idx)%ptr,NO_PART_DERIV,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER, &
             & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
           IF(err/=0) GOTO 999
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             !                   INTERPOLATED_POINT%VALUES(component_idx,nu)=BASIS_INTERPOLATE_GAUSS(INTERPOLATION_PARAMETERS% &
-            !                     & BASES(component_idx)%PTR,nu,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER, &
+            !                     & BASES(component_idx)%ptr,nu,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER, &
             !                     & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=BASIS_INTERPOLATE_LOCAL_FACE_GAUSS(INTERPOLATION_PARAMETERS%BASES( &
-              & component_idx)%PTR,nu,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER, &
+              & component_idx)%ptr,nu,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER, &
               & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
             IF(err/=0) GOTO 999
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -5546,17 +5546,17 @@ CONTAINS
             & " is invalid for component index "//TRIM(NumberToVString(component_idx,"*",err,error))//"."
         END SELECT
       ENDDO! component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=FIRST_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=FIRST_PART_DERIV
     CASE(SECOND_PART_DERIV)
       DO component_idx=startComponentIdx,endComponentIdx
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           !Handle the first case of no partial derivative
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
               & err,error,*999)
@@ -5567,18 +5567,18 @@ CONTAINS
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
               & err,error,*999)
           ENDDO !nu
         CASE(FIELD_NODE_BASED_INTERPOLATION)              
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             !                   INTERPOLATED_POINT%VALUES(component_idx,nu)=BASIS_INTERPOLATE_GAUSS(INTERPOLATION_PARAMETERS% &
-            !                     & BASES(component_idx)%PTR,nu,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER, &
+            !                     & BASES(component_idx)%ptr,nu,QUADRATURE_SCHEME,GAUSS_POINT_NUMBER, &
             !                     & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=BASIS_INTERPOLATE_LOCAL_FACE_GAUSS(INTERPOLATION_PARAMETERS%BASES( &
-              & component_idx)%PTR,nu,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER, &
+              & component_idx)%ptr,nu,QUADRATURE_SCHEME,LOCAL_FACE_NUMBER,GAUSS_POINT_NUMBER, &
               & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
             IF(err/=0) GOTO 999
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -5596,9 +5596,9 @@ CONTAINS
             & " is invalid for component index "//TRIM(NumberToVString(component_idx,"*",err,error))//"."
         END SELECT
       ENDDO !component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=SECOND_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=SECOND_PART_DERIV
     CASE DEFAULT
-      localError="The partial derivative type of "//TRIM(NumberToVString(PARTIAL_DERIVATIVE_TYPE,"*",err,error))// &
+      localError="The partial derivative type of "//TRIM(NumberToVString(partialDerivativeType,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -5614,22 +5614,22 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates a field at a xi location to give an interpolated point. XI is the element location to be interpolated at. PARTIAL_DERIVATIVE_TYPE controls which partial derivatives are evaluated. If it is NO_PART_DERIV then only the field values are interpolated. If it is FIRST_PART_DERIV then the field values and first partial derivatives are interpolated. If it is SECOND_PART_DERIV the the field values and first and second partial derivatives are evaluated. Old CMISS name PXI
-  SUBROUTINE FIELD_INTERPOLATE_XI(PARTIAL_DERIVATIVE_TYPE,XI,INTERPOLATED_POINT,err,error,*,componentType)
+  !>Interpolates a field at a xi location to give an interpolated point. XI is the element location to be interpolated at. partialDerivativeType controls which partial derivatives are evaluated. If it is NO_PART_DERIV then only the field values are interpolated. If it is FIRST_PART_DERIV then the field values and first partial derivatives are interpolated. If it is SECOND_PART_DERIV the the field values and first and second partial derivatives are evaluated. Old CMISS name PXI
+  SUBROUTINE FIELD_INTERPOLATE_XI(partialDerivativeType,XI,INTERPOLATED_POINT,err,error,*,componentType)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: PARTIAL_DERIVATIVE_TYPE !<The partial derivative type of the provide field interpolation
+    INTEGER(INTG), INTENT(IN) :: partialDerivativeType !<The partial derivative type of the provide field interpolation
     REAL(DP), INTENT(IN) :: XI(:) !<XI(ni). The ni'th Xi coordinate to evaluate the field at
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !<The pointer to the interpolated point which will contain the field interpolation information at the specified Xi point
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT !<The pointer to the interpolated point which will contain the field interpolation information at the specified Xi point
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
     !Local Variables
     INTEGER(INTG) :: component_idx,ni,nu,startComponentIdx,endComponentIdx
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_TYPE), POINTER :: field,geometricField
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldType), POINTER :: field,geometricField
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_INTERPOLATE_XI",err,error,*999)
@@ -5687,17 +5687,17 @@ CONTAINS
       startComponentIdx=1
       endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
-    SELECT CASE(PARTIAL_DERIVATIVE_TYPE)
+    SELECT CASE(partialDerivativeType)
     CASE(NO_PART_DERIV)
       DO component_idx=startComponentIdx,endComponentIdx
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)              
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           INTERPOLATED_POINT%VALUES(component_idx,1)=BASIS_INTERPOLATE_XI(INTERPOLATION_PARAMETERS% &
-            & BASES(component_idx)%PTR,NO_PART_DERIV,XI,INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
+            & BASES(component_idx)%ptr,NO_PART_DERIV,XI,INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
           IF(err/=0) GOTO 999
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
@@ -5713,17 +5713,17 @@ CONTAINS
         CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
           & err,error,*999)
       ENDDO !component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=NO_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=NO_PART_DERIV
     CASE(FIRST_PART_DERIV)
       DO component_idx=startComponentIdx,endComponentIdx
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           !Handle the first case of no partial derivative
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -5735,7 +5735,7 @@ CONTAINS
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -5744,15 +5744,15 @@ CONTAINS
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
           INTERPOLATED_POINT%VALUES(component_idx,1)=BASIS_INTERPOLATE_XI(INTERPOLATION_PARAMETERS% &
-            & BASES(component_idx)%PTR,NO_PART_DERIV,XI,INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
+            & BASES(component_idx)%ptr,NO_PART_DERIV,XI,INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),err,error)
           IF(err/=0) GOTO 999
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process all the first partial derivatives
-          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfXi
+          DO ni=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfXi
             nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(ni)
             INTERPOLATED_POINT%VALUES(component_idx,nu)=BASIS_INTERPOLATE_XI(INTERPOLATION_PARAMETERS% &
-              & BASES(component_idx)%PTR,nu,XI,INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx), &
+              & BASES(component_idx)%ptr,nu,XI,INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx), &
               & err,error)
             IF(err/=0) GOTO 999
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -5770,17 +5770,17 @@ CONTAINS
             & " is invalid for component index "//TRIM(NumberToVString(component_idx,"*",err,error))//"."
         END SELECT
       ENDDO !component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=FIRST_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=FIRST_PART_DERIV
     CASE(SECOND_PART_DERIV)
       DO component_idx=startComponentIdx,endComponentIdx
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           !Handle the first case of no partial derivative
           INTERPOLATED_POINT%VALUES(component_idx,1)=INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
               & err,error,*999)
@@ -5791,15 +5791,15 @@ CONTAINS
           CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,NO_PART_DERIV,INTERPOLATED_POINT%VALUES(component_idx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             INTERPOLATED_POINT%VALUES(component_idx,nu)=0.0_DP
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
               & err,error,*999)
           ENDDO !nu
         CASE(FIELD_NODE_BASED_INTERPOLATION)              
-          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR%numberOfPartialDerivatives
+          DO nu=1,INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr%numberOfPartialDerivatives
             INTERPOLATED_POINT%VALUES(component_idx,nu)=BASIS_INTERPOLATE_XI(INTERPOLATION_PARAMETERS% &
-              & BASES(component_idx)%PTR,nu,XI,INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx), &
+              & BASES(component_idx)%ptr,nu,XI,INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx), &
               & err,error)
             IF(err/=0) GOTO 999
             CALL COORDINATE_INTERPOLATION_ADJUST(COORDINATE_SYSTEM,nu,INTERPOLATED_POINT%VALUES(component_idx,nu), &
@@ -5817,16 +5817,16 @@ CONTAINS
             & " is invalid for component index "//TRIM(NumberToVString(component_idx,"*",err,error))//"."
         END SELECT
       ENDDO !component_idx
-      INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE=SECOND_PART_DERIV
+      INTERPOLATED_POINT%partialDerivativeType=SECOND_PART_DERIV
     CASE DEFAULT
-      localError="The partial derivative type of "//TRIM(NumberToVString(PARTIAL_DERIVATIVE_TYPE,"*",err,error))// &
+      localError="The partial derivative type of "//TRIM(NumberToVString(partialDerivativeType,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     !ELSE
     !  localError="Invalid number of Xi directions. The supplied Xi has "// &
     !    & TRIM(NumberToVString(SIZE(XI,1),"*",err,error))//" directions and the required number of directions is "// &
-    !    & TRIM(NumberToVString(INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD%DECOMPOSITION%MESH%numberOfDimensions, &
+    !    & TRIM(NumberToVString(INTERPOLATED_POINT%interpolationParameters%FIELD%DECOMPOSITION%MESH%numberOfDimensions, &
     !    & "*",err,error))
     !  CALL FlagError(localError,err,error,*999)
     !ENDIF
@@ -5847,7 +5847,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER, INTENT(IN) :: interpolatedPointMetrics !<A pointer to the interpolated point metric information to calculate the position etc. for
+    TYPE(FieldInterpolatedPointMetricsType), POINTER, INTENT(IN) :: interpolatedPointMetrics !<A pointer to the interpolated point metric information to calculate the position etc. for
     LOGICAL, INTENT(IN) :: reverseNormal !<Reverse normal diretion if .TRUE.
     REAL(DP), INTENT(OUT) :: position(:) !<position(coordinate_idx), on exit the geometric position of the node
     REAL(DP), INTENT(OUT) :: normal(:) !<normal(coordinate_idx), on exit the normal vector
@@ -5856,7 +5856,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: coordinateIdx,numberOfXDimensions,numberOfXiDimensions,xiIdx
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_PositionNormalTangentsCalculateIntPtMetric",err,error,*999)
@@ -5886,7 +5886,7 @@ CONTAINS
         & TRIM(NumberToVString(numberOfXiDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    interpolatedPoint=>interpolatedPointMetrics%INTERPOLATED_POINT
+    interpolatedPoint=>interpolatedPointMetrics%interpolatedPoint
     IF(.NOT.ASSOCIATED(interpolatedPoint)) &
       & CALL FlagError("Interpolated point metrics interpolated point is not associated.",err,error,*999)
 
@@ -5896,7 +5896,7 @@ CONTAINS
     CASE(1) !For lines
       normal(1:numberOfXDimensions)=0.0_DP
       DO coordinateIdx=1,numberOfXDimensions
-        tangents(coordinateIdx,1)=interpolatedPointMetrics%DX_DXI(coordinateIdx,1)
+        tangents(coordinateIdx,1)=interpolatedPointMetrics%dXdXi(coordinateIdx,1)
       ENDDO !coordinateIdx 
       CALL Normalise(tangents(1:numberOfXDimensions,1),tangents(1:numberOfXDimensions,1),err,error,*999)
       SELECT CASE(numberOfXDimensions)
@@ -5913,7 +5913,7 @@ CONTAINS
     CASE(2) !For faces
       DO xiIdx=1,numberOfXiDimensions
         DO coordinateIdx=1,numberOfXDimensions
-          tangents(coordinateIdx,xiIdx)=interpolatedPointMetrics%DX_DXI(coordinateIdx,xiIdx)
+          tangents(coordinateIdx,xiIdx)=interpolatedPointMetrics%dXdXi(coordinateIdx,xiIdx)
         ENDDO !coordinateIdx
         CALL Normalise(tangents(1:numberOfXDimensions,xiIdx),tangents(1:numberOfXDimensions,xiIdx),err,error,*999)
       ENDDO !xiIdx
@@ -5958,7 +5958,7 @@ CONTAINS
     & POSITION,NORMAL,TANGENTS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER, INTENT(IN) :: FIELD !<A pointer to the field to interpolate the geometric information for
+    TYPE(FieldType), POINTER, INTENT(IN) :: FIELD !<A pointer to the field to interpolate the geometric information for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The variable type of the node to compute the geometric information for
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The component number of the node to compute the geometric information for
     INTEGER(INTG), INTENT(IN) :: LOCAL_NODE_NUMBER !<The local node number to compute the geometric information for
@@ -5980,10 +5980,10 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: DECOMPOSITION
     TYPE(DecompositionTopologyType), POINTER :: DECOMP_TOPOLOGY
     TYPE(DecompositionElementsType), POINTER :: DECOMP_ELEMENTS
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:)
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINTS(:)
+    TYPE(FieldType), POINTER :: GEOMETRIC_FIELD
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: INTERPOLATION_PARAMETERS(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: INTERPOLATED_POINTS(:)
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_PositionNormalTangentsCalculateNode",err,error,*999)
@@ -5995,7 +5995,7 @@ CONTAINS
     CALL Field_GeometricFieldGet(field,GEOMETRIC_FIELD,err,error,*999)
     NULLIFY(FIELD_VARIABLE)
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
-    DIMS=GEOMETRIC_FIELD%VARIABLES(1)%numberOfComponents !\TODO: clean this up
+    DIMS=GEOMETRIC_FIELD%variables(1)%numberOfComponents !\TODO: clean this up
     !               DIMS=FIELD_VARIABLE%numberOfComponents !\TODO: clean this up
     IF(COMPONENT_NUMBER>=1.AND.COMPONENT_NUMBER<=DIMS) THEN
       NULLIFY(domain)
@@ -6012,7 +6012,7 @@ CONTAINS
         IF(SIZE(NORMAL,1)>=DIMS) THEN
           IF(SIZE(TANGENTS,1)>=DIMS) THEN
             IF(SIZE(DXDXI,1)>=DIMS) THEN
-              SELECT CASE(FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType)
+              SELECT CASE(FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType)
               CASE(FIELD_CONSTANT_INTERPOLATION)
                 localError="Cannot compute the normal at a node for component number "// &
                   & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))//" for variable type "// &
@@ -6042,8 +6042,8 @@ CONTAINS
                     & INTERPOLATION_PARAMETERS,err,error,*999)
                   CALL FIELD_INTERPOLATED_POINTS_INITIALISE(INTERPOLATION_PARAMETERS, &
                     & INTERPOLATED_POINTS,err,error,*999)
-                  DO element_idx=1,DOMAIN_NODES%NODES(LOCAL_NODE_NUMBER)%numberOfSurroundingElements
-                    element=DOMAIN_NODES%NODES(LOCAL_NODE_NUMBER)%surroundingElements(element_idx)
+                  DO element_idx=1,DOMAIN_NODES%nodes(LOCAL_NODE_NUMBER)%numberOfSurroundingElements
+                    element=DOMAIN_NODES%nodes(LOCAL_NODE_NUMBER)%surroundingElements(element_idx)
                     NULLIFY(basis)
                     CALL DomainElements_BasisGet(DOMAIN_ELEMENTS,element,basis,err,error,*999)
                     !Find local node number in the basis
@@ -6061,9 +6061,9 @@ CONTAINS
                     CALL BASIS_LOCAL_NODE_XI_CALCULATE(BASIS,local_node,XI,err,error,*999)
                     !Interpolate the geometric field at the xi position.
                     CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,element, &
-                      & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+                      & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                     CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,XI(1:BASIS%numberOfXi), &
-                      & INTERPOLATED_POINTS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+                      & INTERPOLATED_POINTS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                     !Grab the position. This shouldn't vary between elements so do it once only
                     IF(element_idx==1) POSITION(1:DIMS)=INTERPOLATED_POINTS(FIELD_U_VARIABLE_TYPE)% &
                       & PTR%VALUES(1:DIMS,NO_PART_DERIV)
@@ -6073,12 +6073,12 @@ CONTAINS
                     DO component_idx=1,DIMS
                       DO xi_idx=1,BASIS%numberOfXi
                         derivative_idx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xi_idx) !2,4,7
-                        DXDXI(component_idx,xi_idx)=INTERPOLATED_POINTS(FIELD_U_VARIABLE_TYPE)%PTR% &
+                        DXDXI(component_idx,xi_idx)=INTERPOLATED_POINTS(FIELD_U_VARIABLE_TYPE)%ptr% &
                           & VALUES(component_idx,derivative_idx) !dx/dxi
                       ENDDO
                     ENDDO
                     !Calculate the tangents and normal vectors
-                    IF(DOMAIN_NODES%NODES(LOCAL_NODE_NUMBER)%boundaryNode) THEN
+                    IF(DOMAIN_NODES%nodes(LOCAL_NODE_NUMBER)%boundaryNode) THEN
                       SELECT CASE(BASIS%TYPE)
                       CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
                         DO nic=-BASIS%numberOfXiCoordinates,BASIS%numberOfXiCoordinates
@@ -6219,7 +6219,7 @@ CONTAINS
                 CALL FlagError(localError,err,error,*999)
               CASE DEFAULT
                 localError="The interpolation type of "//TRIM(NumberToVString &
-                  & (FIELD_VARIABLE%COMPONENTS(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
+                  & (FIELD_VARIABLE%components(COMPONENT_NUMBER)%interpolationType,"*",err,error))// &
                   & " is invalid for component number "//TRIM(NumberToVString(COMPONENT_NUMBER,"*", &
                   & err,error))//" for variable type "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
                   & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -6288,7 +6288,7 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATED_POINT_FINALISE(INTERPOLATED_POINT,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !<A pointer to the interpolated point to finalise
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT !<A pointer to the interpolated point to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6315,16 +6315,16 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATED_POINT_INITIALISE(INTERPOLATION_PARAMETERS,INTERPOLATED_POINT,err,error,*,componentType)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<A pointer to the interpolation parameters to initialise the interpolated point for
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !<On exit, A pointer to the interpolated point that has been initialised
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<A pointer to the interpolation parameters to initialise the interpolated point for
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT !<On exit, A pointer to the interpolated point that has been initialised
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,numberOfDimensions,numberOfComponents
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_TYPE), POINTER :: field,geometricField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldType), POINTER :: field,geometricField
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
     TYPE(VARYING_STRING) :: DUMMY_ERROR,localError
 
     ENTERS("FIELD_INTERPOLATED_POINT_INITIALISE",err,error,*999)
@@ -6340,7 +6340,7 @@ CONTAINS
 
     ALLOCATE(INTERPOLATED_POINT,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate interpolated point",err,error,*999)
-    INTERPOLATED_POINT%INTERPOLATION_PARAMETERS=>INTERPOLATION_PARAMETERS
+    INTERPOLATED_POINT%interpolationParameters=>INTERPOLATION_PARAMETERS
     numberOfDimensions=decomposition%numberOfDimensions
     INTERPOLATED_POINT%maximumPartialDerivativeIndex=PARTIAL_DERIVATIVE_MAXIMUM_MAP(numberOfDimensions)
     !Calculate the number of components for the interpolated point
@@ -6401,7 +6401,7 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATED_POINTS_FINALISE(INTERPOLATED_POINTS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINTS(:) !<A pointer to the interpolated point to finalise
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: INTERPOLATED_POINTS(:) !<A pointer to the interpolated point to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6411,7 +6411,7 @@ CONTAINS
 
     IF(ASSOCIATED(INTERPOLATED_POINTS)) THEN
       DO var_type_idx=1,SIZE(INTERPOLATED_POINTS,1)
-        CALL FIELD_INTERPOLATED_POINT_FINALISE(INTERPOLATED_POINTS(var_type_idx)%PTR,err,error,*999)
+        CALL FIELD_INTERPOLATED_POINT_FINALISE(INTERPOLATED_POINTS(var_type_idx)%ptr,err,error,*999)
       ENDDO !var_type_idx
       DEALLOCATE(INTERPOLATED_POINTS)
     ENDIF
@@ -6431,8 +6431,8 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATED_POINTS_INITIALISE(INTERPOLATION_PARAMETERS,INTERPOLATED_POINTS,err,error,*,componentType)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:) !<A pointer to the interpolation parameters to initialise the interpolated point for
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINTS(:) !<On exit, A pointer to the interpolated point that has been initialised
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: INTERPOLATION_PARAMETERS(:) !<A pointer to the interpolation parameters to initialise the interpolated point for
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: INTERPOLATED_POINTS(:) !<On exit, A pointer to the interpolated point that has been initialised
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
@@ -6449,14 +6449,14 @@ CONTAINS
         ALLOCATE(INTERPOLATED_POINTS(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate interpolated points",err,error,*999)
         DO var_type_idx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-          NULLIFY(INTERPOLATED_POINTS(var_type_idx)%PTR)
-          IF(ASSOCIATED(INTERPOLATION_PARAMETERS(var_type_idx)%PTR)) THEN
+          NULLIFY(INTERPOLATED_POINTS(var_type_idx)%ptr)
+          IF(ASSOCIATED(INTERPOLATION_PARAMETERS(var_type_idx)%ptr)) THEN
             IF(PRESENT(componentType)) THEN
-              CALL FIELD_INTERPOLATED_POINT_INITIALISE(INTERPOLATION_PARAMETERS(var_type_idx)%PTR, &
-                & INTERPOLATED_POINTS(var_type_idx)%PTR,err,error,*999,componentType)
+              CALL FIELD_INTERPOLATED_POINT_INITIALISE(INTERPOLATION_PARAMETERS(var_type_idx)%ptr, &
+                & INTERPOLATED_POINTS(var_type_idx)%ptr,err,error,*999,componentType)
             ELSE
-              CALL FIELD_INTERPOLATED_POINT_INITIALISE(INTERPOLATION_PARAMETERS(var_type_idx)%PTR, &
-                & INTERPOLATED_POINTS(var_type_idx)%PTR,err,error,*999)
+              CALL FIELD_INTERPOLATED_POINT_INITIALISE(INTERPOLATION_PARAMETERS(var_type_idx)%ptr, &
+                & INTERPOLATED_POINTS(var_type_idx)%ptr,err,error,*999)
             ENDIF
           ENDIF
         ENDDO !var_type_idx
@@ -6478,19 +6478,19 @@ CONTAINS
   !
 
   !>Calculates the interpolated point metrics and the associated interpolated point
-  SUBROUTINE FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(JACOBIAN_TYPE,INTERPOLATED_POINT_METRICS,err,error,*)
+  SUBROUTINE FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(jacobianType,INTERPOLATED_POINT_METRICS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: INTERPOLATED_POINT_METRICS !<A pointer to the interpolated point metrics
-    INTEGER(INTG), INTENT(IN) :: JACOBIAN_TYPE !<The Jacobian type of the calculation \see COORDINATE_ROUTINES_JacobianTypes,COORDINATE_ROUTINES
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: INTERPOLATED_POINT_METRICS !<A pointer to the interpolated point metrics
+    INTEGER(INTG), INTENT(IN) :: jacobianType !<The Jacobian type of the calculation \see COORDINATE_ROUTINES_JacobianTypes,COORDINATE_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_TYPE), POINTER :: FIELD
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: FIELD
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("FIELD_INTERPOLATED_POINT_METRICS_CALCULATE",err,error,*999)
 
@@ -6508,7 +6508,7 @@ CONTAINS
       & .OR.FIELD%TYPE==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
       NULLIFY(COORDINATE_SYSTEM)
       CALL FIELD_COORDINATE_SYSTEM_GET(FIELD,COORDINATE_SYSTEM,err,error,*999)
-      CALL COORDINATE_METRICS_CALCULATE(COORDINATE_SYSTEM,JACOBIAN_TYPE,INTERPOLATED_POINT_METRICS,err,error,*999)
+      CALL COORDINATE_METRICS_CALCULATE(COORDINATE_SYSTEM,jacobianType,INTERPOLATED_POINT_METRICS,err,error,*999)
     ELSE
       CALL FlagError("The field is not a geometric or fibre field.",err,error,*999)
     ENDIF
@@ -6528,7 +6528,7 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATED_POINT_METRICS_FINALISE(INTERPOLATED_POINT_METRICS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: INTERPOLATED_POINT_METRICS !<A pointer to the interpolated point metrics to finalise
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: INTERPOLATED_POINT_METRICS !<A pointer to the interpolated point metrics to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6538,8 +6538,8 @@ CONTAINS
     IF(ASSOCIATED(INTERPOLATED_POINT_METRICS)) THEN
       IF(ALLOCATED(INTERPOLATED_POINT_METRICS%GL)) DEALLOCATE(INTERPOLATED_POINT_METRICS%GL)
       IF(ALLOCATED(INTERPOLATED_POINT_METRICS%GU)) DEALLOCATE(INTERPOLATED_POINT_METRICS%GU)
-      IF(ALLOCATED(INTERPOLATED_POINT_METRICS%DX_DXI)) DEALLOCATE(INTERPOLATED_POINT_METRICS%DX_DXI)
-      IF(ALLOCATED(INTERPOLATED_POINT_METRICS%DXI_DX)) DEALLOCATE(INTERPOLATED_POINT_METRICS%DXI_DX)
+      IF(ALLOCATED(INTERPOLATED_POINT_METRICS%dXdXi)) DEALLOCATE(INTERPOLATED_POINT_METRICS%dXdXi)
+      IF(ALLOCATED(INTERPOLATED_POINT_METRICS%dXidX)) DEALLOCATE(INTERPOLATED_POINT_METRICS%dXidX)
       DEALLOCATE(INTERPOLATED_POINT_METRICS)
     ENDIF
 
@@ -6558,8 +6558,8 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATED_POINT_METRICS_INITIALISE(INTERPOLATED_POINT,INTERPOLATED_POINT_METRICS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !A pointer to the interpolated point to initliase the interpolated point metrics for
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: INTERPOLATED_POINT_METRICS !<On exit, a pointer to the interpolated point metrics that have been initialised
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT !A pointer to the interpolated point to initliase the interpolated point metrics for
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: INTERPOLATED_POINT_METRICS !<On exit, a pointer to the interpolated point metrics that have been initialised
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6567,9 +6567,9 @@ CONTAINS
     INTEGER(INTG) :: DUMMY_ERR
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: interpolationParameters
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: DUMMY_ERROR !,localError
 
     ENTERS("FIELD_INTERPOLATED_POINT_METRICS_INITIALISE",err,error,*998)
@@ -6599,19 +6599,19 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate interpolated point metrics convariant tensor.",err,error,*999)
       ALLOCATE(INTERPOLATED_POINT_METRICS%GU(numberOfXiDimensions,numberOfXiDimensions),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate interpolated point metrics contravariant tensor.",err,error,*999)
-      ALLOCATE(INTERPOLATED_POINT_METRICS%DX_DXI(numberOfXDimensions,numberOfXiDimensions),STAT=err)
+      ALLOCATE(INTERPOLATED_POINT_METRICS%dXdXi(numberOfXDimensions,numberOfXiDimensions),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate interpolated point metrics dX_dXi.",err,error,*999)
-      ALLOCATE(INTERPOLATED_POINT_METRICS%DXI_DX(numberOfXiDimensions,numberOfXDimensions),STAT=err)
+      ALLOCATE(INTERPOLATED_POINT_METRICS%dXidX(numberOfXiDimensions,numberOfXDimensions),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate interpolated point metrics dXi_dX.",err,error,*999)
-      INTERPOLATED_POINT_METRICS%INTERPOLATED_POINT=>INTERPOLATED_POINT
+      INTERPOLATED_POINT_METRICS%interpolatedPoint=>INTERPOLATED_POINT
       INTERPOLATED_POINT_METRICS%numberOfXDimensions=numberOfXDimensions
       INTERPOLATED_POINT_METRICS%numberOfXiDimensions=numberOfXiDimensions
       INTERPOLATED_POINT_METRICS%GL=0.0_DP
       INTERPOLATED_POINT_METRICS%GU=0.0_DP
-      INTERPOLATED_POINT_METRICS%DX_DXI=0.0_DP
-      INTERPOLATED_POINT_METRICS%DXI_DX=0.0_DP
-      INTERPOLATED_POINT_METRICS%JACOBIAN=0.0_DP
-      INTERPOLATED_POINT_METRICS%JACOBIAN_TYPE=0
+      INTERPOLATED_POINT_METRICS%dXdXi=0.0_DP
+      INTERPOLATED_POINT_METRICS%dXidX=0.0_DP
+      INTERPOLATED_POINT_METRICS%jacobian=0.0_DP
+      INTERPOLATED_POINT_METRICS%jacobianType=0
       !For now don't flag an error if the number of xi dimensions doesn't match the number of x dimensions.
       !Simply do not allocate the metrics information.
       !        ELSE
@@ -6637,7 +6637,7 @@ CONTAINS
   SUBROUTINE Field_InterpolatedPointsMetricsFinalise(INTERPOLATED_POINTS_METRICS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: INTERPOLATED_POINTS_METRICS(:) !<A pointer to the interpolated point metrics to finalise
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: INTERPOLATED_POINTS_METRICS(:) !<A pointer to the interpolated point metrics to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6647,7 +6647,7 @@ CONTAINS
 
     IF(ASSOCIATED(INTERPOLATED_POINTS_METRICS)) THEN
       DO var_type_idx=1,SIZE(INTERPOLATED_POINTS_METRICS,1)
-        CALL FIELD_INTERPOLATED_POINT_METRICS_FINALISE(INTERPOLATED_POINTS_METRICS(var_type_idx)%PTR,err,error,*999)
+        CALL FIELD_INTERPOLATED_POINT_METRICS_FINALISE(INTERPOLATED_POINTS_METRICS(var_type_idx)%ptr,err,error,*999)
       ENDDO !var_type_idx
       DEALLOCATE(INTERPOLATED_POINTS_METRICS)
     ENDIF
@@ -6666,8 +6666,8 @@ CONTAINS
   SUBROUTINE Field_InterpolatedPointsMetricsInitialise(INTERPOLATED_POINTS,INTERPOLATED_POINTS_METRICS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINTS(:) !A pointer to the interpolated pointS to initliase the interpolated point metrics for
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: INTERPOLATED_POINTS_METRICS(:) !<On exit, a pointer to the interpolated point metrics that have been initialised
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: INTERPOLATED_POINTS(:) !A pointer to the interpolated pointS to initliase the interpolated point metrics for
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: INTERPOLATED_POINTS_METRICS(:) !<On exit, a pointer to the interpolated point metrics that have been initialised
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6684,12 +6684,12 @@ CONTAINS
         IF(err/=0) CALL FlagError("Could not allocate interpolated points metrics.",err,error,*999)
         !Nullify all pointers first so that finalise does not fail on error condition half way through the next loop
         DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-          NULLIFY(INTERPOLATED_POINTS_METRICS(variableTypeIdx)%PTR)          
+          NULLIFY(INTERPOLATED_POINTS_METRICS(variableTypeIdx)%ptr)          
         ENDDO !variableTypeIdx
         DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-          IF(ASSOCIATED(INTERPOLATED_POINTS(variableTypeIdx)%PTR)) &
-            & CALL FIELD_INTERPOLATED_POINT_METRICS_INITIALISE(INTERPOLATED_POINTS(variableTypeIdx)%PTR, &
-            & INTERPOLATED_POINTS_METRICS(variableTypeIdx)%PTR,err,error,*999)
+          IF(ASSOCIATED(INTERPOLATED_POINTS(variableTypeIdx)%ptr)) &
+            & CALL FIELD_INTERPOLATED_POINT_METRICS_INITIALISE(INTERPOLATED_POINTS(variableTypeIdx)%ptr, &
+            & INTERPOLATED_POINTS_METRICS(variableTypeIdx)%ptr,err,error,*999)
         ENDDO !variableTypeIdx
       ENDIF
     ELSE
@@ -6711,7 +6711,7 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATION_PARAMETER_FINALISE(INTERPOLATION_PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<A pointer to the interpolation parameters to finalise
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<A pointer to the interpolation parameters to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6720,9 +6720,9 @@ CONTAINS
 
     IF(ASSOCIATED(INTERPOLATION_PARAMETERS)) THEN
       IF(ALLOCATED(INTERPOLATION_PARAMETERS%BASES)) DEALLOCATE(INTERPOLATION_PARAMETERS%BASES)
-      IF(ALLOCATED(INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS)) DEALLOCATE(INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS)
+      IF(ALLOCATED(INTERPOLATION_PARAMETERS%numberOfParameters)) DEALLOCATE(INTERPOLATION_PARAMETERS%numberOfParameters)
       IF(ALLOCATED(INTERPOLATION_PARAMETERS%PARAMETERS)) DEALLOCATE(INTERPOLATION_PARAMETERS%PARAMETERS)
-      IF(ALLOCATED(INTERPOLATION_PARAMETERS%SCALE_FACTORS)) DEALLOCATE(INTERPOLATION_PARAMETERS%SCALE_FACTORS)      
+      IF(ALLOCATED(INTERPOLATION_PARAMETERS%scaleFactors)) DEALLOCATE(INTERPOLATION_PARAMETERS%scaleFactors)      
       DEALLOCATE(INTERPOLATION_PARAMETERS)
     ENDIF
 
@@ -6740,15 +6740,15 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATION_PARAMETER_INITIALISE(FIELD_VARIABLE,INTERPOLATION_PARAMETERS,err,error,*,componentType)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE !<A pointer to the field to initialise the interpolation parameters for
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<On exit, a pointer to the initialised interpolation parameters. Must not be associated on entry.
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE !<A pointer to the field to initialise the interpolation parameters for
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<On exit, a pointer to the initialised interpolation parameters. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
     !Local Variables
     INTEGER(INTG) :: component_idx,DUMMY_ERR,numberOfComponents
 
-    TYPE(FIELD_TYPE), POINTER :: FIELD
+    TYPE(FieldType), POINTER :: FIELD
     TYPE(VARYING_STRING) :: DUMMY_ERROR,localError
 
     ENTERS("FIELD_INTERPOLATION_PARAMETER_INITIALISE",err,error,*998)
@@ -6762,19 +6762,19 @@ CONTAINS
           ALLOCATE(INTERPOLATION_PARAMETERS,STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate an interpolation parameter.",err,error,*999)
           INTERPOLATION_PARAMETERS%FIELD=>FIELD
-          INTERPOLATION_PARAMETERS%FIELD_VARIABLE=>FIELD_VARIABLE
+          INTERPOLATION_PARAMETERS%fieldVariable=>FIELD_VARIABLE
           INTERPOLATION_PARAMETERS%numberOfXi=0
           !Calculate the number of components required 
           IF(PRESENT(componentType)) THEN
             SELECT CASE(componentType)
             CASE(FIELD_ALL_COMPONENTS_TYPE)
-              numberOfComponents=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
+              numberOfComponents=INTERPOLATION_PARAMETERS%fieldVariable%numberOfComponents
             CASE(FIELD_GEOMETRIC_COMPONENTS_TYPE)
               IF(INTERPOLATION_PARAMETERS%FIELD%TYPE==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
-                numberOfComponents=INTERPOLATION_PARAMETERS%FIELD%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR% &
+                numberOfComponents=INTERPOLATION_PARAMETERS%FIELD%geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr% &
                   & numberOfComponents
               ELSEIF(INTERPOLATION_PARAMETERS%FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-                numberOfComponents=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
+                numberOfComponents=INTERPOLATION_PARAMETERS%fieldVariable%numberOfComponents
               ELSE
                 localError="Field type "//TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD%TYPE,"*",err,error))// &
                   & " is not valid for only interpolating geometric field, use FIELD_GEOMETRIC_GENERAL_TYPE."
@@ -6782,8 +6782,8 @@ CONTAINS
               ENDIF
             CASE(FIELD_NONGEOMETRIC_COMPONENTS_TYPE)
               IF(INTERPOLATION_PARAMETERS%FIELD%TYPE==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
-                numberOfComponents=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents-INTERPOLATION_PARAMETERS% &
-                  & FIELD%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%PTR%numberOfComponents
+                numberOfComponents=INTERPOLATION_PARAMETERS%fieldVariable%numberOfComponents-INTERPOLATION_PARAMETERS% &
+                  & FIELD%geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr%numberOfComponents
               ELSE
                 localError="Field type "//TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD%TYPE,"*",err,error))// &
                   & " is not valid for only interpolating geometric field, use FIELD_GEOMETRIC_GENERAL_TYPE."
@@ -6794,26 +6794,26 @@ CONTAINS
               CALL FlagError(localError,err,error,*999)
             END SELECT
           ELSE
-            numberOfComponents=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents
+            numberOfComponents=INTERPOLATION_PARAMETERS%fieldVariable%numberOfComponents
           ENDIF
           ALLOCATE(INTERPOLATION_PARAMETERS%BASES(numberOfComponents),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate bases.",err,error,*999)
-          ALLOCATE(INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(numberOfComponents),STAT=err)
+          ALLOCATE(INTERPOLATION_PARAMETERS%numberOfParameters(numberOfComponents),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate interpolation type.",err,error,*999)
           ALLOCATE(INTERPOLATION_PARAMETERS%PARAMETERS(FIELD_VARIABLE%maxNumberElementInterpolationParameters, &
             & numberOfComponents),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate parameters.",err,error,*999)
           INTERPOLATION_PARAMETERS%PARAMETERS=0.0_DP
-          IF(FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-            ALLOCATE(INTERPOLATION_PARAMETERS%SCALE_FACTORS(FIELD_VARIABLE%maxNumberElementInterpolationParameters, &
+          IF(FIELD%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
+            ALLOCATE(INTERPOLATION_PARAMETERS%scaleFactors(FIELD_VARIABLE%maxNumberElementInterpolationParameters, &
               & numberOfComponents),STAT=err)
             IF(err/=0) CALL FlagError("Could not allocate scale factors.",err,error,*999)
-            INTERPOLATION_PARAMETERS%SCALE_FACTORS=0.0_DP
+            INTERPOLATION_PARAMETERS%scaleFactors=0.0_DP
           ENDIF
           DO component_idx=1,numberOfComponents
-            NULLIFY(INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR)
+            NULLIFY(INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr)
           ENDDO !component_idx
-          INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS=0
+          INTERPOLATION_PARAMETERS%numberOfParameters=0
         ENDIF
       ELSE
         CALL FlagError("Field variable field is not associated.",err,error,*998)
@@ -6840,7 +6840,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: PARAMETER_SET_TYPE !<The field parameter set type to get the element parameters for
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to get the element parameters for
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
@@ -6854,9 +6854,9 @@ CONTAINS
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_TYPE), POINTER :: field,geometricField
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldType), POINTER :: field,geometricField
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET",err,error,*999)
@@ -6925,28 +6925,28 @@ CONTAINS
       IF(ELEMENT_NUMBER>0.AND.ELEMENT_NUMBER<=domainElements%totalNumberOfElements) THEN
         NULLIFY(basis)
         CALL DomainElements_BasisGet(domainElements,ELEMENT_NUMBER,basis,err,error,*999)
-        INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR=>BASIS
+        INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr=>BASIS
         IF(component_idx==1) THEN
           INTERPOLATION_PARAMETERS%numberOfXi=BASIS%numberOfXi
         ELSE
           IF(BASIS%numberOfXi/=INTERPOLATION_PARAMETERS%numberOfXi) &
             & CALL FlagError("Inconsistent number of xi directions???",err,error,*999)
         ENDIF
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
-          dof_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-          INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+          dof_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%paramToDOFMap%constantParam2DOFMap
+          INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
           INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-          dof_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-            & ELEMENT_PARAM2DOF_MAP%ELEMENTS(ELEMENT_NUMBER)
-          INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+          dof_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%paramToDOFMap% &
+            & elementParam2DOFMap%ELEMENTS(ELEMENT_NUMBER)
+          INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
           INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           NULLIFY(domainNodes)
           CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-          INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%numberOfElementParameters
-          SELECT CASE(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALING_TYPE)
+          INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=BASIS%numberOfElementParameters
+          SELECT CASE(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%scalingType)
           CASE(FIELD_NO_SCALING)
             DO element_node_idx=1,BASIS%numberOfNodes
               node_idx=domainElements%ELEMENTS(ELEMENT_NUMBER)%elementNodes(element_node_idx)
@@ -6956,15 +6956,15 @@ CONTAINS
                 version_idx=domainElements%ELEMENTS(ELEMENT_NUMBER)%elementVersions(local_derivative_idx, &
                   & element_node_idx)
                 element_parameter_idx=BASIS%elementParameterIndex(local_derivative_idx,element_node_idx)
-                dof_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(global_derivative_idx)%VERSIONS(version_idx)
+                dof_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%paramToDOFMap% &
+                  & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(global_derivative_idx)%VERSIONS(version_idx)
                 INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)
               ENDDO !local_derivative_idx
             ENDDO !element_node_idx
           CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-            scaling_idx=fieldVariable%COMPONENTS(component_idx)%SCALING_INDEX
+            scaling_idx=fieldVariable%components(component_idx)%scalingIndex
             NULLIFY(SCALE_FACTORS)
-            CALL DistributedVector_DataGet(field%SCALINGS%SCALINGS(scaling_idx)%SCALE_FACTORS,SCALE_FACTORS,err,error,*999)
+            CALL DistributedVector_DataGet(field%SCALINGS%SCALINGS(scaling_idx)%scaleFactors,SCALE_FACTORS,err,error,*999)
             DO element_node_idx=1,BASIS%numberOfNodes
               node_idx=domainElements%ELEMENTS(ELEMENT_NUMBER)%elementNodes(element_node_idx)
               DO local_derivative_idx=1,BASIS%numberOfDerivatives(element_node_idx)
@@ -6973,36 +6973,36 @@ CONTAINS
                 version_idx=domainElements%ELEMENTS(ELEMENT_NUMBER)%elementVersions( &
                   & local_derivative_idx,element_node_idx)
                 element_parameter_idx=BASIS%elementParameterIndex(global_derivative_idx,element_node_idx)
-                dof_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(global_derivative_idx)%VERSIONS(version_idx)
+                dof_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%paramToDOFMap% &
+                  & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(global_derivative_idx)%VERSIONS(version_idx)
                 node_scaling_dof_idx= &
-                  & domainNodes%NODES(node_idx)%DERIVATIVES(global_derivative_idx)%dofIndex(version_idx)
+                  & domainNodes%nodes(node_idx)%DERIVATIVES(global_derivative_idx)%dofIndex(version_idx)
                 !INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)* &
-                !  & INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)%SCALE_FACTORS(element_parameter_idx,ELEMENT_NUMBER)
+                !  & INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)%scaleFactors(element_parameter_idx,ELEMENT_NUMBER)
                 !INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)* &
-                !  & INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)%SCALE_FACTORS(global_derivative_idx,node_idx)
+                !  & INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)%scaleFactors(global_derivative_idx,node_idx)
                 INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA( &
                   & dof_idx)*SCALE_FACTORS(node_scaling_dof_idx)
-                INTERPOLATION_PARAMETERS%SCALE_FACTORS(element_parameter_idx,component_idx)=SCALE_FACTORS( &
+                INTERPOLATION_PARAMETERS%scaleFactors(element_parameter_idx,component_idx)=SCALE_FACTORS( &
                   & node_scaling_dof_idx)
               ENDDO !local_derivative_idx
             ENDDO !element_node_idx
             CALL DistributedVector_DataRestore(INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)% &
-              & SCALE_FACTORS,SCALE_FACTORS,err,error,*999)
+              & scaleFactors,SCALE_FACTORS,err,error,*999)
           CASE(FIELD_ARC_LENGTH_SCALING)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS% &
-              & SCALING_TYPE,"*",err,error))//" is invalid for field number "// &
+              & scalingType,"*",err,error))//" is invalid for field number "// &
               & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)                  
-          INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
-            & COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS
-          DO gaussIdx=1,BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
-            dof_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gaussIdx,ELEMENT_NUMBER)
+          INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=INTERPOLATION_PARAMETERS%fieldVariable% &
+            & COMPONENTS(component_idx)%paramToDOFMap% gaussPointParam2DOFMap%numberOfGridPointParameters
+          DO gaussIdx=1,BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%NUMBER_OF_GAUSS
+            dof_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gaussIdx,ELEMENT_NUMBER)
             INTERPOLATION_PARAMETERS%PARAMETERS(gaussIdx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)
           ENDDO !gaussIdx
         CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
@@ -7029,15 +7029,15 @@ CONTAINS
     IF(DIAGNOSTICS1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",field%userNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",fieldVariable%VARIABLE_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",fieldVariable%variableNumber,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",ELEMENT_NUMBER,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",fieldVariable%numberOfComponents,err,error,*999)
       DO component_idx=startComponentIdx,endComponentIdx
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
-          & NUMBER_OF_PARAMETERS(component_idx),err,error,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
+          & numberOfParameters(component_idx),err,error,*999)
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%numberOfParameters(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),'("      Parameters :",4(X,E13.6))','(18X,4(X,E13.6))', &
           & err,error,*999)
       ENDDO !component_idx
@@ -7058,7 +7058,7 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATION_PARAMETERS_FINALISE(INTERPOLATION_PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:) !<A pointer to the interpolation parameters to finalise
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: INTERPOLATION_PARAMETERS(:) !<A pointer to the interpolation parameters to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -7068,7 +7068,7 @@ CONTAINS
 
     IF(ASSOCIATED(INTERPOLATION_PARAMETERS)) THEN
       DO var_type_idx=1,SIZE(INTERPOLATION_PARAMETERS,1)       
-        CALL FIELD_INTERPOLATION_PARAMETER_FINALISE(INTERPOLATION_PARAMETERS(var_type_idx)%PTR,err,error,*999)
+        CALL FIELD_INTERPOLATION_PARAMETER_FINALISE(INTERPOLATION_PARAMETERS(var_type_idx)%ptr,err,error,*999)
       ENDDO !var_type_idx           
       DEALLOCATE(INTERPOLATION_PARAMETERS)
     ENDIF
@@ -7087,34 +7087,34 @@ CONTAINS
   SUBROUTINE FIELD_INTERPOLATION_PARAMETERS_INITIALISE(FIELD,INTERPOLATION_PARAMETERS,err,error,*,componentType)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the interpolation parameters for
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:) !<On exit, a pointer to the initialised interpolation parameters.
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the interpolation parameters for
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: INTERPOLATION_PARAMETERS(:) !<On exit, a pointer to the initialised interpolation parameters.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,var_type_idx
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: DUMMY_ERROR,localError
 
     ENTERS("FIELD_INTERPOLATION_PARAMETERS_INITIALISE",err,error,*998)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         IF(ASSOCIATED(INTERPOLATION_PARAMETERS)) THEN
           CALL FlagError("Interpolation parameters is already associated.",err,error,*998)
         ELSE
           ALLOCATE(INTERPOLATION_PARAMETERS(FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate the interpolation parameters.",err,error,*999)
           DO var_type_idx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-            NULLIFY(INTERPOLATION_PARAMETERS(var_type_idx)%PTR)
-            FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(var_type_idx)%PTR
+            NULLIFY(INTERPOLATION_PARAMETERS(var_type_idx)%ptr)
+            FIELD_VARIABLE=>FIELD%variableTypeMap(var_type_idx)%ptr
             IF(PRESENT(componentType)) THEN
               IF(ASSOCIATED(FIELD_VARIABLE)) CALL FIELD_INTERPOLATION_PARAMETER_INITIALISE(FIELD_VARIABLE, &
-                & INTERPOLATION_PARAMETERS(var_type_idx)%PTR,err,error,*999,componentType)
+                & INTERPOLATION_PARAMETERS(var_type_idx)%ptr,err,error,*999,componentType)
             ELSE
               IF(ASSOCIATED(FIELD_VARIABLE)) CALL FIELD_INTERPOLATION_PARAMETER_INITIALISE(FIELD_VARIABLE, &
-                & INTERPOLATION_PARAMETERS(var_type_idx)%PTR,err,error,*999)
+                & INTERPOLATION_PARAMETERS(var_type_idx)%ptr,err,error,*999)
             ENDIF
           ENDDO !var_type_idx
         ENDIF
@@ -7145,7 +7145,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: PARAMETER_SET_TYPE !<The field parameter set type to get the line parameters for
     INTEGER(INTG), INTENT(IN) :: LINE_NUMBER !<The line number to get the line parameters for
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to get the interpolation parameters for
@@ -7160,9 +7160,9 @@ CONTAINS
     TYPE(DomainLinesType), POINTER :: domainLines
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_TYPE), POINTER :: FIELD,geometricField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
+    TYPE(FieldType), POINTER :: FIELD,geometricField
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_INTERPOLATION_PARAMETERS_LINE_GET",err,error,*999)
@@ -7230,14 +7230,14 @@ CONTAINS
       IF(LINE_NUMBER>0.AND.LINE_NUMBER<=domainLines%numberOfLines) THEN
         NULLIFY(basis)
         CALL DomainLines_BasisGet(domainLines,LINE_NUMBER,basis,err,error,*999)
-        INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR=>BASIS
+        INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr=>BASIS
         IF(component_idx==1) THEN
           INTERPOLATION_PARAMETERS%numberOfXi=BASIS%numberOfXi
         ELSE
           IF(BASIS%numberOfXi/=INTERPOLATION_PARAMETERS%numberOfXi) &
             & CALL FlagError("Inconsistent number of xi directions???",err,error,*999)
         ENDIF
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
@@ -7245,8 +7245,8 @@ CONTAINS
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           NULLIFY(domainNodes)
           CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-          INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%numberOfElementParameters
-          SELECT CASE(field%SCALINGS%SCALING_TYPE)
+          INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=BASIS%numberOfElementParameters
+          SELECT CASE(field%SCALINGS%scalingType)
           CASE(FIELD_NO_SCALING)
             DO basis_node_idx=1,BASIS%numberOfNodes
               node_idx=domainLines%LINES(LINE_NUMBER)%nodesInLine(basis_node_idx)
@@ -7254,13 +7254,13 @@ CONTAINS
                 derivative_idx=domainLines%LINES(LINE_NUMBER)%derivativesInLine(1,basis_derivative_idx,basis_node_idx)
                 version_idx=domainLines%LINES(LINE_NUMBER)%derivativesInLine(2,basis_derivative_idx,basis_node_idx)
                 element_parameter_idx=BASIS%elementParameterIndex(basis_derivative_idx,basis_node_idx)
-                dof_idx=fieldVariable%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
+                dof_idx=fieldVariable%components(component_idx)%paramToDOFMap% &
+                  & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
                 INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)
               ENDDO !basis_derivative_idx
             ENDDO !basis_node_idx
           CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-            scaling_idx=fieldVariable%COMPONENTS(component_idx)%SCALING_INDEX
+            scaling_idx=fieldVariable%components(component_idx)%scalingIndex
             NULLIFY(scaleFactorsVector)
             CALL Field_ScaleFactorsVectorGet(field,scaling_idx,scaleFactorsVector,err,error,*999)
             NULLIFY(SCALE_FACTORS)
@@ -7271,15 +7271,15 @@ CONTAINS
                 derivative_idx=domainLines%LINES(LINE_NUMBER)%derivativesInLine(1,basis_derivative_idx,basis_node_idx)
                 version_idx=domainLines%LINES(LINE_NUMBER)%derivativesInLine(2,basis_derivative_idx,basis_node_idx)
                 element_parameter_idx=BASIS%elementParameterIndex(basis_derivative_idx,basis_node_idx)
-                dof_idx=fieldVariable%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
+                dof_idx=fieldVariable%components(component_idx)%paramToDOFMap% &
+                  & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
                 node_scaling_dof_idx= &
-                  & domainNodes%NODES(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
+                  & domainNodes%nodes(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
                 !INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)* &
-                !  & INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)%SCALE_FACTORS(derivative_idx,node_idx)
+                !  & INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)%scaleFactors(derivative_idx,node_idx)
                 INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)= &
                   & FIELD_PARAMETER_SET_DATA(dof_idx)*SCALE_FACTORS(node_scaling_dof_idx)
-                INTERPOLATION_PARAMETERS%SCALE_FACTORS(element_parameter_idx,component_idx)= &
+                INTERPOLATION_PARAMETERS%scaleFactors(element_parameter_idx,component_idx)= &
                   & SCALE_FACTORS(node_scaling_dof_idx)
               ENDDO !basis_derivative_idx
             ENDDO !basis_node_idx
@@ -7288,7 +7288,7 @@ CONTAINS
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The scaling type of "//TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD%SCALINGS% &
-              & SCALING_TYPE,"*",err,error))//" is invalid for field number "// &
+              & scalingType,"*",err,error))//" is invalid for field number "// &
               & TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD%userNumber,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -7299,7 +7299,7 @@ CONTAINS
         CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The interpolation type of "//TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+          localError="The interpolation type of "//TRIM(NumberToVString(INTERPOLATION_PARAMETERS%fieldVariable% &
             & COMPONENTS(component_idx)%interpolationType,"*",err,error))//" is invalid for component number "// &
             & TRIM(NumberToVString(component_idx,"*",err,error))//" of field number "// &
             & TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD%userNumber,"*",err,error))//"."
@@ -7321,19 +7321,19 @@ CONTAINS
     IF(DIAGNOSTICS1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%userNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
-        & VARIABLE_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%fieldVariable% &
+        & variableNumber,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Line number = ",LINE_NUMBER,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of components = ", &
-        & INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents,err,error,*999)
+        & INTERPOLATION_PARAMETERS%fieldVariable%numberOfComponents,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Interpolation number of components = ", &
         & endComponentIdx-startComponentIdx+1,err,error,*999)
       DO component_idx=startComponentIdx,endComponentIdx
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
-          & NUMBER_OF_PARAMETERS(component_idx),err,error,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
+          & numberOfParameters(component_idx),err,error,*999)
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%numberOfParameters(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),'("      Parameters :",4(X,E13.6))','(18X,4(X,E13.6))', &
           & err,error,*999)
       ENDDO !component_idx
@@ -7356,7 +7356,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: PARAMETER_SET_TYPE !<The field parameter set type to get the face parameters for
     INTEGER(INTG), INTENT(IN) :: FACE_NUMBER !<The face number to get the face parameters for
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to get field interpolation parameters for
@@ -7371,9 +7371,9 @@ CONTAINS
     TYPE(DomainFacesType), POINTER :: domainFaces
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_TYPE), POINTER :: FIELD,geometricField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
+    TYPE(FieldType), POINTER :: FIELD,geometricField
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_INTERPOLATION_PARAMETERS_FACE_GET",err,error,*999)
@@ -7441,14 +7441,14 @@ CONTAINS
       IF(FACE_NUMBER>0.AND.FACE_NUMBER<=domainFaces%numberOfFaces) THEN
         NULLIFY(basis)
         CALL DomainFaces_BasisGet(domainFaces,FACE_NUMBER,basis,err,error,*999)
-        INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR=>BASIS
+        INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr=>BASIS
         IF(component_idx==1) THEN
           INTERPOLATION_PARAMETERS%numberOfXi=BASIS%numberOfXi
         ELSE
           IF(BASIS%numberOfXi/=INTERPOLATION_PARAMETERS%numberOfXi) &
             & CALL FlagError("Inconsistent number of xi directions???",err,error,*999)
         ENDIF
-        SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+        SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
@@ -7456,8 +7456,8 @@ CONTAINS
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           NULLIFY(domainNodes)
           CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-          INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%numberOfElementParameters
-          SELECT CASE(field%SCALINGS%SCALING_TYPE)
+          INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=BASIS%numberOfElementParameters
+          SELECT CASE(field%SCALINGS%scalingType)
           CASE(FIELD_NO_SCALING)
             DO basis_node_idx=1,BASIS%numberOfNodes
               node_idx=domainFaces%FACES(FACE_NUMBER)%nodesInFace(basis_node_idx)
@@ -7465,13 +7465,13 @@ CONTAINS
                 derivative_idx=domainFaces%FACES(FACE_NUMBER)%derivativesInFace(1,basis_derivative_idx,basis_node_idx)
                 version_idx=domainFaces%FACES(FACE_NUMBER)%derivativesInFace(2,basis_derivative_idx,basis_node_idx)
                 element_parameter_idx=BASIS%elementParameterIndex(basis_derivative_idx,basis_node_idx)
-                dof_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
+                dof_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%paramToDOFMap% &
+                  & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
                 INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)
               ENDDO !basis_derivative_idx
             ENDDO !basis_node_idx
           CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-            scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
+            scaling_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%scalingIndex
             NULLIFY(scaleFactorsVector)
             CALL Field_ScaleFactorsVectorGet(field,scaling_idx,scaleFactorsVector,err,error,*999)
             NULLIFY(SCALE_FACTORS)
@@ -7482,15 +7482,15 @@ CONTAINS
                 derivative_idx=domainFaces%FACES(FACE_NUMBER)%derivativesInFace(1,basis_derivative_idx,basis_node_idx)
                 version_idx=domainFaces%FACES(FACE_NUMBER)%derivativesInFace(2,basis_derivative_idx,basis_node_idx)
                 element_parameter_idx=BASIS%elementParameterIndex(basis_derivative_idx,basis_node_idx)
-                dof_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
+                dof_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%paramToDOFMap% &
+                  & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
                 node_scaling_dof_idx= &
-                  & domainNodes%NODES(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
+                  & domainNodes%nodes(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
                 !INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)=FIELD_PARAMETER_SET_DATA(dof_idx)* &
-                !  & INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)%SCALE_FACTORS(derivative_idx,node_idx)
+                !  & INTERPOLATION_PARAMETERS%FIELD%SCALINGS%SCALINGS(scaling_idx)%scaleFactors(derivative_idx,node_idx)
                 INTERPOLATION_PARAMETERS%PARAMETERS(element_parameter_idx,component_idx)= &
                   & FIELD_PARAMETER_SET_DATA(dof_idx)*SCALE_FACTORS(node_scaling_dof_idx)
-                INTERPOLATION_PARAMETERS%SCALE_FACTORS(element_parameter_idx,component_idx)= &
+                INTERPOLATION_PARAMETERS%scaleFactors(element_parameter_idx,component_idx)= &
                   & SCALE_FACTORS(node_scaling_dof_idx)
               ENDDO !basis_derivative_idx
             ENDDO !basis_node_idx
@@ -7499,7 +7499,7 @@ CONTAINS
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS% &
-              & SCALING_TYPE,"*",err,error))//" is invalid for field number "// &
+              & scalingType,"*",err,error))//" is invalid for field number "// &
               & TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD%userNumber,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -7510,7 +7510,7 @@ CONTAINS
         CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
-          localError="The interpolation type of "//TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
+          localError="The interpolation type of "//TRIM(NumberToVString(INTERPOLATION_PARAMETERS%fieldVariable% &
             & COMPONENTS(component_idx)%interpolationType,"*",err,error))//" is invalid for component number "// &
             & TRIM(NumberToVString(component_idx,"*",err,error))//" of field number "// &
             & TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD%userNumber,"*",err,error))//"."
@@ -7531,19 +7531,19 @@ CONTAINS
     IF(DIAGNOSTICS1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation parameters:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",INTERPOLATION_PARAMETERS%FIELD%userNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%FIELD_VARIABLE% &
-        & VARIABLE_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",INTERPOLATION_PARAMETERS%fieldVariable% &
+        & variableNumber,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Parameter set type = ",PARAMETER_SET_TYPE,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Face number = ",FACE_NUMBER,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of components = ", &
-        & INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents,err,error,*999)
+        & INTERPOLATION_PARAMETERS%fieldVariable%numberOfComponents,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Interpolation number of components = ", &
         & endComponentIdx-startComponentIdx+1,err,error,*999)
       DO component_idx=startComponentIdx,endComponentIdx
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
-          & NUMBER_OF_PARAMETERS(component_idx),err,error,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
+          & numberOfParameters(component_idx),err,error,*999)
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%numberOfParameters(component_idx),4,4, &
           & INTERPOLATION_PARAMETERS%PARAMETERS(:,component_idx),'("      Parameters :",4(X,E13.6))','(18X,4(X,E13.6))', &
           & err,error,*999)
       ENDDO !component_idx
@@ -7564,7 +7564,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: ELEMENT_NUMBER !<The element number to get the element scale factors for
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -7576,8 +7576,8 @@ CONTAINS
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_InterpolationParametersScaleFactorsElementGet",err,error,*999)
@@ -7587,7 +7587,7 @@ CONTAINS
     CALL FieldInterpolationParameters_FieldVariableGet(INTERPOLATION_PARAMETERS,fieldVariable,err,error,*999)
     NULLIFY(field)
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
-    SELECT CASE(field%SCALINGS%SCALING_TYPE)
+    SELECT CASE(field%SCALINGS%scalingType)
     CASE(FIELD_NO_SCALING)
       CALL FlagError("Can not get the scale factors for a field with no scaling.",err,error,*999)
     CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
@@ -7601,19 +7601,19 @@ CONTAINS
         IF(ELEMENT_NUMBER>0.AND.ELEMENT_NUMBER<=domainElements%totalNumberOfElements) THEN
           NULLIFY(basis)
           CALL DomainElements_BasisGet(domainElements,ELEMENT_NUMBER,basis,err,error,*999)
-          INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR=>BASIS
-          SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+          INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr=>BASIS
+          SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)             
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_NODE_BASED_INTERPOLATION)
             NULLIFY(domainNodes)
             CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%numberOfElementParameters
-            scaling_idx=fieldVariable%COMPONENTS(component_idx)%SCALING_INDEX
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=BASIS%numberOfElementParameters
+            scaling_idx=fieldVariable%components(component_idx)%scalingIndex
             NULLIFY(scaleFactorsVector)
             CALL Field_ScaleFactorsVectorGet(field,scaling_idx,scaleFactorsVector,err,error,*999)
             NULLIFY(SCALE_FACTORS)
@@ -7624,19 +7624,19 @@ CONTAINS
                 nk=domainElements%ELEMENTS(ELEMENT_NUMBER)%elementDerivatives(mk,nn)
                 nv=domainElements%ELEMENTS(ELEMENT_NUMBER)%elementVersions(mk,nn)
                 ns=BASIS%elementParameterIndex(mk,nn)
-                ny=domainNodes%NODES(np)%DERIVATIVES(nk)%dofIndex(nv)
-                INTERPOLATION_PARAMETERS%SCALE_FACTORS(ns,component_idx)=SCALE_FACTORS(ny)
+                ny=domainNodes%nodes(np)%DERIVATIVES(nk)%dofIndex(nv)
+                INTERPOLATION_PARAMETERS%scaleFactors(ns,component_idx)=SCALE_FACTORS(ny)
               ENDDO !mk
             ENDDO !nn
             CALL DistributedVector_DataRestore(scaleFactorsVector,SCALE_FACTORS,err,error,*999)
           CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE DEFAULT
             localError="The interpolation type of "//TRIM(NumberToVString(fieldVariable% &
@@ -7658,7 +7658,7 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS% &
-        & SCALING_TYPE,"*",err,error))//" is invalid for field number "// &
+        & scalingType,"*",err,error))//" is invalid for field number "// &
         & TRIM(NumberToVString(INTERPOLATION_PARAMETERS%FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -7666,15 +7666,15 @@ CONTAINS
     IF(DIAGNOSTICS1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",field%userNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",fieldVariable%VARIABLE_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",fieldVariable%variableNumber,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",ELEMENT_NUMBER,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",fieldVariable%numberOfComponents,err,error,*999)
       DO component_idx=1,fieldVariable%numberOfComponents
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
-          & NUMBER_OF_PARAMETERS(component_idx),err,error,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
-          & INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
+          & numberOfParameters(component_idx),err,error,*999)
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%numberOfParameters(component_idx),4,4, &
+          & INTERPOLATION_PARAMETERS%scaleFactors(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
           & err,error,*999)
       ENDDO !component_idx
     ENDIF
@@ -7696,7 +7696,7 @@ CONTAINS
     & componentNumber,scaleFactor,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get scale factor for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get scale factor for
     INTEGER(INTG),  INTENT(IN) :: variableType !<The field variable type to get the scale factor for
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to get the scale factor for
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The user number of the node derivative to get the scale factor for
@@ -7710,13 +7710,13 @@ CONTAINS
     REAL(DP), POINTER :: fieldScaleFactors(:)
     LOGICAL :: ghostDof
     TYPE(DistributedVectorType), POINTER :: fieldScaleFactorsVector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetNodeScaleFactorGet",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
-    SELECT CASE(field%SCALINGS%SCALING_TYPE)
+    SELECT CASE(field%SCALINGS%scalingType)
     CASE(FIELD_NO_SCALING)
       CALL FlagError("Can not get the scale factors for a field with no scaling.",err,error,*999)
     CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
@@ -7726,7 +7726,7 @@ CONTAINS
         & dofNumber,ghostDof,err,error,*999)
       ! The field component number is used to determine which scaling index to use.
       ! The number of scaling indices are set based on the number of mesh components (not field components).
-      scalingIdx=fieldVariable%components(componentNumber)%SCALING_INDEX
+      scalingIdx=fieldVariable%components(componentNumber)%scalingIndex
       NULLIFY(fieldScaleFactorsVector)
       CALL Field_ScaleFactorsVectorGet(field,scalingIdx,fieldScaleFactorsVector,err,error,*999)
       NULLIFY(fieldScaleFactors)
@@ -7736,7 +7736,7 @@ CONTAINS
     CASE(FIELD_ARC_LENGTH_SCALING)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%SCALING_TYPE,"*",err,error))// &
+      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%scalingType,"*",err,error))// &
         & " is invalid for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -7756,7 +7756,7 @@ CONTAINS
   SUBROUTINE Field_ParameterSetNodeScaleFactorsGet(field,variableType,meshComponentNumber,scaleFactors,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get scale factor for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get scale factor for
     INTEGER(INTG),  INTENT(IN) :: variableType !<The field variable type to get the scale factor for
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the field to get the scale factor for
     REAL(DP), INTENT(OUT) :: scaleFactors(:) !<The scale factor for all nodes
@@ -7766,20 +7766,20 @@ CONTAINS
     INTEGER(INTG) :: scalingIdx
     REAL(DP), POINTER :: fieldScaleFactors(:)
     TYPE(DistributedVectorType), POINTER :: fieldScaleFactorsVector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetNodeScaleFactorsGet",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
-    SELECT CASE(field%SCALINGS%SCALING_TYPE)
+    SELECT CASE(field%SCALINGS%scalingType)
     CASE(FIELD_NO_SCALING)
       CALL FlagError("Can not get the scale factors for a field with no scaling.",err,error,*999)
     CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
       NULLIFY(fieldVariable)
       CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-      !The NUMBER_OF_SCALING_INDICES is the same as the number of mesh components (not field components).  
-      IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%NUMBER_OF_SCALING_INDICES) THEN
+      !The numberOfScalingIndices is the same as the number of mesh components (not field components).  
+      IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%numberOfScalingIndices) THEN
         scalingIdx=meshComponentNumber
         NULLIFY(fieldScaleFactorsVector)
         CALL Field_ScaleFactorsVectorGet(field,scalingIdx,fieldScaleFactorsVector,err,error,*999)
@@ -7791,14 +7791,14 @@ CONTAINS
         localError="Mesh component number "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
           & " is invalid for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
           & " of field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//" which has "// &
-          & TRIM(NumberToVString(field%SCALINGS%NUMBER_OF_SCALING_INDICES,"*",err,error))// &
+          & TRIM(NumberToVString(field%SCALINGS%numberOfScalingIndices,"*",err,error))// &
           & " components."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     CASE(FIELD_ARC_LENGTH_SCALING)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%SCALING_TYPE,"*",err,error))// &
+      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%scalingType,"*",err,error))// &
         & " is invalid for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -7819,7 +7819,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<The field to get the number of scale factor dofs for
+    TYPE(FieldType), POINTER :: field !<The field to get the number of scale factor dofs for
     INTEGER(INTG),  INTENT(IN) :: variableType !<The field variable type to get the number of scale factor dofs for
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the field to get the number of scale factor dofs for
     INTEGER(INTG), INTENT(OUT) :: numberOfScaleFactorsDofs !<The number of scale factor dofs
@@ -7829,20 +7829,20 @@ CONTAINS
     INTEGER(INTG) :: scalingIdx
     REAL(DP), POINTER :: fieldScaleFactors(:)
     TYPE(DistributedVectorType), POINTER :: fieldScaleFactorsVector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetNodeNumberOfScaleFactorDofsGet",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
-    SELECT CASE(field%SCALINGS%SCALING_TYPE)
+    SELECT CASE(field%SCALINGS%scalingType)
     CASE(FIELD_NO_SCALING)
       CALL FlagError("Can not get the scale factors for a field with no scaling.",err,error,*999)
     CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
       NULLIFY(fieldVariable)
       CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-      !The NUMBER_OF_SCALING_INDICES is the same as the number of mesh components (not field components).  
-      IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%NUMBER_OF_SCALING_INDICES) THEN
+      !The numberOfScalingIndices is the same as the number of mesh components (not field components).  
+      IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%numberOfScalingIndices) THEN
         scalingIdx=meshComponentNumber
         NULLIFY(fieldScaleFactorsVector)
         CALL Field_ScaleFactorsVectorGet(field,scalingIdx,fieldScaleFactorsVector,err,error,*999)
@@ -7854,14 +7854,14 @@ CONTAINS
         localError="Mesh component number "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
           & " is invalid for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
           & " of field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//" which has "// &
-          & TRIM(NumberToVString(field%SCALINGS%NUMBER_OF_SCALING_INDICES,"*",err,error))// &
+          & TRIM(NumberToVString(field%SCALINGS%numberOfScalingIndices,"*",err,error))// &
           & " components."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     CASE(FIELD_ARC_LENGTH_SCALING)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%SCALING_TYPE,"*",err,error))// &
+      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%scalingType,"*",err,error))// &
         & " is invalid for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -7883,7 +7883,7 @@ CONTAINS
     & componentNumber,scaleFactor,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to set scale factor for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to set scale factor for
     INTEGER(INTG),  INTENT(IN) :: variableType !<The field variable type to set the scale factor for
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The user number of the node derivative version to set the scale factor for
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The user number of the node derivative to set the scale factor for
@@ -7897,13 +7897,13 @@ CONTAINS
     REAL(DP), POINTER :: fieldScaleFactors(:)
     LOGICAL :: ghostDof
     TYPE(DistributedVectorType), POINTER :: fieldScaleFactorsVector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetNodeScaleFactorSet",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
-    SELECT CASE(field%SCALINGS%SCALING_TYPE)
+    SELECT CASE(field%SCALINGS%scalingType)
     CASE(FIELD_NO_SCALING)
       CALL FlagError("Can not set the scale factors for a field with no scaling.",err,error,*999)
     CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
@@ -7913,7 +7913,7 @@ CONTAINS
         & dofNumber,ghostDof,err,error,*999)
       ! The field component number is used to determine which scaling index to use.
       ! The number of scaling indices are set based on the number of mesh components (not field components).
-      scalingIdx=fieldVariable%COMPONENTS(componentNumber)%SCALING_INDEX
+      scalingIdx=fieldVariable%components(componentNumber)%scalingIndex
       NULLIFY(fieldScaleFactorsVector)
       CALL Field_ScaleFactorsVectorGet(field,scalingIdx,fieldScaleFactorsVector,err,error,*999)
       NULLIFY(fieldScaleFactors)
@@ -7923,7 +7923,7 @@ CONTAINS
     CASE(FIELD_ARC_LENGTH_SCALING)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%SCALING_TYPE,"*",err,error))// &
+      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%scalingType,"*",err,error))// &
         & " is invalid for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -7942,7 +7942,7 @@ CONTAINS
   SUBROUTINE Field_ParameterSetNodeScaleFactorsSet(field,variableType,meshComponentNumber,scaleFactors,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to set scale factor for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to set scale factor for
     INTEGER(INTG),  INTENT(IN) :: variableType !<The field variable type to set the scale factor for
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the field to set the scale factor for
     REAL(DP), INTENT(IN) :: scaleFactors(:) !<The scale factor for all nodes
@@ -7952,20 +7952,20 @@ CONTAINS
     INTEGER(INTG) :: scalingIdx
     REAL(DP), POINTER :: fieldScaleFactors(:)
     TYPE(DistributedVectorType), POINTER :: fieldScaleFactorsVector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetNodeScaleFactorsSet",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
-    SELECT CASE(field%SCALINGS%SCALING_TYPE)
+    SELECT CASE(field%SCALINGS%scalingType)
     CASE(FIELD_NO_SCALING)
       CALL FlagError("Can not set the scale factors for a field with no scaling.",err,error,*999)
     CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
       NULLIFY(fieldVariable)
       CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-      !The NUMBER_OF_SCALING_INDICES is the same as the number of mesh components (not field components).  
-      IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%NUMBER_OF_SCALING_INDICES) THEN
+      !The numberOfScalingIndices is the same as the number of mesh components (not field components).  
+      IF(meshComponentNumber>=1.AND.meshComponentNumber<=field%SCALINGS%numberOfScalingIndices) THEN
         scalingIdx=meshComponentNumber
         NULLIFY(fieldScaleFactorsVector)
         CALL Field_ScaleFactorsVectorGet(field,scalingIdx,fieldScaleFactorsVector,err,error,*999)
@@ -7984,14 +7984,14 @@ CONTAINS
         localError="Mesh component number "//TRIM(NumberToVString(meshComponentNumber,"*",err,error))// &
           & " is invalid for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
           & " of field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//" which has "// &
-          & TRIM(NumberToVString(field%SCALINGS%NUMBER_OF_SCALING_INDICES,"*",err,error))// &
+          & TRIM(NumberToVString(field%SCALINGS%numberOfScalingIndices,"*",err,error))// &
           & " components."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     CASE(FIELD_ARC_LENGTH_SCALING)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%SCALING_TYPE,"*",err,error))// &
+      localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS%scalingType,"*",err,error))// &
         & " is invalid for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -8012,7 +8012,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: LINE_NUMBER !<The line number to get the element scale factors for
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8024,8 +8024,8 @@ CONTAINS
     TYPE(DomainLinesType), POINTER :: domainLines
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_InterpolationParametersScaleFactorsLineGet",err,error,*999)
@@ -8035,7 +8035,7 @@ CONTAINS
     CALL FieldInterpolationParameters_FieldVariableGet(INTERPOLATION_PARAMETERS,fieldVariable,err,error,*999)
     NULLIFY(field)
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
-    SELECT CASE(field%SCALINGS%SCALING_TYPE)
+    SELECT CASE(field%SCALINGS%scalingType)
     CASE(FIELD_NO_SCALING)
       CALL FlagError("Can not scale factors for a field with no scaling.",err,error,*999)
     CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
@@ -8049,25 +8049,25 @@ CONTAINS
         IF(LINE_NUMBER>0.AND.LINE_NUMBER<=domainLines%numberOfLines) THEN
           NULLIFY(basis)
           CALL DomainLines_BasisGet(domainLines,LINE_NUMBER,basis,err,error,*999)
-          INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR=>BASIS
+          INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr=>BASIS
           IF(component_idx==1) THEN
             INTERPOLATION_PARAMETERS%numberOfXi=BASIS%numberOfXi
           ELSE
             IF(BASIS%numberOfXi/=INTERPOLATION_PARAMETERS%numberOfXi) &
               & CALL FlagError("Inconsistent number of xi directions???",err,error,*999)
           ENDIF
-          SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+          SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)             
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_NODE_BASED_INTERPOLATION)
             NULLIFY(domainNodes)
             CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%numberOfElementParameters
-            scaling_idx=fieldVariable%COMPONENTS(component_idx)%SCALING_INDEX
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=BASIS%numberOfElementParameters
+            scaling_idx=fieldVariable%components(component_idx)%scalingIndex
             NULLIFY(scaleFactorsVector)
             CALL Field_ScaleFactorsVectorGet(field,scaling_idx,scaleFactorsVector,err,error,*999)
             NULLIFY(SCALE_FACTORS)
@@ -8078,19 +8078,19 @@ CONTAINS
                 nk=domainLines%LINES(LINE_NUMBER)%derivativesInLine(1,mk,nn)
                 nv=domainLines%LINES(LINE_NUMBER)%derivativesInLine(2,mk,nn)
                 ns=BASIS%elementParameterIndex(mk,nn)
-                ny=domainNodes%NODES(np)%DERIVATIVES(nk)%dofIndex(nv)
-                INTERPOLATION_PARAMETERS%SCALE_FACTORS(ns,component_idx)=SCALE_FACTORS(ny)
+                ny=domainNodes%nodes(np)%DERIVATIVES(nk)%dofIndex(nv)
+                INTERPOLATION_PARAMETERS%scaleFactors(ns,component_idx)=SCALE_FACTORS(ny)
               ENDDO !mk
             ENDDO !nn
             CALL DistributedVector_DataRestore(scaleFactorsVector,SCALE_FACTORS,err,error,*999)
           CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE DEFAULT
             localError="The interpolation type of "//TRIM(NumberToVString(fieldVariable% &
@@ -8112,7 +8112,7 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS% &
-        & SCALING_TYPE,"*",err,error))//" is invalid for field number "// &
+        & scalingType,"*",err,error))//" is invalid for field number "// &
         & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -8120,15 +8120,15 @@ CONTAINS
     IF(DIAGNOSTICS1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",field%userNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",fieldVariable%VARIABLE_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",fieldVariable%variableNumber,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Line number = ",LINE_NUMBER,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",fieldVariable%numberOfComponents,err,error,*999)
       DO component_idx=1,fieldVariable%numberOfComponents
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
-          & NUMBER_OF_PARAMETERS(component_idx),err,error,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
-          & INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
+          & numberOfParameters(component_idx),err,error,*999)
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%numberOfParameters(component_idx),4,4, &
+          & INTERPOLATION_PARAMETERS%scaleFactors(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
           & err,error,*999)
       ENDDO !component_idx
     ENDIF
@@ -8150,7 +8150,7 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: FACE_NUMBER !<The face number to get the element scale factors for
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<On return, a pointer to the interpolation parameters
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8162,8 +8162,8 @@ CONTAINS
     TYPE(DomainFacesType), POINTER :: domainFaces
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_InterpolationParametersScaleFactorsFaceGet",err,error,*999)
@@ -8173,7 +8173,7 @@ CONTAINS
     CALL FieldInterpolationParameters_FieldVariableGet(INTERPOLATION_PARAMETERS,fieldVariable,err,error,*999)
     NULLIFY(field)
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
-    SELECT CASE(field%SCALINGS%SCALING_TYPE)
+    SELECT CASE(field%SCALINGS%scalingType)
     CASE(FIELD_NO_SCALING)
       CALL FlagError("Can not scale factors for a field with no scaling.",err,error,*999)
     CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
@@ -8187,25 +8187,25 @@ CONTAINS
         IF(FACE_NUMBER>0.AND.FACE_NUMBER<=domainFaces%numberOfFaces) THEN
           NULLIFY(basis)
           CALL DomainFaces_BasisGet(domainFaces,FACE_NUMBER,basis,err,error,*999)
-          INTERPOLATION_PARAMETERS%BASES(component_idx)%PTR=>BASIS
+          INTERPOLATION_PARAMETERS%BASES(component_idx)%ptr=>BASIS
           IF(component_idx==1) THEN
             INTERPOLATION_PARAMETERS%numberOfXi=BASIS%numberOfXi
           ELSE
             IF(BASIS%numberOfXi/=INTERPOLATION_PARAMETERS%numberOfXi) &
               & CALL FlagError("Inconsistent number of xi directions???",err,error,*999)
           ENDIF
-          SELECT CASE(fieldVariable%COMPONENTS(component_idx)%interpolationType)
+          SELECT CASE(fieldVariable%components(component_idx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)             
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_NODE_BASED_INTERPOLATION)
             NULLIFY(domainNodes)
             CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=BASIS%numberOfElementParameters
-            scaling_idx=INTERPOLATION_PARAMETERS%FIELD_VARIABLE%COMPONENTS(component_idx)%SCALING_INDEX
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=BASIS%numberOfElementParameters
+            scaling_idx=INTERPOLATION_PARAMETERS%fieldVariable%components(component_idx)%scalingIndex
             NULLIFY(scaleFactorsVector)
             CALL Field_ScaleFactorsVectorGet(field,scaling_idx,scaleFactorsVector,err,error,*999)
             NULLIFY(SCALE_FACTORS)
@@ -8216,19 +8216,19 @@ CONTAINS
                 nk=domainFaces%FACES(FACE_NUMBER)%derivativesInFace(1,mk,nn)
                 nv=domainFaces%FACES(FACE_NUMBER)%derivativesInFace(2,mk,nn)
                 ns=BASIS%elementParameterIndex(mk,nn)
-                ny=domainNodes%NODES(np)%DERIVATIVES(nk)%dofIndex(nv)
-                INTERPOLATION_PARAMETERS%SCALE_FACTORS(ns,component_idx)=SCALE_FACTORS(ny)
+                ny=domainNodes%nodes(np)%DERIVATIVES(nk)%dofIndex(nv)
+                INTERPOLATION_PARAMETERS%scaleFactors(ns,component_idx)=SCALE_FACTORS(ny)
               ENDDO !mk
             ENDDO !nn
             CALL DistributedVector_DataRestore(scaleFactorsVector,SCALE_FACTORS,err,error,*999)
           CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-            INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx)=1
+            INTERPOLATION_PARAMETERS%numberOfParameters(component_idx)=1
             INTERPOLATION_PARAMETERS%PARAMETERS(1,component_idx)=1.0_DP
           CASE DEFAULT
             localError="The interpolation type of "//TRIM(NumberToVString(fieldVariable% &
@@ -8250,7 +8250,7 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="The scaling type of "//TRIM(NumberToVString(field%SCALINGS% &
-        & SCALING_TYPE,"*",err,error))//" is invalid for field number "// &
+        & scalingType,"*",err,error))//" is invalid for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -8258,15 +8258,15 @@ CONTAINS
     IF(DIAGNOSTICS1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interpolation scale factors:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number = ",field%userNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",fieldVariable%VARIABLE_NUMBER,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field variable number = ",fieldVariable%variableNumber,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Face number = ",FACE_NUMBER,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of components = ",fieldVariable%numberOfComponents,err,error,*999)
       DO component_idx=1,fieldVariable%numberOfComponents
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Component = ",component_idx,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of parameters = ",INTERPOLATION_PARAMETERS% &
-          & NUMBER_OF_PARAMETERS(component_idx),err,error,*999)
-        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%NUMBER_OF_PARAMETERS(component_idx),4,4, &
-          & INTERPOLATION_PARAMETERS%SCALE_FACTORS(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
+          & numberOfParameters(component_idx),err,error,*999)
+        CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,INTERPOLATION_PARAMETERS%numberOfParameters(component_idx),4,4, &
+          & INTERPOLATION_PARAMETERS%scaleFactors(:,component_idx),'("      Scale factors :",4(X,E13.6))','(21X,4(X,E13.6))', &
           & err,error,*999)
       ENDDO !component_idx
     ENDIF
@@ -8287,7 +8287,7 @@ CONTAINS
   SUBROUTINE FIELD_PHYSICAL_POINT_FINALISE(PHYSICAL_POINT,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_PHYSICAL_POINT_TYPE), POINTER :: PHYSICAL_POINT !<A pointer to the physical point to finalise
+    TYPE(FieldPhysicalPointType), POINTER :: PHYSICAL_POINT !<A pointer to the physical point to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8314,16 +8314,16 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: FIELD_INTERPOLATED_POINT !<A pointer to the field interpolation point to initialise the physical point for
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT !<A pointer to the geometric field interpolated point to initialise the physical point for
-    TYPE(FIELD_PHYSICAL_POINT_TYPE), POINTER :: PHYSICAL_POINT !<On exit, A pointer to the physical point that has been initialised
+    TYPE(FieldInterpolatedPointType), POINTER :: FIELD_INTERPOLATED_POINT !<A pointer to the field interpolation point to initialise the physical point for
+    TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT !<A pointer to the geometric field interpolated point to initialise the physical point for
+    TYPE(FieldPhysicalPointType), POINTER :: PHYSICAL_POINT !<On exit, A pointer to the physical point that has been initialised
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR
-    TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: FIELD_INTERPOLATION_PARAMETERS,GEOMETRIC_INTERPOLATION_PARAMETERS
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricVariable
+    TYPE(FieldType), POINTER :: FIELD,GEOMETRIC_FIELD
+    TYPE(FieldInterpolationParametersType), POINTER :: FIELD_INTERPOLATION_PARAMETERS,GEOMETRIC_INTERPOLATION_PARAMETERS
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
     TYPE(VARYING_STRING) :: DUMMY_ERROR
 
     ENTERS("FIELD_PHYSICAL_POINT_INITIALISE",err,error,*998)
@@ -8346,16 +8346,16 @@ CONTAINS
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(GEOMETRIC_FIELD)
     CALL FieldVariable_FieldGet(geometricVariable,GEOMETRIC_FIELD,err,error,*999)
-    IF(.NOT.ASSOCIATED(FIELD%GEOMETRIC_FIELD,GEOMETRIC_FIELD)) THEN
+    IF(.NOT.ASSOCIATED(FIELD%geometricField,GEOMETRIC_FIELD)) THEN
       CALL FlagError("The field geometric field and the specified geometric field are not associated.",err,error,*999)
     ENDIF
 
     ALLOCATE(PHYSICAL_POINT,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate physical point",err,error,*999)
-    PHYSICAL_POINT%FIELD_INTERPOLATED_POINT=>FIELD_INTERPOLATED_POINT
-    PHYSICAL_POINT%GEOMETRIC_INTERPOLATED_POINT=>GEOMETRIC_INTERPOLATED_POINT
-    PHYSICAL_POINT%PHYSICAL_DERIVATIVE_TYPE=0
-    ALLOCATE(PHYSICAL_POINT%VALUES(FIELD_INTERPOLATION_PARAMETERS%FIELD_VARIABLE%numberOfComponents),STAT=err)
+    PHYSICAL_POINT%fieldInterpolatedPoint=>FIELD_INTERPOLATED_POINT
+    PHYSICAL_POINT%geometricInterpolatedPoint=>GEOMETRIC_INTERPOLATED_POINT
+    PHYSICAL_POINT%physicalDerivativeType=0
+    ALLOCATE(PHYSICAL_POINT%VALUES(FIELD_INTERPOLATION_PARAMETERS%fieldVariable%numberOfComponents),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate physical point values.",err,error,*999)
     PHYSICAL_POINT%VALUES=0.0_DP
 
@@ -8375,7 +8375,7 @@ CONTAINS
   SUBROUTINE FIELD_PHYSICAL_POINTS_FINALISE(PHYSICAL_POINTS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_PHYSICAL_POINT_PTR_TYPE), POINTER :: PHYSICAL_POINTS(:) !<A pointer to the physical points to finalise
+    TYPE(FieldPhysicalPointPtrType), POINTER :: PHYSICAL_POINTS(:) !<A pointer to the physical points to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8385,7 +8385,7 @@ CONTAINS
 
     IF(ASSOCIATED(PHYSICAL_POINTS)) THEN
       DO var_type_idx=1,SIZE(PHYSICAL_POINTS,1)
-        CALL FIELD_PHYSICAL_POINT_FINALISE(PHYSICAL_POINTS(var_type_idx)%PTR,err,error,*999)
+        CALL FIELD_PHYSICAL_POINT_FINALISE(PHYSICAL_POINTS(var_type_idx)%ptr,err,error,*999)
       ENDDO !var_type_idx
       DEALLOCATE(PHYSICAL_POINTS)
     ENDIF
@@ -8406,9 +8406,9 @@ CONTAINS
     & PHYSICAL_POINTS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: FIELD_INTERPOLATED_POINTS(:) !<A pointer to the field interpolated points to initialise the physical points for
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINTS(:) !<A pointer to the geometric interpolated points to initialise the physical points for
-    TYPE(FIELD_PHYSICAL_POINT_PTR_TYPE), POINTER :: PHYSICAL_POINTS(:) !<On exit, A pointer to the physical points that has been initialised. Must not be associated on entry.
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: FIELD_INTERPOLATED_POINTS(:) !<A pointer to the field interpolated points to initialise the physical points for
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: GEOMETRIC_INTERPOLATED_POINTS(:) !<A pointer to the geometric interpolated points to initialise the physical points for
+    TYPE(FieldPhysicalPointPtrType), POINTER :: PHYSICAL_POINTS(:) !<On exit, A pointer to the physical points that has been initialised. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -8426,11 +8426,11 @@ CONTAINS
           IF(err/=0) CALL FlagError("Could not allocate physical points.",err,error,*999)
           DO var_type_idx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
 
-            NULLIFY(PHYSICAL_POINTS(var_type_idx)%PTR)
-            IF(ASSOCIATED(FIELD_INTERPOLATED_POINTS(var_type_idx)%PTR).AND. &
-              & ASSOCIATED(GEOMETRIC_INTERPOLATED_POINTS(var_type_idx)%PTR)) &
-              & CALL FIELD_PHYSICAL_POINT_INITIALISE(FIELD_INTERPOLATED_POINTS(var_type_idx)%PTR, &
-              & GEOMETRIC_INTERPOLATED_POINTS(var_type_idx)%PTR,PHYSICAL_POINTS(var_type_idx)%PTR,err,error,*999)
+            NULLIFY(PHYSICAL_POINTS(var_type_idx)%ptr)
+            IF(ASSOCIATED(FIELD_INTERPOLATED_POINTS(var_type_idx)%ptr).AND. &
+              & ASSOCIATED(GEOMETRIC_INTERPOLATED_POINTS(var_type_idx)%ptr)) &
+              & CALL FIELD_PHYSICAL_POINT_INITIALISE(FIELD_INTERPOLATED_POINTS(var_type_idx)%ptr, &
+              & GEOMETRIC_INTERPOLATED_POINTS(var_type_idx)%ptr,PHYSICAL_POINTS(var_type_idx)%ptr,err,error,*999)
           ENDDO !var_type_idx
         ENDIF
       ELSE
@@ -8456,17 +8456,17 @@ CONTAINS
   SUBROUTINE FIELD_MAPPINGS_CALCULATE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to calculate the mappings for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to calculate the mappings for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: variable_idx,component_idx,domain_type_idx,VARIABLE_GLOBAL_DOFS_OFFSET,NUMBER_OF_GLOBAL_VARIABLE_DOFS, &
-      & NUMBER_OF_CONSTANT_DOFS,NUMBER_OF_ELEMENT_DOFS,NUMBER_OF_NODE_DOFS,NUMBER_OF_GRID_POINT_DOFS,NUMBER_OF_GAUSS_POINT_DOFS, &
+      & numberOfConstantDOFs,numberOfElementDOFs,numberOfNodeDOFs,numberOfGridPointDOFs,numberOfGaussPointDOFs, &
       & NUMBER_OF_LOCAL_VARIABLE_DOFS,TOTAL_NUMBER_OF_VARIABLE_DOFS,NUMBER_OF_DOMAINS,variable_global_ny, &
       & variable_local_ny,domain_idx,domain_no,constant_nyy,element_ny,element_nyy,node_ny,node_nyy,grid_point_nyy, &
       & Gauss_point_nyy,version_idx,derivative_idx,ny,numberOfGroupComputationNodes, &
       & myGroupComputationNodeNumber,domain_type_stop,start_idx,stop_idx,element_idx,node_idx,NUMBER_OF_LOCAL, NGP, MAX_NGP, &
-      & gp,MPI_IERROR,numberOfGlobalDofs,gauss_point_idx,NUMBER_OF_DATA_POINT_DOFS,data_point_nyy,dataPointIdx,elementIdx, &
+      & gp,MPI_IERROR,numberOfGlobalDofs,gauss_point_idx,numberOfDataPointDOFs,data_point_nyy,dataPointIdx,elementIdx, &
       & localDataNumber,globalElementNumber,groupCommunicator
     INTEGER(INTG), ALLOCATABLE :: VARIABLE_LOCAL_DOFS_OFFSETS(:),VARIABLE_GHOST_DOFS_OFFSETS(:), &
       & localDataParamCount(:),ghostDataParamCount(:)
@@ -8481,7 +8481,7 @@ CONTAINS
     TYPE(DomainMappingsType), POINTER :: domainMappings
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: FIELD_COMPONENT
+    TYPE(FieldVariableComponentType), POINTER :: FIELD_COMPONENT
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -8498,21 +8498,21 @@ CONTAINS
 
       !Calculate the number of global and local degrees of freedom for the field variables and components. Each field variable
       !component has a set of DOFs so loop over the components for each variable component and count up the DOFs.
-      DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
-        NUMBER_OF_CONSTANT_DOFS=0
-        NUMBER_OF_ELEMENT_DOFS=0
-        NUMBER_OF_NODE_DOFS=0
-        NUMBER_OF_GRID_POINT_DOFS=0
-        NUMBER_OF_GAUSS_POINT_DOFS=0
-        NUMBER_OF_DATA_POINT_DOFS=0
+      DO variable_idx=1,FIELD%numberOfVariables
+        numberOfConstantDOFs=0
+        numberOfElementDOFs=0
+        numberOfNodeDOFs=0
+        numberOfGridPointDOFs=0
+        numberOfGaussPointDOFs=0
+        numberOfDataPointDOFs=0
         NUMBER_OF_LOCAL_VARIABLE_DOFS=0
         TOTAL_NUMBER_OF_VARIABLE_DOFS=0
         NUMBER_OF_GLOBAL_VARIABLE_DOFS=0
-        DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-          FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+        DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+          FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
           SELECT CASE(FIELD_COMPONENT%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
-            NUMBER_OF_CONSTANT_DOFS=NUMBER_OF_CONSTANT_DOFS+1
+            numberOfConstantDOFs=numberOfConstantDOFs+1
             NUMBER_OF_LOCAL_VARIABLE_DOFS=NUMBER_OF_LOCAL_VARIABLE_DOFS+1
             TOTAL_NUMBER_OF_VARIABLE_DOFS=TOTAL_NUMBER_OF_VARIABLE_DOFS+1
             NUMBER_OF_GLOBAL_VARIABLE_DOFS=NUMBER_OF_GLOBAL_VARIABLE_DOFS+1
@@ -8522,7 +8522,7 @@ CONTAINS
             CALL Domain_DomainTopologyGet(DOMAIN,domainTopology,err,error,*999)
             NULLIFY(domainElements)
             CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
-            NUMBER_OF_ELEMENT_DOFS=NUMBER_OF_ELEMENT_DOFS+domainElements%totalNumberOfElements
+            numberOfElementDOFs=numberOfElementDOFs+domainElements%totalNumberOfElements
             NUMBER_OF_LOCAL_VARIABLE_DOFS=NUMBER_OF_LOCAL_VARIABLE_DOFS+domainElements%numberOfElements
             TOTAL_NUMBER_OF_VARIABLE_DOFS=TOTAL_NUMBER_OF_VARIABLE_DOFS+domainElements%totalNumberOfElements
             NUMBER_OF_GLOBAL_VARIABLE_DOFS=NUMBER_OF_GLOBAL_VARIABLE_DOFS+domainElements%numberOfGlobalElements
@@ -8532,7 +8532,7 @@ CONTAINS
             CALL Domain_DomainTopologyGet(DOMAIN,domainTopology,err,error,*999)
             NULLIFY(domainDofs)
             CALL DomainTopology_DomainDofsGet(domainTopology,domainDofs,err,error,*999)
-            NUMBER_OF_NODE_DOFS=NUMBER_OF_NODE_DOFS+domainDofs%totalNumberOfDofs
+            numberOfNodeDOFs=numberOfNodeDOFs+domainDofs%totalNumberOfDofs
             NUMBER_OF_LOCAL_VARIABLE_DOFS=NUMBER_OF_LOCAL_VARIABLE_DOFS+domainDofs%numberOfDofs
             TOTAL_NUMBER_OF_VARIABLE_DOFS=TOTAL_NUMBER_OF_VARIABLE_DOFS+domainDofs%totalNumberOfDofs
             NUMBER_OF_GLOBAL_VARIABLE_DOFS=NUMBER_OF_GLOBAL_VARIABLE_DOFS+domainDofs%numberOfGlobalDofs
@@ -8548,12 +8548,12 @@ CONTAINS
             DO element_idx=1,domainElements%numberOfElements
               NULLIFY(basis)
               CALL DomainElements_BasisGet(domainElements,element_idx,basis,err,error,*999)
-              NGP=BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
+              NGP=BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%NUMBER_OF_GAUSS
               MAX_NGP=MAX(MAX_NGP,NGP)
             ENDDO !element_idx
             CALL MPI_ALLREDUCE(MPI_IN_PLACE,MAX_NGP,1,MPI_INTEGER,MPI_MAX,groupCommunicator,MPI_IERROR)
             CALL MPI_ERROR_CHECK("MPI_ALLREDUCE",MPI_IERROR,err,error,*999)             
-            NUMBER_OF_GAUSS_POINT_DOFS=NUMBER_OF_GAUSS_POINT_DOFS+domainElements%totalNumberOfElements*MAX_NGP
+            numberOfGaussPointDOFs=numberOfGaussPointDOFs+domainElements%totalNumberOfElements*MAX_NGP
             NUMBER_OF_LOCAL_VARIABLE_DOFS=NUMBER_OF_LOCAL_VARIABLE_DOFS+domainElements%numberOfElements*MAX_NGP
             TOTAL_NUMBER_OF_VARIABLE_DOFS=TOTAL_NUMBER_OF_VARIABLE_DOFS+domainElements%totalNumberOfElements*MAX_NGP
             NUMBER_OF_GLOBAL_VARIABLE_DOFS=NUMBER_OF_GLOBAL_VARIABLE_DOFS+domainElements%numberOfGlobalElements*MAX_NGP
@@ -8563,54 +8563,54 @@ CONTAINS
             CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
             NULLIFY(decompositionDataPoints)
             CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionDataPoints,err,error,*999)
-            NUMBER_OF_DATA_POINT_DOFS=NUMBER_OF_DATA_POINT_DOFS+decompositionDataPoints%totalNumberOfDataPoints
+            numberOfDataPointDOFs=numberOfDataPointDOFs+decompositionDataPoints%totalNumberOfDataPoints
             NUMBER_OF_LOCAL_VARIABLE_DOFS=NUMBER_OF_LOCAL_VARIABLE_DOFS+decompositionDataPoints%numberOfDataPoints
             TOTAL_NUMBER_OF_VARIABLE_DOFS=TOTAL_NUMBER_OF_VARIABLE_DOFS+decompositionDataPoints%totalNumberOfDataPoints  
             NUMBER_OF_GLOBAL_VARIABLE_DOFS=NUMBER_OF_GLOBAL_VARIABLE_DOFS+decompositionDataPoints%numberOfGlobalDataPoints
           CASE DEFAULT
             localError="The interpolation type of "// &
-              & TRIM(NumberToVString(FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)%interpolationType, &
+              & TRIM(NumberToVString(FIELD%variables(variable_idx)%components(component_idx)%interpolationType, &
               & "*",err,error))//" is invalid for component number "//TRIM(NumberToVString(component_idx,"*",err,error))// &
-              & " of variable type  "//TRIM(NumberToVString(FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE,"*",err,error))//"."
+              & " of variable type  "//TRIM(NumberToVString(FIELD%variables(variable_idx)%variableType,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ENDDO !component_idx
         !Allocate the DOF to parameters (nodes, elements, gauss, components etc.) maps. 
-        FIELD%VARIABLES(variable_idx)%numberOfDofs=NUMBER_OF_LOCAL_VARIABLE_DOFS
-        FIELD%VARIABLES(variable_idx)%totalNumberOfDofs=TOTAL_NUMBER_OF_VARIABLE_DOFS
-        FIELD%VARIABLES(variable_idx)%numberOfGlobalDofs=NUMBER_OF_GLOBAL_VARIABLE_DOFS
-        ALLOCATE(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,TOTAL_NUMBER_OF_VARIABLE_DOFS),STAT=err)
+        FIELD%variables(variable_idx)%numberOfDofs=NUMBER_OF_LOCAL_VARIABLE_DOFS
+        FIELD%variables(variable_idx)%totalNumberOfDofs=TOTAL_NUMBER_OF_VARIABLE_DOFS
+        FIELD%variables(variable_idx)%numberOfGlobalDofs=NUMBER_OF_GLOBAL_VARIABLE_DOFS
+        ALLOCATE(FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,TOTAL_NUMBER_OF_VARIABLE_DOFS),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate dof to parameter map.",err,error,*999)
-        FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%numberOfDofs=TOTAL_NUMBER_OF_VARIABLE_DOFS
-        IF(NUMBER_OF_CONSTANT_DOFS>0) THEN
-          ALLOCATE(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%CONSTANT_DOF2PARAM_MAP(NUMBER_OF_CONSTANT_DOFS),STAT=err)
+        FIELD%variables(variable_idx)%dofToParamMap%numberOfDofs=TOTAL_NUMBER_OF_VARIABLE_DOFS
+        IF(numberOfConstantDOFs>0) THEN
+          ALLOCATE(FIELD%variables(variable_idx)%dofToParamMap%constantDOF2ParamMap(numberOfConstantDOFs),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate dof to parameter constant map.",err,error,*999)
-          FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS=NUMBER_OF_CONSTANT_DOFS
+          FIELD%variables(variable_idx)%dofToParamMap%numberOfConstantDOFs=numberOfConstantDOFs
         ENDIF
-        IF(NUMBER_OF_ELEMENT_DOFS>0) THEN
-          ALLOCATE(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(2,NUMBER_OF_ELEMENT_DOFS),STAT=err)
+        IF(numberOfElementDOFs>0) THEN
+          ALLOCATE(FIELD%variables(variable_idx)%dofToParamMap%elementDOF2ParamMap(2,numberOfElementDOFs),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate dof to parameter element map.",err,error,*999)
-          FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS=NUMBER_OF_ELEMENT_DOFS
+          FIELD%variables(variable_idx)%dofToParamMap%numberOfElementDOFs=numberOfElementDOFs
         ENDIF
-        IF(NUMBER_OF_NODE_DOFS>0) THEN
-          ALLOCATE(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(4,NUMBER_OF_NODE_DOFS),STAT=err)
+        IF(numberOfNodeDOFs>0) THEN
+          ALLOCATE(FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(4,numberOfNodeDOFs),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate dof to parameter node map.",err,error,*999)
-          FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS=NUMBER_OF_NODE_DOFS
+          FIELD%variables(variable_idx)%dofToParamMap%numberOfNodeDOFs=numberOfNodeDOFs
         ENDIF
-        IF(NUMBER_OF_GRID_POINT_DOFS>0) THEN
-          ALLOCATE(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%GRID_POINT_DOF2PARAM_MAP(2,NUMBER_OF_GRID_POINT_DOFS),STAT=err)
+        IF(numberOfGridPointDOFs>0) THEN
+          ALLOCATE(FIELD%variables(variable_idx)%dofToParamMap%gridPointDOF2ParamMap(2,numberOfGridPointDOFs),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate dof to parameter grid point map.",err,error,*999)
-          FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS=NUMBER_OF_GRID_POINT_DOFS
+          FIELD%variables(variable_idx)%dofToParamMap%numberOfGridPointDOFs=numberOfGridPointDOFs
         ENDIF
-        IF(NUMBER_OF_GAUSS_POINT_DOFS>0) THEN
-          ALLOCATE(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(3,NUMBER_OF_GAUSS_POINT_DOFS),STAT=err)
+        IF(numberOfGaussPointDOFs>0) THEN
+          ALLOCATE(FIELD%variables(variable_idx)%dofToParamMap%gaussPointDOF2ParamMap(3,numberOfGaussPointDOFs),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate dof to parameter Gauss point map.",err,error,*999)
-          FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS=NUMBER_OF_GAUSS_POINT_DOFS
+          FIELD%variables(variable_idx)%dofToParamMap%numberOfGaussPointDOFs=numberOfGaussPointDOFs
         ENDIF
-        IF(NUMBER_OF_DATA_POINT_DOFS>0) THEN
-          ALLOCATE(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DATA_POINT_DOF2PARAM_MAP(3,NUMBER_OF_DATA_POINT_DOFS),STAT=err)
+        IF(numberOfDataPointDOFs>0) THEN
+          ALLOCATE(FIELD%variables(variable_idx)%dofToParamMap%dataPointDOF2ParamMap(3,numberOfDataPointDOFs),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate dof to parameter Gauss point map.",err,error,*999)
-          FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS=NUMBER_OF_DATA_POINT_DOFS
+          FIELD%variables(variable_idx)%dofToParamMap%numberOfDataPointDOFs=numberOfDataPointDOFs
         ENDIF
       ENDDO !variable_idx
       !Allocate the mapping arrays
@@ -8626,7 +8626,7 @@ CONTAINS
         domain_type_stop=2 !Local+Ghosts
       ENDIF
       !Calculate the local and global numbers and set up the mappings
-      DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
+      DO variable_idx=1,FIELD%numberOfVariables
         constant_nyy=0
         element_nyy=0
         node_nyy=0
@@ -8634,11 +8634,11 @@ CONTAINS
         Gauss_point_nyy=0
         data_point_nyy=0
         variable_local_ny=0
-        FIELD_VARIABLE_DOFS_MAPPING=>FIELD%VARIABLES(variable_idx)%DOMAIN_MAPPING
+        FIELD_VARIABLE_DOFS_MAPPING=>FIELD%variables(variable_idx)%domainMapping
         IF(ASSOCIATED(FIELD_VARIABLE_DOFS_MAPPING)) THEN
-          ALLOCATE(FIELD_VARIABLE_DOFS_MAPPING%globalToLocalMap(FIELD%VARIABLES(variable_idx)%numberOfGlobalDofs),STAT=err)
+          ALLOCATE(FIELD_VARIABLE_DOFS_MAPPING%globalToLocalMap(FIELD%variables(variable_idx)%numberOfGlobalDofs),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate variable dofs mapping global to local map.",err,error,*999)
-          FIELD_VARIABLE_DOFS_MAPPING%numberOfGlobal=FIELD%VARIABLES(variable_idx)%numberOfGlobalDofs
+          FIELD_VARIABLE_DOFS_MAPPING%numberOfGlobal=FIELD%variables(variable_idx)%numberOfGlobalDofs
         ENDIF
         !The ordering of the DOFs with respect to components is arbitrary. Allow for two orderings: The first ordering is that
         !all the DOFs from one component are processed before all the DOFs of the next component. This is known as "separated"
@@ -8646,16 +8646,16 @@ CONTAINS
         !and then process all the components for the next parameter. This is known as "contiguous" component DOF ordering.
         !Continguous component ordering only works if each of the components has the same DOF structure. For this reason
         !separate component ordering is the default.
-        SELECT CASE(FIELD%VARIABLES(variable_idx)%DOF_ORDER_TYPE)
+        SELECT CASE(FIELD%variables(variable_idx)%dofOrderType)
         CASE(FIELD_SEPARATED_COMPONENT_DOF_ORDER)
           !Loop over the domain types. Here domain_type_idx=1 for the non-ghosted dofs and =2 for the ghosted dofs.
           VARIABLE_GHOST_DOFS_OFFSETS=0
           DO domain_type_idx=1,domain_type_stop
             VARIABLE_GLOBAL_DOFS_OFFSET=0
             VARIABLE_LOCAL_DOFS_OFFSETS=0
-            DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
+            DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
               NUMBER_OF_LOCAL=0
-              FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+              FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
               SELECT CASE(FIELD_COMPONENT%interpolationType)
               CASE(FIELD_CONSTANT_INTERPOLATION)
                 !Only process the non-ghosted dofs for constant interpolation
@@ -8692,12 +8692,12 @@ CONTAINS
                   ENDIF
                   constant_nyy=constant_nyy+1
                   !Setup dof to parameter map
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_CONSTANT_DOF_TYPE
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=constant_nyy
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%CONSTANT_DOF2PARAM_MAP(constant_nyy)=component_idx
+                  FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_CONSTANT_DOF_TYPE
+                  FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=constant_nyy
+                  FIELD%variables(variable_idx)%dofToParamMap%constantDOF2ParamMap(constant_nyy)=component_idx
                   !Setup reverse parameter to dof map
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS=1
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP=variable_local_ny
+                  FIELD_COMPONENT%paramToDOFMap%numberOfConstantParameters=1
+                  FIELD_COMPONENT%paramToDOFMap%constantParam2DOFMap=variable_local_ny
                   !Adjust the offsets
                   VARIABLE_GLOBAL_DOFS_OFFSET=VARIABLE_GLOBAL_DOFS_OFFSET+1
                   VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)= &
@@ -8716,10 +8716,10 @@ CONTAINS
                 IF(domain_type_idx==1) THEN
                   !Allocate parameter to dof map for this field variable component
                   DOFS_MAPPING=>elementsMapping
-                  ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(domainElements% &
+                  ALLOCATE(FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%ELEMENTS(domainElements% &
                     & totalNumberOfElements),STAT=err)
                   IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof element map.",err,error,*999)
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%numberOfElementParameters= &
+                  FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%numberOfElementParameters= &
                     & domainElements%totalNumberOfElements
                   !Handle global dofs domain mapping
                   DO ny=1,elementsMapping%numberOfGlobal
@@ -8802,12 +8802,12 @@ CONTAINS
                   variable_local_ny=variable_local_ny+1
                   element_nyy=element_nyy+1
                   !Setup dof to parameter map
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_ELEMENT_DOF_TYPE
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=element_nyy
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(1,element_nyy)=element_idx
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(2,element_nyy)=component_idx
+                  FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_ELEMENT_DOF_TYPE
+                  FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=element_nyy
+                  FIELD%variables(variable_idx)%dofToParamMap%elementDOF2ParamMap(1,element_nyy)=element_idx
+                  FIELD%variables(variable_idx)%dofToParamMap%elementDOF2ParamMap(2,element_nyy)=component_idx
                   !Setup reverse parameter to dof map
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)=variable_local_ny
+                  FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%ELEMENTS(element_idx)=variable_local_ny
                 ENDDO !element_idx
               CASE(FIELD_NODE_BASED_INTERPOLATION)
                 DOMAIN=>FIELD_COMPONENT%DOMAIN
@@ -8822,24 +8822,24 @@ CONTAINS
                 NULLIFY(DOFS_MAPPING)
                 CALL DomainMappings_DofsMappingGet(domainMappings,DOFS_MAPPING,err,error,*999)
                 IF(domain_type_idx==1) THEN
-                  ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(domainNodes%totalNumberOfNodes),STAT=err)
+                  ALLOCATE(FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(domainNodes%totalNumberOfNodes),STAT=err)
                   IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof node map (nodes).",err,error,*999)
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS = domainNodes%totalNumberOfNodes
+                  FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%numberOfNodeParameters = domainNodes%totalNumberOfNodes
                   !Loop through and allocate number of derivatives for each node in the domain
                   DO node_idx=1,domainNodes%totalNumberOfNodes
-                    ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES( &
-                      & domainNodes%NODES(node_idx)%numberOfDerivatives),STAT=err)
+                    ALLOCATE(FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES( &
+                      & domainNodes%nodes(node_idx)%numberOfDerivatives),STAT=err)
                     IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof node map (derivatives).", &
                       & err,error,*999)
-                    FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%numberOfDerivatives = & 
-                      & domainNodes%NODES(node_idx)%numberOfDerivatives
-                    DO derivative_idx=1,domainNodes%NODES(node_idx)%numberOfDerivatives
-                      ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)% &
-                        & VERSIONS(domainNodes%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions),STAT=err)
+                    FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%numberOfDerivatives = & 
+                      & domainNodes%nodes(node_idx)%numberOfDerivatives
+                    DO derivative_idx=1,domainNodes%nodes(node_idx)%numberOfDerivatives
+                      ALLOCATE(FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)% &
+                        & VERSIONS(domainNodes%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions),STAT=err)
                       IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof node map (versions).", &
                         & err,error,*999)
-                      FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)% &
-                        & NUMBER_OF_VERSIONS = domainNodes%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+                      FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)% &
+                        & numberOfVersions = domainNodes%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
                     ENDDO !derivative_idx
                   ENDDO !node_idx
                   DO ny=1,DOFS_MAPPING%numberOfGlobal
@@ -8925,14 +8925,14 @@ CONTAINS
                   derivative_idx=DOMAIN%TOPOLOGY%DOFS%dofIndex(2,ny)
                   node_idx=DOMAIN%TOPOLOGY%DOFS%dofIndex(3,ny)
                   !Setup dof to parameter map
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_NODE_DOF_TYPE
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=node_nyy
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(1,node_nyy)=version_idx
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(2,node_nyy)=derivative_idx
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,node_nyy)=node_idx
-                  FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(4,node_nyy)=component_idx
+                  FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_NODE_DOF_TYPE
+                  FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=node_nyy
+                  FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(1,node_nyy)=version_idx
+                  FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(2,node_nyy)=derivative_idx
+                  FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(3,node_nyy)=node_idx
+                  FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(4,node_nyy)=component_idx
                   !Setup reverse parameter to dof map
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)% &
+                  FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)% &
                     & VERSIONS(version_idx) = variable_local_ny
                 ENDDO !ny
               CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
@@ -8950,12 +8950,12 @@ CONTAINS
                 IF(domain_type_idx==1) THEN ! domain_type_idx==1 --> non ghosts
                   !Allocate parameter to dof map for this field variable component
                   DOFS_MAPPING=>elementsMapping
-                  ! GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(ng,element_idx). The field variable dof number of ng'th Gauss point in the element_idx'th element based parameter for this field variable component. 
-                  ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(&
+                  ! gaussPointParam2DOFMap%gaussPoints(ng,element_idx). The field variable dof number of ng'th Gauss point in the element_idx'th element based parameter for this field variable component. 
+                  ALLOCATE(FIELD_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints(&
                     & MAX_NGP,domainElements%totalNumberOfElements),STAT=err)
                   IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof Gauss point map.",err,error,*999)
                   ! this might be wasteful in worst case, but should generally be ok
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS= &
+                  FIELD_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%numberOfGridPointParameters= &
                     &  domainElements%totalNumberOfElements*MAX_NGP
                   !Handle global dofs domain mapping
                   DO ny=1,elementsMapping%numberOfGlobal
@@ -9049,13 +9049,13 @@ CONTAINS
                     variable_local_ny= variable_local_ny+1
                     Gauss_point_nyy  = Gauss_point_nyy+1
                     !Setup dof to parameter map
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_GAUSS_POINT_DOF_TYPE
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=Gauss_point_nyy
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(1,Gauss_point_nyy)=gp
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(2,Gauss_point_nyy)=element_idx
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(3,Gauss_point_nyy)=component_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_GAUSS_POINT_DOF_TYPE
+                    FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=Gauss_point_nyy
+                    FIELD%variables(variable_idx)%dofToParamMap%gaussPointDOF2ParamMap(1,Gauss_point_nyy)=gp
+                    FIELD%variables(variable_idx)%dofToParamMap%gaussPointDOF2ParamMap(2,Gauss_point_nyy)=element_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%gaussPointDOF2ParamMap(3,Gauss_point_nyy)=component_idx
                     !Setup reverse parameter to dof map
-                    FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gp,element_idx)=variable_local_ny
+                    FIELD_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints(gp,element_idx)=variable_local_ny
                   ENDDO !gp
                 ENDDO !element_idx                       
               CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
@@ -9071,11 +9071,11 @@ CONTAINS
                 IF(domain_type_idx==1) THEN ! domain_type_idx==1 -> non ghosts
                   !Allocate parameter to dof map for this field variable component
                   !including both local and ghost data points on this computation domain.
-                  ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(decompositionDataPoints% &
+                  ALLOCATE(FIELD_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%dataPoints(decompositionDataPoints% &
                     & totalNumberOfDataPoints),STAT=err)
                   IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof data point map.",err,error,*999)
                   ! Number of data points
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%NUMBER_OF_DATA_POINT_PARAMETERS= &
+                  FIELD_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%numberOfDataPointParameters= &
                     & decompositionDataPoints%totalNumberOfDataPoints 
                   ALLOCATE(localDataParamCount(0:decomposition%numberOfDomains-1),STAT=err)
                   IF(err/=0) CALL FlagError("Could not allocate data point parameter local count.",err,error,*999)
@@ -9189,20 +9189,20 @@ CONTAINS
                     localDataNumber=decompositionDataPoints%elementDataPoints(elementIdx)%dataIndices(dataPointIdx)% &
                       & localNumber
                     !Setup dof to parameter map
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_DATA_POINT_DOF_TYPE
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=data_point_nyy
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DATA_POINT_DOF2PARAM_MAP(1,data_point_nyy)=localDataNumber
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DATA_POINT_DOF2PARAM_MAP(2,data_point_nyy)=elementIdx
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DATA_POINT_DOF2PARAM_MAP(3,data_point_nyy)=component_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_DATA_POINT_DOF_TYPE
+                    FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=data_point_nyy
+                    FIELD%variables(variable_idx)%dofToParamMap%dataPointDOF2ParamMap(1,data_point_nyy)=localDataNumber
+                    FIELD%variables(variable_idx)%dofToParamMap%dataPointDOF2ParamMap(2,data_point_nyy)=elementIdx
+                    FIELD%variables(variable_idx)%dofToParamMap%dataPointDOF2ParamMap(3,data_point_nyy)=component_idx
                     !Setup reverse parameter to dof map
-                    FIELD_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(localDataNumber)=variable_local_ny
+                    FIELD_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%dataPoints(localDataNumber)=variable_local_ny
                   ENDDO !dataPointIdx
                 ENDDO !elementIdx 
               CASE DEFAULT
                 localError="The interpolation type of "// &
-                  & TRIM(NumberToVString(FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)%interpolationType, &
+                  & TRIM(NumberToVString(FIELD%variables(variable_idx)%components(component_idx)%interpolationType, &
                   & "*",err,error))//" is invalid for component number "//TRIM(NumberToVString(component_idx,"*",err,error))// &
-                  & " of variable type "//TRIM(NumberToVString(FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE,"*",err,error))//"."
+                  & " of variable type "//TRIM(NumberToVString(FIELD%variables(variable_idx)%variableType,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
             ENDDO !component_idx
@@ -9213,11 +9213,11 @@ CONTAINS
           VARIABLE_LOCAL_DOFS_OFFSETS=0
           VARIABLE_GLOBAL_DOFS_OFFSET=0
           VARIABLE_GHOST_DOFS_OFFSETS=0
-          IF(FIELD%VARIABLES(variable_idx)%numberOfComponents>=1) THEN
-            SELECT CASE(FIELD%VARIABLES(variable_idx)%COMPONENTS(1)%interpolationType)
+          IF(FIELD%variables(variable_idx)%numberOfComponents>=1) THEN
+            SELECT CASE(FIELD%variables(variable_idx)%components(1)%interpolationType)
             CASE(FIELD_CONSTANT_INTERPOLATION)
-              DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+              DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                 variable_local_ny=1+VARIABLE_LOCAL_DOFS_OFFSETS(myGroupComputationNodeNumber)
                 !Allocate and set up global to local domain map for variable mapping
                 IF(ASSOCIATED(FIELD_VARIABLE_DOFS_MAPPING)) THEN
@@ -9249,38 +9249,38 @@ CONTAINS
                 ENDIF
                 constant_nyy=constant_nyy+1
                 !Setup dof to parameter map
-                FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_CONSTANT_DOF_TYPE
-                FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=constant_nyy
-                FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%CONSTANT_DOF2PARAM_MAP(constant_nyy)=component_idx
+                FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_CONSTANT_DOF_TYPE
+                FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=constant_nyy
+                FIELD%variables(variable_idx)%dofToParamMap%constantDOF2ParamMap(constant_nyy)=component_idx
                 !Setup reverse parameter to dof map
-                FIELD_COMPONENT%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS=1
-                FIELD_COMPONENT%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP=variable_local_ny
+                FIELD_COMPONENT%paramToDOFMap%numberOfConstantParameters=1
+                FIELD_COMPONENT%paramToDOFMap%constantParam2DOFMap=variable_local_ny
                 !Adjust the offsets
                 VARIABLE_GLOBAL_DOFS_OFFSET=VARIABLE_GLOBAL_DOFS_OFFSET+1
                 VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)= &
                   & VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)+1
               ENDDO !component_idx
             CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-              DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+              DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                 DOMAIN=>FIELD_COMPONENT%DOMAIN
                 NULLIFY(domainTopology)
                 CALL Domain_DomainTopologyGet(DOMAIN,domainTopology,err,error,*999)
                 NULLIFY(domainElements)
                 CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
                 !Allocate parameter to dof map for this field variable component
-                ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(domainElements% &
+                ALLOCATE(FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%ELEMENTS(domainElements% &
                   & totalNumberOfElements),STAT=err)
                 IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof element map.",err,error,*999)
-                FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%numberOfElementParameters= &
+                FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%numberOfElementParameters= &
                   & domainElements%totalNumberOfElements
               ENDDO !component_idx
               !Handle global dofs domain mapping
               element_ny=0
-              numberOfGlobalDofs=FIELD%VARIABLES(variable_idx)%COMPONENTS(1)%DOMAIN%MAPPINGS%ELEMENTS%numberOfGlobal              
+              numberOfGlobalDofs=FIELD%variables(variable_idx)%components(1)%DOMAIN%MAPPINGS%ELEMENTS%numberOfGlobal              
               DO ny=1,numberOfGlobalDofs
-                DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                  FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+                DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                  FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                   DOMAIN=>FIELD_COMPONENT%DOMAIN
                   NULLIFY(domainTopology)
                   CALL Domain_DomainTopologyGet(DOMAIN,domainTopology,err,error,*999)
@@ -9335,58 +9335,58 @@ CONTAINS
                 !Handle local dofs domain mapping
                 element_ny=0
                 DO element_idx=start_idx,stop_idx
-                  DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                    FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+                  DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                    FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                     element_ny=element_ny+1
                     variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myGroupComputationNodeNumber)
                     element_nyy=element_nyy+1
                     !Setup dof to parameter map
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_ELEMENT_DOF_TYPE
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=element_nyy
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(1,element_nyy)=element_idx
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP(2,element_nyy)=component_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_ELEMENT_DOF_TYPE
+                    FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=element_nyy
+                    FIELD%variables(variable_idx)%dofToParamMap%elementDOF2ParamMap(1,element_nyy)=element_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%elementDOF2ParamMap(2,element_nyy)=component_idx
                     !Setup reverse parameter to dof map
-                    FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)=variable_local_ny
+                    FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%ELEMENTS(element_idx)=variable_local_ny
                   ENDDO !component_idx
                 ENDDO !element_idx
                 !Adjust the offsets
                 VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)= &
                   &  VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)+ &
-                  & FIELD%VARIABLES(variable_idx)%numberOfComponents* &
+                  & FIELD%variables(variable_idx)%numberOfComponents* &
                   & elementsMapping%numberOfDomainLocal
                 IF(domain_type_idx==1) THEN
-                  VARIABLE_GLOBAL_DOFS_OFFSET=VARIABLE_GLOBAL_DOFS_OFFSET+FIELD%VARIABLES(variable_idx)%numberOfComponents* &
+                  VARIABLE_GLOBAL_DOFS_OFFSET=VARIABLE_GLOBAL_DOFS_OFFSET+FIELD%variables(variable_idx)%numberOfComponents* &
                     & elementsMapping%numberOfGlobal
                 ENDIF
               ENDDO !domain_type_idx
             CASE(FIELD_NODE_BASED_INTERPOLATION)
-              DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+              DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                 DOMAIN=>FIELD_COMPONENT%DOMAIN
                 NULLIFY(domainTopology)
                 CALL Domain_DomainTopologyGet(DOMAIN,domainTopology,err,error,*999)
                 NULLIFY(domainNodes)
                 CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-                ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(domainNodes%totalNumberOfNodes), &
+                ALLOCATE(FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(domainNodes%totalNumberOfNodes), &
                   & STAT=err)
                 IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof node map (nodes).",err,error,*999)
-                FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS = &
+                FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%numberOfNodeParameters = &
                   & domainNodes%totalNumberOfNodes
                 !Loop through and allocate number of derivatives for each node in the domain
                 DO node_idx=1,domainNodes%totalNumberOfNodes
-                  ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES( &
-                    & domainNodes%NODES(node_idx)%numberOfDerivatives),STAT=err)
+                  ALLOCATE(FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES( &
+                    & domainNodes%nodes(node_idx)%numberOfDerivatives),STAT=err)
                   IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof node map (derivatives).", &
                     & err,error,*999)
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%numberOfDerivatives = & 
-                    & domainNodes%NODES(node_idx)%numberOfDerivatives
-                  DO derivative_idx=1,domainNodes%NODES(node_idx)%numberOfDerivatives
-                    ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)% &
-                      & VERSIONS(domainNodes%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions),STAT=err)
+                  FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%numberOfDerivatives = & 
+                    & domainNodes%nodes(node_idx)%numberOfDerivatives
+                  DO derivative_idx=1,domainNodes%nodes(node_idx)%numberOfDerivatives
+                    ALLOCATE(FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)% &
+                      & VERSIONS(domainNodes%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions),STAT=err)
                     IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof node map (versions).", &
                       & err,error,*999)
-                    FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)% &
-                      NUMBER_OF_VERSIONS = domainNodes%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+                    FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)% &
+                      numberOfVersions = domainNodes%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
                   ENDDO !derivative_idx
                 ENDDO !node_idx
               ENDDO !component_idx
@@ -9394,10 +9394,10 @@ CONTAINS
               !Should the contiguous components have an inner groupping for derivatives??? i.e., loop over nodes, components then
               !derivatives????
               node_ny=0
-              numberOfGlobalDofs=FIELD%VARIABLES(variable_idx)%COMPONENTS(1)%DOMAIN%MAPPINGS%DOFS%numberOfGlobal
+              numberOfGlobalDofs=FIELD%variables(variable_idx)%components(1)%DOMAIN%MAPPINGS%DOFS%numberOfGlobal
               DO ny=1,numberOfGlobalDofs
-                DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                  FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+                DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                  FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                   DOMAIN=>FIELD_COMPONENT%DOMAIN
                   NULLIFY(domainTopology)
                   CALL Domain_DomainTopologyGet(DOMAIN,domainTopology,err,error,*999)
@@ -9453,8 +9453,8 @@ CONTAINS
                 !Handle local dofs domain mapping
                 node_ny=0
                 DO ny=start_idx,stop_idx
-                  DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                    FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+                  DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                    FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                     DOMAIN=>FIELD_COMPONENT%DOMAIN
                     NULLIFY(domainTopology)
                     CALL Domain_DomainTopologyGet(DOMAIN,domainTopology,err,error,*999)
@@ -9467,52 +9467,52 @@ CONTAINS
                     derivative_idx=domainDofs%dofIndex(2,ny)
                     node_idx=domainDofs%dofIndex(3,ny)
                     !Setup dof to parameter map
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_NODE_DOF_TYPE
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=node_nyy
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(1,node_nyy)=version_idx
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(2,node_nyy)=derivative_idx
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(3,node_nyy)=node_idx
-                    FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP(4,node_nyy)=component_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_NODE_DOF_TYPE
+                    FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=node_nyy
+                    FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(1,node_nyy)=version_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(2,node_nyy)=derivative_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(3,node_nyy)=node_idx
+                    FIELD%variables(variable_idx)%dofToParamMap%nodeDOF2ParamMap(4,node_nyy)=component_idx
                     !Setup reverse parameter to dof map
-                    FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)% &
+                    FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)% &
                       & VERSIONS(version_idx) = variable_local_ny
                   ENDDO !component_idx
                 ENDDO !ny
                 !Adjust the offsets
                 VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)= &
                   & VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)+ &
-                  & FIELD%VARIABLES(variable_idx)%numberOfComponents* &
+                  & FIELD%variables(variable_idx)%numberOfComponents* &
                   & DOFS_MAPPING%numberOfDomainLocal
                 IF(domain_type_idx==1) THEN
-                  VARIABLE_GLOBAL_DOFS_OFFSET=VARIABLE_GLOBAL_DOFS_OFFSET+FIELD%VARIABLES(variable_idx)%numberOfComponents* &
+                  VARIABLE_GLOBAL_DOFS_OFFSET=VARIABLE_GLOBAL_DOFS_OFFSET+FIELD%variables(variable_idx)%numberOfComponents* &
                     & DOFS_MAPPING%numberOfGlobal
                 ENDIF
               ENDDO !domain_type_idx
             CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-              DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+              DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                 DOMAIN=>FIELD_COMPONENT%DOMAIN
                 NULLIFY(domainTopology)
                 CALL Domain_DomainTopologyGet(DOMAIN,domainTopology,err,error,*999)
                 NULLIFY(domainElements)
                 CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
                 !>todo find a better way than assuming NGP=MAX_NGP for all elements TODO
-                ALLOCATE(FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(MAX_NGP,domainElements% &
+                ALLOCATE(FIELD_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints(MAX_NGP,domainElements% &
                   & totalNumberOfElements),STAT=err)
                 IF(err/=0) CALL FlagError("Could not allocate field component parameter to dof gauss point map (gauss points).", &
                   & err,error,*999)
-                FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS= &
+                FIELD_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%numberOfGridPointParameters= &
                   & MAX_NGP*domainElements%totalNumberOfElements
               ENDDO
               !Handle global dofs domain mapping
               element_ny=0
-              numberOfGlobalDofs=FIELD%VARIABLES(variable_idx)%COMPONENTS(1)%DOMAIN%MAPPINGS%ELEMENTS%numberOfGlobal
+              numberOfGlobalDofs=FIELD%variables(variable_idx)%components(1)%DOMAIN%MAPPINGS%ELEMENTS%numberOfGlobal
               DO ny=1,numberOfGlobalDofs
                 DO gauss_point_idx=1,MAX_NGP
-                  DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                    FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+                  DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                    FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                     DOMAIN=>FIELD_COMPONENT%DOMAIN
                     NULLIFY(domainMappings)               
                     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)                
@@ -9565,20 +9565,20 @@ CONTAINS
                 element_ny=0
                 DO ny=start_idx,stop_idx
                   DO gauss_point_idx=1,MAX_NGP
-                    DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-                      FIELD_COMPONENT=>FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+                    DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+                      FIELD_COMPONENT=>FIELD%variables(variable_idx)%components(component_idx)
                       DOMAIN=>FIELD_COMPONENT%DOMAIN
                       element_ny=element_ny+1                      
                       variable_local_ny=element_ny+VARIABLE_LOCAL_DOFS_OFFSETS(myGroupComputationNodeNumber)
                       node_nyy=node_nyy+1
                       !Setup dof to parameter map
-                      FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(1,variable_local_ny)=FIELD_GAUSS_POINT_DOF_TYPE
-                      FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%DOF_TYPE(2,variable_local_ny)=node_nyy
-                      FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(1,node_nyy)=gauss_point_idx
-                      FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(2,node_nyy)=ny !element_idx
-                      FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP(3,node_nyy)=component_idx
+                      FIELD%variables(variable_idx)%dofToParamMap%DOFType(1,variable_local_ny)=FIELD_GAUSS_POINT_DOF_TYPE
+                      FIELD%variables(variable_idx)%dofToParamMap%DOFType(2,variable_local_ny)=node_nyy
+                      FIELD%variables(variable_idx)%dofToParamMap%gaussPointDOF2ParamMap(1,node_nyy)=gauss_point_idx
+                      FIELD%variables(variable_idx)%dofToParamMap%gaussPointDOF2ParamMap(2,node_nyy)=ny !element_idx
+                      FIELD%variables(variable_idx)%dofToParamMap%gaussPointDOF2ParamMap(3,node_nyy)=component_idx
                       !Setup reverse parameter to dof map
-                      FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_point_idx,ny)= &
+                      FIELD_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints(gauss_point_idx,ny)= &
                         & variable_local_ny
                     ENDDO !component_idx
                   ENDDO !gauss_point_idx
@@ -9586,10 +9586,10 @@ CONTAINS
                 !Adjust the offsets
                 VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)= &
                   & VARIABLE_LOCAL_DOFS_OFFSETS(0:decomposition%numberOfDomains-1)+ &
-                  & FIELD%VARIABLES(variable_idx)%numberOfComponents* &
+                  & FIELD%variables(variable_idx)%numberOfComponents* &
                   & DOFS_MAPPING%numberOfDomainLocal*MAX_NGP
                 IF(domain_type_idx==1) THEN
-                  VARIABLE_GLOBAL_DOFS_OFFSET=VARIABLE_GLOBAL_DOFS_OFFSET+FIELD%VARIABLES(variable_idx)%numberOfComponents* &
+                  VARIABLE_GLOBAL_DOFS_OFFSET=VARIABLE_GLOBAL_DOFS_OFFSET+FIELD%variables(variable_idx)%numberOfComponents* &
                     & DOFS_MAPPING%numberOfGlobal*MAX_NGP
                 ENDIF
               ENDDO !domain_type_idx
@@ -9597,18 +9597,18 @@ CONTAINS
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
               localError="The interpolation type of "// &
-                & TRIM(NumberToVString(FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)%interpolationType, &
+                & TRIM(NumberToVString(FIELD%variables(variable_idx)%components(component_idx)%interpolationType, &
                 & "*",err,error))//" is invalid for component number 1 of variable type "//TRIM(NumberToVString( &
-                & FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE,"*",err,error))//"."
+                & FIELD%variables(variable_idx)%variableType,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             END SELECT
           ELSE
             CALL FlagError("The field must have at least one component.",err,error,*999)
           ENDIF
         CASE DEFAULT
-          localError="The DOF order type of "//TRIM(NumberToVString(FIELD%VARIABLES(variable_idx)%DOF_ORDER_TYPE, &
-            & "*",err,error))//" is invalid for variable type "//TRIM(NumberToVString(FIELD%VARIABLES(variable_idx)% &
-            & VARIABLE_TYPE,"*",err,error))//"."
+          localError="The DOF order type of "//TRIM(NumberToVString(FIELD%variables(variable_idx)%dofOrderType, &
+            & "*",err,error))//" is invalid for variable type "//TRIM(NumberToVString(FIELD%variables(variable_idx)% &
+            & variableType,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         END SELECT
         IF(ASSOCIATED(FIELD_VARIABLE_DOFS_MAPPING)) THEN
@@ -9621,135 +9621,135 @@ CONTAINS
       IF(DIAGNOSTICS1) THEN
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Field DOF mappings:",err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field user number = ",FIELD%userNumber,err,error,*999)
-        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of variables = ",FIELD%NUMBER_OF_VARIABLES,err,error,*999)
-        DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of variables = ",FIELD%numberOfVariables,err,error,*999)
+        DO variable_idx=1,FIELD%numberOfVariables
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Variable : ",variable_idx,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable type = ",FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable type = ",FIELD%variables(variable_idx)%variableType, &
             & err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of local DOFs = ",FIELD%variables(variable_idx)% &
             & numberOfDofs,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of local DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Total number of local DOFs = ",FIELD%variables(variable_idx)% &
             & totalNumberOfDofs,err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of global DOFs = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of global DOFs = ",FIELD%variables(variable_idx)% &
             & numberOfGlobalDofs,err,error,*999)
           CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    DOF to parameter map:",err,error,*999)
-          DO variable_local_ny=1,FIELD%VARIABLES(variable_idx)%totalNumberOfDofs
+          DO variable_local_ny=1,FIELD%variables(variable_idx)%totalNumberOfDofs
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      DOF : ",variable_local_ny,err,error,*999)
-            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
-              & DOF_TYPE(:,variable_local_ny),'("        DOF type :",2(X,I8))','(18X,2(X,I8))',err,error,*999)
+            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%variables(variable_idx)%dofToParamMap% &
+              & DOFType(:,variable_local_ny),'("        DOF type :",2(X,I8))','(18X,2(X,I8))',err,error,*999)
           ENDDO !variable_local_ny
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of constant DOFs = ",FIELD%VARIABLES(variable_idx)% &
-            & DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS,err,error,*999)
-          IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS>0) THEN
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of constant DOFs = ",FIELD%variables(variable_idx)% &
+            & dofToParamMap%numberOfConstantDOFs,err,error,*999)
+          IF(FIELD%variables(variable_idx)%dofToParamMap%numberOfConstantDOFs>0) THEN
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Constant DOFs:",err,error,*999)
-            DO constant_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS
+            DO constant_nyy=1,FIELD%variables(variable_idx)%dofToParamMap%numberOfConstantDOFs
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Constant DOF : ",constant_nyy,err,error,*999)
               CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"          DOF 2 Parameters : ", &
-                & FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%CONSTANT_DOF2PARAM_MAP(constant_nyy),'(I8)',err,error,*999)
+                & FIELD%variables(variable_idx)%dofToParamMap%constantDOF2ParamMap(constant_nyy),'(I8)',err,error,*999)
             ENDDO !constant_nyy
           ENDIF
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of element DOFs = ",FIELD%VARIABLES(variable_idx)% &
-            & DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS,err,error,*999)
-          IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS>0) THEN            
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of element DOFs = ",FIELD%variables(variable_idx)% &
+            & dofToParamMap%numberOfElementDOFs,err,error,*999)
+          IF(FIELD%variables(variable_idx)%dofToParamMap%numberOfElementDOFs>0) THEN            
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Element DOFs:",err,error,*999)
-            DO element_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS
+            DO element_nyy=1,FIELD%variables(variable_idx)%dofToParamMap%numberOfElementDOFs
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Element DOF : ",element_nyy,err,error,*999)
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
-                & ELEMENT_DOF2PARAM_MAP(:,element_nyy),'("          DOF 2 Parameters :",2(X,I8))','(28X,2(X,I8))',err,error,*999)
+              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%variables(variable_idx)%dofToParamMap% &
+                & elementDOF2ParamMap(:,element_nyy),'("          DOF 2 Parameters :",2(X,I8))','(28X,2(X,I8))',err,error,*999)
             ENDDO !element_nyy
           ENDIF
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodal DOFs = ",FIELD%VARIABLES(variable_idx)% &
-            & DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS,err,error,*999)
-          IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS>0) THEN
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of nodal DOFs = ",FIELD%variables(variable_idx)% &
+            & dofToParamMap%numberOfNodeDOFs,err,error,*999)
+          IF(FIELD%variables(variable_idx)%dofToParamMap%numberOfNodeDOFs>0) THEN
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Nodal DOFs:",err,error,*999)
-            DO node_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS
+            DO node_nyy=1,FIELD%variables(variable_idx)%dofToParamMap%numberOfNodeDOFs
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Node DOF : ",node_nyy,err,error,*999)
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,4,4,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
-                & NODE_DOF2PARAM_MAP(:,node_nyy),'("          DOF 2 Parameters :",4(X,I8))','(28X,4(X,I8))',err,error,*999)
+              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,4,4,FIELD%variables(variable_idx)%dofToParamMap% &
+                & nodeDOF2ParamMap(:,node_nyy),'("          DOF 2 Parameters :",4(X,I8))','(28X,4(X,I8))',err,error,*999)
             ENDDO !node_nyy
           ENDIF
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of grid point DOFs = ",FIELD%VARIABLES(variable_idx)% &
-            & DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS,err,error,*999)
-          IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS>0) THEN
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of grid point DOFs = ",FIELD%variables(variable_idx)% &
+            & dofToParamMap%numberOfGridPointDOFs,err,error,*999)
+          IF(FIELD%variables(variable_idx)%dofToParamMap%numberOfGridPointDOFs>0) THEN
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Grid point DOFs:",err,error,*999)
-            DO grid_point_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS
+            DO grid_point_nyy=1,FIELD%variables(variable_idx)%dofToParamMap%numberOfGridPointDOFs
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Grid point DOF : ",grid_point_nyy,err,error,*999)
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
-                & GRID_POINT_DOF2PARAM_MAP(:,grid_point_nyy),'("          DOF 2 Parameters :",2(X,I8))','(28X,2(X,I8))', &
+              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,FIELD%variables(variable_idx)%dofToParamMap% &
+                & gridPointDOF2ParamMap(:,grid_point_nyy),'("          DOF 2 Parameters :",2(X,I8))','(28X,2(X,I8))', &
                 & err,error,*999)
             ENDDO !node_nyy
           ENDIF
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of Gauss point DOFs = ",FIELD%VARIABLES(variable_idx)% &
-            & DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS,err,error,*999)
-          IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS>0) THEN
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of Gauss point DOFs = ",FIELD%variables(variable_idx)% &
+            & dofToParamMap%numberOfGaussPointDOFs,err,error,*999)
+          IF(FIELD%variables(variable_idx)%dofToParamMap%numberOfGaussPointDOFs>0) THEN
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Gauss point DOFs:",err,error,*999)
-            DO Gauss_point_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS
+            DO Gauss_point_nyy=1,FIELD%variables(variable_idx)%dofToParamMap%numberOfGaussPointDOFs
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Gauss point DOF : ",Gauss_point_nyy,err,error,*999)
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
-                & GAUSS_POINT_DOF2PARAM_MAP(:,Gauss_point_nyy),'("          DOF 2 Parameters :",3(X,I8))','(28X,3(X,I8))', &
+              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,FIELD%variables(variable_idx)%dofToParamMap% &
+                & gaussPointDOF2ParamMap(:,Gauss_point_nyy),'("          DOF 2 Parameters :",3(X,I8))','(28X,3(X,I8))', &
                 & err,error,*999)
             ENDDO !node_nyy
           ENDIF
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of data point DOFs = ",FIELD%VARIABLES(variable_idx)% &
-            & DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS,err,error,*999)
-          IF(FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS>0) THEN
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of data point DOFs = ",FIELD%variables(variable_idx)% &
+            & dofToParamMap%numberOfDataPointDOFs,err,error,*999)
+          IF(FIELD%variables(variable_idx)%dofToParamMap%numberOfDataPointDOFs>0) THEN
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      data point DOFs:",err,error,*999)
-            DO data_point_nyy=1,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS
+            DO data_point_nyy=1,FIELD%variables(variable_idx)%dofToParamMap%numberOfDataPointDOFs
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        data point DOF : ",data_point_nyy,err,error,*999)
-              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,FIELD%VARIABLES(variable_idx)%DOF_TO_PARAM_MAP% &
-                & DATA_POINT_DOF2PARAM_MAP(:,data_point_nyy),'("          DOF 2 Parameters :",3(X,I8))','(28X,3(X,I8))', &
+              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,3,3,FIELD%variables(variable_idx)%dofToParamMap% &
+                & dataPointDOF2ParamMap(:,data_point_nyy),'("          DOF 2 Parameters :",3(X,I8))','(28X,3(X,I8))', &
                 & err,error,*999)
             ENDDO !node_nyy
           ENDIF
           CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Parameter to DOF map:",err,error,*999)
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of components = ",FIELD%VARIABLES(variable_idx)% &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of components = ",FIELD%variables(variable_idx)% &
             & numberOfComponents,err,error,*999)
-          DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-            FIELD_COMPONENT => FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)
+          DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+            FIELD_COMPONENT => FIELD%variables(variable_idx)%components(component_idx)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Component : ",component_idx,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of constant parameters = ", &
-              & FIELD_COMPONENT%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS,err,error,*999)
-            IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NUMBER_OF_CONSTANT_PARAMETERS>0) THEN
+              & FIELD_COMPONENT%paramToDOFMap%numberOfConstantParameters,err,error,*999)
+            IF(FIELD_COMPONENT%paramToDOFMap%numberOfConstantParameters>0) THEN
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Constant DOF = ", &
-                & FIELD_COMPONENT%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP,err,error,*999)
+                & FIELD_COMPONENT%paramToDOFMap%constantParam2DOFMap,err,error,*999)
             ENDIF
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of element parameters = ", &
-              & FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%numberOfElementParameters,err,error,*999)
-            IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%numberOfElementParameters>0) THEN
-              DO element_idx=1,FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%numberOfElementParameters
+              & FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%numberOfElementParameters,err,error,*999)
+            IF(FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%numberOfElementParameters>0) THEN
+              DO element_idx=1,FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%numberOfElementParameters
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Element : ",element_idx,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"            Element DOF = ", &
-                  & FIELD_COMPONENT%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx), &
+                  & FIELD_COMPONENT%paramToDOFMap%elementParam2DOFMap%ELEMENTS(element_idx), &
                   & err,error,*999)
               ENDDO !element_idx
             ENDIF
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of node parameters = ", &
-              & FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS,err,error,*999)
-            IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS>0) THEN
-              DO node_idx=1,FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NUMBER_OF_NODE_PARAMETERS
+              & FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%numberOfNodeParameters,err,error,*999)
+            IF(FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%numberOfNodeParameters>0) THEN
+              DO node_idx=1,FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%numberOfNodeParameters
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Node : ",node_idx,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Number of Derivatives = ", &
-                  & FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%numberOfDerivatives,err,error,*999)
-                DO derivative_idx=1,FIELD_COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%numberOfDerivatives
+                  & FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%numberOfDerivatives,err,error,*999)
+                DO derivative_idx=1,FIELD_COMPONENT%paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%numberOfDerivatives
                   CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Derivative : ",derivative_idx,err,error,*999)
-                  CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,FIELD_COMPONENT%PARAM_TO_DOF_MAP% &
-                    & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%NUMBER_OF_VERSIONS,8,8,FIELD_COMPONENT% &
-                    & PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(:), &
+                  CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,FIELD_COMPONENT%paramToDOFMap% &
+                    & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions,8,8,FIELD_COMPONENT% &
+                    & paramToDOFMap%nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(:), &
                     & '("              Version DOFs :",8(X,I8))','(23X,8(X,I8))',err,error,*999)
                 ENDDO !derivative_idx
               ENDDO !node_idx
             ENDIF
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of grid point parameters = ", &
-              & FIELD_COMPONENT%PARAM_TO_DOF_MAP%GRID_POINT_PARAM2DOF_MAP%NUMBER_OF_GRID_POINT_PARAMETERS,err,error,*999)
-            IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%GRID_POINT_PARAM2DOF_MAP%NUMBER_OF_GRID_POINT_PARAMETERS>0) THEN
+              & FIELD_COMPONENT%paramToDOFMap%gridPointParam2DOFMap%numberOfGridPointParameters,err,error,*999)
+            IF(FIELD_COMPONENT%paramToDOFMap%gridPointParam2DOFMap%numberOfGridPointParameters>0) THEN
             ENDIF
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of Gauss point parameters = ", &
-              & FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS,err,error,*999)
-            IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS>0) THEN
+              & FIELD_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%numberOfGridPointParameters,err,error,*999)
+            IF(FIELD_COMPONENT%paramToDOFMap%gaussPointParam2DOFMap%numberOfGridPointParameters>0) THEN
             ENDIF
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"        Number of data point parameters = ", &
-              & FIELD_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%NUMBER_OF_DATA_POINT_PARAMETERS,err,error,*999)
-            IF(FIELD_COMPONENT%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP%NUMBER_OF_DATA_POINT_PARAMETERS>0) THEN
+              & FIELD_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%numberOfDataPointParameters,err,error,*999)
+            IF(FIELD_COMPONENT%paramToDOFMap%dataPointParam2DOFMap%numberOfDataPointParameters>0) THEN
             ENDIF
           ENDDO !component_idx
         ENDDO !variable_idx
@@ -9772,65 +9772,66 @@ CONTAINS
   !
 
   !>Finalises the dofs to parameters mapping for a field varaible and deallocates all memory.
-  SUBROUTINE FIELD_DOF_TO_PARAM_MAP_FINALISE(DOF_TO_PARAM_MAP,err,error,*)
+  SUBROUTINE FIELD_dofToParamMap_FINALISE(dofToParamMap,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE) :: DOF_TO_PARAM_MAP !<The dof to parameter map to finalise
+    TYPE(FieldDOFToParamMapType) :: dofToParamMap !<The dof to parameter map to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("FIELD_DOF_TO_PARAM_MAP_FINALISE",err,error,*999)
+    ENTERS("FIELD_dofToParamMap_FINALISE",err,error,*999)
 
-    IF(ALLOCATED(DOF_TO_PARAM_MAP%DOF_TYPE)) DEALLOCATE(DOF_TO_PARAM_MAP%DOF_TYPE)
-    IF(ALLOCATED(DOF_TO_PARAM_MAP%CONSTANT_DOF2PARAM_MAP)) DEALLOCATE(DOF_TO_PARAM_MAP%CONSTANT_DOF2PARAM_MAP)
-    IF(ALLOCATED(DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP)) DEALLOCATE(DOF_TO_PARAM_MAP%ELEMENT_DOF2PARAM_MAP)
-    IF(ALLOCATED(DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP)) DEALLOCATE(DOF_TO_PARAM_MAP%NODE_DOF2PARAM_MAP)
-    IF(ALLOCATED(DOF_TO_PARAM_MAP%GRID_POINT_DOF2PARAM_MAP)) DEALLOCATE(DOF_TO_PARAM_MAP%GRID_POINT_DOF2PARAM_MAP)
-    IF(ALLOCATED(DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP)) DEALLOCATE(DOF_TO_PARAM_MAP%GAUSS_POINT_DOF2PARAM_MAP)
-    IF(ALLOCATED(DOF_TO_PARAM_MAP%DATA_POINT_DOF2PARAM_MAP)) DEALLOCATE(DOF_TO_PARAM_MAP%DATA_POINT_DOF2PARAM_MAP)
-    DOF_TO_PARAM_MAP%numberOfDofs=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS=0
+    IF(ALLOCATED(dofToParamMap%DOFType)) DEALLOCATE(dofToParamMap%DOFType)
+    IF(ALLOCATED(dofToParamMap%constantDOF2ParamMap)) DEALLOCATE(dofToParamMap%constantDOF2ParamMap)
+    IF(ALLOCATED(dofToParamMap%elementDOF2ParamMap)) DEALLOCATE(dofToParamMap%elementDOF2ParamMap)
+    IF(ALLOCATED(dofToParamMap%nodeDOF2ParamMap)) DEALLOCATE(dofToParamMap%nodeDOF2ParamMap)
+    IF(ALLOCATED(dofToParamMap%gridPointDOF2ParamMap)) DEALLOCATE(dofToParamMap%gridPointDOF2ParamMap)
+    IF(ALLOCATED(dofToParamMap%gaussPointDOF2ParamMap)) DEALLOCATE(dofToParamMap%gaussPointDOF2ParamMap)
+    IF(ALLOCATED(dofToParamMap%dataPointDOF2ParamMap)) DEALLOCATE(dofToParamMap%dataPointDOF2ParamMap)
+    dofToParamMap%numberOfDofs=0
+    dofToParamMap%numberOfConstantDOFs=0
+    dofToParamMap%numberOfElementDOFs=0
+    dofToParamMap%numberOfNodeDOFs=0
+    dofToParamMap%numberOfGridPointDOFs=0
+    dofToParamMap%numberOfGaussPointDOFs=0
+    dofToParamMap%numberOfDataPointDOFs=0
 
-    EXITS("FIELD_DOF_TO_PARAM_MAP_FINALISE")
+    EXITS("FIELD_dofToParamMap_FINALISE")
     RETURN
-999 ERRORSEXITS("FIELD_DOF_TO_PARAM_MAP_FINALISE",err,error)
+999 ERRORSEXITS("FIELD_dofToParamMap_FINALISE",err,error)
     RETURN 1
-  END SUBROUTINE FIELD_DOF_TO_PARAM_MAP_FINALISE
+  END SUBROUTINE FIELD_dofToParamMap_FINALISE
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the dofs to parameters mappings for a field.
-  SUBROUTINE FIELD_DOF_TO_PARAM_MAP_INITIALISE(DOF_TO_PARAM_MAP,err,error,*)
+  SUBROUTINE FIELD_dofToParamMap_INITIALISE(dofToParamMap,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE) :: DOF_TO_PARAM_MAP !<The dof to parameter map to initialise
+    TYPE(FieldDOFToParamMapType) :: dofToParamMap !<The dof to parameter map to initialise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("FIELD_DOF_TO_PARAM_MAP_INITIALISE",err,error,*999)
+    ENTERS("FIELD_dofToParamMap_INITIALISE",err,error,*999)
 
-    DOF_TO_PARAM_MAP%numberOfDofs=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_CONSTANT_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_ELEMENT_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_NODE_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_GRID_POINT_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_GAUSS_POINT_DOFS=0
-    DOF_TO_PARAM_MAP%NUMBER_OF_DATA_POINT_DOFS=0
+    dofToParamMap%numberOfDofs=0
+    dofToParamMap%numberOfConstantDOFs=0
+    dofToParamMap%numberOfElementDOFs=0
+    dofToParamMap%numberOfNodeDOFs=0
+    dofToParamMap%numberOfGridPointDOFs=0
+    dofToParamMap%numberOfGaussPointDOFs=0
+    dofToParamMap%numberOfDataPointDOFs=0
 
-    EXITS("FIELD_DOF_TO_PARAM_MAP_INITIALISE")
+    EXITS("FIELD_dofToParamMap_INITIALISE")
     RETURN
-999 ERRORSEXITS("FIELD_DOF_TO_PARAM_MAP_INITIALISE",err,error)
+999 ERRORSEXITS("FIELD_dofToParamMap_INITIALISE",err,error)
     RETURN 1
-  END SUBROUTINE FIELD_DOF_TO_PARAM_MAP_INITIALISE
+    
+  END SUBROUTINE FIELD_dofToParamMap_INITIALISE
 
   !
   !================================================================================================================================
@@ -9840,12 +9841,12 @@ CONTAINS
   SUBROUTINE FIELD_GEOMETRIC_FIELD_SET(FIELD,GEOMETRIC_FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the geometric field for
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the geometric field for
+    TYPE(FieldType), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_GEOMETRIC_FIELD_SET",err,error,*999)
@@ -9853,12 +9854,12 @@ CONTAINS
     CALL Field_AssertNotFinished(field,err,error,*999)
     NULLIFY(createValuesCache)
     CALL Field_CreateValuesCacheGet(field,createValuesCache,err,error,*999)
-    IF(createValuesCache%GEOMETRIC_FIELD_LOCKED) THEN
+    IF(createValuesCache%geometricFieldLocked) THEN
       localError="The geometric field has been locked for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(ASSOCIATED(FIELD%GEOMETRIC_FIELD)) THEN
+    IF(ASSOCIATED(FIELD%geometricField)) THEN
       localError="Field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
         & " already has a geometric field associated."
       CALL FlagError(localError,err,error,*999)
@@ -9866,11 +9867,11 @@ CONTAINS
     IF(ASSOCIATED(FIELD%DECOMPOSITION)) THEN
       IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
         IF(GEOMETRIC_FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-          IF(GEOMETRIC_FIELD%FIELD_FINISHED) THEN
+          IF(GEOMETRIC_FIELD%fieldFinished) THEN
             IF(FIELD%DECOMPOSITION%MESH%userNumber==GEOMETRIC_FIELD%DECOMPOSITION%MESH%userNumber) THEN
               SELECT CASE(FIELD%TYPE)
               CASE(FIELD_FIBRE_TYPE,FIELD_GENERAL_TYPE,FIELD_MATERIAL_TYPE,FIELD_GEOMETRIC_GENERAL_TYPE)
-                FIELD%GEOMETRIC_FIELD=>GEOMETRIC_FIELD
+                FIELD%geometricField=>GEOMETRIC_FIELD
               CASE(FIELD_GEOMETRIC_TYPE)
                 CALL FlagError("Can not set the geometric field for a geometric field.",err,error,*999)
               CASE DEFAULT
@@ -9913,8 +9914,8 @@ CONTAINS
   SUBROUTINE FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(FIELD,GEOMETRIC_FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the geometric field for
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the geometric field for
+    TYPE(FieldType), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -9923,8 +9924,8 @@ CONTAINS
     ENTERS("FIELD_GEOMETRIC_FIELD_SET_AND_LOCK",err,error,*999)
 
     CALL FIELD_GEOMETRIC_FIELD_SET(FIELD,GEOMETRIC_FIELD,err,error,*999)
-    IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-      FIELD%CREATE_VALUES_CACHE%GEOMETRIC_FIELD_LOCKED=.TRUE.
+    IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+      FIELD%createValuesCache%geometricFieldLocked=.TRUE.
     ELSE
       localError="Field create values cache is not associated for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -9946,7 +9947,7 @@ CONTAINS
   SUBROUTINE FIELD_GEOMETRIC_PARAMETERS_CALCULATE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<The field to calculate the geometric parameters for
+    TYPE(FieldType), POINTER :: FIELD !<The field to calculate the geometric parameters for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -9981,22 +9982,22 @@ CONTAINS
   SUBROUTINE FIELD_GEOMETRIC_PARAMETERS_FINALISE(GEOMETRIC_PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_GEOMETRIC_PARAMETERS_TYPE), POINTER :: GEOMETRIC_PARAMETERS !<A pointer to the geometric field parameters to finalise
+    TYPE(FieldGeometricParametersType), POINTER :: GEOMETRIC_PARAMETERS !<A pointer to the geometric field parameters to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: field_idx
-    TYPE(FIELD_TYPE), POINTER :: FIELD2
+    TYPE(FieldType), POINTER :: FIELD2
 
     ENTERS("FIELD_GEOMETRIC_PARAMETERS_FINALISE",err,error,*999)
 
     IF(ASSOCIATED(GEOMETRIC_PARAMETERS)) THEN
       !Nullify the geometric field pointer of those fields using this geometric field.
-      DO field_idx=1,GEOMETRIC_PARAMETERS%NUMBER_OF_FIELDS_USING
-        FIELD2=>GEOMETRIC_PARAMETERS%FIELDS_USING(field_idx)%PTR
-        IF(ASSOCIATED(FIELD2)) NULLIFY(FIELD2%GEOMETRIC_FIELD)
+      DO field_idx=1,GEOMETRIC_PARAMETERS%numberOfFieldsUsing
+        FIELD2=>GEOMETRIC_PARAMETERS%fieldsUsing(field_idx)%ptr
+        IF(ASSOCIATED(FIELD2)) NULLIFY(FIELD2%geometricField)
       ENDDO !field_idx
-      IF(ASSOCIATED(GEOMETRIC_PARAMETERS%FIELDS_USING)) DEALLOCATE(GEOMETRIC_PARAMETERS%FIELDS_USING)
+      IF(ASSOCIATED(GEOMETRIC_PARAMETERS%fieldsUsing)) DEALLOCATE(GEOMETRIC_PARAMETERS%fieldsUsing)
       IF(ALLOCATED(GEOMETRIC_PARAMETERS%LENGTHS)) DEALLOCATE(GEOMETRIC_PARAMETERS%LENGTHS)
       !      IF(ALLOCATED(GEOMETRIC_PARAMETERS%AREAS)) DEALLOCATE(GEOMETRIC_PARAMETERS%AREAS) !temporarily commented out
       IF(ALLOCATED(GEOMETRIC_PARAMETERS%VOLUMES)) DEALLOCATE(GEOMETRIC_PARAMETERS%VOLUMES)
@@ -10018,61 +10019,61 @@ CONTAINS
   SUBROUTINE FIELD_GEOMETRIC_PARAMETERS_INITIALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the geometric parameters for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the geometric parameters for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: field_idx
-    TYPE(FIELD_PTR_TYPE), POINTER :: NEW_FIELDS_USING(:)
+    TYPE(FieldPtrType), POINTER :: newFieldsUsing(:)
 
-    NULLIFY(NEW_FIELDS_USING)
+    NULLIFY(newFieldsUsing)
 
     ENTERS("FIELD_GEOMETRIC_PARAMETERS_INITIALISE",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
       IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
         !Field is a geometric field
-        ALLOCATE(FIELD%GEOMETRIC_FIELD_PARAMETERS,STAT=err)
+        ALLOCATE(FIELD%geometricFieldParameters,STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate geometric field parameters.",err,error,*999)
         IF(FIELD%DECOMPOSITION%calculateLines) THEN
-          FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_LINES=FIELD%DECOMPOSITION%TOPOLOGY%LINES%numberOfLines
-          ALLOCATE(FIELD%GEOMETRIC_FIELD_PARAMETERS%LENGTHS(FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_LINES),STAT=err)
+          FIELD%geometricFieldParameters%numberOfLines=FIELD%DECOMPOSITION%TOPOLOGY%LINES%numberOfLines
+          ALLOCATE(FIELD%geometricFieldParameters%lengths(FIELD%geometricFieldParameters%numberOfLines),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate lengths.",err,error,*999)
-          FIELD%GEOMETRIC_FIELD_PARAMETERS%LENGTHS=0.0_DP
+          FIELD%geometricFieldParameters%LENGTHS=0.0_DP
         ENDIF
         !        IF(FIELD%DECOMPOSITION%calculateFaces) THEN !temporarily commented out
-        !          FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_AREAS=FIELD%DECOMPOSITION%TOPOLOGY%FACES%numberOfFaces
-        !          ALLOCATE(FIELD%GEOMETRIC_FIELD_PARAMETERS%AREAS(FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_AREAS),STAT=err)
+        !          FIELD%geometricFieldParameters%numberOfAreas=FIELD%DECOMPOSITION%TOPOLOGY%FACES%numberOfFaces
+        !          ALLOCATE(FIELD%geometricFieldParameters%AREAS(FIELD%geometricFieldParameters%numberOfAreas),STAT=err)
         !          IF(err/=0) CALL FlagError("Could not allocate areas.",err,error,*999)
-        !          FIELD%GEOMETRIC_FIELD_PARAMETERS%AREAS=0.0_DP
+        !          FIELD%geometricFieldParameters%AREAS=0.0_DP
         !        ENDIF
-        FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_VOLUMES=FIELD%DECOMPOSITION%TOPOLOGY%ELEMENTS%numberOfElements
-        ALLOCATE(FIELD%GEOMETRIC_FIELD_PARAMETERS%VOLUMES(FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_VOLUMES),STAT=err)
+        FIELD%geometricFieldParameters%numberOfVolumes=FIELD%DECOMPOSITION%TOPOLOGY%ELEMENTS%numberOfElements
+        ALLOCATE(FIELD%geometricFieldParameters%VOLUMES(FIELD%geometricFieldParameters%numberOfVolumes),STAT=err)
         IF(err/=0) CALL FLAG_ERROR("Could not allocate volumes.",err,error,*999)
-        FIELD%GEOMETRIC_FIELD_PARAMETERS%VOLUMES=0.0_DP
+        FIELD%geometricFieldParameters%VOLUMES=0.0_DP
 
 
         !The field is a geometric field so it must use itself initiallly
-        ALLOCATE(FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING(1),STAT=err)
+        ALLOCATE(FIELD%geometricFieldParameters%fieldsUsing(1),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate fields using.",err,error,*999)
-        FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING(1)%PTR=>FIELD
-        FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING=1
+        FIELD%geometricFieldParameters%fieldsUsing(1)%ptr=>FIELD
+        FIELD%geometricFieldParameters%numberOfFieldsUsing=1
       ELSE
         !Field is not a geometric field
-        NULLIFY(FIELD%GEOMETRIC_FIELD_PARAMETERS)
-        IF(ASSOCIATED(FIELD%GEOMETRIC_FIELD)) THEN
+        NULLIFY(FIELD%geometricFieldParameters)
+        IF(ASSOCIATED(FIELD%geometricField)) THEN
           !Set the geometric field so that it knows that this field is using it
-          ALLOCATE(NEW_FIELDS_USING(FIELD%GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING+1),STAT=err)
+          ALLOCATE(newFieldsUsing(FIELD%geometricField%geometricFieldParameters%numberOfFieldsUsing+1),STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate new fields using.",err,error,*999)
-          DO field_idx=1,FIELD%GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING
-            NEW_FIELDS_USING(field_idx)%PTR=>FIELD%GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING(field_idx)%PTR
+          DO field_idx=1,FIELD%geometricField%geometricFieldParameters%numberOfFieldsUsing
+            newFieldsUsing(field_idx)%ptr=>FIELD%geometricField%geometricFieldParameters%fieldsUsing(field_idx)%ptr
           ENDDO !field_idx
-          NEW_FIELDS_USING(FIELD%GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING+1)%PTR=>FIELD
-          FIELD%GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING=FIELD%GEOMETRIC_FIELD% &
-            & GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING+1
-          IF(ASSOCIATED(FIELD%GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING)) &
-            & DEALLOCATE(FIELD%GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING)
-          FIELD%GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING=>NEW_FIELDS_USING
+          newFieldsUsing(FIELD%geometricField%geometricFieldParameters%numberOfFieldsUsing+1)%ptr=>FIELD
+          FIELD%geometricField%geometricFieldParameters%numberOfFieldsUsing=FIELD%geometricField% &
+            & geometricFieldParameters%numberOfFieldsUsing+1
+          IF(ASSOCIATED(FIELD%geometricField%geometricFieldParameters%fieldsUsing)) &
+            & DEALLOCATE(FIELD%geometricField%geometricFieldParameters%fieldsUsing)
+          FIELD%geometricField%geometricFieldParameters%fieldsUsing=>newFieldsUsing
         ELSE
           CALL FlagError("Field does not have a geometric field associated.",err,error,*999)
         ENDIF
@@ -10083,7 +10084,7 @@ CONTAINS
 
     EXITS("FIELD_GEOMETRIC_PARAMETERS_INITIALISE")
     RETURN
-999 IF(ASSOCIATED(NEW_FIELDS_USING)) DEALLOCATE(NEW_FIELDS_USING)
+999 IF(ASSOCIATED(newFieldsUsing)) DEALLOCATE(newFieldsUsing)
     ERRORSEXITS("FIELD_GEOMETRIC_PARAMETERS_INITIALISE",err,error)
     RETURN 1
   END SUBROUTINE FIELD_GEOMETRIC_PARAMETERS_INITIALISE
@@ -10096,7 +10097,7 @@ CONTAINS
   SUBROUTINE Field_GeometricParametersElementLineLengthGet(field,elementNumber,elementLineNumber,lineLength,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the line length for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the line length for
     INTEGER(INTG),  INTENT(IN) :: elementNumber !<The element to get the line length for
     INTEGER(INTG), INTENT(IN) :: elementLineNumber !<The element basis line to get the length for
     REAL(DP), INTENT(OUT) :: lineLength !<The line length of the chosen element line number
@@ -10111,17 +10112,17 @@ CONTAINS
     ENTERS("Field_GeometricParametersElementLineLengthGet",err,error,*999)
 
     IF(ASSOCIATED(field)) THEN
-      IF(field%FIELD_FINISHED) THEN
+      IF(field%fieldFinished) THEN
         IF(field%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-          IF(ASSOCIATED(field%GEOMETRIC_FIELD_PARAMETERS)) THEN
+          IF(ASSOCIATED(field%geometricFieldParameters)) THEN
             !\todo user to global element maps not in OpenCMISS?
             IF(elementNumber>=1.AND.elementNumber<=field%DECOMPOSITION%TOPOLOGY%ELEMENTS%numberOfElements) THEN
-              domainElement=>field%DECOMPOSITION%DOMAIN(field%decomposition%meshComponentNumber)%PTR% &
+              domainElement=>field%DECOMPOSITION%DOMAIN(field%decomposition%meshComponentNumber)%ptr% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
               decompositionElement=>field%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
               IF(elementLineNumber>=1.AND.elementLineNumber<=domainElement%BASIS%numberOfLocalLines) THEN
                 globalLineNumber=decompositionElement%elementLines(elementLineNumber)
-                lineLength=Field%GEOMETRIC_FIELD_PARAMETERS%LENGTHS(globalLineNumber)
+                lineLength=Field%geometricFieldParameters%lengths(globalLineNumber)
               ELSE
                 localError="Element basis line number  "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
                   & " is not valid and needs to be >=1 and <="//TRIM(NumberToVString( &
@@ -10167,7 +10168,7 @@ CONTAINS
   SUBROUTINE Field_GeometricParametersElementVolumeGet(field,elementNumber,elementVolume,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the line length for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the line length for
     INTEGER(INTG),  INTENT(IN) :: elementNumber !<The element to get the line length for
     REAL(DP), INTENT(OUT) :: elementVolume !<The volume of the chosen element number
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -10180,19 +10181,19 @@ CONTAINS
     ENTERS("Field_GeometricParametersElementVolumeGet",err,error,*999)
 
     IF(ASSOCIATED(field)) THEN
-      IF(field%FIELD_FINISHED) THEN
+      IF(field%fieldFinished) THEN
         IF(field%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-          IF(ASSOCIATED(field%GEOMETRIC_FIELD_PARAMETERS)) THEN
+          IF(ASSOCIATED(field%geometricFieldParameters)) THEN
             !\todo user to global element maps not in OpenCMISS?
 
             IF(elementNumber>=1.AND.elementNumber<=field%DECOMPOSITION%TOPOLOGY%ELEMENTS%numberOfElements) THEN
-              domainElement=>field%DECOMPOSITION%DOMAIN(field%decomposition%meshComponentNumber)%PTR% &
+              domainElement=>field%DECOMPOSITION%DOMAIN(field%decomposition%meshComponentNumber)%ptr% &
                 & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
               decompositionElement=>field%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)
               NULLIFY(coordinateSystem)
               CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
               IF(coordinateSystem%numberOfDimensions.EQ.3) THEN 
-                elementVolume = field%GEOMETRIC_FIELD_PARAMETERS%VOLUMES(elementNumber)
+                elementVolume = field%geometricFieldParameters%VOLUMES(elementNumber)
               ELSE
                 localError = "Volumes can only be calculated for 3D elements."
                 CALL FlagError(localError,err,error,*999)
@@ -10236,7 +10237,7 @@ CONTAINS
   SUBROUTINE Field_GeometricParametersElementVolumesCalculate(field,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to calculate the face areas for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to calculate the face areas for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -10252,10 +10253,10 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoint(:)
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: interpolatedPointMetrics(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoint(:)
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: interpolatedPointMetrics(:)
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("Field_GeometricParametersElementVolumesCalculate",err,error,*996)
@@ -10265,7 +10266,7 @@ CONTAINS
       localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//" is not a geometric field."
       CALL FlagError(localError,err,error,*996)
     ENDIF
-    IF(.NOT.ASSOCIATED(field%GEOMETRIC_FIELD_PARAMETERS)) THEN
+    IF(.NOT.ASSOCIATED(field%geometricFieldParameters)) THEN
       localError="Geometric parameters are not associated for field number "// &
         & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*996)
@@ -10309,16 +10310,16 @@ CONTAINS
       !Loop over the elements      
       DO elementIdx=1,decompositionElements%numberOfElements
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
-          & interpolationParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+          & interpolationParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
         elementVolume=0.0_DP
         DO gaussPointIdx=1,numberOfGaussPoints
-          CALL Field_InterpolateXi(FIRST_PART_DERIV,gaussPoints(1:3,gaussPointIdx),interpolatedPoint(FIELD_U_VARIABLE_TYPE)%PTR, &
+          CALL Field_InterpolateXi(FIRST_PART_DERIV,gaussPoints(1:3,gaussPointIdx),interpolatedPoint(FIELD_U_VARIABLE_TYPE)%ptr, &
             & err,error,*999)
           CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_VOLUME_TYPE, &
-            & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+            & interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
           elementVolume=elementVolume+InterpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian*gaussWeights(gaussPointIdx)
         ENDDO !gaussPointIdx
-        field%GEOMETRIC_FIELD_PARAMETERS%volumes(elementIdx)=elementVolume
+        field%geometricFieldParameters%volumes(elementIdx)=elementVolume
       ENDDO !elementIdx
       !Finalise
       DEALLOCATE(gaussWeights)
@@ -10334,7 +10335,7 @@ CONTAINS
         & err,error,*999)
       DO elementIdx=1,decompositionElements%numberOfElements
         CALL WriteStringFmtTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"    Element ",elementIdx,"(I8)"," volume = ",field% &
-          & GEOMETRIC_FIELD_PARAMETERS%VOLUMES(elementIdx),"*",err,error,*999)
+          & geometricFieldParameters%VOLUMES(elementIdx),"*",err,error,*999)
       ENDDO !elementIdx
     ENDIF
 
@@ -10362,7 +10363,7 @@ CONTAINS
   SUBROUTINE Field_GeometricParametersLineLengthsCalculate(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to calculate the line lengths for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to calculate the line lengths for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -10383,10 +10384,10 @@ CONTAINS
     !      &                     0.173927422568727_DP,0.326072577431273_DP,0.326072577431273_DP,0.173927422568727_DP ]
     REAL(DP) :: XIG(10),WIG(10)
     REAL(DP), PARAMETER :: LINE_INCREMENT_TOLERANCE=CONVERGENCE_TOLERANCE
-    LOGICAL :: ITERATE,UPDATE_FIELDS_USING
+    LOGICAL :: ITERATE,UPDATE_fieldsUsing
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINT(:)
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: INTERPOLATED_POINT(:)
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: INTERPOLATION_PARAMETERS(:)
     TYPE(VARYING_STRING) :: DUMMY_ERROR,localError
 
     XIG = [ 0.500000000000000_DP, &
@@ -10404,9 +10405,9 @@ CONTAINS
     ENTERS("Field_GeometricParametersLineLengthsCalculate",err,error,*997)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-          IF(ASSOCIATED(FIELD%GEOMETRIC_FIELD_PARAMETERS)) THEN            
+          IF(ASSOCIATED(FIELD%geometricFieldParameters)) THEN            
             NULLIFY(COORDINATE_SYSTEM)
             CALL FIELD_COORDINATE_SYSTEM_GET(FIELD,COORDINATE_SYSTEM,err,error,*999)
             !Iterate to find the line lengths as the line lengths depend on the scaling factors and vise versa.
@@ -10421,19 +10422,19 @@ CONTAINS
               !Loop over the lines
               DO nl=1,FIELD%DECOMPOSITION%TOPOLOGY%LINES%numberOfLines
                 CALL FIELD_INTERPOLATION_PARAMETERS_LINE_GET(FIELD_VALUES_SET_TYPE,nl, &
-                  & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-                OLD_LINE_LENGTH=FIELD%GEOMETRIC_FIELD_PARAMETERS%LENGTHS(nl)
+                  & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                OLD_LINE_LENGTH=FIELD%geometricFieldParameters%lengths(nl)
                 LINE_LENGTH=0.0_DP
                 !Integrate || dr(xi)/dt || from xi=0 to 1 to determine the arc length.
                 DO ng=1,NUMBER_OF_GAUSS_POINTS
                   XI(1)=XIG(GAUSS_START(NUMBER_OF_GAUSS_POINTS)+ng)
                   W=WIG(GAUSS_START(NUMBER_OF_GAUSS_POINTS)+ng)
-                  CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,XI,INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+                  CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,XI,INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                   CALL COORDINATE_DERIVATIVE_NORM(COORDINATE_SYSTEM,PART_DERIV_S1, &
-                    & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%PTR,DERIV_NORM,err,error,*999)
+                    & INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,DERIV_NORM,err,error,*999)
                   LINE_LENGTH=LINE_LENGTH+W*DERIV_NORM
                 ENDDO !ng
-                FIELD%GEOMETRIC_FIELD_PARAMETERS%LENGTHS(nl)=LINE_LENGTH
+                FIELD%geometricFieldParameters%lengths(nl)=LINE_LENGTH
                 LENGTH_DIFFERENCE=ABS(LINE_LENGTH-OLD_LINE_LENGTH)/(1.0_DP+OLD_LINE_LENGTH)
                 IF(LENGTH_DIFFERENCE>MAXIMUM_LENGTH_DIFFERENCE) THEN
                   MAXIMUM_LENGTH_DIFFERENCE=LENGTH_DIFFERENCE
@@ -10464,11 +10465,11 @@ CONTAINS
                   err,error,*999)
               ENDIF
               IF(.NOT.ITERATE.OR.ITERATION_NUMBER==LINES_MAXIMUM_NUMBER_OF_ITERATIONS) THEN
-                UPDATE_FIELDS_USING=.TRUE.
+                UPDATE_fieldsUsing=.TRUE.
               ELSE
-                UPDATE_FIELDS_USING=.FALSE.
+                UPDATE_fieldsUsing=.FALSE.
               ENDIF
-              CALL Field_GeometricParametersScaleFactorsUpdate(FIELD,UPDATE_FIELDS_USING,err,error,*999)
+              CALL Field_GeometricParametersScaleFactorsUpdate(FIELD,UPDATE_fieldsUsing,err,error,*999)
             ENDDO !iterate
             CALL FIELD_INTERPOLATED_POINTS_FINALISE(INTERPOLATED_POINT,err,error,*999)
             CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(INTERPOLATION_PARAMETERS,err,error,*999)
@@ -10499,7 +10500,7 @@ CONTAINS
         & err,error,*999)
       DO nl=1,FIELD%DECOMPOSITION%TOPOLOGY%LINES%numberOfLines
         CALL WRITE_STRING_FMT_TWO_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Line ",nl,"(I8)"," length = ",FIELD% &
-          & GEOMETRIC_FIELD_PARAMETERS% LENGTHS(nl),"*",err,error,*999)
+          & geometricFieldParameters% LENGTHS(nl),"*",err,error,*999)
       ENDDO !nl
     ENDIF
 
@@ -10522,7 +10523,7 @@ CONTAINS
   SUBROUTINE Field_GeometricParametersFaceAreasCalculate(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to calculate the face areas for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to calculate the face areas for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -10533,9 +10534,9 @@ CONTAINS
     REAL(DP) :: XI(1),W,FACE_AREA
     REAL(DP) :: XIG(10),WIG(10)
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINT(:)
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: INTERPOLATED_POINT_METRICS(:)
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: INTERPOLATED_POINT(:)
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: INTERPOLATED_POINT_METRICS(:)
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: INTERPOLATION_PARAMETERS(:)
     TYPE(VARYING_STRING) :: DUMMY_ERROR,localError
 
     XIG = [ 0.500000000000000_DP, &
@@ -10553,9 +10554,9 @@ CONTAINS
     ENTERS("Field_GeometricParametersFaceAreasCalculate",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-          IF(ASSOCIATED(FIELD%GEOMETRIC_FIELD_PARAMETERS)) THEN
+          IF(ASSOCIATED(FIELD%geometricFieldParameters)) THEN
             NULLIFY(COORDINATE_SYSTEM)
             CALL FIELD_COORDINATE_SYSTEM_GET(FIELD,COORDINATE_SYSTEM,err,error,*999)
             CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(FIELD,INTERPOLATION_PARAMETERS,err,error,*999)
@@ -10565,17 +10566,17 @@ CONTAINS
             !Loop over the faces
             DO nf=1,FIELD%DECOMPOSITION%TOPOLOGY%FACES%numberOfFaces
               CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,nf, &
-                & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+                & INTERPOLATION_PARAMETERS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               FACE_AREA=0.0_DP
               DO ng=1,NUMBER_OF_GAUSS_POINTS
                 XI(1)=XIG(GAUSS_START(NUMBER_OF_GAUSS_POINTS)+ng)
                 W=WIG(GAUSS_START(NUMBER_OF_GAUSS_POINTS)+ng)
-                CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,XI,INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
+                CALL FIELD_INTERPOLATE_XI(FIRST_PART_DERIV,XI,INTERPOLATED_POINT(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                 CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_AREA_TYPE, &
-                  & INTERPOLATED_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
-                FACE_AREA=FACE_AREA+W*INTERPOLATED_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%PTR%JACOBIAN
+                  & INTERPOLATED_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                FACE_AREA=FACE_AREA+W*INTERPOLATED_POINT_METRICS(FIELD_U_VARIABLE_TYPE)%ptr%jacobian
               ENDDO !ng
-              FIELD%GEOMETRIC_FIELD_PARAMETERS%AREAS(nf)=FACE_AREA
+              FIELD%geometricFieldParameters%AREAS(nf)=FACE_AREA
             ENDDO !nf
 
             CALL Field_InterpolatedPointsMetricsFinalise(INTERPOLATED_POINT_METRICS,err,error,*999)
@@ -10604,7 +10605,7 @@ CONTAINS
         & err,error,*999)
       DO nf=1,FIELD%DECOMPOSITION%TOPOLOGY%FACES%numberOfFaces
         CALL WRITE_STRING_FMT_TWO_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"    Face ",nf,"(I8)"," area = ",FIELD% &
-          & GEOMETRIC_FIELD_PARAMETERS%AREAS(nf),"*",err,error,*999)
+          & geometricFieldParameters%AREAS(nf),"*",err,error,*999)
       ENDDO !nf
     ENDIF
 
@@ -10625,28 +10626,28 @@ CONTAINS
   !
 
   !>Finalises the geometric parameters for a field and deallocates all memory.
-  SUBROUTINE Field_GeometricParametersScaleFactorsUpdate(FIELD,UPDATE_FIELDS_USING,err,error,*)
+  SUBROUTINE Field_GeometricParametersScaleFactorsUpdate(FIELD,UPDATE_fieldsUsing,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update the scale factors for
-    LOGICAL, INTENT(IN) :: UPDATE_FIELDS_USING !<If .TRUE. then update the fields that use this fields geometric parameters.
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update the scale factors for
+    LOGICAL, INTENT(IN) :: UPDATE_fieldsUsing !<If .TRUE. then update the fields that use this fields geometric parameters.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: field_idx,LAST_FIELD_IDX
-    TYPE(FIELD_TYPE), POINTER :: FIELD2
+    TYPE(FieldType), POINTER :: FIELD2
 
     ENTERS("Field_GeometricParametersScaleFactorsUpdate",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
       IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-        IF(UPDATE_FIELDS_USING) THEN
-          LAST_FIELD_IDX=FIELD%GEOMETRIC_FIELD_PARAMETERS%NUMBER_OF_FIELDS_USING
+        IF(UPDATE_fieldsUsing) THEN
+          LAST_FIELD_IDX=FIELD%geometricFieldParameters%numberOfFieldsUsing
         ELSE
           LAST_FIELD_IDX=1 !The first field using will be the current field
         ENDIF
         DO field_idx=1,LAST_FIELD_IDX
-          FIELD2=>FIELD%GEOMETRIC_FIELD_PARAMETERS%FIELDS_USING(field_idx)%PTR
+          FIELD2=>FIELD%geometricFieldParameters%fieldsUsing(field_idx)%ptr
           CALL FIELD_SCALINGS_CALCULATE(FIELD2,err,error,*999)
         ENDDO !field_idx
       ELSE
@@ -10671,7 +10672,7 @@ CONTAINS
   SUBROUTINE FIELD_LABEL_GET_C(FIELD,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the label for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the label for
     CHARACTER(LEN=*), INTENT(OUT) :: LABEL !<On return, the field label for the specified field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -10704,7 +10705,7 @@ CONTAINS
   SUBROUTINE FIELD_LABEL_GET_VS(FIELD,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the label for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the label for
     TYPE(VARYING_STRING), INTENT(OUT) :: LABEL !<On return, the field label for the specified field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -10729,12 +10730,12 @@ CONTAINS
   SUBROUTINE FIELD_LABEL_SET_C(FIELD,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the type for
     CHARACTER(LEN=*), INTENT(IN) :: LABEL !<The field label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_LABEL_SET_C",err,error,*999)
@@ -10764,12 +10765,12 @@ CONTAINS
   SUBROUTINE FIELD_LABEL_SET_VS(FIELD,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the type for
     TYPE(VARYING_STRING), INTENT(IN) :: LABEL !<The field label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_LABEL_SET_VS",err,error,*999)
@@ -10799,12 +10800,12 @@ CONTAINS
   SUBROUTINE FIELD_LABEL_SET_AND_LOCK_C(FIELD,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the type for
     CHARACTER(LEN=*), INTENT(IN) :: LABEL !<The field label to set 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
 
     ENTERS("FIELD_LABEL_SET_AND_LOCK_C",err,error,*999)
 
@@ -10828,12 +10829,12 @@ CONTAINS
   SUBROUTINE FIELD_LABEL_SET_AND_LOCK_VS(FIELD,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the type for
     TYPE(VARYING_STRING), INTENT(IN) :: LABEL !<The field label to set 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
 
     ENTERS("FIELD_LABEL_SET_AND_LOCK_VS",err,error,*999)
 
@@ -10857,12 +10858,12 @@ CONTAINS
   SUBROUTINE FIELD_MESH_DECOMPOSITION_SET(FIELD,MESH_DECOMPOSITION,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the decomposition for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the decomposition for
     TYPE(DecompositionType), POINTER :: MESH_DECOMPOSITION !<A pointer to the mesh decomposition to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(MeshType), POINTER :: MESH
     TYPE(InterfaceType), POINTER :: MESH_INTERFACE,FIELD_INTERFACE
     TYPE(RegionType), POINTER :: MESH_REGION,FIELD_REGION,PARENT_REGION
@@ -10984,12 +10985,12 @@ CONTAINS
   SUBROUTINE FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(FIELD,MESH_DECOMPOSITION,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the decomposition for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the decomposition for
     TYPE(DecompositionType), POINTER :: MESH_DECOMPOSITION !<A pointer to the mesh decomposition to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
 
     ENTERS("FIELD_MESH_DECOMPOSITION_SET_AND_LOCK",err,error,*999)
 
@@ -11014,13 +11015,13 @@ CONTAINS
   SUBROUTINE Field_DataProjectionSet(field,dataProjection,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to set the decomposition for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to set the decomposition for
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     TYPE(VARYING_STRING) :: localError
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
 
     ENTERS("Field_DataProjectionSet",err,error,*999)
 
@@ -11051,20 +11052,20 @@ CONTAINS
   SUBROUTINE Field_NumberOfComponentsCheck(field,variableType,numberOfComponents,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to check the number of components
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to check the number of components
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to check \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: numberOfComponents !The number of components in the field variable to check
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_NumberOfComponentsCheck",err,error,*999)
 
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
-    IF(field%FIELD_FINISHED) THEN
+    IF(field%fieldFinished) THEN
       NULLIFY(fieldVariable)
       CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
       IF(fieldVariable%numberOfComponents/=numberOfComponents) THEN
@@ -11086,7 +11087,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       ENDIF
       IF(createValuesCache%numberOfComponents(variableType)/=numberOfComponents) THEN
-        fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%PTR
+        fieldVariable=>field%variableTypeMap(variableType)%ptr
         IF(ASSOCIATED(fieldVariable)) THEN
           localError="Invalid number of components. The number components for variable type "// &
             & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
@@ -11121,7 +11122,7 @@ CONTAINS
   SUBROUTINE FIELD_NUMBER_OF_COMPONENTS_SET(FIELD,VARIABLE_TYPE,NUMBER_OF_COMPONENTS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the number of components
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the number of components
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: NUMBER_OF_COMPONENTS !<The number of components to be set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -11129,11 +11130,11 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: component_idx,NEW_NUMBER_OF_COMPONENTS,OLD_NUMBER_OF_COMPONENTS,OVERLAP_NUMBER_OF_COMPONENTS,variable_idx
     INTEGER(INTG), ALLOCATABLE :: NEW_INTERPOLATION_TYPE(:,:),NEW_meshComponentNumber(:,:)
-    LOGICAL, ALLOCATABLE ::NEW_COMPONENT_LABELS_LOCKED(:,:), NEW_INTERPOLATION_TYPE_LOCKED(:,:), &
+    LOGICAL, ALLOCATABLE ::NEW_componentLabelsLocked(:,:), NEW_INTERPOLATION_TYPE_LOCKED(:,:), &
       & NEW_meshComponentNumberLocked(:,:)
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError
-    TYPE(VARYING_STRING), ALLOCATABLE :: NEW_COMPONENT_LABELS(:,:)
+    TYPE(VARYING_STRING), ALLOCATABLE :: NEW_componentLabels(:,:)
 
     ENTERS("FIELD_NUMBER_OF_COMPONENTS_SET",err,error,*999)
 
@@ -11147,7 +11148,7 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ANY(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES==VARIABLE_TYPE)) THEN
+    IF(.NOT.ANY(FIELD%createValuesCache%variableTypes==VARIABLE_TYPE)) THEN
       localError="The field variable type of "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
         & " has not been created on field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)      
@@ -11182,9 +11183,9 @@ CONTAINS
           ENDIF
         ENDDO
         OVERLAP_NUMBER_OF_COMPONENTS=MIN(OLD_NUMBER_OF_COMPONENTS,NEW_NUMBER_OF_COMPONENTS)
-        ALLOCATE(NEW_COMPONENT_LABELS(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(NEW_componentLabels(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new component labels.",err,error,*999)
-        ALLOCATE(NEW_COMPONENT_LABELS_LOCKED(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
+        ALLOCATE(NEW_componentLabelsLocked(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new component labels locked.",err,error,*999)
         ALLOCATE(NEW_INTERPOLATION_TYPE(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new interpolation type.",err,error,*999)
@@ -11195,16 +11196,16 @@ CONTAINS
         ALLOCATE(NEW_meshComponentNumberLocked(NEW_NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new mesh component number locked.",err,error,*999)
 
-        NEW_COMPONENT_LABELS=''
-        NEW_COMPONENT_LABELS_LOCKED=.FALSE.
+        NEW_componentLabels=''
+        NEW_componentLabelsLocked=.FALSE.
         NEW_INTERPOLATION_TYPE=0
         NEW_INTERPOLATION_TYPE_LOCKED=.FALSE.
         NEW_meshComponentNumber=0                   
         NEW_meshComponentNumberLocked=.FALSE.
-        NEW_COMPONENT_LABELS(1:OVERLAP_NUMBER_OF_COMPONENTS,:) = &
-          & createValuesCache%COMPONENT_LABELS(1:OVERLAP_NUMBER_OF_COMPONENTS,:)
-        NEW_COMPONENT_LABELS_LOCKED(1:OVERLAP_NUMBER_OF_COMPONENTS,:) = &
-          & createValuesCache%COMPONENT_LABELS_LOCKED(1:OVERLAP_NUMBER_OF_COMPONENTS,:)
+        NEW_componentLabels(1:OVERLAP_NUMBER_OF_COMPONENTS,:) = &
+          & createValuesCache%componentLabels(1:OVERLAP_NUMBER_OF_COMPONENTS,:)
+        NEW_componentLabelsLocked(1:OVERLAP_NUMBER_OF_COMPONENTS,:) = &
+          & createValuesCache%componentLabelsLocked(1:OVERLAP_NUMBER_OF_COMPONENTS,:)
         NEW_INTERPOLATION_TYPE(1:OVERLAP_NUMBER_OF_COMPONENTS,:) = &
           & createValuesCache%interpolationTypes(1:OVERLAP_NUMBER_OF_COMPONENTS,:)
         NEW_INTERPOLATION_TYPE_LOCKED(1:OVERLAP_NUMBER_OF_COMPONENTS,:) = &
@@ -11217,7 +11218,7 @@ CONTAINS
         IF(OLD_NUMBER_OF_COMPONENTS<NUMBER_OF_COMPONENTS) THEN
           DO variable_idx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
             DO component_idx=OLD_NUMBER_OF_COMPONENTS+1,NUMBER_OF_COMPONENTS
-              NEW_COMPONENT_LABELS(component_idx,variable_idx)= &
+              NEW_componentLabels(component_idx,variable_idx)= &
                 & TRIM(NumberToVString(component_idx,"*",err,error))
               IF(err/=0) GOTO 999
             ENDDO
@@ -11228,8 +11229,8 @@ CONTAINS
           ENDDO
         ENDIF
 
-        CALL MOVE_ALLOC(NEW_COMPONENT_LABELS,createValuesCache%COMPONENT_LABELS)
-        CALL MOVE_ALLOC(NEW_COMPONENT_LABELS_LOCKED,createValuesCache%COMPONENT_LABELS_LOCKED)
+        CALL MOVE_ALLOC(NEW_componentLabels,createValuesCache%componentLabels)
+        CALL MOVE_ALLOC(NEW_componentLabelsLocked,createValuesCache%componentLabelsLocked)
         CALL MOVE_ALLOC(NEW_INTERPOLATION_TYPE,createValuesCache%interpolationTypes)
         CALL MOVE_ALLOC(NEW_INTERPOLATION_TYPE_LOCKED,createValuesCache%interpolationTypesLocked)
         CALL MOVE_ALLOC(NEW_meshComponentNumber,createValuesCache%meshComponentNumber)
@@ -11247,8 +11248,8 @@ CONTAINS
 
     EXITS("FIELD_NUMBER_OF_COMPONENTS_SET")
     RETURN
-999 IF(ALLOCATED(NEW_COMPONENT_LABELS)) DEALLOCATE(NEW_COMPONENT_LABELS)
-    IF(ALLOCATED(NEW_COMPONENT_LABELS_LOCKED)) DEALLOCATE(NEW_COMPONENT_LABELS_LOCKED)
+999 IF(ALLOCATED(NEW_componentLabels)) DEALLOCATE(NEW_componentLabels)
+    IF(ALLOCATED(NEW_componentLabelsLocked)) DEALLOCATE(NEW_componentLabelsLocked)
     IF(ALLOCATED(NEW_INTERPOLATION_TYPE)) DEALLOCATE(NEW_INTERPOLATION_TYPE)
     IF(ALLOCATED(NEW_INTERPOLATION_TYPE_LOCKED)) DEALLOCATE(NEW_INTERPOLATION_TYPE_LOCKED)
     IF(ALLOCATED(NEW_meshComponentNumber)) DEALLOCATE(NEW_meshComponentNumber)
@@ -11266,13 +11267,13 @@ CONTAINS
   SUBROUTINE FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(FIELD,VARIABLE_TYPE,NUMBER_OF_COMPONENTS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the number of components
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the number of components
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: NUMBER_OF_COMPONENTS !<The number of components to be set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
 
     ENTERS("FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK",err,error,*999)
 
@@ -11296,7 +11297,7 @@ CONTAINS
   SUBROUTINE FIELD_NUMBER_OF_VARIABLES_CHECK(FIELD,NUMBER_OF_VARIABLES,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the number of variables for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the number of variables for
     INTEGER(INTG), INTENT(IN) :: NUMBER_OF_VARIABLES !<The number of variables in the specified field to check
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -11306,10 +11307,10 @@ CONTAINS
     ENTERS("FIELD_NUMBER_OF_VARIABLES_CHECK",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
-    IF(FIELD%NUMBER_OF_VARIABLES/=NUMBER_OF_VARIABLES) THEN
+    IF(FIELD%numberOfVariables/=NUMBER_OF_VARIABLES) THEN
       localError="Invalid number of variables. The number of variables for field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-        & TRIM(NumberToVString(FIELD%NUMBER_OF_VARIABLES,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD%numberOfVariables,"*",err,error))// &
         & " which is does correspond to the specified number of variables of "// &
         & TRIM(NumberToVString(NUMBER_OF_VARIABLES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -11330,15 +11331,15 @@ CONTAINS
   SUBROUTINE FIELD_NUMBER_OF_VARIABLES_SET(FIELD,NUMBER_OF_VARIABLES,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the number of variables for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the number of variables for
     INTEGER(INTG), INTENT(IN) :: NUMBER_OF_VARIABLES !<The number of variables to set for the field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: variable_idx,variable_idx2,variable_type
-    INTEGER(INTG), ALLOCATABLE :: OLD_VARIABLE_TYPES(:)
+    INTEGER(INTG), ALLOCATABLE :: oldVariableTypes(:)
     LOGICAL :: FOUND
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_NUMBER_OF_VARIABLES_SET",err,error,*999)
@@ -11346,7 +11347,7 @@ CONTAINS
     CALL Field_AssertNotFinished(field,err,error,*999)
     NULLIFY(createValuesCache)
     CALL Field_CreateValuesCacheGet(field,createValuesCache,err,error,*999)
-    IF(createValuesCache%NUMBER_OF_VARIABLES_LOCKED) THEN
+    IF(createValuesCache%numberOfVariablesLocked) THEN
       localError="The number of variables has been locked field number "// &
         & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
       CALL FlagError(localError,err,error,*999)
@@ -11358,26 +11359,26 @@ CONTAINS
         & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(FIELD%NUMBER_OF_VARIABLES/=NUMBER_OF_VARIABLES) THEN
-      ALLOCATE(OLD_VARIABLE_TYPES(FIELD%NUMBER_OF_VARIABLES),STAT=err)
+    IF(FIELD%numberOfVariables/=NUMBER_OF_VARIABLES) THEN
+      ALLOCATE(oldVariableTypes(FIELD%numberOfVariables),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate old variable types.",err,error,*999)
-      OLD_VARIABLE_TYPES(1:FIELD%NUMBER_OF_VARIABLES)=createValuesCache%VARIABLE_TYPES(1:FIELD%NUMBER_OF_VARIABLES)
-      DEALLOCATE(createValuesCache%VARIABLE_TYPES)
-      ALLOCATE(createValuesCache%VARIABLE_TYPES(NUMBER_OF_VARIABLES),STAT=err)
+      oldVariableTypes(1:FIELD%numberOfVariables)=createValuesCache%variableTypes(1:FIELD%numberOfVariables)
+      DEALLOCATE(createValuesCache%variableTypes)
+      ALLOCATE(createValuesCache%variableTypes(NUMBER_OF_VARIABLES),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate variable types.",err,error,*999)
-      createValuesCache%VARIABLE_TYPES=0
-      IF(NUMBER_OF_VARIABLES<FIELD%NUMBER_OF_VARIABLES) THEN
-        createValuesCache%VARIABLE_TYPES(1:NUMBER_OF_VARIABLES)=OLD_VARIABLE_TYPES(1:NUMBER_OF_VARIABLES)
-        DO variable_idx=NUMBER_OF_VARIABLES+1,FIELD%NUMBER_OF_VARIABLES
-          variable_type=OLD_VARIABLE_TYPES(variable_idx)
-          createValuesCache%VARIABLE_LABELS(variable_type)=""
-          createValuesCache%VARIABLE_LABELS_LOCKED(variable_type)=.FALSE.
+      createValuesCache%variableTypes=0
+      IF(NUMBER_OF_VARIABLES<FIELD%numberOfVariables) THEN
+        createValuesCache%variableTypes(1:NUMBER_OF_VARIABLES)=oldVariableTypes(1:NUMBER_OF_VARIABLES)
+        DO variable_idx=NUMBER_OF_VARIABLES+1,FIELD%numberOfVariables
+          variable_type=oldVariableTypes(variable_idx)
+          createValuesCache%variableLabels(variable_type)=""
+          createValuesCache%variableLabelsLocked(variable_type)=.FALSE.
           createValuesCache%DIMENSION(variable_type)=0
           createValuesCache%DIMENSION_LOCKED(variable_type)=.FALSE.
-          createValuesCache%DATA_TYPES(variable_type)=0
-          createValuesCache%DATA_TYPES_LOCKED(variable_type)=.FALSE.
-          createValuesCache%DOF_ORDER_TYPES(variable_type)=0
-          createValuesCache%DOF_ORDER_TYPES_LOCKED(variable_type)=.FALSE.
+          createValuesCache%dataTypes(variable_type)=0
+          createValuesCache%dataTypesLocked(variable_type)=.FALSE.
+          createValuesCache%dofOrderTypes(variable_type)=0
+          createValuesCache%dofOrderTypesLocked(variable_type)=.FALSE.
           createValuesCache%numberOfComponents(variable_type)=0
           createValuesCache%numberOfComponentsLocked(variable_type)=.FALSE.
           createValuesCache%interpolationTypes(:,variable_type)=0
@@ -11386,13 +11387,13 @@ CONTAINS
           createValuesCache%meshComponentNumberLocked(:,variable_type)=.FALSE.
         ENDDO !variable_idx
       ELSE
-        createValuesCache%VARIABLE_TYPES(1:FIELD%NUMBER_OF_VARIABLES)=OLD_VARIABLE_TYPES(1:FIELD%NUMBER_OF_VARIABLES)
-        DO variable_idx=FIELD%NUMBER_OF_VARIABLES+1,NUMBER_OF_VARIABLES
+        createValuesCache%variableTypes(1:FIELD%numberOfVariables)=oldVariableTypes(1:FIELD%numberOfVariables)
+        DO variable_idx=FIELD%numberOfVariables+1,NUMBER_OF_VARIABLES
           !Find the next available variable type
           DO variable_type=1,FIELD_NUMBER_OF_VARIABLE_TYPES
             FOUND=.FALSE.
-            DO variable_idx2=1,FIELD%NUMBER_OF_VARIABLES
-              IF(createValuesCache%VARIABLE_TYPES(variable_idx2)==variable_type) THEN
+            DO variable_idx2=1,FIELD%numberOfVariables
+              IF(createValuesCache%variableTypes(variable_idx2)==variable_type) THEN
                 FOUND=.TRUE.
                 EXIT
               ENDIF
@@ -11402,52 +11403,52 @@ CONTAINS
           IF(FOUND) THEN
             CALL FlagError("Could not find free variable type???",err,error,*999)
           ELSE
-            createValuesCache%VARIABLE_TYPES(variable_idx)=variable_type
+            createValuesCache%variableTypes(variable_idx)=variable_type
             SELECT CASE(variable_type)
             CASE(FIELD_U_VARIABLE_TYPE)
-              createValuesCache%VARIABLE_LABELS(variable_type)="U"
+              createValuesCache%variableLabels(variable_type)="U"
             CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-              createValuesCache%VARIABLE_LABELS(variable_type)="del U/del n"
+              createValuesCache%variableLabels(variable_type)="del U/del n"
             CASE(FIELD_DELUDELT_VARIABLE_TYPE)
-              createValuesCache%VARIABLE_LABELS(variable_type)="del U/del t"
+              createValuesCache%variableLabels(variable_type)="del U/del t"
             CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)
-              createValuesCache%VARIABLE_LABELS(variable_type)="del^2 U/del t^2"
+              createValuesCache%variableLabels(variable_type)="del^2 U/del t^2"
             CASE(FIELD_V_VARIABLE_TYPE)
-              createValuesCache%VARIABLE_LABELS(variable_type)="V"
+              createValuesCache%variableLabels(variable_type)="V"
             CASE(FIELD_DELVDELN_VARIABLE_TYPE)
-              createValuesCache%VARIABLE_LABELS(variable_type)="del V/del n"
+              createValuesCache%variableLabels(variable_type)="del V/del n"
             CASE DEFAULT
               localError="The variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))//" is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-            createValuesCache%VARIABLE_LABELS_LOCKED(variable_type)=.FALSE.
-            createValuesCache%DIMENSION(variable_type)=createValuesCache%DIMENSION(OLD_VARIABLE_TYPES(1))
+            createValuesCache%variableLabelsLocked(variable_type)=.FALSE.
+            createValuesCache%DIMENSION(variable_type)=createValuesCache%DIMENSION(oldVariableTypes(1))
             createValuesCache%DIMENSION_LOCKED(variable_type)=.FALSE.
-            createValuesCache%DATA_TYPES(variable_type)=createValuesCache%DATA_TYPES(OLD_VARIABLE_TYPES(1))
-            createValuesCache%DATA_TYPES_LOCKED(variable_type)=.FALSE.
-            createValuesCache%DOF_ORDER_TYPES(variable_type)=createValuesCache%DOF_ORDER_TYPES(OLD_VARIABLE_TYPES(1))
-            createValuesCache%DOF_ORDER_TYPES_LOCKED(variable_type)=.FALSE.
-            createValuesCache%numberOfComponents(variable_type)=createValuesCache%numberOfComponents(OLD_VARIABLE_TYPES(1))
+            createValuesCache%dataTypes(variable_type)=createValuesCache%dataTypes(oldVariableTypes(1))
+            createValuesCache%dataTypesLocked(variable_type)=.FALSE.
+            createValuesCache%dofOrderTypes(variable_type)=createValuesCache%dofOrderTypes(oldVariableTypes(1))
+            createValuesCache%dofOrderTypesLocked(variable_type)=.FALSE.
+            createValuesCache%numberOfComponents(variable_type)=createValuesCache%numberOfComponents(oldVariableTypes(1))
             createValuesCache%numberOfComponentsLocked(variable_type)=.FALSE.
-            createValuesCache%COMPONENT_LABELS(:,variable_type)=createValuesCache%COMPONENT_LABELS(:,createValuesCache% &
-              & VARIABLE_TYPES(OLD_VARIABLE_TYPES(1)))
-            createValuesCache%COMPONENT_LABELS_LOCKED(:,variable_type)=.FALSE.
+            createValuesCache%componentLabels(:,variable_type)=createValuesCache%componentLabels(:,createValuesCache% &
+              & variableTypes(oldVariableTypes(1)))
+            createValuesCache%componentLabelsLocked(:,variable_type)=.FALSE.
             createValuesCache%interpolationTypes(:,variable_type)=createValuesCache% interpolationTypes(:,createValuesCache% &
-              & VARIABLE_TYPES(OLD_VARIABLE_TYPES(1)))
+              & variableTypes(oldVariableTypes(1)))
             createValuesCache%interpolationTypesLocked(:,variable_type)=.FALSE.
             createValuesCache%meshComponentNumber(:,variable_type)=createValuesCache%meshComponentNumber(:,createValuesCache% &
-              & VARIABLE_TYPES(OLD_VARIABLE_TYPES(1)))
+              & variableTypes(oldVariableTypes(1)))
             createValuesCache%meshComponentNumberLocked(:,variable_type)=.FALSE.
           ENDIF
         ENDDO !variable_idx
       ENDIF
-      DEALLOCATE(OLD_VARIABLE_TYPES)
-      FIELD%NUMBER_OF_VARIABLES=NUMBER_OF_VARIABLES
+      DEALLOCATE(oldVariableTypes)
+      FIELD%numberOfVariables=NUMBER_OF_VARIABLES
     ENDIF
 
     EXITS("FIELD_NUMBER_OF_VARIABLES_SET")
     RETURN
-999 IF(ALLOCATED(OLD_VARIABLE_TYPES)) DEALLOCATE(OLD_VARIABLE_TYPES)
+999 IF(ALLOCATED(oldVariableTypes)) DEALLOCATE(oldVariableTypes)
     ERRORSEXITS("FIELD_NUMBER_OF_VARIABLES_SET",err,error)
     RETURN 1
 
@@ -11461,19 +11462,19 @@ CONTAINS
   SUBROUTINE FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(FIELD,NUMBER_OF_VARIABLES,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the number of variables for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the number of variables for
     INTEGER(INTG), INTENT(IN) :: NUMBER_OF_VARIABLES !<The number of variables to set for the field
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache
 
     ENTERS("FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK",err,error,*999)
 
     CALL FIELD_NUMBER_OF_VARIABLES_SET(FIELD,NUMBER_OF_VARIABLES,err,error,*999)
     NULLIFY(createValuesCache)
     CALL Field_CreateValuesCacheGet(field,createValuesCache,err,error,*999)
-    createValuesCache%NUMBER_OF_VARIABLES_LOCKED=.TRUE.
+    createValuesCache%numberOfVariablesLocked=.TRUE.
 
     EXITS("FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK")
     RETURN
@@ -11490,7 +11491,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SETS_ADD_DP(FIELD,VARIABLE_TYPE,ALPHA,FIELD_FROM_SET_TYPE,FIELD_TO_SET_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add the parameter sets for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add the parameter sets for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     REAL(DP), INTENT(IN) :: ALPHA(:) !<The multiplicative factor for the add.
     INTEGER(INTG), INTENT(IN) :: FIELD_FROM_SET_TYPE(:) !<The field parameter set identifier to add the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
@@ -11501,9 +11502,9 @@ CONTAINS
     INTEGER(INTG) :: dof_idx,parameter_set_idx
     REAL(DP) :: VALUE
     TYPE(REAL_DP_PTR_TYPE) :: FIELD_FROM_PARAMETERS(SIZE(FIELD_FROM_SET_TYPE,1))
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: FIELD_FROM_PARAMETER_SET,FIELD_TO_PARAMETER_SET
-    TYPE(FIELD_PARAMETER_SET_PTR_TYPE) :: FIELD_FROM_PARAMETER_SETS(SIZE(FIELD_FROM_SET_TYPE,1))
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: FIELD_TO_PARAMETER_SET
+    TYPE(FieldParameterSetPtrType) :: FIELD_FROM_PARAMETER_SETS(SIZE(FIELD_FROM_SET_TYPE,1))
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SETS_ADD_DP",err,error,*999)
@@ -11525,23 +11526,23 @@ CONTAINS
       NULLIFY(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%ptr)
       CALL FieldVariable_ParameterSetGet(FIELD_VARIABLE,FIELD_FROM_SET_TYPE(parameter_set_idx), &
         & FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%ptr,err,error,*999)
-      NULLIFY(FIELD_FROM_PARAMETERS(parameter_set_idx)%PTR)
-      CALL DistributedVector_DataGet(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%PTR%PARAMETERS, &
-        & FIELD_FROM_PARAMETERS(parameter_set_idx)%PTR,err,error,*999)
+      NULLIFY(FIELD_FROM_PARAMETERS(parameter_set_idx)%ptr)
+      CALL DistributedVector_DataGet(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%ptr%PARAMETERS, &
+        & FIELD_FROM_PARAMETERS(parameter_set_idx)%ptr,err,error,*999)
     ENDDO
     !Do not need to do an update here as each rank already has the values.
     !Add the field dofs
     DO dof_idx=1,FIELD_VARIABLE%totalNumberOfDofs
       VALUE=0.0_DP
       DO parameter_set_idx=1,SIZE(FIELD_FROM_SET_TYPE,1)
-        VALUE=VALUE+ALPHA(parameter_set_idx)*FIELD_FROM_PARAMETERS(parameter_set_idx)%PTR(dof_idx)
+        VALUE=VALUE+ALPHA(parameter_set_idx)*FIELD_FROM_PARAMETERS(parameter_set_idx)%ptr(dof_idx)
       ENDDO !parameter_set_idx
       CALL DistributedVector_ValuesAdd(FIELD_TO_PARAMETER_SET%PARAMETERS,dof_idx,VALUE,err,error,*999)
     ENDDO !dof_idx
     !Restore the from parameter set transfer
     DO parameter_set_idx=1,SIZE(FIELD_FROM_SET_TYPE,1)
-      CALL DistributedVector_DataRestore(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%PTR%PARAMETERS, &
-        & FIELD_FROM_PARAMETERS(parameter_set_idx)%PTR,err,error,*999)
+      CALL DistributedVector_DataRestore(FIELD_FROM_PARAMETER_SETS(parameter_set_idx)%ptr%PARAMETERS, &
+        & FIELD_FROM_PARAMETERS(parameter_set_idx)%ptr,err,error,*999)
     ENDDO !parameter_set_idx
 
     EXITS("FIELD_PARAMETER_SETS_ADD_DP")
@@ -11560,7 +11561,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SETS_ADD_DP1(FIELD,VARIABLE_TYPE,ALPHA,FIELD_FROM_SET_TYPE,FIELD_TO_SET_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add the parameter sets for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add the parameter sets for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINE
     REAL(DP), INTENT(IN) :: ALPHA !<The multiplicative factor for the add.
     INTEGER(INTG), INTENT(IN) :: FIELD_FROM_SET_TYPE !<The field parameter set identifier to add the parameters from
@@ -11587,7 +11588,7 @@ CONTAINS
   SUBROUTINE Field_ParameterSetsCopy(field,variableType,parameterFromSetType,parameterToSetType,alpha,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to copy the parameters set for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to copy the parameters set for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to copy \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: parameterFromSetType !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: parameterToSetType !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
@@ -11595,7 +11596,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetsCopy",err,error,*999)
 
@@ -11619,7 +11620,7 @@ CONTAINS
   SUBROUTINE Field_ParameterSetsCopyIfExists(field,variableType,parameterFromSetType,parameterToSetType,alpha,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to copy the parameters set for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to copy the parameters set for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to copy \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: parameterFromSetType !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: parameterToSetType !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
@@ -11627,7 +11628,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetsCopyIfExists",err,error,*999)
 
@@ -11653,11 +11654,11 @@ CONTAINS
     & FROM_COMPONENT_NUMBER,TO_FIELD,TO_VARIABLE_TYPE,TO_PARAMETER_SET_TYPE,TO_COMPONENT_NUMBER,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FROM_FIELD !<A pointer to the field to copy from
+    TYPE(FieldType), POINTER :: FROM_FIELD !<A pointer to the field to copy from
     INTEGER(INTG), INTENT(IN) :: FROM_VARIABLE_TYPE !<The field variable type to copy from
     INTEGER(INTG), INTENT(IN) :: FROM_PARAMETER_SET_TYPE !<The field parameter set type to copy from
     INTEGER(INTG), INTENT(IN) :: FROM_COMPONENT_NUMBER !<The field variable component number to copy from
-    TYPE(FIELD_TYPE), POINTER :: TO_FIELD !<A pointer to the field to copy to
+    TYPE(FieldType), POINTER :: TO_FIELD !<A pointer to the field to copy to
     INTEGER(INTG), INTENT(IN) :: TO_VARIABLE_TYPE !<The field variable type to copy to
     INTEGER(INTG), INTENT(IN) :: TO_PARAMETER_SET_TYPE !<The parameter set type to copy to
     INTEGER(INTG), INTENT(IN) :: TO_COMPONENT_NUMBER !<The field variable component to copy to
@@ -11676,7 +11677,7 @@ CONTAINS
     TYPE(DomainElementsType), POINTER :: FROM_DOMAIN_ELEMENTS
     TYPE(DomainNodesType), POINTER :: FROM_DOMAIN_NODES
     TYPE(DomainTopologyType), POINTER :: fromDomainTopology
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FROM_FIELD_VARIABLE,TO_FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FROM_FIELD_VARIABLE,TO_FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     NULLIFY(FROM_PARAMETER_DATA_INTG)
@@ -11702,31 +11703,31 @@ CONTAINS
       CALL FlagError("The from field variable component domain is not associated with the "// &
         & "to field variable component domain.",err,error,*999)
     ENDIF
-    IF(FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%interpolationType/= &
-      & TO_FIELD_VARIABLE%COMPONENTS(TO_COMPONENT_NUMBER)%interpolationType) THEN
+    IF(FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%interpolationType/= &
+      & TO_FIELD_VARIABLE%components(TO_COMPONENT_NUMBER)%interpolationType) THEN
       localError="The from field variable component interpolation type of "// &
-        & TRIM(NumberToVString(FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)% &
+        & TRIM(NumberToVString(FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)% &
         & interpolationType,"*",err,error))// &
         & " does not match the to variable component interpolation type of "// &
-        & TRIM(NumberToVString(TO_FIELD_VARIABLE%COMPONENTS(TO_COMPONENT_NUMBER)% &
+        & TRIM(NumberToVString(TO_FIELD_VARIABLE%components(TO_COMPONENT_NUMBER)% &
         & interpolationType,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(FROM_FIELD_VARIABLE%DATA_TYPE/=TO_FIELD_VARIABLE%DATA_TYPE) THEN
+    IF(FROM_FIELD_VARIABLE%dataType/=TO_FIELD_VARIABLE%dataType) THEN
       localError="The from field variable data type of "// &
-        & TRIM(NumberToVString(FROM_FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+        & TRIM(NumberToVString(FROM_FIELD_VARIABLE%dataType,"*",err,error))// &
         & " does not match the to variable data type of "// &
-        & TRIM(NumberToVString(TO_FIELD_VARIABLE%DATA_TYPE,"*",err,error))//"."
+        & TRIM(NumberToVString(TO_FIELD_VARIABLE%dataType,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    SELECT CASE(FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%interpolationType)
+    SELECT CASE(FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%interpolationType)
     CASE(FIELD_CONSTANT_INTERPOLATION)
-      SELECT CASE(FROM_FIELD_VARIABLE%DATA_TYPE)
+      SELECT CASE(FROM_FIELD_VARIABLE%dataType)
       CASE(FIELD_INTG_TYPE)
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_INTG,err,error,*999)
-        local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-          & CONSTANT_PARAM2DOF_MAP
+        local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+          & constantParam2DOFMap
         VALUE_INTG=FROM_PARAMETER_DATA_INTG(local_ny)
         CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(TO_FIELD,TO_VARIABLE_TYPE,TO_PARAMETER_SET_TYPE, &
           & TO_COMPONENT_NUMBER,VALUE_INTG,err,error,*999)
@@ -11735,8 +11736,8 @@ CONTAINS
       CASE(FIELD_SP_TYPE)
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_SP,err,error,*999)
-        local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-          & CONSTANT_PARAM2DOF_MAP
+        local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+          & constantParam2DOFMap
         VALUE_SP=FROM_PARAMETER_DATA_SP(local_ny)
         CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(TO_FIELD,TO_VARIABLE_TYPE,TO_PARAMETER_SET_TYPE, &
           & TO_COMPONENT_NUMBER,VALUE_SP,err,error,*999)
@@ -11745,8 +11746,8 @@ CONTAINS
       CASE(FIELD_DP_TYPE)
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_DP,err,error,*999)
-        local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-          & CONSTANT_PARAM2DOF_MAP
+        local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+          & constantParam2DOFMap
         VALUE_DP=FROM_PARAMETER_DATA_DP(local_ny)
         CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(TO_FIELD,TO_VARIABLE_TYPE,TO_PARAMETER_SET_TYPE, &
           & TO_COMPONENT_NUMBER,VALUE_DP,err,error,*999)
@@ -11755,8 +11756,8 @@ CONTAINS
       CASE(FIELD_L_TYPE)
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_L,err,error,*999)
-        local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-          & CONSTANT_PARAM2DOF_MAP
+        local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+          & constantParam2DOFMap
         VALUE_L=FROM_PARAMETER_DATA_L(local_ny)
         CALL FIELD_PARAMETER_SET_UPDATE_CONSTANT(TO_FIELD,TO_VARIABLE_TYPE,TO_PARAMETER_SET_TYPE, &
           & TO_COMPONENT_NUMBER,VALUE_L,err,error,*999)
@@ -11764,7 +11765,7 @@ CONTAINS
           & FROM_PARAMETER_DATA_L,err,error,*999)
       CASE DEFAULT
         localError="The from field variable data type of "// &
-          & TRIM(NumberToVString(FROM_FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FROM_FIELD_VARIABLE%dataType,"*",err,error))// &
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -11773,13 +11774,13 @@ CONTAINS
       CALL Domain_DomainTopologyGet(FROM_DOMAIN,fromDomainTopology,err,error,*999)
       NULLIFY(FROM_DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(fromDomainTopology,FROM_DOMAIN_ELEMENTS,err,error,*999)
-      SELECT CASE(FROM_FIELD_VARIABLE%DATA_TYPE)
+      SELECT CASE(FROM_FIELD_VARIABLE%dataType)
       CASE(FIELD_INTG_TYPE)
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_INTG,err,error,*999)
         DO elem_idx=1,FROM_DOMAIN_ELEMENTS%totalNumberOfElements
-          local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-            & ELEMENT_PARAM2DOF_MAP%ELEMENTS(elem_idx)
+          local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+            & elementParam2DOFMap%ELEMENTS(elem_idx)
           VALUE_INTG=FROM_PARAMETER_DATA_INTG(local_ny)
           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(TO_FIELD,TO_VARIABLE_TYPE, &
             & TO_PARAMETER_SET_TYPE,elem_idx,TO_COMPONENT_NUMBER,VALUE_INTG,err,error,*999)
@@ -11790,8 +11791,8 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_SP,err,error,*999)
         DO elem_idx=1,FROM_DOMAIN_ELEMENTS%totalNumberOfElements
-          local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-            & ELEMENT_PARAM2DOF_MAP%ELEMENTS(elem_idx)
+          local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+            & elementParam2DOFMap%ELEMENTS(elem_idx)
           VALUE_SP=FROM_PARAMETER_DATA_SP(local_ny)
           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(TO_FIELD,TO_VARIABLE_TYPE, &
             & TO_PARAMETER_SET_TYPE,elem_idx,TO_COMPONENT_NUMBER,VALUE_SP,err,error,*999)
@@ -11802,8 +11803,8 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_DP,err,error,*999)
         DO elem_idx=1,FROM_DOMAIN_ELEMENTS%totalNumberOfElements
-          local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-            & ELEMENT_PARAM2DOF_MAP%ELEMENTS(elem_idx)
+          local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+            & elementParam2DOFMap%ELEMENTS(elem_idx)
           VALUE_DP=FROM_PARAMETER_DATA_DP(local_ny)
           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(TO_FIELD,TO_VARIABLE_TYPE, &            
             & TO_PARAMETER_SET_TYPE,elem_idx,TO_COMPONENT_NUMBER,VALUE_DP,err,error,*999)
@@ -11814,8 +11815,8 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_L,err,error,*999)
         DO elem_idx=1,FROM_DOMAIN_ELEMENTS%totalNumberOfElements
-          local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-            & ELEMENT_PARAM2DOF_MAP%ELEMENTS(elem_idx)
+          local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+            & elementParam2DOFMap%ELEMENTS(elem_idx)
           VALUE_L=FROM_PARAMETER_DATA_L(local_ny)
           CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT(TO_FIELD,TO_VARIABLE_TYPE, &
             & TO_PARAMETER_SET_TYPE,elem_idx,TO_COMPONENT_NUMBER,VALUE_L,err,error,*999)
@@ -11824,7 +11825,7 @@ CONTAINS
           & FROM_PARAMETER_SET_TYPE,FROM_PARAMETER_DATA_L,err,error,*999)
       CASE DEFAULT
         localError="The from field variable data type of "// &
-          & TRIM(NumberToVString(FROM_FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FROM_FIELD_VARIABLE%dataType,"*",err,error))// &
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -11833,16 +11834,16 @@ CONTAINS
       CALL Domain_DomainTopologyGet(FROM_DOMAIN,fromDomainTopology,err,error,*999)
       NULLIFY(FROM_DOMAIN_NODES)
       CALL DomainTopology_DomainNodesGet(fromDomainTopology,FROM_DOMAIN_NODES,err,error,*999)
-      SELECT CASE(FROM_FIELD_VARIABLE%DATA_TYPE)
+      SELECT CASE(FROM_FIELD_VARIABLE%dataType)
       CASE(FIELD_INTG_TYPE)
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_INTG,err,error,*999)
         DO node_idx=1,FROM_DOMAIN_NODES%totalNumberOfNodes
-          DO deriv_idx=1,FROM_DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-            DO version_idx=1,FROM_DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
+          DO deriv_idx=1,FROM_DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+            DO version_idx=1,FROM_DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(deriv_idx)% &
               & numberOfVersions
-              local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-                & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(version_idx)
+              local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+                & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(version_idx)
               VALUE_INTG=FROM_PARAMETER_DATA_INTG(local_ny)
               CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(TO_FIELD,TO_VARIABLE_TYPE, &
                 & TO_PARAMETER_SET_TYPE,version_idx,deriv_idx,node_idx,TO_COMPONENT_NUMBER, &
@@ -11856,11 +11857,11 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_SP,err,error,*999)
         DO node_idx=1,FROM_DOMAIN_NODES%totalNumberOfNodes
-          DO deriv_idx=1,FROM_DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-            DO version_idx=1,FROM_DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
+          DO deriv_idx=1,FROM_DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+            DO version_idx=1,FROM_DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(deriv_idx)% &
               & numberOfVersions
-              local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-                & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(version_idx)
+              local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+                & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(version_idx)
               VALUE_SP=FROM_PARAMETER_DATA_SP(local_ny)
               CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(TO_FIELD,TO_VARIABLE_TYPE, &
                 & TO_PARAMETER_SET_TYPE,version_idx,deriv_idx,node_idx,TO_COMPONENT_NUMBER, &
@@ -11874,11 +11875,11 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_DP,err,error,*999)
         DO node_idx=1,FROM_DOMAIN_NODES%totalNumberOfNodes
-          DO deriv_idx=1,FROM_DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-            DO version_idx=1,FROM_DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
+          DO deriv_idx=1,FROM_DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+            DO version_idx=1,FROM_DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(deriv_idx)% &
               & numberOfVersions
-              local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-                & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(version_idx)
+              local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+                & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(version_idx)
               VALUE_DP=FROM_PARAMETER_DATA_DP(local_ny)
               CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(TO_FIELD,TO_VARIABLE_TYPE, &
                 & TO_PARAMETER_SET_TYPE,version_idx,deriv_idx,node_idx,TO_COMPONENT_NUMBER, &
@@ -11892,11 +11893,11 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_L,err,error,*999)
         DO node_idx=1,FROM_DOMAIN_NODES%totalNumberOfNodes
-          DO deriv_idx=1,FROM_DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-            DO version_idx=1,FROM_DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(deriv_idx)% &
+          DO deriv_idx=1,FROM_DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+            DO version_idx=1,FROM_DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(deriv_idx)% &
               & numberOfVersions
-              local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-                & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(version_idx)
+              local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+                & nodeParam2DOFMap%nodes(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(version_idx)
               VALUE_L=FROM_PARAMETER_DATA_L(local_ny)
               CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE(TO_FIELD,TO_VARIABLE_TYPE, &
                 & TO_PARAMETER_SET_TYPE,version_idx,deriv_idx,node_idx,TO_COMPONENT_NUMBER, &
@@ -11908,7 +11909,7 @@ CONTAINS
           & FROM_PARAMETER_SET_TYPE,FROM_PARAMETER_DATA_L,err,error,*999)
       CASE DEFAULT
         localError="The from field variable data type of "// &
-          & TRIM(NumberToVString(FROM_FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+          & TRIM(NumberToVString(FROM_FIELD_VARIABLE%dataType,"*",err,error))// &
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -11919,21 +11920,21 @@ CONTAINS
       CALL Domain_DomainTopologyGet(FROM_DOMAIN,fromDomainTopology,err,error,*999)
       NULLIFY(FROM_DOMAIN_ELEMENTS)
       CALL DomainTopology_DomainElementsGet(fromDomainTopology,FROM_DOMAIN_ELEMENTS,err,error,*999)
-      SELECT CASE(FROM_FIELD_VARIABLE%DATA_TYPE)
+      SELECT CASE(FROM_FIELD_VARIABLE%dataType)
       CASE(FIELD_INTG_TYPE)
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_INTG,err,error,*999)
         DO elem_idx=1,FROM_DOMAIN_ELEMENTS%totalNumberOfElements
-          DO gausspoint_idx=1,SIZE(FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)% &
-            & PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)
-            local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
+          DO gausspoint_idx=1,SIZE(FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)% &
+            & paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
+            local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gausspoint_idx,elem_idx)
             VALUE_INTG=FROM_PARAMETER_DATA_INTG(local_ny)
-            local_ny=TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
-              &COMPONENTS(TO_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
-            CALL DistributedVector_ValuesSet(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
-              & PARAMETER_SETS%SET_TYPE(TO_PARAMETER_SET_TYPE)%PTR%PARAMETERS,local_ny,VALUE_INTG,&
+            local_ny=TO_FIELD%variableTypeMap(TO_VARIABLE_TYPE)%ptr%&
+              &COMPONENTS(TO_COMPONENT_NUMBER)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gausspoint_idx,elem_idx)
+            CALL DistributedVector_ValuesSet(TO_FIELD%variableTypeMap(TO_VARIABLE_TYPE)%ptr%&
+              & parameterSets%setType(TO_PARAMETER_SET_TYPE)%ptr%PARAMETERS,local_ny,VALUE_INTG,&
               & err,error,*999)
           ENDDO !gausspoint_idx
         ENDDO !elem_idx
@@ -11943,16 +11944,16 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_SP,err,error,*999)
         DO elem_idx=1,FROM_DOMAIN_ELEMENTS%totalNumberOfElements
-          DO gausspoint_idx=1,SIZE(FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)% &
-            & PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)
-            local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
+          DO gausspoint_idx=1,SIZE(FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)% &
+            & paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
+            local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gausspoint_idx,elem_idx)
             VALUE_SP=FROM_PARAMETER_DATA_SP(local_ny)
-            local_ny=TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
-              &COMPONENTS(TO_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
-            CALL DistributedVector_ValuesSet(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
-              & PARAMETER_SETS%SET_TYPE(TO_PARAMETER_SET_TYPE)%PTR%PARAMETERS,local_ny,VALUE_SP,&
+            local_ny=TO_FIELD%variableTypeMap(TO_VARIABLE_TYPE)%ptr%&
+              &COMPONENTS(TO_COMPONENT_NUMBER)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gausspoint_idx,elem_idx)
+            CALL DistributedVector_ValuesSet(TO_FIELD%variableTypeMap(TO_VARIABLE_TYPE)%ptr%&
+              & parameterSets%setType(TO_PARAMETER_SET_TYPE)%ptr%PARAMETERS,local_ny,VALUE_SP,&
               & err,error,*999)
           ENDDO !gausspoint_idx
         ENDDO !elem_idx
@@ -11962,16 +11963,16 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_DP,err,error,*999)
         DO elem_idx=1,FROM_DOMAIN_ELEMENTS%totalNumberOfElements
-          DO gausspoint_idx=1,SIZE(FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)% &
-            & PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)
-            local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
+          DO gausspoint_idx=1,SIZE(FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)% &
+            & paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
+            local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gausspoint_idx,elem_idx)
             VALUE_DP=FROM_PARAMETER_DATA_DP(local_ny)
-            local_ny=TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
-              &COMPONENTS(TO_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
-            CALL DistributedVector_ValuesSet(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
-              & PARAMETER_SETS%SET_TYPE(TO_PARAMETER_SET_TYPE)%PTR%PARAMETERS,local_ny,VALUE_DP,&
+            local_ny=TO_FIELD%variableTypeMap(TO_VARIABLE_TYPE)%ptr%&
+              &COMPONENTS(TO_COMPONENT_NUMBER)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gausspoint_idx,elem_idx)
+            CALL DistributedVector_ValuesSet(TO_FIELD%variableTypeMap(TO_VARIABLE_TYPE)%ptr%&
+              & parameterSets%setType(TO_PARAMETER_SET_TYPE)%ptr%PARAMETERS,local_ny,VALUE_DP,&
               & err,error,*999)
           ENDDO !gausspoint_idx
         ENDDO !elem_idx
@@ -11981,16 +11982,16 @@ CONTAINS
         CALL FIELD_PARAMETER_SET_DATA_GET(FROM_FIELD,FROM_VARIABLE_TYPE,FROM_PARAMETER_SET_TYPE, &
           & FROM_PARAMETER_DATA_L,err,error,*999)
         DO elem_idx=1,FROM_DOMAIN_ELEMENTS%totalNumberOfElements
-          DO gausspoint_idx=1,SIZE(FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)% &
-            & PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS,1)
-            local_ny=FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
+          DO gausspoint_idx=1,SIZE(FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)% &
+            & paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
+            local_ny=FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gausspoint_idx,elem_idx)
             VALUE_L=FROM_PARAMETER_DATA_L(local_ny)
-            local_ny=TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
-              &COMPONENTS(TO_COMPONENT_NUMBER)%PARAM_TO_DOF_MAP% &
-              & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gausspoint_idx,elem_idx)
-            CALL DistributedVector_ValuesSet(TO_FIELD%VARIABLE_TYPE_MAP(TO_VARIABLE_TYPE)%PTR%&
-              & PARAMETER_SETS%SET_TYPE(TO_PARAMETER_SET_TYPE)%PTR%PARAMETERS,local_ny,VALUE_L,&
+            local_ny=TO_FIELD%variableTypeMap(TO_VARIABLE_TYPE)%ptr%&
+              &COMPONENTS(TO_COMPONENT_NUMBER)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gausspoint_idx,elem_idx)
+            CALL DistributedVector_ValuesSet(TO_FIELD%variableTypeMap(TO_VARIABLE_TYPE)%ptr%&
+              & parameterSets%setType(TO_PARAMETER_SET_TYPE)%ptr%PARAMETERS,local_ny,VALUE_L,&
               & err,error,*999)
           ENDDO !gausspoint_idx
         ENDDO !elem_idx
@@ -12003,7 +12004,7 @@ CONTAINS
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="The from field variable component interpolation type of "// &
-        & TRIM(NumberToVString(FROM_FIELD_VARIABLE%COMPONENTS(FROM_COMPONENT_NUMBER)% &
+        & TRIM(NumberToVString(FROM_FIELD_VARIABLE%components(FROM_COMPONENT_NUMBER)% &
         & interpolationType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -12024,7 +12025,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_ADD_CONSTANT_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add to
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add to
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to add
@@ -12033,8 +12034,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_CONSTANT_INTG",err,error,*999)
 
@@ -12062,7 +12063,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_ADD_CONSTANT_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add to
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add to
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to add
@@ -12071,8 +12072,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_CONSTANT_SP",err,error,*999)
 
@@ -12100,7 +12101,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_ADD_CONSTANT_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add to
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add to
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to add
@@ -12109,8 +12110,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_CONSTANT_DP",err,error,*999)
 
@@ -12138,7 +12139,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_ADD_CONSTANT_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add to
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add to
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to add
@@ -12147,8 +12148,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_CONSTANT_L",err,error,*999)
 
@@ -12176,7 +12177,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_ADD_LOCAL_DOF_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to add
@@ -12186,8 +12187,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: GLOBAL_DOF_NUMBER
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_DOF_INTG",err,error,*999)
@@ -12204,10 +12205,10 @@ CONTAINS
     !not being set.
     NULLIFY(domainMapping)
     CALL FieldVariable_DomainMappingGet(FIELD_VARIABLE,domainMapping,err,error,*999)
-    IF(DOF_NUMBER<1.OR.DOF_NUMBER>FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal) THEN
+    IF(DOF_NUMBER<1.OR.DOF_NUMBER>FIELD_VARIABLE%domainMapping%totalNumberOfLocal) THEN
       localError="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",err,error))// &
         & " is invalid. It must be >0 and <="// &
-        & TRIM(NumberToVString(FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD_VARIABLE%domainMapping%totalNumberOfLocal,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -12234,7 +12235,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_ADD_LOCAL_DOF_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to add
@@ -12244,8 +12245,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: GLOBAL_DOF_NUMBER
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_DOF_SP",err,error,*999)
@@ -12262,10 +12263,10 @@ CONTAINS
     !not being set.
     NULLIFY(domainMapping)
     CALL FieldVariable_DomainMappingGet(FIELD_VARIABLE,domainMapping,err,error,*999)
-    IF(DOF_NUMBER<1.OR.DOF_NUMBER>FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal) THEN
+    IF(DOF_NUMBER<1.OR.DOF_NUMBER>FIELD_VARIABLE%domainMapping%totalNumberOfLocal) THEN
       localError="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",err,error))// &
         & " is invalid. It must be >0 and <="// &
-        & TRIM(NumberToVString(FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD_VARIABLE%domainMapping%totalNumberOfLocal,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -12292,7 +12293,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_ADD_LOCAL_DOF_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to add
@@ -12302,8 +12303,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: GLOBAL_DOF_NUMBER
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_DOF_DP",err,error,*999)
@@ -12320,10 +12321,10 @@ CONTAINS
     !not being set.
     NULLIFY(domainMapping)
     CALL FieldVariable_DomainMappingGet(FIELD_VARIABLE,domainMapping,err,error,*999)
-    IF(DOF_NUMBER<1.OR.DOF_NUMBER>FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal) THEN
+    IF(DOF_NUMBER<1.OR.DOF_NUMBER>FIELD_VARIABLE%domainMapping%totalNumberOfLocal) THEN
       localError="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",err,error))// &
         & " is invalid. It must be >0 and <="// &
-        & TRIM(NumberToVString(FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD_VARIABLE%domainMapping%totalNumberOfLocal,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -12351,7 +12352,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_ADD_LOCAL_DOF_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to add
@@ -12361,8 +12362,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: GLOBAL_DOF_NUMBER
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_DOF_L",err,error,*999)
@@ -12379,10 +12380,10 @@ CONTAINS
     !not being set.
     NULLIFY(domainMapping)
     CALL FieldVariable_DomainMappingGet(FIELD_VARIABLE,domainMapping,err,error,*999)
-    IF(DOF_NUMBER<1.OR.DOF_NUMBER>FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal) THEN
+    IF(DOF_NUMBER<1.OR.DOF_NUMBER>FIELD_VARIABLE%domainMapping%totalNumberOfLocal) THEN
       localError="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",err,error))// &
         & " is invalid. It must be >0 and <="// &
-        & TRIM(NumberToVString(FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD_VARIABLE%domainMapping%totalNumberOfLocal,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -12410,7 +12411,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The user element number to add
@@ -12421,8 +12422,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_ELEMENT_INTG",err,error,*999)
@@ -12457,7 +12458,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The user element number to add
@@ -12468,8 +12469,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_ELEMENT_SP",err,error,*999)
@@ -12504,7 +12505,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The user element number to add
@@ -12515,8 +12516,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_ELEMENT_DP",err,error,*999)
@@ -12551,7 +12552,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The user element number to add
@@ -12562,8 +12563,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_ELEMENT_L",err,error,*999)
@@ -12598,7 +12599,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number in the element to add
@@ -12610,8 +12611,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetAddGaussPointIntg",err,error,*999)
@@ -12647,7 +12648,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number in the element to add
@@ -12659,8 +12660,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetAddGaussPointSP",err,error,*999)
@@ -12696,7 +12697,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number in the element to add
@@ -12708,8 +12709,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetAddGaussPointDP",err,error,*999)
@@ -12745,7 +12746,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number in the element to add
@@ -12757,8 +12758,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetAddGaussPointL",err,error,*999)
@@ -12794,7 +12795,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: LOCAL_ELEMENT_NUMBER !<The local element number to add
@@ -12804,8 +12805,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_ELEMENT_INTG",err,error,*999)
 
@@ -12834,7 +12835,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: LOCAL_ELEMENT_NUMBER !<The local element number to add
@@ -12844,8 +12845,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_ELEMENT_SP",err,error,*999)
 
@@ -12874,7 +12875,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: LOCAL_ELEMENT_NUMBER !<The local element number to add
@@ -12884,8 +12885,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_ELEMENT_DP",err,error,*999)
 
@@ -12914,7 +12915,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: LOCAL_ELEMENT_NUMBER !<The local element number to add
@@ -12924,8 +12925,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_ELEMENT_L",err,error,*999)
 
@@ -12954,7 +12955,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -12967,8 +12968,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_NODE_INTG",err,error,*999)
@@ -13005,7 +13006,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -13018,8 +13019,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_NODE_SP",err,error,*999)
@@ -13055,7 +13056,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -13068,8 +13069,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_NODE_DP",err,error,*999)
@@ -13105,7 +13106,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -13118,8 +13119,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_ADD_NODE_L",err,error,*999)
@@ -13155,7 +13156,7 @@ CONTAINS
     & LOCAL_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -13167,8 +13168,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_NODE_INTG",err,error,*999)
 
@@ -13198,7 +13199,7 @@ CONTAINS
     & LOCAL_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -13210,8 +13211,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_NODE_SP",err,error,*999)
 
@@ -13242,7 +13243,7 @@ CONTAINS
     & LOCAL_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -13254,8 +13255,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_NODE_DP",err,error,*999)
 
@@ -13285,7 +13286,7 @@ CONTAINS
     & LOCAL_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to add
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to add
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to add \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -13297,8 +13298,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_ADD_LOCAL_NODE_L",err,error,*999)
 
@@ -13328,16 +13329,16 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_CREATE(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to create the parameter set for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to create the parameter set for
     INTEGER(INTG),  INTENT(IN) :: VARIABLE_TYPE !<The variable type to create the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,parameter_set_idx
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: NEW_PARAMETER_SET
-    TYPE(FIELD_PARAMETER_SET_PTR_TYPE), POINTER :: NEW_PARAMETER_SETS(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: NEW_PARAMETER_SET
+    TYPE(FieldParameterSetPtrType), POINTER :: NEW_PARAMETER_SETS(:)
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError,DUMMY_ERROR
 
     NULLIFY(NEW_PARAMETER_SET)
@@ -13351,8 +13352,8 @@ CONTAINS
     !Check the set type input
     IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<FIELD_NUMBER_OF_SET_TYPES) THEN
       !Check if this set type has already been created
-      IF(ASSOCIATED(FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE)) THEN
-        IF(ASSOCIATED(FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR)) THEN
+      IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%setType)) THEN
+        IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%setType(FIELD_SET_TYPE)%ptr)) THEN
           localError="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",err,error))// &
             & " has already been created for variable type of "// &
             & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
@@ -13363,11 +13364,11 @@ CONTAINS
       ALLOCATE(NEW_PARAMETER_SET,STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate new parameter set.",err,error,*999)
       CALL FIELD_PARAMETER_SET_INITIALISE(NEW_PARAMETER_SET,err,error,*999)
-      NEW_PARAMETER_SET%SET_INDEX=FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS+1
-      NEW_PARAMETER_SET%SET_TYPE=FIELD_SET_TYPE
+      NEW_PARAMETER_SET%setIndex=FIELD_VARIABLE%parameterSets%numberOfParameterSets+1
+      NEW_PARAMETER_SET%setType=FIELD_SET_TYPE
       NULLIFY(NEW_PARAMETER_SET%PARAMETERS)
-      CALL DistributedVector_CreateStart(FIELD_VARIABLE%DOMAIN_MAPPING,NEW_PARAMETER_SET%PARAMETERS,err,error,*999)
-      SELECT CASE(FIELD_VARIABLE%DATA_TYPE)
+      CALL DistributedVector_CreateStart(FIELD_VARIABLE%domainMapping,NEW_PARAMETER_SET%PARAMETERS,err,error,*999)
+      SELECT CASE(FIELD_VARIABLE%dataType)
       CASE(FIELD_INTG_TYPE)
         CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE,err,error,*999)
       CASE(FIELD_SP_TYPE)
@@ -13377,13 +13378,13 @@ CONTAINS
       CASE(FIELD_L_TYPE)
         CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_L_TYPE,err,error,*999)
       CASE DEFAULT
-        localError="The field data type of "//TRIM(NumberToVString(FIELD_VARIABLE%DATA_TYPE,"*",err,error))// &
+        localError="The field data type of "//TRIM(NumberToVString(FIELD_VARIABLE%dataType,"*",err,error))// &
           & " is invalid for variable type of "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
           & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       END SELECT
       CALL DistributedVector_CreateFinish(NEW_PARAMETER_SET%PARAMETERS,err,error,*999)
-      SELECT CASE(FIELD_VARIABLE%DATA_TYPE)
+      SELECT CASE(FIELD_VARIABLE%dataType)
       CASE(FIELD_INTG_TYPE)
         CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,0_INTG,err,error,*999)
       CASE(FIELD_SP_TYPE)
@@ -13394,23 +13395,23 @@ CONTAINS
         CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,.FALSE.,err,error,*999)
       END SELECT
       !Add the new parameter set to the list of parameter sets
-      ALLOCATE(NEW_PARAMETER_SETS(FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS+1),STAT=err)
+      ALLOCATE(NEW_PARAMETER_SETS(FIELD_VARIABLE%parameterSets%numberOfParameterSets+1),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate new parameter sets.",err,error,*999)
-      IF(ASSOCIATED(FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS)) THEN
-        DO parameter_set_idx=1,FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS
-          NEW_PARAMETER_SETS(parameter_set_idx)%PTR=>FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS(parameter_set_idx)%PTR
+      IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%parameterSets)) THEN
+        DO parameter_set_idx=1,FIELD_VARIABLE%parameterSets%numberOfParameterSets
+          NEW_PARAMETER_SETS(parameter_set_idx)%ptr=>FIELD_VARIABLE%parameterSets%parameterSets(parameter_set_idx)%ptr
         ENDDO !parameter_set_idx
-        DEALLOCATE(FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS)
+        DEALLOCATE(FIELD_VARIABLE%parameterSets%parameterSets)
       ENDIF
-      NEW_PARAMETER_SETS(FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS+1)%PTR=>NEW_PARAMETER_SET
-      ALLOCATE(FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS(FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS+1),STAT=err)
+      NEW_PARAMETER_SETS(FIELD_VARIABLE%parameterSets%numberOfParameterSets+1)%ptr=>NEW_PARAMETER_SET
+      ALLOCATE(FIELD_VARIABLE%parameterSets%parameterSets(FIELD_VARIABLE%parameterSets%numberOfParameterSets+1),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate field parameter sets parameter sets.",err,error,*999)
-      DO parameter_set_idx=1,FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS+1
-        FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS(parameter_set_idx)%PTR=>NEW_PARAMETER_SETS(parameter_set_idx)%PTR
+      DO parameter_set_idx=1,FIELD_VARIABLE%parameterSets%numberOfParameterSets+1
+        FIELD_VARIABLE%parameterSets%parameterSets(parameter_set_idx)%ptr=>NEW_PARAMETER_SETS(parameter_set_idx)%ptr
       ENDDO !parameter_set_idx
       DEALLOCATE(NEW_PARAMETER_SETS)
-      FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS=FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS+1
-      FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR=>NEW_PARAMETER_SET
+      FIELD_VARIABLE%parameterSets%numberOfParameterSets=FIELD_VARIABLE%parameterSets%numberOfParameterSets+1
+      FIELD_VARIABLE%parameterSets%setType(FIELD_SET_TYPE)%ptr=>NEW_PARAMETER_SET
     ELSE
       localError="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",err,error))// &
         & " is invalid. The field parameter set type must be between 1 and "// &
@@ -13435,14 +13436,14 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_CREATED(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETER_SET_CREATED,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field
     INTEGER(INTG),  INTENT(IN) :: VARIABLE_TYPE !<The field variable type to check the parameter set creation for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     LOGICAL, INTENT(OUT) :: PARAMETER_SET_CREATED
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_CREATED",err,error,*999)
@@ -13458,7 +13459,7 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     !Check if this set type has been created
-    IF(ASSOCIATED(FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR)) THEN
+    IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%setType(FIELD_SET_TYPE)%ptr)) THEN
       PARAMETER_SET_CREATED=.TRUE.
     ELSE
       PARAMETER_SET_CREATED=.FALSE.
@@ -13480,7 +13481,7 @@ CONTAINS
   SUBROUTINE Field_ParameterSetEnsureCreated(field,variableType,fieldSetType,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to create the parameter set for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to create the parameter set for
     INTEGER(INTG),  INTENT(IN) :: variableType !<The variable type to create the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -13509,16 +13510,16 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DESTROY(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to destroy a parameter set for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to destroy a parameter set for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to destroy the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: parameter_set_idx,SET_INDEX
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_PARAMETER_SET_PTR_TYPE), POINTER :: NEW_PARAMETER_SETS(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldParameterSetPtrType), POINTER :: NEW_PARAMETER_SETS(:)
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     NULLIFY(NEW_PARAMETER_SETS)
 
@@ -13529,21 +13530,21 @@ CONTAINS
     CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
     NULLIFY(PARAMETER_SET)
     CALL FieldVariable_ParameterSetGet(FIELD_VARIABLE,FIELD_SET_TYPE,PARAMETER_SET,err,error,*999)
-    SET_INDEX=PARAMETER_SET%SET_INDEX
-    ALLOCATE(NEW_PARAMETER_SETS(FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS-1),STAT=err)
+    SET_INDEX=PARAMETER_SET%setIndex
+    ALLOCATE(NEW_PARAMETER_SETS(FIELD_VARIABLE%parameterSets%numberOfParameterSets-1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate new parameter sets",err,error,*999)
-    DO parameter_set_idx=1,FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS
+    DO parameter_set_idx=1,FIELD_VARIABLE%parameterSets%numberOfParameterSets
       IF(parameter_set_idx<SET_INDEX) THEN
-        NEW_PARAMETER_SETS(parameter_set_idx)%PTR=>FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS(parameter_set_idx)%PTR
+        NEW_PARAMETER_SETS(parameter_set_idx)%ptr=>FIELD_VARIABLE%parameterSets%parameterSets(parameter_set_idx)%ptr
       ELSE IF(parameter_set_idx>SET_INDEX) THEN
-        NEW_PARAMETER_SETS(parameter_set_idx-1)%PTR=>FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS(parameter_set_idx)%PTR
-        NEW_PARAMETER_SETS(parameter_set_idx-1)%PTR%SET_INDEX=NEW_PARAMETER_SETS(parameter_set_idx-1)%PTR%SET_INDEX-1
+        NEW_PARAMETER_SETS(parameter_set_idx-1)%ptr=>FIELD_VARIABLE%parameterSets%parameterSets(parameter_set_idx)%ptr
+        NEW_PARAMETER_SETS(parameter_set_idx-1)%ptr%setIndex=NEW_PARAMETER_SETS(parameter_set_idx-1)%ptr%setIndex-1
       ENDIF
     ENDDO !parameter_set_idx
-    DEALLOCATE(FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS)
-    FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS=>NEW_PARAMETER_SETS
-    FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS=FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS-1
-    NULLIFY(FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE(FIELD_SET_TYPE)%PTR)
+    DEALLOCATE(FIELD_VARIABLE%parameterSets%parameterSets)
+    FIELD_VARIABLE%parameterSets%parameterSets=>NEW_PARAMETER_SETS
+    FIELD_VARIABLE%parameterSets%numberOfParameterSets=FIELD_VARIABLE%parameterSets%numberOfParameterSets-1
+    NULLIFY(FIELD_VARIABLE%parameterSets%setType(FIELD_SET_TYPE)%ptr)
     CALL FIELD_PARAMETER_SET_FINALISE(PARAMETER_SET,err,error,*999)
 
     EXITS("FIELD_PARAMETER_SET_DESTROY")
@@ -13562,7 +13563,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_FINALISE(FIELD_PARAMETER_SET,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: FIELD_PARAMETER_SET !<A pointer to the field parameter set to destroy
+    TYPE(FieldParameterSetType), POINTER :: FIELD_PARAMETER_SET !<A pointer to the field parameter set to destroy
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -13588,15 +13589,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DATA_GET_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the parameter set from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the parameter set from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the parameter set data for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), POINTER :: PARAMETERS(:) !<On return, a pointer to the field parameter set data
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_DATA_GET_INTG",err,error,*998)
 
@@ -13625,15 +13626,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DATA_GET_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the parameter set from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the parameter set from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the parameter set data for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     REAL(SP), POINTER :: PARAMETERS(:) !<On return, a pointer to the field parameter set data
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_DATA_GET_SP",err,error,*998)
 
@@ -13661,15 +13662,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DATA_GET_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the parameter set from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the parameter set from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the parameter set data for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     REAL(DP), POINTER :: PARAMETERS(:) !<On return, a pointer to the field parameter set data
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_DATA_GET_DP",err,error,*999)
 
@@ -13697,15 +13698,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DATA_GET_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the parameter set from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the parameter set from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the parameter set data for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     LOGICAL, POINTER :: PARAMETERS(:) !<On return, a pointer to the field parameter set data
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_DATA_GET_L",err,error,*998)
 
@@ -13734,15 +13735,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DATA_RESTORE_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to restore the parameter set from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to restore the parameter set from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field varaible type to restore the parameter set data for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), POINTER :: PARAMETERS(:) !<The pointer to the field parameter set data obtained with the parameter set get call
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_DATA_RESTORE_INTG",err,error,*999)
 
@@ -13770,15 +13771,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DATA_RESTORE_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to restore the parameter set from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to restore the parameter set from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field varaible type to restore the parameter set data for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     REAL(SP), POINTER :: PARAMETERS(:) !<The pointer to the field parameter set data obtained with the parameter set get call
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_DATA_RESTORE_SP",err,error,*999)
 
@@ -13806,15 +13807,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DATA_RESTORE_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to restore the parameter set from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to restore the parameter set from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field varaible type to restore the parameter set data for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     REAL(DP), POINTER :: PARAMETERS(:) !<The pointer to the field parameter set data obtained with the parameter set get call
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_DATA_RESTORE_DP",err,error,*999)
 
@@ -13842,15 +13843,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_DATA_RESTORE_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETERS,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to restore the parameter set from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to restore the parameter set from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field varaible type to restore the parameter set data for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     LOGICAL, POINTER :: PARAMETERS(:) !<The pointer to the field parameter set data obtained with the parameter set get call
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_DATA_RESTORE_L",err,error,*999)
 
@@ -13878,14 +13879,14 @@ CONTAINS
   SUBROUTINE Field_ParameterSetGet(field,variableType,fieldSetType,parameterSet,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the parameter set for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the parameter set for
     INTEGER(INTG), INTENT(IN) :: variableType!<The field variable type to get the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier to get \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet !<On return, a pointer to the specified parameter set. Must not be associated on entry.
+    TYPE(FieldParameterSetType), POINTER :: parameterSet !<On return, a pointer to the specified parameter set. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGet",err,error,*999)
 
@@ -13909,7 +13910,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_GET_CONSTANT_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to get the value for
@@ -13918,8 +13919,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_CONSTANT_INTG",err,error,*999)
 
@@ -13947,7 +13948,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_GET_CONSTANT_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to get the value for
@@ -13956,8 +13957,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_CONSTANT_SP",err,error,*999)
 
@@ -13985,7 +13986,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_GET_CONSTANT_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to get the value for
@@ -13994,8 +13995,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_CONSTANT_DP",err,error,*999)
 
@@ -14023,7 +14024,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_GET_CONSTANT_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to get the value for
@@ -14032,8 +14033,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_CONSTANT_L",err,error,*999)
 
@@ -14062,7 +14063,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The data point number to get the value for
@@ -14073,8 +14074,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetDataPointIntg",err,error,*999)
 
@@ -14102,7 +14103,7 @@ CONTAINS
   SUBROUTINE Field_ParameterSetGetDataPointSP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The data point number to get the value for
@@ -14113,8 +14114,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetDataPointSP",err,error,*999)
 
@@ -14143,7 +14144,7 @@ CONTAINS
   SUBROUTINE Field_ParameterSetGetDataPointDP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The data point number to get the value for
@@ -14154,8 +14155,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetDataPointDP",err,error,*999)
 
@@ -14183,7 +14184,7 @@ CONTAINS
   SUBROUTINE Field_ParameterSetGetDataPointL(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The data point number to get the value for
@@ -14194,8 +14195,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetDataPointL",err,error,*999)
 
@@ -14224,7 +14225,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The element number to get the value for
@@ -14235,8 +14236,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_ELEMENT_INTG",err,error,*999)
 
@@ -14266,7 +14267,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The element number to get the value for
@@ -14277,8 +14278,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_ELEMENT_SP",err,error,*999)
 
@@ -14307,7 +14308,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The element number to get the value for
@@ -14318,8 +14319,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_ELEMENT_DP",err,error,*999)
 
@@ -14348,7 +14349,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The element number to get the value for
@@ -14359,8 +14360,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_ELEMENT_L",err,error,*999)
 
@@ -14388,7 +14389,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_GET_LOCAL_DOF_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to get
@@ -14397,8 +14398,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_GET_LOCAL_DOF_INTG",err,error,*999)
@@ -14415,7 +14416,7 @@ CONTAINS
     IF(DOF_NUMBER<1.OR.DOF_NUMBER>domainMapping%totalNumberOfLocal) THEN
       localError="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",err,error))// &
         & " is invalid. It must be >=1 and <= "// &
-        & TRIM(NumberToVString(FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD_VARIABLE%domainMapping%totalNumberOfLocal,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -14436,7 +14437,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_GET_LOCAL_DOF_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to get
@@ -14445,8 +14446,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_GET_LOCAL_DOF_SP",err,error,*999)
@@ -14463,7 +14464,7 @@ CONTAINS
     IF(DOF_NUMBER<1.OR.DOF_NUMBER>domainMapping%totalNumberOfLocal) THEN
       localError="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",err,error))// &
         & " is invalid. It must be >=1 and <= "// &
-        & TRIM(NumberToVString(FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD_VARIABLE%domainMapping%totalNumberOfLocal,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -14484,7 +14485,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_GET_LOCAL_DOF_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to get
@@ -14493,8 +14494,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_GET_LOCAL_DOF_DP",err,error,*999)
@@ -14511,7 +14512,7 @@ CONTAINS
     IF(DOF_NUMBER<1.OR.DOF_NUMBER>domainMapping%totalNumberOfLocal) THEN
       localError="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",err,error))// &
         & " is invalid. It must be >=1 and <= "// &
-        & TRIM(NumberToVString(FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD_VARIABLE%domainMapping%totalNumberOfLocal,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -14532,7 +14533,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_GET_LOCAL_DOF_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to get
@@ -14541,8 +14542,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_GET_LOCAL_DOF_L",err,error,*999)
@@ -14559,7 +14560,7 @@ CONTAINS
     IF(DOF_NUMBER<1.OR.DOF_NUMBER>domainMapping%totalNumberOfLocal) THEN
       localError="The field dof number of "//TRIM(NumberToVString(DOF_NUMBER,"*",err,error))// &
         & " is invalid. It must be >=1 and <= "// &
-        & TRIM(NumberToVString(FIELD_VARIABLE%DOMAIN_MAPPING%totalNumberOfLocal,"*",err,error))// &
+        & TRIM(NumberToVString(FIELD_VARIABLE%domainMapping%totalNumberOfLocal,"*",err,error))// &
         & " for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -14581,7 +14582,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -14594,8 +14595,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_NODE_INTG",err,error,*999)
 
@@ -14625,7 +14626,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -14638,8 +14639,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_NODE_SP",err,error,*999)
 
@@ -14669,7 +14670,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -14682,8 +14683,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_NODE_DP",err,error,*999)
 
@@ -14713,7 +14714,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -14726,8 +14727,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_GET_NODE_L",err,error,*999)
 
@@ -14758,7 +14759,7 @@ CONTAINS
     & componentNumber,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number to get the value for
@@ -14770,8 +14771,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalNodeIntg",err,error,*999)
 
@@ -14801,7 +14802,7 @@ CONTAINS
     & componentNumber,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number to get the value for
@@ -14813,8 +14814,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalNodeSP",err,error,*999)
 
@@ -14844,7 +14845,7 @@ CONTAINS
     & componentNumber,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number to get the value for
@@ -14856,8 +14857,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalNodeDP",err,error,*999)
 
@@ -14887,7 +14888,7 @@ CONTAINS
     & componentNumber,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The node derivative version number to get the value for
@@ -14899,8 +14900,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalNodeL",err,error,*999)
 
@@ -14931,7 +14932,7 @@ CONTAINS
     & componentNumber,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the value for
@@ -14941,8 +14942,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalElementIntg",err,error,*999)
 
@@ -14972,7 +14973,7 @@ CONTAINS
     & componentNumber,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the value for
@@ -14982,8 +14983,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalElementSP",err,error,*999)
 
@@ -15013,7 +15014,7 @@ CONTAINS
     & componentNumber,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the value for
@@ -15023,8 +15024,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalElementDP",err,error,*999)
 
@@ -15054,7 +15055,7 @@ CONTAINS
     & componentNumber,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to get the value for
@@ -15064,8 +15065,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalElementL",err,error,*999)
 
@@ -15094,7 +15095,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to get the value for
@@ -15106,8 +15107,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetGaussPointDP",err,error,*999)
 
@@ -15137,7 +15138,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to get the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to get the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to get the value for
@@ -15148,8 +15149,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetGetLocalGaussPointDP",err,error,*999)
 
@@ -15178,7 +15179,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userElementNumber !<The element number the data point is projected on
@@ -15190,8 +15191,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateElementDataPointDP",err,error,*999)
@@ -15226,7 +15227,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_INITIALISE(FIELD_PARAMETER_SET,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: FIELD_PARAMETER_SET !<The field parameter set to initialise
+    TYPE(FieldParameterSetType), POINTER :: FIELD_PARAMETER_SET !<The field parameter set to initialise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -15234,8 +15235,8 @@ CONTAINS
     ENTERS("FIELD_PARAMETER_SET_INITIALISE",err,error,*999)
 
     IF(ASSOCIATED(FIELD_PARAMETER_SET)) THEN
-      FIELD_PARAMETER_SET%SET_INDEX=0
-      FIELD_PARAMETER_SET%SET_TYPE=0
+      FIELD_PARAMETER_SET%setIndex=0
+      FIELD_PARAMETER_SET%setType=0
     ELSE
       CALL FlagError("Field parameter set is not associated",err,error,*999)
     ENDIF
@@ -15255,14 +15256,14 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to output the parameter set for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to output the parameter set for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to output the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to output
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("FIELD_PARAMETER_SET_OUTPUT",err,error,*999)
 
@@ -15290,7 +15291,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_CONSTANT_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to update
@@ -15299,8 +15300,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_CONSTANT_INTG",err,error,*999)
 
@@ -15328,7 +15329,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_CONSTANT_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to update
@@ -15337,8 +15338,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_CONSTANT_SP",err,error,*999)
 
@@ -15366,7 +15367,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_CONSTANT_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to update
@@ -15375,8 +15376,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_CONSTANT_DP",err,error,*999)
 
@@ -15404,7 +15405,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_CONSTANT_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: COMPONENT_NUMBER !<The field variable component number to update
@@ -15413,8 +15414,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_CONSTANT_L",err,error,*999)
 
@@ -15443,7 +15444,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to Update the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to Update the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to Update the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The data point number to Update the value for
@@ -15454,8 +15455,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateDataPointIntg",err,error,*999)
@@ -15490,7 +15491,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to Update the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to Update the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to Update the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The data point number to Update the value for
@@ -15501,8 +15502,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateDataPointSP",err,error,*999)
@@ -15537,7 +15538,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to Update the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to Update the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to Update the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The data point number to Update the value for
@@ -15548,8 +15549,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateDataPointDP",err,error,*999)
@@ -15584,7 +15585,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to Update the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to Update the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to Update the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: userDataPointNumber !<The data point number to Update the value for
@@ -15595,8 +15596,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateDataPointL",err,error,*999)
@@ -15631,7 +15632,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to Update the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: dataPointNumber !<The local data point number to update the value for
@@ -15641,8 +15642,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetUpdateLocalDataPointIntg",err,error,*999)
 
@@ -15671,7 +15672,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to Update the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: dataPointNumber !<The local data point number to update the value for
@@ -15681,8 +15682,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetUpdateLocalDataPointSP",err,error,*999)
 
@@ -15711,7 +15712,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to Update the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: dataPointNumber !<The local data point number to update the value for
@@ -15721,8 +15722,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetUpdateLocalDataPointDP",err,error,*999)
 
@@ -15751,7 +15752,7 @@ CONTAINS
     & err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update the value for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update the value for
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to Update the value for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: dataPointNumber !<The local data point number to update the value for
@@ -15761,8 +15762,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetUpdateLocalDataPointL",err,error,*999)
 
@@ -15790,7 +15791,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF_INTG(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to update
@@ -15799,8 +15800,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF_INTG",err,error,*999)
@@ -15840,7 +15841,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF_SP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to update
@@ -15849,8 +15850,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF_SP",err,error,*999)
@@ -15890,7 +15891,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to update
@@ -15899,8 +15900,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF_DP",err,error,*999)
@@ -15940,7 +15941,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF_L(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DOF_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: DOF_NUMBER !<The dof number to update
@@ -15949,8 +15950,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF_L",err,error,*999)
@@ -15990,7 +15991,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_LOCAL_DOFS_DP(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,VALUES,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     REAL(DP), INTENT(IN) :: VALUES(:) !<The values to update to
@@ -15999,8 +16000,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: dofIdx
     TYPE(DomainMappingType), POINTER :: domainMapping
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_DOFS_DP",err,error,*999)
@@ -16041,7 +16042,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The element number to update
@@ -16052,8 +16053,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_ELEMENT_INTG",err,error,*999)
@@ -16088,7 +16089,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The element number to update
@@ -16099,8 +16100,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_ELEMENT_SP",err,error,*999)
@@ -16135,7 +16136,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The element number to update
@@ -16146,8 +16147,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_ELEMENT_DP",err,error,*999)
@@ -16182,7 +16183,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: USER_ELEMENT_NUMBER !<The element number to update
@@ -16193,8 +16194,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_ELEMENT_L",err,error,*999)
@@ -16229,7 +16230,7 @@ CONTAINS
     & COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: LOCAL_ELEMENT_NUMBER !<The local element number to update
@@ -16239,8 +16240,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("Field_ParameterSetUpdateLocalElementIntg",err,error,*999)
 
@@ -16269,7 +16270,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: LOCAL_ELEMENT_NUMBER !<The local element number to update
@@ -16279,8 +16280,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT_SP",err,error,*999)
 
@@ -16309,7 +16310,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: LOCAL_ELEMENT_NUMBER !<The local element number to update
@@ -16319,8 +16320,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT_DP",err,error,*999)
 
@@ -16349,7 +16350,7 @@ CONTAINS
     & VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: LOCAL_ELEMENT_NUMBER !<The local element number to update
@@ -16359,8 +16360,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_ELEMENT_L",err,error,*999)
 
@@ -16388,14 +16389,14 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_FINISH(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to finish the update for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to finish the update for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_FINISH",err,error,*999)
 
@@ -16427,7 +16428,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -16440,8 +16441,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_NODE_INTG",err,error,*999)
@@ -16477,7 +16478,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -16490,8 +16491,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_NODE_SP",err,error,*999)
@@ -16528,7 +16529,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -16541,8 +16542,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_NODE_DP",err,error,*999)
@@ -16578,7 +16579,7 @@ CONTAINS
     & USER_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -16591,8 +16592,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_NODE_L",err,error,*999)
@@ -16627,7 +16628,7 @@ CONTAINS
     & LOCAL_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -16639,8 +16640,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE_INTG",err,error,*999)
 
@@ -16670,7 +16671,7 @@ CONTAINS
     & LOCAL_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -16682,8 +16683,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE_SP",err,error,*999)
 
@@ -16713,7 +16714,7 @@ CONTAINS
     & LOCAL_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -16725,8 +16726,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE_DP",err,error,*999)
 
@@ -16756,7 +16757,7 @@ CONTAINS
     & LOCAL_NODE_NUMBER,COMPONENT_NUMBER,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to finish the update for \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: VERSION_NUMBER !<The node derivative version number to add
@@ -16768,8 +16769,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_LOCAL_NODE_L",err,error,*999)
 
@@ -16801,7 +16802,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: variableType!<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to update
@@ -16813,8 +16814,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateGaussPointIntg",err,error,*999)
@@ -16852,7 +16853,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: variableType!<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to update
@@ -16864,8 +16865,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateGaussPointSP",err,error,*999)
@@ -16903,7 +16904,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: variableType!<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to update
@@ -16915,8 +16916,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateGaussPointDP",err,error,*999)
@@ -16954,7 +16955,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: variableType!<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to update
@@ -16966,8 +16967,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localDof
     LOGICAL :: ghostDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetUpdateGaussPointL",err,error,*999)
@@ -17003,7 +17004,7 @@ CONTAINS
     & componentNumber,value,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to update
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to update
     INTEGER(INTG), INTENT(IN) :: variableType!<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier
     INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to update
@@ -17014,8 +17015,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: localDof
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetUpdateLocalGaussPointDP",err,error,*999)
 
@@ -17045,7 +17046,7 @@ CONTAINS
     & values,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to interpolate.
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to interpolate. \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: partialDerivativeType !<The derivative number of the field to interpolate.  \see Constants_PartialDerivativeConstants,Constants
@@ -17080,7 +17081,7 @@ CONTAINS
     & xi,values,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to interpolate.
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to interpolate. \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: partialDerivativeType !<The partial derivative number of the field to interpolate. \see Constants_PartialDerivativeConstants,Constants
@@ -17092,12 +17093,12 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: localElementNumber,numberOfComponents,xiPointsIdx
     LOGICAL :: ghostElement
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoint(:)
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoint(:)
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_ParameterSetInterpolateXiDP1",err,error,*999)
@@ -17160,7 +17161,7 @@ CONTAINS
     & quadratureScheme,gaussPoint,values,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to interpolate.
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to interpolate. \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: partialDerivativeType !<The partial derivative type of the field to interpolate. \see Constants_PartialDerivativeConstants,Constants
@@ -17195,7 +17196,7 @@ CONTAINS
     & quadratureSchemeType,gaussPoints,values,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to interpolate.
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to interpolate.
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to interpolate. \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier. \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: partialDerivativeType !<The derivative number of the field to interpolate.  \see Constants_PartialDerivativeConstants,Constants
@@ -17215,9 +17216,9 @@ CONTAINS
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoint(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoint(:)
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme
     TYPE(VARYING_STRING) :: localError
 
@@ -17318,14 +17319,14 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_UPDATE_START(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to start the update for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to start the update for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier to update
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_UPDATE_START",err,error,*999)
 
@@ -17352,15 +17353,15 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SET_VECTOR_GET(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,DISTRIBUTED_VECTOR,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the parameter set vector from
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the parameter set vector from
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to update \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier
     TYPE(DistributedVectorType), POINTER :: DISTRIBUTED_VECTOR !<On return, a pointer to the field parameter set distributed vector. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PARAMETER_SET
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldParameterSetType), POINTER :: PARAMETER_SET
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
 
     ENTERS("FIELD_PARAMETER_SET_VECTOR_GET",err,error,*999)
 
@@ -17387,7 +17388,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SETS_FINALISE(FIELD_VARIABLE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_TYPE) :: FIELD_VARIABLE !<A pointer to the field variable to finalise the parameter sets for
+    TYPE(FieldVariableType) :: FIELD_VARIABLE !<A pointer to the field variable to finalise the parameter sets for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -17395,14 +17396,14 @@ CONTAINS
 
     ENTERS("FIELD_PARAMETER_SETS_FINALISE",err,error,*999)
 
-    IF(ASSOCIATED(FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE)) DEALLOCATE(FIELD_VARIABLE%PARAMETER_SETS%SET_TYPE)
-    IF(ASSOCIATED(FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS)) THEN
-      DO parameter_set_idx=1,SIZE(FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS,1)
-        CALL FIELD_PARAMETER_SET_FINALISE(FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS(parameter_set_idx)%PTR,err,error,*999)
+    IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%setType)) DEALLOCATE(FIELD_VARIABLE%parameterSets%setType)
+    IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%parameterSets)) THEN
+      DO parameter_set_idx=1,SIZE(FIELD_VARIABLE%parameterSets%parameterSets,1)
+        CALL FIELD_PARAMETER_SET_FINALISE(FIELD_VARIABLE%parameterSets%parameterSets(parameter_set_idx)%ptr,err,error,*999)
       ENDDO !parameter_set_idx
-      DEALLOCATE(FIELD_VARIABLE%PARAMETER_SETS%PARAMETER_SETS)
+      DEALLOCATE(FIELD_VARIABLE%parameterSets%parameterSets)
     ENDIF
-    FIELD_VARIABLE%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS=0
+    FIELD_VARIABLE%parameterSets%numberOfParameterSets=0
 
     EXITS("FIELD_PARAMETER_SETS_FINALISE")
     RETURN
@@ -17418,7 +17419,7 @@ CONTAINS
   SUBROUTINE FIELD_PARAMETER_SETS_INITIALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the variable parameter sets for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the variable parameter sets for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -17428,17 +17429,17 @@ CONTAINS
     ENTERS("FIELD_PARAMETER_SETS_INITIALISE",err,error,*998)
 
     IF(ASSOCIATED(FIELD)) THEN
-      DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES        
-        FIELD%VARIABLES(variable_idx)%PARAMETER_SETS%FIELD_VARIABLE=>FIELD%VARIABLES(variable_idx)
-        FIELD%VARIABLES(variable_idx)%PARAMETER_SETS%NUMBER_OF_PARAMETER_SETS=0
-        NULLIFY(FIELD%VARIABLES(variable_idx)%PARAMETER_SETS%PARAMETER_SETS)
-        ALLOCATE(FIELD%VARIABLES(variable_idx)%PARAMETER_SETS%SET_TYPE(FIELD_NUMBER_OF_SET_TYPES),STAT=err)
+      DO variable_idx=1,FIELD%numberOfVariables        
+        FIELD%variables(variable_idx)%parameterSets%fieldVariable=>FIELD%variables(variable_idx)
+        FIELD%variables(variable_idx)%parameterSets%numberOfParameterSets=0
+        NULLIFY(FIELD%variables(variable_idx)%parameterSets%parameterSets)
+        ALLOCATE(FIELD%variables(variable_idx)%parameterSets%setType(FIELD_NUMBER_OF_SET_TYPES),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate field parameter sets set types.",err,error,*999)
         DO parameter_set_idx=1,FIELD_NUMBER_OF_SET_TYPES
-          NULLIFY(FIELD%VARIABLES(variable_idx)%PARAMETER_SETS%SET_TYPE(parameter_set_idx)%PTR)
+          NULLIFY(FIELD%variables(variable_idx)%parameterSets%setType(parameter_set_idx)%ptr)
         ENDDO !parameter_set_idx
         !Create a field values parameter set
-        CALL FIELD_PARAMETER_SET_CREATE(FIELD,FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
+        CALL FIELD_PARAMETER_SET_CREATE(FIELD,FIELD%variables(variable_idx)%variableType,FIELD_VALUES_SET_TYPE,err,error,*999)
       ENDDO !variable_idx
     ELSE
       CALL FlagError("Field is not associated.",err,error,*998)
@@ -17447,8 +17448,8 @@ CONTAINS
     EXITS("FIELD_PARAMETER_SETS_INITIALISE")
     RETURN
 999 DO variable_idx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-      IF(ASSOCIATED(FIELD%VARIABLE_TYPE_MAP(variable_idx)%PTR)) &
-        & CALL FIELD_PARAMETER_SETS_FINALISE(FIELD%VARIABLE_TYPE_MAP(variable_idx)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
+      IF(ASSOCIATED(FIELD%variableTypeMap(variable_idx)%ptr)) &
+        & CALL FIELD_PARAMETER_SETS_FINALISE(FIELD%variableTypeMap(variable_idx)%ptr,DUMMY_ERR,DUMMY_ERROR,*998)
     ENDDO !variable_idx
 998 ERRORSEXITS("FIELD_PARAMETER_SETS_INITIALISE",err,error)
     RETURN 1
@@ -17459,11 +17460,11 @@ CONTAINS
   !
 
   !>Finalises the scaling for a field scaling index and deallocates all memory.
-  SUBROUTINE FIELD_SCALING_FINALISE(FIELD,SCALING_INDEX,err,error,*)
+  SUBROUTINE FIELD_SCALING_FINALISE(FIELD,scalingIndex,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to finalise the scalings for
-    INTEGER(INTG), INTENT(IN) :: SCALING_INDEX !<The scaling index to finalise
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to finalise the scalings for
+    INTEGER(INTG), INTENT(IN) :: scalingIndex !<The scaling index to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -17472,7 +17473,7 @@ CONTAINS
     ENTERS("FIELD_SCALING_FINALISE",err,error,*999)
 
     NULLIFY(scaleFactors)
-    CALL Field_ScaleFactorsVectorGet(field,SCALING_INDEX,scaleFactors,err,error,*999)
+    CALL Field_ScaleFactorsVectorGet(field,scalingIndex,scaleFactors,err,error,*999)
     CALL DistributedVector_Destroy(scaleFactors,err,error,*999)
 
     EXITS("FIELD_SCALING_FINALISE")
@@ -17487,11 +17488,11 @@ CONTAINS
   !
 
   !>Initialises the scalings for a field scaling index corresponding to a mesh component index.
-  SUBROUTINE FIELD_SCALING_INITIALISE(FIELD,SCALING_INDEX,meshComponentNumber,err,error,*)
+  SUBROUTINE FIELD_SCALING_INITIALISE(FIELD,scalingIndex,meshComponentNumber,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the scaling for
-    INTEGER(INTG), INTENT(IN) :: SCALING_INDEX !<The scaling index to initialise
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the scaling for
+    INTEGER(INTG), INTENT(IN) :: scalingIndex !<The scaling index to initialise
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to initialise for the scaling
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -17501,50 +17502,50 @@ CONTAINS
     ENTERS("FIELD_SCALING_INITIALISE",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(SCALING_INDEX>0.AND.SCALING_INDEX<=FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES) THEN
+      IF(scalingIndex>0.AND.scalingIndex<=FIELD%SCALINGS%numberOfScalingIndices) THEN
         IF(meshComponentNumber>0.AND.meshComponentNumber<=FIELD%DECOMPOSITION%MESH%numberOfComponents) THEN
-          FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%meshComponentNumber=meshComponentNumber
-          FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%maxNumberOfElementParameters=FIELD%DECOMPOSITION% &
-            & DOMAIN(meshComponentNumber)%PTR%TOPOLOGY%ELEMENTS%maximumNumberOfElementParameters
-          FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%maximumNumberOfDerivatives=FIELD%DECOMPOSITION% &
-            & DOMAIN(meshComponentNumber)%PTR%TOPOLOGY%NODES%maximumNumberOfDerivatives
-          NULLIFY(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS)
-          SELECT CASE(FIELD%SCALINGS%SCALING_TYPE)
+          FIELD%SCALINGS%SCALINGS(scalingIndex)%meshComponentNumber=meshComponentNumber
+          FIELD%SCALINGS%SCALINGS(scalingIndex)%maxNumberOfElementParameters=FIELD%DECOMPOSITION% &
+            & DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%ELEMENTS%maximumNumberOfElementParameters
+          FIELD%SCALINGS%SCALINGS(scalingIndex)%maximumNumberOfDerivatives=FIELD%DECOMPOSITION% &
+            & DOMAIN(meshComponentNumber)%ptr%TOPOLOGY%NODES%maximumNumberOfDerivatives
+          NULLIFY(FIELD%SCALINGS%SCALINGS(scalingIndex)%scaleFactors)
+          SELECT CASE(FIELD%SCALINGS%scalingType)
           CASE(FIELD_NO_SCALING)
             !Do nothing
           CASE(FIELD_UNIT_SCALING,FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-            !ALLOCATE(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)% &
-            !  & maximumNumberOfDerivatives,FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%PTR%TOPOLOGY% &
+            !ALLOCATE(FIELD%SCALINGS%SCALINGS(scalingIndex)%scaleFactors(FIELD%SCALINGS%SCALINGS(scalingIndex)% &
+            !  & maximumNumberOfDerivatives,FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%TOPOLOGY% &
             !  & NODES%totalNumberOfNodes),STAT=err)
             !IF(err/=0) CALL FlagError("Could not allocate scale factors",err,error,*999)
-            !FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS=1.0_DP
-            CALL DistributedVector_CreateStart(FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%PTR%MAPPINGS%DOFS, &
-              & FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,err,error,*999)
-            CALL DistributedVector_DataTypeSet(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS, &
+            !FIELD%SCALINGS%SCALINGS(scalingIndex)%scaleFactors=1.0_DP
+            CALL DistributedVector_CreateStart(FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr%MAPPINGS%DOFS, &
+              & FIELD%SCALINGS%SCALINGS(scalingIndex)%scaleFactors,err,error,*999)
+            CALL DistributedVector_DataTypeSet(FIELD%SCALINGS%SCALINGS(scalingIndex)%scaleFactors, &
               & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
-            CALL DistributedVector_CreateFinish(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,err,error,*999)
+            CALL DistributedVector_CreateFinish(FIELD%SCALINGS%SCALINGS(scalingIndex)%scaleFactors,err,error,*999)
             IF(FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
               !Initialise the scalings to 1.0 for a geometric field. Other field types will be setup in FIELD_SCALINGS_CALCULATE
-              CALL DistributedVector_AllValuesSet(FIELD%SCALINGS%SCALINGS(SCALING_INDEX)%SCALE_FACTORS,1.0_DP,err,error,*999)
+              CALL DistributedVector_AllValuesSet(FIELD%SCALINGS%SCALINGS(scalingIndex)%scaleFactors,1.0_DP,err,error,*999)
             ENDIF
           CASE(FIELD_ARC_LENGTH_SCALING)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            localError="The scaling type of "//TRIM(NumberToVString(FIELD%SCALINGS%SCALING_TYPE,"*",err,error))// &
+            localError="The scaling type of "//TRIM(NumberToVString(FIELD%SCALINGS%scalingType,"*",err,error))// &
               & " is invalid for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           END SELECT
         ELSE
-          localError="The mesh component number of "//TRIM(NumberToVString(SCALING_INDEX,"*",err,error))// &
+          localError="The mesh component number of "//TRIM(NumberToVString(scalingIndex,"*",err,error))// &
             & " is invalid for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
             & " which is associated with a mesh which has "//TRIM(NumberToVString(FIELD%DECOMPOSITION% &
             & MESH%numberOfComponents,"*",err,error))//" mesh components."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
-        localError="The scaling index of "//TRIM(NumberToVString(SCALING_INDEX,"*",err,error))// &
+        localError="The scaling index of "//TRIM(NumberToVString(scalingIndex,"*",err,error))// &
           & " is invalid for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
-          & " which has "//TRIM(NumberToVString(FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES,"*",err,error))// &
+          & " which has "//TRIM(NumberToVString(FIELD%SCALINGS%numberOfScalingIndices,"*",err,error))// &
           & " scaling indices."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -17566,7 +17567,7 @@ CONTAINS
   SUBROUTINE FIELD_SCALINGS_CALCULATE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to calculate the scalings for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to calculate the scalings for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -17579,9 +17580,9 @@ CONTAINS
     TYPE(DomainType), POINTER :: DOMAIN
     TYPE(DomainLinesType), POINTER :: DOMAIN_LINES
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD
-    TYPE(FIELD_SCALING_TYPE), POINTER :: FIELD_SCALING
-    TYPE(FIELD_SCALINGS_TYPE), POINTER :: FIELD_SCALINGS
+    TYPE(FieldType), POINTER :: GEOMETRIC_FIELD
+    TYPE(FieldScalingType), POINTER :: FIELD_SCALING
+    TYPE(FieldScalingsType), POINTER :: FIELD_SCALINGS
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_SCALINGS_CALCULATE",err,error,*999)
@@ -17589,44 +17590,44 @@ CONTAINS
     IF(ASSOCIATED(FIELD)) THEN
       FIELD_SCALINGS=>FIELD%SCALINGS
       IF(ASSOCIATED(FIELD_SCALINGS)) THEN
-        GEOMETRIC_FIELD=>FIELD%GEOMETRIC_FIELD
+        GEOMETRIC_FIELD=>FIELD%geometricField
         IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-          SELECT CASE(FIELD_SCALINGS%SCALING_TYPE)
+          SELECT CASE(FIELD_SCALINGS%scalingType)
           CASE(FIELD_NO_SCALING)
             !Do nothing
             NULLIFY(DOMAIN)
           CASE(FIELD_UNIT_SCALING)
-            DO scaling_idx=1,FIELD_SCALINGS%NUMBER_OF_SCALING_INDICES
+            DO scaling_idx=1,FIELD_SCALINGS%numberOfScalingIndices
               FIELD_SCALING=>FIELD_SCALINGS%SCALINGS(scaling_idx)
               meshComponentNumber=FIELD_SCALING%meshComponentNumber
-              DOMAIN=>FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%PTR
-              CALL DistributedVector_AllValuesSet(FIELD_SCALING%SCALE_FACTORS,1.0_DP,err,error,*999)
-              CALL DistributedVector_UpdateStart(FIELD_SCALING%SCALE_FACTORS,err,error,*999)
-              CALL DistributedVector_UpdateFinish(FIELD_SCALING%SCALE_FACTORS,err,error,*999)
+              DOMAIN=>FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr
+              CALL DistributedVector_AllValuesSet(FIELD_SCALING%scaleFactors,1.0_DP,err,error,*999)
+              CALL DistributedVector_UpdateStart(FIELD_SCALING%scaleFactors,err,error,*999)
+              CALL DistributedVector_UpdateFinish(FIELD_SCALING%scaleFactors,err,error,*999)
             ENDDO !scaling_idx
           CASE(FIELD_ARC_LENGTH_SCALING)
             CALL FlagError("Not implemented.",err,error,*999)
 
           CASE(FIELD_ARITHMETIC_MEAN_SCALING,FIELD_GEOMETRIC_MEAN_SCALING,FIELD_HARMONIC_MEAN_SCALING)
-            DO scaling_idx=1,FIELD_SCALINGS%NUMBER_OF_SCALING_INDICES
+            DO scaling_idx=1,FIELD_SCALINGS%numberOfScalingIndices
               FIELD_SCALING=>FIELD_SCALINGS%SCALINGS(scaling_idx)
               meshComponentNumber=FIELD_SCALING%meshComponentNumber
-              DOMAIN=>FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%PTR
+              DOMAIN=>FIELD%DECOMPOSITION%DOMAIN(meshComponentNumber)%ptr
               DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
               IF(FIELD%DECOMPOSITION%calculateLines) THEN
                 DOMAIN_LINES=>DOMAIN%TOPOLOGY%LINES
                 DECOMPOSITION_LINES=>FIELD%DECOMPOSITION%TOPOLOGY%LINES
               ENDIF
               NULLIFY(SCALE_FACTORS)
-              CALL DistributedVector_DataGet(FIELD_SCALING%SCALE_FACTORS,SCALE_FACTORS,err,error,*999)
+              CALL DistributedVector_DataGet(FIELD_SCALING%scaleFactors,SCALE_FACTORS,err,error,*999)
               DO node_idx=1,DOMAIN_NODES%numberOfNodes
-                DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                  partial_derivative_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
+                DO derivative_idx=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+                  partial_derivative_idx=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%partialDerivativeIndex
                   SELECT CASE(partial_derivative_idx)
                   CASE(NO_PART_DERIV)
-                    DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-                      dof_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
-                      CALL DistributedVector_ValuesSet(FIELD_SCALING%SCALE_FACTORS,dof_idx,1.0_DP,err,error,*999)
+                    DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+                      dof_idx=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
+                      CALL DistributedVector_ValuesSet(FIELD_SCALING%scaleFactors,dof_idx,1.0_DP,err,error,*999)
                     ENDDO
                   CASE(PART_DERIV_S1,PART_DERIV_S2,PART_DERIV_S3)
                     IF(FIELD%DECOMPOSITION%calculateLines) THEN
@@ -17641,11 +17642,11 @@ CONTAINS
                       LENGTH2 = 0.0_DP
                       NUMBER_OF_LINE_VERSIONS1 = 0.0_DP
                       NUMBER_OF_LINE_VERSIONS2 = 0.0_DP
-                      DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+                      DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
                         !Find a line of the correct Xi direction going through this node
                         FOUND=.FALSE.
-                        DO node_line_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfNodeLines
-                          local_node_line_idx=DOMAIN_NODES%NODES(node_idx)%nodeLines(node_line_idx)
+                        DO node_line_idx=1,DOMAIN_NODES%nodes(node_idx)%numberOfNodeLines
+                          local_node_line_idx=DOMAIN_NODES%nodes(node_idx)%nodeLines(node_line_idx)
                           IF(DECOMPOSITION_LINES%LINES(local_node_line_idx)%xiDirection==xi_direction) THEN
                             FOUND=.TRUE.
                             EXIT
@@ -17658,10 +17659,10 @@ CONTAINS
                             adjacent_local_node_line_idx=DECOMPOSITION_LINES%LINES(local_node_line_idx)%adjacentLines(1)
                           ENDIF
                           !Average line lengths for the different versions (division by the number of lines is done after all the line lengths are added together)
-                          LENGTH1=LENGTH1+GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%LENGTHS(local_node_line_idx)
+                          LENGTH1=LENGTH1+GEOMETRIC_FIELD%geometricFieldParameters%lengths(local_node_line_idx)
                           NUMBER_OF_LINE_VERSIONS1=NUMBER_OF_LINE_VERSIONS1+1
                           IF(adjacent_local_node_line_idx/=0) THEN !Adjacent node and therefore lines exist
-                            LENGTH2=LENGTH2+GEOMETRIC_FIELD%GEOMETRIC_FIELD_PARAMETERS%LENGTHS(adjacent_local_node_line_idx)
+                            LENGTH2=LENGTH2+GEOMETRIC_FIELD%geometricFieldParameters%lengths(adjacent_local_node_line_idx)
                             NUMBER_OF_LINE_VERSIONS2=NUMBER_OF_LINE_VERSIONS2+1
                           ENDIF
                         ELSE
@@ -17676,7 +17677,7 @@ CONTAINS
                         MEAN_LENGTH=LENGTH1
                       ELSE !Adjacent node and therefore lines exist
                         LENGTH2 = LENGTH2/NUMBER_OF_LINE_VERSIONS2
-                        SELECT CASE(FIELD_SCALINGS%SCALING_TYPE)
+                        SELECT CASE(FIELD_SCALINGS%scalingType)
                         CASE(FIELD_ARITHMETIC_MEAN_SCALING)
                           MEAN_LENGTH=(LENGTH1+LENGTH2)/2.0_DP
                         CASE(FIELD_GEOMETRIC_MEAN_SCALING)
@@ -17690,18 +17691,18 @@ CONTAINS
                           ENDIF
                         CASE DEFAULT
                           localError="The scaling type of "// &
-                            & TRIM(NumberToVString(FIELD_SCALINGS%SCALING_TYPE,"*",err,error))//" is invalid."
+                            & TRIM(NumberToVString(FIELD_SCALINGS%scalingType,"*",err,error))//" is invalid."
                           CALL FlagError(localError,err,error,*999)
                         END SELECT
                       ENDIF
-                      DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-                        dof_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
-                        CALL DistributedVector_ValuesSet(FIELD_SCALING%SCALE_FACTORS,dof_idx,MEAN_LENGTH,err,error,*999)
+                      DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+                        dof_idx=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
+                        CALL DistributedVector_ValuesSet(FIELD_SCALING%scaleFactors,dof_idx,MEAN_LENGTH,err,error,*999)
                       ENDDO !version_idx
                     ENDIF
                   CASE(PART_DERIV_S1_S2,PART_DERIV_S1_S3,PART_DERIV_S2_S3,PART_DERIV_S1_S2_S3)
-                    DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-                      dof_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
+                    DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+                      dof_idx=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
                       IF(partial_derivative_idx==PART_DERIV_S1_S2) THEN
                         ni1=1
                         nu1=PART_DERIV_S1
@@ -17726,9 +17727,9 @@ CONTAINS
 !!TODO: Shouldn't have to search for the derivative_idx directions. Store them somewhere.
                       !Find the first direction derivative_idx
                       FOUND=.FALSE.
-                      DO nk2=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                        IF(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(nk2)%partialDerivativeIndex==nu1) THEN
-                          ny1=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(nk2)%dofIndex(version_idx)
+                      DO nk2=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+                        IF(DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(nk2)%partialDerivativeIndex==nu1) THEN
+                          ny1=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(nk2)%dofIndex(version_idx)
                           FOUND=.TRUE.
                           EXIT
                         ENDIF
@@ -17736,9 +17737,9 @@ CONTAINS
                       IF(FOUND) THEN
                         !Find the second direction derivative_idx
                         FOUND=.FALSE.
-                        DO nk2=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                          IF(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(nk2)%partialDerivativeIndex==nu2) THEN
-                            ny2=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(nk2)%dofIndex(version_idx)
+                        DO nk2=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+                          IF(DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(nk2)%partialDerivativeIndex==nu2) THEN
+                            ny2=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(nk2)%dofIndex(version_idx)
                             FOUND=.TRUE.
                             EXIT
                           ENDIF
@@ -17747,15 +17748,15 @@ CONTAINS
                           IF(partial_derivative_idx==PART_DERIV_S1_S2_S3) THEN
                             !Find the third direction derivative_idx
                             FOUND=.FALSE.
-                            DO nk2=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
-                              IF(DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(nk2)%partialDerivativeIndex==PART_DERIV_S3) THEN
-                                ny3=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(nk2)%dofIndex(version_idx)
+                            DO nk2=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
+                              IF(DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(nk2)%partialDerivativeIndex==PART_DERIV_S3) THEN
+                                ny3=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(nk2)%dofIndex(version_idx)
                                 FOUND=.TRUE.
                                 EXIT
                               ENDIF
                             ENDDO !nk2
                             IF(FOUND) THEN
-                              CALL DistributedVector_ValuesSet(FIELD_SCALING%SCALE_FACTORS,dof_idx, &
+                              CALL DistributedVector_ValuesSet(FIELD_SCALING%scaleFactors,dof_idx, &
                                 SCALE_FACTORS(ny1)*SCALE_FACTORS(ny2)*SCALE_FACTORS(ny3),err,error,*999)
                             ELSE
                               localError="Could not find the first partial derivative in the s3 direction index for "//&
@@ -17763,7 +17764,7 @@ CONTAINS
                               CALL FlagError(localError,err,error,*999)
                             ENDIF
                           ELSE
-                            CALL DistributedVector_ValuesSet(FIELD_SCALING%SCALE_FACTORS,dof_idx,SCALE_FACTORS(ny1)* &
+                            CALL DistributedVector_ValuesSet(FIELD_SCALING%scaleFactors,dof_idx,SCALE_FACTORS(ny1)* &
                               & SCALE_FACTORS(ny2),err,error,*999)
                           ENDIF
                         ELSE
@@ -17786,11 +17787,11 @@ CONTAINS
                   END SELECT
                 ENDDO !derivative_idx
               ENDDO !node_idx
-              CALL DistributedVector_UpdateStart(FIELD_SCALING%SCALE_FACTORS,err,error,*999)
-              CALL DistributedVector_UpdateFinish(FIELD_SCALING%SCALE_FACTORS,err,error,*999)
+              CALL DistributedVector_UpdateStart(FIELD_SCALING%scaleFactors,err,error,*999)
+              CALL DistributedVector_UpdateFinish(FIELD_SCALING%scaleFactors,err,error,*999)
             ENDDO !scaling_idx
           CASE DEFAULT
-            localError="The scaling type of "//TRIM(NumberToVString(FIELD_SCALINGS%SCALING_TYPE,"*",err,error))// &
+            localError="The scaling type of "//TRIM(NumberToVString(FIELD_SCALINGS%scalingType,"*",err,error))// &
               & " is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
@@ -17805,22 +17806,22 @@ CONTAINS
     ENDIF
 
     IF(DIAGNOSTICS1) THEN
-      IF(FIELD_SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING) THEN
+      IF(FIELD_SCALINGS%scalingType /= FIELD_NO_SCALING) THEN
         IF(ASSOCIATED(DOMAIN))THEN
           DOMAIN_NODES=>DOMAIN%TOPOLOGY%NODES
           CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Scale Factors for nodes in the domain:",err,error,*999)
           DO node_idx=1,DOMAIN_NODES%numberOfNodes
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Node : ",node_idx,err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Derivatives = ", &
-              & DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives,err,error,*999)
-            DO derivative_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
+              & DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives,err,error,*999)
+            DO derivative_idx=1,DOMAIN_NODES%nodes(node_idx)%numberOfDerivatives
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative : ",derivative_idx,err,error,*999)
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of Versions = ", &
-                & DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions,err,error,*999)
-              DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
+                & DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions,err,error,*999)
+              DO version_idx=1,DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Version : ",version_idx,err,error,*999)
-                dof_idx=DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
-                CALL DistributedVector_ValuesGet(FIELD_SCALING%SCALE_FACTORS,dof_idx,VALUE,err,error,*999)
+                dof_idx=DOMAIN_NODES%nodes(node_idx)%DERIVATIVES(derivative_idx)%dofIndex(version_idx)
+                CALL DistributedVector_ValuesGet(FIELD_SCALING%scaleFactors,dof_idx,VALUE,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Scale Factor : ",VALUE,err,error,*999)
               ENDDO !version_idx
             ENDDO !derivative_idx
@@ -17843,7 +17844,7 @@ CONTAINS
   SUBROUTINE FIELD_SCALINGS_FINALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to finalise the scalings for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to finalise the scalings for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -17852,7 +17853,7 @@ CONTAINS
     ENTERS("FIELD_SCALINGS_FINALISE",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      DO scaling_idx=1,FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES
+      DO scaling_idx=1,FIELD%SCALINGS%numberOfScalingIndices
         CALL FIELD_SCALING_FINALISE(FIELD,scaling_idx,err,error,*999)
       ENDDO !scaling_idx
       IF(ALLOCATED(FIELD%SCALINGS%SCALINGS)) DEALLOCATE(FIELD%SCALINGS%SCALINGS)
@@ -17874,7 +17875,7 @@ CONTAINS
   SUBROUTINE FIELD_SCALINGS_INITIALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the scalings for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the scalings for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -17893,9 +17894,9 @@ CONTAINS
       CALL LIST_DATA_TYPE_SET(MESH_COMPONENTS_LIST,LIST_INTG_TYPE,err,error,*999)
       CALL LIST_INITIAL_SIZE_SET(MESH_COMPONENTS_LIST,FIELD%DECOMPOSITION%MESH%numberOfComponents,err,error,*999)
       CALL LIST_CREATE_FINISH(MESH_COMPONENTS_LIST,err,error,*999)
-      DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
-        DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-          CALL LIST_ITEM_ADD(MESH_COMPONENTS_LIST,FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)%meshComponentNumber, &
+      DO variable_idx=1,FIELD%numberOfVariables
+        DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+          CALL LIST_ITEM_ADD(MESH_COMPONENTS_LIST,FIELD%variables(variable_idx)%components(component_idx)%meshComponentNumber, &
             & err,error,*999)
         ENDDO !component_idx
       ENDDO !variable_idx
@@ -17908,17 +17909,17 @@ CONTAINS
         MESH_COMPONENTS_MAP(MESH_COMPONENTS(component_idx))=component_idx
       ENDDO !component_idx
       !Allocate the scaling indices and initialise them
-      FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES=NUMBER_OF_MESH_COMPONENTS
-      ALLOCATE(FIELD%SCALINGS%SCALINGS(FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES),STAT=err)
+      FIELD%SCALINGS%numberOfScalingIndices=NUMBER_OF_MESH_COMPONENTS
+      ALLOCATE(FIELD%SCALINGS%SCALINGS(FIELD%SCALINGS%numberOfScalingIndices),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate field scalings.",err,error,*999)
-      DO scaling_idx=1,FIELD%SCALINGS%NUMBER_OF_SCALING_INDICES
+      DO scaling_idx=1,FIELD%SCALINGS%numberOfScalingIndices
         CALL FIELD_SCALING_INITIALISE(FIELD,scaling_idx,MESH_COMPONENTS(scaling_idx),err,error,*999)
       ENDDO !scaling_idx
       !Set the scaling index for all the field variable components
-      DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
-        DO component_idx=1,FIELD%VARIABLES(variable_idx)%numberOfComponents
-          FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)%SCALING_INDEX= &
-            & MESH_COMPONENTS_MAP(FIELD%VARIABLES(variable_idx)%COMPONENTS(component_idx)%meshComponentNumber)
+      DO variable_idx=1,FIELD%numberOfVariables
+        DO component_idx=1,FIELD%variables(variable_idx)%numberOfComponents
+          FIELD%variables(variable_idx)%components(component_idx)%scalingIndex= &
+            & MESH_COMPONENTS_MAP(FIELD%variables(variable_idx)%components(component_idx)%meshComponentNumber)
         ENDDO !component_idx
       ENDDO !variable_idx
       DEALLOCATE(MESH_COMPONENTS)
@@ -17941,11 +17942,11 @@ CONTAINS
   !
 
   !>Checks the scaling type for a field.
-  SUBROUTINE FIELD_SCALING_TYPE_CHECK(FIELD,SCALING_TYPE,err,error,*)
+  SUBROUTINE FIELD_SCALING_TYPE_CHECK(FIELD,scalingType,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the scaling type for
-    INTEGER(INTG), INTENT(IN) :: SCALING_TYPE !<The scaling type for the specified field to check \see FIELD_ROUTINES_ScalingTypes,FIELD_ROUTINES
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the scaling type for
+    INTEGER(INTG), INTENT(IN) :: scalingType !<The scaling type for the specified field to check \see FIELD_ROUTINES_ScalingTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -17954,60 +17955,60 @@ CONTAINS
     ENTERS("FIELD_SCALING_TYPE_CHECK",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        SELECT CASE(SCALING_TYPE)
+      IF(FIELD%fieldFinished) THEN
+        SELECT CASE(scalingType)
         CASE(FIELD_NO_SCALING)
-          IF(FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
+          IF(FIELD%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
             localError="Invalid scaling type. The scaling type for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-              & TRIM(NumberToVString(FIELD%SCALINGS%SCALING_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%SCALINGS%scalingType,"*",err,error))// &
               & " which is not no scaling."
             CALL FlagError(localError,err,error,*999)
           ENDIF
         CASE(FIELD_UNIT_SCALING)
-          IF(FIELD%SCALINGS%SCALING_TYPE/=FIELD_UNIT_SCALING) THEN
+          IF(FIELD%SCALINGS%scalingType/=FIELD_UNIT_SCALING) THEN
             localError="Invalid scaling type. The scaling type for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-              & TRIM(NumberToVString(FIELD%SCALINGS%SCALING_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%SCALINGS%scalingType,"*",err,error))// &
               & " which is not unit scaling."
             CALL FlagError(localError,err,error,*999)
           ENDIF
         CASE(FIELD_ARC_LENGTH_SCALING)
-          IF(FIELD%SCALINGS%SCALING_TYPE/=FIELD_ARC_LENGTH_SCALING) THEN
+          IF(FIELD%SCALINGS%scalingType/=FIELD_ARC_LENGTH_SCALING) THEN
             localError="Invalid scaling type. The scaling type for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-              & TRIM(NumberToVString(FIELD%SCALINGS%SCALING_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%SCALINGS%scalingType,"*",err,error))// &
               & " which is not arc length scaling."
             CALL FlagError(localError,err,error,*999)
           ENDIF
         CASE(FIELD_ARITHMETIC_MEAN_SCALING)
-          IF(FIELD%SCALINGS%SCALING_TYPE/=FIELD_ARITHMETIC_MEAN_SCALING) THEN
+          IF(FIELD%SCALINGS%scalingType/=FIELD_ARITHMETIC_MEAN_SCALING) THEN
             localError="Invalid scaling type. The scaling type for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-              & TRIM(NumberToVString(FIELD%SCALINGS%SCALING_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%SCALINGS%scalingType,"*",err,error))// &
               
               & " which is not arithmetic mean scaling."
             CALL FlagError(localError,err,error,*999)
           ENDIF
         CASE(FIELD_GEOMETRIC_MEAN_SCALING)
-          IF(FIELD%SCALINGS%SCALING_TYPE/=FIELD_GEOMETRIC_MEAN_SCALING) THEN
+          IF(FIELD%SCALINGS%scalingType/=FIELD_GEOMETRIC_MEAN_SCALING) THEN
             localError="Invalid scaling type. The scaling type for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-              & TRIM(NumberToVString(FIELD%SCALINGS%SCALING_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%SCALINGS%scalingType,"*",err,error))// &
               
               & " which is not geometric mean scaling."
             CALL FlagError(localError,err,error,*999)
           ENDIF
         CASE(FIELD_HARMONIC_MEAN_SCALING)
-          IF(FIELD%SCALINGS%SCALING_TYPE/=FIELD_HARMONIC_MEAN_SCALING) THEN
+          IF(FIELD%SCALINGS%scalingType/=FIELD_HARMONIC_MEAN_SCALING) THEN
             localError="Invalid scaling type. The scaling type for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-              & TRIM(NumberToVString(FIELD%SCALINGS%SCALING_TYPE,"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%SCALINGS%scalingType,"*",err,error))// &
               & " which is not harmonic mean scaling."
             CALL FlagError(localError,err,error,*999)
           ENDIF
         CASE DEFAULT
-          localError="The specified scaling type of "//TRIM(NumberToVString(SCALING_TYPE,"*",err,error))// &
+          localError="The specified scaling type of "//TRIM(NumberToVString(scalingType,"*",err,error))// &
             & " is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
@@ -18031,11 +18032,11 @@ CONTAINS
   !
 
   !>Gets the scaling type for a field. \see OpenCMISS::Iron::cmfe_Field_ScalingTypeGet
-  SUBROUTINE FIELD_SCALING_TYPE_GET(FIELD,SCALING_TYPE,err,error,*)
+  SUBROUTINE FIELD_SCALING_TYPE_GET(FIELD,scalingType,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the scaling type for
-    INTEGER(INTG), INTENT(OUT) :: SCALING_TYPE !<On return, the scaling type for the specified field to get \see FIELD_ROUTINES_ScalingTypes,FIELD_ROUTINES
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the scaling type for
+    INTEGER(INTG), INTENT(OUT) :: scalingType !<On return, the scaling type for the specified field to get \see FIELD_ROUTINES_ScalingTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -18044,8 +18045,8 @@ CONTAINS
     ENTERS("FIELD_SCALING_TYPE_GET",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        SCALING_TYPE=FIELD%SCALINGS%SCALING_TYPE
+      IF(FIELD%fieldFinished) THEN
+        scalingType=FIELD%SCALINGS%scalingType
       ELSE
         localError="Field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
           & " has not been finished."
@@ -18066,11 +18067,11 @@ CONTAINS
   !
 
   !>Sets/changes the scaling type for a field. \see OpenCMISS::Iron::cmfe_FieldScalingTypeSet
-  SUBROUTINE FIELD_SCALING_TYPE_SET(FIELD,SCALING_TYPE,err,error,*)
+  SUBROUTINE FIELD_SCALING_TYPE_SET(FIELD,scalingType,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the scaling type for
-    INTEGER(INTG), INTENT(IN) :: SCALING_TYPE !<The scaling type to set \see FIELD_ROUTINES_ScalingTypes,FIELD_ROUTINES
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the scaling type for
+    INTEGER(INTG), INTENT(IN) :: scalingType !<The scaling type to set \see FIELD_ROUTINES_ScalingTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -18079,32 +18080,32 @@ CONTAINS
     ENTERS("FIELD_SCALING_TYPE_SET",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         localError="Field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
           & " has been finished."
         CALL FlagError(localError,err,error,*999)
       ELSE
-        IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-          IF(FIELD%CREATE_VALUES_CACHE%SCALING_TYPE_LOCKED) THEN
+        IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+          IF(FIELD%createValuesCache%scalingTypeLocked) THEN
             localError="The field scaling type has been locked for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
             CALL FlagError(localError,err,error,*999)
           ELSE
-            SELECT CASE(SCALING_TYPE)
+            SELECT CASE(scalingType)
             CASE(FIELD_NO_SCALING)
-              FIELD%SCALINGS%SCALING_TYPE=FIELD_NO_SCALING
+              FIELD%SCALINGS%scalingType=FIELD_NO_SCALING
             CASE(FIELD_UNIT_SCALING)
-              FIELD%SCALINGS%SCALING_TYPE=FIELD_UNIT_SCALING
+              FIELD%SCALINGS%scalingType=FIELD_UNIT_SCALING
             CASE(FIELD_ARC_LENGTH_SCALING)
-              FIELD%SCALINGS%SCALING_TYPE=FIELD_ARC_LENGTH_SCALING
+              FIELD%SCALINGS%scalingType=FIELD_ARC_LENGTH_SCALING
             CASE(FIELD_ARITHMETIC_MEAN_SCALING)
-              FIELD%SCALINGS%SCALING_TYPE=FIELD_ARITHMETIC_MEAN_SCALING
+              FIELD%SCALINGS%scalingType=FIELD_ARITHMETIC_MEAN_SCALING
             CASE(FIELD_GEOMETRIC_MEAN_SCALING)
-              FIELD%SCALINGS%SCALING_TYPE=FIELD_GEOMETRIC_MEAN_SCALING
+              FIELD%SCALINGS%scalingType=FIELD_GEOMETRIC_MEAN_SCALING
             CASE(FIELD_HARMONIC_MEAN_SCALING)
-              FIELD%SCALINGS%SCALING_TYPE=FIELD_HARMONIC_MEAN_SCALING
+              FIELD%SCALINGS%scalingType=FIELD_HARMONIC_MEAN_SCALING
             CASE DEFAULT
-              localError="The specified scaling type of "//TRIM(NumberToVString(SCALING_TYPE,"*",err,error))// &
+              localError="The specified scaling type of "//TRIM(NumberToVString(scalingType,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
@@ -18130,11 +18131,11 @@ CONTAINS
   !
 
   !>Sets/changes the scaling type for a field and locks it so that no further changes can be made.
-  SUBROUTINE FIELD_SCALING_TYPE_SET_AND_LOCK(FIELD,SCALING_TYPE,err,error,*)
+  SUBROUTINE FIELD_SCALING_TYPE_SET_AND_LOCK(FIELD,scalingType,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the scaling type for
-    INTEGER(INTG), INTENT(IN) :: SCALING_TYPE !<The scaling type to set \see FIELD_ROUTINES_ScalingTypes,FIELD_ROUTINES
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the scaling type for
+    INTEGER(INTG), INTENT(IN) :: scalingType !<The scaling type to set \see FIELD_ROUTINES_ScalingTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -18142,10 +18143,10 @@ CONTAINS
 
     ENTERS("FIELD_SCALING_TYPE_SET_AND_LOCK",err,error,*999)
 
-    CALL FIELD_SCALING_TYPE_SET(FIELD,SCALING_TYPE,err,error,*999)
+    CALL FIELD_SCALING_TYPE_SET(FIELD,scalingType,err,error,*999)
     IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-        FIELD%CREATE_VALUES_CACHE%SCALING_TYPE_LOCKED=.TRUE.
+      IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+        FIELD%createValuesCache%scalingTypeLocked=.TRUE.
       ELSE
         localError="Field create values cache is not associated for field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -18169,7 +18170,7 @@ CONTAINS
   SUBROUTINE FIELD_TYPE_CHECK(FIELD,TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the type for
     INTEGER(INTG), INTENT(IN) :: TYPE !<The field type to check \see FIELD_ROUTINES_FieldTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -18179,7 +18180,7 @@ CONTAINS
     ENTERS("FIELD_TYPE_CHECK",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         SELECT CASE(TYPE)
         CASE(FIELD_GEOMETRIC_TYPE)
           IF(FIELD%TYPE/=FIELD_GEOMETRIC_TYPE) THEN
@@ -18248,7 +18249,7 @@ CONTAINS
   SUBROUTINE FIELD_TYPE_GET(FIELD,TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the type for
     INTEGER(INTG), INTENT(OUT) :: TYPE !<On return, the field type for the specified field \see FIELD_ROUTINES_FieldTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -18258,7 +18259,7 @@ CONTAINS
     ENTERS("FIELD_TYPE_GET",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         TYPE=FIELD%TYPE
       ELSE
         localError="Field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
@@ -18283,7 +18284,7 @@ CONTAINS
   SUBROUTINE FIELD_TYPE_SET(FIELD,TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the type for
     INTEGER(INTG), INTENT(IN) :: TYPE !<The field type to set \see FIELD_ROUTINES_FieldTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -18293,13 +18294,13 @@ CONTAINS
     ENTERS("FIELD_TYPE_SET",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         localError="Field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
           & " has been finished."
         CALL FlagError(localError,err,error,*999)
       ELSE
-        IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-          IF(FIELD%CREATE_VALUES_CACHE%TYPE_LOCKED) THEN
+        IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+          IF(FIELD%createValuesCache%TYPE_LOCKED) THEN
             localError="The field type has been locked for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
             CALL FlagError(localError,err,error,*999)
@@ -18307,19 +18308,19 @@ CONTAINS
             SELECT CASE(TYPE)
             CASE(FIELD_GEOMETRIC_TYPE)
               FIELD%TYPE=FIELD_GEOMETRIC_TYPE
-              FIELD%GEOMETRIC_FIELD=>FIELD
+              FIELD%geometricField=>FIELD
             CASE(FIELD_FIBRE_TYPE)
               FIELD%TYPE=FIELD_FIBRE_TYPE
-              NULLIFY(FIELD%GEOMETRIC_FIELD)
+              NULLIFY(FIELD%geometricField)
             CASE(FIELD_GENERAL_TYPE)
               FIELD%TYPE=FIELD_GENERAL_TYPE
-              NULLIFY(FIELD%GEOMETRIC_FIELD)
+              NULLIFY(FIELD%geometricField)
             CASE(FIELD_MATERIAL_TYPE)
               FIELD%TYPE=FIELD_MATERIAL_TYPE
-              NULLIFY(FIELD%GEOMETRIC_FIELD)
+              NULLIFY(FIELD%geometricField)
             CASE(FIELD_GEOMETRIC_GENERAL_TYPE)
               FIELD%TYPE=FIELD_GEOMETRIC_GENERAL_TYPE
-              NULLIFY(FIELD%GEOMETRIC_FIELD)
+              NULLIFY(FIELD%geometricField)
             CASE DEFAULT
               localError="The specified field type of "//TRIM(NumberToVString(TYPE,"*",err,error))//" is invalid."
               CALL FlagError(localError,err,error,*999)
@@ -18349,7 +18350,7 @@ CONTAINS
   SUBROUTINE FIELD_TYPE_SET_AND_LOCK(FIELD,TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the type for
     INTEGER(INTG), INTENT(IN) :: TYPE !<The field type to set \see FIELD_ROUTINES_FieldTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -18360,8 +18361,8 @@ CONTAINS
 
     CALL FIELD_TYPE_SET(FIELD,TYPE,err,error,*999)
     IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-        FIELD%CREATE_VALUES_CACHE%TYPE_LOCKED=.TRUE.
+      IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+        FIELD%createValuesCache%TYPE_LOCKED=.TRUE.
       ELSE
         localError="Field create values cache is not associated for field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -18385,19 +18386,19 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_FINALISE(FIELD_VARIABLE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_TYPE) :: FIELD_VARIABLE !<The field variable to finalise
+    TYPE(FieldVariableType) :: FIELD_VARIABLE !<The field variable to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("FIELD_VARIABLE_FINALISE",err,error,*999)
 
-    FIELD_VARIABLE%VARIABLE_LABEL=""
+    FIELD_VARIABLE%variableLabel=""
     CALL FIELD_VARIABLE_COMPONENTS_FINALISE(FIELD_VARIABLE,err,error,*999)
-    IF(ASSOCIATED(FIELD_VARIABLE%DOMAIN_MAPPING)) THEN
-      CALL DOMAIN_MAPPINGS_MAPPING_FINALISE(FIELD_VARIABLE%DOMAIN_MAPPING,err,error,*999)
+    IF(ASSOCIATED(FIELD_VARIABLE%domainMapping)) THEN
+      CALL DOMAIN_MAPPINGS_MAPPING_FINALISE(FIELD_VARIABLE%domainMapping,err,error,*999)
     ENDIF
-    CALL FIELD_DOF_TO_PARAM_MAP_FINALISE(FIELD_VARIABLE%DOF_TO_PARAM_MAP,err,error,*999)
+    CALL FIELD_dofToParamMap_FINALISE(FIELD_VARIABLE%dofToParamMap,err,error,*999)
     CALL FIELD_PARAMETER_SETS_FINALISE(FIELD_VARIABLE,err,error,*999)
 
 
@@ -18412,56 +18413,56 @@ CONTAINS
   !
 
   !>Initialises a field variable.
-  SUBROUTINE FIELD_VARIABLE_INITIALISE(FIELD,VARIABLE_NUMBER,err,error,*)
+  SUBROUTINE FIELD_VARIABLE_INITIALISE(FIELD,variableNumber,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the variable for
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_NUMBER !<The variable number of the field to initialise
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the variable for
+    INTEGER(INTG), INTENT(IN) :: variableNumber !<The variable number of the field to initialise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,DUMMY_ERR,variable_type
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: DUMMY_ERROR,localError
 
     ENTERS("FIELD_VARIABLE_INITIALISE",err,error,*998)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-        IF(VARIABLE_NUMBER>=1.AND.VARIABLE_NUMBER<=FIELD%NUMBER_OF_VARIABLES) THEN
-          NULLIFY(FIELD%VARIABLES(VARIABLE_NUMBER)%FIELD)
-          NULLIFY(FIELD%VARIABLES(VARIABLE_NUMBER)%REGION)
-          NULLIFY(FIELD%VARIABLES(VARIABLE_NUMBER)%DOMAIN_MAPPING)
+      IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+        IF(variableNumber>=1.AND.variableNumber<=FIELD%numberOfVariables) THEN
+          NULLIFY(FIELD%variables(variableNumber)%FIELD)
+          NULLIFY(FIELD%variables(variableNumber)%REGION)
+          NULLIFY(FIELD%variables(variableNumber)%domainMapping)
 !!TODO this should be done via a field_parameter_sets_initialise call
-          NULLIFY(FIELD%VARIABLES(VARIABLE_NUMBER)%PARAMETER_SETS%SET_TYPE)
-          NULLIFY(FIELD%VARIABLES(VARIABLE_NUMBER)%PARAMETER_SETS%PARAMETER_SETS)
-          FIELD%VARIABLES(VARIABLE_NUMBER)%VARIABLE_NUMBER=VARIABLE_NUMBER
-          variable_type=FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES(VARIABLE_NUMBER)
+          NULLIFY(FIELD%variables(variableNumber)%parameterSets%setType)
+          NULLIFY(FIELD%variables(variableNumber)%parameterSets%parameterSets)
+          FIELD%variables(variableNumber)%variableNumber=variableNumber
+          variable_type=FIELD%createValuesCache%variableTypes(variableNumber)
           IF(variable_type>=1.AND.variable_type<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-            FIELD%VARIABLES(VARIABLE_NUMBER)%VARIABLE_TYPE=FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES(VARIABLE_NUMBER)
+            FIELD%variables(variableNumber)%variableType=FIELD%createValuesCache%variableTypes(variableNumber)
           ELSE
             localError="A field variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
-              & " for variable number "//TRIM(NumberToVString(VARIABLE_NUMBER,"*",err,error))// &
+              & " for variable number "//TRIM(NumberToVString(variableNumber,"*",err,error))// &
               & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
               & " is invalid. The number must be between 1 and "// &
               & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
             CALL FlagError(localError,err,error,*998)
           ENDIF
-          FIELD%VARIABLE_TYPE_MAP(FIELD%VARIABLES(VARIABLE_NUMBER)%VARIABLE_TYPE)%PTR=>FIELD%VARIABLES(VARIABLE_NUMBER)
-          FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(FIELD%VARIABLES(VARIABLE_NUMBER)%VARIABLE_TYPE)%PTR
-          FIELD_VARIABLE%VARIABLE_LABEL=""
-          FIELD_VARIABLE%VARIABLE_LABEL=FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_type)
+          FIELD%variableTypeMap(FIELD%variables(variableNumber)%variableType)%ptr=>FIELD%variables(variableNumber)
+          FIELD_VARIABLE=>FIELD%variableTypeMap(FIELD%variables(variableNumber)%variableType)%ptr
+          FIELD_VARIABLE%variableLabel=""
+          FIELD_VARIABLE%variableLabel=FIELD%createValuesCache%variableLabels(variable_type)
           FIELD_VARIABLE%FIELD=>FIELD
           FIELD_VARIABLE%REGION=>FIELD%REGION
-          FIELD_VARIABLE%DIMENSION=FIELD%CREATE_VALUES_CACHE%DIMENSION(variable_type)
-          FIELD_VARIABLE%DATA_TYPE=FIELD%CREATE_VALUES_CACHE%DATA_TYPES(variable_type)
-          FIELD_VARIABLE%DOF_ORDER_TYPE=FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES(variable_type)
-          IF(FIELD%CREATE_VALUES_CACHE%numberOfComponents(variable_type)>0) THEN
-            FIELD_VARIABLE%numberOfComponents=FIELD%CREATE_VALUES_CACHE%numberOfComponents(variable_type)
+          FIELD_VARIABLE%DIMENSION=FIELD%createValuesCache%DIMENSION(variable_type)
+          FIELD_VARIABLE%dataType=FIELD%createValuesCache%dataTypes(variable_type)
+          FIELD_VARIABLE%dofOrderType=FIELD%createValuesCache%dofOrderTypes(variable_type)
+          IF(FIELD%createValuesCache%numberOfComponents(variable_type)>0) THEN
+            FIELD_VARIABLE%numberOfComponents=FIELD%createValuesCache%numberOfComponents(variable_type)
             CALL FIELD_VARIABLE_COMPONENTS_INITIALISE(FIELD,variable_type,err,error,*999)
           ELSE
             localError="The number of components of "// &
-              & TRIM(NumberToVString(FIELD%CREATE_VALUES_CACHE%numberOfComponents(variable_type),"*",err,error))// &
+              & TRIM(NumberToVString(FIELD%createValuesCache%numberOfComponents(variable_type),"*",err,error))// &
               & " for variable type "//TRIM(NumberToVString(variable_type,"*",err,error))// &
               & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
               & " is invalid. The number must be > 0."
@@ -18470,27 +18471,27 @@ CONTAINS
           FIELD_VARIABLE%maxNumberElementInterpolationParameters=-1
           FIELD_VARIABLE%maxNumberNodeInterpolationParameters=-1
           DO component_idx=1,FIELD_VARIABLE%numberOfComponents
-            IF(FIELD_VARIABLE%COMPONENTS(component_idx)%maxNumberElementInterpolationParameters> &
+            IF(FIELD_VARIABLE%components(component_idx)%maxNumberElementInterpolationParameters> &
               & FIELD_VARIABLE%maxNumberElementInterpolationParameters) FIELD_VARIABLE% &
-              & maxNumberElementInterpolationParameters=FIELD_VARIABLE%COMPONENTS(component_idx)% &
+              & maxNumberElementInterpolationParameters=FIELD_VARIABLE%components(component_idx)% &
               & maxNumberElementInterpolationParameters
-            IF(FIELD_VARIABLE%COMPONENTS(component_idx)%maxNumberNodeInterpolationParameters> &
+            IF(FIELD_VARIABLE%components(component_idx)%maxNumberNodeInterpolationParameters> &
               & FIELD_VARIABLE%maxNumberNodeInterpolationParameters) FIELD_VARIABLE% &
-              & maxNumberNodeInterpolationParameters=FIELD_VARIABLE%COMPONENTS(component_idx)% &
+              & maxNumberNodeInterpolationParameters=FIELD_VARIABLE%components(component_idx)% &
               & maxNumberNodeInterpolationParameters
           ENDDO !component_idx
           FIELD_VARIABLE%numberOfDofs=0
           FIELD_VARIABLE%totalNumberOfDofs=0
           FIELD_VARIABLE%numberOfGlobalDofs=0
-          ALLOCATE(FIELD_VARIABLE%DOMAIN_MAPPING,STAT=err)
+          ALLOCATE(FIELD_VARIABLE%domainMapping,STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate field variable domain mapping.",err,error,*999)
           CALL DomainMappings_MappingInitialise(FIELD%DECOMPOSITION%workGroup, &
-            & FIELD_VARIABLE%DOMAIN_MAPPING,err,error,*999)
-          CALL FIELD_DOF_TO_PARAM_MAP_INITIALISE(FIELD_VARIABLE%DOF_TO_PARAM_MAP,err,error,*999)
+            & FIELD_VARIABLE%domainMapping,err,error,*999)
+          CALL FIELD_dofToParamMap_INITIALISE(FIELD_VARIABLE%dofToParamMap,err,error,*999)
         ELSE
-          localError="Variable number "//TRIM(NumberToVString(VARIABLE_NUMBER,"*",err,error))// &
+          localError="Variable number "//TRIM(NumberToVString(variableNumber,"*",err,error))// &
             & " is invalid for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" which has "// &
-            & TRIM(NumberToVString(FIELD%NUMBER_OF_VARIABLES,"*",err,error))//" variables."
+            & TRIM(NumberToVString(FIELD%numberOfVariables,"*",err,error))//" variables."
           CALL FlagError(localError,err,error,*998)
         ENDIF
       ELSE
@@ -18515,29 +18516,29 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_LABEL_GET_C(FIELD,VARIABLE_TYPE,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     CHARACTER(LEN=*), INTENT(OUT) :: LABEL !<On return, the field variable label
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER :: C_LENGTH,VS_LENGTH
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_VARIABLE_LABEL_GET_C",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         IF(VARIABLE_TYPE>0.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
+          FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%ptr
           IF(ASSOCIATED(FIELD_VARIABLE)) THEN
             C_LENGTH=LEN(LABEL)
-            VS_LENGTH=LEN_TRIM(FIELD_VARIABLE%VARIABLE_LABEL)
+            VS_LENGTH=LEN_TRIM(FIELD_VARIABLE%variableLabel)
             IF(C_LENGTH>VS_LENGTH) THEN
-              LABEL=CHAR(LEN_TRIM(FIELD_VARIABLE%VARIABLE_LABEL))
+              LABEL=CHAR(LEN_TRIM(FIELD_VARIABLE%variableLabel))
             ELSE
-              LABEL=CHAR(FIELD_VARIABLE%VARIABLE_LABEL,C_LENGTH)
+              LABEL=CHAR(FIELD_VARIABLE%variableLabel,C_LENGTH)
             ENDIF
           ELSE
             localError="The field variable type of "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
@@ -18572,23 +18573,23 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_LABEL_GET_VS(FIELD,VARIABLE_TYPE,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     TYPE(VARYING_STRING), INTENT(OUT) :: LABEL !<On return, the field variable label
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FIELD_VARIABLE_LABEL_GET_VS",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         IF(VARIABLE_TYPE>0.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          FIELD_VARIABLE=>FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
+          FIELD_VARIABLE=>FIELD%variableTypeMap(VARIABLE_TYPE)%ptr
           IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-            LABEL=FIELD_VARIABLE%VARIABLE_LABEL
+            LABEL=FIELD_VARIABLE%variableLabel
           ELSE
             localError="The field variable type of "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
               & " has not been created on field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -18622,7 +18623,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_LABEL_SET_C(FIELD,VARIABLE_TYPE,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     CHARACTER(LEN=*), INTENT(IN) :: LABEL !<The label to set/change
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -18633,20 +18634,20 @@ CONTAINS
     ENTERS("FIELD_VARIABLE_LABEL_SET_C",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         localError="Field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" has been finished."
         CALL FlagError(localError,err,error,*999)
       ELSE
-        IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
+        IF(ASSOCIATED(FIELD%createValuesCache)) THEN
           IF(VARIABLE_TYPE>0.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-            IF(ANY(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES==VARIABLE_TYPE)) THEN
-              IF(FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED(VARIABLE_TYPE)) THEN
+            IF(ANY(FIELD%createValuesCache%variableTypes==VARIABLE_TYPE)) THEN
+              IF(FIELD%createValuesCache%variableLabelsLocked(VARIABLE_TYPE)) THEN
                 localError="The field variable label has been locked for for variable type "// &
                   & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
                   & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
                 CALL FlagError(localError,err,error,*999)
               ELSE
-                FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(VARIABLE_TYPE)=LABEL
+                FIELD%createValuesCache%variableLabels(VARIABLE_TYPE)=LABEL
               ENDIF
             ELSE
               localError="The field variable type of "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
@@ -18684,7 +18685,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_LABEL_SET_VS(FIELD,VARIABLE_TYPE,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the dimension for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     TYPE(VARYING_STRING), INTENT(IN) :: LABEL !<The label to set/change
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -18695,20 +18696,20 @@ CONTAINS
     ENTERS("FIELD_VARIABLE_LABEL_SET_VS",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         localError="Field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" has been finished."
         CALL FlagError(localError,err,error,*999)
       ELSE
-        IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
+        IF(ASSOCIATED(FIELD%createValuesCache)) THEN
           IF(VARIABLE_TYPE>0.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-            IF(ANY(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES==VARIABLE_TYPE)) THEN
-              IF(FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED(VARIABLE_TYPE)) THEN
+            IF(ANY(FIELD%createValuesCache%variableTypes==VARIABLE_TYPE)) THEN
+              IF(FIELD%createValuesCache%variableLabelsLocked(VARIABLE_TYPE)) THEN
                 localError="The field variable label has been locked for for variable type "// &
                   & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
                   & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
                 CALL FlagError(localError,err,error,*999)
               ELSE
-                FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(VARIABLE_TYPE)=LABEL
+                FIELD%createValuesCache%variableLabels(VARIABLE_TYPE)=LABEL
               ENDIF
             ELSE
               localError="The field variable type of "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
@@ -18745,7 +18746,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_LABEL_SET_AND_LOCK_C(FIELD,VARIABLE_TYPE,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the label for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the label for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     CHARACTER(LEN=*), INTENT(IN) :: LABEL !<The label to set/change 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -18757,8 +18758,8 @@ CONTAINS
 
     CALL FIELD_VARIABLE_LABEL_SET(FIELD,VARIABLE_TYPE,LABEL,err,error,*999)
     IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-        FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED(VARIABLE_TYPE)=.TRUE.
+      IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+        FIELD%createValuesCache%variableLabelsLocked(VARIABLE_TYPE)=.TRUE.
       ELSE
         localError="Field create values cache is not associated for field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -18782,7 +18783,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_LABEL_SET_AND_LOCK_VS(FIELD,VARIABLE_TYPE,LABEL,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set/change the label for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set/change the label for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES 
     TYPE(VARYING_STRING), INTENT(IN) :: LABEL !<The label to set/change 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -18794,8 +18795,8 @@ CONTAINS
 
     CALL FIELD_VARIABLE_LABEL_SET(FIELD,VARIABLE_TYPE,LABEL,err,error,*999)
     IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-        FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED(VARIABLE_TYPE)=.TRUE.
+      IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+        FIELD%createValuesCache%variableLabelsLocked(VARIABLE_TYPE)=.TRUE.
       ELSE
         localError="Field create values cache is not associated for field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -18819,7 +18820,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_TYPES_CHECK(FIELD,VARIABLE_TYPES,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the variable types for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the variable types for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPES(:) !<VARIABLE_TYPES(variable_idx). The field variable type for the variable_idx'th field variable to check
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -18830,15 +18831,15 @@ CONTAINS
     ENTERS("FIELD_VARIABLE_TYPES_CHECK",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        IF(SIZE(VARIABLE_TYPES,1)>=FIELD%NUMBER_OF_VARIABLES) THEN
-          DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
+      IF(FIELD%fieldFinished) THEN
+        IF(SIZE(VARIABLE_TYPES,1)>=FIELD%numberOfVariables) THEN
+          DO variable_idx=1,FIELD%numberOfVariables
             IF(VARIABLE_TYPES(variable_idx)>=1.AND.VARIABLE_TYPES(variable_idx)<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-              IF(FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE/=VARIABLE_TYPES(variable_idx)) THEN
+              IF(FIELD%variables(variable_idx)%variableType/=VARIABLE_TYPES(variable_idx)) THEN
                 localError="Invalid variable type. The variable type for variable index number "// &
                   & TRIM(NumberToVString(variable_idx,"*",err,error))//" of field number "// &
                   & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" is "// &
-                  & TRIM(NumberToVString(FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE,"*",err,error))// &
+                  & TRIM(NumberToVString(FIELD%variables(variable_idx)%variableType,"*",err,error))// &
                   & " which is does correspond to the specified variable_type of "// &
                   & TRIM(NumberToVString(VARIABLE_TYPES(variable_idx),"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
@@ -18854,7 +18855,7 @@ CONTAINS
         ELSE
           localError="Invalid variable types. The size of the specified variable types array is "// &
             & TRIM(NumberToVString(SIZE(VARIABLE_TYPES,1),"*",err,error))//" and it must be >= "// &
-            & TRIM(NumberToVString(FIELD%NUMBER_OF_VARIABLES,"*",err,error))//"."
+            & TRIM(NumberToVString(FIELD%numberOfVariables,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
@@ -18880,7 +18881,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_TYPE_CHECK(FIELD,VARIABLE_TYPE,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to check the variable type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to check the variable type for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPE !<The field variable type to check for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -18893,9 +18894,9 @@ CONTAINS
 
     VARIABLE_FOUND=.FALSE.
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
-          IF(FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE==VARIABLE_TYPE) THEN
+      IF(FIELD%fieldFinished) THEN
+        DO variable_idx=1,FIELD%numberOfVariables
+          IF(FIELD%variables(variable_idx)%variableType==VARIABLE_TYPE) THEN
             VARIABLE_FOUND=.TRUE.
             CYCLE
           END IF
@@ -18927,7 +18928,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_TYPES_GET(FIELD,VARIABLE_TYPES,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to get the variable types for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to get the variable types for
     INTEGER(INTG), INTENT(OUT) :: VARIABLE_TYPES(:) !<VARIABLE_TYPES(variable_idx). On return, the field variable type variable_idx'th field variable
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -18938,16 +18939,16 @@ CONTAINS
     ENTERS("FIELD_VARIABLE_TYPES_GET",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
-        IF(SIZE(VARIABLE_TYPES,1)>=FIELD%NUMBER_OF_VARIABLES) THEN
+      IF(FIELD%fieldFinished) THEN
+        IF(SIZE(VARIABLE_TYPES,1)>=FIELD%numberOfVariables) THEN
           VARIABLE_TYPES=0
-          DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
-            VARIABLE_TYPES(variable_idx)=FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
+          DO variable_idx=1,FIELD%numberOfVariables
+            VARIABLE_TYPES(variable_idx)=FIELD%variables(variable_idx)%variableType
           ENDDO !variable_idx
         ELSE
           localError="Invalid variable types. The size of the specified variable types array is "// &
             & TRIM(NumberToVString(SIZE(VARIABLE_TYPES,1),"*",err,error))//" and it must be >= "// &
-            & TRIM(NumberToVString(FIELD%NUMBER_OF_VARIABLES,"*",err,error))//"."
+            & TRIM(NumberToVString(FIELD%numberOfVariables,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ELSE
@@ -18973,17 +18974,17 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_TYPES_SET(FIELD,VARIABLE_TYPES,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the type for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPES(:) !<VARIABLE_TYPES(variable_idx). The field variable type for the variable_idx'th field variable to set 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: NUMBER_OF_COMPONENTS,old_variable_type,variable_idx,variable_idx2,variable_type
-    INTEGER(INTG) :: OLD_DIMENSION(FIELD_NUMBER_OF_VARIABLE_TYPES),OLD_DATA_TYPES(FIELD_NUMBER_OF_VARIABLE_TYPES), &
-      & OLD_DOF_ORDER_TYPES(FIELD_NUMBER_OF_VARIABLE_TYPES),OLD_NUMBER_OF_COMPONENTS(FIELD_NUMBER_OF_VARIABLE_TYPES)
-    INTEGER(INTG), ALLOCATABLE :: OLD_VARIABLE_TYPES(:),OLD_INTERPOLATION_TYPE(:,:),oldMeshComponentNumber(:,:)
-    LOGICAL :: OLD_DIMENSION_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES),OLD_DATA_TYPES_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES), &
-      & OLD_DOF_ORDER_TYPES_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES), &
+    INTEGER(INTG) :: OLD_DIMENSION(FIELD_NUMBER_OF_VARIABLE_TYPES),oldDataTypes(FIELD_NUMBER_OF_VARIABLE_TYPES), &
+      & oldDOFOrderTypes(FIELD_NUMBER_OF_VARIABLE_TYPES),OLD_NUMBER_OF_COMPONENTS(FIELD_NUMBER_OF_VARIABLE_TYPES)
+    INTEGER(INTG), ALLOCATABLE :: oldVariableTypes(:),OLD_INTERPOLATION_TYPE(:,:),oldMeshComponentNumber(:,:)
+    LOGICAL :: OLD_DIMENSION_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES),oldDataTypesLocked(FIELD_NUMBER_OF_VARIABLE_TYPES), &
+      & oldDOFOrderTypesLocked(FIELD_NUMBER_OF_VARIABLE_TYPES), &
       & oldNumberOfComponentsLocked(FIELD_NUMBER_OF_VARIABLE_TYPES),OLD_LABELS_LOCKED(FIELD_NUMBER_OF_VARIABLE_TYPES)
     LOGICAL, ALLOCATABLE :: OLD_INTERPOLATION_TYPE_LOCKED(:,:),oldMeshComponentNumberLocked(:,:)
     TYPE(VARYING_STRING) :: localError,OLD_LABELS(FIELD_NUMBER_OF_VARIABLE_TYPES)
@@ -18991,19 +18992,19 @@ CONTAINS
     ENTERS("FIELD_VARIABLE_TYPES_SET",err,error,*999)
 
     IF(ASSOCIATED(FIELD)) THEN
-      IF(FIELD%FIELD_FINISHED) THEN
+      IF(FIELD%fieldFinished) THEN
         localError="Field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
           & " has been finished."
         CALL FlagError(localError,err,error,*999)
       ELSE
-        IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-          IF(FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES_LOCKED) THEN
+        IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+          IF(FIELD%createValuesCache%variableTypesLocked) THEN
             localError="The field variable types has been locked for field number "// &
               & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//" and can not be changed."
             CALL FlagError(localError,err,error,*999)
           ELSE
-            IF(SIZE(VARIABLE_TYPES,1)==FIELD%NUMBER_OF_VARIABLES) THEN
-              DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
+            IF(SIZE(VARIABLE_TYPES,1)==FIELD%numberOfVariables) THEN
+              DO variable_idx=1,FIELD%numberOfVariables
                 variable_type=VARIABLE_TYPES(variable_idx)
                 !Check that the variable type is in range
                 IF(variable_type<1.OR.VARIABLE_TYPE>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
@@ -19014,7 +19015,7 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)                  
                 ENDIF
                 !Check that the variable type is not repeated
-                DO variable_idx2=variable_idx+1,FIELD%NUMBER_OF_VARIABLES
+                DO variable_idx2=variable_idx+1,FIELD%numberOfVariables
                   IF(VARIABLE_TYPES(variable_idx2)==variable_type) THEN
                     localError="The specified variable type of "//TRIM(NumberToVString(variable_type,"*",err,error))// &
                       & " occurs at position number "//TRIM(NumberToVString(variable_idx,"*",err,error))// &
@@ -19024,8 +19025,8 @@ CONTAINS
                   ENDIF
                 ENDDO !variable_idx2
               ENDDO !variable_idx
-              NUMBER_OF_COMPONENTS=SIZE(FIELD%CREATE_VALUES_CACHE%interpolationTypes,1)
-              ALLOCATE(OLD_VARIABLE_TYPES(FIELD%NUMBER_OF_VARIABLES),STAT=err)
+              NUMBER_OF_COMPONENTS=SIZE(FIELD%createValuesCache%interpolationTypes,1)
+              ALLOCATE(oldVariableTypes(FIELD%numberOfVariables),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate old variable types.",err,error,*999)
               ALLOCATE(OLD_INTERPOLATION_TYPE(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate old interpolation type.",err,error,*999)
@@ -19035,63 +19036,63 @@ CONTAINS
               IF(err/=0) CALL FlagError("Could not allocate old mesh component number.",err,error,*999)
               ALLOCATE(oldMeshComponentNumberLocked(NUMBER_OF_COMPONENTS,FIELD_NUMBER_OF_VARIABLE_TYPES),STAT=err)
               IF(err/=0) CALL FlagError("Could not allocate old mesh component number locked.",err,error,*999)
-              OLD_VARIABLE_TYPES(1:FIELD%NUMBER_OF_VARIABLES)=FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES(1:FIELD%NUMBER_OF_VARIABLES)
-              OLD_LABELS=FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS
-              OLD_LABELS_LOCKED=FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED
-              OLD_DIMENSION=FIELD%CREATE_VALUES_CACHE%DIMENSION
-              OLD_DIMENSION_LOCKED=FIELD%CREATE_VALUES_CACHE%DIMENSION_LOCKED
-              OLD_DATA_TYPES=FIELD%CREATE_VALUES_CACHE%DATA_TYPES
-              OLD_DATA_TYPES_LOCKED=FIELD%CREATE_VALUES_CACHE%DATA_TYPES_LOCKED
-              OLD_DOF_ORDER_TYPES=FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES
-              OLD_DOF_ORDER_TYPES_LOCKED=FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED
-              OLD_NUMBER_OF_COMPONENTS=FIELD%CREATE_VALUES_CACHE%numberOfComponents
-              oldNumberOfComponentsLocked=FIELD%CREATE_VALUES_CACHE%numberOfComponentsLocked
+              oldVariableTypes(1:FIELD%numberOfVariables)=FIELD%createValuesCache%variableTypes(1:FIELD%numberOfVariables)
+              OLD_LABELS=FIELD%createValuesCache%variableLabels
+              OLD_LABELS_LOCKED=FIELD%createValuesCache%variableLabelsLocked
+              OLD_DIMENSION=FIELD%createValuesCache%DIMENSION
+              OLD_DIMENSION_LOCKED=FIELD%createValuesCache%DIMENSION_LOCKED
+              oldDataTypes=FIELD%createValuesCache%dataTypes
+              oldDataTypesLocked=FIELD%createValuesCache%dataTypesLocked
+              oldDOFOrderTypes=FIELD%createValuesCache%dofOrderTypes
+              oldDOFOrderTypesLocked=FIELD%createValuesCache%dofOrderTypesLocked
+              OLD_NUMBER_OF_COMPONENTS=FIELD%createValuesCache%numberOfComponents
+              oldNumberOfComponentsLocked=FIELD%createValuesCache%numberOfComponentsLocked
               OLD_INTERPOLATION_TYPE(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)= &
-                & FIELD%CREATE_VALUES_CACHE%interpolationTypes(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)
+                & FIELD%createValuesCache%interpolationTypes(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)
               OLD_INTERPOLATION_TYPE_LOCKED(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)= &
-                & FIELD%CREATE_VALUES_CACHE%interpolationTypesLocked(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)
+                & FIELD%createValuesCache%interpolationTypesLocked(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)
               oldMeshComponentNumber(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)= &
-                & FIELD%CREATE_VALUES_CACHE%meshComponentNumber(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)
+                & FIELD%createValuesCache%meshComponentNumber(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)
               oldMeshComponentNumberLocked(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)= &
-                & FIELD%CREATE_VALUES_CACHE%meshComponentNumberLocked(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES=0
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS=""
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED=.FALSE.
-              FIELD%CREATE_VALUES_CACHE%DIMENSION=0
-              FIELD%CREATE_VALUES_CACHE%DIMENSION_LOCKED=.FALSE.
-              FIELD%CREATE_VALUES_CACHE%DATA_TYPES=0
-              FIELD%CREATE_VALUES_CACHE%DATA_TYPES_LOCKED=.FALSE.
-              FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES=0
-              FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED=.FALSE.
-              FIELD%CREATE_VALUES_CACHE%numberOfComponents=0
-              FIELD%CREATE_VALUES_CACHE%numberOfComponentsLocked=.FALSE.
-              FIELD%CREATE_VALUES_CACHE%interpolationTypes=0
-              FIELD%CREATE_VALUES_CACHE%interpolationTypesLocked=.FALSE.
-              FIELD%CREATE_VALUES_CACHE%meshComponentNumber=0
-              FIELD%CREATE_VALUES_CACHE%meshComponentNumberLocked=.FALSE.
-              DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES                
+                & FIELD%createValuesCache%meshComponentNumberLocked(1:NUMBER_OF_COMPONENTS,1:FIELD_NUMBER_OF_VARIABLE_TYPES)
+              FIELD%createValuesCache%variableTypes=0
+              FIELD%createValuesCache%variableLabels=""
+              FIELD%createValuesCache%variableLabelsLocked=.FALSE.
+              FIELD%createValuesCache%DIMENSION=0
+              FIELD%createValuesCache%DIMENSION_LOCKED=.FALSE.
+              FIELD%createValuesCache%dataTypes=0
+              FIELD%createValuesCache%dataTypesLocked=.FALSE.
+              FIELD%createValuesCache%dofOrderTypes=0
+              FIELD%createValuesCache%dofOrderTypesLocked=.FALSE.
+              FIELD%createValuesCache%numberOfComponents=0
+              FIELD%createValuesCache%numberOfComponentsLocked=.FALSE.
+              FIELD%createValuesCache%interpolationTypes=0
+              FIELD%createValuesCache%interpolationTypesLocked=.FALSE.
+              FIELD%createValuesCache%meshComponentNumber=0
+              FIELD%createValuesCache%meshComponentNumberLocked=.FALSE.
+              DO variable_idx=1,FIELD%numberOfVariables                
                 variable_type=VARIABLE_TYPES(variable_idx)
-                old_variable_type=OLD_VARIABLE_TYPES(variable_idx)
-                FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS(variable_type)=OLD_LABELS(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%VARIABLE_LABELS_LOCKED(variable_type)=OLD_LABELS_LOCKED(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%DIMENSION(variable_type)=OLD_DIMENSION(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%DIMENSION_LOCKED(variable_type)=OLD_DIMENSION_LOCKED(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%DATA_TYPES(variable_type)=OLD_DATA_TYPES(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%DATA_TYPES_LOCKED(variable_type)=OLD_DATA_TYPES_LOCKED(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES(variable_type)=OLD_DOF_ORDER_TYPES(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%DOF_ORDER_TYPES_LOCKED(variable_type)=OLD_DOF_ORDER_TYPES_LOCKED(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%numberOfComponents(variable_type)=OLD_NUMBER_OF_COMPONENTS(old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%numberOfComponentsLocked(variable_type)=oldNumberOfComponentsLocked( &
+                old_variable_type=oldVariableTypes(variable_idx)
+                FIELD%createValuesCache%variableLabels(variable_type)=OLD_LABELS(old_variable_type)
+                FIELD%createValuesCache%variableLabelsLocked(variable_type)=OLD_LABELS_LOCKED(old_variable_type)
+                FIELD%createValuesCache%DIMENSION(variable_type)=OLD_DIMENSION(old_variable_type)
+                FIELD%createValuesCache%DIMENSION_LOCKED(variable_type)=OLD_DIMENSION_LOCKED(old_variable_type)
+                FIELD%createValuesCache%dataTypes(variable_type)=oldDataTypes(old_variable_type)
+                FIELD%createValuesCache%dataTypesLocked(variable_type)=oldDataTypesLocked(old_variable_type)
+                FIELD%createValuesCache%dofOrderTypes(variable_type)=oldDOFOrderTypes(old_variable_type)
+                FIELD%createValuesCache%dofOrderTypesLocked(variable_type)=oldDOFOrderTypesLocked(old_variable_type)
+                FIELD%createValuesCache%numberOfComponents(variable_type)=OLD_NUMBER_OF_COMPONENTS(old_variable_type)
+                FIELD%createValuesCache%numberOfComponentsLocked(variable_type)=oldNumberOfComponentsLocked( &
                   & old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%interpolationTypes(:,variable_type)=OLD_INTERPOLATION_TYPE(:,old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%interpolationTypesLocked(:,variable_type)=OLD_INTERPOLATION_TYPE_LOCKED(:, &
+                FIELD%createValuesCache%interpolationTypes(:,variable_type)=OLD_INTERPOLATION_TYPE(:,old_variable_type)
+                FIELD%createValuesCache%interpolationTypesLocked(:,variable_type)=OLD_INTERPOLATION_TYPE_LOCKED(:, &
                   & old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%meshComponentNumber(:,variable_type)=oldMeshComponentNumber(:,old_variable_type)
-                FIELD%CREATE_VALUES_CACHE%meshComponentNumberLocked(:,variable_type)=oldMeshComponentNumberLocked(:, &
+                FIELD%createValuesCache%meshComponentNumber(:,variable_type)=oldMeshComponentNumber(:,old_variable_type)
+                FIELD%createValuesCache%meshComponentNumberLocked(:,variable_type)=oldMeshComponentNumberLocked(:, &
                   & old_variable_type)
               ENDDO !variable_idx
-              FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES(1:SIZE(VARIABLE_TYPES,1))=VARIABLE_TYPES(1:SIZE(VARIABLE_TYPES,1))
-              DEALLOCATE(OLD_VARIABLE_TYPES)
+              FIELD%createValuesCache%variableTypes(1:SIZE(VARIABLE_TYPES,1))=VARIABLE_TYPES(1:SIZE(VARIABLE_TYPES,1))
+              DEALLOCATE(oldVariableTypes)
               DEALLOCATE(OLD_INTERPOLATION_TYPE)
               DEALLOCATE(OLD_INTERPOLATION_TYPE_LOCKED)
               DEALLOCATE(oldMeshComponentNumber)
@@ -19100,7 +19101,7 @@ CONTAINS
               localError="Invalid variable types. The size of the specified variable types array is "// &
                 & TRIM(NumberToVString(SIZE(VARIABLE_TYPES,1),"*",err,error))// &
                 & " and the number of variables for field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))// &
-                & " is "//TRIM(NumberToVString(FIELD%NUMBER_OF_VARIABLES,"*",err,error))//"."
+                & " is "//TRIM(NumberToVString(FIELD%numberOfVariables,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
           ENDIF
@@ -19116,7 +19117,7 @@ CONTAINS
 
     EXITS("FIELD_VARIABLE_TYPES_SET")
     RETURN
-999 IF(ALLOCATED(OLD_VARIABLE_TYPES)) DEALLOCATE(OLD_VARIABLE_TYPES)
+999 IF(ALLOCATED(oldVariableTypes)) DEALLOCATE(oldVariableTypes)
     IF(ALLOCATED(OLD_INTERPOLATION_TYPE)) DEALLOCATE(OLD_INTERPOLATION_TYPE)
     IF(ALLOCATED(OLD_INTERPOLATION_TYPE_LOCKED)) DEALLOCATE(OLD_INTERPOLATION_TYPE_LOCKED)
     IF(ALLOCATED(oldMeshComponentNumber)) DEALLOCATE(oldMeshComponentNumber)
@@ -19133,7 +19134,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLE_TYPES_SET_AND_LOCK(FIELD,VARIABLE_TYPES,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to set the type for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to set the type for
     INTEGER(INTG), INTENT(IN) :: VARIABLE_TYPES(:) !<VARIABLE_TYPES(variable_idx). The field variable type for the variable_idx'th field variable to set 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -19144,8 +19145,8 @@ CONTAINS
 
     CALL FIELD_VARIABLE_TYPES_SET(FIELD,VARIABLE_TYPES,err,error,*999)
     IF(ASSOCIATED(FIELD)) THEN
-      IF(ASSOCIATED(FIELD%CREATE_VALUES_CACHE)) THEN
-        FIELD%CREATE_VALUES_CACHE%VARIABLE_TYPES_LOCKED=.TRUE.
+      IF(ASSOCIATED(FIELD%createValuesCache)) THEN
+        FIELD%createValuesCache%variableTypesLocked=.TRUE.
       ELSE
         localError="Field create values cache is not associated for field number "// &
           & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
@@ -19169,7 +19170,7 @@ CONTAINS
   SUBROUTINE FieldVariablesCheck(field,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to check the variables for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to check the variables for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -19180,15 +19181,15 @@ CONTAINS
     ENTERS("FieldVariablesCheck",err,error,*999)
 
     IF(ASSOCIATED(field)) THEN
-      IF(ASSOCIATED(field%CREATE_VALUES_CACHE)) THEN
+      IF(ASSOCIATED(field%createValuesCache)) THEN
         !Check the number of field variables
-        IF(field%NUMBER_OF_VARIABLES>0) THEN
+        IF(field%numberOfVariables>0) THEN
           !Check that the variable types are unique. Just do an exhaustive check. It is expensive but the list should be short.
           duplicates=.FALSE.
-          firstVariable: DO variableIdx=1,field%NUMBER_OF_VARIABLES
-            variableType=field%CREATE_VALUES_CACHE%VARIABLE_TYPES(variableIdx)
-            secondVariable: DO variableIdx2=variableIdx+1,field%NUMBER_OF_VARIABLES
-              variableType2=field%CREATE_VALUES_CACHE%VARIABLE_TYPES(variableIdx2)
+          firstVariable: DO variableIdx=1,field%numberOfVariables
+            variableType=field%createValuesCache%variableTypes(variableIdx)
+            secondVariable: DO variableIdx2=variableIdx+1,field%numberOfVariables
+              variableType2=field%createValuesCache%variableTypes(variableIdx2)
               IF(variableType==variableType2) THEN
                 duplicates=.TRUE.
                 EXIT firstVariable
@@ -19201,7 +19202,7 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           ENDIF
         ELSE
-          localError="Invalid field setup. The field has "//TRIM(NumberToVString(field%NUMBER_OF_VARIABLES,"*",err,error))// &
+          localError="Invalid field setup. The field has "//TRIM(NumberToVString(field%numberOfVariables,"*",err,error))// &
             & " variables and should have > 0 variables."
           CALL FlagError(localError,err,error,*999)
         ENDIF
@@ -19227,7 +19228,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLES_FINALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to finalise the variables for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to finalise the variables for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -19238,11 +19239,11 @@ CONTAINS
     IF(ASSOCIATED(FIELD)) THEN
       IF(ALLOCATED(FIELD%VARIABLES)) THEN
         DO variable_idx=1,SIZE(FIELD%VARIABLES,1)
-          CALL FIELD_VARIABLE_FINALISE(FIELD%VARIABLES(variable_idx),err,error,*999)
+          CALL FIELD_VARIABLE_FINALISE(FIELD%variables(variable_idx),err,error,*999)
         ENDDO !variable_idx
         DEALLOCATE(FIELD%VARIABLES)
       ENDIF
-      FIELD%NUMBER_OF_VARIABLES=0
+      FIELD%numberOfVariables=0
     ELSE
       CALL FlagError("Field is not associated.",err,error,*999)
     ENDIF
@@ -19261,7 +19262,7 @@ CONTAINS
   SUBROUTINE FIELD_VARIABLES_INITIALISE(FIELD,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to initialise the variables for
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to initialise the variables for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -19273,9 +19274,9 @@ CONTAINS
       IF(ALLOCATED(FIELD%VARIABLES)) THEN
         CALL FlagError("Field already has associated variables.",err,error,*999)
       ELSE
-        ALLOCATE(FIELD%VARIABLES(FIELD%NUMBER_OF_VARIABLES),STAT=err)
+        ALLOCATE(FIELD%variables(FIELD%numberOfVariables),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate new field variables.",err,error,*999)
-        DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
+        DO variable_idx=1,FIELD%numberOfVariables
           CALL FIELD_VARIABLE_INITIALISE(FIELD,variable_idx,err,error,*999)
         ENDDO !variable_idx
       ENDIF
@@ -19297,15 +19298,15 @@ CONTAINS
   SUBROUTINE FieldVariable_ParameterSetsCopy(fieldVariable,parameterFromSetType,parameterToSetType,alpha,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to copy the parameters set for
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to copy the parameters set for
     INTEGER(INTG), INTENT(IN) :: parameterFromSetType !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: parameterToSetType !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the copy.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: fromParameterSet,toParameterSet
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldParameterSetType), POINTER :: fromParameterSet,toParameterSet
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FieldVariable_ParameterSetsCopy",err,error,*999)
@@ -19324,9 +19325,9 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    fromParameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterFromSetType)%ptr
+    fromParameterSet=>fieldVariable%parameterSets%setType(parameterFromSetType)%ptr
     IF(ASSOCIATED(fromParameterSet)) THEN
-      toParameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterToSetType)%ptr
+      toParameterSet=>fieldVariable%parameterSets%setType(parameterToSetType)%ptr
       IF(ASSOCIATED(toParameterSet)) THEN
         !Do not need to do an update here as each rank already has the values.
         CALL DistributedVector_Copy(fromParameterSet%parameters,toParameterSet%parameters,alpha,err,error,*999)
@@ -19334,11 +19335,11 @@ CONTAINS
         field=>fieldVariable%field
         IF(.NOT.ASSOCIATED(field)) THEN
           localError="The to parameter set type of "//TRIM(NumberToVString(parameterToSetType,"*",err,error))// &
-            & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"",err,error))// &
+            & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%variableType,"",err,error))// &
             & " of field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
         ELSE
           localError="The to parameter set type of "//TRIM(NumberToVString(parameterToSetType,"*",err,error))// &
-            & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"",err,error))//"."
+            & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%variableType,"",err,error))//"."
         ENDIF
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -19346,11 +19347,11 @@ CONTAINS
       field=>fieldVariable%field
       IF(.NOT.ASSOCIATED(field)) THEN
         localError="The from parameter set type of "//TRIM(NumberToVString(parameterFromSetType,"*",err,error))// &
-          & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"",err,error))// &
+          & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%variableType,"",err,error))// &
           & " of field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       ELSE
         localError="The from parameter set type of "//TRIM(NumberToVString(parameterFromSetType,"*",err,error))// &
-          & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%VARIABLE_TYPE,"",err,error))//"."
+          & " has not been created on variable type "//TRIM(NumberToVString(fieldVariable%variableType,"",err,error))//"."
       ENDIF
       CALL FlagError(localError,err,error,*999)      
     ENDIF
@@ -19370,14 +19371,14 @@ CONTAINS
   SUBROUTINE FieldVariable_ParameterSetsCopyIfExists(fieldVariable,parameterFromSetType,parameterToSetType,alpha,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to copy the parameters set for
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to copy the parameters set for
     INTEGER(INTG), INTENT(IN) :: parameterFromSetType !<The field parameter set identifier to copy the parameters from \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(IN) :: parameterToSetType !<The field parameter set identifier to copy the parameters to \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the copy.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: fromParameterSet,toParameterSet
+    TYPE(FieldParameterSetType), POINTER :: fromParameterSet,toParameterSet
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FieldVariable_ParameterSetsCopyIfExists",err,error,*999)
@@ -19396,9 +19397,9 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    fromParameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterFromSetType)%ptr
+    fromParameterSet=>fieldVariable%parameterSets%setType(parameterFromSetType)%ptr
     IF(ASSOCIATED(fromParameterSet)) THEN
-      toParameterSet=>fieldVariable%PARAMETER_SETS%SET_TYPE(parameterToSetType)%ptr
+      toParameterSet=>fieldVariable%parameterSets%setType(parameterToSetType)%ptr
       IF(ASSOCIATED(toParameterSet)) THEN
         !Do not need to do an update here as each rank already has the values.
         CALL DistributedVector_Copy(fromParameterSet%parameters,toParameterSet%parameters,alpha,err,error,*999)
@@ -19420,17 +19421,17 @@ CONTAINS
   SUBROUTINE FIELDS_FINALISE(FIELDS,err,error,*)
 
     !Argument variables
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields to finalise
+    TYPE(FieldsType), POINTER :: FIELDS !<A pointer to the fields to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD
+    TYPE(FieldType), POINTER :: FIELD
 
     ENTERS("FIELDS_FINALISE",err,error,*999)
 
     IF(ASSOCIATED(FIELDS)) THEN
-      DO WHILE(FIELDS%NUMBER_OF_FIELDS>0)
-        FIELD=>FIELDS%FIELDS(1)%PTR
+      DO WHILE(FIELDS%numberOfFields>0)
+        FIELD=>FIELDS%FIELDS(1)%ptr
         CALL FIELD_DESTROY(FIELD,err,error,*999)
       ENDDO !field_idx
       DEALLOCATE(FIELDS)
@@ -19447,24 +19448,22 @@ CONTAINS
   !
 
   !>Initialises the fields.
-  SUBROUTINE FIELDS_INITIALISE_GENERIC(FIELDS,err,error,*)
+  SUBROUTINE FIELDS_INITIALISE_GENERIC(fields,err,error,*)
 
     !Argument variables
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields to initialise
+    TYPE(FieldsType), POINTER :: FIELDS !<A pointer to the fields to initialise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("FIELDS_INITIALISE_GENERIC",err,error,*999)
 
-    IF(ASSOCIATED(FIELDS)) THEN
-      NULLIFY(FIELDS%REGION)
-      NULLIFY(FIELDS%INTERFACE)
-      FIELDS%NUMBER_OF_FIELDS=0
-      NULLIFY(FIELDS%FIELDS)
-    ELSE
-      CALL FlagError("Fields is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(fields)) CALL FlagError("Fields is not associated.",err,error,*999)
+    
+    NULLIFY(fields%region)
+    NULLIFY(fields%INTERFACE)
+    fields%numberOfFields=0
+    NULLIFY(fields%fields)
 
     EXITS("FIELDS_INITIALISE_GENERIC")
     RETURN
@@ -19549,8 +19548,8 @@ CONTAINS
       TYPE(MESH_EMBEDDING_TYPE), INTENT(INOUT) :: MESH_EMBEDDING !<The mesh embedding object
       INTEGER(INTG), INTENT(OUT) :: err              !<The error code
       TYPE(VARYING_STRING), INTENT(OUT) :: error     !<The error string
-      TYPE(FIELD_TYPE), POINTER :: PARENT_FIELD      !<Field for the parent nodes
-      TYPE(FIELD_TYPE), POINTER :: CHILD_FIELD       !<Field for the child nodes
+      TYPE(FieldType), POINTER :: PARENT_FIELD      !<Field for the parent nodes
+      TYPE(FieldType), POINTER :: CHILD_FIELD       !<Field for the child nodes
       INTEGER(INTG), INTENT(IN) :: PARENT_COMPONENT  !<Component of the parent field, must be nodally based
       INTEGER(INTG), INTENT(IN) ::  CHILD_COMPONENT  !<Component of the child  field, must be nodally based
 
@@ -19565,7 +19564,7 @@ CONTAINS
 
       version=1
       DO E=1,MESH_EMBEDDING%PARENT_MESH%numberOfElements
-        ELEMENT=>MESH_EMBEDDING%PARENT_MESH%TOPOLOGY(1)%PTR%ELEMENTS%ELEMENTS(E)
+        ELEMENT=>MESH_EMBEDDING%PARENT_MESH%TOPOLOGY(1)%ptr%ELEMENTS%ELEMENTS(E)
         BASIS=>ELEMENT%BASIS
         ALLOCATE(PARENT_VALUES(BASIS%numberOfNodes))
 
@@ -19608,8 +19607,8 @@ CONTAINS
       TYPE(MESH_EMBEDDING_TYPE), INTENT(INOUT) :: MESH_EMBEDDING !<The mesh embedding object
       INTEGER(INTG), INTENT(OUT) :: err              !<The error code
       TYPE(VARYING_STRING), INTENT(OUT) :: error     !<The error string
-      TYPE(FIELD_TYPE), POINTER :: PARENT_FIELD      !<Field for the parent nodes
-      TYPE(FIELD_TYPE), POINTER :: CHILD_FIELD       !<Field for the child nodes
+      TYPE(FieldType), POINTER :: PARENT_FIELD      !<Field for the parent nodes
+      TYPE(FieldType), POINTER :: CHILD_FIELD       !<Field for the child nodes
       INTEGER(INTG), INTENT(IN) :: PARENT_COMPONENT  !<Component of the parent field, must be nodally based
       INTEGER(INTG), INTENT(IN) ::  CHILD_COMPONENT  !<Component of the child  field, must be nodally based
 
@@ -19622,12 +19621,12 @@ CONTAINS
 
       ENTERS("MESH_EMBEDDING_PULL_GAUSS_POINT_DATA",err,error,*999)
 
-      ELEMENTS=>MESH_EMBEDDING%CHILD_MESH%TOPOLOGY(1)%PTR%ELEMENTS
+      ELEMENTS=>MESH_EMBEDDING%CHILD_MESH%TOPOLOGY(1)%ptr%ELEMENTS
 
-      BASIS=>MESH_EMBEDDING%CHILD_MESH%TOPOLOGY(1)%PTR%ELEMENTS%ELEMENTS(1)%BASIS
+      BASIS=>MESH_EMBEDDING%CHILD_MESH%TOPOLOGY(1)%ptr%ELEMENTS%ELEMENTS(1)%BASIS
       version = 1
       DO E=1,MESH_EMBEDDING%PARENT_MESH%numberOfElements    
-        NGP = BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
+        NGP = BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%NUMBER_OF_GAUSS
         DO GP=1,NGP
           ELEMENT=>ELEMENTS%ELEMENTS(MESH_EMBEDDING%GAUSS_POINT_XI_POSITION(GP,E)%ELEMENT_NUMBER)
           BASIS=>ELEMENT%BASIS
@@ -19672,13 +19671,13 @@ CONTAINS
 
       ENTERS("FIELD_PARAMETER_SET_GET_GAUSS_POINT_COORD",err,error,*999)
 
-      ELEMENTS=>MESH_EMBEDDING%PARENT_MESH%TOPOLOGY(1)%PTR%ELEMENTS
+      ELEMENTS=>MESH_EMBEDDING%PARENT_MESH%TOPOLOGY(1)%ptr%ELEMENTS
 
-      BASIS=>MESH_EMBEDDING%PARENT_MESH%TOPOLOGY(1)%PTR%ELEMENTS%ELEMENTS(1)%BASIS
-      NGP = BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS
+      BASIS=>MESH_EMBEDDING%PARENT_MESH%TOPOLOGY(1)%ptr%ELEMENTS%ELEMENTS(1)%BASIS
+      NGP = BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%NUMBER_OF_GAUSS
 
       DO GP = 1,NGP
-        COORD_VALUE(GP) = BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%&
+        COORD_VALUE(GP) = BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr%&
           &GAUSS_POSITIONS(COMPONENT_NUMBER,GP)
       ENDDO
 

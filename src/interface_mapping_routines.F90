@@ -100,8 +100,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: column_idx,dof_idx,matrix_idx,mesh_idx,variable_idx,number_of_interface_matrices
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldType), POINTER :: LAGRANGE_FIELD
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,LAGRANGE_VARIABLE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
@@ -136,12 +136,12 @@ CONTAINS
                 INTERFACE_MAPPING%TOTAL_NUMBER_OF_COLUMNS=LAGRANGE_VARIABLE%totalNumberOfDofs
                 INTERFACE_MAPPING%NUMBER_OF_GLOBAL_COLUMNS=LAGRANGE_VARIABLE%numberOfGlobalDofs
                 !Set the column dofs mapping
-                INTERFACE_MAPPING%COLUMN_DOFS_MAPPING=>LAGRANGE_VARIABLE%DOMAIN_MAPPING
+                INTERFACE_MAPPING%COLUMN_DOFS_MAPPING=>LAGRANGE_VARIABLE%domainMapping
                 ALLOCATE(INTERFACE_MAPPING%LAGRANGE_DOF_TO_COLUMN_MAP(LAGRANGE_VARIABLE%totalNumberOfDofs),STAT=ERR)
                 IF(ERR/=0) CALL FlagError("Could not allocate Lagrange dof to column map.",ERR,ERROR,*999)
                 !1-1 mapping for now
                 DO dof_idx=1,LAGRANGE_VARIABLE%totalNumberOfDofs
-                  column_idx=LAGRANGE_VARIABLE%DOMAIN_MAPPING%localToGlobalMap(dof_idx)
+                  column_idx=LAGRANGE_VARIABLE%domainMapping%localToGlobalMap(dof_idx)
                   INTERFACE_MAPPING%LAGRANGE_DOF_TO_COLUMN_MAP(dof_idx)=column_idx
                 ENDDO
                 !Set the number of interface matrices
@@ -167,14 +167,14 @@ CONTAINS
                   DO variable_idx=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
                     IF(INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES(variable_idx)==mesh_idx) THEN
                       EQUATIONS_SET=>INTERFACE_DEPENDENT%EQUATIONS_SETS(variable_idx)%PTR
-                      FIELD_VARIABLE=>INTERFACE_DEPENDENT%FIELD_VARIABLES(variable_idx)%PTR
+                      FIELD_VARIABLE=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
                       EXIT
                     ENDIF
                   ENDDO !variable_idx
                   IF(ASSOCIATED(EQUATIONS_SET)) THEN
                     IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%EQUATIONS_SET=>EQUATIONS_SET
-                      INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+                      INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%variableType=FIELD_VARIABLE%variableType
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE=>FIELD_VARIABLE
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%MESH_INDEX=mesh_idx
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%MATRIX_COEFFICIENT=INTERFACE_MAPPING% &
@@ -189,7 +189,7 @@ CONTAINS
                         & FIELD_VARIABLE%numberOfGlobalDofs
                       !Set the row mapping
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%ROW_DOFS_MAPPING=> &
-                        & FIELD_VARIABLE%DOMAIN_MAPPING
+                        & FIELD_VARIABLE%domainMapping
                       ALLOCATE(INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_DOF_TO_ROW_MAP( &
                         & FIELD_VARIABLE%totalNumberOfDofs),STAT=ERR)
                       IF(ERR/=0) CALL FlagError("Could not allocate variable dof to row map.",ERR,ERROR,*999)
@@ -227,7 +227,7 @@ CONTAINS
                   IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
                     IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%INTERFACE_EQUATIONS=>INTERFACE_EQUATIONS
-                      INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+                      INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%variableType=FIELD_VARIABLE%variableType
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE=>FIELD_VARIABLE
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%MESH_INDEX=mesh_idx
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%MATRIX_COEFFICIENT=INTERFACE_MAPPING% &
@@ -242,7 +242,7 @@ CONTAINS
                         & FIELD_VARIABLE%numberOfGlobalDofs
                       !Set the row mapping
                       INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%ROW_DOFS_MAPPING=> &
-                        & FIELD_VARIABLE%DOMAIN_MAPPING
+                        & FIELD_VARIABLE%domainMapping
                       ALLOCATE(INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_DOF_TO_ROW_MAP( &
                         & FIELD_VARIABLE%totalNumberOfDofs),STAT=ERR)
                       IF(ERR/=0) CALL FlagError("Could not allocate variable dof to row map.",ERR,ERROR,*999)
@@ -268,9 +268,9 @@ CONTAINS
                   RHS_MAPPING=>INTERFACE_MAPPING%RHS_MAPPING
                   IF(ASSOCIATED(RHS_MAPPING)) THEN
                     RHS_MAPPING%RHS_VARIABLE_TYPE=CREATE_VALUES_CACHE%RHS_LAGRANGE_VARIABLE_TYPE
-                    LAGRANGE_VARIABLE=>LAGRANGE_FIELD%VARIABLE_TYPE_MAP(CREATE_VALUES_CACHE%RHS_LAGRANGE_VARIABLE_TYPE)%PTR
+                    LAGRANGE_VARIABLE=>LAGRANGE_FIELD%variableTypeMap(CREATE_VALUES_CACHE%RHS_LAGRANGE_VARIABLE_TYPE)%PTR
                     RHS_MAPPING%RHS_VARIABLE=>LAGRANGE_VARIABLE
-                    RHS_MAPPING%RHS_VARIABLE_MAPPING=>LAGRANGE_VARIABLE%DOMAIN_MAPPING
+                    RHS_MAPPING%RHS_VARIABLE_MAPPING=>LAGRANGE_VARIABLE%domainMapping
                     RHS_MAPPING%RHS_COEFFICIENT=CREATE_VALUES_CACHE%RHS_COEFFICIENT
                     !Allocate and set up the row mappings
                     ALLOCATE(RHS_MAPPING%RHS_DOF_TO_INTERFACE_ROW_MAP(LAGRANGE_VARIABLE%totalNumberOfDofs),STAT=ERR)
@@ -441,7 +441,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: DUMMY_ERR,variable_idx,variable_type_idx,variable_type_idx2
-    TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD
+    TYPE(FieldType), POINTER :: LAGRANGE_FIELD
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
@@ -489,7 +489,7 @@ CONTAINS
                     !Default the Lagrange variable to the first Lagrange variable
                     INTERFACE_MAPPING%CREATE_VALUES_CACHE%LAGRANGE_VARIABLE_TYPE=0
                     DO variable_type_idx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-                      IF(ASSOCIATED(LAGRANGE_FIELD%VARIABLE_TYPE_MAP(variable_type_idx)%PTR)) THEN
+                      IF(ASSOCIATED(LAGRANGE_FIELD%variableTypeMap(variable_type_idx)%PTR)) THEN
                         INTERFACE_MAPPING%CREATE_VALUES_CACHE%LAGRANGE_VARIABLE_TYPE=variable_type_idx
                         EXIT
                       ENDIF
@@ -498,7 +498,7 @@ CONTAINS
                       & CALL FlagError("Could not find a Lagrange variable type in the Lagrange field.",ERR,ERROR,*999)
                     !Default the RHS Lagrange variable to the second Lagrange variable
                     DO variable_type_idx2=variable_type_idx+1,FIELD_NUMBER_OF_VARIABLE_TYPES
-                      IF(ASSOCIATED(LAGRANGE_FIELD%VARIABLE_TYPE_MAP(variable_type_idx2)%PTR)) THEN
+                      IF(ASSOCIATED(LAGRANGE_FIELD%variableTypeMap(variable_type_idx2)%PTR)) THEN
                         INTERFACE_MAPPING%CREATE_VALUES_CACHE%RHS_LAGRANGE_VARIABLE_TYPE=variable_type_idx2
                         EXIT
                       ENDIF
@@ -699,8 +699,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: LAGRANGE_VARIABLE
+    TYPE(FieldType), POINTER :: LAGRANGE_FIELD
+    TYPE(FieldVariableType), POINTER :: LAGRANGE_VARIABLE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: LAGRANGE
@@ -812,7 +812,7 @@ CONTAINS
           INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%MATRIX_NUMBER=matrix_idx
           NULLIFY(INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%INTERFACE_MATRIX)
           NULLIFY(INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%EQUATIONS_SET)
-          INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE_TYPE=0
+          INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%variableType=0
           NULLIFY(INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%VARIABLE)
           INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%MESH_INDEX=0
           INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%MATRIX_COEFFICIENT=0.0_DP
@@ -1458,7 +1458,7 @@ CONTAINS
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: INTERFACE_LAGRANGE
     TYPE(INTERFACE_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-    TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD
+    TYPE(FieldType), POINTER :: LAGRANGE_FIELD
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("INTERFACE_MAPPING_RHS_VARIABLE_TYPE_SET",ERR,ERROR,*999)
@@ -1491,7 +1491,7 @@ CONTAINS
                       ENDIF
                       !Check the RHS variable number is defined on the Lagrange field
                       IF(RHS_VARIABLE_TYPE>=1.AND.RHS_VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                        IF(ASSOCIATED(LAGRANGE_FIELD%VARIABLE_TYPE_MAP(RHS_VARIABLE_TYPE)%PTR)) THEN
+                        IF(ASSOCIATED(LAGRANGE_FIELD%variableTypeMap(RHS_VARIABLE_TYPE)%PTR)) THEN
                           CREATE_VALUES_CACHE%RHS_LAGRANGE_VARIABLE_TYPE=RHS_VARIABLE_TYPE
                         ELSE
                           LOCAL_ERROR="The specified RHS variable type of "// &

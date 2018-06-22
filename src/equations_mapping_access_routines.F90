@@ -107,7 +107,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping !<A pointer to the dynamic mapping to get the dynamic variable for
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dynamicVariable !<On exit, a pointer to the requested dynamic variable. Must not be associated on entry.
+    TYPE(FieldVariableType), POINTER :: dynamicVariable !<On exit, a pointer to the requested dynamic variable. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -139,7 +139,7 @@ CONTAINS
     !Argument variables
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping !<A pointer to the linear mapping to get the linear variable for
     INTEGER(INTG), INTENT(IN) :: linearMatrixIdx !<The index of the linear matrix to get the linear variable for. 
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: linearVariable !<On exit, a pointer to the requested linear variable. Must not be associated on entry.
+    TYPE(FieldVariableType), POINTER :: linearVariable !<On exit, a pointer to the requested linear variable. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -185,7 +185,7 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping !<A pointer to the nonlinear mapping to get the residual variable for
     INTEGER(INTG), INTENT(IN) :: residualIdx !<The index of the residual to get the field variable for. Currently will just be 1.
     INTEGER(INTG), INTENT(IN) :: variableIdx !<The index of the variable in the residual to get the field variable for. 
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<On exit, a pointer to the requested field variable. Must not be associated on entry.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<On exit, a pointer to the requested field variable. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -235,7 +235,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping !<A pointer to the RHS mapping to get the RHS variable for
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable !<On exit, a pointer to the requested RHS field variable. Must not be associated on entry.
+    TYPE(FieldVariableType), POINTER :: rhsVariable !<On exit, a pointer to the requested RHS field variable. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -327,7 +327,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EquationsMappingSourceType), POINTER :: sourceMapping !<A pointer to the source mapping to get the source variable for
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: sourceVariable !<On exit, a pointer to the requested source variable. Must not be associated on entry.
+    TYPE(FieldVariableType), POINTER :: sourceVariable !<On exit, a pointer to the requested source variable. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

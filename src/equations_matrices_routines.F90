@@ -612,8 +612,8 @@ CONTAINS
     LOGICAL :: updateMatrix !<Is .TRUE. if the element matrix is to be updated, .FALSE. if not.
     INTEGER(INTG), INTENT(IN) :: rowElementNumbers(:) !<The row element number to calculate
     INTEGER(INTG), INTENT(IN) :: columnElementNumbers(:) !<The column element number to calculate
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: colsFieldVariable !<A pointer to the field variable associated with the columns
+    TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FieldVariableType), POINTER :: colsFieldVariable !<A pointer to the field variable associated with the columns
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -641,23 +641,23 @@ CONTAINS
             IF(rowElementNumber<1.OR.rowElementNumber>elementsTopology%totalNumberOfElements) THEN
               localError="Element number "//TRIM(NumberToVString(rowElementNumber,"*",err,error))// &
                 & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))// &
                 & ". The element number must be between 1 and "// &
                 & TRIM(NumberToVString(elementsTopology%totalNumberOfElements,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
             SELECT CASE(rowsFieldVariable%components(componentIdx)%interpolationType)
             CASE(FIELD_CONSTANT_INTERPOLATION)
-              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-              globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%constantParam2DOFMap
+              globalDOFIdx=rowsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
               elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
               elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
               elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
               elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
             CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap% &
                 & elements(rowElementNumber)
-              globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+              globalDOFIdx=rowsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
               elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
               elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
               elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
@@ -669,9 +669,9 @@ CONTAINS
                 DO derivativeIdx=1,basis%numberOfDerivatives(localNodeIdx)
                   derivative=elementsTopology%elements(rowElementNumber)%elementDerivatives(derivativeIdx,localNodeIdx)
                   version=elementsTopology%elements(rowElementNumber)%elementVersions(derivativeIdx,localNodeIdx)
-                  localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
+                  localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap%NODES(node)% &
                     & derivatives(derivative)%versions(version)
-                  globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+                  globalDOFIdx=rowsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
                   elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
                   elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
                   elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
@@ -686,9 +686,9 @@ CONTAINS
               decompositionData=>rowsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
               DO dataPointIdx=1,decompositionData%elementDataPoints(rowElementNumber)%numberOfProjectedData
                 localDataPointNumber=decompositionData%elementDataPoints(rowElementNumber)%dataIndices(dataPointIdx)%localNumber
-                localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-                  & DATA_POINTS(localDataPointNumber)
-                globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+                localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%dataPointParam2DOFMap% &
+                  & dataPoints(localDataPointNumber)
+                globalDOFIdx=rowsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
                 elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
                 elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
                 elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
@@ -698,7 +698,7 @@ CONTAINS
               localError="The interpolation type of "// &
                 & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
                 & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)          
             END SELECT
           ENDDO !elementIdx
@@ -713,18 +713,18 @@ CONTAINS
             IF(rowElementNumber<1.OR.rowElementNumber>elementsTopology%totalNumberOfElements) THEN
               localError="Row element number "//TRIM(NumberToVString(rowElementNumber,"*",err,error))// &
                 & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))// &
                 & ". The element number must be between 1 and "// &
                 & TRIM(NumberToVString(elementsTopology%totalNumberOfElements,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
             SELECT CASE(rowsFieldVariable%components(componentIdx)%interpolationType)
             CASE(FIELD_CONSTANT_INTERPOLATION)
-              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%constantParam2DOFMap
               elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
               elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
             CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap% &
                 & elements(rowElementNumber)
               elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
               elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
@@ -735,7 +735,7 @@ CONTAINS
                 DO derivativeIdx=1,basis%numberOfDerivatives(localNodeIdx)
                   derivative=elementsTopology%elements(rowElementNumber)%elementDerivatives(derivativeIdx,localNodeIdx)
                   version=elementsTopology%elements(rowElementNumber)%elementVersions(derivativeIdx,localNodeIdx)
-                  localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(node)% &
+                  localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap%nodes(node)% &
                     & derivatives(derivative)%versions(version)
                   elementMatrix%numberOfRows=elementMatrix%numberOfRows+1
                   elementMatrix%rowDOFS(elementMatrix%numberOfRows)=localDOFIdx
@@ -749,9 +749,9 @@ CONTAINS
               decompositionData=>rowsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
               DO dataPointIdx=1,decompositionData%elementDataPoints(colElementNumber)%numberOfProjectedData
                 localDataPointNumber=decompositionData%elementDataPoints(colElementNumber)%dataIndices(dataPointIdx)%localNumber
-                localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-                  & DATA_POINTS(localDataPointNumber)
-                globalDOFIdx=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+                localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%dataPointParam2DOFMap% &
+                  & dataPoints(localDataPointNumber)
+                globalDOFIdx=rowsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
                 elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
                 elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
               ENDDO !dataPointIdx
@@ -759,7 +759,7 @@ CONTAINS
               localError="The interpolation type of "// &
                 & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
                 & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+                & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)          
             END SELECT
           ENDDO !elementIdx
@@ -772,21 +772,21 @@ CONTAINS
             IF(colElementNumber<1.AND.colElementNumber>elementsTopology%totalNumberOfElements) THEN
               localError="Column element number "//TRIM(NumberToVString(colElementNumber,"*",err,error))// &
                 & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+                & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%variableType,"*",err,error))// &
                 & ". The element number must be between 1 and "// &
                 & TRIM(NumberToVString(elementsTopology%totalNumberOfElements,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
             SELECT CASE(colsFieldVariable%components(componentIdx)%interpolationType)
             CASE(FIELD_CONSTANT_INTERPOLATION)
-              localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-              globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+              localDOFIdx=colsFieldVariable%components(componentIdx)%paramToDOFMap%constantParam2DOFMap
+              globalDOFIdx=colsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
               elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
               elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
             CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-              localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP% &
+              localDOFIdx=colsFieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap% &
                 & elements(colElementNumber)
-              globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+              globalDOFIdx=colsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
               elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
               elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
             CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -796,9 +796,9 @@ CONTAINS
                 DO derivativeIdx=1,basis%numberOfDerivatives(localNodeIdx)
                   derivative=elementsTopology%elements(colElementNumber)%elementDerivatives(derivativeIdx,localNodeIdx)
                   version=elementsTopology%elements(colElementNumber)%elementVersions(derivativeIdx,localNodeIdx)
-                  localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
+                  localDOFIdx=colsFieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap%NODES(node)% &
                     & derivatives(derivative)%versions(version)
-                  globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+                  globalDOFIdx=colsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
                   elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
                   elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
                 ENDDO !derivativeIdx
@@ -811,9 +811,9 @@ CONTAINS
               decompositionData=>colsFieldVariable%components(componentIdx)%domain%decomposition%topology%dataPoints
               DO dataPointIdx=1,decompositionData%elementDataPoints(colElementNumber)%numberOfProjectedData
                 localDataPointNumber=decompositionData%elementDataPoints(colElementNumber)%dataIndices(dataPointIdx)%localNumber
-                localDOFIdx=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-                  & DATA_POINTS(localDataPointNumber)
-                globalDOFIdx=colsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localDOFIdx)
+                localDOFIdx=colsFieldVariable%components(componentIdx)%paramToDOFMap%dataPointParam2DOFMap% &
+                  & dataPoints(localDataPointNumber)
+                globalDOFIdx=colsFieldVariable%domainMapping%localToGlobalMap(localDOFIdx)
                 elementMatrix%numberOfColumns=elementMatrix%numberOfColumns+1
                 elementMatrix%columnDOFS(elementMatrix%numberOfColumns)=globalDOFIdx
               ENDDO !dataPointIdx
@@ -821,7 +821,7 @@ CONTAINS
               localError="The interpolation type of "// &
                 & TRIM(NumberToVString(colsFieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
                 & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-                & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+                & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%variableType,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)          
             END SELECT
           ENDDO !elementIdx
@@ -903,8 +903,8 @@ CONTAINS
 
     !Argument variables
     TYPE(ElementMatrixType) :: elementMatrix !<The element matrix to setup
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: columnsFieldVariable !<A pointer to the field variable associated with the columns
+    TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FieldVariableType), POINTER :: columnsFieldVariable !<A pointer to the field variable associated with the columns
     INTEGER(INTG), INTENT(IN)  :: rowsNumberOfElements !<Number of elements in the row variables whose dofs are present in this element matrix
     INTEGER(INTG), INTENT(IN)  :: colsNumberOfElements !<Number of elements in the col variables whose dofs are present in this element matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -959,7 +959,7 @@ CONTAINS
     TYPE(ElementVectorType) :: elementVector !<The element vector to calculate.
     LOGICAL :: updateVector !<Is .TRUE. if the element vector is to be updated, .FALSE. if not.
     INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculate
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -981,18 +981,18 @@ CONTAINS
         IF(elementNumber<1.OR.elementNumber>elementsTopology%totalNumberOfElements) THEN
           localError="Element number "//TRIM(NumberToVString(elementNumber,"*",err,error))// &
             & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))// &
             & ". The element number must be between 1 and "// &
             & TRIM(NumberToVString(elementsTopology%totalNumberOfElements,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
         SELECT CASE(rowsFieldVariable%components(componentIdx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
-          localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+          localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%constantParam2DOFMap
           elementVector%numberOfRows=elementVector%numberOfRows+1
           elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-          localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(elementNumber)
+          localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(elementNumber)
           elementVector%numberOfRows=elementVector%numberOfRows+1
           elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
         CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -1002,7 +1002,7 @@ CONTAINS
             DO derivativeIdx=1,basis%numberOfDerivatives(localNodeIdx)
               derivative=elementsTopology%elements(elementNumber)%elementDerivatives(derivativeIdx,localNodeIdx)
               version=elementsTopology%elements(elementNumber)%elementVersions(derivativeIdx,localNodeIdx)
-              localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(node)% &
+              localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap%nodes(node)% &
                 & derivatives(derivative)%versions(version)
               elementVector%numberOfRows=elementVector%numberOfRows+1
               elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
@@ -1017,8 +1017,8 @@ CONTAINS
           DO dataPointIdx=1,decompositionData%elementDataPoints(elementNumber)%numberOfProjectedData
             localDataPointNumber=decompositionData%elementDataPoints(elementNumber)% &
               & dataIndices(dataPointIdx)%localNumber
-            localDOFIdx=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%DATA_POINT_PARAM2DOF_MAP% &
-              & DATA_POINTS(localDataPointNumber)
+            localDOFIdx=rowsFieldVariable%components(componentIdx)%paramToDOFMap%dataPointParam2DOFMap% &
+              & dataPoints(localDataPointNumber)
             elementVector%numberOfRows=elementVector%numberOfRows+1
             elementVector%rowDOFS(elementVector%numberOfRows)=localDOFIdx
           ENDDO !dataPointIdx
@@ -1026,7 +1026,7 @@ CONTAINS
           localError="The interpolation type of "// &
             & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
             & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)          
         END SELECT
       ENDDO !componentIdx
@@ -1099,7 +1099,7 @@ CONTAINS
 
     !Argument variables
     TYPE(ElementVectorType) :: elementVector !<The element vector to setup
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1288,7 +1288,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable,colFieldVariable
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_ElementCalculate()")
@@ -1406,7 +1406,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable,colFieldVariable
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_START("EquationsMatrices_NodalCalculate()")
@@ -1511,8 +1511,8 @@ CONTAINS
     LOGICAL :: updateMatrix !<Is .TRUE. if the nodal matrix is to be updated, .FALSE. if not.
     INTEGER(INTG), INTENT(IN) :: rowNodeNumber !<The row nodal number to calculate
     INTEGER(INTG), INTENT(IN) :: columnNodeNumber !<The column nodal number to calculate
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: colsFieldVariable !<A pointer to the field variable associated with the columns
+    TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FieldVariableType), POINTER :: colsFieldVariable !<A pointer to the field variable associated with the columns
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1537,22 +1537,22 @@ CONTAINS
           IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%totalNumberOfNodes) THEN
             localError="Nodal number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
               & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))// &
               & ". The nodal number must be between 1 and "// &
               & TRIM(NumberToVString(nodesTopology%totalNumberOfNodes,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           ENDIF
           SELECT CASE(rowsFieldVariable%components(componentIdx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
-            localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-            globalRow=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localRow)
+            localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%constantParam2DOFMap
+            globalRow=rowsFieldVariable%domainMapping%localToGlobalMap(localRow)
             nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
             nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
             nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
             nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalRow
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(rowNodeNumber)
-            globalRow=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localRow)
+            localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(rowNodeNumber)
+            globalRow=rowsFieldVariable%domainMapping%localToGlobalMap(localRow)
             nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
             nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
             nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
@@ -1564,9 +1564,9 @@ CONTAINS
               numberOfVersions=rowsFieldVariable%components(componentIdx)%domain%topology%NODES%NODES(rowNodeNumber)% &
                 & derivatives(derivativeIdx)%numberOfVersions
               DO versionIdx=1,numberOfVersions
-                localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
+                localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% & 
                   & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
-                globalRow=rowsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localRow)
+                globalRow=rowsFieldVariable%domainMapping%localToGlobalMap(localRow)
                 nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
                 nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
                 nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
@@ -1581,7 +1581,7 @@ CONTAINS
             localError="The interpolation type of "// &
               & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
               & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)          
           END SELECT
         ENDDO !componentIdx
@@ -1593,18 +1593,18 @@ CONTAINS
           IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%totalNumberOfNodes) THEN
             localError="Row nodal number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
               & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))// &
               & ". The nodal number must be between 1 and "// &
               & TRIM(NumberToVString(nodesTopology%totalNumberOfNodes,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           ENDIF
           SELECT CASE(rowsFieldVariable%components(componentIdx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
-            localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+            localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%constantParam2DOFMap
             nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
             nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(rowNodeNumber)
+            localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(rowNodeNumber)
             nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
             nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
           CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -1614,7 +1614,7 @@ CONTAINS
               numberOfVersions=colsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
                 & derivatives(derivativeIdx)%numberOfVersions
               DO versionIdx=1,numberOfVersions
-                localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
+                localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% & 
                   & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
                 nodalMatrix%numberOfRows=nodalMatrix%numberOfRows+1
                 nodalMatrix%rowDofs(nodalMatrix%numberOfRows)=localRow
@@ -1628,7 +1628,7 @@ CONTAINS
             localError="The interpolation type of "// &
               & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
               & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+              & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)          
           END SELECT
         ENDDO !componentIdx
@@ -1638,20 +1638,20 @@ CONTAINS
           IF(columnNodeNumber<1.OR.columnNodeNumber>nodesTopology%totalNumberOfNodes) THEN
             localError="Column nodal number "//TRIM(NumberToVString(columnNodeNumber,"*",err,error))// &
               & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-              & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+              & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%variableType,"*",err,error))// &
               & ". The nodal number must be between 1 and "// &
               & TRIM(NumberToVString(nodesTopology%totalNumberOfNodes,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)
           ENDIF
           SELECT CASE(colsFieldVariable%components(componentIdx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
-            localColumn=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
-            globalColumn=colsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)
+            localColumn=colsFieldVariable%components(componentIdx)%paramToDOFMap%constantParam2DOFMap
+            globalColumn=colsFieldVariable%domainMapping%localToGlobalMap(localColumn)
             nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
             nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            localColumn=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(columnNodeNumber)
-            globalColumn=colsFieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)
+            localColumn=colsFieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(columnNodeNumber)
+            globalColumn=colsFieldVariable%domainMapping%localToGlobalMap(localColumn)
             nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
             nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=globalColumn
           CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -1661,7 +1661,7 @@ CONTAINS
               numberOfVersions=colsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
                 & derivatives(derivativeIdx)%numberOfVersions
               DO versionIdx=1,numberOfVersions
-                localRow=colsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
+                localRow=colsFieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% & 
                   & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
                 nodalMatrix%numberOfColumns=nodalMatrix%numberOfColumns+1
                 nodalMatrix%columnDofs(nodalMatrix%numberOfColumns)=localRow
@@ -1675,7 +1675,7 @@ CONTAINS
             localError="The interpolation type of "// &
               & TRIM(NumberToVString(colsFieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
               & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-              & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+              & " of column field variable type "//TRIM(NumberToVString(colsFieldVariable%variableType,"*",err,error))//"."
             CALL FlagError(localError,err,error,*999)          
           END SELECT
         ENDDO !componentIdx
@@ -1701,7 +1701,7 @@ CONTAINS
     TYPE(NodalVectorType) :: nodalVector !<The nodal vector to calculate.
     LOGICAL :: updateVector !<Is .TRUE. if the nodal vector is to be updated, .FALSE. if not.
     INTEGER(INTG), INTENT(IN) :: rowNodeNumber !<The nodal number to calculate
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1722,18 +1722,18 @@ CONTAINS
         IF(rowNodeNumber<1.OR.rowNodeNumber>nodesTopology%totalNumberOfNodes) THEN
           localError="Node number "//TRIM(NumberToVString(rowNodeNumber,"*",err,error))// &
             & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))// &
+            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))// &
             & ". The nodal number must be between 1 and "// &
             & TRIM(NumberToVString(nodesTopology%totalNumberOfNodes,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
         SELECT CASE(rowsFieldVariable%components(componentIdx)%interpolationType)
         CASE(FIELD_CONSTANT_INTERPOLATION)
-          localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP
+          localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%constantParam2DOFMap
           nodalVector%numberOfRows=nodalVector%numberOfRows+1
           nodalVector%rowDofs(nodalVector%numberOfRows)=localRow
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-          localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(rowNodeNumber)
+          localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(rowNodeNumber)
           nodalVector%numberOfRows=nodalVector%numberOfRows+1
           nodalVector%rowDofs(nodalVector%numberOfRows)=localRow
         CASE(FIELD_NODE_BASED_INTERPOLATION)
@@ -1743,7 +1743,7 @@ CONTAINS
             numberOfVersions=rowsFieldVariable%components(componentIdx)%domain%topology%nodes%nodes(rowNodeNumber)% &
               & derivatives(derivativeIdx)%numberOfVersions
             DO versionIdx=1,numberOfVersions
-              localRow=rowsFieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% & 
+              localRow=rowsFieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% & 
                 & nodes(rowNodeNumber)%derivatives(derivativeIdx)%versions(versionIdx)
               nodalVector%numberOfRows=nodalVector%numberOfRows+1
               nodalVector%rowDofs(nodalVector%numberOfRows)=localRow
@@ -1757,7 +1757,7 @@ CONTAINS
           localError="The interpolation type of "// &
             & TRIM(NumberToVString(rowsFieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
             & " is invalid for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
-            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%VARIABLE_TYPE,"*",err,error))//"."
+            & " of rows field variable type "//TRIM(NumberToVString(rowsFieldVariable%variableType,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)          
         END SELECT
       ENDDO !componentIdx
@@ -1928,7 +1928,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable,colFieldVariable
     
     ENTERS("EquationsMatrices_NodalInitialise",err,error,*999)
 
@@ -2023,8 +2023,8 @@ CONTAINS
 
     !Argument variables
     TYPE(NodalMatrixType) :: nodalMatrix !<The nodal matrix to setup
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: colsFieldVariable !<A pointer to the field variable associated with the columns
+    TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FieldVariableType), POINTER :: colsFieldVariable !<A pointer to the field variable associated with the columns
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2065,7 +2065,7 @@ CONTAINS
 
     !Argument variables
     TYPE(NodalVectorType) :: nodalVector !<The nodal vector to setup
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
+    TYPE(FieldVariableType), POINTER :: rowsFieldVariable !<A pointer to the field variable associated with the rows
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2431,7 +2431,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,colFieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable,colFieldVariable
     
     ENTERS("EquationsMatrices_ElementInitialise",err,error,*999)
 
@@ -4251,9 +4251,9 @@ CONTAINS
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE), POINTER :: dependentDofsParamMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError
     
@@ -4295,10 +4295,10 @@ CONTAINS
       fieldVariable=>linearMapping%equationsMatrixToVarMaps(matrixNumber)%variable
     ENDIF
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Dependent field variable is not associated.",err,error,*998)          
-    dependentDofsDomainMapping=>fieldVariable%DOMAIN_MAPPING
+    dependentDofsDomainMapping=>fieldVariable%domainMapping
     IF(.NOT.ASSOCIATED(dependentDofsDomainMapping)) &
       & CALL FlagError("Dependent dofs domain mapping is not associated.",err,error,*998)
-    dependentDofsParamMapping=>fieldVariable%DOF_TO_PARAM_MAP
+    dependentDofsParamMapping=>fieldVariable%dofToParamMap
     IF(.NOT.ASSOCIATED(dependentDofsParamMapping)) &
       & CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*998)
     
@@ -4320,13 +4320,13 @@ CONTAINS
         !First, loop over the rows and calculate the number of non-zeros
         numberOfNonZeros=0
         DO localDOFIdx=1,dependentDofsDomainMapping%totalNumberOfLocal
-          IF(dependentDofsParamMapping%DOF_TYPE(1,localDOFIdx)/=FIELD_NODE_DOF_TYPE) THEN
+          IF(dependentDofsParamMapping%DOFType(1,localDOFIdx)/=FIELD_NODE_DOF_TYPE) THEN
             localError="Local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" is not a node based DOF."
             CALL FlagError(localError,err,error,*999)
           ENDIF
-          dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDOFIdx) !value for a particular field dof (localDOFIdx)
-          node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx) !node number of the field parameter
-          component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx) !component number of the field parameter
+          dofIdx=dependentDofsParamMapping%DOFType(2,localDOFIdx) !value for a particular field dof (localDOFIdx)
+          node=dependentDofsParamMapping%nodeDOF2ParamMap(3,dofIdx) !node number of the field parameter
+          component=dependentDofsParamMapping%nodeDOF2ParamMap(4,dofIdx) !component number of the field parameter
           domainNodes=>fieldVariable%components(component)%domain%topology%nodes          
           !Set up list
           NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
@@ -4348,9 +4348,9 @@ CONTAINS
                   derivative=domainElements%elements(element)%elementDerivatives(derivativeIdx,localNodeIdx)
                   version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
                   !Find the local and global column and add the global column to the indices list
-                  localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
+                  localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% &
                     & nodes(node2)%derivatives(derivative)%versions(version)
-                  globalColumn=fieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)
+                  globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
                   
                   CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
                   
@@ -4383,13 +4383,13 @@ CONTAINS
         !First, loop over the rows and calculate the number of non-zeros
         numberOfNonZeros=0
         DO localDofIdx=1,dependentDofsDomainMapping%totalNumberOfLocal
-          IF(dependentDofsParamMapping%DOF_TYPE(1,localDOFIdx)/=FIELD_NODE_DOF_TYPE) THEN
+          IF(dependentDofsParamMapping%DOFType(1,localDOFIdx)/=FIELD_NODE_DOF_TYPE) THEN
             localError="Local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" is not a node based DOF."
             CALL FlagError(localError,err,error,*999)
           ENDIF
-          dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDofIdx)!value for a particular field dof (localDofIdx)
-          node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx)!node number (node) of the field parameter
-          component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx)!component number (component) of the field parameter
+          dofIdx=dependentDofsParamMapping%DOFType(2,localDofIdx)!value for a particular field dof (localDofIdx)
+          node=dependentDofsParamMapping%nodeDOF2ParamMap(3,dofIdx)!node number (node) of the field parameter
+          component=dependentDofsParamMapping%nodeDOF2ParamMap(4,dofIdx)!component number (component) of the field parameter
           domainNodes=>fieldVariable%components(component)%domain%topology%NODES
           
           !Set up list
@@ -4406,9 +4406,9 @@ CONTAINS
               numberOfVersions=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)% &
                 & derivatives(derivativeIdx)%numberOfVersions
               DO versionIdx=1,numberOfVersions
-                localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
+                localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% &
                   & nodes(node)%derivatives(derivativeIdx)%versions(versionIdx)
-                globalColumn=fieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)
+                globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
                 
                 CALL List_ItemAdd(columnIndicesLists(localDofIdx)%ptr,globalColumn,err,error,*999)
                 
@@ -4460,9 +4460,9 @@ CONTAINS
               localDOF = localColumn
             ENDIF
           ENDIF
-          dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDOF)
-          node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx)
-          component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx)
+          dofIdx=dependentDofsParamMapping%DOFType(2,localDOF)
+          node=dependentDofsParamMapping%nodeDOF2ParamMap(3,dofIdx)
+          component=dependentDofsParamMapping%nodeDOF2ParamMap(4,dofIdx)
           domainNodes=>fieldVariable%components(component)%domain%topology%NODES
           
           !Check whether boundary node    
@@ -4541,9 +4541,9 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: NONlinearMatrices
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE), POINTER :: dependentDofsParamMapping,rowDofsParamMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,rowVariable
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping,rowDofsParamMapping
+    TYPE(FieldVariableType), POINTER :: fieldVariable,rowVariable
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -4572,10 +4572,10 @@ CONTAINS
     CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*998)
     fieldVariable=>nonlinearMapping%jacobianToVarMap(matrixNumber)%VARIABLE
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Dependent field variable is not associated.",err,error,*998)          
-    dependentDofsDomainMapping=>fieldVariable%DOMAIN_MAPPING
+    dependentDofsDomainMapping=>fieldVariable%domainMapping
     IF(.NOT.ASSOCIATED(dependentDofsDomainMapping)) &
       & CALL FlagError("Dependent dofs domain mapping is not associated.",err,error,*998)
-    dependentDofsParamMapping=>fieldVariable%DOF_TO_PARAM_MAP
+    dependentDofsParamMapping=>fieldVariable%dofToParamMap
     IF(.NOT.ASSOCIATED(dependentDofsParamMapping)) &
       & CALL FlagError("Dependent dofs parameter mapping is not associated.",err,error,*998)
     !If RHS variable exists, use this for row DOFs, else use the first nonlinear variable
@@ -4585,8 +4585,8 @@ CONTAINS
       rowVariable=>nonlinearMapping%jacobianToVarMap(1)%VARIABLE
     ENDIF
     IF(.NOT.ASSOCIATED(rowVariable)) CALL FlagError("RHS or first nonlinear variable is not associated",err,error,*999)
-    rowDofsDomainMapping=>rowVariable%DOMAIN_MAPPING
-    rowDofsParamMapping=>rowVariable%DOF_TO_PARAM_MAP      
+    rowDofsDomainMapping=>rowVariable%domainMapping
+    rowDofsParamMapping=>rowVariable%dofToParamMap      
     IF(.NOT.ASSOCIATED(rowDofsDomainMapping)) CALL FlagError("Row dofs domain mapping is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(rowDofsParamMapping)) CALL FlagError("Row dofs parameter mapping is not associated.",err,error,*999)
     
@@ -4606,13 +4606,13 @@ CONTAINS
         !First, loop over the rows and calculate the number of non-zeros
         numberOfNonZeros=0
         DO localDOFIdx=1,rowDofsDomainMapping%totalNumberOfLocal
-          SELECT CASE(rowDofsParamMapping%DOF_TYPE(1,localDOFIdx))
+          SELECT CASE(rowDofsParamMapping%DOFType(1,localDOFIdx))
           CASE(FIELD_CONSTANT_INTERPOLATION)
             CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
           CASE(FIELD_NODE_DOF_TYPE)
-            dofIdx=rowDofsParamMapping%DOF_TYPE(2,localDOFIdx)
-            node=rowDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx) !node number
-            component=rowDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx) !component number
+            dofIdx=rowDofsParamMapping%DOFType(2,localDOFIdx)
+            node=rowDofsParamMapping%nodeDOF2ParamMap(3,dofIdx) !node number
+            component=rowDofsParamMapping%nodeDOF2ParamMap(4,dofIdx) !component number
             domainNodes=>rowVariable%components(component)%domain%topology%nodes
             !Set up list
             NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
@@ -4631,8 +4631,8 @@ CONTAINS
                   ! do nothing? this will probably never be encountered...?
                   CALL FlagError("Not implemented?",err,error,*999)
                 CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                  localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(element)
-                  globalColumn=fieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)
+                  localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(element)
+                  globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
                   CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
                 CASE(FIELD_NODE_BASED_INTERPOLATION)
                   domainElements=>fieldVariable%components(componentIdx)%domain%topology%elements
@@ -4643,9 +4643,9 @@ CONTAINS
                       derivative=domainElements%elements(element)%elementDerivatives(derivativeIdx,localNodeIdx)
                       version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
                       !Find the local and global column and add the global column to the indices list
-                      localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP% &
-                        & NODE_PARAM2DOF_MAP%NODES(node2)%derivatives(derivative)%versions(version)
-                      globalColumn=fieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)
+                      localColumn=fieldVariable%components(componentIdx)%paramToDOFMap% &
+                        & nodeParam2DOFMap%NODES(node2)%derivatives(derivative)%versions(version)
+                      globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
                       CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
                     ENDDO !derivative
                   ENDDO !localNodeIdx
@@ -4669,9 +4669,9 @@ CONTAINS
             rowIndices(localDOFIdx+1)=numberOfNonZeros+1
           CASE(FIELD_ELEMENT_DOF_TYPE)
             ! row corresponds to a variable that's element-wisely interpolated
-            dofIdx=rowDofsParamMapping%DOF_TYPE(2,localDOFIdx)          ! dofIdx = index in ELEMENT_DOF2PARAM_MAP
-            element=rowDofsParamMapping%ELEMENT_DOF2PARAM_MAP(1,dofIdx)   ! current element (i.e. corresponds to current dof)
-            component=rowDofsParamMapping%ELEMENT_DOF2PARAM_MAP(2,dofIdx)   ! current variable component
+            dofIdx=rowDofsParamMapping%DOFType(2,localDOFIdx)          ! dofIdx = index in elementDOF2ParamMap
+            element=rowDofsParamMapping%elementDOF2ParamMap(1,dofIdx)   ! current element (i.e. corresponds to current dof)
+            component=rowDofsParamMapping%elementDOF2ParamMap(2,dofIdx)   ! current variable component
             domainElements=>rowVariable%components(component)%domain%topology%ELEMENTS
             basis=>domainElements%elements(element)%BASIS
             !Set up list
@@ -4690,8 +4690,8 @@ CONTAINS
               CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
                 ! it's assumed that element-based variables arne't directly coupled
                 ! put a diagonal entry
-                localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(element)
-                globalColumn=fieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)
+                localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(element)
+                globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
                 CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
               CASE(FIELD_NODE_BASED_INTERPOLATION)
                 ! loop over all nodes in the element (and dofs belonging to them)
@@ -4701,9 +4701,9 @@ CONTAINS
                     derivative=domainElements2%elements(element)%elementDerivatives(derivativeIdx,localNodeIdx)
                     version=domainElements2%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
                     !Find the local and global column and add the global column to the indices list
-                    localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
+                    localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% &
                       & nodes(node2)%derivatives(derivative)%versions(version)
-                    globalColumn=fieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)
+                    globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
                     CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
                   ENDDO !derivativeIdx
                 ENDDO !localNodeIdx
@@ -4748,13 +4748,13 @@ CONTAINS
         !First, loop over the rows and calculate the number of non-zeros
         numberOfNonZeros=0
         DO localDofIdx=1,rowDofsDomainMapping%totalNumberOfLocal
-          SELECT CASE(rowDofsParamMapping%DOF_TYPE(1,localDofIdx))
+          SELECT CASE(rowDofsParamMapping%DOFType(1,localDofIdx))
           CASE(FIELD_CONSTANT_INTERPOLATION)
             CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
           CASE(FIELD_NODE_DOF_TYPE)
-            dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDofIdx)!value for a particular field dof (localDofIdx)
-            node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx)!node number (node) of the field parameter
-            component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx)!component number (component) of the field parameter
+            dofIdx=dependentDofsParamMapping%DOFType(2,localDofIdx)!value for a particular field dof (localDofIdx)
+            node=dependentDofsParamMapping%nodeDOF2ParamMap(3,dofIdx)!node number (node) of the field parameter
+            component=dependentDofsParamMapping%nodeDOF2ParamMap(4,dofIdx)!component number (component) of the field parameter
             domainNodes=>fieldVariable%components(component)%domain%topology%NODES            
             !Set up list
             NULLIFY(columnIndicesLists(localDofIdx)%ptr)
@@ -4772,9 +4772,9 @@ CONTAINS
                   numberOfVersions=fieldVariable%components(componentIdx)%domain%topology%nodes%nodes(node)% &
                     & derivatives(derivativeIdx)%numberOfVersions
                   DO versionIdx=1,numberOfVersions
-                    localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%nodes(node)% &
+                    localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap%nodes(node)% &
                       & derivatives(derivativeIdx)%versions(versionIdx)
-                    globalColumn=fieldVariable%DOMAIN_MAPPING%localToGlobalMap(localColumn)                    
+                    globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)                    
                     CALL List_ItemAdd(columnIndicesLists(localDofIdx)%ptr,globalColumn,err,error,*999)                    
                   ENDDO !versionIdx
                 ENDDO !derivativeIdx

@@ -299,7 +299,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: matrixIdx,rowsElementNumber,rowsMeshIdx
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: colsFieldVariable,rowsFieldVariable
+    TYPE(FieldVariableType), POINTER :: colsFieldVariable,rowsFieldVariable
     TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
@@ -509,7 +509,7 @@ CONTAINS
     TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
     TYPE(INTERFACE_RHS_TYPE), POINTER :: rhsVector
     TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: rhsMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: colsFieldVariable,rowsFieldVariable
+    TYPE(FieldVariableType), POINTER :: colsFieldVariable,rowsFieldVariable
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("InterfaceMatrices_ElementInitialise",err,error,*999)
@@ -679,8 +679,8 @@ CONTAINS
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
     TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
     TYPE(InterfaceMeshConnectivityType), POINTER :: MESH_CONNECTIVITY
-    TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE), POINTER :: COLUMN_DOFS_PARAM_MAPPING,ROW_DOFS_PARAM_MAPPING
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: COLUMN_VARIABLE,ROW_VARIABLE
+    TYPE(FieldDOFToParamMapType), POINTER :: COLUMN_DOFS_PARAM_MAPPING,ROW_DOFS_PARAM_MAPPING
+    TYPE(FieldVariableType), POINTER :: COLUMN_VARIABLE,ROW_VARIABLE
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: COLUMN_INDICES_LISTS(:)
     TYPE(LIST_PTR_TYPE), ALLOCATABLE :: TRANSPOSE_COLUMN_INDICES_LISTS(:)
     TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
@@ -717,13 +717,13 @@ CONTAINS
                               IF(ASSOCIATED(ROW_VARIABLE)) THEN
                                 COLUMN_VARIABLE=>INTERFACE_MAPPING%LAGRANGE_VARIABLE
                                 IF(ASSOCIATED(COLUMN_VARIABLE)) THEN
-                                  ROW_DOFS_DOMAIN_MAPPING=>ROW_VARIABLE%DOMAIN_MAPPING
+                                  ROW_DOFS_DOMAIN_MAPPING=>ROW_VARIABLE%domainMapping
                                   IF(ASSOCIATED(ROW_DOFS_DOMAIN_MAPPING)) THEN
-                                    COLUMN_DOFS_DOMAIN_MAPPING=>COLUMN_VARIABLE%DOMAIN_MAPPING
+                                    COLUMN_DOFS_DOMAIN_MAPPING=>COLUMN_VARIABLE%domainMapping
                                     IF(ASSOCIATED(COLUMN_DOFS_DOMAIN_MAPPING)) THEN
-                                      ROW_DOFS_PARAM_MAPPING=>ROW_VARIABLE%DOF_TO_PARAM_MAP
+                                      ROW_DOFS_PARAM_MAPPING=>ROW_VARIABLE%dofToParamMap
                                       IF(ASSOCIATED(ROW_DOFS_PARAM_MAPPING)) THEN
-                                        COLUMN_DOFS_PARAM_MAPPING=>COLUMN_VARIABLE%DOF_TO_PARAM_MAP
+                                        COLUMN_DOFS_PARAM_MAPPING=>COLUMN_VARIABLE%dofToParamMap
                                         IF(ASSOCIATED(COLUMN_DOFS_PARAM_MAPPING)) THEN
                                           !Allocate lists
                                           ALLOCATE(COLUMN_INDICES_LISTS(ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal),STAT=ERR)
@@ -782,20 +782,20 @@ CONTAINS
                                                       & elementDerivatives(column_local_derivative_idx,column_local_node_idx)
                                                     column_version=COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)% &
                                                       & elementVersions(column_local_derivative_idx,column_local_node_idx)
-                                                    local_column=COLUMN_VARIABLE%COMPONENTS(column_component_idx)% &
-                                                      & PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(column_node)% &
-                                                      & DERIVATIVES(column_derivative)%VERSIONS(column_version)
+                                                    CALL FieldVariable_LocalNodeDOFGet(COLUMN_VARIABLE,column_version, &
+                                                      & column_derivative,column_node,column_component_idx,local_column, &
+                                                      & err,error,*999)
                                                     global_column=COLUMN_DOFS_DOMAIN_MAPPING%localToGlobalMap(local_column)
                                                     !Loop over the components in the dependent variable
                                                     DO row_component_idx=1,ROW_VARIABLE%numberOfComponents
                                                       SELECT CASE(ROW_VARIABLE%COMPONENTS(row_component_idx)%interpolationType)
                                                       CASE(FIELD_CONSTANT_INTERPOLATION)
-                                                        local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)%PARAM_TO_DOF_MAP% &
-                                                          & CONSTANT_PARAM2DOF_MAP
+                                                        CALL FieldVariable_ConstantDOFGet(ROW_VARIABLE,row_component_idx, &
+                                                          & local_row,err,error,*999)
                                                         CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                           & ERR,ERROR,*999)
                                                         IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                          global_row=ROW_VARIABLE%DOMAIN_MAPPING%localToGlobalMap(local_row)
+                                                          global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
                                                           CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                             & global_row,ERR,ERROR,*999)
                                                         ENDIF
@@ -803,12 +803,12 @@ CONTAINS
                                                         domain_element=MESH_CONNECTIVITY% &
                                                           & elementConnectivity(interface_element_idx,INTERFACE_MESH_INDEX)% &
                                                           & coupledMeshElementNumber
-                                                        local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)%PARAM_TO_DOF_MAP% &
-                                                          & ELEMENT_PARAM2DOF_MAP%ELEMENTS(domain_element)
+                                                        CALL FieldVariable_LocalElementDOFGet(ROW_VARIABLE,domain_element, &
+                                                          & row_component_idx,local_row,err,error,*999)
                                                         CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                           & ERR,ERROR,*999)
                                                         IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                          global_row=ROW_VARIABLE%DOMAIN_MAPPING%localToGlobalMap(local_row)
+                                                          global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
                                                           CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                             & global_row,ERR,ERROR,*999)
                                                         ENDIF
@@ -828,13 +828,13 @@ CONTAINS
                                                               & elementDerivatives(row_local_derivative_idx,row_local_node_idx)
                                                             row_version=ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)% &
                                                               & elementVersions(row_local_derivative_idx,row_local_node_idx)
-                                                            local_row=ROW_VARIABLE%COMPONENTS(row_component_idx)% &
-                                                              & PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(row_node)% &
-                                                              & DERIVATIVES(row_derivative)%VERSIONS(row_version)
+                                                            CALL FieldVariable_LocalNodeDOFGet(ROW_VARIABLE,row_version, &
+                                                              & row_derivative,row_node,row_component_idx,local_row, &
+                                                              & err,error,*999)
                                                             CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                               & ERR,ERROR,*999)
                                                             IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                              global_row=ROW_VARIABLE%DOMAIN_MAPPING%localToGlobalMap(local_row)
+                                                              global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
                                                               CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                                 & global_row,ERR,ERROR,*999)
                                                             ENDIF

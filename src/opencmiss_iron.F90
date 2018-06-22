@@ -220,13 +220,13 @@ MODULE OpenCMISS_Iron
  !>Contains information for a field defined on a region.
  TYPE cmfe_FieldType
    PRIVATE
-   TYPE(FIELD_TYPE), POINTER :: field
+   TYPE(FieldType), POINTER :: field
  END TYPE cmfe_FieldType
 
  !>Contains information for a fields defined on a region.
  TYPE cmfe_FieldsType
    !PRIVATE
-   TYPE(FIELDS_TYPE), POINTER :: fields
+   TYPE(FieldsType), POINTER :: fields
  END TYPE cmfe_FieldsType
 
  !>Contains information on a generated mesh.
@@ -9986,7 +9986,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10058,7 +10058,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10140,7 +10140,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10223,7 +10223,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10303,7 +10303,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10378,7 +10378,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10454,7 +10454,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10528,7 +10528,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10601,7 +10601,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10675,7 +10675,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10751,7 +10751,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10831,7 +10831,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10910,7 +10910,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -10988,7 +10988,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -11066,7 +11066,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -11144,7 +11144,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -11222,7 +11222,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -11300,7 +11300,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -11378,7 +11378,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -13099,7 +13099,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -13191,7 +13191,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -13283,7 +13283,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -13377,7 +13377,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -13474,7 +13474,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -13573,7 +13573,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -13637,7 +13637,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -13854,7 +13854,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
@@ -14408,7 +14408,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -14505,7 +14505,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -14602,7 +14602,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -14699,7 +14699,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15427,7 +15427,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15508,7 +15508,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15670,7 +15670,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -15751,7 +15751,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -16102,7 +16102,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -16185,7 +16185,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -16348,7 +16348,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -16431,7 +16431,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(CELLML_TYPE), POINTER :: cellml
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -22526,7 +22526,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(FIELD_TYPE), POINTER :: projectionField
+    TYPE(FieldType), POINTER :: projectionField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -22675,7 +22675,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -22728,7 +22728,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: parentRegion
     TYPE(RegionsType), POINTER :: regions
@@ -28550,7 +28550,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: analyticField
+    TYPE(FieldType), POINTER :: analyticField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29096,7 +29096,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: geometryFibreField,equationsSetField
+    TYPE(FieldType), POINTER :: geometryFibreField,equationsSetField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29251,7 +29251,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: derivedField
+    TYPE(FieldType), POINTER :: derivedField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -29653,7 +29653,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30054,7 +30054,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: independentField
+    TYPE(FieldType), POINTER :: independentField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30521,7 +30521,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: materialsField
+    TYPE(FieldType), POINTER :: materialsField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -30989,7 +30989,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: sourceField
+    TYPE(FieldType), POINTER :: sourceField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31556,7 +31556,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31627,7 +31627,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31698,7 +31698,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31769,7 +31769,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31840,7 +31840,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31911,7 +31911,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -31982,7 +31982,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32053,7 +32053,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32125,7 +32125,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32198,7 +32198,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32271,7 +32271,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32344,7 +32344,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32414,7 +32414,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32482,7 +32482,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32550,7 +32550,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32618,7 +32618,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32684,7 +32684,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32756,7 +32756,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32857,7 +32857,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32923,7 +32923,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -32988,7 +32988,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33054,7 +33054,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33122,7 +33122,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33189,7 +33189,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field,geometricField
+    TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33257,7 +33257,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field,geometricField
+    TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33328,7 +33328,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: geometricField
+    TYPE(FieldType), POINTER :: geometricField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33402,7 +33402,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: geometricField
+    TYPE(FieldType), POINTER :: geometricField
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33479,7 +33479,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33558,7 +33558,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33630,7 +33630,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33709,7 +33709,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33788,7 +33788,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33858,7 +33858,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33924,7 +33924,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -33990,7 +33990,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -34056,7 +34056,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34126,7 +34126,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34201,7 +34201,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34272,7 +34272,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(MeshType), POINTER :: mesh
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -34347,7 +34347,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34419,7 +34419,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34488,7 +34488,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34555,7 +34555,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34621,7 +34621,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34691,7 +34691,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34765,7 +34765,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34838,7 +34838,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34911,7 +34911,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -34985,7 +34985,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35061,7 +35061,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35137,7 +35137,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35213,7 +35213,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35290,7 +35290,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35372,7 +35372,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35454,7 +35454,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35536,7 +35536,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35619,7 +35619,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35701,7 +35701,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35783,7 +35783,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35865,7 +35865,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -35941,7 +35941,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36009,7 +36009,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36079,7 +36079,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36150,7 +36150,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36221,7 +36221,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36292,7 +36292,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36363,7 +36363,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36435,7 +36435,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36506,7 +36506,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36577,7 +36577,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36649,7 +36649,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36723,7 +36723,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36796,7 +36796,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36869,7 +36869,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -36944,7 +36944,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -36994,7 +36994,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37074,7 +37074,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -37124,7 +37124,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37203,7 +37203,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -37253,7 +37253,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37332,7 +37332,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -37381,7 +37381,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37458,7 +37458,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37534,7 +37534,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37610,7 +37610,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37686,7 +37686,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37764,7 +37764,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37846,7 +37846,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -37928,7 +37928,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38010,7 +38010,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38122,7 +38122,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38197,7 +38197,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38271,7 +38271,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38345,7 +38345,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38421,7 +38421,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -38471,7 +38471,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38552,7 +38552,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -38602,7 +38602,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38682,7 +38682,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -38732,7 +38732,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38812,7 +38812,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(InterfaceType), POINTER :: interface
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -38862,7 +38862,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -38941,7 +38941,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39020,7 +39020,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39099,7 +39099,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39178,7 +39178,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39287,7 +39287,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39361,7 +39361,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39444,7 +39444,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39527,7 +39527,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39610,7 +39610,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39720,7 +39720,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39804,7 +39804,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39888,7 +39888,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -39972,7 +39972,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40055,7 +40055,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40137,7 +40137,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40220,7 +40220,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40304,7 +40304,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40383,7 +40383,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40460,7 +40460,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: fromField,toField
+    TYPE(FieldType), POINTER :: fromField,toField
     TYPE(RegionType), POINTER :: fromRegion,toRegion
     TYPE(RegionsType), POINTER :: regions
 
@@ -40542,7 +40542,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40608,7 +40608,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40663,18 +40663,18 @@ CONTAINS
   !
 
   !>Returns the field type for a field identified by a user number.
-  SUBROUTINE cmfe_Field_TypeGetNumber(contextUserNumber,regionUserNumber,fieldUserNumber,fieldType,err)
+  SUBROUTINE cmfe_Field_TypeGetNumber(contextUserNumber,regionUserNumber,fieldUserNumber,fieldType_,err)
     !DLLEXPORT(cmfe_Field_TypeGetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to get the field type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to get the field type for.
-    INTEGER(INTG), INTENT(OUT) :: fieldType !<On return, the field type. \see OpenCMISS_FieldTypes
+    INTEGER(INTG), INTENT(OUT) :: fieldType_ !<On return, the field type. \see OpenCMISS_FieldTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40688,7 +40688,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_TYPE_GET(field,fieldType,err,error,*999)
+    CALL FIELD_TYPE_GET(field,fieldType_,err,error,*999)
 
     EXITS("cmfe_Field_TypeGetNumber")
     RETURN
@@ -40703,18 +40703,18 @@ CONTAINS
   !
 
   !>Returns the type for a field identified by an object.
-  SUBROUTINE cmfe_Field_TypeGetObj(field,fieldType,err)
+  SUBROUTINE cmfe_Field_TypeGetObj(field,fieldType_,err)
     !DLLEXPORT(cmfe_Field_TypeGetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to get the field type for.
-    INTEGER(INTG), INTENT(OUT) :: fieldType !<On return, the field type. \see OpenCMISS_FieldTypes
+    INTEGER(INTG), INTENT(OUT) :: fieldType_ !<On return, the field type. \see OpenCMISS_FieldTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Field_TypeGetObj",err,error,*999)
 
-    CALL FIELD_TYPE_GET(field%field,fieldType,err,error,*999)
+    CALL FIELD_TYPE_GET(field%field,fieldType_,err,error,*999)
 
     EXITS("cmfe_Field_TypeGetObj")
     RETURN
@@ -40729,18 +40729,18 @@ CONTAINS
   !
 
   !>Sets/changes the field type for a field identified by a user number.
-  SUBROUTINE cmfe_Field_TypeSetNumber(contextUserNumber,regionUserNumber,fieldUserNumber,fieldType,err)
+  SUBROUTINE cmfe_Field_TypeSetNumber(contextUserNumber,regionUserNumber,fieldUserNumber,fieldType_,err)
     !DLLEXPORT(cmfe_Field_TypeSetNumber)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the region.
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the field to set the field type for.
     INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to set the field type for.
-    INTEGER(INTG), INTENT(IN) :: fieldType !<The field type to set. \see OpenCMISS_FieldTypes
+    INTEGER(INTG), INTENT(IN) :: fieldType_ !<The field type to set. \see OpenCMISS_FieldTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40754,7 +40754,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
-    CALL FIELD_TYPE_SET(field,fieldType,err,error,*999)
+    CALL FIELD_TYPE_SET(field,fieldType_,err,error,*999)
 
     EXITS("cmfe_Field_TypeSetNumber")
     RETURN
@@ -40769,18 +40769,18 @@ CONTAINS
   !
 
   !>Sets/changes the type for a field identified by an object.
-  SUBROUTINE cmfe_Field_TypeSetObj(field,fieldType,err)
+  SUBROUTINE cmfe_Field_TypeSetObj(field,fieldType_,err)
     !DLLEXPORT(cmfe_Field_TypeSetObj)
 
     !Argument variables
     TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to set the field type for.
-    INTEGER(INTG), INTENT(IN) :: fieldType !<The field type to set. \see OpenCMISS_FieldTypes
+    INTEGER(INTG), INTENT(IN) :: fieldType_ !<The field type to set. \see OpenCMISS_FieldTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_Field_TypeSetObj",err,error,*999)
 
-    CALL FIELD_TYPE_SET(field%field,fieldType,err,error,*999)
+    CALL FIELD_TYPE_SET(field%field,fieldType_,err,error,*999)
 
     EXITS("cmfe_Field_TypeSetObj")
     RETURN
@@ -40807,7 +40807,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -40875,7 +40875,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -40943,7 +40943,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -41011,7 +41011,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -41078,7 +41078,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -41144,7 +41144,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -42898,7 +42898,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(GeneratedMeshType), POINTER :: generatedMesh
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -45287,7 +45287,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: geometricField
+    TYPE(FieldType), POINTER :: geometricField
     TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
@@ -45953,7 +45953,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: lagrangeField
+    TYPE(FieldType), POINTER :: lagrangeField
     TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
@@ -46528,7 +46528,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: penaltyField
+    TYPE(FieldType), POINTER :: penaltyField
     TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
@@ -57550,7 +57550,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
@@ -66525,7 +66525,7 @@ CONTAINS
     TYPE(RegionsType), POINTER :: regions
     TYPE(MeshType), POINTER :: mesh
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
 
     ENTERS("cmfe_FieldML_InputFieldCreateStartNumberVS",err,error,*999)
 
@@ -66616,7 +66616,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(MeshType), POINTER :: mesh
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -66710,7 +66710,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
 
     ENTERS("cmfe_FieldML_InputFieldParametersUpdateNumberVS",err,error,*999)
 
@@ -66795,7 +66795,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -66953,7 +66953,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
 
     ENTERS("cmfe_FieldML_OutputAddFieldNoTypeNumberVS",err,error,*999)
 
@@ -67041,7 +67041,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
 
     ENTERS("cmfe_FieldML_OutputAddFieldWithTypeNumberVS",err,error,*999)
 
@@ -67128,7 +67128,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
 
     ENTERS("cmfe_FieldML_OutputAddFieldNoTypeNumberC",err,error,*999)
 
@@ -67215,7 +67215,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !< The error code.
     !Locals
     TYPE(ContextType), POINTER :: context
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -67481,7 +67481,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
 
     ENTERS("cmfe_FieldML_OutputAddFieldComponentsNumberVS",err,error,*999)
 
@@ -67574,7 +67574,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(FieldType), POINTER :: field
 
     ENTERS("cmfe_FieldML_OutputAddFieldComponentsNumberC",err,error,*999)
 

@@ -139,8 +139,8 @@ CONTAINS
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField,sourceField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dependentVariable,sourceVariable,rowVariable
+    TYPE(FieldType), POINTER :: dependentField,sourceField
+    TYPE(FieldVariableType), POINTER :: dependentVariable,sourceVariable,rowVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_VectorCalculate",err,error,*999)
@@ -169,7 +169,7 @@ CONTAINS
         !Static linear equations set
         IF(createValuesCache%numberOfLinearMatrices>=1) THEN
           linearMatrixStart=2
-          dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%linearMatrixVariableTypes(1))%ptr
+          dependentVariable=>dependentField%variableTypeMap(createValuesCache%linearMatrixVariableTypes(1))%ptr
         ELSE
           localError="The create values cache number of linear matrices of "// &
             & TRIM(NumberToVString(createValuesCache%numberOfLinearMatrices,"*",err,error))// &
@@ -180,7 +180,7 @@ CONTAINS
         !Static nonlinear equations set
         !Use first listed nonlinear variable
         IF(createValuesCache%numberOfResidualVariables>=1) THEN
-          dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(1))%ptr
+          dependentVariable=>dependentField%variableTypeMap(createValuesCache%residualVariableTypes(1))%ptr
         ELSE
           localError="The create values cache number of residual vectors of "// &
             & TRIM(NumberToVString(createValuesCache%numberOfResidualVariables,"*",err,error))// &
@@ -195,10 +195,10 @@ CONTAINS
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
         !Dynamic linear equations set
-        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%dynamicVariableType)%ptr
+        dependentVariable=>dependentField%variableTypeMap(createValuesCache%dynamicVariableType)%ptr
       CASE(EQUATIONS_NONLINEAR)
         !Dynamic nonlinear equations set
-        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(1))%ptr
+        dependentVariable=>dependentField%variableTypeMap(createValuesCache%residualVariableTypes(1))%ptr
       CASE DEFAULT
         localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -206,7 +206,7 @@ CONTAINS
     CASE(EQUATIONS_TIME_STEPPING)
       !Time stepping DAE equations set
 !!NOTE: The time stepping variable type doesn't have to come from the dependent field, it could come from, say, the source field.
-      !dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%TIME_STEPPING_VARIABLE_TYPE)%ptr
+      !dependentVariable=>dependentField%variableTypeMap(createValuesCache%TIME_STEPPING_VARIABLE_TYPE)%ptr
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="The equations time dependence type of "//TRIM(NumberToVString(equations%timeDependence,"*",err,error))// &
@@ -216,14 +216,14 @@ CONTAINS
     IF(.NOT.ASSOCIATED(dependentVariable)) CALL FlagError("The dependent variable is not associated.",err,error,*999)
     numberOfRows=dependentVariable%numberOfDofs
     totalNumberOfRows=dependentVariable%totalNumberOfDofs
-    vectorMapping%rowDofsMapping=>dependentVariable%DOMAIN_MAPPING
+    vectorMapping%rowDofsMapping=>dependentVariable%domainMapping
     IF(.NOT.ASSOCIATED(vectorMapping%rowDofsMapping)) &
       & CALL FlagError("Dependent variable domain mapping is not associated.",err,error,*999)
     numberOfGlobalRows=vectorMapping%rowDofsMapping%numberOfGlobal
     
     !Check that the number of rows is consistent across the remaining linear matrices
     DO matrixIdx=linearMatrixStart,createValuesCache%numberOfLinearMatrices
-      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%linearMatrixVariableTypes(matrixIdx))%ptr
+      dependentVariable=>dependentField%variableTypeMap(createValuesCache%linearMatrixVariableTypes(matrixIdx))%ptr
       IF(ASSOCIATED(dependentVariable)) THEN
         IF(dependentVariable%numberOfDofs/=numberOfRows) THEN
           localError="Invalid equations set up. The number of rows in the equations set ("// &
@@ -250,7 +250,7 @@ CONTAINS
     !Check the Jacobian matrices
     !Can't check the number of rows now as Jacobian's might not be square so just check variables are associated
     DO matrixIdx=1,createValuesCache%numberOfResidualVariables
-      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(matrixIdx))%ptr
+      dependentVariable=>dependentField%variableTypeMap(createValuesCache%residualVariableTypes(matrixIdx))%ptr
       IF(.NOT.ASSOCIATED(dependentVariable)) THEN
         localError="The dependent variable mapped to Jacobian matrix number "// &
           & TRIM(NumberToVString(matrixIdx,"*",err,error))//" is not associated."
@@ -259,7 +259,7 @@ CONTAINS
     ENDDO !matrixIdx
     !Check that the number of rows are consistent with the RHS vector if it exists
     IF(createValuesCache%rhsVariableType/=0) THEN
-      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%rhsVariableType)%ptr
+      dependentVariable=>dependentField%variableTypeMap(createValuesCache%rhsVariableType)%ptr
       IF(ASSOCIATED(dependentVariable)) THEN
         IF(dependentVariable%numberOfDofs/=numberOfRows) THEN
           localError="Invalid equations set up. The number of rows in the equations set ("// &
@@ -281,7 +281,7 @@ CONTAINS
     ENDIF
     !Check that the number of rows are consistent with the source vector if it exists
     !IF(createValuesCache%sourceVariableType/=0) THEN
-    !  sourceVariable=>sourceField%VARIABLE_TYPE_MAP(createValuesCache%sourceVariableType)%ptr
+    !  sourceVariable=>sourceField%variableTypeMap(createValuesCache%sourceVariableType)%ptr
     !  IF(ASSOCIATED(sourceVariable)) THEN
     !    IF(sourceVariable%numberOfDofs/=numberOfRows) THEN
     !      localError="Invalid equations set up. The number of rows in the equations set ("// &
@@ -321,7 +321,7 @@ CONTAINS
           & err,error,*999)
         dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variableIndex=variableTypeIdx
         dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variableType=variableTypeIdx
-        dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable=>dependentField%VARIABLE_TYPE_MAP(variableTypeIdx)%ptr
+        dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable=>dependentField%variableTypeMap(variableTypeIdx)%ptr
       ENDDO !variableTypeIdx
       dynamicMapping%varToEquationsMatricesMaps(createValuesCache%dynamicVariableType)% &
         & numberOfEquationsMatrices=createValuesCache%numberOfDynamicMatrices
@@ -329,7 +329,7 @@ CONTAINS
         & dynamicMapping%varToEquationsMatricesMaps(createValuesCache%rhsVariableType)%numberOfEquationsMatrices=-1
       !Allocate and initialise the variable to equations matrices maps
       DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES
-        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(variableTypeIdx)%ptr
+        dependentVariable=>dependentField%variableTypeMap(variableTypeIdx)%ptr
         IF(ASSOCIATED(dependentVariable)) THEN
           IF(dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices==-1) THEN
 !!TODO: check if this can be removed and just allocate those variables that are actually used
@@ -362,7 +362,7 @@ CONTAINS
                 IF(err/=0) CALL FlagError("Could not allocate variable dof to columns map column dof.",err,error,*999)
                 DO dofIdx=1,dependentVariable%totalNumberOfDofs
                   !1-1 mapping for now
-                  columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
+                  columnIdx=dependentVariable%domainMapping%localToGlobalMap(dofIdx)
                   dynamicMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps(matrixIdx)%columnDOF(dofIdx)=columnIdx
                 ENDDO !dofIdx                          
               ENDDO !matrixIdx
@@ -383,7 +383,7 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate equations mapping equations matrix to variable maps.",err,error,*999)
       !Create the individual matrix maps and column maps
       variableType=createValuesCache%dynamicVariableType
-      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(variableType)%ptr
+      dependentVariable=>dependentField%variableTypeMap(variableType)%ptr
       dynamicMapping%dynamicVariableType=variableType
       dynamicMapping%dynamicVariable=>dependentVariable
       DO matrixIdx=1,dynamicMapping%numberOfDynamicMatrices
@@ -391,18 +391,18 @@ CONTAINS
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%matrixNumber=matrixIdx
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%variableType=variableType
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%variable=>dependentVariable
-        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%numberOfGlobal
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%domainMapping%numberOfGlobal
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%matrixCoefficient=createValuesCache%dynamicMatrixCoefficients(matrixIdx)
-        ALLOCATE(dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(dependentVariable%DOMAIN_MAPPING% &
+        ALLOCATE(dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(dependentVariable%domainMapping% &
           & numberOfGlobal),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate equation matrix to variable map column to dof map.",err,error,*999)
         dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap=0
         DO dofIdx=1,dependentVariable%totalNumberOfDofs
           !1-1 mapping for now
-          columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
+          columnIdx=dependentVariable%domainMapping%localToGlobalMap(dofIdx)
           dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(columnIdx)=dofIdx
         ENDDO !dofIdx
-        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
+        dynamicMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping=>dependentVariable%domainMapping
       ENDDO !matrixIdx
       !Allocate the row mappings
       ALLOCATE(dynamicMapping%equationsRowToVariableDOFMaps(vectorMapping%totalNumberOfRows),STAT=err)
@@ -427,7 +427,7 @@ CONTAINS
           & err,error,*999)
         linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variableIndex=variableTypeIdx
         linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variableType=variableTypeIdx
-        linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable=>dependentField%VARIABLE_TYPE_MAP(variableTypeIdx)%ptr
+        linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%variable=>dependentField%variableTypeMap(variableTypeIdx)%ptr
       ENDDO !variableTypeIdx
       !Calculate the number of variable type maps and initialise
       DO matrixIdx=1,linearMapping%numberOfLinearMatrices
@@ -440,7 +440,7 @@ CONTAINS
       linearMapping%numberOfLinearMatrixVariables=0
       !Allocate and initialise the variable to equations matrices maps
       DO variableTypeIdx=1,FIELD_NUMBER_OF_VARIABLE_TYPES        
-        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(variableTypeIdx)%ptr
+        dependentVariable=>dependentField%variableTypeMap(variableTypeIdx)%ptr
         IF(ASSOCIATED(dependentVariable)) THEN
           IF(linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%numberOfEquationsMatrices==-1) THEN
 !!TODO: check if this can be removed and just allocate those variables that are actually used
@@ -471,7 +471,7 @@ CONTAINS
                 IF(err/=0) CALL FlagError("Could not allocate variable dof to columns map column dof.",err,error,*999)
                 DO dofIdx=1,dependentVariable%totalNumberOfDofs
                   !1-1 mapping for now
-                  columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
+                  columnIdx=dependentVariable%domainMapping%localToGlobalMap(dofIdx)
                   linearMapping%varToEquationsMatricesMaps(variableTypeIdx)%dofToColumnsMaps( &
                     & linearMapping%varToEquationsMatricesMaps(variableTypeIdx)% &
                     & numberOfEquationsMatrices)%columnDOF(dofIdx)=columnIdx
@@ -506,24 +506,24 @@ CONTAINS
       !Create the individual matrix maps and column maps
       DO matrixIdx=1,linearMapping%numberOfLinearMatrices
         variableType=createValuesCache%linearMatrixVariableTypes(matrixIdx)
-        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(variableType)%ptr
+        dependentVariable=>dependentField%variableTypeMap(variableType)%ptr
         CALL EquationsMapping_EquatsMatrixToVarMapInitialise(linearMapping%equationsMatrixToVarMaps(matrixIdx),err,error,*999)
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%matrixNumber=matrixIdx
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%variableType=variableType
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%variable=>dependentVariable
-        linearMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%numberOfGlobal
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%numberOfColumns=dependentVariable%domainMapping%numberOfGlobal
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%matrixCoefficient=vectorMapping% &
           createValuesCache%linearMatrixCoefficients(matrixIdx)
         ALLOCATE(linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap( &
-          & dependentVariable%DOMAIN_MAPPING%numberOfGlobal),STAT=err)                  
+          & dependentVariable%domainMapping%numberOfGlobal),STAT=err)                  
         IF(err/=0) CALL FlagError("Could not allocate equation matrix to variable map column to dof map.",err,error,*999)
         linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap=0
         DO dofIdx=1,dependentVariable%totalNumberOfDofs
           !1-1 mapping for now
-          columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
+          columnIdx=dependentVariable%domainMapping%localToGlobalMap(dofIdx)
           linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnToDOFMap(columnIdx)=dofIdx
         ENDDO !dofIdx
-        linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
+        linearMapping%equationsMatrixToVarMaps(matrixIdx)%columnDOFSMapping=>dependentVariable%domainMapping
       ENDDO !matrixIdx
       !Allocate the row mappings
       ALLOCATE(linearMapping%equationsRowToVariableDOFMaps(vectorMapping%totalNumberOfRows, &
@@ -553,21 +553,21 @@ CONTAINS
         CALL EquationsMapping_VarToEquatsJacobianMapInitialise(nonlinearMapping%varToJacobianMap(matrixIdx),err,error,*999)
         nonlinearMapping%varToJacobianMap(matrixIdx)%jacobianNumber=matrixIdx
         nonlinearMapping%varToJacobianMap(matrixIdx)%variableType=createValuesCache%residualVariableTypes(matrixIdx)
-        dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(matrixIdx))%ptr
+        dependentVariable=>dependentField%variableTypeMap(createValuesCache%residualVariableTypes(matrixIdx))%ptr
         nonlinearMapping%varToJacobianMap(matrixIdx)%variable=>dependentVariable
         nonlinearMapping%residualVariables(matrixIdx)%ptr=>dependentVariable
         !Row variable is RHS if set, otherwise first nonlinear variable
         IF(createValuesCache%rhsVariableType/=0) THEN
-          rowVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%rhsVariableType)%ptr
+          rowVariable=>dependentField%variableTypeMap(createValuesCache%rhsVariableType)%ptr
         ELSE
-          rowVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%residualVariableTypes(1))%ptr
+          rowVariable=>dependentField%variableTypeMap(createValuesCache%residualVariableTypes(1))%ptr
         ENDIF
         !Allocate and set dof to Jacobian columns map
         ALLOCATE(nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap(dependentVariable%totalNumberOfDofs),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate variable to Jacobian map dof to columns map.",err,error,*999)
         DO dofIdx=1,dependentVariable%totalNumberOfDofs
           !1-1 mapping for now
-          columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
+          columnIdx=dependentVariable%domainMapping%localToGlobalMap(dofIdx)
           nonlinearMapping%varToJacobianMap(matrixIdx)%dofToColumnsMap(dofIdx)=columnIdx
         ENDDO !dofIdx
         !Allocate and set dof to Jacobian rows map
@@ -582,17 +582,17 @@ CONTAINS
         nonlinearMapping%jacobianToVarMap(matrixIdx)%jacobianNumber=matrixIdx
         nonlinearMapping%jacobianToVarMap(matrixIdx)%variableType=createValuesCache%residualVariableTypes(matrixIdx)
         nonlinearMapping%jacobianToVarMap(matrixIdx)%variable=>dependentVariable
-        nonlinearMapping%jacobianToVarMap(matrixIdx)%numberOfColumns=dependentVariable%DOMAIN_MAPPING%numberOfGlobal
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%numberOfColumns=dependentVariable%domainMapping%numberOfGlobal
         nonlinearMapping%jacobianToVarMap(matrixIdx)%jacobianCoefficient=createValuesCache%residualCoefficient
         ALLOCATE(nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap( &
-          & dependentVariable%DOMAIN_MAPPING%numberOfGlobal),STAT=err)
+          & dependentVariable%domainMapping%numberOfGlobal),STAT=err)
         nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap=0
         DO dofIdx=1,dependentVariable%totalNumberOfDofs
           !1-1 mapping for now
-          columnIdx=dependentVariable%DOMAIN_MAPPING%localToGlobalMap(dofIdx)
+          columnIdx=dependentVariable%domainMapping%localToGlobalMap(dofIdx)
           nonlinearMapping%jacobianToVarMap(matrixIdx)%equationsColumnToDOFVariableMap(columnIdx)=dofIdx
         ENDDO !dofIdx
-        nonlinearMapping%jacobianToVarMap(matrixIdx)%columnDOFSMapping=>dependentVariable%DOMAIN_MAPPING
+        nonlinearMapping%jacobianToVarMap(matrixIdx)%columnDOFSMapping=>dependentVariable%domainMapping
       ENDDO !matrixIdx
       !Set up the row mappings
       ALLOCATE(nonlinearMapping%equationsRowToResidualDOFMap(totalNumberOfRows),STAT=err)
@@ -609,9 +609,9 @@ CONTAINS
       NULLIFY(rhsMapping)
       CALL EquationsMappingVector_RHSMappingGet(vectorMapping,rhsMapping,err,error,*999)
       rhsMapping%rhsVariableType=createValuesCache%rhsVariableType
-      dependentVariable=>dependentField%VARIABLE_TYPE_MAP(createValuesCache%rhsVariableType)%ptr
+      dependentVariable=>dependentField%variableTypeMap(createValuesCache%rhsVariableType)%ptr
       rhsMapping%rhsVariable=>dependentVariable
-      rhsMapping%rhsVariableMapping=>dependentVariable%DOMAIN_MAPPING
+      rhsMapping%rhsVariableMapping=>dependentVariable%domainMapping
       rhsMapping%rhsCoefficient=createValuesCache%rhsCoefficient
       !Allocate and set up the row mappings
       ALLOCATE(rhsMapping%rhsDOFToEquationsRowMap(dependentVariable%totalNumberOfDofs),STAT=err)
@@ -635,9 +635,9 @@ CONTAINS
       NULLIFY(sourceMapping)
       CALL EquationsMappingVector_SourceMappingGet(vectorMapping,sourceMapping,err,error,*999)
       sourceMapping%sourceVariableType=createValuesCache%sourceVariableType
-      sourceVariable=>sourceField%VARIABLE_TYPE_MAP(createValuesCache%sourceVariableType)%ptr
+      sourceVariable=>sourceField%variableTypeMap(createValuesCache%sourceVariableType)%ptr
       sourceMapping%sourceVariable=>sourceVariable
-      !    sourceMapping%sourceVariableMapping=>sourceVariable%DOMAIN_MAPPING
+      !    sourceMapping%sourceVariableMapping=>sourceVariable%domainMapping
       !    sourceMapping%sourceCoefficient=createValuesCache%sourceCoefficient
       !    !Allocate and set up the row mappings
       !    ALLOCATE(sourceMapping%sourceDOFToEquationsRowMap(sourceVariable%totalNumberOfDofs),STAT=err)
@@ -989,8 +989,8 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: lhsVariable
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(FieldVariableType), POINTER :: lhsVariable
     
     ENTERS("EquationsMapping_VectorCreateStart",err,error,*998)
 
@@ -1006,7 +1006,7 @@ CONTAINS
 
     NULLIFY(lhsVariable)
     CALL Field_VariableGet(dependentField,lhsVariableType,lhsVariable,err,error,*999)
-    IF(.NOT.ASSOCIATED(lhsVariable%DOMAIN_MAPPING))  &
+    IF(.NOT.ASSOCIATED(lhsVariable%domainMapping))  &
       & CALL FlagError("LHS variable domain mapping is not associated.",err,error,*999)
      
     CALL EquationsMapping_VectorInitialise(vectorEquations,err,error,*999)
@@ -1015,7 +1015,7 @@ CONTAINS
     CALL EquationsMappingVector_LHSMappingGet(vectorMapping,lhsMapping,err,error,*999)
     lhsMapping%lhsVariableType=lhsVariableType
     lhsMapping%lhsVariable=>lhsVariable
-    lhsMapping%rowDofsMapping=>lhsVariable%DOMAIN_MAPPING
+    lhsMapping%rowDofsMapping=>lhsVariable%domainMapping
     lhsMapping%numberOfRows=lhsVariable%numberOfDofs
     lhsMapping%totalNumberOfRows=lhsVariable%totalNumberOfDofs
     lhsMapping%numberOfGlobalRows=lhsVariable%numberOfGlobalDofs
@@ -1076,7 +1076,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("EquationsMapping_VectorCreateValuesCacheInitialise",err,error,*998)
@@ -1112,7 +1112,7 @@ CONTAINS
     !Set the default equations mapping in the create values cache
     !First calculate how many linear and dynamic matrices we have and set the variable types for the dynamic, residual
     !and RHS variables
-    IF(dependentField%NUMBER_OF_VARIABLES==1) THEN
+    IF(dependentField%numberOfVariables==1) THEN
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
         CALL FlagError("Dependent field only has one variable which cannot be mapped to both an equations matrix and RHS vector.", &
@@ -1124,24 +1124,24 @@ CONTAINS
         localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE IF(dependentField%NUMBER_OF_VARIABLES>1) THEN
+    ELSE IF(dependentField%numberOfVariables>1) THEN
       SELECT CASE(equations%timeDependence)
       CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
         SELECT CASE(equations%linearity)
         CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-          vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%NUMBER_OF_VARIABLES-1
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
-            vectorMapping%createValuesCache%rhsVariableType=dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)% &
-              & PTR%VARIABLE_TYPE
+          vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%numberOfVariables-1
+          IF(ASSOCIATED(dependentField%variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
+            vectorMapping%createValuesCache%rhsVariableType=dependentField%variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)% &
+              & PTR%variableType
           ELSE
             CALL FlagError("Not implemented.",err,error,*999)
           ENDIF
         CASE(EQUATIONS_NONLINEAR)
           vectorMapping%createValuesCache%numberOfLinearMatrices=0
           vectorMapping%createValuesCache%numberOfResidualVariables=1
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
-            vectorMapping%createValuesCache%rhsVariableType=dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)% &
-              & ptr%VARIABLE_TYPE
+          IF(ASSOCIATED(dependentField%variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
+            vectorMapping%createValuesCache%rhsVariableType=dependentField%variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)% &
+              & ptr%variableType
           ELSE
             CALL FlagError("Not implemented.",err,error,*999)
           ENDIF
@@ -1162,17 +1162,17 @@ CONTAINS
             vectorMapping%createValuesCache%dynamicDampingMatrixNumber=2
             vectorMapping%createValuesCache%dynamicMassMatrixNumber=3
           ENDIF
-          !vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%NUMBER_OF_VARIABLES-2
+          !vectorMapping%createValuesCache%numberOfLinearMatrices=dependentField%numberOfVariables-2
           vectorMapping%createValuesCache%numberOfLinearMatrices=0
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
+          IF(ASSOCIATED(dependentField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
             vectorMapping%createValuesCache%dynamicVariableType=dependentField% &
-              & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr%VARIABLE_TYPE
+              & variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr%variableType
           ELSE
             CALL FlagError("Not implemented.",err,error,*999)
           ENDIF
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
+          IF(ASSOCIATED(dependentField%variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
             vectorMapping%createValuesCache%rhsVariableType=dependentField% &
-              & VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr%VARIABLE_TYPE
+              & variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)%ptr%variableType
           ELSE
             CALL FlagError("Not implemented.",err,error,*999)
           ENDIF
@@ -1191,15 +1191,15 @@ CONTAINS
           ENDIF
           vectorMapping%createValuesCache%numberOfLinearMatrices=0
           vectorMapping%createValuesCache%numberOfResidualVariables=1
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
+          IF(ASSOCIATED(dependentField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
             vectorMapping%createValuesCache%dynamicVariableType=dependentField% &
-              & VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr%VARIABLE_TYPE
+              & variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr%variableType
           ELSE
             CALL FlagError("Not implemented.",err,error,*999)
           ENDIF
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
+          IF(ASSOCIATED(dependentField%variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)%ptr)) THEN
             vectorMapping%createValuesCache%rhsVariableType=dependentField% &
-              & VARIABLE_TYPE_MAP(FIELD_DELUDELN_VARIABLE_TYPE)%ptr%VARIABLE_TYPE
+              & variableTypeMap(FIELD_DELUDELN_VARIABLE_TYPE)%ptr%variableType
           ELSE
             CALL FlagError("Not implemented.",err,error,*999)
           ENDIF
@@ -1216,7 +1216,7 @@ CONTAINS
       END SELECT
     ELSE
       localError="The number of dependent field variables of "// &
-        & TRIM(NumberToVString(dependentField%NUMBER_OF_VARIABLES,"*",err,error))//" is invalid."
+        & TRIM(NumberToVString(dependentField%numberOfVariables,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     !Allocate the dynamic matrix coefficients and set their values
@@ -1237,11 +1237,11 @@ CONTAINS
         variableNumber=1
         DO WHILE(vectorMapping%createValuesCache%residualVariableTypes(matrixIdx)==0.AND. &
           & variableNumber<=FIELD_NUMBER_OF_VARIABLE_TYPES)
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr)) THEN
-            IF(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE/= &
+          IF(ASSOCIATED(dependentField%variableTypeMap(variableNumber)%ptr)) THEN
+            IF(dependentField%variableTypeMap(variableNumber)%ptr%variableType/= &
               & vectorMapping%createValuesCache%dynamicVariableType) THEN
               vectorMapping%createValuesCache%residualVariableTypes(matrixIdx)= &
-                & dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE
+                & dependentField%variableTypeMap(variableNumber)%ptr%variableType
             ENDIF
           ENDIF
           variableNumber=variableNumber+1
@@ -1267,19 +1267,19 @@ CONTAINS
       DO matrixIdx=1,vectorMapping%createValuesCache%numberOfLinearMatrices
         DO WHILE(vectorMapping%createValuesCache%linearMatrixVariableTypes(matrixIdx)==0.AND. &
           & variableNumber<=FIELD_NUMBER_OF_VARIABLE_TYPES)
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr)) THEN
-            IF(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE/= &
+          IF(ASSOCIATED(dependentField%variableTypeMap(variableNumber)%ptr)) THEN
+            IF(dependentField%variableTypeMap(variableNumber)%ptr%variableType/= &
               & vectorMapping%createValuesCache%dynamicVariableType) THEN
               isResidualType=.FALSE.
               DO matrixIdx2=1,vectorMapping%createValuesCache%numberOfResidualVariables
-                IF(dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE== &
+                IF(dependentField%variableTypeMap(variableNumber)%ptr%variableType== &
                   & vectorMapping%createValuesCache%residualVariableTypes(matrixIdx2)) THEN
                   isResidualType=.TRUE.
                 ENDIF
               ENDDO
               IF(.NOT.isResidualType) THEN
                 vectorMapping%createValuesCache%linearMatrixVariableTypes(matrixIdx)= &
-                  & dependentField%VARIABLE_TYPE_MAP(variableNumber)%ptr%VARIABLE_TYPE
+                  & dependentField%variableTypeMap(variableNumber)%ptr%variableType
               ENDIF
             ENDIF
           ENDIF
@@ -1943,7 +1943,7 @@ CONTAINS
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
     LOGICAL :: isResidualType
 
@@ -1994,7 +1994,7 @@ CONTAINS
         ENDDO !matrixIdx
         !Check the dynamic variable type is defined on the dependent field
         IF(dynamicVariableType>=1.AND.dynamicVariableType<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(dynamicVariableType)%ptr)) THEN
+          IF(ASSOCIATED(dependentField%variableTypeMap(dynamicVariableType)%ptr)) THEN
             vectorMapping%createValuesCache%dynamicVariableType=dynamicVariableType
           ELSE
             localError="The specified dynamic variable type of "//TRIM(NumberToVString(dynamicVariableType,"*",err,error))// &
@@ -2577,7 +2577,7 @@ CONTAINS
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_LinearMatricesNumberSet",err,error,*999)
@@ -2694,25 +2694,25 @@ CONTAINS
         CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
           SELECT CASE(equations%linearity)
           CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
-            IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
-              createValuesCache%linearMatrixVariableTypes(1)=dependentField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr% &
-                & VARIABLE_TYPE
+            IF(ASSOCIATED(dependentField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr)) THEN
+              createValuesCache%linearMatrixVariableTypes(1)=dependentField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr% &
+                & variableType
             ELSE
               CALL FlagError("Not implemented.",err,error,*999)
             ENDIF
             DO matrixIdx=2,createValuesCache%numberOfLinearMatrices
-              IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(matrixIdx+1)%ptr)) THEN
-                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%VARIABLE_TYPE_MAP(matrixIdx+1)%ptr% &
-                  & VARIABLE_TYPE
+              IF(ASSOCIATED(dependentField%variableTypeMap(matrixIdx+1)%ptr)) THEN
+                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%variableTypeMap(matrixIdx+1)%ptr% &
+                  & variableType
               ELSE
                 CALL FlagError("Not implemented.",err,error,*999)
               ENDIF
             ENDDO !matrixIdx
           CASE(EQUATIONS_NONLINEAR)
             DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
-              IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr)) THEN
-                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr% &
-                  & VARIABLE_TYPE
+              IF(ASSOCIATED(dependentField%variableTypeMap(matrixIdx+2)%ptr)) THEN
+                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%variableTypeMap(matrixIdx+2)%ptr% &
+                  & variableType
               ELSE
                 CALL FlagError("Not implemented.",err,error,*999)
               ENDIF
@@ -2725,9 +2725,9 @@ CONTAINS
           SELECT CASE(equations%linearity)
           CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
             DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
-              IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr)) THEN
-                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr% &
-                  & VARIABLE_TYPE
+              IF(ASSOCIATED(dependentField%variableTypeMap(matrixIdx+2)%ptr)) THEN
+                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%variableTypeMap(matrixIdx+2)%ptr% &
+                  & variableType
               ELSE
                 CALL FlagError("Not implemented.",err,error,*999)
               ENDIF
@@ -2777,7 +2777,7 @@ CONTAINS
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMapping_LinearMatricesVariableTypesSet",err,error,*999)
@@ -2825,7 +2825,7 @@ CONTAINS
         !Check to see if the linear matrix variable numbers are defined on the dependent field
         IF(linearMatrixVariableTypes(matrixIdx)>=1.OR. &
           & linearMatrixVariableTypes(matrixIdx)<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-          IF(.NOT.ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(linearMatrixVariableTypes(matrixIdx))%ptr)) THEN
+          IF(.NOT.ASSOCIATED(dependentField%variableTypeMap(linearMatrixVariableTypes(matrixIdx))%ptr)) THEN
             localError="The linear matrix variable type of "// &
               & TRIM(NumberToVString(linearMatrixVariableTypes(matrixIdx),"*",err,error))// &
               & " for linear matrix NUMBER "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
@@ -3216,7 +3216,7 @@ CONTAINS
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_ResidualVariableTypesSet",err,error,*999)
@@ -3284,7 +3284,7 @@ CONTAINS
           & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-      IF(.NOT.ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(residualVariableType)%ptr)) THEN
+      IF(.NOT.ASSOCIATED(dependentField%variableTypeMap(residualVariableType)%ptr)) THEN
         localError="The specified residual variable type of "//TRIM(NumberToVString(residualVariableType,"*",err,error))// &
           & " is not defined on the dependent field."
         CALL FlagError(localError,err,error,*999)
@@ -3417,7 +3417,7 @@ CONTAINS
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_RHSVariableTypeSet",err,error,*999)
@@ -3467,7 +3467,7 @@ CONTAINS
           & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-      IF(.NOT.ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(rhsVariableType)%ptr)) THEN
+      IF(.NOT.ASSOCIATED(dependentField%variableTypeMap(rhsVariableType)%ptr)) THEN
         localError="The specified RHS variable type of "//TRIM(NumberToVString(rhsVariableType,"*",err,error))// &
           & " is not defined on the dependent field."
         CALL FlagError(localError,err,error,*999)
@@ -3697,7 +3697,7 @@ CONTAINS
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(FIELD_TYPE), POINTER :: sourceField
+    TYPE(FieldType), POINTER :: sourceField
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMapping_SourceVariableTypeSet",err,error,*999)
@@ -3727,7 +3727,7 @@ CONTAINS
           & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-      IF(.NOT.ASSOCIATED(sourceField%VARIABLE_TYPE_MAP(sourceVariableType)%ptr)) THEN
+      IF(.NOT.ASSOCIATED(sourceField%variableTypeMap(sourceVariableType)%ptr)) THEN
         localError="The specified source variable type of "//TRIM(NumberToVString(sourceVariableType,"*",err,error))// &
           & " is not defined on the source field."
         CALL FlagError(localError,err,error,*999)

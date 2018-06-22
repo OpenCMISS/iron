@@ -291,7 +291,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the projectionField for
-    TYPE(FIELD_TYPE), POINTER :: projectionField !<On exit, the projection field of the data projection. Must not be associated on entry.
+    TYPE(FieldType), POINTER :: projectionField !<On exit, the projection field of the data projection. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

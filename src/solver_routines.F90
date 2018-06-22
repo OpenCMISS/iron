@@ -1559,8 +1559,8 @@ CONTAINS
     TYPE(CELLML_TYPE), POINTER :: CELLML_ENVIRONMENT
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
     TYPE(CELLML_MODELS_FIELD_TYPE), POINTER :: CELLML_MODELS_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: MODELS_VARIABLE
-    TYPE(FIELD_TYPE), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
+    TYPE(FieldVariableType), POINTER :: MODELS_VARIABLE
+    TYPE(FieldType), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -1631,7 +1631,7 @@ CONTAINS
                   CASE(SOLVER_CMISS_LIBRARY)
                     CALL SOLVER_CELLML_EVALUATE(CELLML_EVALUATOR_SOLVER,time,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
                       & totalNumberOfDofs,CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
-                      & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS, &
+                      & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
                       & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
                   CASE DEFAULT
                     CALL FlagError("Solver library not implemented.",ERR,ERROR,*999)
@@ -1734,7 +1734,7 @@ CONTAINS
                     IF(ASSOCIATED(MODEL)) THEN
                       NUMBER_STATES=MODEL%NUMBER_OF_STATE
                       NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
-                      NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
+                      NUMBER_PARAMETERS=MODEL%numberOfParameters
                     
                       !Copy CellML data to temporary arrays
                       DO state_idx=1,NUMBER_STATES
@@ -1773,7 +1773,7 @@ CONTAINS
                 IF(ASSOCIATED(MODEL)) THEN
                   NUMBER_STATES=MODEL%NUMBER_OF_STATE
                   NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
-                  NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
+                  NUMBER_PARAMETERS=MODEL%numberOfParameters
                   DO dof_idx=1,N
                     model_idx=MODELS_DATA(dof_idx)
                     IF(model_idx.GT.0) THEN
@@ -1825,7 +1825,7 @@ CONTAINS
                     IF(ASSOCIATED(MODEL)) THEN
                       NUMBER_STATES=MODEL%NUMBER_OF_STATE
                       NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
-                      NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
+                      NUMBER_PARAMETERS=MODEL%numberOfParameters
                       !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
                       !to avoid indexing in to null pointers
                       IF(NUMBER_STATES>0) THEN
@@ -1923,7 +1923,7 @@ CONTAINS
                 IF(ASSOCIATED(MODEL)) THEN
                   NUMBER_STATES=MODEL%NUMBER_OF_STATE
                   NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
-                  NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS                
+                  NUMBER_PARAMETERS=MODEL%numberOfParameters                
 #ifdef WITH_CELLML
                   !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
                   !to avoid referencing null pointers
@@ -2469,7 +2469,7 @@ CONTAINS
                     IF(ASSOCIATED(MODEL)) THEN
                       NUMBER_STATES=MODEL%NUMBER_OF_STATE
                       NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
-                      NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
+                      NUMBER_PARAMETERS=MODEL%numberOfParameters
 
                       !Copy CellML data to temporary arrays
                       DO state_idx=1,NUMBER_STATES
@@ -2510,7 +2510,7 @@ CONTAINS
               IF(ASSOCIATED(MODEL)) THEN
                 NUMBER_STATES=MODEL%NUMBER_OF_STATE
                 NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
-                NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
+                NUMBER_PARAMETERS=MODEL%numberOfParameters
                 TIME=START_TIME
                 DO WHILE(TIME<=END_TIME)
                   DO dof_idx=1,N
@@ -2564,7 +2564,7 @@ CONTAINS
                     IF(ASSOCIATED(MODEL)) THEN
                       NUMBER_STATES=MODEL%NUMBER_OF_STATE
                       NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
-                      NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
+                      NUMBER_PARAMETERS=MODEL%numberOfParameters
 
 #ifdef WITH_CELLML                    
                       !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
@@ -2649,7 +2649,7 @@ CONTAINS
               IF(ASSOCIATED(MODEL)) THEN
                 NUMBER_STATES=MODEL%NUMBER_OF_STATE
                 NUMBER_INTERMEDIATES=MODEL%NUMBER_OF_INTERMEDIATE
-                NUMBER_PARAMETERS=MODEL%NUMBER_OF_PARAMETERS
+                NUMBER_PARAMETERS=MODEL%numberOfParameters
 #ifdef WITH_CELLML                    
 
                 !Call RHS. Note some models might not have state, rates, intermediate or parameter data so call accordingly
@@ -2807,8 +2807,8 @@ CONTAINS
     TYPE(CELLML_MODELS_FIELD_TYPE), POINTER :: CELLML_MODELS_FIELD
     TYPE(DAE_SOLVER_TYPE), POINTER :: DAE_SOLVER
     TYPE(EULER_DAE_SOLVER_TYPE), POINTER :: EULER_SOLVER
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: MODELS_VARIABLE
-    TYPE(FIELD_TYPE), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
+    TYPE(FieldVariableType), POINTER :: MODELS_VARIABLE
+    TYPE(FieldType), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
@@ -2881,7 +2881,7 @@ CONTAINS
                       CALL SOLVER_DAE_EULER_FORWARD_INTEGRATE(FORWARD_EULER_SOLVER,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
                         & totalNumberOfDofs,DAE_SOLVER%START_TIME,DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP, &
                         & CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
-                        & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS, &
+                        & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
                         & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
                       
                       !Restore field data
@@ -4133,8 +4133,8 @@ CONTAINS
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
     TYPE(CELLML_MODELS_FIELD_TYPE), POINTER :: CELLML_MODELS_FIELD
     TYPE(DAE_SOLVER_TYPE), POINTER :: DAE_SOLVER
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: MODELS_VARIABLE
-    TYPE(FIELD_TYPE), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
+    TYPE(FieldVariableType), POINTER :: MODELS_VARIABLE
+    TYPE(FieldType), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -4202,7 +4202,7 @@ CONTAINS
                     CALL SOLVER_DAE_BDF_INTEGRATE(BDF_SOLVER,CELLML_ENVIRONMENT,MODELS_VARIABLE% &
                       & totalNumberOfDofs,DAE_SOLVER%START_TIME,DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP, &
                       & CELLML_ENVIRONMENT%MODELS_FIELD%ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT% &
-                      & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS, &
+                      & MAXIMUM_NUMBER_OF_STATE,STATE_DATA,CELLML_ENVIRONMENT%maximumNumberOfParameters, &
                       & PARAMETERS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR,ERROR,*999)
                       
                     !Restore field data
@@ -4435,8 +4435,8 @@ CONTAINS
     TYPE(CELLML_TYPE), POINTER :: CELLML_ENVIRONMENT
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
     TYPE(DAE_SOLVER_TYPE), POINTER :: DAE_SOLVER
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: MODELS_VARIABLE
-    TYPE(FIELD_TYPE), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
+    TYPE(FieldVariableType), POINTER :: MODELS_VARIABLE
+    TYPE(FieldType), POINTER :: MODELS_FIELD,STATE_FIELD,PARAMETERS_FIELD,INTERMEDIATE_FIELD
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -4512,7 +4512,7 @@ CONTAINS
                     CALL SOLVER_DAE_EXTERNAL_INTEGRATE(MODELS_VARIABLE%totalNumberOfDofs,DAE_SOLVER%START_TIME, &
                       & DAE_SOLVER%END_TIME,DAE_SOLVER%INITIAL_STEP,CELLML_ENVIRONMENT%MODELS_FIELD% &
                       & ONLY_ONE_MODEL_INDEX,MODELS_DATA,CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_STATE,STATE_DATA, &
-                      & CELLML_ENVIRONMENT%MAXIMUM_NUMBER_OF_PARAMETERS,PARAMETERS_DATA,CELLML_ENVIRONMENT% &
+                      & CELLML_ENVIRONMENT%maximumNumberOfParameters,PARAMETERS_DATA,CELLML_ENVIRONMENT% &
                       & MAXIMUM_NUMBER_OF_INTERMEDIATE,INTERMEDIATE_DATA,ERR)
                     IF(ERR/=0) THEN
                       ERROR="Error from external solver integrate."
@@ -4607,7 +4607,7 @@ CONTAINS
     IF(ASSOCIATED(model)) THEN
       numberOfStates=model%NUMBER_OF_STATE
       numberOfIntermediates=model%NUMBER_OF_INTERMEDIATE
-      numberOfParameters=model%NUMBER_OF_PARAMETERS
+      numberOfParameters=model%numberOfParameters
       IF(numberOfStates>0) THEN
         IF(.NOT.ASSOCIATED(stateData)) CALL FlagError("State data is not associated.",err,error,*999)
         IF(.NOT.ASSOCIATED(rateData)) CALL FlagError("Rate data is not associated.",err,error,*999)
@@ -5495,8 +5495,8 @@ CONTAINS
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: DAMPING_MATRIX,equationsMatrix,MASS_MATRIX
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD !, INDEPENDENT_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DYNAMIC_VARIABLE,LINEAR_VARIABLE,ResidualVariable
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD !, INDEPENDENT_FIELD
+    TYPE(FieldVariableType), POINTER :: DYNAMIC_VARIABLE,LINEAR_VARIABLE,ResidualVariable
     TYPE(SOLVER_TYPE), POINTER :: SOLVER,LINEAR_SOLVER,NONLINEAR_SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
@@ -5567,7 +5567,7 @@ CONTAINS
                               dynamicMatrices=>vectorMatrices%dynamicMatrices
                               IF(ASSOCIATED(dynamicMatrices)) THEN
                                 IF(.NOT.ASSOCIATED(dynamicMatrices%tempVector)) THEN
-                                  CALL DistributedVector_CreateStart(DYNAMIC_VARIABLE%DOMAIN_MAPPING, &
+                                  CALL DistributedVector_CreateStart(DYNAMIC_VARIABLE%domainMapping, &
                                     & dynamicMatrices%tempVector,ERR,ERROR,*999)
                                   CALL DistributedVector_DataTypeSet(dynamicMatrices%tempVector, &
                                     & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
@@ -5613,7 +5613,7 @@ CONTAINS
                               !Default to first variable type for now
                               ResidualVariable=>NonlinearMapping%residualVariables(1)%ptr
                               IF(ASSOCIATED(ResidualVariable)) THEN
-                                VariableType=ResidualVariable%VARIABLE_TYPE
+                                VariableType=ResidualVariable%variableType
                               ELSE
                                 CALL FlagError("Residual variable is not associated.",ERR,ERROR,*999)
                               ENDIF
@@ -5654,7 +5654,7 @@ CONTAINS
                                   IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                     LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                     IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                      CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                      CALL DistributedVector_CreateStart(LINEAR_VARIABLE%domainMapping, &
                                         & equationsMatrix%tempVector,ERR,ERROR,*999)
                                       CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                         & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
@@ -6322,7 +6322,7 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -8611,12 +8611,12 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer the solver to set the field for
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to transformed
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to transformed
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to be transformed
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable,geometricFieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricFieldVariable
     INTEGER(INTG) :: numberOfGeoemtricComponents,i,j
 
     ENTERS("Solver_GeometricTransformationFieldSet",err,error,*999)
@@ -8624,10 +8624,10 @@ CONTAINS
     IF(ASSOCIATED(solver)) THEN
       IF(ASSOCIATED(solver%geometricTransformationSolver)) THEN
         IF(ASSOCIATED(field)) THEN
-          fieldVariable=>field%VARIABLE_TYPE_MAP(variableType)%ptr
+          fieldVariable=>field%variableTypeMap(variableType)%ptr
           IF(ASSOCIATED(fieldVariable)) THEN
-            IF(ASSOCIATED(field%GEOMETRIC_FIELD)) THEN
-              geometricFieldVariable=>field%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(1)%ptr !only 1 variable for geometric field
+            IF(ASSOCIATED(field%geometricField)) THEN
+              geometricFieldVariable=>field%geometricField%variableTypeMap(1)%ptr !only 1 variable for geometric field
               IF(ASSOCIATED(geometricFieldVariable)) THEN
                 numberOfGeoemtricComponents=geometricFieldVariable%numberOfComponents
                 IF(solver%geometricTransformationSolver%arbitraryPath) THEN !Allocate memory for transformation matrix at each load increment if the transformation is arbitrary at each step
@@ -12413,9 +12413,9 @@ CONTAINS
     TYPE(EquationsJacobianType), POINTER :: JACOBIAN_MATRIX
     TYPE(JACOBIAN_TO_SOLVER_MAP_TYPE), POINTER :: JACOBIAN_TO_SOLVER_MAP
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DYNAMIC_VARIABLE,LINEAR_VARIABLE,RHS_VARIABLE,INTERFACE_VARIABLE
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
+    TYPE(FieldVariableType), POINTER :: DYNAMIC_VARIABLE,LINEAR_VARIABLE,RHS_VARIABLE,INTERFACE_VARIABLE
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -12974,7 +12974,7 @@ CONTAINS
   !!TODO: what if the equations set doesn't have a RHS vector???
                                         rhs_variable_type=rhsMapping%rhsVariableType
                                         RHS_VARIABLE=>rhsMapping%rhsVariable
-                                        RHS_DOMAIN_MAPPING=>RHS_VARIABLE%DOMAIN_MAPPING
+                                        RHS_DOMAIN_MAPPING=>RHS_VARIABLE%domainMapping
                                         CALL FIELD_PARAMETER_SET_CREATED(RHS_VARIABLE%FIELD,RHS_VARIABLE_TYPE, &
                                           & FIELD_INTEGRATED_NEUMANN_SET_TYPE,HAS_INTEGRATED_VALUES,ERR,ERROR,*999)
                                         EQUATIONS_RHS_VECTOR=>rhsVector%VECTOR
@@ -13089,7 +13089,7 @@ CONTAINS
                                             !Get the dynamic contribution to the the RHS values
                                             rhs_variable_dof=rhsMapping%equationsRowToRHSDofMap(equations_row_number)
                                             rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(rhs_variable_dof)
-                                            rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
+                                            rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOFTypes(rhs_global_dof)
                                             !Apply boundary conditions
                                             SELECT CASE(rhs_boundary_condition)
                                             CASE(BOUNDARY_CONDITION_DOF_FREE)
@@ -13136,14 +13136,14 @@ CONTAINS
                                                     variable_type=dynamicMapping%dynamicVariableType
                                                     DEPENDENT_VARIABLE=>dynamicMapping%varToEquationsMatricesMaps( &
                                                       & variable_type)%VARIABLE
-                                                    DEPENDENT_VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
-                                                    VARIABLE_DOMAIN_MAPPING=>DEPENDENT_VARIABLE%DOMAIN_MAPPING
+                                                    DEPENDENT_VARIABLE_TYPE=DEPENDENT_VARIABLE%variableType
+                                                    VARIABLE_DOMAIN_MAPPING=>DEPENDENT_VARIABLE%domainMapping
                                                     CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE, &
                                                       & DEPENDENT_BOUNDARY_CONDITIONS,ERR,ERROR,*999)
                                                     variable_dof=dynamicMapping%equationsRowToVariableDOFMaps( &
                                                       & equations_row_number)
                                                     variable_global_dof=VARIABLE_DOMAIN_MAPPING%localToGlobalMap(variable_dof)
-                                                    variable_boundary_condition=DEPENDENT_BOUNDARY_CONDITIONS%DOF_TYPES( &
+                                                    variable_boundary_condition=DEPENDENT_BOUNDARY_CONDITIONS%DOFTypes( &
                                                       & variable_global_dof)
 
                                                     IF(variable_boundary_condition==BOUNDARY_CONDITION_DOF_FIXED) THEN
@@ -13788,7 +13788,7 @@ CONTAINS
                                       ENDIF
                                       !Calculate the transposed interface matrix-dependent variable product residual contribution
                                       dependent_variable_type=INTERFACE_MAPPING% &
-                                        & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE_TYPE
+                                        & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%variableType
                                       DEPENDENT_VARIABLE=>INTERFACE_MAPPING% &
                                         & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
                                       IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
@@ -14076,8 +14076,8 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix,LINEAR_MATRIX
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(EQUATIONS_TO_SOLVER_MAPS_TYPE), POINTER :: EQUATIONS_TO_SOLVER_MAP
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: INTERFACE_VARIABLE,DEPENDENT_VARIABLE,LINEAR_VARIABLE,RHS_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
+    TYPE(FieldVariableType), POINTER :: INTERFACE_VARIABLE,DEPENDENT_VARIABLE,LINEAR_VARIABLE,RHS_VARIABLE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: INTERFACE_LAGRANGE
@@ -14438,7 +14438,7 @@ CONTAINS
                                   ENDIF
                                   !Calculate the transposed interface matrix-dependent variable product residual contribution
                                   dependent_variable_type=INTERFACE_MAPPING% &
-                                    & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE_TYPE
+                                    & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%variableType
                                   DEPENDENT_VARIABLE=>INTERFACE_MAPPING% &
                                     & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
                                   IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
@@ -14649,8 +14649,8 @@ CONTAINS
                                   IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
 !!TODO: what if the equations set doesn't have a RHS vector???
                                     RHS_VARIABLE=>rhsMapping%rhsVariable
-                                    RHS_VARIABLE_TYPE=RHS_VARIABLE%VARIABLE_TYPE
-                                    RHS_DOMAIN_MAPPING=>RHS_VARIABLE%DOMAIN_MAPPING
+                                    RHS_VARIABLE_TYPE=RHS_VARIABLE%variableType
+                                    RHS_DOMAIN_MAPPING=>RHS_VARIABLE%domainMapping
                                     ! Check if there are any integrated values to add
                                     CALL FIELD_PARAMETER_SET_CREATED(RHS_VARIABLE%FIELD,RHS_VARIABLE_TYPE, &
                                       & FIELD_INTEGRATED_NEUMANN_SET_TYPE,HAS_INTEGRATED_VALUES,ERR,ERROR,*999)
@@ -14687,7 +14687,7 @@ CONTAINS
                                         ENDIF
                                         rhs_variable_dof=rhsMapping%equationsRowToRHSDofMap(equations_row_number)
                                         rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(rhs_variable_dof)
-                                        rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
+                                        rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOFTypes(rhs_global_dof)
                                         !Apply boundary conditions
                                         SELECT CASE(rhs_boundary_condition)
                                         CASE(BOUNDARY_CONDITION_DOF_FREE)
@@ -14721,14 +14721,14 @@ CONTAINS
                                               variable_type=linearMapping%linearMatrixVariableTypes(variable_idx)
                                               DEPENDENT_VARIABLE=>linearMapping%varToEquationsMatricesMaps( &
                                                 & variable_type)%VARIABLE
-                                              DEPENDENT_VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
-                                              VARIABLE_DOMAIN_MAPPING=>DEPENDENT_VARIABLE%DOMAIN_MAPPING
+                                              DEPENDENT_VARIABLE_TYPE=DEPENDENT_VARIABLE%variableType
+                                              VARIABLE_DOMAIN_MAPPING=>DEPENDENT_VARIABLE%domainMapping
                                               CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE, &
                                                 & DEPENDENT_BOUNDARY_CONDITIONS,ERR,ERROR,*999)
                                               variable_dof=linearMapping%equationsRowToVariableDOFMaps( &
                                                 & equations_row_number,variable_idx)
                                               variable_global_dof=VARIABLE_DOMAIN_MAPPING%localToGlobalMap(variable_dof)
-                                              variable_boundary_condition=DEPENDENT_BOUNDARY_CONDITIONS%DOF_TYPES( &
+                                              variable_boundary_condition=DEPENDENT_BOUNDARY_CONDITIONS%DOFTypes( &
                                                 & variable_global_dof)
                                               IF(variable_boundary_condition==BOUNDARY_CONDITION_DOF_FIXED) THEN
                                                 DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_idx)%ptr(variable_dof)
@@ -15742,8 +15742,8 @@ CONTAINS
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
+    TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,LAGRANGE_VARIABLE
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: LINEAR_SOLVER,SOLVER
@@ -15804,7 +15804,7 @@ CONTAINS
                                       IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                         LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                         IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%domainMapping, &
                                             & equationsMatrix%tempVector,ERR,ERROR,*999)
                                           CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                             & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
@@ -15866,13 +15866,13 @@ CONTAINS
                                         & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
                                       IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                         !Set up the temporary interface distributed vector to be used with interface matrices
-                                        CALL DistributedVector_CreateStart(INTERFACE_VARIABLE%DOMAIN_MAPPING, &
+                                        CALL DistributedVector_CreateStart(INTERFACE_VARIABLE%domainMapping, &
                                           & INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
                                         CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_VECTOR, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
                                         CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
                                         !Set up the temporary interface distributed vector to be used with transposed interface matrices
-                                        CALL DistributedVector_CreateStart(LAGRANGE_VARIABLE%DOMAIN_MAPPING, &
+                                        CALL DistributedVector_CreateStart(LAGRANGE_VARIABLE%domainMapping, &
                                           & INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR,ERR,ERROR,*999)
                                         CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
@@ -16985,8 +16985,8 @@ CONTAINS
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: LINEAR_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -17041,7 +17041,7 @@ CONTAINS
                                       IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                         LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                         IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%domainMapping, &
                                             & equationsMatrix%tempVector,ERR,ERROR,*999)
                                           CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                             & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
@@ -18523,8 +18523,8 @@ CONTAINS
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
+    TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,LAGRANGE_VARIABLE
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: LINEAR_SOLVER,SOLVER
@@ -18585,7 +18585,7 @@ CONTAINS
                                       IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                         LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                         IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%domainMapping, &
                                             & equationsMatrix%tempVector,ERR,ERROR,*999)
                                           CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                             & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
@@ -18647,13 +18647,13 @@ CONTAINS
                                         & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
                                       IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                         !Set up the temporary interface distributed vector to be used with interface matrices
-                                        CALL DistributedVector_CreateStart(INTERFACE_VARIABLE%DOMAIN_MAPPING, &
+                                        CALL DistributedVector_CreateStart(INTERFACE_VARIABLE%domainMapping, &
                                           & INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
                                         CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_VECTOR, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
                                         CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
                                         !Set up the temporary interface distributed vector to be used with transposed interface matrices
-                                        CALL DistributedVector_CreateStart(LAGRANGE_VARIABLE%DOMAIN_MAPPING, &
+                                        CALL DistributedVector_CreateStart(LAGRANGE_VARIABLE%domainMapping, &
                                           & INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR,ERR,ERROR,*999)
                                         CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
@@ -19749,8 +19749,8 @@ CONTAINS
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: LINEAR_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -19805,7 +19805,7 @@ CONTAINS
                                       IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
                                         LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                         IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%DOMAIN_MAPPING, &
+                                          CALL DistributedVector_CreateStart(LINEAR_VARIABLE%domainMapping, &
                                             & equationsMatrix%tempVector,ERR,ERROR,*999)
                                           CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
                                             & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
@@ -21562,8 +21562,8 @@ CONTAINS
     REAL(DP), POINTER :: VARIABLE_DATA(:)
     TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
     TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -21590,11 +21590,11 @@ CONTAINS
                     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
                       DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                         DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_VARIABLES
+                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                           DEPENDENT_VARIABLE=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                             & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%VARIABLES(variable_idx)%ptr
                           IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                            variable_type=DEPENDENT_VARIABLE%VARIABLE_TYPE
+                            variable_type=DEPENDENT_VARIABLE%variableType
                             DEPENDENT_FIELD=>DEPENDENT_VARIABLE%FIELD
                             NULLIFY(VARIABLE_DATA)
                             CALL FIELD_PARAMETER_SET_DATA_GET(DEPENDENT_FIELD,variable_type,FIELD_VALUES_SET_TYPE,VARIABLE_DATA, &
@@ -21626,7 +21626,7 @@ CONTAINS
                         LAGRANGE_VARIABLE=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                           & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE
                         IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                          variable_type=LAGRANGE_VARIABLE%VARIABLE_TYPE
+                          variable_type=LAGRANGE_VARIABLE%variableType
                           LAGRANGE_FIELD=>LAGRANGE_VARIABLE%FIELD
                           NULLIFY(VARIABLE_DATA)
                           CALL FIELD_PARAMETER_SET_DATA_GET(LAGRANGE_FIELD,variable_type,FIELD_VALUES_SET_TYPE,VARIABLE_DATA, &
@@ -21888,8 +21888,8 @@ CONTAINS
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -21929,7 +21929,7 @@ CONTAINS
                             DEPENDENT_VARIABLE=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                               & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%VARIABLE(equations_idx)%ptr
                             IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                              DYNAMIC_VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
+                              DYNAMIC_VARIABLE_TYPE=DEPENDENT_VARIABLE%variableType
                               NULLIFY(DEPENDENT_FIELD)
                               DEPENDENT_FIELD=>DEPENDENT_VARIABLE%FIELD
                               IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
@@ -22378,8 +22378,8 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,RESIDUAL_VARIABLE
+    TYPE(FieldType), POINTER :: FIELD
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,RESIDUAL_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -22399,10 +22399,10 @@ CONTAINS
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
                   !Loop over the variables involved in the solver matrix.
-                  DO variable_idx=1,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%NUMBER_OF_VARIABLES
+                  DO variable_idx=1,SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%numberOfVariables
                     FIELD_VARIABLE=>SOLVER_MAPPING%VARIABLES_LIST(solver_matrix_idx)%VARIABLES(variable_idx)%VARIABLE
                     IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                      VARIABLE_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+                      VARIABLE_TYPE=FIELD_VARIABLE%variableType
                       FIELD=>FIELD_VARIABLE%FIELD
                       !Copy the displacements
                       CALL FIELD_PARAMETER_SETS_COPY(FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
@@ -22440,7 +22440,7 @@ CONTAINS
                                 DO residual_variable_idx=1,nonlinearMapping%numberOfResidualVariables
                                   RESIDUAL_VARIABLE=>nonlinearMapping%residualVariables(residual_variable_idx)%ptr
                                   IF(ASSOCIATED(RESIDUAL_VARIABLE)) THEN
-                                    CALL FIELD_PARAMETER_SETS_COPY(RESIDUAL_VARIABLE%FIELD,RESIDUAL_VARIABLE%VARIABLE_TYPE, &
+                                    CALL FIELD_PARAMETER_SETS_COPY(RESIDUAL_VARIABLE%FIELD,RESIDUAL_VARIABLE%variableType, &
                                       & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,ERR,ERROR,*999)
                                   ELSE
                                     LOCAL_ERROR="Nonlinear mapping residual variable is not associated for "// &
@@ -22521,8 +22521,8 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
@@ -22609,7 +22609,7 @@ CONTAINS
                             DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                             EQUATIONS=>EQUATIONS_SET%EQUATIONS
                             IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                              VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
+                              VARIABLE_TYPE=DEPENDENT_VARIABLE%variableType
                               IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                                 IF(ASSOCIATED(EQUATIONS)) THEN
                                   NULLIFY(vectorEquations)
@@ -22708,7 +22708,7 @@ CONTAINS
                             DEPENDENT_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                             INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
                             IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                              VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
+                              VARIABLE_TYPE=DEPENDENT_VARIABLE%variableType
                               IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                                 IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
                                   INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
@@ -22766,9 +22766,9 @@ CONTAINS
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_VARIABLES
+                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                           VARIABLE_TYPE=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                            & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%VARIABLE_TYPES(variable_idx)
+                            & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%variableTypes(variable_idx)
                           CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
                           CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_INCREMENTAL_VALUES_SET_TYPE, &
                             & ERR,ERROR,*999)
@@ -22782,9 +22782,9 @@ CONTAINS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
                       DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                       DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                        & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_VARIABLES
+                        & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                         VARIABLE_TYPE=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%VARIABLE_TYPES(variable_idx)
+                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%variableTypes(variable_idx)
                         CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
                         CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_INCREMENTAL_VALUES_SET_TYPE, &
                           & ERR,ERROR,*999)
@@ -22850,8 +22850,8 @@ CONTAINS
     REAL(DP), POINTER :: SOLVER_DATA(:)
     TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -22889,7 +22889,7 @@ CONTAINS
                           DEPENDENT_VARIABLE=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                             & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%VARIABLE(equations_idx)%ptr
                           IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                            VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
+                            VARIABLE_TYPE=DEPENDENT_VARIABLE%variableType
                             DEPENDENT_FIELD=>DEPENDENT_VARIABLE%FIELD
                             IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                               !Get the dependent field variable dof the solver dof is mapped to
@@ -22914,7 +22914,7 @@ CONTAINS
                           LAGRANGE_VARIABLE=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                            & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%VARIABLE(equations_idx)%ptr
                           IF(ASSOCIATED(LAGRANGE_VARIABLE)) THEN
-                            VARIABLE_TYPE=LAGRANGE_VARIABLE%VARIABLE_TYPE
+                            VARIABLE_TYPE=LAGRANGE_VARIABLE%variableType
                             LAGRANGE_FIELD=>LAGRANGE_VARIABLE%FIELD
                             IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                               !Get the dependent field variable dof the solver dof is mapped to
@@ -22975,9 +22975,9 @@ CONTAINS
                       IF(ASSOCIATED(EQUATIONS_SET)) THEN
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_VARIABLES
+                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                           VARIABLE_TYPE=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                            & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%VARIABLE_TYPES(variable_idx)
+                            & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%variableTypes(variable_idx)
                           CALL FIELD_PARAMETER_SET_UPDATE_START(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
                         ENDDO !variable_idx
                       ELSE
@@ -22989,9 +22989,9 @@ CONTAINS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
                       DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                       DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                        & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_VARIABLES
+                        & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfVariables
                         VARIABLE_TYPE=SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%VARIABLE_TYPES(variable_idx)
+                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%variableTypes(variable_idx)
                         CALL FIELD_PARAMETER_SET_UPDATE_FINISH(DEPENDENT_FIELD,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
                       ENDDO !variable_idx
                     ENDDO !equations_set_idx

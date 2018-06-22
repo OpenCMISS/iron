@@ -123,7 +123,7 @@ MODULE FIELD_IO_ROUTINES
 
   !>field variable component type pointer for IO
   TYPE FIELD_VARIABLE_COMPONENT_PTR_TYPE
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: PTR !< pointer field variable component
+    TYPE(FieldVariableComponentType), POINTER :: PTR !< pointer field variable component
   END TYPE FIELD_VARIABLE_COMPONENT_PTR_TYPE
 
   !>contains information for parallel IO, and it is nodal base
@@ -142,7 +142,7 @@ MODULE FIELD_IO_ROUTINES
 
   !>contains information for parallel IO, and it is nodal base
   TYPE FIELD_IO_INFO_SET
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields defined on the region.
+    TYPE(FieldsType), POINTER :: FIELDS !<A pointer to the fields defined on the region.
     INTEGER(INTG) :: NUMBER_OF_ENTRIES !<Number of nodes in this computional node for NODAL_INFO_SET
     !Interesting thing: pointer here, also means dymanically allocated attibute
     INTEGER(INTG), ALLOCATABLE:: LIST_OF_GLOBAL_NUMBER(:) !<the list of global numbering in each domain
@@ -232,14 +232,14 @@ MODULE FIELD_IO_ROUTINES
       INTEGER(C_INT) :: FieldExport_CoordinateVariable
     END FUNCTION FieldExport_CoordinateVariable
 
-    FUNCTION FieldExport_Variable( handle, variableName, variableNumber, fieldType, variableType, componentCount ) &
+    FUNCTION FieldExport_Variable( handle, variableName, variableNumber, fieldType_, variableType, componentCount ) &
       & BIND(C,NAME="FieldExport_Variable")
       USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       CHARACTER(LEN=1, KIND=C_CHAR) :: variableName(*)
       INTEGER(C_INT), VALUE :: variableNumber
-      INTEGER(C_INT), VALUE :: fieldType
+      INTEGER(C_INT), VALUE :: fieldType_
       INTEGER(C_INT), VALUE :: variableType
       INTEGER(C_INT), VALUE :: componentCount
       INTEGER(C_INT) :: FieldExport_Variable
@@ -371,13 +371,13 @@ MODULE FIELD_IO_ROUTINES
       INTEGER(C_INT) :: FieldExport_CoordinateDerivativeIndices
     END FUNCTION FieldExport_CoordinateDerivativeIndices
 
-    FUNCTION FieldExport_DerivativeIndices( handle, componentNumber, fieldType, variableType, numberOfDerivatives, &
+    FUNCTION FieldExport_DerivativeIndices( handle, componentNumber, fieldType_, variableType, numberOfDerivatives, &
       & derivatives, valueIndex ) BIND(C,NAME="FieldExport_DerivativeIndices")
       USE Types
       USE ISO_C_BINDING
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: componentNumber
-      INTEGER(C_INT), VALUE :: fieldType
+      INTEGER(C_INT), VALUE :: fieldType_
       INTEGER(C_INT), VALUE :: variableType
       INTEGER(C_INT), VALUE :: numberOfDerivatives
       TYPE(C_PTR), VALUE :: derivatives
@@ -573,7 +573,7 @@ CONTAINS
   !
 
   SUBROUTINE REALLOCATE_FIELD( array, newSize, errorMessage, ERR, ERROR, * )
-    TYPE(FIELD_PTR_TYPE), ALLOCATABLE, INTENT(INOUT) :: array(:)
+    TYPE(FieldPtrType), ALLOCATABLE, INTENT(INOUT) :: array(:)
     INTEGER(INTG), INTENT(IN) :: newSize
     CHARACTER(LEN=*), INTENT(IN) :: errorMessage
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -861,7 +861,7 @@ CONTAINS
   !
 
   SUBROUTINE CHECKED_DEALLOCATE_FIELD( array )
-    TYPE(FIELD_PTR_TYPE), ALLOCATABLE, INTENT(INOUT) :: array(:)
+    TYPE(FieldPtrType), ALLOCATABLE, INTENT(INOUT) :: array(:)
 
     IF( ALLOCATED( array ) ) THEN
       DEALLOCATE( array )
@@ -1044,7 +1044,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<field
+    TYPE(FieldType), POINTER :: FIELD !<field
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
     TYPE(VARYING_STRING), ALLOCATABLE :: LIST_STR(:)
     TYPE(VARYING_STRING) :: FILE_NAME, FILE_STATUS, LINE, LINE1
@@ -1053,7 +1053,7 @@ CONTAINS
     INTEGER(INTG), ALLOCATABLE :: tmp_pointer(:), LIST_DEV(:), LIST_DEV_POS(:)
     INTEGER(INTG) :: FILE_ID,worldCommunicator
     !INTEGER(INTG) :: NUMBER_FIELDS
-    INTEGER(INTG) :: NODAL_USER_NUMBER, NODAL_LOCAL_NUMBER, FIELDTYPE, NUMBER_NODAL_VALUE_LINES, numberOfLines, &
+    INTEGER(INTG) :: NODAL_USER_NUMBER, NODAL_LOCAL_NUMBER, FIELDTYPE_, NUMBER_NODAL_VALUE_LINES, numberOfLines, &
       & NUMBER_OF_COMPONENTS !, LABEL_TYPE, FOCUS
     INTEGER(INTG) :: MPI_IERROR
     INTEGER(INTG) :: idx_comp, idx_comp1, pos, idx_field, idx_exnode, idx_nodal_line, idx_node
@@ -1175,12 +1175,12 @@ CONTAINS
       CALL FIELD_SCALING_TYPE_SET(FIELD, FIELD_SCALING_TYPE, ERR, ERROR, *999)
 
       IF(MASTER_COMPUTATION_NUMBER==myWorldComputationNodeNumber) THEN
-        CALL FIELD_IO_FIELD_INFO(LIST_STR(idx_field), FIELD_IO_FIELD_LABEL, FIELDTYPE, ERR, ERROR, *999)
+        CALL FIELD_IO_FIELD_INFO(LIST_STR(idx_field), FIELD_IO_FIELD_LABEL, FIELDTYPE_, ERR, ERROR, *999)
       ENDIF
-      CALL MPI_BCAST(FIELDTYPE,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
+      CALL MPI_BCAST(FIELDTYPE_,1,MPI_LOGICAL,MASTER_COMPUTATION_NUMBER,worldCommunicator,MPI_IERROR)
       CALL MPI_ERROR_CHECK("MPI_BCAST",MPI_IERROR,ERR,ERROR,*999)
       !Set FIELD TYPE
-      CALL FIELD_TYPE_SET(FIELD, FIELDTYPE, ERR, ERROR, *999)
+      CALL FIELD_TYPE_SET(FIELD, FIELDTYPE_, ERR, ERROR, *999)
       !Finish creating the field
       CALL FIELD_CREATE_FINISH(FIELD,ERR,ERROR,*999)
     ENDDO
@@ -1452,8 +1452,8 @@ CONTAINS
     DO idx_field=1,NUMBER_OF_FIELDS
        IF(ASSOCIATED(FIELD)) NULLIFY(FIELD)
        FIELD=>REGION%FIELDS%FIELDS(idx_field)%PTR
-       DO variable_idx=1,FIELD%NUMBER_OF_VARIABLES
-         variable_type=FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
+       DO variable_idx=1,FIELD%numberOfVariables
+         variable_type=FIELD%VARIABLES(variable_idx)%variableType
          CALL FIELD_PARAMETER_SET_UPDATE_START(FIELD,variable_type,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
          CALL FIELD_PARAMETER_SET_UPDATE_FINISH(FIELD,variable_type,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
        ENDDO !variable_idx
@@ -2590,15 +2590,15 @@ CONTAINS
     CHARACTER(LEN=MAXSTRLEN) :: fvar_name
     CHARACTER(LEN=1, KIND=C_CHAR) :: cvar_name(MAXSTRLEN+1)
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_PTR_TYPE), ALLOCATABLE :: listScaleFields(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: variable_ptr
+    TYPE(FieldPtrType), ALLOCATABLE :: listScaleFields(:)
+    TYPE(FieldVariableType), POINTER :: variable_ptr
     TYPE(DomainType), POINTER :: componentDomain !The domain mapping to calculate nodal mappings
     TYPE(DomainElementsType), POINTER :: DOMAIN_ELEMENTS ! domain nodes
     TYPE(DomainElementType), POINTER :: MAX_NODE_ELEMENT
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES,MAX_ELEMENT_DOMAIN_NODES ! domain nodes
     TYPE(BasisType), POINTER :: BASIS
     TYPE(BasisPtrType), ALLOCATABLE :: listScaleBases(:)
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: component
+    TYPE(FieldVariableComponentType), POINTER :: component
     INTEGER(INTG), ALLOCATABLE :: GROUP_LOCAL_NUMBER(:), GROUP_SCALE_FACTORS(:)
     INTEGER(INTG), ALLOCATABLE :: GROUP_NODE(:), GROUP_VARIABLES(:)
     !INTEGER(C_INT), TARGET :: INTERPOLATION_XI(3),elementDerivatives(64*64),numberOfDerivatives(64), NODE_INDEXES(128)
@@ -2635,9 +2635,9 @@ CONTAINS
     !collect scale factor information
     DO comp_idx=1,elementalInfoSet%numberOfComponents
       !calculate the number of variables
-      IF (.NOT.ASSOCIATED(variable_ptr, TARGET=elementalInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE)) THEN
+      IF (.NOT.ASSOCIATED(variable_ptr, TARGET=elementalInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable)) THEN
         NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
-        variable_ptr=>elementalInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE
+        variable_ptr=>elementalInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable
       ENDIF
 
       !finding the local numbering through the global to local mapping
@@ -2669,13 +2669,13 @@ CONTAINS
         SAME_SCALING_SET=.FALSE.
         DO scaleIndex1=1, NUM_OF_SCALING_FACTOR_SETS
           IF(BASIS%globalNumber == listScaleBases(scaleIndex1)%PTR%globalNumber) THEN
-            IF(variable_ptr%FIELD%SCALINGS%SCALING_TYPE /= listScaleFields(scaleIndex1)%PTR%SCALINGS%SCALING_TYPE) THEN
+            IF(variable_ptr%FIELD%SCALINGS%scalingType /= listScaleFields(scaleIndex1)%PTR%SCALINGS%scalingType) THEN
               CALL FLAG_WARNING("Fields "//TRIM(NUMBER_TO_VSTRING(listScaleFields(scaleIndex1)%PTR%userNumber,"*",ERR,ERROR))// &
                   & " and "//TRIM(NUMBER_TO_VSTRING(variable_ptr%FIELD%userNumber,"*",ERR,ERROR))// &
                   & " have components that use basis number "//TRIM(NUMBER_TO_VSTRING(BASIS%globalNumber,"*",ERR,ERROR))// &
                   & " but have different scaling types. ",ERR,ERROR,*999)
             ENDIF
-            IF(variable_ptr%FIELD%SCALINGS%SCALING_TYPE == listScaleFields(scaleIndex1)%PTR%SCALINGS%SCALING_TYPE) THEN
+            IF(variable_ptr%FIELD%SCALINGS%scalingType == listScaleFields(scaleIndex1)%PTR%SCALINGS%scalingType) THEN
               SAME_SCALING_SET=.TRUE.
               LIST_COMP_SCALE(comp_idx)=scaleIndex1
               EXIT
@@ -2707,9 +2707,9 @@ CONTAINS
     NUM_OF_VARIABLES=0
     DO comp_idx=1,elementalInfoSet%numberOfComponents
       !calculate the number of variables
-      IF (.NOT.ASSOCIATED(variable_ptr, TARGET=elementalInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE)) THEN
+      IF (.NOT.ASSOCIATED(variable_ptr, TARGET=elementalInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable)) THEN
         NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
-        variable_ptr=>elementalInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE
+        variable_ptr=>elementalInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable
       ENDIF
       GROUP_VARIABLES(NUM_OF_VARIABLES)=GROUP_VARIABLES(NUM_OF_VARIABLES)+1
     ENDDO  !comp_idx
@@ -2783,12 +2783,12 @@ CONTAINS
       component => elementalInfoSet%COMPONENTS(comp_idx)%PTR
 
       !grouping field variables and components together
-      IF(.NOT.ASSOCIATED(variable_ptr,TARGET=component%FIELD_VARIABLE)) THEN !different variables
+      IF(.NOT.ASSOCIATED(variable_ptr,TARGET=component%fieldVariable)) THEN !different variables
         var_idx=var_idx+1
-        variable_ptr=>component%FIELD_VARIABLE
+        variable_ptr=>component%fieldVariable
         !write out the field information
 
-        fvar_name = CHAR(variable_ptr%variable_label)
+        fvar_name = CHAR(variable_ptr%variableLabel)
         LENGTH=LEN_TRIM(fvar_name)
         DO i=1,LENGTH
           cvar_name(I)=fvar_name(i:i)
@@ -2796,13 +2796,13 @@ CONTAINS
         cvar_name(LENGTH+1)=C_NULL_CHAR
 
         IF( variable_ptr%FIELD%TYPE == FIELD_GEOMETRIC_TYPE .AND. &
-            & variable_ptr%VARIABLE_TYPE == FIELD_U_VARIABLE_TYPE ) THEN
+            & variable_ptr%variableType == FIELD_U_VARIABLE_TYPE ) THEN
           NULLIFY(COORDINATE_SYSTEM)
           CALL FIELD_COORDINATE_SYSTEM_GET(variable_ptr%FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
           ERR = FieldExport_CoordinateVariable( sessionHandle, cvar_name, var_idx, COORDINATE_SYSTEM%TYPE, &
               & GROUP_VARIABLES(var_idx) )
         ELSE
-          ERR = FieldExport_Variable( sessionHandle, cvar_name, var_idx, variable_ptr%FIELD%TYPE, variable_ptr%VARIABLE_TYPE, &
+          ERR = FieldExport_Variable( sessionHandle, cvar_name, var_idx, variable_ptr%FIELD%TYPE, variable_ptr%variableType, &
               & GROUP_VARIABLES(var_idx) )
         ENDIF
 
@@ -2858,20 +2858,20 @@ CONTAINS
       ENDIF
       
       IF( variable_ptr%FIELD%TYPE == FIELD_GEOMETRIC_TYPE .AND. &
-          & variable_ptr%VARIABLE_TYPE == FIELD_U_VARIABLE_TYPE ) THEN
+          & variable_ptr%variableType == FIELD_U_VARIABLE_TYPE ) THEN
         !!TEMP
         !ERR = FieldExport_CoordinateComponent( sessionHandle, variable_ptr%FIELD%REGION%coordinateSystem, &
-        !  & component%COMPONENT_NUMBER, basis%numberOfXi, C_LOC( basis%interpolationXi ) )
+        !  & component%componentNumber, basis%numberOfXi, C_LOC( basis%interpolationXi ) )
         NULLIFY(COORDINATE_SYSTEM)
         CALL FIELD_COORDINATE_SYSTEM_GET(variable_ptr%FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
         ERR = FieldExport_CoordinateComponent( sessionHandle, COORDINATE_SYSTEM%TYPE, &
-            & component%COMPONENT_NUMBER,interpType,basis%numberOfXi, C_LOC( INTERPOLATION_XI ))
+            & component%componentNumber,interpType,basis%numberOfXi, C_LOC( INTERPOLATION_XI ))
       ELSE
         !!TEMP
         !ERR = FieldExport_Component( sessionHandle, &
-        !  & component%COMPONENT_NUMBER, basis%numberOfXi, C_LOC( basis%interpolationXi ) )
+        !  & component%componentNumber, basis%numberOfXi, C_LOC( basis%interpolationXi ) )
         ERR = FieldExport_Component( sessionHandle, &
-            & component%COMPONENT_NUMBER,interpType,basis%numberOfXi, C_LOC( INTERPOLATION_XI ) )
+            & component%componentNumber,interpType,basis%numberOfXi, C_LOC( INTERPOLATION_XI ) )
       ENDIF
       IF(ERR/=0) THEN
         CALL FlagError( "File write error during field export", ERR, ERROR,*999 )
@@ -3439,7 +3439,7 @@ CONTAINS
         ENDIF
 
 
-        IF( variable_ptr%FIELD%SCALINGS%SCALING_TYPE == FIELD_NO_SCALING ) THEN
+        IF( variable_ptr%FIELD%SCALINGS%scalingType == FIELD_NO_SCALING ) THEN
           SCALE_INDEXES(:) = -1
         ENDIF
         ERR = FieldExport_NodeScaleIndexes( sessionHandle, NUMBER_OF_ELEMENT_NODES, C_LOC( numberOfDerivatives ), &
@@ -3493,7 +3493,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: scaleIndex, componentIndex, localNumber, scaleFactorCount, nodeIndex
     INTEGER(INTG) :: nodeNumber, derivativeIndex, nv, nk, ny2, firstScaleSet
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: component
+    TYPE(FieldVariableComponentType), POINTER :: component
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainMappingType), POINTER :: domainElementMapping
@@ -3531,9 +3531,9 @@ CONTAINS
         CALL REALLOCATE( scaleBuffer, SUM( basis%numberOfDerivatives(1:basis%numberOfNodes ) ), &
           & "Could not allocate scale buffer in IO", ERR, ERROR, *999 )
 
-        IF( component%FIELD_VARIABLE%FIELD%SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING ) THEN
-          CALL DistributedVector_DataGet(component%FIELD_VARIABLE%FIELD%SCALINGS%SCALINGS(component% &
-            & SCALING_INDEX)%SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
+        IF( component%fieldVariable%FIELD%SCALINGS%scalingType /= FIELD_NO_SCALING ) THEN
+          CALL DistributedVector_DataGet(component%fieldVariable%FIELD%SCALINGS%SCALINGS(component% &
+            & scalingIndex)%scaleFactors,SCALE_FACTORS,ERR,ERROR,*999)
         ENDIF
 
         !IF( .NOT.basis%DEGENERATE ) THEN
@@ -3544,7 +3544,7 @@ CONTAINS
               nv = domainElements%ELEMENTS( localNumber )%elementVersions(derivativeIndex, nodeIndex )
               ny2 = domainNodes%NODES( nodeNumber )%DERIVATIVES(nk)%dofIndex(nv)
               scaleFactorCount = scaleFactorCount + 1
-              IF( component%FIELD_VARIABLE%FIELD%SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING ) THEN
+              IF( component%fieldVariable%FIELD%SCALINGS%scalingType /= FIELD_NO_SCALING ) THEN
                 scaleBuffer( scaleFactorCount ) = SCALE_FACTORS(ny2)
               ELSE
                 scaleBuffer( scaleFactorCount ) = 1
@@ -3568,9 +3568,9 @@ CONTAINS
         !  ENDDO
         !ENDIF
 
-        IF( component%FIELD_VARIABLE%FIELD%SCALINGS%SCALING_TYPE /= FIELD_NO_SCALING ) THEN
-          CALL DistributedVector_DataRestore(component%FIELD_VARIABLE%FIELD%SCALINGS%SCALINGS(component% &
-            & SCALING_INDEX)%SCALE_FACTORS,SCALE_FACTORS,ERR,ERROR,*999)
+        IF( component%fieldVariable%FIELD%SCALINGS%scalingType /= FIELD_NO_SCALING ) THEN
+          CALL DistributedVector_DataRestore(component%fieldVariable%FIELD%SCALINGS%SCALINGS(component% &
+            & scalingIndex)%scaleFactors,SCALE_FACTORS,ERR,ERROR,*999)
         ENDIF
 
         ERR = FieldExport_ElementNodeScales( sessionHandle, firstScaleSet, scaleFactorCount, C_LOC( scaleBuffer ) )
@@ -3609,7 +3609,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: sessionHandle
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: component
+    TYPE(FieldVariableComponentType), POINTER :: component
     TYPE(MeshElementType), POINTER :: element
     TYPE(VARYING_STRING) :: FILE_NAME !the prefix name of file.
     TYPE(BasisType), POINTER ::BASIS
@@ -3656,7 +3656,7 @@ CONTAINS
 
     NULLIFY(COORDINATE_SYSTEM)
     CALL FIELD_COORDINATE_SYSTEM_GET(ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(1)%PTR%COMPONENTS(1)%PTR% &
-        & FIELD_VARIABLE%FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
+      & fieldVariable%FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
     NUM_DIM=COORDINATE_SYSTEM%numberOfDimensions
 
     ERR = FieldExport_OpenSession( EXPORT_TYPE_FILE, char(FILE_NAME)//C_NULL_CHAR, sessionHandle )
@@ -3734,60 +3734,60 @@ CONTAINS
 !         IF( .NOT.ASSOCIATED( component%DOMAIN%TOPOLOGY%ELEMENTS ) ) THEN
 !           CYCLE
 !         ENDIF
-          IF(component%FIELD_VARIABLE%DATA_TYPE==FIELD_DP_TYPE) THEN
+          IF(component%fieldVariable%dataType==FIELD_DP_TYPE) THEN
             NULLIFY(GEOMETRIC_PARAMETERS)
-            CALL FIELD_PARAMETER_SET_DATA_GET(component%FIELD_VARIABLE%FIELD,&
-                & component%FIELD_VARIABLE%VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
+            CALL FIELD_PARAMETER_SET_DATA_GET(component%fieldVariable%FIELD,&
+                & component%fieldVariable%variableType,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
             ERR = FieldExport_ElementGridValues( sessionHandle, isFirstValueSet, 1, &
-                & GEOMETRIC_PARAMETERS(component%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(local_number)))
-          ELSE IF(component%FIELD_VARIABLE%DATA_TYPE==FIELD_INTG_TYPE) THEN
+                & GEOMETRIC_PARAMETERS(component%paramToDOFMap%elementParam2DOFMap%ELEMENTS(local_number)))
+          ELSE IF(component%fieldVariable%dataType==FIELD_INTG_TYPE) THEN
             NULLIFY(GEOMETRIC_PARAMETERS_INTG)
-            CALL FIELD_PARAMETER_SET_DATA_GET(component%FIELD_VARIABLE%FIELD,&
-                & component%FIELD_VARIABLE%VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS_INTG,ERR,ERROR,*999)
+            CALL FIELD_PARAMETER_SET_DATA_GET(component%fieldVariable%FIELD,&
+                & component%fieldVariable%variableType,FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS_INTG,ERR,ERROR,*999)
             ALLOCATE(GEOMETRIC_PARAMETERS_DP(SIZE(GEOMETRIC_PARAMETERS_INTG)))
             IF(ERR/=0) CALL FlagError("Could not allocate geometric parameters dp", ERR, ERROR,*999 )
             GEOMETRIC_PARAMETERS_DP(1:SIZE(GEOMETRIC_PARAMETERS_INTG))= &
               & REAL(GEOMETRIC_PARAMETERS_INTG(1:SIZE(GEOMETRIC_PARAMETERS_INTG)))
             ERR = FieldExport_ElementGridValues( sessionHandle, isFirstValueSet, 1, &
-                & GEOMETRIC_PARAMETERS_DP(component%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(local_number)))
+                & GEOMETRIC_PARAMETERS_DP(component%paramToDOFMap%elementParam2DOFMap%ELEMENTS(local_number)))
             DEALLOCATE(GEOMETRIC_PARAMETERS_DP)
           ELSE
             CALL FlagError( "Only INTG and REAL data types implemented.", ERR, ERROR,*999 )
           ENDIF
           isFirstValueSet = 0
         ELSE IF( component%interpolationType == FIELD_CONSTANT_INTERPOLATION ) THEN
-          IF(component%FIELD_VARIABLE%DATA_TYPE==FIELD_DP_TYPE) THEN
+          IF(component%fieldVariable%dataType==FIELD_DP_TYPE) THEN
             NULLIFY(GEOMETRIC_PARAMETERS)
-            CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%FIELD_VARIABLE%FIELD,COMPONENT%FIELD_VARIABLE%VARIABLE_TYPE, &
+            CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%fieldVariable%FIELD,COMPONENT%fieldVariable%variableType, &
               & FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
             ERR = FieldExport_ElementGridValues( sessionHandle, isFirstValueSet, 1, &
-              & GEOMETRIC_PARAMETERS(component%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP))
-          ELSE IF(component%FIELD_VARIABLE%DATA_TYPE==FIELD_INTG_TYPE) THEN
+              & GEOMETRIC_PARAMETERS(component%paramToDOFMap%constantParam2DOFMap))
+          ELSE IF(component%fieldVariable%dataType==FIELD_INTG_TYPE) THEN
             NULLIFY(GEOMETRIC_PARAMETERS_INTG)
-            CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%FIELD_VARIABLE%FIELD,COMPONENT%FIELD_VARIABLE%VARIABLE_TYPE, &
+            CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%fieldVariable%FIELD,COMPONENT%fieldVariable%variableType, &
               & FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS_INTG,ERR,ERROR,*999)
             ALLOCATE(GEOMETRIC_PARAMETERS_DP(SIZE(GEOMETRIC_PARAMETERS_INTG)))
             IF(ERR/=0) CALL FlagError("Could not allocate geometric parameters dp", ERR, ERROR,*999 )
             GEOMETRIC_PARAMETERS_DP(1:SIZE(GEOMETRIC_PARAMETERS_INTG))= &
               & REAL(GEOMETRIC_PARAMETERS_INTG(1:SIZE(GEOMETRIC_PARAMETERS_INTG)))
             ERR = FieldExport_ElementGridValues( sessionHandle, isFirstValueSet, 1, &
-              & GEOMETRIC_PARAMETERS_DP(component%PARAM_TO_DOF_MAP%CONSTANT_PARAM2DOF_MAP))
+              & GEOMETRIC_PARAMETERS_DP(component%paramToDOFMap%constantParam2DOFMap))
             DEALLOCATE(GEOMETRIC_PARAMETERS_DP)
           ELSE
             CALL FlagError( "Only INTG and REAL data types implemented.", ERR, ERROR,*999 )
           ENDIF
           isFirstValueSet = 0
         ELSE IF( component%interpolationType == FIELD_GAUSS_POINT_BASED_INTERPOLATION) THEN
-          IF(component%FIELD_VARIABLE%DATA_TYPE==FIELD_DP_TYPE) THEN
+          IF(component%fieldVariable%dataType==FIELD_DP_TYPE) THEN
             NULLIFY(GEOMETRIC_PARAMETERS)
-            CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%FIELD_VARIABLE%FIELD,COMPONENT%FIELD_VARIABLE%VARIABLE_TYPE, &
+            CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%fieldVariable%FIELD,COMPONENT%fieldVariable%variableType, &
               & FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
             ERR = FieldExport_ElementGridValues( sessionHandle, isFirstValueSet, BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP( &
               & BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS, &
-              & GEOMETRIC_PARAMETERS(component%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(1,local_number)))
-          ELSE IF(component%FIELD_VARIABLE%DATA_TYPE==FIELD_INTG_TYPE) THEN
+              & GEOMETRIC_PARAMETERS(component%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints(1,local_number)))
+          ELSE IF(component%fieldVariable%dataType==FIELD_INTG_TYPE) THEN
             NULLIFY(GEOMETRIC_PARAMETERS_INTG)
-            CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%FIELD_VARIABLE%FIELD,COMPONENT%FIELD_VARIABLE%VARIABLE_TYPE, &
+            CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%fieldVariable%FIELD,COMPONENT%fieldVariable%variableType, &
               & FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS_INTG,ERR,ERROR,*999)
             ALLOCATE(GEOMETRIC_PARAMETERS_DP(SIZE(GEOMETRIC_PARAMETERS_INTG)))
             IF(ERR/=0) CALL FlagError("Could not allocate geometric parameters dp", ERR, ERROR,*999 )
@@ -3795,7 +3795,7 @@ CONTAINS
               & REAL(GEOMETRIC_PARAMETERS_INTG(1:SIZE(GEOMETRIC_PARAMETERS_INTG)))
             ERR = FieldExport_ElementGridValues( sessionHandle, isFirstValueSet, BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP( &
               & BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR%NUMBER_OF_GAUSS, &
-              & GEOMETRIC_PARAMETERS_DP(component%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(1,local_number)))
+              & GEOMETRIC_PARAMETERS_DP(component%paramToDOFMap%gaussPointParam2DOFMap%gaussPoints(1,local_number)))
             DEALLOCATE(GEOMETRIC_PARAMETERS_DP)
           ELSE
             CALL FlagError( "Only INTG and REAL data types implemented.", ERR, ERROR,*999 )
@@ -3997,14 +3997,14 @@ CONTAINS
             !  EXIT
             !ELSE  !GLOBAL_NUBMER
             !  !are they the same variable?
-            !  IF(ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%COMPONENTS(component_idx)%PTR%FIELD_VARIABLE%VARIABLE_NUMBER/= &
-            !  & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR%COMPONENTS(component_idx)%PTR%FIELD_VARIABLE%VARIABLE_NUMBER) THEN
+            !  IF(ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%COMPONENTS(component_idx)%PTR%fieldVariable%variableNumber/= &
+            !  & ELEMENTAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR%COMPONENTS(component_idx)%PTR%fieldVariable%variableNumber) THEN
             !     SAME_ELEMENT_INFO=.FALSE.
             !     EXIT
             !   ELSE !VARIABLE_NUBMER
             !    !are they the same component?
-            !    IF(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%COMPONENTS(component_idx)%PTR%COMPONENT_NUMBER/=&
-            !      &LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR%COMPONENTS(component_idx)%PTR%COMPONENT_NUMBER) THEN
+            !    IF(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn1)%PTR%COMPONENTS(component_idx)%PTR%componentNumber/=&
+            !      &LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn2)%PTR%COMPONENTS(component_idx)%PTR%componentNumber) THEN
             !       SAME_ELEMENT_INFO=.FALSE.
             !       EXIT
             !     ENDIF !COMPONENT_NUMBER
@@ -4092,8 +4092,8 @@ CONTAINS
     !        !checking the same variable's components
     !       print "(A, I)", "component_idx=", component_idx
     !       print "(A, I)", "LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents", LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents
-    !       DO WHILE(ASSOCIATED(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(component_idx)%PTR%FIELD_VARIABLE, &
-    !       & TARGET=LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(component_idx+1)%PTR%FIELD_VARIABLE))
+    !       DO WHILE(ASSOCIATED(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(component_idx)%PTR%fieldVariable, &
+    !       & TARGET=LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(component_idx+1)%PTR%fieldVariable))
     !          component_idx=component_idx+1
     !          IF(component_idx>=LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%numberOfComponents) THEN
     !             EXIT
@@ -4107,8 +4107,8 @@ CONTAINS
     !           print "(A, I)", "tmp1=", tmp1
     !           SAME_ELEMENT_INFO=.FALSE.
     !           DO tmp2=1,(component_idx-tmp1)
-    !              IF(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(tmp2)%PTR%COMPONENT_NUMBER>&
-    !              &LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(tmp2+1)%PTR%COMPONENT_NUMBER) THEN
+    !              IF(LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(tmp2)%PTR%componentNumber>&
+    !              &LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(tmp2+1)%PTR%componentNumber) THEN
     !                 tmp_ptr=>LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(tmp2+1)%PTR
     !                 LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(tmp2+1)%PTR=>&
     !                 LOCAL_PROCESS_NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%PTR%COMPONENTS(tmp2)%PTR
@@ -4141,15 +4141,15 @@ CONTAINS
   SUBROUTINE FieldIO_ElementalInfoSetAttachLocalProcess( ELEMENTAL_INFO_SET, FIELDS, ERR, ERROR, * )
     !Argument variables
     TYPE(FIELD_IO_INFO_SET), INTENT(INOUT):: ELEMENTAL_INFO_SET !<nodal information in this process
-    TYPE(FIELDS_TYPE), POINTER ::FIELDS !<the field object
+    TYPE(FieldsType), POINTER ::FIELDS !<the field object
     INTEGER(INTG), INTENT(OUT):: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     LOGICAL :: ININTERFACE,INREGION
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(FIELD_TYPE), POINTER :: FIELD
+    TYPE(FieldType), POINTER :: FIELD
     TYPE(DomainMappingType), POINTER:: DOMAIN_ELEMENTS_MAPPING !nodes in local mapping--it is different as exnode
-    TYPE(FIELD_VARIABLE_TYPE), POINTER:: FIELD_VARIABLE !field variable
+    TYPE(FieldVariableType), POINTER:: FIELD_VARIABLE !field variable
     INTEGER(INTG) :: num_field, var_idx, component_idx, np, nn !temporary variable
     LOGICAL :: foundNewElement
 
@@ -4170,7 +4170,7 @@ CONTAINS
 
     IF(INREGION) THEN
       !checking whether the list of fields in the same region
-      DO num_field =1, FIELDS%NUMBER_OF_FIELDS
+      DO num_field =1, FIELDS%numberOfFields
         IF(.NOT.ASSOCIATED(FIELDS%FIELDS(num_field)%PTR)) THEN
           LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))// &
             & " field handle in fields list is invalid"
@@ -4189,7 +4189,7 @@ CONTAINS
       ENDDO
     ELSE
       !checking whether the list of fields in the same interface
-      DO num_field =1, FIELDS%NUMBER_OF_FIELDS
+      DO num_field =1, FIELDS%numberOfFields
         IF(.NOT.ASSOCIATED(FIELDS%FIELDS(num_field)%PTR)) THEN
           LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))// &
             & " field handle in fields list is invalid"
@@ -4220,12 +4220,12 @@ CONTAINS
         & ERR,ERROR,*999)
     ENDIF
 
-    DO num_field=1,ELEMENTAL_INFO_SET%FIELDS%NUMBER_OF_FIELDS
+    DO num_field=1,ELEMENTAL_INFO_SET%FIELDS%numberOfFields
       FIELD=>ELEMENTAL_INFO_SET%FIELDS%FIELDS(num_field)%PTR
       IF(.NOT.ALLOCATED(FIELD%VARIABLES)) THEN
         CYCLE
       ENDIF
-      DO var_idx=1, FIELD%NUMBER_OF_VARIABLES
+      DO var_idx=1, FIELD%numberOfVariables
         FIELD_VARIABLE=>FIELD%VARIABLES(var_idx)
         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
           IF(.NOT.ASSOCIATED(FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS)) THEN
@@ -4267,12 +4267,12 @@ CONTAINS
     ENDDO
 
     !collect nodal information from local process
-    DO num_field=1,ELEMENTAL_INFO_SET%FIELDS%NUMBER_OF_FIELDS
+    DO num_field=1,ELEMENTAL_INFO_SET%FIELDS%numberOfFields
       FIELD=>ELEMENTAL_INFO_SET%FIELDS%FIELDS(num_field)%PTR
       IF(.NOT.ALLOCATED(FIELD%VARIABLES)) THEN
         CYCLE
       ENDIF
-      DO var_idx=1, FIELD%NUMBER_OF_VARIABLES
+      DO var_idx=1, FIELD%numberOfVariables
         FIELD_VARIABLE=>FIELD%VARIABLES(var_idx)
         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
           IF(.NOT.ASSOCIATED(FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN%TOPOLOGY%ELEMENTS)) THEN
@@ -4317,7 +4317,7 @@ CONTAINS
   !!>Import nodal information \see{FIELD_IO::FIELD_IO_NODES_IMPORT}.
   !SUBROUTINE FIELD_IO_NODES_IMPORT(FIELDS, FILE_NAME, METHOD, ERR,ERROR,*)
   !  !Argument variables
-  !  TYPE(FIELDS_TYPE), POINTER :: FIELDS !<the field object
+  !  TYPE(FieldsType), POINTER :: FIELDS !<the field object
   !  TYPE(VARYING_STRING), INTENT(INOUT) :: FILE_NAME !<file name
   !  TYPE(VARYING_STRING), INTENT(IN):: METHOD
   !  INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -4390,21 +4390,21 @@ CONTAINS
       !           checking according to the types defined in the openCMISS                          !
       !=============================================================================================!
       !are they in the same field?
-      IF( SET1%COMPONENTS(component_idx)%PTR%FIELD_VARIABLE%FIELD%globalNumber/= &
-        & SET2%COMPONENTS(component_idx)%PTR%FIELD_VARIABLE%FIELD%globalNumber ) THEN
+      IF( SET1%COMPONENTS(component_idx)%PTR%fieldVariable%FIELD%globalNumber/= &
+        & SET2%COMPONENTS(component_idx)%PTR%fieldVariable%FIELD%globalNumber ) THEN
         RETURN
       ENDIF
 
         !are they the same variable?
-      IF( SET1%COMPONENTS( component_idx )%PTR%FIELD_VARIABLE% &
-        & VARIABLE_NUMBER /= SET2%COMPONENTS( component_idx )%PTR% &
-        & FIELD_VARIABLE%VARIABLE_NUMBER ) THEN
+      IF( SET1%COMPONENTS( component_idx )%PTR%fieldVariable% &
+        & variableNumber /= SET2%COMPONENTS( component_idx )%PTR% &
+        & fieldVariable%variableNumber ) THEN
         RETURN
       ENDIF
 
       !are they the same component?
-      IF( SET1%COMPONENTS( component_idx )%PTR%COMPONENT_NUMBER /= &
-        & SET2%COMPONENTS( component_idx)%PTR%COMPONENT_NUMBER ) THEN
+      IF( SET1%COMPONENTS( component_idx )%PTR%componentNumber /= &
+        & SET2%COMPONENTS( component_idx)%PTR%componentNumber ) THEN
         RETURN
       ENDIF
     ENDDO !component_idx
@@ -4595,8 +4595,8 @@ CONTAINS
     !        !checking the same variable's components
     !       print "(A, I)", "component_idx=", component_idx
     !       print "(A, I)", "NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents", NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents
-    !       DO WHILE(ASSOCIATED(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(component_idx)%PTR%FIELD_VARIABLE, &
-    !       & TARGET=NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(component_idx+1)%PTR%FIELD_VARIABLE))
+    !       DO WHILE(ASSOCIATED(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(component_idx)%PTR%fieldVariable, &
+    !       & TARGET=NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(component_idx+1)%PTR%fieldVariable))
     !          component_idx=component_idx+1
     !          IF(component_idx>=NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%numberOfComponents) THEN
     !             EXIT
@@ -4610,8 +4610,8 @@ CONTAINS
     !           print "(A, I)", "tmp1=", tmp1
     !           SAME_NODAL_INFO=.FALSE.
     !           DO tmp2=1,(component_idx-tmp1)
-    !              IF(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(tmp2)%PTR%COMPONENT_NUMBER>&
-    !              &NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(tmp2+1)%PTR%COMPONENT_NUMBER) THEN
+    !              IF(NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(tmp2)%PTR%componentNumber>&
+    !              &NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(tmp2+1)%PTR%componentNumber) THEN
     !                 tmp_ptr=>NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(tmp2+1)%PTR
     !                 NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(tmp2+1)%PTR=>&
     !                 NODAL_INFO_SET%COMPONENT_INFO_SET(nn)%COMPONENTS(tmp2)%PTR
@@ -4734,7 +4734,7 @@ CONTAINS
   !>Get the field information
   FUNCTION FIELD_IO_GET_FIELD_INFO_LABEL(FIELD, ERR, ERROR)
     !Argument variables
-    TYPE(FIELD_TYPE), POINTER :: FIELD
+    TYPE(FieldType), POINTER :: FIELD
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -4776,13 +4776,13 @@ CONTAINS
   !>Get the field information
   FUNCTION FIELD_IO_GET_VARIABLE_INFO_LABEL(COMPONENT, ERR, ERROR)
     !Argument variables
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: COMPONENT
+    TYPE(FieldVariableComponentType), POINTER :: COMPONENT
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_TYPE), POINTER :: FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: VARIABLE
+    TYPE(FieldType), POINTER :: FIELD
+    TYPE(FieldVariableType), POINTER :: VARIABLE
     TYPE(VARYING_STRING) :: FIELD_IO_GET_VARIABLE_INFO_LABEL
 
     ENTERS("FIELD_IO_GET_VARIABLE_INFO_LABEL",ERR,ERROR,*999)
@@ -4792,12 +4792,12 @@ CONTAINS
       GOTO 999
     ENDIF
 
-    FIELD=>COMPONENT%FIELD_VARIABLE%FIELD
-    VARIABLE=>COMPONENT%FIELD_VARIABLE
+    FIELD=>COMPONENT%fieldVariable%FIELD
+    VARIABLE=>COMPONENT%fieldVariable
 
     SELECT CASE(FIELD%TYPE)
     CASE(FIELD_GEOMETRIC_TYPE) !FIELD_GEOMETRIC_TYPE
-      SELECT CASE(VARIABLE%VARIABLE_TYPE)
+      SELECT CASE(VARIABLE%variableType)
       CASE(FIELD_U_VARIABLE_TYPE)
         !coordinate system
         NULLIFY(COORDINATE_SYSTEM)
@@ -4820,9 +4820,9 @@ CONTAINS
         FIELD_IO_GET_VARIABLE_INFO_LABEL="second_time_derivative,  field,  second time derivative of variable"
       CASE DEFAULT
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown_geometry,  field,  real"
-      END SELECT !CASE(VARIABLE%VARIABLE_TYPE)
+      END SELECT !CASE(VARIABLE%variableType)
     CASE(FIELD_FIBRE_TYPE)
-      SELECT CASE(VARIABLE%VARIABLE_TYPE)
+      SELECT CASE(VARIABLE%variableType)
       CASE(FIELD_U_VARIABLE_TYPE)
 !kmith - 17.10.08: Fixing fibre field label
         !FIELD_IO_GET_VARIABLE_INFO_LABEL="fiber,  standand variable type"
@@ -4836,9 +4836,9 @@ CONTAINS
         FIELD_IO_GET_VARIABLE_INFO_LABEL="second_time_fiber,  second time derivative of variable"
       CASE DEFAULT
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown_fiber,  real"
-      END SELECT !CASE(VARIABLE%VARIABLE_TYPE)
+      END SELECT !CASE(VARIABLE%variableType)
     CASE(FIELD_GENERAL_TYPE)
-      SELECT CASE(VARIABLE%VARIABLE_TYPE)
+      SELECT CASE(VARIABLE%variableType)
       CASE(FIELD_U_VARIABLE_TYPE)
 !kmith - 17.10.08: Fixing general field label
         !FIELD_IO_GET_VARIABLE_INFO_LABEL="general_variabe,  field,  string"
@@ -4852,9 +4852,9 @@ CONTAINS
         FIELD_IO_GET_VARIABLE_INFO_LABEL="second_time_variable,  field,  second time derivative of variable"
       CASE DEFAULT
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown_general,  field,  real"
-      END SELECT !CASE(VARIABLE%VARIABLE_TYPE)
+      END SELECT !CASE(VARIABLE%variableType)
     CASE(FIELD_MATERIAL_TYPE)
-      SELECT CASE(VARIABLE%VARIABLE_TYPE)
+      SELECT CASE(VARIABLE%variableType)
       CASE(FIELD_U_VARIABLE_TYPE)
 !kmith - 17.10.08: Fixing material field label
         !FIELD_IO_GET_VARIABLE_INFO_LABEL="material,  field,  standand variable type"
@@ -4868,9 +4868,9 @@ CONTAINS
         FIELD_IO_GET_VARIABLE_INFO_LABEL="second_time_material,  field,  second time derivative of variable"
       CASE DEFAULT
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown material,  field,  real"
-      END SELECT !CASE(VARIABLE%VARIABLE_TYPE)
+      END SELECT !CASE(VARIABLE%variableType)
     CASE(FIELD_GEOMETRIC_GENERAL_TYPE)
-      SELECT CASE(VARIABLE%VARIABLE_TYPE)
+      SELECT CASE(VARIABLE%variableType)
       CASE(FIELD_U_VARIABLE_TYPE)
 !kmith - 17.10.08: Fixing general field label
         !FIELD_IO_GET_VARIABLE_INFO_LABEL="general_variabe,  field,  string"
@@ -4884,9 +4884,9 @@ CONTAINS
         FIELD_IO_GET_VARIABLE_INFO_LABEL="second_time_variable,  field,  second time derivative of variable"
       CASE DEFAULT
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown_general,  field,  real"
-      END SELECT !CASE(VARIABLE%VARIABLE_TYPE)
+      END SELECT !CASE(VARIABLE%variableType)
     CASE DEFAULT
-      SELECT CASE(VARIABLE%VARIABLE_TYPE)
+      SELECT CASE(VARIABLE%variableType)
       CASE(FIELD_U_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown,  field,  unknown standand variable type"
       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
@@ -4897,7 +4897,7 @@ CONTAINS
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown, field,  unknown second time derivative of variable"
       CASE DEFAULT
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown,  field,  real"
-      END SELECT !CASE(VARIABLE%VARIABLE_TYPE)
+      END SELECT !CASE(VARIABLE%variableType)
     END SELECT
 
     EXITS("FIELD_IO_GET_VARIABLE_INFO_LABEL")
@@ -4913,13 +4913,13 @@ CONTAINS
   !>Get the field information
   FUNCTION FIELD_IO_GET_COMPONENT_INFO_LABEL(COMPONENT, ERR, ERROR)
     !Argument variables
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: COMPONENT
+    TYPE(FieldVariableComponentType), POINTER :: COMPONENT
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_TYPE), POINTER :: FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: VARIABLE
+    TYPE(FieldType), POINTER :: FIELD
+    TYPE(FieldVariableType), POINTER :: VARIABLE
     TYPE(VARYING_STRING) :: FIELD_IO_GET_COMPONENT_INFO_LABEL
 
     ENTERS("FIELD_IO_GET_COMPONENT_INFO_LABEL",ERR,ERROR,*999)
@@ -4929,23 +4929,23 @@ CONTAINS
        GOTO 999
     ENDIF
 
-    FIELD=>COMPONENT%FIELD_VARIABLE%FIELD
-    VARIABLE=>COMPONENT%FIELD_VARIABLE
+    FIELD=>COMPONENT%fieldVariable%FIELD
+    VARIABLE=>COMPONENT%fieldVariable
 
     SELECT CASE(FIELD%TYPE)
     CASE(FIELD_GEOMETRIC_TYPE) !FIELD_GEOMETRIC_TYPE
-      SELECT CASE(VARIABLE%VARIABLE_TYPE)
+      SELECT CASE(VARIABLE%variableType)
       CASE(FIELD_U_VARIABLE_TYPE)
         !coordinate system
         NULLIFY(COORDINATE_SYSTEM)
         CALL FIELD_COORDINATE_SYSTEM_GET(FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
         SELECT CASE(COORDINATE_SYSTEM%TYPE)
         CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
-          IF(COMPONENT%COMPONENT_NUMBER==1) THEN
+          IF(COMPONENT%componentNumber==1) THEN
             FIELD_IO_GET_COMPONENT_INFO_LABEL="x"
-          ELSE IF(COMPONENT%COMPONENT_NUMBER==2) THEN
+          ELSE IF(COMPONENT%componentNumber==2) THEN
             FIELD_IO_GET_COMPONENT_INFO_LABEL="y"
-          ELSE IF(COMPONENT%COMPONENT_NUMBER==3) THEN
+          ELSE IF(COMPONENT%componentNumber==3) THEN
             FIELD_IO_GET_COMPONENT_INFO_LABEL="z"
           ENDIF
         !CASE(COORDINATE_CYCLINDRICAL_POLAR_TYPE)
@@ -4953,13 +4953,13 @@ CONTAINS
         !CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
         !CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
         CASE DEFAULT
-          FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%COMPONENT_NUMBER,"*",ERR,ERROR))
+          FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%componentNumber,"*",ERR,ERROR))
         END SELECT
       CASE DEFAULT
-        FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%COMPONENT_NUMBER,"*",ERR,ERROR))
-      END SELECT !CASE(VARIABLE%VARIABLE_TYPE)
+        FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%componentNumber,"*",ERR,ERROR))
+      END SELECT !CASE(VARIABLE%variableType)
       CASE DEFAULT
-        FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%COMPONENT_NUMBER,"*",ERR,ERROR))
+        FIELD_IO_GET_COMPONENT_INFO_LABEL=TRIM(NUMBER_TO_VSTRING(COMPONENT%componentNumber,"*",ERR,ERROR))
     END SELECT
 
     EXITS("FIELD_IO_GET_COMPONENT_INFO_LABEL")
@@ -4985,8 +4985,8 @@ CONTAINS
   !  INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
   !  TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
   !  !Local Variables
-  !  TYPE(FIELD_TYPE), POINTER :: field_ptr
-  !  TYPE(FIELD_VARIABLE_TYPE), POINTER :: variable_ptr
+  !  TYPE(FieldType), POINTER :: field_ptr
+  !  TYPE(FieldVariableType), POINTER :: variable_ptr
   !  TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING_NODES !The domain mapping to calculate nodal mappings
   !  TYPE(DomainNodesType), POINTER :: DOMAIN_NODES ! domain nodes
   !  TYPE(VARYING_STRING) :: LINE, LABEL
@@ -5023,9 +5023,9 @@ CONTAINS
   !
   !     !calculate the number of variables
   !     IF (.NOT.ASSOCIATED(variable_ptr, target=NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)% &
-  !          &COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE)) THEN
+  !          &COMPONENTS(comp_idx)%PTR%fieldVariable)) THEN
   !        NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
-  !        variable_ptr=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE
+  !        variable_ptr=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%fieldVariable
   !     ENDIF
   !
   !    !finding the local numbering through the global to local mapping
@@ -5058,7 +5058,7 @@ CONTAINS
   !     !grouping field variables and components together
   !     IF((.NOT.ASSOCIATED(field_ptr,TARGET=NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)% &
   !          &COMPONENTS(comp_idx)%PTR%FIELD)).AND.(.NOT.ASSOCIATED(variable_ptr,TARGET=NODAL_INFO_SET% &
-  !          &NODAL_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE))) THEN !different field and variables
+  !          &NODAL_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%fieldVariable))) THEN !different field and variables
   !        !add one new variable
   !        NUM_OF_FIELDS=NUM_OF_FIELDS+1
   !        GROUP_FIELDS(NUM_OF_FIELDS)=GROUP_FIELDS(NUM_OF_FIELDS)+1
@@ -5066,16 +5066,16 @@ CONTAINS
   !        NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
   !        GROUP_VARIABLES(NUM_OF_VARIABLES)=GROUP_VARIABLES(NUM_OF_VARIABLES)+1
   !        field_ptr=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%FIELD
-  !        variable_ptr=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE
+  !        variable_ptr=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%fieldVariable
   !     ELSE IF (ASSOCIATED(field_ptr,TARGET=NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)% &
   !        &COMPONENTS(comp_idx)%PTR%FIELD).AND.(.NOT.ASSOCIATED(variable_ptr,TARGET=NODAL_INFO_SET%&
-  !        &NODAL_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE))) THEN !the same field and  different variables
+  !        &NODAL_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%fieldVariable))) THEN !the same field and  different variables
   !        !add one new variable
   !        GROUP_FIELDS(NUM_OF_FIELDS)=GROUP_FIELDS(NUM_OF_FIELDS)+1
   !        !add one new component
   !        NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
   !        GROUP_VARIABLES(NUM_OF_VARIABLES)=GROUP_VARIABLES(NUM_OF_VARIABLES)+1
-  !        variable_ptr=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE
+  !        variable_ptr=>NODAL_INFO_SET%COMPONENT_INFO_SET(LOCAL_NODAL_NUMBER)%COMPONENTS(comp_idx)%PTR%fieldVariable
   !     ELSE  !different components of the same variable
   !        !add one new component
   !        GROUP_VARIABLES(NUM_OF_VARIABLES)=GROUP_VARIABLES(NUM_OF_VARIABLES)+1
@@ -5195,10 +5195,10 @@ CONTAINS
     CHARACTER(LEN=MAXSTRLEN) :: fvar_name
     CHARACTER(LEN=1, KIND=C_CHAR) :: cvar_name(MAXSTRLEN+1)
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM
-    TYPE(FIELD_TYPE), POINTER :: field_ptr
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: variable_ptr
+    TYPE(FieldType), POINTER :: field_ptr
+    TYPE(FieldVariableType), POINTER :: variable_ptr
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES ! domain nodes
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: component, fieldComponent
+    TYPE(FieldVariableComponentType), POINTER :: component, fieldComponent
     INTEGER(INTG), ALLOCATABLE, TARGET :: GROUP_FIELDS(:), GROUP_VARIABLES(:), GROUP_DERIVATIVES(:)
     INTEGER(INTG) :: NUM_OF_FIELDS, NUM_OF_VARIABLES, NUM_OF_NODAL_DEV
     INTEGER(INTG) :: local_number
@@ -5224,15 +5224,15 @@ CONTAINS
     NULLIFY(variable_ptr)
     DO comp_idx=1,fieldInfoSet%numberOfComponents
       !calculate the number of fields
-      IF (.NOT.ASSOCIATED(field_ptr, TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE%FIELD)) THEN
+      IF (.NOT.ASSOCIATED(field_ptr, TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable%FIELD)) THEN
         NUM_OF_FIELDS=NUM_OF_FIELDS+1
-        field_ptr=>fieldInfoSet%COMPONENTS (comp_idx)%PTR%FIELD_VARIABLE%FIELD
+        field_ptr=>fieldInfoSet%COMPONENTS (comp_idx)%PTR%fieldVariable%FIELD
       ENDIF
 
       !calculate the number of variables
-      IF (.NOT.ASSOCIATED(variable_ptr, TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE)) THEN
+      IF (.NOT.ASSOCIATED(variable_ptr, TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable)) THEN
         NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
-        variable_ptr=>fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE
+        variable_ptr=>fieldInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable
       ENDIF
 
       !find the local numbering
@@ -5272,18 +5272,18 @@ CONTAINS
     GROUP_VARIABLES(:)=0 !the item in this arrary is the number of components in the same variable
     DO comp_idx=1,fieldInfoSet%numberOfComponents
       !grouping field variables and components together
-      IF((.NOT.ASSOCIATED(field_ptr,TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE%FIELD)).AND. &
-          & (.NOT.ASSOCIATED(variable_ptr,TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE))) THEN !different field and variables
+      IF((.NOT.ASSOCIATED(field_ptr,TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable%FIELD)).AND. &
+          & (.NOT.ASSOCIATED(variable_ptr,TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable))) THEN !different field and variables
         NUM_OF_FIELDS=NUM_OF_FIELDS+1
-        field_ptr=>fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE%FIELD
+        field_ptr=>fieldInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable%FIELD
       ENDIF
 
-      IF(.NOT.ASSOCIATED(variable_ptr,TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE)) THEN !the same field and  different variables
+      IF(.NOT.ASSOCIATED(variable_ptr,TARGET=fieldInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable)) THEN !the same field and  different variables
         !add one new variable
         GROUP_FIELDS(NUM_OF_FIELDS)=GROUP_FIELDS(NUM_OF_FIELDS)+1
         !add one new component
         NUM_OF_VARIABLES=NUM_OF_VARIABLES+1
-        variable_ptr=>fieldInfoSet%COMPONENTS(comp_idx)%PTR%FIELD_VARIABLE
+        variable_ptr=>fieldInfoSet%COMPONENTS(comp_idx)%PTR%fieldVariable
       ENDIF
 
       GROUP_VARIABLES(NUM_OF_VARIABLES)=GROUP_VARIABLES(NUM_OF_VARIABLES)+1
@@ -5309,10 +5309,10 @@ CONTAINS
       DO var_idx=1, GROUP_FIELDS(field_idx)
         global_var_idx=global_var_idx+1
 
-        variable_ptr=>fieldInfoSet%COMPONENTS(comp_idx1)%PTR%FIELD_VARIABLE
+        variable_ptr=>fieldInfoSet%COMPONENTS(comp_idx1)%PTR%fieldVariable
         !write out the field information
 
-        fvar_name = CHAR(variable_ptr%variable_label)
+        fvar_name = CHAR(variable_ptr%variableLabel)
         LENGTH=LEN_TRIM(fvar_name)
         DO i=1,LENGTH
           cvar_name(I)=fvar_name(i:i)
@@ -5320,14 +5320,14 @@ CONTAINS
         cvar_name(LENGTH+1)=C_NULL_CHAR
 
         IF( variable_ptr%FIELD%TYPE == FIELD_GEOMETRIC_TYPE .AND. &
-          & variable_ptr%VARIABLE_TYPE == FIELD_U_VARIABLE_TYPE ) THEN
+          & variable_ptr%variableType == FIELD_U_VARIABLE_TYPE ) THEN
           NULLIFY(COORDINATE_SYSTEM)
           CALL FIELD_COORDINATE_SYSTEM_GET(variable_ptr%FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
           ERR = FieldExport_CoordinateVariable( sessionHandle, cvar_name, global_var_idx, &
            & COORDINATE_SYSTEM%TYPE, variable_ptr%numberOfComponents )
         ELSE
           ERR = FieldExport_Variable( sessionHandle, cvar_name, global_var_idx, variable_ptr%FIELD%TYPE,  &
-           & variable_ptr%VARIABLE_TYPE, &
+           & variable_ptr%variableType, &
            & variable_ptr%numberOfComponents )
         ENDIF
         IF( ERR /= 0 ) THEN
@@ -5348,16 +5348,16 @@ CONTAINS
           IF(.NOT.ASSOCIATED(component,TARGET=fieldComponent)) THEN
             paddingInfo(comp_idx1) = paddingInfo(comp_idx1) + 1
             GROUP_DERIVATIVES(1:1) = NO_PART_DERIV
-            IF( fieldComponent%FIELD_VARIABLE%FIELD%TYPE == FIELD_GEOMETRIC_TYPE .AND. &
-               & fieldComponent%FIELD_VARIABLE%VARIABLE_TYPE == FIELD_U_VARIABLE_TYPE ) THEN
+            IF( fieldComponent%fieldVariable%FIELD%TYPE == FIELD_GEOMETRIC_TYPE .AND. &
+               & fieldComponent%fieldVariable%variableType == FIELD_U_VARIABLE_TYPE ) THEN
              NULLIFY(COORDINATE_SYSTEM)
              CALL FIELD_COORDINATE_SYSTEM_GET(variable_ptr%FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
-             ERR = FieldExport_CoordinateDerivativeIndices( sessionHandle, fieldComponent%COMPONENT_NUMBER, &
+             ERR = FieldExport_CoordinateDerivativeIndices( sessionHandle, fieldComponent%componentNumber, &
                  & COORDINATE_SYSTEM%TYPE, 1, C_LOC(GROUP_DERIVATIVES), value_idx )
             ELSE
-              ERR = FieldExport_DerivativeIndices( sessionHandle, fieldComponent%COMPONENT_NUMBER, &
+              ERR = FieldExport_DerivativeIndices( sessionHandle, fieldComponent%componentNumber, &
                   & variable_ptr%FIELD%TYPE, &
-                  & variable_ptr%VARIABLE_TYPE, 1, C_LOC(GROUP_DERIVATIVES), value_idx )
+                  & variable_ptr%variableType, 1, C_LOC(GROUP_DERIVATIVES), value_idx )
             ENDIF
 
             value_idx = value_idx + 1
@@ -5391,16 +5391,16 @@ CONTAINS
           !sort  the partial derivatives
           CALL LIST_SORT(GROUP_DERIVATIVES(1:NUM_OF_NODAL_DEV),ERR,ERROR,*999)
 
-          IF( component%FIELD_VARIABLE%FIELD%TYPE == FIELD_GEOMETRIC_TYPE .AND. &
-            & component%FIELD_VARIABLE%VARIABLE_TYPE == FIELD_U_VARIABLE_TYPE ) THEN
+          IF( component%fieldVariable%FIELD%TYPE == FIELD_GEOMETRIC_TYPE .AND. &
+            & component%fieldVariable%variableType == FIELD_U_VARIABLE_TYPE ) THEN
             NULLIFY(COORDINATE_SYSTEM)
             CALL FIELD_COORDINATE_SYSTEM_GET(variable_ptr%FIELD,COORDINATE_SYSTEM,ERR,ERROR,*999)
-            ERR = FieldExport_CoordinateDerivativeIndices( sessionHandle, component%COMPONENT_NUMBER, &
+            ERR = FieldExport_CoordinateDerivativeIndices( sessionHandle, component%componentNumber, &
                 & COORDINATE_SYSTEM%TYPE, NUM_OF_NODAL_DEV, C_LOC(GROUP_DERIVATIVES), value_idx )
           ELSE
-            ERR = FieldExport_DerivativeIndices( sessionHandle, component%COMPONENT_NUMBER, &
+            ERR = FieldExport_DerivativeIndices( sessionHandle, component%componentNumber, &
                 & variable_ptr%FIELD%TYPE, &
-                & variable_ptr%VARIABLE_TYPE,NUM_OF_NODAL_DEV, C_LOC(GROUP_DERIVATIVES), value_idx )
+                & variable_ptr%variableType,NUM_OF_NODAL_DEV, C_LOC(GROUP_DERIVATIVES), value_idx )
           ENDIF
 
           ERR = FieldExport_VersionInfo( sessionHandle, fieldInfoSet%COMPONENT_VERSIONS(comp_idx1) )
@@ -5443,7 +5443,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     TYPE(VARYING_STRING) :: FILE_NAME !the prefix name of file.
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), POINTER :: COMPONENT !the prefix name of file.
+    TYPE(FieldVariableComponentType), POINTER :: COMPONENT !the prefix name of file.
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES ! domain nodes
     INTEGER(INTG) :: local_number, global_number, sessionHandle, paddingCount,DERIVATIVE_INDEXES(PART_DERIV_S4_S4_S4)
     INTEGER(INTG), ALLOCATABLE :: paddingInfo(:)
@@ -5559,14 +5559,14 @@ CONTAINS
         ENDDO !paddingCount
 
 
-        SELECT CASE(COMPONENT%FIELD_VARIABLE%DATA_TYPE)
+        SELECT CASE(COMPONENT%fieldVariable%dataType)
         CASE(FIELD_INTG_TYPE)
           NULLIFY(GEOMETRIC_PARAMETERS_INTG)
-          CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%FIELD_VARIABLE%FIELD,COMPONENT%FIELD_VARIABLE%VARIABLE_TYPE, &
+          CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%fieldVariable%FIELD,COMPONENT%fieldVariable%variableType, &
             & FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS_INTG,ERR,ERROR,*999)
         CASE(FIELD_DP_TYPE)
           NULLIFY(GEOMETRIC_PARAMETERS_DP)
-          CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%FIELD_VARIABLE%FIELD,COMPONENT%FIELD_VARIABLE%VARIABLE_TYPE, &
+          CALL FIELD_PARAMETER_SET_DATA_GET(COMPONENT%fieldVariable%FIELD,COMPONENT%fieldVariable%variableType, &
             & FIELD_VALUES_SET_TYPE,GEOMETRIC_PARAMETERS_DP,ERR,ERROR,*999)
         CASE DEFAULT
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
@@ -5591,26 +5591,26 @@ CONTAINS
 
             NUM_OF_NODAL_DEV = NUM_OF_NODAL_DEV + 1
 
-            SELECT CASE(COMPONENT%FIELD_VARIABLE%DATA_TYPE)
+            SELECT CASE(COMPONENT%fieldVariable%dataType)
             CASE(FIELD_INTG_TYPE)
-              IF(COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(local_number)% &
-                  & DERIVATIVES(DERIVATIVE_INDEXES(dev_idx))%NUMBER_OF_VERSIONS < version_idx) THEN
+              IF(COMPONENT%paramToDOFMap%nodeParam2DOFMap%NODES(local_number)% &
+                  & DERIVATIVES(DERIVATIVE_INDEXES(dev_idx))%numberOfVersions < version_idx) THEN
                 !If the number of versions for this derivative isn't equal to the maximum number of versions for the
                 !component, then fill the rest of the version data with the first version
-                VALUE=REAL(GEOMETRIC_PARAMETERS_INTG( COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(local_number)% &
+                VALUE=REAL(GEOMETRIC_PARAMETERS_INTG( COMPONENT%paramToDOFMap%nodeParam2DOFMap%NODES(local_number)% &
                   & DERIVATIVES(DERIVATIVE_INDEXES(dev_idx))%VERSIONS(1) ) ,DP)
               ELSE
-                VALUE=REAL(GEOMETRIC_PARAMETERS_INTG( COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(local_number)% &
+                VALUE=REAL(GEOMETRIC_PARAMETERS_INTG( COMPONENT%paramToDOFMap%nodeParam2DOFMap%NODES(local_number)% &
                   & DERIVATIVES(DERIVATIVE_INDEXES(dev_idx))%VERSIONS(version_idx) ) ,DP)
               ENDIF
             CASE(FIELD_DP_TYPE)
               !Default to version 1 of each node derivative
-              IF(COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(local_number)% &
-                  & DERIVATIVES(DERIVATIVE_INDEXES(dev_idx))%NUMBER_OF_VERSIONS < version_idx) THEN
-                VALUE=GEOMETRIC_PARAMETERS_DP( COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(local_number)% &
+              IF(COMPONENT%paramToDOFMap%nodeParam2DOFMap%NODES(local_number)% &
+                  & DERIVATIVES(DERIVATIVE_INDEXES(dev_idx))%numberOfVersions < version_idx) THEN
+                VALUE=GEOMETRIC_PARAMETERS_DP( COMPONENT%paramToDOFMap%nodeParam2DOFMap%NODES(local_number)% &
                   & DERIVATIVES(DERIVATIVE_INDEXES(dev_idx))%VERSIONS(1) )
               ELSE
-                VALUE=GEOMETRIC_PARAMETERS_DP( COMPONENT%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(local_number)% &
+                VALUE=GEOMETRIC_PARAMETERS_DP( COMPONENT%paramToDOFMap%nodeParam2DOFMap%NODES(local_number)% &
                   & DERIVATIVES(DERIVATIVE_INDEXES(dev_idx))%VERSIONS(version_idx) )
               ENDIF
             CASE DEFAULT
@@ -5988,16 +5988,16 @@ CONTAINS
   SUBROUTINE FieldIO_NodelInfoSetAttachLocalProcess(NODAL_INFO_SET, FIELDS, myWorldComputationNodeNumber, ERR,ERROR,*)
     !Argument variables
     TYPE(FIELD_IO_INFO_SET), INTENT(INOUT):: NODAL_INFO_SET !<nodal information in this process
-    TYPE(FIELDS_TYPE), POINTER ::FIELDS !<the field object
+    TYPE(FieldsType), POINTER ::FIELDS !<the field object
     INTEGER(INTG), INTENT(IN):: myWorldComputationNodeNumber !<myWorldComputationNodeNumber
     INTEGER(INTG), INTENT(OUT):: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
     LOGICAL :: ININTERFACE,INREGION
-    TYPE(FIELD_TYPE), POINTER :: FIELD
+    TYPE(FieldType), POINTER :: FIELD
     TYPE(DomainNodesType), POINTER:: DOMAIN_NODES !nodes in local domain
-    TYPE(FIELD_VARIABLE_TYPE), POINTER:: FIELD_VARIABLE !field variable
+    TYPE(FieldVariableType), POINTER:: FIELD_VARIABLE !field variable
     INTEGER(INTG) :: field_idx, var_idx, component_idx, deriv_idx, np, nn, num_field !temporary variable
     INTEGER(INTG) :: MAX_NUMBER_VERSIONS
     LOGICAL :: foundNewNode
@@ -6020,7 +6020,7 @@ CONTAINS
 
     IF(INREGION) THEN
       !checking whether the list of fields in the same region
-      DO num_field =1, FIELDS%NUMBER_OF_FIELDS
+      DO num_field =1, FIELDS%numberOfFields
         IF(.NOT.ASSOCIATED(FIELDS%FIELDS(num_field)%PTR)) THEN
           LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))// &
             & " field handle in fields list is invalid"
@@ -6039,7 +6039,7 @@ CONTAINS
       ENDDO
     ELSE
       !checking whether the list of fields in the same interface
-      DO num_field =1, FIELDS%NUMBER_OF_FIELDS
+      DO num_field =1, FIELDS%numberOfFields
         IF(.NOT.ASSOCIATED(FIELDS%FIELDS(num_field)%PTR)) THEN
           LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR))// &
             & " field handle in fields list is invalid"
@@ -6063,7 +6063,7 @@ CONTAINS
     !IF(.NOT.ASSOCIATED(DECOMPOSITION))
     !  CALL FlagError("decomposition method is not vakid",ERR,ERROR,*999)
     !ENDIF
-    !DO num_field =1, FIELDS%NUMBER_OF_FIELDS
+    !DO num_field =1, FIELDS%numberOfFields
     !  IF(FIELDS%FIELDS(num_field)%PTR%DECOMPOSITION/=DECOMPOSITION)
     !    LOCAL_ERROR ="No. "//TRIM(NUMBER_TO_VSTRING(num_field,"*",ERR,ERROR)) //" field "&
     !    & //" uses different decomposition method with the specified decomposition method,"//&
@@ -6082,13 +6082,13 @@ CONTAINS
       CALL FlagError("nodal information set is not initialized properly, call start method first",ERR,ERROR,*999)
     ENDIF
 
-    DO field_idx = 1, NODAL_INFO_SET%FIELDS%NUMBER_OF_FIELDS
+    DO field_idx = 1, NODAL_INFO_SET%FIELDS%numberOfFields
       FIELD => NODAL_INFO_SET%FIELDS%FIELDS(field_idx)%PTR
       IF( .NOT.ALLOCATED( FIELD%VARIABLES ) ) THEN
         CYCLE
       ENDIF
 
-      DO var_idx = 1, FIELD%NUMBER_OF_VARIABLES
+      DO var_idx = 1, FIELD%numberOfVariables
         FIELD_VARIABLE => FIELD%VARIABLES( var_idx )
 
         DO component_idx = 1, FIELD_VARIABLE%numberOfComponents
@@ -6134,13 +6134,13 @@ CONTAINS
     ENDDO
 
     !collect nodal information from local process
-    DO field_idx = 1, NODAL_INFO_SET%FIELDS%NUMBER_OF_FIELDS
+    DO field_idx = 1, NODAL_INFO_SET%FIELDS%numberOfFields
       FIELD => NODAL_INFO_SET%FIELDS%FIELDS( field_idx )%PTR
       IF( .NOT.ALLOCATED(FIELD%VARIABLES) ) THEN
         CYCLE
       ENDIF
 
-      DO var_idx=1, FIELD%NUMBER_OF_VARIABLES
+      DO var_idx=1, FIELD%numberOfVariables
         FIELD_VARIABLE => FIELD%VARIABLES( var_idx )
         DO component_idx = 1, FIELD_VARIABLE%numberOfComponents
           IF( FIELD_VARIABLE%COMPONENTS( component_idx )%interpolationType /= FIELD_NODE_BASED_INTERPOLATION ) THEN
@@ -6238,7 +6238,7 @@ CONTAINS
   !>Export nodal information \see{FIELD_IO::FIELD_IO_NODES_EXPORT}. \see OPENCMISS::CMISSFieldIOElementsExportObj.
   SUBROUTINE FIELD_IO_NODES_EXPORT(FIELDS, FILE_NAME, METHOD, ERR,ERROR,*)
     !Argument variables
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<the field object
+    TYPE(FieldsType), POINTER :: FIELDS !<the field object
     TYPE(VARYING_STRING), INTENT(IN) :: FILE_NAME !<file name
     TYPE(VARYING_STRING), INTENT(IN):: METHOD
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
@@ -6298,7 +6298,7 @@ CONTAINS
   !because CMGui can read the same data for several times
 
     !Argument variables
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<the field object
+    TYPE(FieldsType), POINTER :: FIELDS !<the field object
     TYPE(VARYING_STRING), INTENT(IN) :: FILE_NAME !<file name
     TYPE(VARYING_STRING), INTENT(IN):: METHOD !< method used for IO
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code

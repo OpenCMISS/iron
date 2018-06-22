@@ -269,7 +269,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<The interpolated point for the data point
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<The interpolated point for the data point
     REAL(DP), INTENT(IN) :: dataPointLocation(:) !<dataPointLocation(componentIdx). The location of data point in the region.
     INTEGER(INTG), INTENT(IN) :: numberOfCandidates !<The number of candidate elements.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
@@ -295,7 +295,7 @@ CONTAINS
     DO closestElementIdx=1,numberOfClosestCandidates
       elementNumber=candidateElements(closestElementIdx)
       CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber, &
-        & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+        & interpolatedPoint%interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE)
       distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
@@ -318,7 +318,7 @@ CONTAINS
     DO closestElementIdx=numberOfClosestCandidates+1,numberOfCandidates
       elementNumber=candidateElements(closestElementIdx)
       CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber, &
-        & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+        & interpolatedPoint%interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
       distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation
@@ -358,7 +358,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<The interpolated point for the data point
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<The interpolated point for the data point
     REAL(DP), INTENT(IN) :: dataPointLocation(:) !<dataPointLocation(componentIdx). The location of data point in the region.
     INTEGER(INTG), INTENT(IN) :: numberOfCandidates !<The number of candidate elements.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
@@ -386,10 +386,10 @@ CONTAINS
     DO closestElementIdx=1,numberOfClosestCandidates
       elementNumber=candidateElements(closestElementIdx)
       elementFaceNumber=candidateElementFaces(closestElementIdx)
-      faceNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements%elements( &
+      faceNumber=interpolatedPoint%interpolationParameters%field%decomposition%topology%elements%elements( &
         & elementNumber)%elementFaces(elementFaceNumber)
       CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
-        & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+        & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE)
       distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
@@ -414,10 +414,10 @@ CONTAINS
     DO closestElementIdx=numberOfClosestCandidates+1,numberOfCandidates
       elementNumber=candidateElements(closestElementIdx)
       elementFaceNumber=candidateElementFaces(closestElementIdx)
-      faceNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements%elements( &
+      faceNumber=interpolatedPoint%interpolationParameters%field%decomposition%topology%elements%elements( &
         & elementNumber)%elementFaces(elementFaceNumber)          
       CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
-        & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+        & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
       distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation
@@ -460,7 +460,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<The interpolated point for the data point 
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<The interpolated point for the data point 
     REAL(DP), INTENT(IN) :: dataPointLocation(:) !<dataPointLocation(componentIdx). The location of data point in the region.
     INTEGER(INTG), INTENT(IN) :: numberOfCandidates !<The number of candidate elements.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
@@ -488,10 +488,10 @@ CONTAINS
     DO closestElementIdx=1,numberOfClosestCandidates
       elementNumber=candidateElements(closestElementIdx)
       elementLineNumber=candidateElementLines(closestElementIdx)
-      lineNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements%elements( &
+      lineNumber=interpolatedPoint%interpolationParameters%field%decomposition%topology%elements%elements( &
         & elementNumber)%elementLines(elementLineNumber)
       CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolatedPoint% &
-        & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+        & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE)
       distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
@@ -516,10 +516,10 @@ CONTAINS
     DO closestElementIdx=numberOfClosestCandidates+1,numberOfCandidates
       elementNumber=candidateElements(closestElementIdx)
       elementLineNumber=candidateElementLines(closestElementIdx)
-      lineNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements%elements( &
+      lineNumber=interpolatedPoint%interpolationParameters%field%decomposition%topology%elements%elements( &
         & elementNumber)%elementLines(elementLineNumber)          
       CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolatedPoint% &
-        & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+        & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
       distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation 
@@ -620,7 +620,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection
     TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points in which to create data projection
-    TYPE(FIELD_TYPE), POINTER :: projectionField !<A pointer to the field for the data projection
+    TYPE(FieldType), POINTER :: projectionField !<A pointer to the field for the data projection
     INTEGER(INTG), INTENT(IN) :: projectionVariableType !<The field variable type of the projection field for the data projection \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
     TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, a pointer to the created data projection. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -630,7 +630,7 @@ CONTAINS
     TYPE(CoordinateSystemType), POINTER :: dataPointsCoordinateSystem,fieldCoordinateSystem
     TYPE(DataProjectionPtrType), ALLOCATABLE :: newDataProjections(:)
     TYPE(DecompositionType), POINTER :: fieldDecomposition
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: projectionFieldVariable
+    TYPE(FieldVariableType), POINTER :: projectionFieldVariable
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("DataProjection_CreateStart",err,error,*998)
@@ -1332,10 +1332,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(BasisType), POINTER :: basis
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: parameterSet
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoints(:)
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
@@ -2018,22 +2018,22 @@ CONTAINS
   !
   
   !>Evaluate the data points position in a field based on data projection
-  SUBROUTINE DataProjection_DataPointsPositionEvaluate(dataProjection,field,fieldVariableType,fieldParameterSetType,err,error,*)
+  SUBROUTINE DataProjection_DataPointsPositionEvaluate(dataProjection,field,fieldVariableType,parameterSetType,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection to give the xi locations and element number for the data points
-    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to be interpolated
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to be interpolated
     INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
-    INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The parameter set to be interpolated
+    INTEGER(INTG), INTENT(IN) :: parameterSetType !<The parameter set to be interpolated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dataPointIdx,elementNumber,coordinateIdx
     TYPE(DataPointsType), POINTER :: dataPoints
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: fieldParameterSet
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoints(:)
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
+    TYPE(FieldParameterSetType), POINTER :: fieldParameterSet
     
     ENTERS("DataProjection_DataPointsPositionEvaluate",err,error,*999)
     
@@ -2048,7 +2048,7 @@ CONTAINS
       & CALL FlagError("Cannot evaluate data points position on field other than geometric or geometric general type.", &
       & err,error,*999)
     NULLIFY(fieldParameterSet)
-    CALL Field_ParameterSetGet(field,fieldVariableType,fieldParameterSetType,fieldParameterSet,err,error,*999)
+    CALL Field_ParameterSetGet(field,fieldVariableType,parameterSetType,fieldParameterSet,err,error,*999)
     
     NULLIFY(interpolatedPoints)
     NULLIFY(interpolationParameters)
@@ -2060,7 +2060,7 @@ CONTAINS
     !Loop through data points 
     DO dataPointIdx=1,dataPoints%numberOfDataPoints
       elementNumber=dataProjection%dataProjectionResults(dataPointIdx)%elementNumber
-      CALL Field_InterpolationParametersElementGet(fieldParameterSetType,elementNumber, &
+      CALL Field_InterpolationParametersElementGet(parameterSetType,elementNumber, &
         & interpolationParameters(fieldVariableType)%ptr,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
       CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%dataProjectionResults(dataPointIdx)%xi, &
         & interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
@@ -2207,7 +2207,7 @@ CONTAINS
     & projectionExitTag,projectionElementNumber,projectionDistance,projectionXi,projectionVector,err,error,*)
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<The interpolated point for the data point
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<The interpolated point for the data point
     REAL(DP), INTENT(IN) :: dataPointLocation(:) !<dataPointLocation(componentIdx). The location of data point in the region.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
     INTEGER(INTG), INTENT(OUT) :: projectionExitTag !<On exit, the exit tag status for the data point projection
@@ -2250,7 +2250,7 @@ CONTAINS
         !Start at half the maximumDelta as we do not know if quadratic model is a good approximation yet
         delta=0.5_DP*maximumDelta 
         CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber,interpolatedPoint% &
-          & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+          & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         xi=dataProjection%startingXi
         CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,NO_PART_DERIV)-dataPointLocation
@@ -2364,7 +2364,7 @@ CONTAINS
     & projectionExitTag,projectionElementNumber,projectionDistance,projectionXi,projectionVector,err,error,*)
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<The interpolated point for the data point 
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<The interpolated point for the data point 
     REAL(DP), INTENT(IN) :: dataPointLocation(:) !<dataPointLocation(componentIdx). The location of data point in the region.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
     INTEGER(INTG), INTENT(OUT) :: projectionExitTag !<On exit, the exit tag status for the data point projection
@@ -2396,8 +2396,8 @@ CONTAINS
     CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
-    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%meshComponentNumber
-    domainMapping=>interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%domain(meshComponentNumber)%ptr% &
+    meshComponentNumber=interpolatedPoint%interpolationParameters%field%decomposition%meshComponentNumber
+    domainMapping=>interpolatedPoint%interpolationParameters%field%decomposition%domain(meshComponentNumber)%ptr% &
       & mappings%elements
     numberOfCoordinates=dataProjection%numberOfCoordinates
     relativeTolerance=dataProjection%relativeTolerance
@@ -2412,7 +2412,7 @@ CONTAINS
         !start at half the maximumDelta as we do not know if quadratic model is a good approximation yet                      
         delta=0.5_DP*maximumDelta 
         CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber, &
-          & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+          & interpolatedPoint%interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         xi=dataProjection%startingXi
         CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
@@ -2594,7 +2594,7 @@ CONTAINS
     & projectionExitTag,projectionElementNumber,projectionDistance,projectionXi,projectionVector,err,error,*)
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<The interpolated point for the data point 
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<The interpolated point for the data point 
     REAL(DP), INTENT(IN) :: dataPointLocation(:) !<dataPointLocation(componentIdx). The location of data point in the region.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
     INTEGER(INTG), INTENT(OUT) :: projectionExitTag !<On exit, the exit tag status for the data point projection
@@ -2627,8 +2627,8 @@ CONTAINS
     CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
-    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%meshComponentNumber
-    domainMapping=>interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%domain(meshComponentNumber)%ptr% &
+    meshComponentNumber=interpolatedPoint%interpolationParameters%field%decomposition%meshComponentNumber
+    domainMapping=>interpolatedPoint%interpolationParameters%field%decomposition%domain(meshComponentNumber)%ptr% &
       & mappings%elements
     numberOfCoordinates=dataProjection%numberOfCoordinates
     relativeTolerance=dataProjection%relativeTolerance
@@ -2644,7 +2644,7 @@ CONTAINS
         !start at half the maximumDelta as we do not know if quadratic model is a good approximation yet            
         delta=0.5_DP*maximumDelta 
         CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber, &
-          & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+          & interpolatedPoint%interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         xi=dataProjection%startingXi
         CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
@@ -2955,7 +2955,7 @@ CONTAINS
     & projectionXi,projectionVector,err,error,*)
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<The interpolation for the data point
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<The interpolation for the data point
     REAL(DP), INTENT(IN) :: dataPointLocation(:) !<dataPointLocation(componentIdx). The location of data point in the region.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:)!<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
     INTEGER(INTG), INTENT(IN) :: candidateElementFaces(:) !<candidateElementFaces(candidateIdx). The list of candidate faces for the projection.
@@ -2988,8 +2988,8 @@ CONTAINS
     CALL DataProjection_AssertIsFinished(dataProjection,err,error,*999)
     
     projectionExitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
-    meshComponentNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%FIELD%decomposition%meshComponentNumber
-    domainMapping=>interpolatedPoint%INTERPOLATION_PARAMETERS%FIELD%decomposition%domain(meshComponentNumber)% &
+    meshComponentNumber=interpolatedPoint%interpolationParameters%FIELD%decomposition%meshComponentNumber
+    domainMapping=>interpolatedPoint%interpolationParameters%FIELD%decomposition%domain(meshComponentNumber)% &
       & PTR%MAPPINGS%ELEMENTS
     numberOfCoordinates=dataProjection%numberOfCoordinates
     relativeTolerance=dataProjection%relativeTolerance
@@ -3001,14 +3001,14 @@ CONTAINS
       elementNumber=candidateElements(elementIdx)
       IF(elementNumber>0) THEN
         elementFaceNumber=candidateElementFaces(elementIdx)
-        faceNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements% &
+        faceNumber=interpolatedPoint%interpolationParameters%field%decomposition%topology%elements% &
           & elements(elementNumber)%elementFaces(elementFaceNumber)     
         exitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
         converged=.FALSE.
         !start at half the maximumDelta as we do not know if quadratic model is a good approximation yet
         delta=0.5_DP*maximumDelta 
         CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
-          & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+          & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         xi=dataProjection%startingXi
         CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
@@ -3200,7 +3200,7 @@ CONTAINS
     & projectionXi,projectionVector,err,error,*)
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint !<The interpolated point for the data point
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<The interpolated point for the data point
     REAL(DP), INTENT(IN) :: dataPointLocation(:) !<dataPointLocation(componentIdx). The location of data point in the region.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
     INTEGER(INTG), INTENT(IN) :: candidateElementLines(:) !<candidateElementLines(candidateIdx). The list of candidate lines for the projection.
@@ -3240,14 +3240,14 @@ CONTAINS
       elementNumber=candidateElements(elementIdx)
       IF(elementNumber>0) THEN
         elementLineNumber=candidateElementLines(elementIdx)
-        lineNumber=interpolatedPoint%INTERPOLATION_PARAMETERS%field%decomposition%topology%elements% &
+        lineNumber=interpolatedPoint%interpolationParameters%field%decomposition%topology%elements% &
           & elements(elementNumber)%elementLines(elementLineNumber)
         exitTag=DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
         converged=.FALSE.
         !start at half the maximumDelta as we do not know if quadratic model is a good approximation yet
         delta=0.5_DP*maximumDelta
         CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolatedPoint% &
-          & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+          & interpolationParameters,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         xi=dataProjection%startingXi
         CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
         distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)- &
@@ -4704,7 +4704,7 @@ CONTAINS
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FIELD_TYPE), POINTER :: projectionField
+    TYPE(FieldType), POINTER :: projectionField
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
         

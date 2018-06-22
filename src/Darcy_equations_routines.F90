@@ -153,8 +153,8 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: equations_EQUATIONS_SET_FIELD
-    TYPE(FIELD_TYPE), POINTER :: equations_SET_FIELD_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldType), POINTER :: equations_SET_FIELD_FIELD
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(EQUATIONS_SET_SOURCE_TYPE), POINTER :: equations_SOURCE
     TYPE(VARYING_STRING) :: localError
     INTEGER:: DEPENDENT_FIELD_NUMBER_OF_VARIABLES, DEPENDENT_FIELD_NUMBER_OF_COMPONENTS
@@ -290,21 +290,21 @@ CONTAINS
             SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
 
-              FIELD_VARIABLE=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr
+              FIELD_VARIABLE=>EQUATIONS_SET%GEOMETRY%geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr
 
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                 & FIELD_INITIAL_VALUES_SET_TYPE, ERR, ERROR, *999)
 
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                 & FIELD_PREVIOUS_VALUES_SET_TYPE, ERR, ERROR, *999)
 
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                 & FIELD_MESH_DISPLACEMENT_SET_TYPE, ERR, ERROR, *999)
 
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                 & FIELD_MESH_VELOCITY_SET_TYPE, ERR, ERROR, *999)
 
-              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+              CALL Field_ParameterSetEnsureCreated(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                 & FIELD_NEGATIVE_MESH_VELOCITY_SET_TYPE, ERR, ERROR, *999)
 
               IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE .OR. &
@@ -316,12 +316,12 @@ CONTAINS
                 EQUATIONS_SET_FIELD_FIELD=>EQUATIONS_EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
 
                 IF(EQUATIONS_EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
-                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
                   CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET_FIELD_FIELD,&
                     & GEOMETRIC_DECOMPOSITION,err,error,*999)
                   CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET_FIELD_FIELD,&
-                    & EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,err,error,*999)
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & EQUATIONS_SET%GEOMETRY%geometricField,err,error,*999)
+                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
                   DO component_idx = 1, EQUATIONS_SET_FIELD_NUMBER_OF_COMPONENTS
                     CALL FIELD_COMPONENT_MESH_COMPONENT_SET_AND_LOCK(EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD, &
@@ -331,7 +331,7 @@ CONTAINS
                   END DO
 
                   !Default the field scaling to that of the geometric field
-                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
                   CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD,GEOMETRIC_SCALING_TYPE, &
                     & err,error,*999)
                 ELSE
@@ -367,11 +367,11 @@ CONTAINS
                 CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DEPENDENT_TYPE,err,error,*999)
 
-                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
-                  & EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,err,error,*999)
+                  & EQUATIONS_SET%GEOMETRY%geometricField,err,error,*999)
 
                 DEPENDENT_FIELD_NUMBER_OF_VARIABLES = 2  ! U and the normal component of its flux
                 CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
@@ -390,7 +390,7 @@ CONTAINS
                 CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
 
-                CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+                CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions, ERR, ERROR, *999)
                 DEPENDENT_FIELD_NUMBER_OF_COMPONENTS = numberOfDimensions + 1
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, FIELD_U_VARIABLE_TYPE, &
@@ -398,7 +398,7 @@ CONTAINS
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                   & FIELD_DELUDELN_VARIABLE_TYPE, DEPENDENT_FIELD_NUMBER_OF_COMPONENTS, ERR, ERROR, *999)
                 !Default to the geometric interpolation setup
-                CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
                   & GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 DO i=1,DEPENDENT_FIELD_NUMBER_OF_COMPONENTS
                   IF( i < DEPENDENT_FIELD_NUMBER_OF_COMPONENTS ) THEN
@@ -427,7 +427,7 @@ CONTAINS
                       & FIELD_DELUDELN_VARIABLE_TYPE,i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   ENDDO
                   !Default the scaling to the geometric field scaling
-                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
                   CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
                 CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
@@ -472,7 +472,7 @@ CONTAINS
                   CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                   CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                   CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                     & numberOfDimensions, ERR, ERROR, *999)
 
                   SELECT CASE(EQUATIONS_SET%SPECIFICATION(3))
@@ -542,7 +542,7 @@ CONTAINS
                   ENDDO
                   CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES,err,error,*999)
 
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & numberOfDimensions,err,error,*999)
                   NUMBER_OF_COMPONENTS=numberOfDimensions+1
                   NUMBER_OF_DARCY_COMPONENTS=numberOfDimensions+1
@@ -608,7 +608,7 @@ CONTAINS
                   ENDDO
                   CALL FIELD_VARIABLE_TYPES_CHECK(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES,err,error,*999)
 
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & numberOfDimensions,err,error,*999)
                   DO num_var=1,2*Ncompartments
                     CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,VARIABLE_TYPES(num_var), &
@@ -659,7 +659,7 @@ CONTAINS
                     & err,error,*999)
                   CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                   CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                     & numberOfDimensions, ERR, ERROR, *999)
                   DEPENDENT_FIELD_NUMBER_OF_COMPONENTS = numberOfDimensions + 1
                   CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -731,11 +731,11 @@ CONTAINS
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_INDEPENDENT_TYPE,&
                   & err,error,*999)
 
-                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                  & EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,err,error,*999)
+                  & EQUATIONS_SET%GEOMETRY%geometricField,err,error,*999)
 
                 INDEPENDENT_FIELD_NUMBER_OF_VARIABLES = 2  ! U and the normal component of its flux
                 CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
@@ -755,7 +755,7 @@ CONTAINS
                 CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
 
-                CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+                CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions, ERR, ERROR, *999)
                 INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS = numberOfDimensions !+ 1
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, FIELD_U_VARIABLE_TYPE, &
@@ -763,7 +763,7 @@ CONTAINS
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
                   & FIELD_DELUDELN_VARIABLE_TYPE, INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS, ERR, ERROR, *999)
                 !Default to the geometric interpolation setup
-                CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE,1, &
                   & GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 DO i=1,INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS
                   IF( i < INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS ) THEN
@@ -792,7 +792,7 @@ CONTAINS
                       & FIELD_DELUDELN_VARIABLE_TYPE,i,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   ENDDO
                   !Default the scaling to the geometric field scaling
-                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
                   CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
                 CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
@@ -824,7 +824,7 @@ CONTAINS
                   & err,error,*999)
                 CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+                CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions, ERR, ERROR, *999)
                 INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS = numberOfDimensions !+ 1
                 CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -894,11 +894,11 @@ CONTAINS
                     & MATERIALS_FIELD,err,error,*999)
                   CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                   CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
                   CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
                     & err,error,*999)
                   CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
-                    & GEOMETRIC_FIELD,err,error,*999)
+                    & geometricField,err,error,*999)
                   CALL FIELD_NUMBER_OF_VARIABLES_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD, &
                     & MATERIAL_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
                   CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE], &
@@ -911,7 +911,7 @@ CONTAINS
                     & FIELD_DP_TYPE,err,error,*999)
                   CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & MATERIAL_FIELD_NUMBER_OF_COMPONENTS,err,error,*999)
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
 
                   !Auto-created / default is node_based_interpolation: that's an expensive default ...
@@ -924,7 +924,7 @@ CONTAINS
                   END DO
 
                   !Default the field scaling to that of the geometric field
-                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
                   CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
                 ELSE
                   !Check the user specified field
@@ -984,11 +984,11 @@ CONTAINS
                     & MATERIALS_FIELD,err,error,*999)
                   CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                   CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
                   CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_DECOMPOSITION, &
                     & err,error,*999)
                   CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,EQUATIONS_SET%GEOMETRY% &
-                    & GEOMETRIC_FIELD,err,error,*999)
+                    & geometricField,err,error,*999)
                   CALL FIELD_NUMBER_OF_VARIABLES_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD, &
                     & MATERIAL_FIELD_NUMBER_OF_VARIABLES,err,error,*999)
                   CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,[FIELD_U_VARIABLE_TYPE, &
@@ -1011,7 +1011,7 @@ CONTAINS
                     & MATERIAL_FIELD_NUMBER_OF_V_VAR_COMPONENTS,err,error,*999)
                   CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U1_VARIABLE_TYPE, &
                     & MATERIAL_FIELD_NUMBER_OF_U1_VAR_COMPONENTS,err,error,*999)
-                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
 
                   !Auto-created / default is node_based_interpolation: that's an expensive default ...
@@ -1036,7 +1036,7 @@ CONTAINS
                   END DO
 
                   !Default the field scaling to that of the geometric field
-                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
                   CALL FIELD_SCALING_TYPE_SET(EQUATIONS_MATERIALS%MATERIALS_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
                 ELSE
                   !Check the user specified field
@@ -1107,8 +1107,8 @@ CONTAINS
                 CASE(EQUATIONS_SET_SETUP_START_ACTION)
                   IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
                     IF(ASSOCIATED(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD)) THEN
-                      IF(ASSOCIATED(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD)) THEN
-                        CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      IF(ASSOCIATED(EQUATIONS_SET%GEOMETRY%geometricField)) THEN
+                        CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                           & numberOfDimensions,err,error,*999)
                         SELECT CASE(EQUATIONS_SET_SETUP%ANALYTIC_FUNCTION_TYPE)
                           CASE(EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1)
@@ -1170,8 +1170,8 @@ CONTAINS
                 CASE(EQUATIONS_SET_SETUP_START_ACTION)
                   IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FINISHED) THEN
                     IF(ASSOCIATED(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD)) THEN
-                      IF(ASSOCIATED(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD)) THEN
-                        CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      IF(ASSOCIATED(EQUATIONS_SET%GEOMETRY%geometricField)) THEN
+                        CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                           & numberOfDimensions,err,error,*999)
                         !Initialise analytic parameter which stores value of time to zero - need to update this somewhere in a pre_solve routine
                         EQUATIONS_SET%ANALYTIC%ANALYTIC_USER_PARAMS(1)=0.0_DP
@@ -1238,11 +1238,11 @@ CONTAINS
                   CALL FIELD_LABEL_SET(EQUATIONS_SOURCE%SOURCE_FIELD,"Source Field",err,error,*999)
                   CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SOURCE%SOURCE_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
                   CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SOURCE%SOURCE_FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
-                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+                  CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION,err,error,*999)
                   CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SOURCE%SOURCE_FIELD,GEOMETRIC_DECOMPOSITION, &
                     & err,error,*999)
                   CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SOURCE%SOURCE_FIELD,EQUATIONS_SET%GEOMETRY% &
-                    & GEOMETRIC_FIELD,err,error,*999)
+                    & geometricField,err,error,*999)
                   CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SOURCE%SOURCE_FIELD,1,err,error,*999)
                   CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(EQUATIONS_SOURCE%SOURCE_FIELD,[FIELD_U_VARIABLE_TYPE], &
                     & err,error,*999)
@@ -1252,7 +1252,7 @@ CONTAINS
                     & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                   CALL FIELD_DATA_TYPE_SET_AND_LOCK(EQUATIONS_SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_DP_TYPE,err,error,*999)
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                     & numberOfDimensions, ERR, ERROR, *999)
                     NUMBER_OF_SOURCE_COMPONENTS = numberOfDimensions + 1
                   CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -1263,7 +1263,7 @@ CONTAINS
                     & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
                     !nodal / mesh based
                     DO component_idx=1,numberOfDimensions !NUMBER_OF_SOURCE_COMPONENTS
-                      CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      CALL FIELD_COMPONENT_MESH_COMPONENT_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                         & component_idx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                       CALL FIELD_COMPONENT_INTERPOLATION_SET(EQUATIONS_SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
                         & component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
@@ -1277,7 +1277,7 @@ CONTAINS
                       & numberOfDimensions + 1,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                   ENDIF
                   !Default the field scaling to that of the geometric field
-                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
+                  CALL FIELD_SCALING_TYPE_GET(EQUATIONS_SET%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE,err,error,*999)
                   CALL FIELD_SCALING_TYPE_SET(EQUATIONS_SOURCE%SOURCE_FIELD,GEOMETRIC_SCALING_TYPE,err,error,*999)
                 ELSE
                   !Check the user specified field
@@ -1288,7 +1288,7 @@ CONTAINS
                   CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
                     & err,error,*999)
                   CALL FIELD_DATA_TYPE_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD, FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField, FIELD_U_VARIABLE_TYPE, &
                     & numberOfDimensions, ERR, ERROR, *999)
                     NUMBER_OF_SOURCE_COMPONENTS = numberOfDimensions + 1
                   CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE, &
@@ -1304,7 +1304,7 @@ CONTAINS
                   !Finish creating the source field
                   CALL FIELD_CREATE_FINISH(EQUATIONS_SOURCE%SOURCE_FIELD,err,error,*999)
                   !Set the default values for the source field
-                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & numberOfDimensions,err,error,*999)
                   IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE .OR. &
                     & EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
@@ -1727,24 +1727,24 @@ CONTAINS
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix, dampingMatrix
-    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField,materialsField,EQUATIONS_SET_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField,EQUATIONS_SET_FIELD
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(DecompositionType), POINTER :: DECOMPOSITION
     TYPE(MeshElementType), POINTER :: MESH_ELEMENT
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
-    TYPE(FIELD_TYPE), POINTER :: sourceField
-    TYPE(FIELD_VARIABLE_PTR_TYPE) :: FIELD_VARIABLES(99)
+    TYPE(FieldType), POINTER :: sourceField
+    TYPE(FieldVariablePtrType) :: FIELD_VARIABLES(99)
     TYPE(EquationsMatrixPtrType) :: COUPLING_MATRICES(99)
     REAL(DP), ALLOCATABLE :: PRESSURE_COEFF(:),PRESSURE(:),GRAD_PRESSURE(:,:)
 
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: QUADRATURE_SCHEME_1, QUADRATURE_SCHEME_2
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT,MATERIALS_INTERPOLATED_POINT
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: REFERENCE_GEOMETRIC_INTERPOLATED_POINT
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: ELASTICITY_DEPENDENT_INTERPOLATION_PARAMETERS
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: ELASTICITY_DEPENDENT_INTERPOLATED_POINT
+    TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT,MATERIALS_INTERPOLATED_POINT
+    TYPE(FieldInterpolatedPointType), POINTER :: REFERENCE_GEOMETRIC_INTERPOLATED_POINT
+    TYPE(FieldInterpolationParametersType), POINTER :: ELASTICITY_DEPENDENT_INTERPOLATION_PARAMETERS
+    TYPE(FieldInterpolatedPointType), POINTER :: ELASTICITY_DEPENDENT_INTERPOLATED_POINT
     TYPE(VARYING_STRING) :: localError
 
     REAL(DP):: SOURCE,INTER_COMP_SOURCE,INTER_COMP_PERM_1,INTER_COMP_PERM_2
@@ -1852,7 +1852,7 @@ CONTAINS
 
             linearMapping=>vectorMapping%linearMapping
             FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
 
             stiffnessMatrix%elementMatrix%matrix=0.0_DP
 
@@ -1865,7 +1865,7 @@ CONTAINS
 
             dynamicMapping=>vectorMapping%dynamicMapping
             FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
 
             stiffnessMatrix%elementMatrix%matrix=0.0_DP
             dampingMatrix%elementMatrix%matrix=0.0_DP
@@ -1888,7 +1888,7 @@ CONTAINS
 
             linearMapping=>vectorMapping%linearMapping
             FIELD_VARIABLE=>linearMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
 
             stiffnessMatrix%elementMatrix%matrix=0.0_DP
 
@@ -1909,7 +1909,7 @@ CONTAINS
 !             DO imatrix = 1,Ncompartments
 !               COUPLING_MATRICES(imatrix)%ptr=>linearMatrices%matrices(imatrix)%ptr
 !               FIELD_VARIABLES(imatrix)%ptr=>linearMapping%equationsMatrixToVarMaps(imatrix)%VARIABLE
-!               FIELD_VAR_TYPES(imatrix)=FIELD_VARIABLES(imatrix)%ptr%VARIABLE_TYPE
+!               FIELD_VAR_TYPES(imatrix)=FIELD_VARIABLES(imatrix)%ptr%variableType
 !               COUPLING_MATRICES(imatrix)%ptr%elementMatrix%matrix=0.0_DP
 !             END DO
 
@@ -1921,7 +1921,7 @@ CONTAINS
 
             dynamicMapping=>vectorMapping%dynamicMapping
             FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
 
             stiffnessMatrix%elementMatrix%matrix=0.0_DP
             dampingMatrix%elementMatrix%matrix=0.0_DP
@@ -1943,7 +1943,7 @@ CONTAINS
               num_var_count=num_var_count+1
               COUPLING_MATRICES(num_var_count)%ptr=>linearMatrices%matrices(num_var_count)%ptr
               FIELD_VARIABLES(num_var_count)%ptr=>linearMapping%equationsMatrixToVarMaps(num_var_count)%VARIABLE
-              FIELD_VAR_TYPES(num_var_count)=FIELD_VARIABLES(num_var_count)%ptr%VARIABLE_TYPE
+              FIELD_VAR_TYPES(num_var_count)=FIELD_VARIABLES(num_var_count)%ptr%variableType
               COUPLING_MATRICES(num_var_count)%ptr%elementMatrix%matrix=0.0_DP
              ENDIF
             END DO
@@ -1954,7 +1954,7 @@ CONTAINS
 
             dynamicMapping=>vectorMapping%dynamicMapping
             FIELD_VARIABLE=>dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
-            FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+            FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
 
             stiffnessMatrix%elementMatrix%matrix=0.0_DP
             dampingMatrix%elementMatrix%matrix=0.0_DP
@@ -2222,7 +2222,7 @@ CONTAINS
             ENDIF
 
 
-!             RWG = equations%interpolation%geometricInterpPointMetrics%JACOBIAN * QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
+!             RWG = equations%interpolation%geometricInterpPointMetrics%jacobian * QUADRATURE_SCHEME%GAUSS_WEIGHTS(ng)
 
             !Loop over element rows
             mhs=0
@@ -2233,7 +2233,7 @@ CONTAINS
                 & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
               QUADRATURE_SCHEME_1 => DEPENDENT_BASIS_1%QUADRATURE% &
                 & QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-              RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN * &
+              RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian * &
                 & QUADRATURE_SCHEME_1%GAUSS_WEIGHTS(ng)
 
               DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
@@ -2253,7 +2253,7 @@ CONTAINS
                     !--- We cannot use two different quadrature schemes here !!!
                     QUADRATURE_SCHEME_2 => DEPENDENT_BASIS_2%QUADRATURE% &
                      & QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                    !RWG = equations%interpolation%geometricInterpPointMetrics%JACOBIAN * &
+                    !RWG = equations%interpolation%geometricInterpPointMetrics%jacobian * &
                     !  & QUADRATURE_SCHEME_2%GAUSS_WEIGHTS(ng)
 
                     DO ns=1,DEPENDENT_BASIS_2%numberOfElementParameters
@@ -2297,7 +2297,7 @@ CONTAINS
 
                           DO ni=1,DEPENDENT_BASIS_2%numberOfXi
                             SUM = SUM + PGM * PGNSI(ni) * &
-                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(ni,nh)
+                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,nh)
                           ENDDO !ni
 
                           stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
@@ -2370,7 +2370,7 @@ CONTAINS
 
                           DO ni=1,DEPENDENT_BASIS_2%numberOfXi
                             SUM = SUM + PGM * PGNSI(ni) * &
-                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(ni,nh)
+                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,nh)
                           ENDDO !ni
 
                           stiffnessMatrix%elementMatrix%matrix(mhs,nhs) = stiffnessMatrix%elementMatrix%matrix(mhs,nhs) + &
@@ -2451,13 +2451,13 @@ CONTAINS
 
                           DO mi=1,DEPENDENT_BASIS_1%numberOfXi
                             SUM = SUM - PGMSI(mi) * PGN * &
-                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(mi,mh)
+                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,mh)
                           ENDDO !mi
 
                           IF( STABILIZED ) THEN
                             DO ni=1,DEPENDENT_BASIS_2%numberOfXi
                               SUM = SUM - 0.5_DP * PGM * PGNSI(ni) * &
-                                & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(ni,mh)
+                                & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,mh)
                             ENDDO !ni
                           END IF
 
@@ -2483,13 +2483,13 @@ CONTAINS
 
                           DO ni=1,DEPENDENT_BASIS_2%numberOfXi
                             SUM = SUM + PGM * PGNSI(ni) * &
-                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(ni,nh)
+                              & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,nh)
                           ENDDO !ni
 
                           IF( STABILIZED ) THEN
                             DO mi=1,DEPENDENT_BASIS_1%numberOfXi
                               SUM = SUM + 0.5_DP * PGMSI(mi) * PGN * &
-                                & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(mi,nh)
+                                & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,nh)
                             ENDDO !mi
                           END IF
 
@@ -2516,8 +2516,8 @@ CONTAINS
                                 DO ni=1,DEPENDENT_BASIS_2%numberOfXi
                                   SUM = SUM + 0.5_DP * PERM_TENSOR_OVER_VIS( idxdim, idxdim ) * PGMSI(mi) * PGNSI(ni) * &
                                     & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr% &
-                                    & DXI_DX(mi,idxdim) * equations%interpolation% &
-                                    & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(ni,idxdim)
+                                    & dXidX(mi,idxdim) * equations%interpolation% &
+                                    & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(ni,idxdim)
                                 ENDDO !ni
                               ENDDO !mi
                             ENDDO !idxdim
@@ -2633,7 +2633,7 @@ CONTAINS
                       !Term arising from the pressure / Lagrange Multiplier of elasticity (given):
                       DO mi=1,DEPENDENT_BASIS_1%numberOfXi
                         SUM = SUM - PGM * GRAD_LM_PRESSURE(mi) * &
-                          & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(mi,mh)
+                          & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,mh)
                       ENDDO !mi
 
                       rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
@@ -2672,10 +2672,10 @@ CONTAINS
                       !TO DO- need to read different grad p depending on the compartment of interest
                       DO mi=1,DEPENDENT_BASIS_1%numberOfXi
 !                         SUM = SUM - PGM * GRAD_LM_PRESSURE(mi) * &
-!                           & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(mi,mh)
+!                           & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,mh)
                         !this is the pressure gradient for the appropriate compartment
                         SUM = SUM - PGM * GRAD_PRESSURE(mi,my_compartment) * &
-                          & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%DXI_DX(mi,mh)
+                          & equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%dXidX(mi,mh)
                       ENDDO !mi
 
                       rhsVector%elementVector%vector(mhs) = rhsVector%elementVector%vector(mhs) + SUM * RWG
@@ -2800,7 +2800,7 @@ CONTAINS
                   & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
                 QUADRATURE_SCHEME_1 => DEPENDENT_BASIS_1%QUADRATURE% &
                   & QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN * &
+                RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian * &
                   & QUADRATURE_SCHEME_1%GAUSS_WEIGHTS(ng)
 
                 DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
@@ -2825,7 +2825,7 @@ CONTAINS
                         !--- We cannot use two different quadrature schemes here !!!
                         QUADRATURE_SCHEME_2 => DEPENDENT_BASIS_2%QUADRATURE% &
                          & QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                        !RWG = equations%interpolation%geometricInterpPointMetrics%JACOBIAN * &
+                        !RWG = equations%interpolation%geometricInterpPointMetrics%jacobian * &
                         !  & QUADRATURE_SCHEME_2%GAUSS_WEIGHTS(ng)
 
                         DO ns=1,DEPENDENT_BASIS_2%numberOfElementParameters
@@ -2880,7 +2880,7 @@ CONTAINS
                   DEPENDENT_BASIS_1=>dependentField%DECOMPOSITION%DOMAIN(MESH_COMPONENT_1)%ptr% &
                     & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
                   QUADRATURE_SCHEME_1=>DEPENDENT_BASIS_1%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                  RWG=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN* &
+                  RWG=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian* &
                     & QUADRATURE_SCHEME_1%GAUSS_WEIGHTS(ng)
                   DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
                     mhs=mhs+1
@@ -2969,7 +2969,7 @@ CONTAINS
 !                   & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
 !                 QUADRATURE_SCHEME_1 => DEPENDENT_BASIS_1%QUADRATURE% &
 !                   & QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-!                 RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%JACOBIAN * &
+!                 RWG = equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian * &
 !                   & QUADRATURE_SCHEME_1%GAUSS_WEIGHTS(ng)
 !
 !                 DO ms=1,DEPENDENT_BASIS_1%numberOfElementParameters
@@ -2990,7 +2990,7 @@ CONTAINS
 !                         !--- We cannot use two different quadrature schemes here !!!
 !                         QUADRATURE_SCHEME_2 => DEPENDENT_BASIS_2%QUADRATURE% &
 !                          & QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-!                         !RWG = equations%interpolation%geometricInterpPointMetrics%JACOBIAN * &
+!                         !RWG = equations%interpolation%geometricInterpPointMetrics%jacobian * &
 !                         !  & QUADRATURE_SCHEME_2%GAUSS_WEIGHTS(ng)
 !
 !                         DO ns=1,DEPENDENT_BASIS_2%numberOfElementParameters
@@ -3051,7 +3051,7 @@ CONTAINS
           END IF
 
           !Scale factor adjustment
-          IF(dependentField%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
+          IF(dependentField%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
             CALL Field_InterpolationParametersScaleFactorsElementGet(ELEMENT_NUMBER,equations%interpolation% &
               & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
             mhs=0
@@ -3074,13 +3074,13 @@ CONTAINS
                         nhs=nhs+1
                         IF(stiffnessMatrix%updateMatrix)THEN
                           stiffnessMatrix%elementMatrix%matrix(mhs,nhs)=stiffnessMatrix%elementMatrix%matrix(mhs,nhs)* &
-                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)* &
-                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ns,nh)
+                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)* &
+                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ns,nh)
                         END IF
                         IF(dampingMatrix%updateMatrix)THEN
                           dampingMatrix%elementMatrix%matrix(mhs,nhs)=dampingMatrix%elementMatrix%matrix(mhs,nhs)* &
-                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)* &
-                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ns,nh)
+                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)* &
+                            & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ns,nh)
                         END IF
                       ENDDO !ns
                     ENDDO !nh
@@ -3088,12 +3088,12 @@ CONTAINS
                 ENDIF
                 IF(ASSOCIATED(rhsVector)) THEN
                   IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)* &
-                    & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)
+                    & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)
                 ENDIF
                 IF(ASSOCIATED(sourceVector)) THEN
                   IF(sourceVector%updateVector) sourceVector%elementVector%vector(mhs)= &
                      & sourceVector%elementVector%vector(mhs)* &
-                     & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%SCALE_FACTORS(ms,mh)
+                     & equations%interpolation%dependentInterpParameters(FIELD_VAR_TYPE)%ptr%scaleFactors(ms,mh)
                 ENDIF
               ENDDO !ms
             ENDDO !mh
@@ -3131,7 +3131,7 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<The equations set to calculate the RHS term for
     INTEGER(INTG), INTENT(IN) :: elementNumber !<The element number to calculat the RHS term for
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dependentVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -3143,12 +3143,12 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: equationsMatrices
     TYPE(DecompositionFaceType), POINTER :: face
     TYPE(BasisType), POINTER :: faceBasis
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: dependentInterpolatedPoint
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: dependentInterpolationParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpolatedPoint
+    TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpolationParameters
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: faceQuadratureScheme
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpolatedPoint
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: geometricInterpolationParameters
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: pointMetrics
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpolatedPoint
+    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpolationParameters
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: pointMetrics
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     INTEGER(INTG) :: faceIdx, faceNumber
     INTEGER(INTG) :: componentIdx, gaussIdx
@@ -3212,8 +3212,8 @@ CONTAINS
       !Only add RHS terms if the face geometric parameters are calculated
       IF(decomposition%calculateFaces) THEN
         !Get interpolation parameters and point for Darcy pressure
-        dependentInterpolationParameters=>equations%interpolation%dependentInterpParameters(dependentVariable%VARIABLE_TYPE)%ptr
-        dependentInterpolatedPoint=>equations%interpolation%dependentInterpPoint(dependentVariable%VARIABLE_TYPE)%ptr
+        dependentInterpolationParameters=>equations%interpolation%dependentInterpParameters(dependentVariable%variableType)%ptr
+        dependentInterpolatedPoint=>equations%interpolation%dependentInterpPoint(dependentVariable%variableType)%ptr
 
         DO faceIdx=1,dependentBasis%numberOfLocalFaces
           !Get the face normal and quadrature information
@@ -3252,7 +3252,7 @@ CONTAINS
             CALL FIELD_INTERPOLATED_POINT_METRICS_CALCULATE(COORDINATE_JACOBIAN_VOLUME_TYPE,pointMetrics,err,error,*999)
 
             DO componentIdx=1,dependentVariable%numberOfComponents-1
-              normalProjection=DOT_PRODUCT(pointMetrics%GU(normalComponentIdx,:),pointMetrics%DX_DXI(componentIdx,:))
+              normalProjection=DOT_PRODUCT(pointMetrics%GU(normalComponentIdx,:),pointMetrics%dXdXi(componentIdx,:))
               IF(face%xiNormalDirection<0) THEN
                 normalProjection=-normalProjection
               END IF
@@ -3269,7 +3269,7 @@ CONTAINS
                   rhsVector%elementVector%vector(elementDofIdx) = rhsVector%elementVector%vector(elementDofIdx) - &
                     & gaussWeight*pressureGauss*normalProjection* &
                     & faceQuadratureScheme%GAUSS_BASIS_FNS(faceParameterIdx,NO_PART_DERIV,gaussIdx)* &
-                    & pointMetrics%JACOBIAN
+                    & pointMetrics%jacobian
                 END DO !nodeDerivativeIdx
               END DO !faceNodeIdx
             END DO !componentIdx
@@ -4251,13 +4251,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: dependentField, geometricField
+    TYPE(FieldType), POINTER :: dependentField, geometricField
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     REAL(DP) :: ALPHA
@@ -4317,7 +4317,7 @@ CONTAINS
                           & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
                           & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
                           dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                          geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
                           IF(ASSOCIATED(dependentField).AND.ASSOCIATED(geometricField)) THEN
                             !--- Store the initial (= reference) GEOMETRY field values
                             ALPHA = 1.0_DP
@@ -4339,7 +4339,7 @@ CONTAINS
                               END SELECT
 
                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+                                FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
                                 !--- Store the initial DEPENDENT field values
                                 ALPHA = 1.0_DP
                                 CALL FIELD_PARAMETER_SETS_COPY(dependentField,FIELD_VAR_TYPE, &
@@ -4421,7 +4421,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: geometricField
+    TYPE(FieldType), POINTER :: geometricField
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
@@ -4478,7 +4478,7 @@ CONTAINS
                           & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                           & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
                           & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
-                          geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
                           IF(ASSOCIATED(geometricField)) THEN
                             !--- Store the GEOMETRY field values of the previous time step
                             ALPHA = 1.0_DP
@@ -4540,7 +4540,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: geometricField
+    TYPE(FieldType), POINTER :: geometricField
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_ALE_DARCY !<A pointer to the solvers
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
@@ -4618,7 +4618,7 @@ CONTAINS
                           IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
                             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy update mesh ... ",err,error,*999)
                           ENDIF
-                          geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
                           IF(ASSOCIATED(geometricField)) THEN
                             !--- First, get pointer to mesh displacement values
                             NULLIFY(MESH_DISPLACEMENT_VALUES)
@@ -4631,7 +4631,7 @@ CONTAINS
                                 & err,error,*999)
                             ENDIF
 
-                            numberOfDofs = geometricField%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr%numberOfDofs
+                            numberOfDofs = geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr%numberOfDofs
 
                             IF(PROBLEM_SUBTYPE==PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE &
                                 & .OR. PROBLEM_SUBTYPE==PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE &
@@ -4719,9 +4719,9 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
-    TYPE(FIELD_TYPE), POINTER :: dependentField, geometricField
+    TYPE(FieldType), POINTER :: dependentField, geometricField
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP
@@ -4798,7 +4798,7 @@ CONTAINS
                               CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy update boundary conditions ... ",err,error,*999)
                             ENDIF
                             dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                            geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                            geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
                             IF(ASSOCIATED(dependentField).AND.ASSOCIATED(geometricField)) THEN
                               BOUNDARY_CONDITIONS=>SOLVER_equations%BOUNDARY_CONDITIONS
                               IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
@@ -4818,7 +4818,7 @@ CONTAINS
                                   END SELECT
 
                                   IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                    FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+                                    FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
 
                                     CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,FIELD_VARIABLE, &
                                       & BOUNDARY_CONDITIONS_VARIABLE,err,error,*999)
@@ -4839,7 +4839,7 @@ CONTAINS
                                           & '(" dependentField,FIELD_VAR_TYPE,FIELD_VALUES_SET_TYPE (before) = ",4(X,E13.6))', &
                                           & '4(4(X,E13.6))',err,error,*999)
                                       ENDIF
-                                      numberOfDofs = dependentField%VARIABLE_TYPE_MAP(FIELD_VAR_TYPE)%ptr%numberOfDofs
+                                      numberOfDofs = dependentField%variableTypeMap(FIELD_VAR_TYPE)%ptr%numberOfDofs
                                       DO dof_number=1,numberOfDofs
                                         BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
                                           & CONDITION_TYPES(dof_number)
@@ -4982,7 +4982,7 @@ CONTAINS
 
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_MAT_PROPERTIES, SOLVER_ALE_DARCY  !<A pointer to the solvers
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD_MAT_PROPERTIES, MATERIALS_FIELD_ALE_DARCY
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD_MAT_PROPERTIES, MATERIALS_FIELD_ALE_DARCY
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_MAT_PROPERTIES, SOLVER_EQUATIONS_ALE_DARCY  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_MAT_PROPERTIES, SOLVER_MAPPING_ALE_DARCY !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET_MAT_PROPERTIES, EQUATIONS_SET_ALE_DARCY !<A pointer to the equations set
@@ -5209,7 +5209,7 @@ CONTAINS
     !Local Variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
-    TYPE(FIELDS_TYPE), POINTER :: Fields
+    TYPE(FieldsType), POINTER :: Fields
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop.
     TYPE(VARYING_STRING) :: localError,METHOD,FILENAME
@@ -5461,10 +5461,10 @@ CONTAINS
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
     TYPE(DomainType), POINTER :: DOMAIN
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,geometricField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINT (:)
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:)
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,geometricField
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: INTERPOLATED_POINT (:)
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: INTERPOLATION_PARAMETERS(:)
     TYPE(VARYING_STRING) :: localError
     INTEGER(INTG) :: GLOBAL_DERIV_INDEX,ANALYTIC_FUNCTION_TYPE
     REAL(DP) :: CURRENT_TIME
@@ -5496,7 +5496,7 @@ CONTAINS
       CASE(EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY)
         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-          geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
           IF(ASSOCIATED(geometricField)) THEN
             CALL FIELD_NUMBER_OF_COMPONENTS_GET(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             NULLIFY(GEOMETRIC_VARIABLE)
@@ -5506,9 +5506,9 @@ CONTAINS
               & err,error,*999)
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
               CURRENT_TIME=EQUATIONS_SET%ANALYTIC%ANALYTIC_USER_PARAMS(1)
-              DO variable_idx=3,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
-                variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
-                FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
+              DO variable_idx=3,DEPENDENT_FIELD%numberOfVariables
+                variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%variableType
+                FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                   DO component_idx=1,FIELD_VARIABLE%numberOfComponents
@@ -5523,8 +5523,8 @@ CONTAINS
                               !!TODO \todo We should interpolate the geometric field here and the node position.
                               DO dim_idx=1,numberOfDimensions
                                 !Default to version 1 of each node derivative
-                                local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
-                                  & NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
+                                CALL FieldVariable_LocalNodeDOFGet(GEOMETRIC_VARIABLE,1,1,node_idx,dim_idx, &
+                                  & local_ny,err,error,*999)
                                 X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                               ENDDO !dim_idx
                               !Loop over the derivatives
@@ -5536,8 +5536,8 @@ CONTAINS
 !!!!!!!!!!!!NEED TO SET APPROPRIATE VALUE DEPENDING ON WHETHER IT IS A VELOCITY COMPONENT OR THE MASS INCREASE COMPONENT
                                 VALUE=0.0_DP
                                 !Default to version 1 of each node derivative
-                                local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
+                                CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
+                                  & component_idx,local_ny,err,error,*999)
                                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
                                 IF(variable_type==FIELD_V_VARIABLE_TYPE) THEN
@@ -5587,7 +5587,7 @@ CONTAINS
       CASE DEFAULT
         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-          geometricField=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+          geometricField=>EQUATIONS_SET%GEOMETRY%geometricField
           IF(ASSOCIATED(geometricField)) THEN
             NULLIFY(INTERPOLATION_PARAMETERS)
             NULLIFY(INTERPOLATED_POINT)
@@ -5616,9 +5616,9 @@ CONTAINS
             CALL FIELD_PARAMETER_SET_DATA_GET(geometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
               & GEOMETRIC_PARAMETERS,err,error,*999)
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-              DO variable_idx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
-                variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%VARIABLE_TYPE
-                FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
+              DO variable_idx=1,DEPENDENT_FIELD%numberOfVariables
+                variable_type=DEPENDENT_FIELD%VARIABLES(variable_idx)%variableType
+                FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   CALL FIELD_PARAMETER_SET_CREATE(DEPENDENT_FIELD,variable_type,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
                   DO component_idx=1,FIELD_VARIABLE%numberOfComponents
@@ -6192,8 +6192,8 @@ CONTAINS
                                   CALL FlagError(localError,err,error,*999)
                                 END SELECT
                                 !Default to version 1 of each node derivative
-                                local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
+                                CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
+                                  & component_idx,local_ny,err,error,*999)
                                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
                                 IF(variable_type==FIELD_U_VARIABLE_TYPE) THEN
@@ -6374,7 +6374,7 @@ CONTAINS
 
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_FINITE_ELASTICITY, SOLVER_DARCY  !<A pointer to the solvers
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD_FINITE_ELASTICITY, GEOMETRIC_FIELD_DARCY
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD_FINITE_ELASTICITY, GEOMETRIC_FIELD_DARCY
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_FINITE_ELASTICITY, SOLVER_EQUATIONS_DARCY  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_FINITE_ELASTICITY, SOLVER_MAPPING_DARCY !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET_FINITE_ELASTICITY, EQUATIONS_SET_DARCY !<A pointer to the equations set
@@ -6466,7 +6466,7 @@ CONTAINS
                           & EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
                           & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE)
                           CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy motion specified ... ",err,error,*999)
-                          GEOMETRIC_FIELD_DARCY=>EQUATIONS_SET_DARCY%GEOMETRY%GEOMETRIC_FIELD
+                          GEOMETRIC_FIELD_DARCY=>EQUATIONS_SET_DARCY%GEOMETRY%geometricField
                           IF(ASSOCIATED(GEOMETRIC_FIELD_DARCY)) THEN
                             ALPHA = 0.085_DP * sin( 2.0_DP * PI * CURRENT_TIME / 4.0_DP )
 
@@ -6503,7 +6503,7 @@ CONTAINS
                   IF(ASSOCIATED(SOLVER_MAPPING_DARCY)) THEN
                     EQUATIONS_SET_DARCY=>SOLVER_MAPPING_DARCY%EQUATIONS_SETS(1)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET_DARCY)) THEN
-                      GEOMETRIC_FIELD_DARCY=>EQUATIONS_SET_DARCY%GEOMETRY%GEOMETRIC_FIELD
+                      GEOMETRIC_FIELD_DARCY=>EQUATIONS_SET_DARCY%GEOMETRY%geometricField
                     ELSE
                       CALL FlagError("Darcy equations set is not associated.",err,error,*999)
                     END IF
@@ -6511,20 +6511,20 @@ CONTAINS
                       CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy motion read from a file ... ",err,error,*999)
                     ENDIF
 
-                    CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET_DARCY%GEOMETRY%GEOMETRIC_FIELD, &
+                    CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
                       & FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
 
                     !Copy input to Darcy' geometric field
                     INPUT_TYPE=42
                     INPUT_OPTION=2
-                    CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET_DARCY%GEOMETRY%GEOMETRIC_FIELD, &
+                    CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,MESH_DISPLACEMENT_VALUES, &
                       & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
                       & err,error,*999)
-                    CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET_DARCY%GEOMETRY%GEOMETRIC_FIELD, &
+                    CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
-                    CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET_DARCY%GEOMETRY%GEOMETRIC_FIELD, &
+                    CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
                   ELSE
                     CALL FlagError("Darcy solver mapping is not associated.",err,error,*999)
@@ -6590,7 +6590,7 @@ CONTAINS
                   IF(ASSOCIATED(SOLVER_MAPPING_DARCY)) THEN
                     EQUATIONS_SET_DARCY=>SOLVER_MAPPING_DARCY%EQUATIONS_SETS(1)%ptr
                     IF(ASSOCIATED(EQUATIONS_SET_DARCY)) THEN
-                      GEOMETRIC_FIELD_DARCY=>EQUATIONS_SET_DARCY%GEOMETRY%GEOMETRIC_FIELD
+                      GEOMETRIC_FIELD_DARCY=>EQUATIONS_SET_DARCY%GEOMETRY%geometricField
                       IF(ASSOCIATED(GEOMETRIC_FIELD_DARCY)) THEN
                           !No longer needed, since no more 'Field_ParametersToFieldParametersCopy'
 !                         CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD_DARCY, &
@@ -6648,7 +6648,7 @@ CONTAINS
                 ENDIF
 
                 !--- Third: FIELD_MESH_DISPLACEMENT_SET_TYPE += Deformed absolute position of solid
-                numberOfDofs = GEOMETRIC_FIELD_DARCY%VARIABLE_TYPE_MAP(FIELD_U_VARIABLE_TYPE)%ptr%numberOfDofs
+                numberOfDofs = GEOMETRIC_FIELD_DARCY%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr%numberOfDofs
                 DO dof_number=1,numberOfDofs
                   ! assumes fluid-geometry and solid-dependent mesh are identical \todo: introduce check
                   CALL FIELD_PARAMETER_SET_ADD_LOCAL_DOF(GEOMETRIC_FIELD_DARCY, &
@@ -6723,12 +6723,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     REAL(DP) :: ALPHA
@@ -6803,7 +6803,7 @@ CONTAINS
                                 FIELD_VARIABLE=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
                               END SELECT
                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+                                FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
                                 ALPHA = 1.0_DP
                                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,FIELD_VAR_TYPE, &
                                   & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,ALPHA,err,error,*999)
@@ -6871,9 +6871,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
-!    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD
+!    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,GEOMETRIC_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
@@ -6948,7 +6948,7 @@ CONTAINS
                       !for this analytic case we copy the mass variable to the pressure variable
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                          GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                          GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
                             CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,&
                               & numberOfDimensions,err,error,*999)
@@ -6958,10 +6958,10 @@ CONTAINS
                             CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,&
                               & GEOMETRIC_PARAMETERS,err,error,*999)
                              EQUATIONS_SET%ANALYTIC%ANALYTIC_USER_PARAMS(1)=CURRENT_TIME
-!                              DO variable_idx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
-                              !variable_type=DEPENDENT_FIELD%VARIABLES(2*eqnset_idx-1)%VARIABLE_TYPE
+!                              DO variable_idx=1,DEPENDENT_FIELD%numberOfVariables
+                              !variable_type=DEPENDENT_FIELD%VARIABLES(2*eqnset_idx-1)%variableType
                               variable_type=FIELD_V_VARIABLE_TYPE
-                              FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%ptr
+                              FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%ptr
                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
 !                                DO component_idx=4,FIELD_VARIABLE%numberOfComponents
 
@@ -7003,7 +7003,7 @@ CONTAINS
 ! !                                               CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
 ! !                                                 & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
 ! ! !                                               BOUNDARY_CONDITION_CHECK_VARIABLE=SOLVER_equations%BOUNDARY_CONDITIONS% &
-! ! !                                                 & BOUNDARY_CONDITIONS_VARIABLE_TYPE_MAP(variable_type)%ptr% &
+! ! !                                                 & BOUNDARY_CONDITIONS_variableTypeMap(variable_type)%ptr% &
 ! ! !                                                 & CONDITION_TYPES(local_ny)
 ! ! !                                               IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_FIXED) THEN
 ! ! !                                                CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD, &
@@ -7078,7 +7078,7 @@ CONTAINS
 !               IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
 !                 sourceField=>EQUATIONS_SET%SOURCE%SOURCE_FIELD
 !                 IF(ASSOCIATED(sourceField)) THEN
-!                   GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+!                   GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
 !                   IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
 !                     CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
 !                     NULLIFY(GEOMETRIC_VARIABLE)
@@ -7086,7 +7086,7 @@ CONTAINS
 !                     CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
 !                       & GEOMETRIC_PARAMETERS,err,error,*999)
 !                       variable_type=FIELD_U_VARIABLE_TYPE
-!                       FIELD_VARIABLE=>sourceField%VARIABLE_TYPE_MAP(variable_type)%ptr
+!                       FIELD_VARIABLE=>sourceField%variableTypeMap(variable_type)%ptr
 !                       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
 !                         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
 !                           IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
@@ -7193,13 +7193,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
     CHARACTER(25) :: FILENAME
     TYPE(VARYING_STRING) :: FILEPATH
@@ -7288,7 +7288,7 @@ CONTAINS
                                   FIELD_VARIABLE=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
                                 END SELECT
                                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                  FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+                                  FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
 
                                   !iter 1
                                   NULLIFY(ITERATION_VALUES_N)
@@ -7301,7 +7301,7 @@ CONTAINS
                                     & FIELD_VALUES_SET_TYPE,ITERATION_VALUES_N1,err,error,*999)
 
                                   RESIDUAL_NORM = 0.0_DP
-                                  numberOfDofs = DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_VAR_TYPE)%ptr%numberOfDofs
+                                  numberOfDofs = DEPENDENT_FIELD%variableTypeMap(FIELD_VAR_TYPE)%ptr%numberOfDofs
                                   DO dof_number=1,numberOfDofs
                                     RESIDUAL_NORM = RESIDUAL_NORM + &
                                       & ( ITERATION_VALUES_N1(dof_number) - ITERATION_VALUES_N(dof_number) )**2.0_DP
@@ -7435,13 +7435,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     REAL(DP), POINTER :: ITERATION_VALUES_N(:),ITERATION_VALUES_N1(:)
@@ -7515,7 +7515,7 @@ CONTAINS
                                   FIELD_VARIABLE=>vectorMapping%dynamicMapping%equationsMatrixToVarMaps(1)%VARIABLE
                                 END SELECT
                                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
-                                  FIELD_VAR_TYPE=FIELD_VARIABLE%VARIABLE_TYPE
+                                  FIELD_VAR_TYPE=FIELD_VARIABLE%variableType
 
                                   !iter 1
                                   NULLIFY(ITERATION_VALUES_N)
@@ -7528,7 +7528,7 @@ CONTAINS
                                     & FIELD_VALUES_SET_TYPE,ITERATION_VALUES_N1,err,error,*999)
 
 !                                   RESIDUAL_NORM = 0.0_DP
-                                  numberOfDofs = DEPENDENT_FIELD%VARIABLE_TYPE_MAP(FIELD_VAR_TYPE)%ptr%numberOfDofs
+                                  numberOfDofs = DEPENDENT_FIELD%variableTypeMap(FIELD_VAR_TYPE)%ptr%numberOfDofs
 
 !                                   DO dof_number=1,numberOfDofs
 !                                     RESIDUAL_NORM = RESIDUAL_NORM + &
@@ -7630,7 +7630,7 @@ CONTAINS
 
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_FINITE_ELASTICITY, SOLVER_DARCY  !<A pointer to the solvers
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD_DARCY
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD_DARCY
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_DARCY  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_DARCY !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET_DARCY !<A pointer to the equations set
@@ -7734,7 +7734,7 @@ CONTAINS
 
                 write(*,*)'ALPHA = ',ALPHA
 
-                numberOfDofs = DEPENDENT_FIELD_DARCY%VARIABLE_TYPE_MAP(FIELD_V_VARIABLE_TYPE)%ptr%numberOfDofs
+                numberOfDofs = DEPENDENT_FIELD_DARCY%variableTypeMap(FIELD_V_VARIABLE_TYPE)%ptr%numberOfDofs
 
                 DO dof_number = nint(3.0/4.0*numberOfDofs) + 1, numberOfDofs
                   !'3/4' only works for equal order interpolation in (u,v,w) and p
@@ -7788,19 +7788,19 @@ CONTAINS
     !Local variables
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField, independentField
+    TYPE(FieldType), POINTER :: dependentField, independentField
     TYPE(DecompositionType), POINTER :: DECOMPOSITION
     TYPE(DecompositionElementType), POINTER :: DECOMP_ELEMENT
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT
+    TYPE(FieldInterpolationParametersType), POINTER :: GEOMETRIC_INTERPOLATION_PARAMETERS
+    TYPE(FieldInterpolatedPointType), POINTER :: GEOMETRIC_INTERPOLATED_POINT
     TYPE(DecompositionFaceType), POINTER :: DECOMP_FACE
     TYPE(DomainFaceType), POINTER :: DOMAIN_FACE
     TYPE(BasisType), POINTER :: FACE_BASIS,DEPENDENT_BASIS
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: FACE_QUADRATURE_SCHEME
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: FACE_VELOCITY_INTERPOLATION_PARAMETERS
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: FACE_INTERPOLATED_POINT
+    TYPE(FieldInterpolationParametersType), POINTER :: FACE_VELOCITY_INTERPOLATION_PARAMETERS
+    TYPE(FieldInterpolatedPointType), POINTER :: FACE_INTERPOLATED_POINT
     INTEGER(INTG) :: MESH_COMPONENT_NUMBER
     INTEGER(INTG) :: element_face_idx,face_number,normal_component_idx,gauss_idx
     INTEGER(INTG) :: FACE_NUMBER_OF_GAUSS_POINTS

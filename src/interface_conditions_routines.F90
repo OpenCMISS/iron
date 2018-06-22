@@ -174,7 +174,7 @@ CONTAINS
     TYPE(DomainMappingType), POINTER :: ELEMENTS_MAPPING
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
-    TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD
+    TYPE(FieldType), POINTER :: LAGRANGE_FIELD
     
 !#ifdef TAUPROF
 !    CHARACTER(28) :: CVAR
@@ -344,8 +344,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: mesh_idx,mesh_idx_count,NUMBER_OF_COMPONENTS,variable_idx
     INTEGER(INTG), POINTER :: NEW_VARIABLE_MESH_INDICES(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    TYPE(FIELD_VARIABLE_PTR_TYPE), POINTER :: NEW_FIELD_VARIABLES(:)
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
+    TYPE(FieldVariablePtrType), POINTER :: NEW_FIELD_VARIABLES(:)
     TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -383,11 +383,11 @@ CONTAINS
               CASE(INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR,INTERFACE_CONDITION_FLS_CONTACT_OPERATOR, &
                 & INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR,INTERFACE_CONDITION_SOLID_FLUID_OPERATOR)
                 !Check that the dependent variables have the same number of components
-                FIELD_VARIABLE=>INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR
+                FIELD_VARIABLE=>INTERFACE_DEPENDENT%fieldVariables(1)%PTR
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   NUMBER_OF_COMPONENTS=FIELD_VARIABLE%numberOfComponents
                   DO variable_idx=2,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
-                    FIELD_VARIABLE=>INTERFACE_DEPENDENT%FIELD_VARIABLES(variable_idx)%PTR
+                    FIELD_VARIABLE=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
                     IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                       !do nothing
                     ELSE
@@ -420,16 +420,16 @@ CONTAINS
                 DO variable_idx=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
                   IF(INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES(variable_idx)==mesh_idx) THEN
                     mesh_idx_count=mesh_idx_count+1
-                    NEW_FIELD_VARIABLES(mesh_idx_count)%PTR=>INTERFACE_DEPENDENT%FIELD_VARIABLES(variable_idx)%PTR
+                    NEW_FIELD_VARIABLES(mesh_idx_count)%PTR=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
                     NEW_VARIABLE_MESH_INDICES(mesh_idx_count)=mesh_idx
                   ENDIF
                 ENDDO !variable_idx
               ENDDO !mesh_idx
               IF(mesh_idx_count/=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES) &
                 & CALL FlagError("Invalid dependent variable mesh index setup.",err,error,*999)
-              IF(ASSOCIATED(INTERFACE_DEPENDENT%FIELD_VARIABLES)) DEALLOCATE(INTERFACE_DEPENDENT%FIELD_VARIABLES)
+              IF(ASSOCIATED(INTERFACE_DEPENDENT%fieldVariables)) DEALLOCATE(INTERFACE_DEPENDENT%fieldVariables)
               IF(ASSOCIATED(INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES)) DEALLOCATE(INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES)
-              INTERFACE_DEPENDENT%FIELD_VARIABLES=>NEW_FIELD_VARIABLES
+              INTERFACE_DEPENDENT%fieldVariables=>NEW_FIELD_VARIABLES
               INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES=>NEW_VARIABLE_MESH_INDICES
             ELSE
               CALL FlagError("Interface condition dependent is not associated.",err,error,*999)
@@ -472,7 +472,7 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the interface condition
     TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface to create the interface condition on
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field for the interface condition.
+    TYPE(FieldType), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field for the interface condition.
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<On return, a pointer to the interface condition. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -497,84 +497,77 @@ CONTAINS
             & " has already been created on interface number "//TRIM(NUMBER_TO_VSTRING(INTERFACE%userNumber,"*",err,error))//"."
           CALL FlagError(LOCAL_ERROR,err,error,*997)
         ELSE
-          IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-            IF(GEOMETRIC_FIELD%FIELD_FINISHED) THEN
-              !Check the geometric field is defined on the interface
-              GEOMETRIC_INTERFACE=>GEOMETRIC_FIELD%INTERFACE
-              IF(ASSOCIATED(GEOMETRIC_INTERFACE)) THEN
-                IF(ASSOCIATED(GEOMETRIC_INTERFACE,INTERFACE)) THEN
-                  NULLIFY(NEW_INTERFACE_CONDITION)
-                  !Initialise the new interface condition
-                  CALL INTERFACE_CONDITION_INITIALISE(NEW_INTERFACE_CONDITION,err,error,*999)
-                  !Set default interface condition values
-                  NEW_INTERFACE_CONDITION%userNumber=USER_NUMBER
-                  NEW_INTERFACE_CONDITION%globalNumber=INTERFACE%interfaceConditions%numberOfInterfaceConditions+1
-                  NEW_INTERFACE_CONDITION%interfaceConditions=>INTERFACE%interfaceConditions
-                  NEW_INTERFACE_CONDITION%label="Interface Condition "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))
-                  NEW_INTERFACE_CONDITION%INTERFACE=>INTERFACE
-                  !Default attributes
-                  NEW_INTERFACE_CONDITION%GEOMETRY%GEOMETRIC_FIELD=>GEOMETRIC_FIELD
-                  NEW_INTERFACE_CONDITION%METHOD=INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD
-                  NEW_INTERFACE_CONDITION%OPERATOR=INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR
-                  IF(ASSOCIATED(INTERFACE%pointsConnectivity)) THEN
-                    NEW_INTERFACE_CONDITION%integrationType=INTERFACE_CONDITION_DATA_POINTS_INTEGRATION
-                  ELSE
-                    NEW_INTERFACE_CONDITION%integrationType=INTERFACE_CONDITION_GAUSS_INTEGRATION
-                  ENDIF
-                  CALL INTERFACE_CONDITION_DEPENDENT_INITIALISE(NEW_INTERFACE_CONDITION,err,error,*999)
-                  !Add new interface condition into list of interface conditions in the interface
-                  ALLOCATE(NEW_INTERFACE_CONDITIONS(INTERFACE%interfaceConditions%numberOfInterfaceConditions+1),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate new interface conditions.",err,error,*999)
-                  DO interface_conditions_idx=1,INTERFACE%interfaceConditions%numberOfInterfaceConditions
-                    NEW_INTERFACE_CONDITIONS(interface_conditions_idx)%PTR=>INTERFACE%interfaceConditions% &
-                      & interfaceConditions(interface_conditions_idx)%PTR
-                  ENDDO !interface_conditions_idx
-                  NEW_INTERFACE_CONDITIONS(INTERFACE%interfaceConditions%numberOfInterfaceConditions+1)%PTR=> &
-                    & NEW_INTERFACE_CONDITION
-                  IF(ASSOCIATED(INTERFACE%interfaceConditions%interfaceConditions)) DEALLOCATE(INTERFACE%interfaceConditions% &
-                    & interfaceConditions)
-                  INTERFACE%interfaceConditions%interfaceConditions=>NEW_INTERFACE_CONDITIONS
-                  INTERFACE%interfaceConditions%numberOfInterfaceConditions=INTERFACE%interfaceConditions% &
-                    numberOfInterfaceConditions+1
-                  !Return the pointer
-                  INTERFACE_CONDITION=>NEW_INTERFACE_CONDITION
-                ELSE
-                  INTERFACE_PARENT_REGION=>INTERFACE%parentRegion
-                  IF(ASSOCIATED(INTERFACE_PARENT_REGION)) THEN
-                    GEOMETRIC_INTERFACE_PARENT_REGION=>GEOMETRIC_INTERFACE%parentRegion
-                    IF(ASSOCIATED(GEOMETRIC_INTERFACE_PARENT_REGION)) THEN
-                      LOCAL_ERROR="Geometric field interface does not match specified interface. "// &
-                        "The geometric field was created on interface number "// &
-                        & TRIM(NUMBER_TO_VSTRING(GEOMETRIC_INTERFACE%userNumber,"*",err,error))// &
-                        & " of parent region number "// &
-                        & TRIM(NUMBER_TO_VSTRING(GEOMETRIC_INTERFACE_PARENT_REGION%userNumber,"*",err,error))// &
-                        & " and the specified interface was created as number "// &
-                        & TRIM(NUMBER_TO_VSTRING(INTERFACE%userNumber,"*",err,error))//" on parent region number "// &
-                        & TRIM(NUMBER_TO_VSTRING(INTERFACE_PARENT_REGION%userNumber,"*",err,error))//"."
-                      CALL FlagError(LOCAL_ERROR,err,error,*999)
-                    ELSE
-                      CALL FlagError("Geometric interface parent region is not associated.",err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Interface parent region is not associated.",err,error,*999)
-                  ENDIF
-                ENDIF
+          CALL Field_AssertIsFinished(GEOMETRIC_FIELD,err,error,*999)
+          !Check the geometric field is defined on the interface
+          GEOMETRIC_INTERFACE=>GEOMETRIC_FIELD%INTERFACE
+          IF(ASSOCIATED(GEOMETRIC_INTERFACE)) THEN
+            IF(ASSOCIATED(GEOMETRIC_INTERFACE,INTERFACE)) THEN
+              NULLIFY(NEW_INTERFACE_CONDITION)
+              !Initialise the new interface condition
+              CALL INTERFACE_CONDITION_INITIALISE(NEW_INTERFACE_CONDITION,err,error,*999)
+              !Set default interface condition values
+              NEW_INTERFACE_CONDITION%userNumber=USER_NUMBER
+              NEW_INTERFACE_CONDITION%globalNumber=INTERFACE%interfaceConditions%numberOfInterfaceConditions+1
+              NEW_INTERFACE_CONDITION%interfaceConditions=>INTERFACE%interfaceConditions
+              NEW_INTERFACE_CONDITION%label="Interface Condition "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))
+              NEW_INTERFACE_CONDITION%INTERFACE=>INTERFACE
+              !Default attributes
+              NEW_INTERFACE_CONDITION%GEOMETRY%geometricField=>GEOMETRIC_FIELD
+              NEW_INTERFACE_CONDITION%METHOD=INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD
+              NEW_INTERFACE_CONDITION%OPERATOR=INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR
+              IF(ASSOCIATED(INTERFACE%pointsConnectivity)) THEN
+                NEW_INTERFACE_CONDITION%integrationType=INTERFACE_CONDITION_DATA_POINTS_INTEGRATION
               ELSE
-                GEOMETRIC_REGION=>GEOMETRIC_FIELD%REGION
-                IF(ASSOCIATED(GEOMETRIC_REGION)) THEN
-                  LOCAL_ERROR="The geometric field was created on region number "// &
-                    & TRIM(NUMBER_TO_VSTRING(GEOMETRIC_REGION%userNumber,"*",err,error))// &
-                    & " and not on the specified interface."
+                NEW_INTERFACE_CONDITION%integrationType=INTERFACE_CONDITION_GAUSS_INTEGRATION
+              ENDIF
+              CALL INTERFACE_CONDITION_DEPENDENT_INITIALISE(NEW_INTERFACE_CONDITION,err,error,*999)
+              !Add new interface condition into list of interface conditions in the interface
+              ALLOCATE(NEW_INTERFACE_CONDITIONS(INTERFACE%interfaceConditions%numberOfInterfaceConditions+1),STAT=ERR)
+              IF(ERR/=0) CALL FlagError("Could not allocate new interface conditions.",err,error,*999)
+              DO interface_conditions_idx=1,INTERFACE%interfaceConditions%numberOfInterfaceConditions
+                NEW_INTERFACE_CONDITIONS(interface_conditions_idx)%PTR=>INTERFACE%interfaceConditions% &
+                  & interfaceConditions(interface_conditions_idx)%PTR
+              ENDDO !interface_conditions_idx
+              NEW_INTERFACE_CONDITIONS(INTERFACE%interfaceConditions%numberOfInterfaceConditions+1)%PTR=> &
+                & NEW_INTERFACE_CONDITION
+              IF(ASSOCIATED(INTERFACE%interfaceConditions%interfaceConditions)) DEALLOCATE(INTERFACE%interfaceConditions% &
+                & interfaceConditions)
+              INTERFACE%interfaceConditions%interfaceConditions=>NEW_INTERFACE_CONDITIONS
+              INTERFACE%interfaceConditions%numberOfInterfaceConditions=INTERFACE%interfaceConditions% &
+              numberOfInterfaceConditions+1
+              !Return the pointer
+              INTERFACE_CONDITION=>NEW_INTERFACE_CONDITION
+            ELSE
+              INTERFACE_PARENT_REGION=>INTERFACE%parentRegion
+              IF(ASSOCIATED(INTERFACE_PARENT_REGION)) THEN
+                GEOMETRIC_INTERFACE_PARENT_REGION=>GEOMETRIC_INTERFACE%parentRegion
+                IF(ASSOCIATED(GEOMETRIC_INTERFACE_PARENT_REGION)) THEN
+                  LOCAL_ERROR="Geometric field interface does not match specified interface. "// &
+                    "The geometric field was created on interface number "// &
+                    & TRIM(NUMBER_TO_VSTRING(GEOMETRIC_INTERFACE%userNumber,"*",err,error))// &
+                    & " of parent region number "// &
+                    & TRIM(NUMBER_TO_VSTRING(GEOMETRIC_INTERFACE_PARENT_REGION%userNumber,"*",err,error))// &
+                    & " and the specified interface was created as number "// &
+                    & TRIM(NUMBER_TO_VSTRING(INTERFACE%userNumber,"*",err,error))//" on parent region number "// &
+                    & TRIM(NUMBER_TO_VSTRING(INTERFACE_PARENT_REGION%userNumber,"*",err,error))//"."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 ELSE
-                  CALL FlagError("The geometric field does not have a region or interface created.",err,error,*999)
+                  CALL FlagError("Geometric interface parent region is not associated.",err,error,*999)
                 ENDIF
+              ELSE
+                CALL FlagError("Interface parent region is not associated.",err,error,*999)
               ENDIF
-            ELSE
-              CALL FlagError("Geometric field has not been finished.",err,error,*999)
             ENDIF
           ELSE
-            CALL FlagError("Geometric field is not finished.",err,error,*999)
+            GEOMETRIC_REGION=>GEOMETRIC_FIELD%REGION
+            IF(ASSOCIATED(GEOMETRIC_REGION)) THEN
+              LOCAL_ERROR="The geometric field was created on region number "// &
+                & TRIM(NUMBER_TO_VSTRING(GEOMETRIC_REGION%userNumber,"*",err,error))// &
+                & " and not on the specified interface."
+              CALL FlagError(LOCAL_ERROR,err,error,*999)
+            ELSE
+              CALL FlagError("The geometric field does not have a region or interface created.",err,error,*999)
+            ENDIF
           ENDIF
         ENDIF
       ELSE
@@ -611,7 +604,7 @@ CONTAINS
 
     IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
       IF(ASSOCIATED(INTERFACE_DEPENDENT%EQUATIONS_SETS)) DEALLOCATE(INTERFACE_DEPENDENT%EQUATIONS_SETS)
-      IF(ASSOCIATED(INTERFACE_DEPENDENT%FIELD_VARIABLES)) DEALLOCATE(INTERFACE_DEPENDENT%FIELD_VARIABLES)
+      IF(ASSOCIATED(INTERFACE_DEPENDENT%fieldVariables)) DEALLOCATE(INTERFACE_DEPENDENT%fieldVariables)
       IF(ASSOCIATED(INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES)) DEALLOCATE(INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES)
       DEALLOCATE(INTERFACE_DEPENDENT)
     ENDIF
@@ -648,7 +641,7 @@ CONTAINS
         INTERFACE_CONDITION%DEPENDENT%INTERFACE_CONDITION=>INTERFACE_CONDITION
         INTERFACE_CONDITION%DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES=0
         NULLIFY(INTERFACE_CONDITION%DEPENDENT%EQUATIONS_SETS)
-        NULLIFY(INTERFACE_CONDITION%DEPENDENT%FIELD_VARIABLES)
+        NULLIFY(INTERFACE_CONDITION%DEPENDENT%fieldVariables)
         NULLIFY(INTERFACE_CONDITION%DEPENDENT%VARIABLE_MESH_INDICES)
       ENDIF
     ELSE
@@ -682,9 +675,9 @@ CONTAINS
     LOGICAL :: FOUND_MESH_INDEX
     TYPE(DecompositionType), POINTER :: DECOMPOSITION
     TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: NEW_EQUATIONS_SETS(:)
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,INTERFACE_VARIABLE
-    TYPE(FIELD_VARIABLE_PTR_TYPE), POINTER :: NEW_FIELD_VARIABLES(:)
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE,INTERFACE_VARIABLE
+    TYPE(FieldVariablePtrType), POINTER :: NEW_FIELD_VARIABLES(:)
     TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
     TYPE(MeshType), POINTER :: DEPENDENT_MESH,INTERFACE_MESH
@@ -702,15 +695,15 @@ CONTAINS
               DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
               IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
                 IF(VARIABLE_TYPE>=1.AND.VARIABLE_TYPE<=FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
-                  FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
+                  FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(VARIABLE_TYPE)%PTR
                   IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                     !Check that the field variable hasn't already been added.
                     variable_idx=1
                     NULLIFY(INTERFACE_VARIABLE)
                     DO WHILE(variable_idx<=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES.AND. &
                       & .NOT.ASSOCIATED(INTERFACE_VARIABLE))
-                      IF(ASSOCIATED(FIELD_VARIABLE,INTERFACE_DEPENDENT%FIELD_VARIABLES(variable_idx)%PTR)) THEN
-                        INTERFACE_VARIABLE=>INTERFACE_DEPENDENT%FIELD_VARIABLES(variable_idx)%PTR
+                      IF(ASSOCIATED(FIELD_VARIABLE,INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR)) THEN
+                        INTERFACE_VARIABLE=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
                       ELSE
                         variable_idx=variable_idx+1
                       ENDIF
@@ -741,8 +734,8 @@ CONTAINS
                               ENDDO !variable_idx
                               IF(FOUND_MESH_INDEX) THEN
                                 !The mesh index has already been added to replace the dependent variable with the specified variable
-                                INTERFACE_DEPENDENT%FIELD_VARIABLES(variable_idx)%PTR=>DEPENDENT_FIELD% &
-                                  & VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
+                                INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR=>DEPENDENT_FIELD% &
+                                  & variableTypeMap(VARIABLE_TYPE)%PTR
                               ELSE
                                 !The mesh index has not been found so add a new dependent variable.
                                 ALLOCATE(NEW_EQUATIONS_SETS(INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES+1),STAT=ERR)
@@ -753,19 +746,19 @@ CONTAINS
                                 IF(ERR/=0) CALL FlagError("Could not allocate new variable mesh indices.",err,error,*999)
                                 DO variable_idx=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
                                   NEW_EQUATIONS_SETS(variable_idx)%PTR=>INTERFACE_DEPENDENT%EQUATIONS_SETS(variable_idx)%PTR
-                                  NEW_FIELD_VARIABLES(variable_idx)%PTR=>INTERFACE_DEPENDENT%FIELD_VARIABLES(variable_idx)%PTR
+                                  NEW_FIELD_VARIABLES(variable_idx)%PTR=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
                                   NEW_VARIABLE_MESH_INDICES(variable_idx)=INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES(variable_idx)
                                 ENDDO !variable_idx
                                 NEW_EQUATIONS_SETS(INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES+1)%PTR=>EQUATIONS_SET
                                 NEW_FIELD_VARIABLES(INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES+1)%PTR=>DEPENDENT_FIELD% &
-                                  & VARIABLE_TYPE_MAP(VARIABLE_TYPE)%PTR
+                                  & variableTypeMap(VARIABLE_TYPE)%PTR
                                 NEW_VARIABLE_MESH_INDICES(INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES+1)=MESH_INDEX
                                 IF(ASSOCIATED(INTERFACE_DEPENDENT%EQUATIONS_SETS)) DEALLOCATE(INTERFACE_DEPENDENT%EQUATIONS_SETS)
-                                IF(ASSOCIATED(INTERFACE_DEPENDENT%FIELD_VARIABLES)) DEALLOCATE(INTERFACE_DEPENDENT%FIELD_VARIABLES)
+                                IF(ASSOCIATED(INTERFACE_DEPENDENT%fieldVariables)) DEALLOCATE(INTERFACE_DEPENDENT%fieldVariables)
                                 IF(ASSOCIATED(INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES)) &
                                   & DEALLOCATE(INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES)
                                 INTERFACE_DEPENDENT%EQUATIONS_SETS=>NEW_EQUATIONS_SETS
-                                INTERFACE_DEPENDENT%FIELD_VARIABLES=>NEW_FIELD_VARIABLES
+                                INTERFACE_DEPENDENT%fieldVariables=>NEW_FIELD_VARIABLES
                                 INTERFACE_DEPENDENT%VARIABLE_MESH_INDICES=>NEW_VARIABLE_MESH_INDICES
                                 INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES= &
                                   & INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES+1
@@ -1224,7 +1217,7 @@ CONTAINS
     ENTERS("INTERFACE_CONDITION_GEOMETRY_FINALISE",err,error,*999)
 
     NULLIFY(INTERFACE_GEOMETRY%INTERFACE_CONDITION)
-    NULLIFY(INTERFACE_GEOMETRY%GEOMETRIC_FIELD)
+    NULLIFY(INTERFACE_GEOMETRY%geometricField)
        
     EXITS("INTERFACE_CONDITION_GEOMETRY_FINALISE")
     RETURN
@@ -1251,7 +1244,7 @@ CONTAINS
 
     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
       INTERFACE_CONDITION%GEOMETRY%INTERFACE_CONDITION=>INTERFACE_CONDITION
-      NULLIFY(INTERFACE_CONDITION%GEOMETRY%GEOMETRIC_FIELD)
+      NULLIFY(INTERFACE_CONDITION%GEOMETRY%geometricField)
     ELSE
       CALL FlagError("Interface condition is not associated.",err,error,*999)
     ENDIF
@@ -1370,13 +1363,13 @@ CONTAINS
     !Argument variables
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to create the Lagrange field on
     INTEGER(INTG), INTENT(IN) :: LAGRANGE_FIELD_USER_NUMBER !<The user specified Lagrange field number
-    TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD !<If associated on entry, a pointer to the user created Lagrange field which has the same user number as the specified Lagrange field user number. If not associated on entry, on exit, a pointer to the created Lagrange field for the interface condition.
+    TYPE(FieldType), POINTER :: LAGRANGE_FIELD !<If associated on entry, a pointer to the user created Lagrange field which has the same user number as the specified Lagrange field user number. If not associated on entry, on exit, a pointer to the created Lagrange field for the interface condition.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,interpolation_type,GEOMETRIC_SCALING_TYPE,dependent_variable_number
     TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(FIELD_TYPE), POINTER :: FIELD
+    TYPE(FieldType), POINTER :: FIELD
     TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
     TYPE(RegionType), POINTER :: INTERFACE_REGION,LAGRANGE_FIELD_REGION
@@ -1396,31 +1389,28 @@ CONTAINS
             IF(ASSOCIATED(INTERFACE_REGION)) THEN
               IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                 !Check the Lagrange field has been finished
-                IF(LAGRANGE_FIELD%FIELD_FINISHED) THEN
-                  !Check the user numbers match
-                  IF(LAGRANGE_FIELD_USER_NUMBER/=LAGRANGE_FIELD%userNumber) THEN
-                    LOCAL_ERROR="The specified Lagrange field user number of "// &
-                      & TRIM(NUMBER_TO_VSTRING(LAGRANGE_FIELD_USER_NUMBER,"*",err,error))// &
-                      & " does not match the user number of the specified Lagrange field of "// &
-                      & TRIM(NUMBER_TO_VSTRING(LAGRANGE_FIELD%userNumber,"*",err,error))//"."
+                CALL Field_AssertIsFinished(LAGRANGE_FIELD,err,error,*999)
+                !Check the user numbers match
+                IF(LAGRANGE_FIELD_USER_NUMBER/=LAGRANGE_FIELD%userNumber) THEN
+                  LOCAL_ERROR="The specified Lagrange field user number of "// &
+                    & TRIM(NUMBER_TO_VSTRING(LAGRANGE_FIELD_USER_NUMBER,"*",err,error))// &
+                    & " does not match the user number of the specified Lagrange field of "// &
+                    & TRIM(NUMBER_TO_VSTRING(LAGRANGE_FIELD%userNumber,"*",err,error))//"."
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
+                ENDIF
+                LAGRANGE_FIELD_REGION=>LAGRANGE_FIELD%REGION
+                IF(ASSOCIATED(LAGRANGE_FIELD_REGION)) THEN
+                  !Check the field is defined on the same region as the interface
+                  IF(LAGRANGE_FIELD_REGION%userNumber/=INTERFACE_REGION%userNumber) THEN
+                    LOCAL_ERROR="Invalid region setup. The specified Lagrange field has been created on interface number "// &
+                      & TRIM(NUMBER_TO_VSTRING(INTERFACE%userNumber,"*",err,error))//" in parent region number "// &
+                      & TRIM(NUMBER_TO_VSTRING(LAGRANGE_FIELD_REGION%userNumber,"*",err,error))// &
+                      & " and the specified interface has been created in parent region number "// &
+                      & TRIM(NUMBER_TO_VSTRING(INTERFACE_REGION%userNumber,"*",err,error))//"."
                     CALL FlagError(LOCAL_ERROR,err,error,*999)
                   ENDIF
-                  LAGRANGE_FIELD_REGION=>LAGRANGE_FIELD%REGION
-                  IF(ASSOCIATED(LAGRANGE_FIELD_REGION)) THEN
-                    !Check the field is defined on the same region as the interface
-                    IF(LAGRANGE_FIELD_REGION%userNumber/=INTERFACE_REGION%userNumber) THEN
-                      LOCAL_ERROR="Invalid region setup. The specified Lagrange field has been created on interface number "// &
-                        & TRIM(NUMBER_TO_VSTRING(INTERFACE%userNumber,"*",err,error))//" in parent region number "// &
-                        & TRIM(NUMBER_TO_VSTRING(LAGRANGE_FIELD_REGION%userNumber,"*",err,error))// &
-                        & " and the specified interface has been created in parent region number "// &
-                        & TRIM(NUMBER_TO_VSTRING(INTERFACE_REGION%userNumber,"*",err,error))//"."
-                      CALL FlagError(LOCAL_ERROR,err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("The Lagrange field region is not associated.",err,error,*999)
-                  ENDIF
                 ELSE
-                  CALL FlagError("The specified Lagrange field has not been finished.",err,error,*999)
+                  CALL FlagError("The Lagrange field region is not associated.",err,error,*999)
                 ENDIF
               ELSE
                 !Check the user number has not already been used for a field in this region.
@@ -1445,12 +1435,12 @@ CONTAINS
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,FIELD_DEPENDENT_TYPE, &
                   & err,error,*999)
                 NULLIFY(GEOMETRIC_DECOMPOSITION)
-                CALL FIELD_MESH_DECOMPOSITION_GET(INTERFACE_CONDITION%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL FIELD_MESH_DECOMPOSITION_GET(INTERFACE_CONDITION%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,INTERFACE_CONDITION%GEOMETRY% &
-                  & GEOMETRIC_FIELD,err,error,*999)
+                  & geometricField,err,error,*999)
                 CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,2,err,error,*999)
                 CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,[FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
@@ -1472,13 +1462,13 @@ CONTAINS
                 !coupled variable components don't have to always come before the uncoupled variable components
                 INTERFACE_CONDITION%LAGRANGE%numberOfComponents=0
                 DO dependent_variable_number=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
-                  IF (INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%numberOfComponents< &
+                  IF (INTERFACE_DEPENDENT%fieldVariables(dependent_variable_number)%PTR%numberOfComponents< &
                     & INTERFACE_CONDITION%LAGRANGE%numberOfComponents) THEN
                     INTERFACE_CONDITION%LAGRANGE%numberOfComponents= &
-                      & INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%numberOfComponents
+                      & INTERFACE_DEPENDENT%fieldVariables(dependent_variable_number)%PTR%numberOfComponents
                   ELSEIF (INTERFACE_CONDITION%LAGRANGE%numberOfComponents==0) THEN
                     INTERFACE_CONDITION%LAGRANGE%numberOfComponents= &
-                      & INTERFACE_DEPENDENT%FIELD_VARIABLES(dependent_variable_number)%PTR%numberOfComponents
+                      & INTERFACE_DEPENDENT%fieldVariables(dependent_variable_number)%PTR%numberOfComponents
                   ENDIF
                 ENDDO
                 ! Remove pressure component from number of coupled components
@@ -1492,14 +1482,14 @@ CONTAINS
                 CALL FIELD_NUMBER_OF_COMPONENTS_SET(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                   & INTERFACE_CONDITION%LAGRANGE%numberOfComponents,err,error,*999)
                 DO component_idx=1,INTERFACE_CONDITION%LAGRANGE%numberOfComponents
-                  CALL Field_ComponentInterpolationGet(INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR%FIELD,FIELD_U_VARIABLE_TYPE, &
+                  CALL Field_ComponentInterpolationGet(INTERFACE_DEPENDENT%fieldVariables(1)%PTR%FIELD,FIELD_U_VARIABLE_TYPE, &
                     & component_idx,interpolation_type,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD, &
                     & FIELD_U_VARIABLE_TYPE,component_idx,interpolation_type,err,error,*999)
                   CALL FIELD_COMPONENT_INTERPOLATION_SET(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD, &
                     & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,interpolation_type,err,error,*999)
                 ENDDO !component_idx
-                CALL FIELD_SCALING_TYPE_GET(INTERFACE_CONDITION%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE, &
+                CALL FIELD_SCALING_TYPE_GET(INTERFACE_CONDITION%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE, &
                   & err,error,*999)
                 CALL FIELD_SCALING_TYPE_SET(INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD,GEOMETRIC_SCALING_TYPE, &
                   & err,error,*999)
@@ -1650,13 +1640,13 @@ CONTAINS
     !Argument variables
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to create the penalty field on
     INTEGER(INTG), INTENT(IN) :: PENALTY_FIELD_USER_NUMBER !<The user specified penalty field number
-    TYPE(FIELD_TYPE), POINTER :: PENALTY_FIELD !<If associated on entry, a pointer to the user created penalty field which has the same user number as the specified penalty field user number. If not associated on entry, on exit, a pointer to the created penalty field for the interface condition.
+    TYPE(FieldType), POINTER :: PENALTY_FIELD !<If associated on entry, a pointer to the user created penalty field which has the same user number as the specified penalty field user number. If not associated on entry, on exit, a pointer to the created penalty field for the interface condition.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG) :: component_idx,GEOMETRIC_SCALING_TYPE
     TYPE(DecompositionType), POINTER :: GEOMETRIC_DECOMPOSITION
-    TYPE(FIELD_TYPE), POINTER :: FIELD
+    TYPE(FieldType), POINTER :: FIELD
     TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
     TYPE(RegionType), POINTER :: INTERFACE_REGION,PENALTY_FIELD_REGION
@@ -1676,31 +1666,28 @@ CONTAINS
             IF(ASSOCIATED(INTERFACE_REGION)) THEN
               IF(ASSOCIATED(PENALTY_FIELD)) THEN
                 !Check the penalty field has been finished
-                IF(PENALTY_FIELD%FIELD_FINISHED) THEN
-                  !Check the user numbers match
-                  IF(PENALTY_FIELD_USER_NUMBER/=PENALTY_FIELD%userNumber) THEN
-                    LOCAL_ERROR="The specified penalty field user number of "// &
-                      & TRIM(NUMBER_TO_VSTRING(PENALTY_FIELD_USER_NUMBER,"*",err,error))// &
-                      & " does not match the user number of the specified penalty field of "// &
-                      & TRIM(NUMBER_TO_VSTRING(PENALTY_FIELD%userNumber,"*",err,error))//"."
+                CALL Field_AssertIsFinished(PENALTY_FIELD,err,error,*999)
+                !Check the user numbers match
+                IF(PENALTY_FIELD_USER_NUMBER/=PENALTY_FIELD%userNumber) THEN
+                  LOCAL_ERROR="The specified penalty field user number of "// &
+                    & TRIM(NUMBER_TO_VSTRING(PENALTY_FIELD_USER_NUMBER,"*",err,error))// &
+                    & " does not match the user number of the specified penalty field of "// &
+                    & TRIM(NUMBER_TO_VSTRING(PENALTY_FIELD%userNumber,"*",err,error))//"."
+                  CALL FlagError(LOCAL_ERROR,err,error,*999)
+                ENDIF
+                PENALTY_FIELD_REGION=>PENALTY_FIELD%REGION
+                IF(ASSOCIATED(PENALTY_FIELD_REGION)) THEN
+                  !Check the field is defined on the same region as the interface
+                  IF(PENALTY_FIELD_REGION%userNumber/=INTERFACE_REGION%userNumber) THEN
+                    LOCAL_ERROR="Invalid region setup. The specified penalty field has been created on interface number "// &
+                      & TRIM(NUMBER_TO_VSTRING(INTERFACE%userNumber,"*",err,error))//" in parent region number "// &
+                      & TRIM(NUMBER_TO_VSTRING(PENALTY_FIELD_REGION%userNumber,"*",err,error))// &
+                      & " and the specified interface has been created in parent region number "// &
+                      & TRIM(NUMBER_TO_VSTRING(INTERFACE_REGION%userNumber,"*",err,error))//"."
                     CALL FlagError(LOCAL_ERROR,err,error,*999)
                   ENDIF
-                  PENALTY_FIELD_REGION=>PENALTY_FIELD%REGION
-                  IF(ASSOCIATED(PENALTY_FIELD_REGION)) THEN
-                    !Check the field is defined on the same region as the interface
-                    IF(PENALTY_FIELD_REGION%userNumber/=INTERFACE_REGION%userNumber) THEN
-                      LOCAL_ERROR="Invalid region setup. The specified penalty field has been created on interface number "// &
-                        & TRIM(NUMBER_TO_VSTRING(INTERFACE%userNumber,"*",err,error))//" in parent region number "// &
-                        & TRIM(NUMBER_TO_VSTRING(PENALTY_FIELD_REGION%userNumber,"*",err,error))// &
-                        & " and the specified interface has been created in parent region number "// &
-                        & TRIM(NUMBER_TO_VSTRING(INTERFACE_REGION%userNumber,"*",err,error))//"."
-                      CALL FlagError(LOCAL_ERROR,err,error,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("The penalty field region is not associated.",err,error,*999)
-                  ENDIF
                 ELSE
-                  CALL FlagError("The specified penalty field has not been finished.",err,error,*999)
+                  CALL FlagError("The penalty field region is not associated.",err,error,*999)
                 ENDIF
               ELSE
                 !Check the user number has not already been used for a field in this region.
@@ -1725,12 +1712,12 @@ CONTAINS
                 CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD,FIELD_DEPENDENT_TYPE, &
                   & err,error,*999)
                 NULLIFY(GEOMETRIC_DECOMPOSITION)
-                CALL FIELD_MESH_DECOMPOSITION_GET(INTERFACE_CONDITION%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                CALL FIELD_MESH_DECOMPOSITION_GET(INTERFACE_CONDITION%GEOMETRY%geometricField,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD,GEOMETRIC_DECOMPOSITION, &
                   & err,error,*999)
                 CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD,INTERFACE_CONDITION%GEOMETRY% &
-                  & GEOMETRIC_FIELD,err,error,*999)
+                  & geometricField,err,error,*999)
                 CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD,1,err,error,*999)
                 CALL FIELD_VARIABLE_TYPES_SET_AND_LOCK(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD,[FIELD_U_VARIABLE_TYPE], &
                   & err,error,*999)
@@ -1750,13 +1737,13 @@ CONTAINS
                 ELSE
                   !Default the number of component to the first variable of the interface dependent field's number of components, 
                   CALL FIELD_NUMBER_OF_COMPONENTS_SET(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR%numberOfComponents,err,error,*999)
-                  DO component_idx=1,INTERFACE_DEPENDENT%FIELD_VARIABLES(1)%PTR%numberOfComponents
+                    & INTERFACE_DEPENDENT%fieldVariables(1)%PTR%numberOfComponents,err,error,*999)
+                  DO component_idx=1,INTERFACE_DEPENDENT%fieldVariables(1)%PTR%numberOfComponents
                     CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD, &
                       & FIELD_U_VARIABLE_TYPE,component_idx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
                   ENDDO !component_idx
                 ENDIF
-                CALL FIELD_SCALING_TYPE_GET(INTERFACE_CONDITION%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_SCALING_TYPE, &
+                CALL FIELD_SCALING_TYPE_GET(INTERFACE_CONDITION%GEOMETRY%geometricField,GEOMETRIC_SCALING_TYPE, &
                   & err,error,*999)
                 CALL FIELD_SCALING_TYPE_SET(INTERFACE_CONDITION%PENALTY%PENALTY_FIELD,GEOMETRIC_SCALING_TYPE, &
                   & err,error,*999)
@@ -2153,7 +2140,7 @@ CONTAINS
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: LAGRANGE
     TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
-    TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD
+    TYPE(FieldType), POINTER :: LAGRANGE_FIELD
  
     ENTERS("INTERFACE_CONDITION_RESIDUAL_EVALUATE_FEM",err,error,*999)
 

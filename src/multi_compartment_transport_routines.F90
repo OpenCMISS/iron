@@ -469,9 +469,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD,SOURCE_FIELD
-!    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: ANALYTIC_VARIABLE,FIELD_VARIABLE,GEOMETRIC_VARIABLE,MATERIALS_VARIABLE
+    TYPE(FieldType), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD,SOURCE_FIELD
+!    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field
+    TYPE(FieldVariableType), POINTER :: ANALYTIC_VARIABLE,FIELD_VARIABLE,GEOMETRIC_VARIABLE,MATERIALS_VARIABLE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set
@@ -545,7 +545,7 @@ CONTAINS
                      IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
                         DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                         IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                          GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                          GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                           IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
                             ANALYTIC_FIELD=>EQUATIONS_SET%ANALYTIC%ANALYTIC_FIELD
                             CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,&
@@ -572,9 +572,9 @@ CONTAINS
                                  & MATERIALS_PARAMETERS,ERR,ERROR,*999)           
                              ENDIF
                              EQUATIONS_SET%ANALYTIC%ANALYTIC_USER_PARAMS(1)=CURRENT_TIME
-!                              DO variable_idx=1,DEPENDENT_FIELD%NUMBER_OF_VARIABLES
-                              variable_type=DEPENDENT_FIELD%VARIABLES(2*eqnset_idx-1)%VARIABLE_TYPE
-                              FIELD_VARIABLE=>DEPENDENT_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
+!                              DO variable_idx=1,DEPENDENT_FIELD%numberOfVariables
+                              variable_type=DEPENDENT_FIELD%VARIABLES(2*eqnset_idx-1)%variableType
+                              FIELD_VARIABLE=>DEPENDENT_FIELD%variableTypeMap(variable_type)%PTR
                               IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                                 DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                                   IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType== & 
@@ -592,8 +592,8 @@ CONTAINS
                                               !!TODO \todo We should interpolate the geometric field here and the node position.
                                               DO dim_idx=1,numberOfDimensions
                                                 !Default to version 1 of each node derivative
-                                                local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP% &
-                                                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
+                                                CALL FieldVariable_LocalNodeDofGet(GEOMETRIC_VARIABLE,1,1,node_idx, &
+                                                  & dim_idx,local_ny,err,error,*999)
                                                 X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                                               ENDDO !dim_idx
                                               !Loop over the derivatives
@@ -606,8 +606,8 @@ CONTAINS
                                                   & GLOBAL_DERIV_INDEX,component_idx,ANALYTIC_PARAMETERS,MATERIALS_PARAMETERS, &
                                                   & VALUE,ERR,ERROR,*999)
                                                 !Default to version 1 of each node derivative
-                                                local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                                  & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
+                                                CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
+                                                  & component_idx,local_ny,err,error,*999)
                                                 CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(DEPENDENT_FIELD,variable_type, &
                                                   & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,ERR,ERROR,*999)
                                                 BOUNDARY_CONDITION_CHECK_VARIABLE=BOUNDARY_CONDITIONS_VARIABLE% &
@@ -690,7 +690,7 @@ CONTAINS
               IF(ASSOCIATED(EQUATIONS_SET%ANALYTIC)) THEN
                 SOURCE_FIELD=>EQUATIONS_SET%SOURCE%SOURCE_FIELD
                 IF(ASSOCIATED(SOURCE_FIELD)) THEN
-                  GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+                  GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
                   IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
                     CALL FIELD_NUMBER_OF_COMPONENTS_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,ERR,ERROR,*999)
                     NULLIFY(GEOMETRIC_VARIABLE)
@@ -698,7 +698,7 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                       & GEOMETRIC_PARAMETERS,ERR,ERROR,*999)
                       variable_type=FIELD_U_VARIABLE_TYPE
-                      FIELD_VARIABLE=>SOURCE_FIELD%VARIABLE_TYPE_MAP(variable_type)%PTR
+                      FIELD_VARIABLE=>SOURCE_FIELD%variableTypeMap(variable_type)%PTR
                       IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                         DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                           IF(FIELD_VARIABLE%COMPONENTS(component_idx)%interpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
@@ -712,9 +712,9 @@ CONTAINS
                                     !!TODO \todo We should interpolate the geometric field here and the node position.
                                     DO dim_idx=1,numberOfDimensions
                                       !Default to version 1 of each node derivative
-                                      local_ny=GEOMETRIC_VARIABLE%COMPONENTS(dim_idx)%PARAM_TO_DOF_MAP% &
-                                        & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(1)%VERSIONS(1)
-                                      X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
+                                      CALL FieldVariable_LocalNodeDOFGet(GEOMETRIC_VARIABLE,1,1,node_idx, &
+                                        & dim_idx,local_ny,err,error,*999)
+                                       X(dim_idx)=GEOMETRIC_PARAMETERS(local_ny)
                                     ENDDO !dim_idx
                                     !Loop over the derivatives
                                     DO deriv_idx=1,DOMAIN_NODES%NODES(node_idx)%numberOfDerivatives
@@ -750,8 +750,8 @@ CONTAINS
                                         CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                       END SELECT
                                       !Default to version 1 of each node derivative
-                                      local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                        & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(deriv_idx)%VERSIONS(1)
+                                      CALL FieldVariable_LocalNodeDOFGet(FIELD_VARIABLE,1,deriv_idx,node_idx, &
+                                        & component_idx,local_ny,err,error,*999)
                                       CALL FIELD_PARAMETER_SET_UPDATE_LOCAL_DOF(SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, &
                                         & FIELD_VALUES_SET_TYPE,local_ny,VALUE_SOURCE,ERR,ERROR,*999)
                                     ENDDO !deriv_idx

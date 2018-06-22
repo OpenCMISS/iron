@@ -188,7 +188,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the analytic field for
-    TYPE(FIELD_TYPE), POINTER :: analyticField !<On exit, a pointer to the analytic field in the specified equations set if it exists. Must not be associated on entry
+    TYPE(FieldType), POINTER :: analyticField !<On exit, a pointer to the analytic field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -221,7 +221,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the analytic field for
-    TYPE(FIELD_TYPE), POINTER :: analyticField !<On exit, a pointer to the analytic field in the specified equations set. Must not be associated on entry
+    TYPE(FieldType), POINTER :: analyticField !<On exit, a pointer to the analytic field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -391,7 +391,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the derived field for
-    TYPE(FIELD_TYPE), POINTER :: derivedField !<On exit, a pointer to the derived field in the specified equations set if it exists. Must not be associated on entry
+    TYPE(FieldType), POINTER :: derivedField !<On exit, a pointer to the derived field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -424,7 +424,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the derived field for
-    TYPE(FIELD_TYPE), POINTER :: derivedField !<On exit, a pointer to the derived field in the specified equations set. Must not be associated on entry
+    TYPE(FieldType), POINTER :: derivedField !<On exit, a pointer to the derived field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -460,7 +460,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the dependent field for
-    TYPE(FIELD_TYPE), POINTER :: dependentField !<On exit, a pointer to the dependent field in the specified equations set. Must not be associated on entry
+    TYPE(FieldType), POINTER :: dependentField !<On exit, a pointer to the dependent field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -531,7 +531,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the equations set field for
-    TYPE(FIELD_TYPE), POINTER :: equationsSetField !<On exit, a pointer to the equations set field in the specified equations set. Must not be associated on entry
+    TYPE(FieldType), POINTER :: equationsSetField !<On exit, a pointer to the equations set field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -566,7 +566,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the fibre field for
-    TYPE(FIELD_TYPE), POINTER :: fibreField !<On exit, a pointer to the fibre field in the specified equations set if it exists. Must not be associated on entry
+    TYPE(FieldType), POINTER :: fibreField !<On exit, a pointer to the fibre field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -595,7 +595,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the geometric field for
-    TYPE(FIELD_TYPE), POINTER :: geometricField !<On exit, a pointer to the geometric field in the specified equations set. Must not be associated on entry
+    TYPE(FieldType), POINTER :: geometricField !<On exit, a pointer to the geometric field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -606,7 +606,7 @@ CONTAINS
     IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
 
-    geometricField=>equationsSet%geometry%GEOMETRIC_FIELD
+    geometricField=>equationsSet%geometry%geometricField
     IF(.NOT.ASSOCIATED(geometricField)) THEN
       localError="Geometric field is not associated for equations set number "// &
         & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))//"."
@@ -661,7 +661,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the independent field for
-    TYPE(FIELD_TYPE), POINTER :: independentField !<On exit, a pointer to the independent field in the specified equations set if it exists. Must not be associated on entry
+    TYPE(FieldType), POINTER :: independentField !<On exit, a pointer to the independent field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -694,7 +694,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the independent field for
-    TYPE(FIELD_TYPE), POINTER :: independentField !<On exit, a pointer to the independent field in the specified equations set. Must not be associated on entry
+    TYPE(FieldType), POINTER :: independentField !<On exit, a pointer to the independent field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -882,7 +882,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the materials field for
-    TYPE(FIELD_TYPE), POINTER :: materialsField !<On exit, a pointer to the materials field in the specified equations set if it exists. Must not be associated on entry
+    TYPE(FieldType), POINTER :: materialsField !<On exit, a pointer to the materials field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -915,7 +915,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the materials field for
-    TYPE(FIELD_TYPE), POINTER :: materialsField !<On exit, a pointer to the materials field in the specified equations set. Must not be associated on entry
+    TYPE(FieldType), POINTER :: materialsField !<On exit, a pointer to the materials field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1021,7 +1021,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the source field for
-    TYPE(FIELD_TYPE), POINTER :: sourceField !<On exit, a pointer to the source field in the specified equations set if it exists. Must not be associated on entry
+    TYPE(FieldType), POINTER :: sourceField !<On exit, a pointer to the source field in the specified equations set if it exists. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1054,7 +1054,7 @@ CONTAINS
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to get the source field for
-    TYPE(FIELD_TYPE), POINTER :: sourceField !<On exit, a pointer to the source field in the specified equations set. Must not be associated on entry
+    TYPE(FieldType), POINTER :: sourceField !<On exit, a pointer to the source field in the specified equations set. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

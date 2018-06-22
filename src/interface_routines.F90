@@ -1522,12 +1522,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(InterfacePointsConnectivityType), POINTER :: interfacePointsConnectivity
-    TYPE(FIELD_TYPE), POINTER :: dependentFieldFixed,dependentFieldProjection
+    TYPE(FieldType), POINTER :: dependentFieldFixed,dependentFieldProjection
     TYPE(DataPointsType), POINTER :: dataPoints
     TYPE(DataProjectionType), POINTER :: dataProjection
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoints(:)
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
     INTEGER(INTG) :: fixedBodyIdx,projectionBodyIdx,dataPointIdx
     INTEGER(INTG) :: elementNumber,numberOfGeometricComponents
     INTEGER(INTG) :: coupledMeshFaceLineNumber,component
@@ -1548,9 +1548,9 @@ CONTAINS
             IF(ASSOCIATED(dataPoints%dataProjections)) THEN
 
               !Evaluate data points positions
-              dependentFieldFixed=>interfaceCondition%DEPENDENT%FIELD_VARIABLES(fixedBodyIdx)%ptr%FIELD
+              dependentFieldFixed=>interfaceCondition%DEPENDENT%fieldVariables(fixedBodyIdx)%ptr%FIELD
               IF(ASSOCIATED(dependentFieldFixed)) THEN
-                numberOfGeometricComponents=dependentFieldFixed%GEOMETRIC_FIELD%VARIABLES(1)%numberOfComponents
+                numberOfGeometricComponents=dependentFieldFixed%geometricField%VARIABLES(1)%numberOfComponents
                 CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(dependentFieldFixed,interpolationParameters,err,error,*999, &
                   & FIELD_GEOMETRIC_COMPONENTS_TYPE)
                 CALL FIELD_INTERPOLATED_POINTS_INITIALISE(interpolationParameters,interpolatedPoints,err,error,*999, &
@@ -1580,7 +1580,7 @@ CONTAINS
               CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"ProjectedBodyDataProjectionLabel",err,error,*999)
               CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,dataProjection%label,err,error,*999)
               IF(ASSOCIATED(dataProjection)) THEN
-                dependentFieldProjection=>interfaceCondition%DEPENDENT%FIELD_VARIABLES(projectionBodyIdx)%ptr%FIELD
+                dependentFieldProjection=>interfaceCondition%DEPENDENT%fieldVariables(projectionBodyIdx)%ptr%FIELD
                 IF(ASSOCIATED(dependentFieldProjection)) THEN
                   !Projection the data points (with know spatial positions) on the projection dependent field 
                   CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,FIELD_VALUES_SET_TYPE,err,error,*999)

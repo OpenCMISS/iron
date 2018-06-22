@@ -96,11 +96,11 @@ MODULE Types
   !
 
   TYPE REAL_DP_PTR_TYPE
-    REAL(DP), POINTER :: PTR(:)
+    REAL(DP), POINTER :: ptr(:)
   END TYPE REAL_DP_PTR_TYPE
   
   TYPE INTEGER_INTG_PTR_TYPE
-    INTEGER(INTG), POINTER :: PTR(:)
+    INTEGER(INTG), POINTER :: ptr(:)
   END TYPE INTEGER_INTG_PTR_TYPE
 
   TYPE INTEGER_CINT_ALLOC_TYPE
@@ -117,7 +117,7 @@ MODULE Types
 
   !>Buffer type to allow arrays of pointers to a list
   TYPE LIST_PTR_TYPE
-    TYPE(LIST_TYPE), POINTER :: PTR !<The pointer to the list
+    TYPE(LIST_TYPE), POINTER :: ptr !<The pointer to the list
   END TYPE LIST_PTR_TYPE
 
   !>Contains information on a list
@@ -128,7 +128,7 @@ MODULE Types
     INTEGER(INTG) :: DATA_DIMENSION !<The dimension of the data being stored
     INTEGER(INTG) :: INITIAL_SIZE !<The size of the list when it was initially created.
     INTEGER(INTG) :: SIZE !<The current size of the list.
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the list \see LISTS_DataType
+    INTEGER(INTG) :: dataType !<The data type of the list \see LISTS_DataType
     INTEGER(INTG) :: KEY_DIMENSION !<The key dimension number i.e., the dimension index used for indexing and sorting
     INTEGER(INTG) :: SORT_ORDER !<The ordering to be used when sorting the list \see LISTS_SortingOrder
     INTEGER(INTG) :: SORT_METHOD !<The sorting method to be used when sorting the list \see LISTS_SortingMethod
@@ -167,7 +167,7 @@ MODULE Types
 
   !>A buffer type to allow for an array of pointers to a QUADRATURE_SCHEME_TYPE \see Types::QUADRATURE_SCHEME_TYPE
   TYPE QUADRATURE_SCHEME_PTR_TYPE
-    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: PTR !<A pointer to the quadrature scheme
+    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: ptr !<A pointer to the quadrature scheme
   END TYPE QUADRATURE_SCHEME_PTR_TYPE
 
   !>Contains information on the quadrature to be used for integrating a basis. \see OpenCMISS::Iron::cmfe_QuadratureType
@@ -334,7 +334,7 @@ MODULE Types
     LOGICAL :: dataProjectionProjected !<Is .TRUE. if the data projection have been projected, .FALSE. if not.
     TYPE(DataPointsType), POINTER :: dataPoints !<The pointer to the data points for this data projection.
     TYPE(DataProjectionsType), POINTER :: dataProjections !<A pointer back to the data projections
-    TYPE(FIELD_TYPE), POINTER :: projectionField !<The pointer to the geometric/dependent field for this data projection.
+    TYPE(FieldType), POINTER :: projectionField !<The pointer to the geometric/dependent field for this data projection.
     INTEGER(INTG) :: projectionVariableType !<The variable type of the geometric/dependent field for this data projection.
     INTEGER(INTG) :: projectionSetType !<The parameter set type of the geometric/dependent field for this data projection. 
     TYPE(DecompositionType), POINTER :: decomposition !<The pointer to the decomposition where data points are projected
@@ -684,7 +684,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>A buffer type to allow for an array of pointers to a GeneratedMeshType.
   TYPE GeneratedMeshPtrType
-    TYPE(GeneratedMeshType), POINTER :: PTR !<The pointer to the generated mesh.
+    TYPE(GeneratedMeshType), POINTER :: ptr !<The pointer to the generated mesh.
   END TYPE GeneratedMeshPtrType
        
   !>Contains information on the generated meshes defined on a region.
@@ -726,7 +726,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a DomainLineType
   TYPE DomainLinePtrType
-    TYPE(DomainLineType), POINTER :: PTR !<A pointer to the domain line.
+    TYPE(DomainLineType), POINTER :: ptr !<A pointer to the domain line.
   END TYPE DomainLinePtrType
 
   !>Contains the topology information for the lines of a domain.
@@ -748,7 +748,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a DomainFaceType.
   TYPE DomainFacePtrType
-    TYPE(DomainFaceType), POINTER :: PTR !<The pointer to the domain face.
+    TYPE(DomainFaceType), POINTER :: ptr !<The pointer to the domain face.
   END TYPE DomainFacePtrType
 
   !>Contains the topology information for the faces of a domain.
@@ -957,7 +957,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: ID !<The ID of the vector.
     LOGICAL :: VECTOR_FINISHED !<Is .TRUE. if the vector has finished being created, .FALSE. if not.
     INTEGER(INTG) :: N !<The length of the vector
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the vector \see MatrixVector_DataTypes 
+    INTEGER(INTG) :: dataType !<The data type of the vector \see MatrixVector_DataTypes 
     INTEGER(INTG) :: SIZE !<The size of the data array of the vector
     INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer vector. The i'th component contains the data for the i'th component vector data on the domain. 
     REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision real vector. The i'th component contains the data for the i'th component vector data on the domain. 
@@ -973,7 +973,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: N !<The number of columns in the matrix
     INTEGER(INTG) :: MAX_M !<The maximum number of columns in the matrix storage
     INTEGER(INTG) :: MAX_N !<The maximum number of rows in the matrix storage
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the matrix  \see MatrixVector_DataTypes 
+    INTEGER(INTG) :: dataType !<The data type of the matrix  \see MatrixVector_DataTypes 
     INTEGER(INTG) :: STORAGE_TYPE !<The storage type of the matrix \see MatrixVector_StorageTypes 
     INTEGER(INTG) :: symmetryType !<The symmetry type of the matrix \see MatrixVector_SymmetryTypes 
     INTEGER(INTG) :: NUMBER_NON_ZEROS !<The number of non-zero elements in the matrix 
@@ -1010,9 +1010,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains the local information for a global mapping number for a domain mapping.
   TYPE DomainGlobalMappingType
     INTEGER(INTG) :: numberOfDomains !<The number of domains that the global number is mapped to a local number in.
-    INTEGER(INTG), ALLOCATABLE :: localNumber(:) !<localNumber(domain_idx). The mapped local number for the domain_idx'th domain for the global number.
-    INTEGER(INTG), ALLOCATABLE :: domainNumber(:) !<domainNumber(domain_idx). The domain number for the domain_idx'th domain for which the global number is mapped to a local number
-    INTEGER(INTG), ALLOCATABLE :: localType(:) !<localType(domain_idx). The type of local for the domain_idx'th domain for which the global number is mapped to a local number. The types depend on whether the mapped local number in the domain_idx'th domain is an internal, boundary or ghost local number. \see DOMAIN_MAPPINGS_DomainType
+    INTEGER(INTG), ALLOCATABLE :: localNumber(:) !<localNumber(domainIdx). The mapped local number for the domain_Ix'th domain for the global number.
+    INTEGER(INTG), ALLOCATABLE :: domainNumber(:) !<domainNumber(domainIdx). The domain number for the domainIdx'th domain for which the global number is mapped to a local number
+    INTEGER(INTG), ALLOCATABLE :: localType(:) !<localType(domainIdx). The type of local for the domain_idx'th domain for which the global number is mapped to a local number. The types depend on whether the mapped local number in the domainIdx'th domain is an internal, boundary or ghost local number. \see DOMAIN_MAPPINGS_DomainType
   END TYPE DomainGlobalMappingType
 
   !>Contains information on the domain mappings (i.e., local and global numberings).
@@ -1262,322 +1262,323 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !
 
   !>Contains information on a physical point in a field.
-  TYPE FIELD_PHYSICAL_POINT_TYPE
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: FIELD_INTERPOLATED_POINT !<A pointer to the interpolated point of the field that is to be interpolated.
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT !<A pointer to the interpolated point of the geometric field that is to be interpolated.
-    INTEGER(INTG) :: PHYSICAL_DERIVATIVE_TYPE !<The type of the physical derivatives that have been interpolated. \see CONSTANTS_PhysicalDerivativeConstants
-    REAL(DP), ALLOCATABLE :: VALUES(:) !<VALUES(component_idx). The physical field component values.
-  END TYPE FIELD_PHYSICAL_POINT_TYPE
+  TYPE FieldPhysicalPointType
+    TYPE(FieldInterpolatedPointType), POINTER :: fieldInterpolatedPoint !<A pointer to the interpolated point of the field that is to be interpolated.
+    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpolatedPoint !<A pointer to the interpolated point of the geometric field that is to be interpolated.
+    INTEGER(INTG) :: physicalDerivativeType !<The type of the physical derivatives that have been interpolated. \see CONSTANTS_PhysicalDerivativeConstants
+    REAL(DP), ALLOCATABLE :: values(:) !<values(componentIdx). The physical field component values.
+  END TYPE FieldPhysicalPointType
 
-  !>Buffer type to allow for arrays of pointers to FIELD_PHYSICAL_POINT_TYPE
-  TYPE FIELD_PHYSICAL_POINT_PTR_TYPE
-    TYPE(FIELD_PHYSICAL_POINT_TYPE), POINTER :: PTR
-  END TYPE FIELD_PHYSICAL_POINT_PTR_TYPE
+  !>Buffer type to allow for arrays of pointers to FieldPhysicalPointType
+  TYPE FieldPhysicalPointPtrType
+    TYPE(FieldPhysicalPointType), POINTER :: ptr
+  END TYPE FieldPhysicalPointPtrType
   
   !> Contains the interpolated point coordinate metrics. Old CMISS name GL,GU,RG.
-  TYPE FIELD_INTERPOLATED_POINT_METRICS_TYPE
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !<A pointer to the interpolated point.
+  TYPE FieldInterpolatedPointMetricsType
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint !<A pointer to the interpolated point.
     INTEGER(INTG) :: numberOfXDimensions !<The number of X dimensions.
     INTEGER(INTG) :: numberOfXiDimensions !<The number of Xi dimensions
-    REAL(DP), ALLOCATABLE :: GL(:,:) !<GL(m_xi_idx,n_xi_idx). Covariant metric tensor. Old CMISS name GL.
-    REAL(DP), ALLOCATABLE :: GU(:,:) !<GU(m_xi_idx,n_xi_idx). Contravariant metric tensor. Old CMISS name GU.
-    REAL(DP), ALLOCATABLE :: DX_DXI(:,:) !<DX_DXI(coord_idx,xi_idx). Rate of change of the X coordinate system wrt the Xi coordinate system.
-    REAL(DP), ALLOCATABLE :: DXI_DX(:,:) !<DXI_DX(xi_idx,coord_idx). Rate of change of the Xi coordinate system wrt the X coordinate system. 
-    REAL(DP) :: JACOBIAN !<The Jacobian of the Xi to X coordinate system transformation. Old CMISS name RG.
-    INTEGER(INTG) :: JACOBIAN_TYPE !<The type of Jacobian. \see COORDINATE_ROUTINES_JacobianType
-  END TYPE FIELD_INTERPOLATED_POINT_METRICS_TYPE
+    REAL(DP), ALLOCATABLE :: gl(:,:) !<GL(mXiIdx,nXiIdx). Covariant metric tensor. Old CMISS name GL.
+    REAL(DP), ALLOCATABLE :: gu(:,:) !<GU(mXiIdx,nXiIdx). Contravariant metric tensor. Old CMISS name GU.
+    REAL(DP), ALLOCATABLE :: dXdXi(:,:) !<dXdXi(coordinateIdx,xiIdx). Rate of change of the X coordinate system wrt the Xi coordinate system.
+    REAL(DP), ALLOCATABLE :: dXidX(:,:) !<dXidX(xiIdx,coordinateIdx). Rate of change of the Xi coordinate system wrt the X coordinate system. 
+    REAL(DP) :: jacobian !<The Jacobian of the Xi to X coordinate system transformation. Old CMISS name RG.
+    INTEGER(INTG) :: jacobianType !<The type of Jacobian. \see COORDINATE_ROUTINES_JacobianType
+  END TYPE FieldInterpolatedPointMetricsType
 
-  TYPE FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: PTR
-  END TYPE FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE
+  TYPE FieldInterpolatedPointMetricsPtrType
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: ptr
+  END TYPE FieldInterpolatedPointMetricsPtrType
   
   !>Contains the interpolated value (and the derivatives wrt xi) of a field at a point. Old CMISS name XG.
-  TYPE FIELD_INTERPOLATED_POINT_TYPE
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<A pointer to the interpolation parameters of the field that is to be interpolated.
+  TYPE FieldInterpolatedPointType
+    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters !<A pointer to the interpolation parameters of the field that is to be interpolated.
     INTEGER(INTG) :: maximumPartialDerivativeIndex !<The maximum number of partial derivatives that have been allocated for the values component.
-    INTEGER(INTG) :: PARTIAL_DERIVATIVE_TYPE !<The type of the partial derivatives that have been interpolated. PARTIAL_DERIVATIVE_TYPE can be either NO_PART_DERIV, FIRST_PART_DERIV or SECOND_PART_DERIV depending on whether just the field value, the field value and all first derivatives (including cross derivatives) or the first value and all first and second derivatives have been interpolated.
-    REAL(DP), ALLOCATABLE :: VALUES(:,:) !<VALUES(component_idx,nu). The interpolated field components and their partial derivatives.
-  END TYPE FIELD_INTERPOLATED_POINT_TYPE
+    INTEGER(INTG) :: partialDerivativeType !<The type of the partial derivatives that have been interpolated. partialDerivativeType can be either NO_PART_DERIV, FIRST_PART_DERIV or SECOND_PART_DERIV depending on whether just the field value, the field value and all first derivatives (including cross derivatives) or the first value and all first and second derivatives have been interpolated.
+    REAL(DP), ALLOCATABLE :: values(:,:) !<values(componentIdx,partialDerivativeIdx). The interpolated field components and their partial derivatives.
+  END TYPE FieldInterpolatedPointType
 
-  TYPE FIELD_INTERPOLATED_POINT_PTR_TYPE
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: PTR
-  END TYPE FIELD_INTERPOLATED_POINT_PTR_TYPE
+  TYPE FieldInterpolatedPointPtrType
+    TYPE(FieldInterpolatedPointType), POINTER :: ptr
+  END TYPE FieldInterpolatedPointPtrType
   
   !>Contains the parameters required to interpolate a field variable within an element. Old CMISS name XE
-  TYPE FIELD_INTERPOLATION_PARAMETERS_TYPE
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field to be interpolated.
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE !<A pointer to the field VARIABLE to be interpolated.
+  TYPE FieldInterpolationParametersType
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to be interpolated.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field VARIABLE to be interpolated.
     INTEGER(INTG) :: numberOfXi !<The number of xi directions for the interpolation parameters.
-    TYPE(BasisPtrType), ALLOCATABLE :: BASES(:) !<BASES(component_idx). An array to hold a pointer to the basis (if any) used for interpolating the component_idx'th component of the field variable.
-    INTEGER(INTG), ALLOCATABLE :: NUMBER_OF_PARAMETERS(:) !<NUMBER_OF_PARAMETERS(component_idx). The number of interpolation parameters used for interpolating the component_idx'th component of the field variable.
-    REAL(DP), ALLOCATABLE :: PARAMETERS(:,:) !<PARAMETERS(ns,component_idx). The ns'th interpolation parameter used for interpolating the component_idx'th component of the field variable.
-    REAL(DP), ALLOCATABLE :: SCALE_FACTORS(:,:) !<SCALE_FACTORS(ns,component_idx). The scale factors used for scaling the component_idx'th component of the field variable.
-  END TYPE FIELD_INTERPOLATION_PARAMETERS_TYPE
+    TYPE(BasisPtrType), ALLOCATABLE :: bases(:) !<BASES(componentIdx). An array to hold a pointer to the basis (if any) used for interpolating the componentIdx'th component of the field variable.
+    INTEGER(INTG), ALLOCATABLE :: numberOfParameters(:) !<numberOfParameters(componentIdx). The number of interpolation parameters used for interpolating the componentIdx'th component of the field variable.
+    REAL(DP), ALLOCATABLE :: parameters(:,:) !<parameters(elementParameterIdx,componentIdx). The elementParameterIdx'th interpolation parameter used for interpolating the componentIdx'th component of the field variable.
+    REAL(DP), ALLOCATABLE :: scaleFactors(:,:) !<scaleFactors(elementParameterIdx,componentIdx). The scale factors used for scaling the componentIdx'th component of the field variable.
+  END TYPE FieldInterpolationParametersType
 
-  TYPE FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: PTR
-  END TYPE FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE
+  TYPE FieldInterpolationParametersPtrType
+    TYPE(FieldInterpolationParametersType), POINTER :: ptr
+  END TYPE FieldInterpolationParametersPtrType
   
   !>Contains the geometric parameters (lines, faces, volumes etc.) for a geometric field decomposition.
-  TYPE FIELD_GEOMETRIC_PARAMETERS_TYPE
-    INTEGER(INTG) :: NUMBER_OF_LINES !<The number of lines in the field. 
-    INTEGER(INTG) :: NUMBER_OF_AREAS !<The number of areas in the field. 
-    INTEGER(INTG) :: NUMBER_OF_VOLUMES !<The number of volumes in the field. Inherited from the field decomposition.
-    REAL(DP), ALLOCATABLE :: LENGTHS(:) !<LENGTHS(nl). The length of the nl'th line in the field decomposition.
-    REAL(DP), ALLOCATABLE :: AREAS(:) !<AREAS(nf). The area of the nf'th face in the field decomposition.
-    REAL(DP), ALLOCATABLE :: VOLUMES(:) !<VOLUMES(ne). The volume of the ne'th element in the field decomposition.
-    INTEGER(INTG) :: NUMBER_OF_FIELDS_USING !<The number of fields that use these geometric parameters for their scaling. 
-    TYPE(FIELD_PTR_TYPE), POINTER :: FIELDS_USING(:) !< FIELDS_USINGS(field_idx). A pointer to the field_idx'th field that uses these geometric parameters for its scaling.
-  END TYPE FIELD_GEOMETRIC_PARAMETERS_TYPE
+  TYPE FieldGeometricParametersType
+    INTEGER(INTG) :: numberOfLines !<The number of lines in the field. 
+    INTEGER(INTG) :: numberOfAreas !<The number of areas in the field. 
+    INTEGER(INTG) :: numberOfVolumes !<The number of volumes in the field. Inherited from the field decomposition.
+    REAL(DP), ALLOCATABLE :: lengths(:) !<lengths(lineIdx). The length of the lineIdx'th line in the field decomposition.
+    REAL(DP), ALLOCATABLE :: areas(:) !<areas(faceIdx). The area of the faceIdx'th face in the field decomposition.
+    REAL(DP), ALLOCATABLE :: volumes(:) !<volumes(elementIdx). The volume of the elementIdx'th element in the field decomposition.
+    INTEGER(INTG) :: numberOfFieldsUsing !<The number of fields that use these geometric parameters for their scaling. 
+    TYPE(FieldPtrType), POINTER :: fieldsUsing(:) !< fieldsUsing(fieldIdx). A pointer to the fieldIdx'th field that uses these geometric parameters for its scaling.
+  END TYPE FieldGeometricParametersType
 
   !>A type to hold the scale factors for the appropriate mesh component of a field. 
-  TYPE FIELD_SCALING_TYPE
+  TYPE FieldScalingType
     INTEGER(INTG) :: meshComponentNumber !<The mesh component number of a field variable component that the scaling factors are associated with.
     INTEGER(INTG) :: maximumNumberOfDerivatives !<The maximum number of derivatives in the mesh component. 
     INTEGER(INTG) :: maxNumberOfElementParameters !<The maximum number of element parameters in the mesh component. 
-    TYPE(DistributedVectorType), POINTER :: SCALE_FACTORS !<SCALE_FACTORS(nk,np). The scale factor that is applied to the nk'th derivative of the np'th node of the mesh component. \todo  Make scale factors nodally based for now. Will have to revert to element based and extended to be a matrix to allow for a global derivative to be mapped onto many different element derivatives at the points that closes meshes or for inconsistent xi directions
-  END TYPE FIELD_SCALING_TYPE
+    TYPE(DistributedVectorType), POINTER :: scaleFactors !<scaleFactors(nk,np). The scale factor that is applied to the nk'th derivative of the np'th node of the mesh component. \todo  Make scale factors nodally based for now. Will have to revert to element based and extended to be a matrix to allow for a global derivative to be mapped onto many different element derivatives at the points that closes meshes or for inconsistent xi directions
+  END TYPE FieldScalingType
 
   !>A type to hold the field scalings for the field.
-  TYPE FIELD_SCALINGS_TYPE
-    INTEGER(INTG) :: SCALING_TYPE !<The type of scaling that is applied to the field. \see FIELD_ROUTINES_ScalingTypes
-    INTEGER(INTG) :: NUMBER_OF_SCALING_INDICES !<The number of scaling indices (or sets of scale factors) for the field. In general there will be a set of scale factors (or a scaling index) for each different mesh component that is used by the field variable components.
-    TYPE(FIELD_SCALING_TYPE), ALLOCATABLE :: SCALINGS(:) !<SCALINGS(scaling_idx). The scaling factors for the scaling_idx'th set of scaling factors. 
-  END TYPE FIELD_SCALINGS_TYPE
+  TYPE FieldScalingsType
+    INTEGER(INTG) :: scalingType !<The type of scaling that is applied to the field. \see FIELD_ROUTINES_ScalingTypes
+    INTEGER(INTG) :: numberOfScalingIndices !<The number of scaling indices (or sets of scale factors) for the field. In general there will be a set of scale factors (or a scaling index) for each different mesh component that is used by the field variable components.
+    TYPE(FieldScalingType), ALLOCATABLE :: scalings(:) !<scalings(scalingIdx). The scaling factors for the scalingIdx'th set of scaling factors. 
+  END TYPE FieldScalingsType
 
   !> A type to hold the mapping from field dof numbers to field parameters (nodes, elements, etc)
-  TYPE FIELD_DOF_TO_PARAM_MAP_TYPE
-    INTEGER(INTG) :: numberOfDofs !<The number of degrees-of-freedom for the field.
-    INTEGER(INTG), ALLOCATABLE :: DOF_TYPE(:,:) !<DOF_TYPE(i=1..2,ny). The parameter type of the ny'th dof. When i=1 the DOF_TYPE is the type of the dof, i.e., 1=constant field dof, 2=element based field dof, 3=node based field dof, 4=point based field dof. When i=2 the DOF_TYPE gives the nyy'th number of the different field types and is used to index the XXX_DOF2PARAM_MAP arrays.
-    INTEGER(INTG) :: NUMBER_OF_CONSTANT_DOFS !<The number of constant degrees-of-freedom in the field dofs.
-    INTEGER(INTG) :: NUMBER_OF_ELEMENT_DOFS !<The number of element based degrees-of-freedom in the field dofs.
-    INTEGER(INTG) :: NUMBER_OF_NODE_DOFS !<The number of node based degrees-of-freedom in the field dofs.
-    INTEGER(INTG) :: NUMBER_OF_GRID_POINT_DOFS !<The number of grid point based degrees-of-freedom in the field dofs.
-    INTEGER(INTG) :: NUMBER_OF_GAUSS_POINT_DOFS !<The number of Gauss point based degrees-of-freedom in the field dofs.
-    INTEGER(INTG) :: NUMBER_OF_DATA_POINT_DOFS !<The number of data point based degrees-of-freedom in the field dofs.
-    INTEGER(INTG), ALLOCATABLE :: CONSTANT_DOF2PARAM_MAP(:) !<CONSTANT_DOF2PARAM_MAP(nyy). The mapping from constant field dofs to field parameters for the nyy'th constant field dof. The DOF2PARAM_MAP gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOF_TYPE component of this type.
-    INTEGER(INTG), ALLOCATABLE :: ELEMENT_DOF2PARAM_MAP(:,:) !<ELEMENT_DOF2PARAM_MAP(i=1..2,nyy). The mapping from element based field dofs to field parameters for the nyy'th constant field dof. When i=1 the DOF2PARAM_MAP gives the element number (ne) of the field parameter. When i=2 the DOF2PARAM_MAP gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOF_TYPE component of this type.
-    INTEGER(INTG), ALLOCATABLE :: NODE_DOF2PARAM_MAP(:,:) !<NODE_DOF2PARAM_MAP(i=1..4,nyy). The mapping from node based field dofs to field parameters for the nyy'th constant field dof. When i=1 the DOF2PARAM_MAP gives the version number (version_idx) of the field parameter. When i=2 the DOF2PARAM_MAP gives the derivative number (derivative_idx) of the field parameter. When i=3 the DOF2PARAM_MAP gives the node number (node_idx) of the field parameter. When i=4 the DOF2PARAM_MAP gives the component number (component_idx) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOF_TYPE component of this type.
-    INTEGER(INTG), ALLOCATABLE :: GRID_POINT_DOF2PARAM_MAP(:,:) !<GRID_POINT_DOF2PARAM_MAP(i=1..2,nyy). The mapping from grid point based field dofs to field parameters for the nyy'th grid point field dof. When i=1 the DOF2PARAM_MAP gives the grid point number (nq) of the field parameter. When i=2 the DOF2PARAM_MAP gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOF_TYPE component of this type.  
-    INTEGER(INTG), ALLOCATABLE :: GAUSS_POINT_DOF2PARAM_MAP(:,:) !<GAUSS_POINT_DOF2PARAM_MAP(i=1..3,nyy). The mapping from Gauss point based field dofs to field parameters for the nyy'th grid point field dof. When i=1 the DOF2PARAM_MAP gives the Gauss point number (ng) of the field parameter. When i=2 the DOF2PARAM_MAP gives the element number (ne) of the field parameter. When i=3 the DOF2PARAM_MAP gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOF_TYPE component of this type.  
-    INTEGER(INTG), ALLOCATABLE :: DATA_POINT_DOF2PARAM_MAP(:,:)!<DATA_POINT_DOF2PARAM_MAP(i=1..3,nyy). The mapping from data point based field dofs to field parameters for the nyy'th data point field dof. When i=1 the DOF2PARAM_MAP gives the data point number (np) of the field parameter. When i=2 the DOF2PARAM_MAP gives the element number (ne) of the field parameter. When i=3 the DOF2PARAM_MAP gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOF_TYPE component of this type.  
-  END TYPE FIELD_DOF_TO_PARAM_MAP_TYPE
+  TYPE FieldDOFToParamMapType
+    INTEGER(INTG) :: numberOfDOFs !<The number of degrees-of-freedom for the field.
+    INTEGER(INTG), ALLOCATABLE :: DOFType(:,:) !<DOFType(i=1..2,ny). The parameter type of the ny'th dof. When i=1 the DOFType is the type of the dof, i.e., 1=constant field dof, 2=element based field dof, 3=node based field dof, 4=point based field dof. When i=2 the DOFType gives the nyy'th number of the different field types and is used to index the xxxDOF2ParamMap arrays.
+    INTEGER(INTG) :: numberOfConstantDOFs !<The number of constant degrees-of-freedom in the field dofs.
+    INTEGER(INTG) :: numberOfElementDOFs !<The number of element based degrees-of-freedom in the field dofs.
+    INTEGER(INTG) :: numberOfNodeDOFs !<The number of node based degrees-of-freedom in the field dofs.
+    INTEGER(INTG) :: numberOfGridPointDOFs !<The number of grid point based degrees-of-freedom in the field dofs.
+    INTEGER(INTG) :: numberOfGaussPointDOFs !<The number of Gauss point based degrees-of-freedom in the field dofs.
+    INTEGER(INTG) :: numberOfDataPointDOFs !<The number of data point based degrees-of-freedom in the field dofs.
+    INTEGER(INTG), ALLOCATABLE :: constantDOF2ParamMap(:) !<constantDOF2ParamMap(nyy). The mapping from constant field dofs to field parameters for the nyy'th constant field dof. The DOF2ParamMap gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOFType component of this type.
+    INTEGER(INTG), ALLOCATABLE :: elementDOF2ParamMap(:,:) !<elementDOF2ParamMap(i=1..2,nyy). The mapping from element based field dofs to field parameters for the nyy'th constant field dof. When i=1 the DOF2ParamMap gives the element number (ne) of the field parameter. When i=2 the DOF2ParamMap gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOFType component of this type.
+    INTEGER(INTG), ALLOCATABLE :: nodeDOF2ParamMap(:,:) !<nodeDOF2ParamMap(i=1..4,nyy). The mapping from node based field dofs to field parameters for the nyy'th constant field dof. When i=1 the DOF2ParamMap gives the version number (version_idx) of the field parameter. When i=2 the DOF2ParamMap gives the derivative number (derivative_idx) of the field parameter. When i=3 the DOF2ParamMap gives the node number (node_idx) of the field parameter. When i=4 the DOF2ParamMap gives the component number (componentIdx) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOFType component of this type.
+    INTEGER(INTG), ALLOCATABLE :: gridPointDOF2ParamMap(:,:) !<gridPointDOF2ParamMap(i=1..2,nyy). The mapping from grid point based field dofs to field parameters for the nyy'th grid point field dof. When i=1 the DOF2ParamMap gives the grid point number (nq) of the field parameter. When i=2 the DOF2ParamMap gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOFType component of this type.  
+    INTEGER(INTG), ALLOCATABLE :: gaussPointDOF2ParamMap(:,:) !<gaussPointDOF2ParamMap(i=1..3,nyy). The mapping from Gauss point based field dofs to field parameters for the nyy'th grid point field dof. When i=1 the DOF2ParamMap gives the Gauss point number (ng) of the field parameter. When i=2 the DOF2ParamMap gives the element number (ne) of the field parameter. When i=3 the DOF2ParamMap gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOFType component of this type.  
+    INTEGER(INTG), ALLOCATABLE :: dataPointDOF2ParamMap(:,:)!<dataPointDOF2ParamMap(i=1..3,nyy). The mapping from data point based field dofs to field parameters for the nyy'th data point field dof. When i=1 the DOF2ParamMap gives the data point number (np) of the field parameter. When i=2 the DOF2ParamMap gives the element number (ne) of the field parameter. When i=3 the DOF2ParamMap gives the component number (nh) of the field parameter. The nyy value for a particular field dof (ny) is given by the DOFType component of this type.  
+  END TYPE FieldDOFToParamMapType
 
   !>A type to hold the mapping from a field node derivative's versions to field dof numbers for a particular field variable component.
-  TYPE FIELD_NODE_PARAM_TO_DOF_MAP_DERIVATIVE_TYPE
-    INTEGER(INTG) :: NUMBER_OF_VERSIONS !<The number of versions for the node derivative parameters of this field variable component.
-    INTEGER(INTG), ALLOCATABLE :: VERSIONS(:) !<NODE_PARAM2DOF_MAP%NODES%(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx). The field variable dof number of the node_idx'th node's derivative_idx'th derivative's version_idx'th version.
-  END TYPE FIELD_NODE_PARAM_TO_DOF_MAP_DERIVATIVE_TYPE
+  TYPE FieldNodeParamToDOFMapDerivativeType
+    INTEGER(INTG) :: numberOfVersions !<The number of versions for the node derivative parameters of this field variable component.
+    INTEGER(INTG), ALLOCATABLE :: versions(:) !<nodeParam2DOFMap%nodes%(nodeIdx)%derivatives(derivativeIdx)%versions(versionIdx). The field variable dof number of the nodeIdx'th node's derivativeIdx'th derivative's versionIdx'th version.
+  END TYPE FieldNodeParamToDOFMapDerivativeType
 
   !>A type to hold the mapping from a field node's derivative to field dof numbers for a particular field variable component.
-  TYPE FIELD_NODE_PARAM_TO_DOF_MAP_NODE_TYPE
+  TYPE FieldNodeParamToDOFMapNodeType
     INTEGER(INTG) :: numberOfDerivatives !<The number of derivatives for the node parameter of this field variable component.
-    TYPE(FIELD_NODE_PARAM_TO_DOF_MAP_DERIVATIVE_TYPE), ALLOCATABLE :: DERIVATIVES(:) ! The mapping from field node derivative parameter to a dof
-  END TYPE FIELD_NODE_PARAM_TO_DOF_MAP_NODE_TYPE
+    TYPE(FieldNodeParamToDOFMapDerivativeType), ALLOCATABLE :: derivatives(:) !<derivatives(?). The mapping from field node derivative parameter to a dof
+  END TYPE FieldNodeParamToDOFMapNodeType
 
   !>A type to hold the mapping from field nodes to field dof numbers for a particular field variable component.
-  TYPE FIELD_NODE_PARAM_TO_DOF_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_NODE_PARAMETERS !<The number of node based field parameters for this field variable component.
-    TYPE(FIELD_NODE_PARAM_TO_DOF_MAP_NODE_TYPE), ALLOCATABLE :: NODES(:)  ! The mapping from field node parameter to a dof
-  END TYPE FIELD_NODE_PARAM_TO_DOF_MAP_TYPE
+  TYPE FieldNodeParamToDOFMapType
+    INTEGER(INTG) :: numberOfNodeParameters !<The number of node based field parameters for this field variable component.
+    TYPE(FieldNodeParamToDOFMapNodeType), ALLOCATABLE :: nodes(:)  !<nodes(?). The mapping from field node parameter to a dof
+  END TYPE FieldNodeParamToDOFMapType
 
   !>A type to hold the mapping from field elements to field dof numbers for a particular field variable component.
-  TYPE FIELD_ELEMENT_PARAM_TO_DOF_MAP_TYPE
+  TYPE FieldElementParamToDOFMapType
     INTEGER(INTG) :: numberOfElementParameters !<The number of element based field parameters for this field variable component.
-    INTEGER(INTG), ALLOCATABLE :: ELEMENTS(:) !<ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx). The field variable dof number of the element_idx'th element based parameter for this field variable component. \todo Allow for multiple element parameters per element.
-  END TYPE FIELD_ELEMENT_PARAM_TO_DOF_MAP_TYPE
+    INTEGER(INTG), ALLOCATABLE :: elements(:) !<elementParam2DOFMap%elements(elementIdx). The field variable dof number of the elementIdx'th element based parameter for this field variable component. \todo Allow for multiple element parameters per element.
+  END TYPE FieldElementParamToDOFMapType
 
   !>A type to hold the mapping from field grid points to field dof numbers for a particular field variable component.
-  TYPE FIELD_GRID_POINT_PARAM_TO_DOF_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_GRID_POINT_PARAMETERS !<The number of grid point based field parameters for this field variable component.
-    INTEGER(INTG), ALLOCATABLE :: GRID_POINTS(:) !<GRID_POINT_PARAM2DOF_MAP%GRID_POINTS(grid_point_idx). The field variable dof number of the grid_point_idx'th point based parameter for this field variable component. 
-  END TYPE FIELD_GRID_POINT_PARAM_TO_DOF_MAP_TYPE
+  TYPE FieldGridPointParamToDOFMapType
+    INTEGER(INTG) :: numberOfGridPointParameters !<The number of grid point based field parameters for this field variable component.
+    INTEGER(INTG), ALLOCATABLE :: gridPoints(:) !<gridPointParam2DOFMap%gridPoints(gridPointIdx). The field variable dof number of the gridPointIdx'th point based parameter for this field variable component. 
+  END TYPE FieldGridPointParamToDOFMapType
 
   !>A type to hold the mapping from field Gauss points to field dof numbers for a particular field variable component.
-  TYPE FIELD_GAUSS_POINT_PARAM_TO_DOF_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_GAUSS_POINT_PARAMETERS !<The number of Gauss point based field parameters for this field variable component.
-    INTEGER(INTG), ALLOCATABLE :: GAUSS_POINTS(:,:) !<GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(gauss_point_idx,element_idx). The field variable dof number of the gauss_point_idx'th Gauss point in the element_idx'th element based parameter for this field variable component. 
-  END TYPE FIELD_GAUSS_POINT_PARAM_TO_DOF_MAP_TYPE
+  TYPE FieldGaussPointParamToDOFMapType
+    INTEGER(INTG) :: numberOfGridPointParameters !<The number of Gauss point based field parameters for this field variable component.
+    INTEGER(INTG), ALLOCATABLE :: gaussPoints(:,:) !<gaussPointParam2DOFMap%gaussPoints(gaussPointIdx,elementIdx). The field variable dof number of the gaussPointIdx'th Gauss point in the elementIdx'th element based parameter for this field variable component. 
+  END TYPE FieldGaussPointParamToDOFMapType
   
   !>A type to hold the mapping from field data points to field dof numbers for a particular field variable component.
-  TYPE FIELD_DATA_POINT_PARAM_TO_DOF_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_DATA_POINT_PARAMETERS !<The number of Gauss point based field parameters for this field variable component.
-    INTEGER(INTG), ALLOCATABLE :: DATA_POINTS(:) !<DATA_POINT_PARAM2DOF_MAP%DATA_POINTS(data_point_idx). The field variable dof number of the data_point_idx'th data point based parameter for this field variable component. 
-  END TYPE FIELD_DATA_POINT_PARAM_TO_DOF_MAP_TYPE
+  
+  TYPE FieldDataPointParamToDOFMapType
+    INTEGER(INTG) :: numberOfDataPointParameters !<The number of data point based field parameters for this field variable component.
+    INTEGER(INTG), ALLOCATABLE :: dataPoints(:) !<dataPointParam2DOFMap%dataPoints(dataPointIdx). The field variable dof number of the dataPointIdx'th data point based parameter for this field variable component. 
+  END TYPE FieldDataPointParamToDOFMapType
 
   !>A type to hold the mapping from field parameters (nodes, elements, etc) to field dof numbers for a particular field variable component.
-  TYPE FIELD_PARAM_TO_DOF_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_CONSTANT_PARAMETERS !<The number of constant field parameters for this field variable component. Note: this is currently always 1 but is included for completeness and to allow for multiple constants per field variable component in the future.
-    INTEGER(INTG) :: CONSTANT_PARAM2DOF_MAP !<The field variable dof number of the constant parameter for this field variable component.
-    TYPE(FIELD_ELEMENT_PARAM_TO_DOF_MAP_TYPE) :: ELEMENT_PARAM2DOF_MAP !> A type to hold the mapping from field element parameters to field dof numbers
-    TYPE(FIELD_NODE_PARAM_TO_DOF_MAP_TYPE) :: NODE_PARAM2DOF_MAP !> A type to hold the mapping from field node parameters to field dof numbers
-    TYPE(FIELD_GRID_POINT_PARAM_TO_DOF_MAP_TYPE) :: GRID_POINT_PARAM2DOF_MAP !> A type to hold the mapping from grid point element parameters to field dof numbers
-    TYPE(FIELD_GAUSS_POINT_PARAM_TO_DOF_MAP_TYPE) :: GAUSS_POINT_PARAM2DOF_MAP !> A type to hold the mapping from field gauss point parameters to field dof numbers
-    TYPE(FIELD_DATA_POINT_PARAM_TO_DOF_MAP_TYPE) :: DATA_POINT_PARAM2DOF_MAP !> A type to hold the mapping from field data point parameters to field dof numbers
-  END TYPE FIELD_PARAM_TO_DOF_MAP_TYPE
+  TYPE FieldParamToDOFMapType
+    INTEGER(INTG) :: numberOfConstantParameters !<The number of constant field parameters for this field variable component. Note: this is currently always 1 but is included for completeness and to allow for multiple constants per field variable component in the future.
+    INTEGER(INTG) :: constantParam2DOFMap !<The field variable dof number of the constant parameter for this field variable component.
+    TYPE(FieldElementParamToDOFMapType) :: elementParam2DOFMap !> A type to hold the mapping from field element parameters to field dof numbers
+    TYPE(FieldNodeParamToDOFMapType) :: nodeParam2DOFMap !> A type to hold the mapping from field node parameters to field dof numbers
+    TYPE(FieldGridPointParamToDOFMapType) :: gridPointParam2DOFMap !> A type to hold the mapping from grid point element parameters to field dof numbers
+    TYPE(FieldGaussPointParamToDOFMapType) :: gaussPointParam2DOFMap !> A type to hold the mapping from field gauss point parameters to field dof numbers
+    TYPE(FieldDataPointParamToDOFMapType) :: dataPointParam2DOFMap !> A type to hold the mapping from field data point parameters to field dof numbers
+  END TYPE FieldParamToDOFMapType
 
   !>Contains information for a component of a field variable.
-  TYPE FIELD_VARIABLE_COMPONENT_TYPE
-    INTEGER(INTG) :: COMPONENT_NUMBER !<The number of the field variable component.
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE !<A pointer to the field variable for this component.
-    TYPE(VARYING_STRING) :: COMPONENT_LABEL !<The label for the field variable component
+  TYPE FieldVariableComponentType
+    INTEGER(INTG) :: componentNumber !<The number of the field variable component.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable for this component.
+    TYPE(VARYING_STRING) :: componentLabel !<The label for the field variable component
     INTEGER(INTG) :: interpolationType !<The interpolation type of the field variable component \see FIELD_ROUTINES_InterpolationTypes
     INTEGER(INTG) :: meshComponentNumber !<The mesh component of the field decomposition for this field variable component.
-    INTEGER(INTG) :: SCALING_INDEX !<The index into the defined field scalings for this field variable component.
-    TYPE(DomainType), POINTER :: DOMAIN !<A pointer to the domain of the field decomposition for this field variable component.
+    INTEGER(INTG) :: scalingIndex !<The index into the defined field scalings for this field variable component.
+    TYPE(DomainType), POINTER :: domain !<A pointer to the domain of the field decomposition for this field variable component.
     INTEGER(INTG) :: maxNumberElementInterpolationParameters !<The maximum number of interpolation parameters in an element for a field variable component. 
     INTEGER(INTG) :: maxNumberNodeInterpolationParameters !<The maximum number of interpolation parameters in an element for a field variable component. 
-    TYPE(FIELD_PARAM_TO_DOF_MAP_TYPE) :: PARAM_TO_DOF_MAP !<The mapping of the field parameters to the field dofs for this field variable component.
-  END TYPE FIELD_VARIABLE_COMPONENT_TYPE
+    TYPE(FieldParamToDOFMapType) :: paramToDOFMap !<The mapping of the field parameters to the field dofs for this field variable component.
+  END TYPE FieldVariableComponentType
 
   !>A type to hold the parameter sets for a field.
-  TYPE FIELD_PARAMETER_SET_TYPE
-    INTEGER(INTG) :: SET_INDEX !<The global set index (from 1 to the Types::FIELD_PARAMETER_SETS_TYPE::NUMBER_OF_PARAMETER_SETS) that this parameter set corresponds to.
-    INTEGER(INTG) :: SET_TYPE !<The user set type (index) (from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_SET_TYPES) that this parameter set \see FIELD_ROUTINES_ParameterSetTypes
+  TYPE FieldParameterSetType
+    INTEGER(INTG) :: setIndex !<The global set index (from 1 to the Types::FieldParameterSetsType::numberOfParameterSets) that this parameter set corresponds to.
+    INTEGER(INTG) :: setType !<The user set type (index) (from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_SET_TYPES) that this parameter set \see FIELD_ROUTINES_ParameterSetTypes
   !###      corresponds to.
-    TYPE(DistributedVectorType), POINTER :: PARAMETERS !<A pointer to the distributed vector that contains the field parameters for this field parameter set.
-  END TYPE FIELD_PARAMETER_SET_TYPE
+    TYPE(DistributedVectorType), POINTER :: parameters !<A pointer to the distributed vector that contains the field parameters for this field parameter set.
+  END TYPE FieldParameterSetType
   
-  !>A buffer type to allow for an array of pointers to a FIELD_PARAMETER_SET_TYPE.
-  TYPE FIELD_PARAMETER_SET_PTR_TYPE
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: PTR !<The pointer to the field parameter set. 
-  END TYPE FIELD_PARAMETER_SET_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a FieldParameterSetType.
+  TYPE FieldParameterSetPtrType
+    TYPE(FieldParameterSetType), POINTER :: ptr !<The pointer to the field parameter set. 
+  END TYPE FieldParameterSetPtrType
 
   !>A type to store the parameter sets for a field.
-  TYPE FIELD_PARAMETER_SETS_TYPE    
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE !<A pointer to the field variable that these parameter sets are defined on.
-    INTEGER(INTG) :: NUMBER_OF_PARAMETER_SETS !<The number of parameter sets that are currently defined on the field.
-    TYPE(FIELD_PARAMETER_SET_PTR_TYPE), POINTER :: SET_TYPE(:) !<SET_TYPE(set_type_idx). A pointer to an array of pointers to the field set types. SET_TYPE(set_type_idx)%PTR is a pointer to the parameter set type for the set_type_idx'th parameter set. set_type_idx can vary from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_SET_TYPES. The value of the pointer will be NULL if the parameter set corresponding to the set_type_idx'th parameter set has not yet been created for the field.
-    TYPE(FIELD_PARAMETER_SET_PTR_TYPE), POINTER :: PARAMETER_SETS(:) !<PARAMETER_SETS(set_type_idx). \todo change to allocatable. A pointer to an array of pointers to the parameter sets that have been created on the field. PARAMETER_SET(set_type_idx)%PTR is a pointer to the parameter set type for the set_type_idx'th parameter set that has been created. set_type_idx can vary from 1 to the number of parameter set types that have currently been created for the field i.e., Types::FIELD_PARAMETER_SETS_TYPE::NUMBER_OF_PARAMETER_SETS.
-  END TYPE FIELD_PARAMETER_SETS_TYPE
+  TYPE FieldParameterSetsType    
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable that these parameter sets are defined on.
+    INTEGER(INTG) :: numberOfParameterSets !<The number of parameter sets that are currently defined on the field.
+    TYPE(FieldParameterSetPtrType), POINTER :: setType(:) !<setType(setTypeIdx). A pointer to an array of pointers to the field set types. setType(setTypeIdx)%ptr is a pointer to the parameter set type for the setTypeIdx'th parameter set. setTypeIdx can vary from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_SET_TYPES. The value of the pointer will be NULL if the parameter set corresponding to the setTypeIdx'th parameter set has not yet been created for the field.
+    TYPE(FieldParameterSetPtrType), POINTER :: parameterSets(:) !<parameterSets(setTypeIdx). \todo change to allocatable. A pointer to an array of pointers to the parameter sets that have been created on the field. parameterSets(setTypeIdx)%ptr is a pointer to the parameter set type for the setTypeIdx'th parameter set that has been created. setTypeIdx can vary from 1 to the number of parameter set types that have currently been created for the field i.e., Types::FieldParameterSetsType::numberOfParameterSets.
+  END TYPE FieldParameterSetsType
 
   !>Contains information for a field variable defined on a field.
-  TYPE FIELD_VARIABLE_TYPE
-    INTEGER(INTG) :: VARIABLE_NUMBER !<The number of the field variable
-    INTEGER(INTG) :: VARIABLE_TYPE !<The type of the field variable. \see FIELD_ROUTINES_VariableTypes
-    TYPE(VARYING_STRING) :: VARIABLE_LABEL !<The label for the variable
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field for this field variable.
-    TYPE(RegionType), POINTER :: REGION !<A pointer to the region for this field variable.
-    INTEGER(INTG) :: DIMENSION !<The dimension of the field variable. \see FIELD_ROUTINES_DimensionTypes
-    INTEGER(INTG) :: DATA_TYPE !<The data type of the field variable.  \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
-    INTEGER(INTG) :: DOF_ORDER_TYPE !<The order of the DOF's in the field variable \see FIELD_ROUTINES_DOFOrderTypes,FIELD_ROUTINES
+  TYPE FieldVariableType
+    INTEGER(INTG) :: variableNumber !<The number of the field variable
+    INTEGER(INTG) :: variableType !<The type of the field variable. \see FIELD_ROUTINES_VariableTypes
+    TYPE(VARYING_STRING) :: variableLabel !<The label for the variable
+    TYPE(FieldType), POINTER :: field !<A pointer to the field for this field variable.
+    TYPE(RegionType), POINTER :: region !<A pointer to the region for this field variable.
+    INTEGER(INTG) :: dimension !<The dimension of the field variable. \see FIELD_ROUTINES_DimensionTypes
+    INTEGER(INTG) :: dataType !<The data type of the field variable.  \see FIELD_ROUTINES_DataTypes,FIELD_ROUTINES
+    INTEGER(INTG) :: dofOrderType !<The order of the DOF's in the field variable \see FIELD_ROUTINES_DOFOrderTypes,FIELD_ROUTINES
     INTEGER(INTG) :: maxNumberElementInterpolationParameters !<The maximum number of interpolation parameters in an element for a field variable. 
     INTEGER(INTG) :: maxNumberNodeInterpolationParameters !<The maximum number of interpolation parameters in an element for a field variable. 
     INTEGER(INTG) :: numberOfDofs !<Number of local degress of freedom for this field variable (excluding ghosted dofs). Old CMISS name NYNR(0,0,nc,nr,nx).
     INTEGER(INTG) :: totalNumberOfDofs !<Number of local degrees of freedom for this field variable (including ghosted dofs). Old CMISS name NYNR(0,0,nc,nr,nx).
     INTEGER(INTG) :: numberOfGlobalDofs !<Number of global degrees of freedom for this field variable. Old CMISS name NYNR(0,0,nc,nr,nx).
-    TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING !<Domain mapping for this variable. 
+    TYPE(DomainMappingType), POINTER :: domainMapping !<Domain mapping for this variable. 
     INTEGER(INTG) :: numberOfComponents !<The number of components in the field variable.
-    TYPE(FIELD_VARIABLE_COMPONENT_TYPE), ALLOCATABLE :: COMPONENTS(:) !<COMPONENTS(component_idx). The array of field variable components.
-    TYPE(FIELD_DOF_TO_PARAM_MAP_TYPE) :: DOF_TO_PARAM_MAP !<The mappings for the field dofs to the field parameters
-    TYPE(FIELD_PARAMETER_SETS_TYPE) :: PARAMETER_SETS !<The parameter sets for the field variable
-  END TYPE FIELD_VARIABLE_TYPE
+    TYPE(FieldVariableComponentType), ALLOCATABLE :: components(:) !<components(componentIdx). The array of field variable components.
+    TYPE(FieldDOFToParamMapType) :: dofToParamMap !<The mappings for the field dofs to the field parameters
+    TYPE(FieldParameterSetsType) :: parameterSets !<The parameter sets for the field variable
+  END TYPE FieldVariableType
   
-  !>A buffer type to allow for an array of pointers to a FIELD_VARIABLE_TYPE.
-  TYPE FIELD_VARIABLE_PTR_TYPE
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: PTR !<The pointer to the field variable. 
-  END TYPE FIELD_VARIABLE_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a FieldVariableType.
+  TYPE FieldVariablePtrType
+    TYPE(FieldVariableType), POINTER :: ptr !<The pointer to the field variable. 
+  END TYPE FieldVariablePtrType
 
   !>A type to temporarily hold (cache) the user modifiable values which are used to create a field. 
-  TYPE FIELD_CREATE_VALUES_CACHE_TYPE
+  TYPE FieldCreateValuesCacheType
     LOGICAL :: LABEL_LOCKED !<Is .TRUE. if the field label has been locked, .FALSE. if not.
     LOGICAL :: DECOMPOSITION_LOCKED !<Is .TRUE. if the field decomposition has been locked, .FALSE. if not.
     LOGICAL :: DataProjectionLocked !<Is .TRUE. if the field data projection has been locked, .FALSE. if not.
     LOGICAL :: DEPENDENT_TYPE_LOCKED !<Is .TRUE. if the field dependent type has been locked, .FALSE. if not.
-    LOGICAL :: NUMBER_OF_VARIABLES_LOCKED !<Is .TRUE. if the number of field variables has been locked, .FALSE. if not.
-    LOGICAL :: GEOMETRIC_FIELD_LOCKED !<Is .TRUE. if the geometric field has been locked, .FALSE. if not.
-    LOGICAL :: SCALING_TYPE_LOCKED !<Is .TRUE. if the scaling type has been locked, .FALSE. if not.        
+    LOGICAL :: numberOfVariablesLocked !<Is .TRUE. if the number of field variables has been locked, .FALSE. if not.
+    LOGICAL :: geometricFieldLocked !<Is .TRUE. if the geometric field has been locked, .FALSE. if not.
+    LOGICAL :: scalingTypeLocked !<Is .TRUE. if the scaling type has been locked, .FALSE. if not.        
     LOGICAL :: TYPE_LOCKED !<Is .TRUE. if the field type has been locked, .FALSE. if not.        
-    INTEGER(INTG), ALLOCATABLE :: VARIABLE_TYPES(:) !<VARIABLE_TYPES(variable_idx). The cache of the variable type for the given variable_idx of the field. \see FIELD_ROUTINES_VariableTypes
-    LOGICAL :: VARIABLE_TYPES_LOCKED !<Is .TRUE. if the variable types have been locked, .FALSE. if not.
-    TYPE(VARYING_STRING), ALLOCATABLE :: VARIABLE_LABELS(:) !<VARIABLE_LABELS(variable_type_idx). The variable label for the variable_type_idx'th variable type of the field.
-    LOGICAL, ALLOCATABLE :: VARIABLE_LABELS_LOCKED(:) !<VARIABLE_LABELS_LOCKED(variable_type_idx). Is .TRUE. if the variable label for the variable_type_idx'th variable type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: DIMENSION(:) !<DIMENSION(variable_type_idx). The cache of the variable dimension for the variable_type_idx'th variable type of the field. \see FIELD_ROUTINES_DimensionTypes
-    LOGICAL, ALLOCATABLE :: DIMENSION_LOCKED(:) !<DIMENSION_LOCKED(variable_type_idx). Is .TRUE. if the dimension for the variable_type_idx'th variable type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: DATA_TYPES(:) !<DATA_TYPES(variable_type_idx). The cache of the variable data type for the variable_type_idx'th variable type of the field. \see FIELD_ROUTINES_DataTypes
-    LOGICAL, ALLOCATABLE :: DATA_TYPES_LOCKED(:) !<DATA_TYPES_LOCKED(variable_type_idx). Is .TRUE. if the data type for the variable_type_idx'th variable type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: DOF_ORDER_TYPES(:) !<DOF_ORDER_TYPES(variable_type_idx). The cache of the variable dof order type for the variable_type_idx'th variable type of the field. \see FIELD_ROUTINES_DataTypes
-    LOGICAL, ALLOCATABLE :: DOF_ORDER_TYPES_LOCKED(:) !<DOF_ORDER_TYPES_LOCKED(variable_type_idx). Is .TRUE. if the dof order type for the variable_type_idx'th variable type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: numberOfComponents(:) !<numberOfComponents(variable_type_idx). The number of components in the field for the variable_type_idx'th field variable type.
-    LOGICAL, ALLOCATABLE :: numberOfComponentsLocked(:) !<numberOfComponentsLocked(variable_type_idx). Is .TRUE. if the number of components has been locked for the variable_type_idx'th variable type, .FALSE. if not.
-    TYPE(VARYING_STRING), ALLOCATABLE :: COMPONENT_LABELS(:,:) !<COMPONENT_LABELS(component_idx,variable_type_idx). The cache of the component label for the given component and variable type of the field.
-    LOGICAL, ALLOCATABLE :: COMPONENT_LABELS_LOCKED(:,:) !<COMPONENT_LABELS_LOCKED(component_idx,variable_type_idx). Is .TRUE. if the component label of the component_idx'th component of the variable_type_idx'th varible type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: interpolationTypes(:,:) !<interpolationTypes(component_idx,variable_type_idx). The cache of the interpolation type for the given component and variable type of the field. \see FIELD_ROUTINES_InterpolationTypes
-    LOGICAL, ALLOCATABLE :: interpolationTypesLocked(:,:) !<interpolationTypesLocked(component_idx,variable_type_idx). Is .TRUE. if the interpolation type of the component_idx'th component of the variable_type_idx'th varible type has been locked, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: meshComponentNumber(:,:) !<meshComponentNumber(component_idx,varaible_type_idx). The cache of the mesh component number for the given component and variable type of the field.
-    LOGICAL, ALLOCATABLE :: meshComponentNumberLocked(:,:) !<meshComponentNumberLocked(component_idx,variable_type_idx). Is .TRUE. if the mesh component number of the component_idx'th component of the variable_type_idx'th varible type has been locked, .FALSE. if not.
-  END TYPE FIELD_CREATE_VALUES_CACHE_TYPE
+    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variable_idx). The cache of the variable type for the given variable_idx of the field. \see FIELD_ROUTINES_VariableTypes
+    LOGICAL :: variableTypesLocked !<Is .TRUE. if the variable types have been locked, .FALSE. if not.
+    TYPE(VARYING_STRING), ALLOCATABLE :: variableLabels(:) !<variableLabels(variableTypeIdx). The variable label for the variableTypeIdx'th variable type of the field.
+    LOGICAL, ALLOCATABLE :: variableLabelsLocked(:) !<variableLabelsLocked(variableTypeIdx). Is .TRUE. if the variable label for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: DIMENSION(:) !<DIMENSION(variableTypeIdx). The cache of the variable dimension for the variableTypeIdx'th variable type of the field. \see FIELD_ROUTINES_DimensionTypes
+    LOGICAL, ALLOCATABLE :: DIMENSION_LOCKED(:) !<DIMENSION_LOCKED(variableTypeIdx). Is .TRUE. if the dimension for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: dataTypes(:) !<dataTypes(variableTypeIdx). The cache of the variable data type for the variableTypeIdx'th variable type of the field. \see FIELD_ROUTINES_DataTypes
+    LOGICAL, ALLOCATABLE :: dataTypesLocked(:) !<dataTypesLocked(variableTypeIdx). Is .TRUE. if the data type for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: dofOrderTypes(:) !<dofOrderTypes(variableTypeIdx). The cache of the variable dof order type for the variableTypeIdx'th variable type of the field. \see FIELD_ROUTINES_DataTypes
+    LOGICAL, ALLOCATABLE :: dofOrderTypesLocked(:) !<dofOrderTypesLocked(variableTypeIdx). Is .TRUE. if the dof order type for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: numberOfComponents(:) !<numberOfComponents(variableTypeIdx). The number of components in the field for the variableTypeIdx'th field variable type.
+    LOGICAL, ALLOCATABLE :: numberOfComponentsLocked(:) !<numberOfComponentsLocked(variableTypeIdx). Is .TRUE. if the number of components has been locked for the variableTypeIdx'th variable type, .FALSE. if not.
+    TYPE(VARYING_STRING), ALLOCATABLE :: componentLabels(:,:) !<componentLabels(componentIdx,variableTypeIdx). The cache of the component label for the given component and variable type of the field.
+    LOGICAL, ALLOCATABLE :: componentLabelsLocked(:,:) !<componentLabelsLocked(componentIdx,variableTypeIdx). Is .TRUE. if the component label of the componentIdx'th component of the variableTypeIdx'th varible type has been locked, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: interpolationTypes(:,:) !<interpolationTypes(componentIdx,variableTypeIdx). The cache of the interpolation type for the given component and variable type of the field. \see FIELD_ROUTINES_InterpolationTypes
+    LOGICAL, ALLOCATABLE :: interpolationTypesLocked(:,:) !<interpolationTypesLocked(componentIdx,variableTypeIdx). Is .TRUE. if the interpolation type of the componentIdx'th component of the variableTypeIdx'th varible type has been locked, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: meshComponentNumber(:,:) !<meshComponentNumber(componentIdx,varaible_type_idx). The cache of the mesh component number for the given component and variable type of the field.
+    LOGICAL, ALLOCATABLE :: meshComponentNumberLocked(:,:) !<meshComponentNumberLocked(componentIdx,variableTypeIdx). Is .TRUE. if the mesh component number of the componentIdx'th component of the variableTypeIdx'th varible type has been locked, .FALSE. if not.
+  END TYPE FieldCreateValuesCacheType
 
   !>Contains information for a field defined on a region. \see OpenCMISS::Iron::cmfe_FieldType
-  TYPE FIELD_TYPE
+  TYPE FieldType
     INTEGER(INTG) :: globalNumber !<The global number of the field in the list of fields for a region.
     INTEGER(INTG) :: userNumber !<The user defined identifier for the field. The user number must be unique.
-    TYPE(VARYING_STRING) :: LABEL !<The label for the field
-    LOGICAL :: FIELD_FINISHED !<Is .TRUE. if the field has finished being created, .FALSE. if not.
-    TYPE(FIELDS_TYPE), POINTER :: FIELDS !<A pointer to the fields for this region.
-    TYPE(RegionType), POINTER :: REGION !<A pointer to the region containing the field. If the field are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
-    TYPE(InterfaceType), POINTER :: INTERFACE!<A pointer to the interface containing the field. If the field are in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
-    INTEGER(INTG) :: TYPE !<The type of the field. NOTE: this should be a field variable attribute as you may have a, say, geometric field variable and a general field variable bundled together in the same field. \see FIELD_ROUTINES_FieldTypes
+    TYPE(VARYING_STRING) :: label !<The label for the field
+    LOGICAL :: fieldFinished !<Is .TRUE. if the field has finished being created, .FALSE. if not.
+    TYPE(FieldsType), POINTER :: fields !<A pointer to the fields for this region.
+    TYPE(RegionType), POINTER :: region !<A pointer to the region containing the field. If the field are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
+    TYPE(InterfaceType), POINTER :: interface!<A pointer to the interface containing the field. If the field are in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
+    INTEGER(INTG) :: type !<The type of the field. NOTE: this should be a field variable attribute as you may have a, say, geometric field variable and a general field variable bundled together in the same field. \see FIELD_ROUTINES_FieldTypes
     INTEGER(INTG) :: DEPENDENT_TYPE !<The dependent type of the field. \see FIELD_ROUTINES_DependentTypes
-    TYPE(DecompositionType), POINTER :: DECOMPOSITION !<A pointer to the decomposition of the mesh for which the field is defined on.
-    INTEGER(INTG) :: NUMBER_OF_VARIABLES !<The number of variable types in the field. Old CMISS name NCT(nr,nx)
-    TYPE(FIELD_VARIABLE_PTR_TYPE), ALLOCATABLE :: VARIABLE_TYPE_MAP(:) !<VARIABLE_TYPE_MAP(variable_idx). The map from the available field variable types to the field variable types that are defined for the field. variable_idx varies from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_VARIABLE_TYPES. If the particular field variable type has not been defined on the field then the VARIABLE_TYPE_MAP will be NULL. \see FIELD_ROUTINES_VariableTypes
-    TYPE(FIELD_VARIABLE_TYPE), ALLOCATABLE :: VARIABLES(:) !<VARIABLES(variable_idx). The array of field variables. 
-    TYPE(FIELD_SCALINGS_TYPE) :: SCALINGS !<The scaling parameters for the field
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field that this field uses. If the field itself is a geometric field then this will be a pointer back to itself.
-    TYPE(FIELD_GEOMETRIC_PARAMETERS_TYPE), POINTER :: GEOMETRIC_FIELD_PARAMETERS !<If the field is a geometric field the pointer to the geometric parameters (lines, areas, volumes etc.). If the field is not a geometric field the pointer is NULL.
-    TYPE(FIELD_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE !<The create values cache for the field.
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition of the mesh for which the field is defined on.
+    INTEGER(INTG) :: numberOfVariables !<The number of variable types in the field. Old CMISS name NCT(nr,nx)
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: variableTypeMap(:) !<variableTypeMap(variable_idx). The map from the available field variable types to the field variable types that are defined for the field. variable_idx varies from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_variableTypes. If the particular field variable type has not been defined on the field then the variableTypeMap will be NULL. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FieldVariableType), ALLOCATABLE :: variables(:) !<variables(variable_idx). The array of field variables. 
+    TYPE(FieldScalingsType) :: scalings !<The scaling parameters for the field
+    TYPE(FieldType), POINTER :: geometricField !<A pointer to the geometric field that this field uses. If the field itself is a geometric field then this will be a pointer back to itself.
+    TYPE(FieldGeometricParametersType), POINTER :: geometricFieldParameters !<If the field is a geometric field the pointer to the geometric parameters (lines, areas, volumes etc.). If the field is not a geometric field the pointer is NULL.
+    TYPE(FieldCreateValuesCacheType), POINTER :: createValuesCache !<The create values cache for the field.
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection that this field uses.
-  END TYPE FIELD_TYPE
+  END TYPE FieldType
 
-  !>A buffer type to allow for an array of pointers to a FIELD_TYPE.
-  TYPE FIELD_PTR_TYPE
-    TYPE(FIELD_TYPE), POINTER :: PTR !<The pointer to the field.  
-  END TYPE FIELD_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a FieldType.
+  TYPE FieldPtrType
+    TYPE(FieldType), POINTER :: ptr !<The pointer to the field.  
+  END TYPE FieldPtrType
 
   !>Contains information on the fields defined on a region.
-  TYPE FIELDS_TYPE
-    TYPE(RegionType), POINTER :: REGION !<A pointer to the region containing the fields. If the fields are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
+  TYPE FieldsType
+    TYPE(RegionType), POINTER :: region !<A pointer to the region containing the fields. If the fields are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
     TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface containing the fields. If the fields are in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
-    INTEGER(INTG) :: NUMBER_OF_FIELDS !<The number of fields defined on the region.
-    TYPE(FIELD_PTR_TYPE), POINTER :: FIELDS(:) !<FIELDS(fields_idx). The array of pointers to the fields.
-  END TYPE FIELDS_TYPE
+    INTEGER(INTG) :: numberOfFields !<The number of fields defined on the region.
+    TYPE(FieldPtrType), POINTER :: fields(:) !<fields(fieldsIdx). The array of pointers to the fields.
+  END TYPE FieldsType
 
-  PUBLIC FIELD_PHYSICAL_POINT_TYPE,FIELD_PHYSICAL_POINT_PTR_TYPE
+  PUBLIC FieldPhysicalPointType,FieldPhysicalPointPtrType
 
-  PUBLIC FIELD_INTERPOLATED_POINT_METRICS_TYPE,FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE
+  PUBLIC FieldInterpolatedPointMetricsType,FieldInterpolatedPointMetricsPtrType
 
-  PUBLIC FIELD_INTERPOLATED_POINT_TYPE,FIELD_INTERPOLATED_POINT_PTR_TYPE
+  PUBLIC FieldInterpolatedPointType,FieldInterpolatedPointPtrType
 
-  PUBLIC FIELD_INTERPOLATION_PARAMETERS_TYPE,FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE
+  PUBLIC FieldInterpolationParametersType,FieldInterpolationParametersPtrType
 
-  PUBLIC FIELD_GEOMETRIC_PARAMETERS_TYPE
+  PUBLIC FieldGeometricParametersType
 
-  PUBLIC FIELD_SCALING_TYPE,FIELD_SCALINGS_TYPE
+  PUBLIC FieldScalingType,FieldScalingsType
 
-  PUBLIC FIELD_DOF_TO_PARAM_MAP_TYPE
+  PUBLIC FieldDOFToParamMapType
 
-  PUBLIC FIELD_NODE_PARAM_TO_DOF_MAP_DERIVATIVE_TYPE,FIELD_NODE_PARAM_TO_DOF_MAP_NODE_TYPE,FIELD_NODE_PARAM_TO_DOF_MAP_TYPE
+  PUBLIC FieldNodeParamToDOFMapDerivativeType,FieldNodeParamToDOFMapNodeType,FieldNodeParamToDOFMapType
 
-  PUBLIC FIELD_ELEMENT_PARAM_TO_DOF_MAP_TYPE
+  PUBLIC FieldElementParamToDOFMapType
 
-  PUBLIC FIELD_GRID_POINT_PARAM_TO_DOF_MAP_TYPE
+  PUBLIC FieldGridPointParamToDOFMapType
 
-  PUBLIC FIELD_GAUSS_POINT_PARAM_TO_DOF_MAP_TYPE
+  PUBLIC FieldGaussPointParamToDOFMapType
 
-  PUBLIC FIELD_DATA_POINT_PARAM_TO_DOF_MAP_TYPE
+  PUBLIC FieldDataPointParamToDOFMapType
 
-  PUBLIC FIELD_PARAM_TO_DOF_MAP_TYPE
+  PUBLIC FieldParamToDOFMapType
 
-  PUBLIC FIELD_VARIABLE_COMPONENT_TYPE
+  PUBLIC FieldVariableComponentType
 
-  PUBLIC FIELD_PARAMETER_SET_TYPE,FIELD_PARAMETER_SET_PTR_TYPE,FIELD_PARAMETER_SETS_TYPE
+  PUBLIC FieldParameterSetType,FieldParameterSetPtrType,FieldParameterSetsType
 
-  PUBLIC FIELD_VARIABLE_TYPE,FIELD_VARIABLE_PTR_TYPE
+  PUBLIC FieldVariableType,FieldVariablePtrType
 
-  PUBLIC FIELD_CREATE_VALUES_CACHE_TYPE
+  PUBLIC FieldCreateValuesCacheType
 
-  PUBLIC FIELD_TYPE,FIELD_PTR_TYPE,FIELDS_TYPE
+  PUBLIC FieldType,FieldPtrType,FieldsType
 
   !
   !================================================================================================================================
@@ -1858,7 +1859,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE VarToEquationsMatricesMapType
     INTEGER(INTG) :: variableIndex !<The variable index for this variable to equations matrices map
     INTEGER(INTG) :: variableType !<The variable type for this variable to equations matrices map
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: variable !<A pointer to the field variable for this variable to equations matrices map
+    TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable for this variable to equations matrices map
     INTEGER(INTG) :: numberOfEquationsMatrices !<The number of equations matrices (linear or dynamic) this variable type is mapped to. If the number is -1 the variable is mapped to the RHS vector. If the number is zero then this variable type is not involved in the equations set and the rest of the type is not allocated.
     INTEGER(INTG), ALLOCATABLE :: equationsMatrixNumbers(:) !<equationsMatrixNumbers(i). The equations matrix number for the i'th matrix that this variable type is mapped to.
     TYPE(varToEquationsColumnMapType), ALLOCATABLE :: dofToColumnsMaps(:) !<dofToColumnsMaps(i). The variable dof to equations columns for the i'th equations matrix.
@@ -1870,7 +1871,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: matrixNumber !<The equations matrix number
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix !<A pointer to the equations matrix
     INTEGER(INTG) :: variableType !<The dependent variable type mapped to this equations matrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: variable !<A pointer to the field variable that is mapped to this equations matrix
+    TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable that is mapped to this equations matrix
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this equations matrix.
     REAL(DP) :: matrixCoefficient !<The multiplicative coefficent for the matrix in the equation set
     INTEGER(INTG), ALLOCATABLE :: columnToDOFMap(:) !<columnToDOFMap(columnIdx). The variable DOF that the columnIdx'th column of this equations matrix is mapped to.
@@ -1892,7 +1893,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information for mapping field variables to a norm i.e., ||x|| in the scalar equations mapping
   TYPE EquationsMappingNormType
     INTEGER(INTG) :: normNumber !<The number of the norm in the norms scalar mapping
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: normVariable !<A pointer to the field variable for this norm mapping
+    TYPE(FieldVariableType), POINTER :: normVariable !<A pointer to the field variable for this norm mapping
     REAL(DP) :: normCoefficient !<The multiplicative coefficient applied to the norm.
   END TYPE EquationsMappingNormType
     
@@ -1906,7 +1907,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information for mapping field variables to a dot product i.e., x^T.y in the scalar equations mapping
   TYPE EquationsMappingDotProductType
     INTEGER(INTG) :: dotProductNumber !<The number of dot product in the dot products scalar mapping
-    TYPE(FIELD_VARIABLE_PTR_TYPE) :: dotProductVariables(2) !<dotProductVaraibles(variableIdx). The variableIdx'th field variable in the dot product. For x^T.y the first variable is x and the second variable is y.
+    TYPE(FieldVariablePtrType) :: dotProductVariables(2) !<dotProductVaraibles(variableIdx). The variableIdx'th field variable in the dot product. For x^T.y the first variable is x and the second variable is y.
     REAL(DP) :: dotProductCoefficient !<The multiplicative coefficient applied to the dot product.
   END TYPE EquationsMappingDotProductType
     
@@ -1920,7 +1921,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information for mapping field variables to a quadratic form i.e., x^T.A.y in the scalar equations mapping
   TYPE EquationsMappingQuadraticType
     INTEGER(INTG) :: quadraticNumber !<The number of dot product in the dot products scalar mapping    
-    TYPE(FIELD_VARIABLE_PTR_TYPE) :: quadraticVariables(2) !<dotProductVaraibles(variableIdx). The variableIdx'th field variable in the dot product. For x^T.A.y the first variable is x and the second variable is y.
+    TYPE(FieldVariablePtrType) :: quadraticVariables(2) !<dotProductVaraibles(variableIdx). The variableIdx'th field variable in the dot product. For x^T.A.y the first variable is x and the second variable is y.
     REAL(DP) :: quadraticCoefficient !<The multiplicative coefficient applied to the quadratic form.
   END TYPE EquationsMappingQuadraticType
     
@@ -1939,7 +1940,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: dampingMatrixNumber !<The matrix number of the dynamic damping matrix. 0 if there is no dynamic damping matrix
     INTEGER(INTG) :: massMatrixNumber !<The matrix number of the dynamic mass matrix. 0 if there is no dynamic mass matrix
     INTEGER(INTG) :: dynamicVariableType !<The variable type involved in the equations matrix mapping.
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: dynamicVariable !<A pointer to the variable that is mapped to the dynamic matrices.
+    TYPE(FieldVariableType), POINTER :: dynamicVariable !<A pointer to the variable that is mapped to the dynamic matrices.
 !!TODO: just make this the size of the number of matrix variables used (i.e. 1) rather than the field number of variable types???
     TYPE(varToEquationsMatricesMapType), ALLOCATABLE :: varToEquationsMatricesMaps(:) !<varToEquationsMatricesMaps(variableTypeIdx). The equations matrices mapping for the variableTypeIdx'th variable type.
     TYPE(EquationsMatrixToVarMapType), ALLOCATABLE :: equationsMatrixToVarMaps(:) !<equationsMatrixToVarMaps(matrixIdx). The mappings for the matrixIdx'th equations matrix.
@@ -1962,7 +1963,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE EquationsJacobianToVarMapType
     INTEGER(INTG) :: jacobianNumber !<The equations Jacobian matrix number
     INTEGER(INTG) :: variableType !<The dependent variable type mapped to this equations matrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: variable !<A pointer to the field variable that is mapped to this equations matrix
+    TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable that is mapped to this equations matrix
     TYPE(EquationsJacobianType), POINTER :: jacobian !<A pointer to the equations matrix for this variable
     INTEGER(INTG) :: numberOfColumns !<The number of columns in this equations matrix.
     REAL(DP) :: jacobianCoefficient !<The multiplicative coefficent for the matrix in the equation set
@@ -1974,7 +1975,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE VarToEquationsJacobianMapType
     INTEGER(INTG) :: jacobianNumber !<The equations Jacobian matrix number
     INTEGER(INTG) :: variableType !<The variable type for this variable to equations matrices map
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: variable !<A pointer to the field variable for this variable to equations matrices map
+    TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable for this variable to equations matrices map
     INTEGER(INTG), ALLOCATABLE :: dofToColumnsMap(:) !<dofToColumnsMap(dofIdx). The Jacobian column number for dofIdx'th variable dof
     INTEGER(INTG), ALLOCATABLE :: dofToRowsMap(:) !<dofToRowsMap(dofIdx). The row number that the dofIdx'th variable dof is mapped to.
   END TYPE VarToEquationsJacobianMapType
@@ -1986,7 +1987,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
     INTEGER(INTG) :: numberOfResiduals !<The number of residuals in this mapping. Currently just one.
     INTEGER(INTG) :: numberOfResidualVariables !<The number of residual variables in this mapping
-    TYPE(FIELD_VARIABLE_PTR_TYPE), ALLOCATABLE :: residualVariables(:) !<residualVariables(variableIdx). The variableIdx'th residual variable.
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: residualVariables(:) !<residualVariables(variableIdx). The variableIdx'th residual variable.
     TYPE(VarToEquationsJacobianMapType), ALLOCATABLE :: varToJacobianMap(:) !<varToJacobianMap(variableIdx). The mapping from the residual variable to the Jacobain matrix for the variableIdx'th residual variable.
     TYPE(EquationsJacobianToVarMapType), ALLOCATABLE :: jacobianToVarMap(:) !<jacobianToVarMap(jacobianIdx). The mapping from the Jacobian matrix to the residual variables for the jacobianIdx'th Jacobian.
     REAL(DP) :: residualCoefficient !<The multiplicative coefficient applied to the residual vector
@@ -1998,7 +1999,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE EquationsMappingRHSType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
     INTEGER(INTG) :: rhsVariableType !<The variable type number mapped to the RHS vector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable !<A pointer to the variable that is mapped to the RHS vector
+    TYPE(FieldVariableType), POINTER :: rhsVariable !<A pointer to the variable that is mapped to the RHS vector
     TYPE(DomainMappingType), POINTER :: rhsVariableMapping !<A pointer to the RHS variable domain mapping
     REAL(DP) :: rhsCoefficient !<The multiplicative coefficient applied to the RHS vector
     INTEGER(INTG), ALLOCATABLE :: rhsDOFToEquationsRowMap(:) !<rhsDOFToEquationsRowMap(residualDofIdx). The mapping from the rhsDofIdx'th RHS dof in the rhs variable to the equations row.   
@@ -2010,7 +2011,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE EquationsMappingSourceType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations mapping
     INTEGER(INTG) :: sourceVariableType !<The variable type number mapped from the source vector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: sourceVariable !<A pointer to the source variable 
+    TYPE(FieldVariableType), POINTER :: sourceVariable !<A pointer to the source variable 
     TYPE(DomainMappingType), POINTER :: sourceVariableMapping !<A pointer to the domain mapping for the source variable.
     REAL(DP) :: sourceCoefficient !<The multiplicative coefficient applied to the source vector
     INTEGER(INTG), ALLOCATABLE :: sourceDOFToEquationsRowMap(:) !<sourceDOFToEquationsRowMap(sourceDofIdx). The mapping from the sourceDofIdx'th source dof in the source variable to the equations row.   
@@ -2050,7 +2051,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE EquationsMappingLHSType
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the equations vector mapping
     INTEGER(INTG) :: lhsVariableType !<The variable type number mapped to the RHS vector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: lhsVariable !<A pointer to the variable that is mapped to the RHS vector
+    TYPE(FieldVariableType), POINTER :: lhsVariable !<A pointer to the variable that is mapped to the RHS vector
     INTEGER(INTG) :: numberOfRows !<The number of local rows (excluding ghost rows) in the equations 
     INTEGER(INTG) :: totalNumberOfRows !<The number of local rows (including ghost rows) in the equations 
     INTEGER(INTG) :: numberOfGlobalRows !<The number of global rows in the equations 
@@ -2137,32 +2138,32 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the interpolation for the equations
   TYPE EquationsInterpolationType
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations
-    TYPE(FIELD_TYPE), POINTER :: geometricField !<A pointer to the geometric field for the equations.
-    TYPE(FIELD_TYPE), POINTER :: fibreField !<A pointer to the fibre field for the equations (if one is defined).
-    TYPE(FIELD_TYPE), POINTER :: dependentField !<A pointer to the dependent field for the equations 
-    TYPE(FIELD_TYPE), POINTER :: independentField !<A pointer to the independent field for the equations 
-    TYPE(FIELD_TYPE), POINTER :: materialsField !<A pointer to the material field for the equations (if one is defined).
-    TYPE(FIELD_TYPE), POINTER :: sourceField !<A pointer to the source field for the equations (if one is defined).
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: geometricInterpParameters(:) !<GEOMETRIC_INTERP_PARAMETERS(variableTypeIdx). A pointer to the variableTypeIdx'th geometric interpolation parameters for the equations.
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: fibreInterpParameters(:) !<FIBRE_INTERP_PARAMETERS(variableTypeIdx). A pointer to the fibre interpolation parameters for the equations (if a fibre field is defined). 
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: dependentInterpParameters(:) !<DEPENDENT_INTERP_PARAMETERS(variableTypeIdx). A pointer to the variableTypeIdx'th dependent interpolation parameters for the equations. 
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: prevDependentInterpParameters(:) !<prevDependentInterpParameters(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolation parameters for the equations. Only allocated for non-static equations.
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: independentInterpParameters(:) !<INDEPENDENT_INTERP_PARAMETERS(variableTypeIdx). A pointer to the variableTypeIdx'th independent interpolation parameters for the equations. 
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: materialsInterpParameters(:) !<materialsInterpParameters(variableTypeIdx). A pointer to the variableTypeIdx'th material interpolation parameters for the equations (if a material field is defined). 
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: sourceInterpParameters(:) !<sourceInterpParameters(variableTypeIdx). A pointer to the variableTypeIdx'th source interpolation parameters for the equations (if a source field is defined). 
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: geometricInterpPoint(:) !<geometricInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th geometric interpolated point information for the equations. 
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: fibreInterpPoint(:) !<fibreInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th fibre interpolated point information for the equations (if a fibre field is defined). 
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: dependentInterpPoint(:) !<dependentInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th dependent interpolated point information for the equations. 
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: prevDependentInterpPoint(:) !<prevDependentInterpPoint(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolated point information for the equations. Only allocated for non-static equations.
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: independentInterpPoint(:) !<independentInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th independent interpolated point information for the equations. 
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: materialsInterpPoint(:) !<materialsInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th material interpolated point information for the equations (if a material field is defined). 
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: sourceInterpPoint(:) !<sourceInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th source interpolated point information for the equations (if a source field is defined).
-    TYPE(FIELD_PHYSICAL_POINT_PTR_TYPE), POINTER :: dependentPhysicalPoint(:) !<dependentPhysicalPoint(variableTypeIdx). A pointer to the variableTypeIdx'th dependent physical point information for the equations. 
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: dependentInterpPointMetrics(:) !<dependentInterpPointMetrics(variableTypeIdx). A pointer to the variableTypeIdx'th dependent interpolated point metrics information 
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: prevDependentInterpPointMetrics(:) !<prevDependentInterpPointMetrics(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolated point metrics information. Only allocated for non-static equations. 
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: independentInterpPointMetrics(:) !<independentInterpPointMetrics(variableTypeIdx). A pointer to the variableTypeIdx'th independent interpolated point metrics information 
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: geometricInterpPointMetrics(:) !<geometricInterpPointMetrics(variableTypeIdx). A pointer to the variableTypeIdx'th geometric interpolated point metrics information 
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: fibreInterpPointMetrics(:) !<fibreInterpPointMetrics(variableTypeIdx). A pointer to the variableTypeIdx'th fibre interpolated point metrics information 
+    TYPE(FieldType), POINTER :: geometricField !<A pointer to the geometric field for the equations.
+    TYPE(FieldType), POINTER :: fibreField !<A pointer to the fibre field for the equations (if one is defined).
+    TYPE(FieldType), POINTER :: dependentField !<A pointer to the dependent field for the equations 
+    TYPE(FieldType), POINTER :: independentField !<A pointer to the independent field for the equations 
+    TYPE(FieldType), POINTER :: materialsField !<A pointer to the material field for the equations (if one is defined).
+    TYPE(FieldType), POINTER :: sourceField !<A pointer to the source field for the equations (if one is defined).
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: geometricInterpParameters(:) !<GEOMETRIC_INTERP_PARAMETERS(variableTypeIdx). A pointer to the variableTypeIdx'th geometric interpolation parameters for the equations.
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: fibreInterpParameters(:) !<FIBRE_INTERP_PARAMETERS(variableTypeIdx). A pointer to the fibre interpolation parameters for the equations (if a fibre field is defined). 
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: dependentInterpParameters(:) !<DEPENDENT_INTERP_PARAMETERS(variableTypeIdx). A pointer to the variableTypeIdx'th dependent interpolation parameters for the equations. 
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: prevDependentInterpParameters(:) !<prevDependentInterpParameters(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolation parameters for the equations. Only allocated for non-static equations.
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: independentInterpParameters(:) !<INDEPENDENT_INTERP_PARAMETERS(variableTypeIdx). A pointer to the variableTypeIdx'th independent interpolation parameters for the equations. 
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: materialsInterpParameters(:) !<materialsInterpParameters(variableTypeIdx). A pointer to the variableTypeIdx'th material interpolation parameters for the equations (if a material field is defined). 
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: sourceInterpParameters(:) !<sourceInterpParameters(variableTypeIdx). A pointer to the variableTypeIdx'th source interpolation parameters for the equations (if a source field is defined). 
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: geometricInterpPoint(:) !<geometricInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th geometric interpolated point information for the equations. 
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: fibreInterpPoint(:) !<fibreInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th fibre interpolated point information for the equations (if a fibre field is defined). 
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: dependentInterpPoint(:) !<dependentInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th dependent interpolated point information for the equations. 
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: prevDependentInterpPoint(:) !<prevDependentInterpPoint(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolated point information for the equations. Only allocated for non-static equations.
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: independentInterpPoint(:) !<independentInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th independent interpolated point information for the equations. 
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: materialsInterpPoint(:) !<materialsInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th material interpolated point information for the equations (if a material field is defined). 
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: sourceInterpPoint(:) !<sourceInterpPoint(variableTypeIdx). A pointer to the variableTypeIdx'th source interpolated point information for the equations (if a source field is defined).
+    TYPE(FieldPhysicalPointPtrType), POINTER :: dependentPhysicalPoint(:) !<dependentPhysicalPoint(variableTypeIdx). A pointer to the variableTypeIdx'th dependent physical point information for the equations. 
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: dependentInterpPointMetrics(:) !<dependentInterpPointMetrics(variableTypeIdx). A pointer to the variableTypeIdx'th dependent interpolated point metrics information 
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: prevDependentInterpPointMetrics(:) !<prevDependentInterpPointMetrics(fieldVariableType). A pointer to the previous fieldVariableType'th dependent interpolated point metrics information. Only allocated for non-static equations. 
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: independentInterpPointMetrics(:) !<independentInterpPointMetrics(variableTypeIdx). A pointer to the variableTypeIdx'th independent interpolated point metrics information 
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: geometricInterpPointMetrics(:) !<geometricInterpPointMetrics(variableTypeIdx). A pointer to the variableTypeIdx'th geometric interpolated point metrics information 
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: fibreInterpPointMetrics(:) !<fibreInterpPointMetrics(variableTypeIdx). A pointer to the variableTypeIdx'th fibre interpolated point metrics information 
   END TYPE EquationsInterpolationType
 
   !>Contains information about scalar equations (i.e., a single equation row).
@@ -2216,10 +2217,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the boundary conditions for a dependent field variable
   TYPE BOUNDARY_CONDITIONS_VARIABLE_TYPE
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions for this boundary conditions variable
-    INTEGER(INTG) :: VARIABLE_TYPE !<The type of variable for this variable boundary conditions
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: VARIABLE !<A pointer to the field variable for this boundary condition variable
-    INTEGER(INTG), ALLOCATABLE :: DOF_TYPES(:) !<DOF_TYPES(dof_idx). The general boundary condition type (eg. fixed or free) of the dof_idx'th dof in the dependent field variable. \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
-    INTEGER(INTG), ALLOCATABLE :: CONDITION_TYPES(:) !<CONDITION_TYPES(dof_idx). The specific boundary condition type (eg. incremented pressure) of the dof_idx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOF_TYPES array. \see OpenCMISS_BoundaryConditionsDOFTypes,OpenCMISS
+    INTEGER(INTG) :: variableType !<The type of variable for this variable boundary conditions
+    TYPE(FieldVariableType), POINTER :: VARIABLE !<A pointer to the field variable for this boundary condition variable
+    INTEGER(INTG), ALLOCATABLE :: DOFTypes(:) !<DOFTypes(dof_idx). The general boundary condition type (eg. fixed or free) of the dof_idx'th dof in the dependent field variable. \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
+    INTEGER(INTG), ALLOCATABLE :: CONDITION_TYPES(:) !<CONDITION_TYPES(dof_idx). The specific boundary condition type (eg. incremented pressure) of the dof_idx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOFTypes array. \see OpenCMISS_BoundaryConditionsDOFTypes,OpenCMISS
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: DIRICHLET_BOUNDARY_CONDITIONS  !<A pointer to the dirichlet boundary condition type for this boundary condition variable
     INTEGER(INTG) :: NUMBER_OF_DIRICHLET_CONDITIONS !<Stores the number of dirichlet conditions associated with this variable
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
@@ -2231,7 +2232,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a VARIABLE_BOUNDARY_CONDITIONS_TYPE \see Types::VARIABLE_BOUNDARY_CONDITIONS_TYPE
   TYPE BOUNDARY_CONDITIONS_VARIABLE_PTR_TYPE
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: PTR !<A pointer to the boundary conditions variable
+    TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: ptr !<A pointer to the boundary conditions variable
   END TYPE BOUNDARY_CONDITIONS_VARIABLE_PTR_TYPE
 
   !>Contains information on the boundary conditions for the solver equations. \see OpenCMISS::Iron::cmfe_BoundaryConditionsType
@@ -2245,7 +2246,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE \see Types::BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE
   TYPE BOUNDARY_CONDITIONS_SPARSITY_INDICES_PTR_TYPE
-    TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: PTR !<A pointer to the boundary conditions sparsity indices type
+    TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: ptr !<A pointer to the boundary conditions sparsity indices type
   END TYPE BOUNDARY_CONDITIONS_SPARSITY_INDICES_PTR_TYPE
 
   !> Contains information on dofs with associated dirichlet conditions and corresponding non-zero elements in the equations matrices
@@ -2341,22 +2342,22 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: SETUP_TYPE !<The setup type for the equations set setup \see EquationsSetConstants_SetupTypes,EquationsSetConstants
     INTEGER(INTG) :: ACTION_TYPE !<The action type for the equations set setup \see EquationsSetConstants_SetupActionTypes,EquationsSetConstants
     INTEGER(INTG) :: fieldUserNumber !<The user number for the field for the equations set setup.
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field for the equations set setup.
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field for the equations set setup.
     INTEGER(INTG) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to use.
   END TYPE EQUATIONS_SET_SETUP_TYPE  
   
   !>Contains information on the geometry for an equations set
   TYPE EQUATIONS_SET_GEOMETRY_TYPE
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<The geometric field for this equations set.
-    TYPE(FIELD_TYPE), POINTER :: FIBRE_FIELD !<The fibre field for this equations set if one is defined. If no fibre field is defined the pointer is NULL.
+    TYPE(FieldType), POINTER :: geometricField !<The geometric field for this equations set.
+    TYPE(FieldType), POINTER :: FIBRE_FIELD !<The fibre field for this equations set if one is defined. If no fibre field is defined the pointer is NULL.
   END TYPE EQUATIONS_SET_GEOMETRY_TYPE
 
   TYPE EQUATIONS_SET_MATERIALS_TYPE
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
     LOGICAL :: MATERIALS_FINISHED !<Is .TRUE. if the materials for the equations set has finished being created, .FALSE. if not.
     LOGICAL :: MATERIALS_FIELD_AUTO_CREATED !<Is .TRUE. if the materials field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: MATERIALS_FIELD !<A pointer to the materials field for the equations set if one is defined. If no material field is defined the pointer is NULL.
+    TYPE(FieldType), POINTER :: MATERIALS_FIELD !<A pointer to the materials field for the equations set if one is defined. If no material field is defined the pointer is NULL.
   END TYPE EQUATIONS_SET_MATERIALS_TYPE
 
   !>Contains information on the dependent variables for the equations set.
@@ -2364,7 +2365,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
     LOGICAL :: DEPENDENT_FINISHED !<Is .TRUE. if the dependent variables for the equations set has finished being created, .FALSE. if not.
     LOGICAL :: DEPENDENT_FIELD_AUTO_CREATED !<Is .TRUE. if the dependent field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD !<A pointer to the dependent field for the equations set.
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD !<A pointer to the dependent field for the equations set.
   END TYPE EQUATIONS_SET_DEPENDENT_TYPE
 
   !>Contains information on the derived variables for the equations set, eg. stress or strain
@@ -2372,7 +2373,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer back to the equations set.
     LOGICAL :: derivedFinished !<Is .TRUE. if the derived variables for the equations set have finished being created, .FALSE. if not.
     LOGICAL :: derivedFieldAutoCreated !<Is .TRUE. if the derived field has been or will be auto created by the equations set setup, .FALSE. if it was already created.
-    TYPE(FIELD_TYPE), POINTER :: derivedField !<A pointer to the derived field for the equations set.
+    TYPE(FieldType), POINTER :: derivedField !<A pointer to the derived field for the equations set.
     INTEGER(INTG) :: numberOfVariables !<The number of derived variables used.
     INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(DERIVED_TYPE) is zero if the derived type is not used, otherwise it is the field variable type in the derived field for the derived variable type
   END TYPE EquationsSetDerivedType
@@ -2382,7 +2383,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
     LOGICAL :: INDEPENDENT_FINISHED !<Is .TRUE. if the independent variables for the equations set has finished being created, .FALSE. if not.
     LOGICAL :: INDEPENDENT_FIELD_AUTO_CREATED !<Is .TRUE. if the independent field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: INDEPENDENT_FIELD !<A pointer to the independent field for the equations set.
+    TYPE(FieldType), POINTER :: INDEPENDENT_FIELD !<A pointer to the independent field for the equations set.
   END TYPE EQUATIONS_SET_INDEPENDENT_TYPE
 
   !>Contains information on the source for the equations set.
@@ -2390,7 +2391,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
     LOGICAL :: SOURCE_FINISHED !<Is .TRUE. if the source for the equations set has finished being created, .FALSE. if not.
     LOGICAL :: SOURCE_FIELD_AUTO_CREATED !<Is .TRUE. if the source field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: SOURCE_FIELD !<A pointer to the source field for the equations set if one is defined. If no source is defined the pointer is NULL.
+    TYPE(FieldType), POINTER :: SOURCE_FIELD !<A pointer to the source field for the equations set if one is defined. If no source is defined the pointer is NULL.
   END TYPE EQUATIONS_SET_SOURCE_TYPE
   
   !>Contains information on the analytic setup for the equations set.
@@ -2399,7 +2400,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: ANALYTIC_FUNCTION_TYPE !<The analytic function identifier
     LOGICAL :: ANALYTIC_FINISHED !<Is .TRUE. if the analytic setup for the problem has finished being created, .FALSE. if not.
     LOGICAL :: ANALYTIC_FIELD_AUTO_CREATED !<Is .TRUE. if the analytic field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD !<A pointer to the analytic field for the equations set if one is defined. If no source is defined the pointer is NULL.
+    TYPE(FieldType), POINTER :: ANALYTIC_FIELD !<A pointer to the analytic field for the equations set if one is defined. If no source is defined the pointer is NULL.
     REAL(DP) :: ANALYTIC_TIME !<The time value to use for analytic evaluations.
     REAL(DP) :: ANALYTIC_USER_PARAMS(20)  !<A small array that can be used to hold various parameters often required in analytic problems. \todo should this be allocated?
   END TYPE EQUATIONS_SET_ANALYTIC_TYPE
@@ -2408,7 +2409,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set.
     LOGICAL :: EQUATIONS_SET_FIELD_FINISHED !<Is .TRUE. if the equations set field for the equations set has finished being created, .FALSE. if not.
     LOGICAL :: EQUATIONS_SET_FIELD_AUTO_CREATED !<Is .TRUE. if the equations set field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: EQUATIONS_SET_FIELD_FIELD !<A pointer to the equations set field for the equations set.
+    TYPE(FieldType), POINTER :: EQUATIONS_SET_FIELD_FIELD !<A pointer to the equations set field for the equations set.
   END TYPE EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE
 
   !>Contains information on an equations set. \see OpenCMISS::Iron::cmfe_EquationsSetType
@@ -2438,7 +2439,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>A buffer type to allow for an array of pointers to a EQUATIONS_SET_TYPE \see Types::EQUATIONS_SET_TYPE
   TYPE EQUATIONS_SET_PTR_TYPE
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: PTR !<A pointer to the equations set.
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: ptr !<A pointer to the equations set.
   END TYPE EQUATIONS_SET_PTR_TYPE
   
   TYPE EQUATIONS_SETS_TYPE
@@ -2494,7 +2495,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a INTERFACE_MATRIX_TYPE \see Types::INTERFACE_MATRIX_TYPE.
   TYPE INTERFACE_MATRIX_PTR_TYPE
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: PTR !<A pointer to the interface matrix.
+    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: ptr !<A pointer to the interface matrix.
   END TYPE INTERFACE_MATRIX_PTR_TYPE
 
   !>Contains information of the RHS vector for interface matrices
@@ -2526,8 +2527,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX !<A pointer to the interface matrix
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set containing the dependent variable that is mapped to this interface matrix.
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface condition containing the Lagrange variable that is mapped to this interface matrix.
-    INTEGER(INTG) :: VARIABLE_TYPE !<The dependent variable type mapped to this interface matrix
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: VARIABLE !<A pointer to the field variable that is mapped to this interface matrix
+    INTEGER(INTG) :: variableType !<The dependent variable type mapped to this interface matrix
+    TYPE(FieldVariableType), POINTER :: VARIABLE !<A pointer to the field variable that is mapped to this interface matrix
     INTEGER(INTG) :: MESH_INDEX !<The mesh index for the matrix in the interface.
     REAL(DP) :: MATRIX_COEFFICIENT !<The multiplicative coefficent for the matrix.    
     LOGICAL :: HAS_TRANSPOSE !<.TRUE. if the interface matrix has a tranpose, .FALSE. if not.  
@@ -2541,7 +2542,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE INTERFACE_MAPPING_RHS_TYPE
     TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING !<A pointer back to the interface mapping
     INTEGER(INTG) :: RHS_VARIABLE_TYPE !<The variable type number mapped to the RHS vector
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: RHS_VARIABLE !<A pointer to the variable that is mapped to the RHS vector
+    TYPE(FieldVariableType), POINTER :: RHS_VARIABLE !<A pointer to the variable that is mapped to the RHS vector
     TYPE(DomainMappingType), POINTER :: RHS_VARIABLE_MAPPING !<A pointer to the RHS variable domain mapping
     REAL(DP) :: RHS_COEFFICIENT !<The multiplicative coefficient applied to the RHS vector
     INTEGER(INTG), ALLOCATABLE :: RHS_DOF_TO_INTERFACE_ROW_MAP(:) !<RHS_DOF_TO_INTERFACE_ROW_MAP(rhs_dof_idx). The mapping from the rhs_dof_idx'th RHS dof in the rhs variable to the interface row.   
@@ -2564,7 +2565,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS  !<A pointer to the interface equations for this interface mapping
     LOGICAL :: INTERFACE_MAPPING_FINISHED !<Is .TRUE. if the interface mapping has finished being created, .FALSE. if not.
     INTEGER(INTG) :: LAGRANGE_VARIABLE_TYPE !<The variable type of the mapped Lagrange field variable.
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: LAGRANGE_VARIABLE !<A pointer to the variable that is mapped to the Lagrange multiplier field variable.
+    TYPE(FieldVariableType), POINTER :: LAGRANGE_VARIABLE !<A pointer to the variable that is mapped to the Lagrange multiplier field variable.
     INTEGER(INTG) :: NUMBER_OF_COLUMNS !<The number of columns in the interface mapping
     INTEGER(INTG) :: TOTAL_NUMBER_OF_COLUMNS !<The total number of columns in the interface mapping
     INTEGER(INTG) :: NUMBER_OF_GLOBAL_COLUMNS !<The global number of columns in the interface mapping
@@ -2578,21 +2579,21 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information about the interpolation for a parameter set in interface equations
   TYPE INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: INTERPOLATION_PARAMETERS(:) !<INTERPOLATION_PARAMETERS(field_variable_type). A pointer to the field_variable_type'th field interpolation parameters.
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: INTERPOLATED_POINT(:) !<INTERPOLATED_POINT(field_variable_type). A pointer to the field_variable_type'th field interpolated point. 
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: INTERPOLATED_POINT_METRICS(:) !<INTERPOLATED_POINT_METRICS(field_variable_type). A pointer to the field_variable_type'th field interpolated point metrics.
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:) !<interpolationParameters(field_variable_type). A pointer to the field_variable_type'th field interpolation parameters.
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoint(:) !<interpolatedPoint(field_variable_type). A pointer to the field_variable_type'th field interpolated point. 
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: interpolatedPointMetrics(:) !<interpolatedPointMetrics(field_variable_type). A pointer to the field_variable_type'th field interpolated point metrics.
   END TYPE INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE
 
   !>Contains information about the interpolation for a domain (interface or coupled mesh) in the interface equations
   TYPE INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE
     TYPE(INTERFACE_EQUATIONS_INTERPOLATION_TYPE), POINTER :: INTERPOLATION !<A pointer to the interpolation information used in the interface equations.
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field for the domain
+    TYPE(FieldType), POINTER :: geometricField !<A pointer to the geometric field for the domain
     INTEGER(INTG) :: NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS !<The number of geometric interpolation sets in the domain
     TYPE(INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE), ALLOCATABLE :: GEOMETRIC_INTERPOLATION(:) !<GEOMETRIC_INTERPOLATION(interpolation_set_idx). The geometric interpolation information for the interpolation_set_idx'th interpolation set.
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD !<A pointer to the dependent field for the domain
+    TYPE(FieldType), POINTER :: DEPENDENT_FIELD !<A pointer to the dependent field for the domain
     INTEGER(INTG) :: NUMBER_OF_DEPENDENT_INTERPOLATION_SETS !<The number of dependent interpolation sets in the domain
     TYPE(INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE), ALLOCATABLE :: DEPENDENT_INTERPOLATION(:) !<DEPENDENT_INTERPOLATION(interpolation_set_idx). The dependent interpolation information for the interpolation_set_idx'th interpolation set.
-    TYPE(FIELD_TYPE), POINTER :: PENALTY_FIELD !<A pointer to the penalty field for the domain
+    TYPE(FieldType), POINTER :: PENALTY_FIELD !<A pointer to the penalty field for the domain
     INTEGER(INTG) :: NUMBER_OF_PENALTY_INTERPOLATION_SETS !<The number of penalty interpolation sets in the domain
     TYPE(INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE), ALLOCATABLE :: PENALTY_INTERPOLATION(:) !<PENALTY_INTERPOLATION(interpolation_set_idx). The penalty interpolation information for the interpolation_set_idx'th interpolation set.
   END TYPE INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE
@@ -2620,7 +2621,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the geometry for an interface condition
   TYPE INTERFACE_GEOMETRY_TYPE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition.
-    TYPE(FIELD_TYPE), POINTER :: GEOMETRIC_FIELD !<The geometric field for this equations set.
+    TYPE(FieldType), POINTER :: geometricField !<The geometric field for this equations set.
   END TYPE INTERFACE_GEOMETRY_TYPE
 
   !>Contains information about the penalty field information for an interface condition. 
@@ -2628,7 +2629,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
     LOGICAL :: PENALTY_FINISHED !<Is .TRUE. if the interface penalty field has finished being created, .FALSE. if not.
     LOGICAL :: PENALTY_FIELD_AUTO_CREATED !<Is .TRUE. if the penalty field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: PENALTY_FIELD !<A pointer to the penalty field.
+    TYPE(FieldType), POINTER :: PENALTY_FIELD !<A pointer to the penalty field.
   END TYPE INTERFACE_PENALTY_TYPE
 
   !>Contains information about the Lagrange field information for an interface condition. 
@@ -2636,7 +2637,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
     LOGICAL :: LAGRANGE_FINISHED !<Is .TRUE. if the interface Lagrange field has finished being created, .FALSE. if not.
     LOGICAL :: LAGRANGE_FIELD_AUTO_CREATED !<Is .TRUE. if the Lagrange field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: LAGRANGE_FIELD !<A pointer to the lagrange field.
+    TYPE(FieldType), POINTER :: LAGRANGE_FIELD !<A pointer to the lagrange field.
     INTEGER(INTG) :: numberOfComponents !<The number of components in the Lagrange field.
   END TYPE INTERFACE_LAGRANGE_TYPE
 
@@ -2645,7 +2646,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
     INTEGER(INTG) :: NUMBER_OF_DEPENDENT_VARIABLES !<The number of dependent variables in the interface condition
     TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: EQUATIONS_SETS(:) !<EQUATIONS_SETS(variable_idx). The pointer to the equations set containing the dependent variable for the variable_idx'th added dependent variable.
-    TYPE(FIELD_VARIABLE_PTR_TYPE), POINTER :: FIELD_VARIABLES(:) !<FIELD_VARIABLES(variable_idx). The pointer to the variable_idx'th dependent variable in the interface condition.
+    TYPE(FieldVariablePtrType), POINTER :: fieldVariables(:) !<fieldVariables(variable_idx). The pointer to the variable_idx'th dependent variable in the interface condition.
     INTEGER(INTG), POINTER :: VARIABLE_MESH_INDICES(:) !<VARIABLE_MESH_INDICES(variable_idx). The mesh index of the variable_idx'th dependent variable in the interface condition.
   END TYPE INTERFACE_DEPENDENT_TYPE
 
@@ -2671,7 +2672,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a INTERFACE_CONDITION_TYPE.
   TYPE INTERFACE_CONDITION_PTR_TYPE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: PTR !<The pointer to the interface condition.
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: ptr !<The pointer to the interface condition.
   END TYPE INTERFACE_CONDITION_PTR_TYPE
   
   !>Contains information for interface region specific data that is not of 'region' importance. <<>>
@@ -2742,7 +2743,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(NodesType), POINTER :: nodes !<A pointer to the nodes in an interface
     TYPE(MeshesType), POINTER :: meshes !<A pointer to the mesh in an interface.
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes in an interface.
-    TYPE(FIELDS_TYPE), POINTER :: fields !<A pointer to the fields defined over an interface.
+    TYPE(FieldsType), POINTER :: fields !<A pointer to the fields defined over an interface.
     TYPE(INTERFACE_CONDITIONS_TYPE), POINTER :: interfaceConditions !<The pointer to the interface conditions for this interface
   END TYPE InterfaceType
 
@@ -2810,18 +2811,18 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment.
     INTEGER(INTG) :: globalNumber !< The global number of this CellML model within the parent CellML environment.
     TYPE(VARYING_STRING) :: MODEL_ID !<The ID of the model.
-    TYPE(C_PTR) :: PTR !< The handle for the actual C++ CellML model definition object
+    TYPE(C_PTR) :: ptr !< The handle for the actual C++ CellML model definition object
     INTEGER(INTG) :: NUMBER_OF_STATE !<The number of state variables in the CellML model.
     TYPE(VARYING_STRING), ALLOCATABLE :: STATE_VARIABLE_ID(:) !<STATE_VARIABLE_ID(state_variable_idx). The ID for the state_variable_idx'th state variable.
     INTEGER(INTG) :: NUMBER_OF_INTERMEDIATE !<The number of intermediate variables in the CellML model.
     TYPE(VARYING_STRING), ALLOCATABLE :: INTERMEDIATE_VARIABLE_ID(:) !<INTERMEDIATE_VARIABLE_ID(intermediate_variable_idx). The ID for the intermediate_variable_idx'th intermediate variable.
-    INTEGER(INTG) :: NUMBER_OF_PARAMETERS !<The number of parameters in the CellML model.
+    INTEGER(INTG) :: numberOfParameters !<The number of parameters in the CellML model.
     TYPE(VARYING_STRING), ALLOCATABLE :: PARAMETER_VARIABLE_ID(:) !<PARAMETER_VARIABLE_ID(parameter_variable_idx). The ID for the parameter_variable_idx'th parameter variable.
  END TYPE CELLML_MODEL_TYPE
 
   !>A buffer type to allow for an array of pointers to a CELLML_MODEL_TYPE
   TYPE CELLML_MODEL_PTR_TYPE
-    TYPE(CELLML_MODEL_TYPE), POINTER :: PTR
+    TYPE(CELLML_MODEL_TYPE), POINTER :: ptr
   END TYPE CELLML_MODEL_PTR_TYPE
 
   !>Contains information on the models field for a CellML environment
@@ -2829,7 +2830,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment 
     LOGICAL :: MODELS_FIELD_FINISHED  !<Is .TRUE. if the models field has finished being created, .FALSE. if not.
     LOGICAL :: MODELS_FIELD_AUTO_CREATED !<Is .TRUE. if the models field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: MODELS_FIELD !<A pointer to the models field
+    TYPE(FieldType), POINTER :: MODELS_FIELD !<A pointer to the models field
     INTEGER(INTG) :: ONLY_ONE_MODEL_INDEX !<If only one model is used in the models field for the CellML environment then this will be equal to the model index. It will be zero otherwise.
   END TYPE CELLML_MODELS_FIELD_TYPE
   
@@ -2838,7 +2839,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment 
     LOGICAL :: STATE_FIELD_FINISHED  !<Is .TRUE. if the state field has finished being created, .FALSE. if not.
     LOGICAL :: STATE_FIELD_AUTO_CREATED !<Is .TRUE. if the state field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: STATE_FIELD !<A pointer to the state field
+    TYPE(FieldType), POINTER :: STATE_FIELD !<A pointer to the state field
   END TYPE CELLML_STATE_FIELD_TYPE
   
   !>Contains information on the intermediate field for a CellML environment
@@ -2846,7 +2847,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment 
     LOGICAL :: INTERMEDIATE_FIELD_FINISHED  !<Is .TRUE. if the intermediate field has finished being created, .FALSE. if not.
     LOGICAL :: INTERMEDIATE_FIELD_AUTO_CREATED !<Is .TRUE. if the intermediate field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: INTERMEDIATE_FIELD !<A pointer to the intermediate field
+    TYPE(FieldType), POINTER :: INTERMEDIATE_FIELD !<A pointer to the intermediate field
   END TYPE CELLML_INTERMEDIATE_FIELD_TYPE
   
   !>Contains information on the parameters field for a CellML environment
@@ -2854,7 +2855,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer to the CellML environment 
     LOGICAL :: PARAMETERS_FIELD_FINISHED  !<Is .TRUE. if the parameters field has finished being created, .FALSE. if not.
     LOGICAL :: PARAMETERS_FIELD_AUTO_CREATED !<Is .TRUE. if the parameters field has been auto created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: PARAMETERS_FIELD !<A pointer to the parameters field
+    TYPE(FieldType), POINTER :: PARAMETERS_FIELD !<A pointer to the parameters field
   END TYPE CELLML_PARAMETERS_FIELD_TYPE
  
   !> Contains information on the solver, cellml, dof etc. for which cellml equations are to be evaluated by petsc
@@ -2869,9 +2870,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the mapping between CellML fields and OpenCMISS fields and vise versa.
   TYPE CELLML_MODEL_MAP_TYPE
     INTEGER(INTG) :: CELLML_MAP_TYPE !<The direction of the mapping. \see CELLML_FieldMappingTypes,CMISS_CELLML
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to/from the field being mapped.
-    INTEGER(INTG) :: VARIABLE_TYPE !<The field variable type being mapped.
-    INTEGER(INTG) :: COMPONENT_NUMBER !<The field variable component number being mapped.
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to/from the field being mapped.
+    INTEGER(INTG) :: variableType !<The field variable type being mapped.
+    INTEGER(INTG) :: componentNumber !<The field variable component number being mapped.
     INTEGER(INTG) :: FIELD_PARAMETER_SET !<The field variable parameter set being mapped.
     TYPE(VARYING_STRING) :: VARIABLE_ID !<The variable ID of the CellML variable being mapped.
     INTEGER(INTG) :: CELLML_FIELD_TYPE !<The type of CellML field variable being mapped. \see CELLML_FieldTypes,CMISS_CELLML
@@ -2881,7 +2882,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Buffer type to allow an array of pointers to CELLML_MODEL_MAP_FIELD_TYPE
   TYPE CELLML_MODEL_MAP_PTR_TYPE
-    TYPE(CELLML_MODEL_MAP_TYPE), POINTER :: PTR !<A pointer to the CELLML_MODEL_MAP_TYPE
+    TYPE(CELLML_MODEL_MAP_TYPE), POINTER :: ptr !<A pointer to the CELLML_MODEL_MAP_TYPE
   END TYPE CELLML_MODEL_MAP_PTR_TYPE
 
   !>Contains information on the maps between a CellML model and external OpenCMISS fields.
@@ -2894,15 +2895,15 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Buffer type to allow arrays of pointer to CELLML_MODEL_MAPS_TYPE
   TYPE CELLML_MODEL_MAPS_PTR_TYPE
-    TYPE(CELLML_MODEL_MAPS_TYPE), POINTER :: PTR !<A pointer to the CELLML_MODEL_MAPS_TYPE
+    TYPE(CELLML_MODEL_MAPS_TYPE), POINTER :: ptr !<A pointer to the CELLML_MODEL_MAPS_TYPE
   END TYPE CELLML_MODEL_MAPS_PTR_TYPE
   
   !>Contains information on the maps between CellML and external OpenCMISS fields.
   TYPE CELLML_FIELD_MAPS_TYPE
     TYPE(CELLML_TYPE), POINTER :: CELLML !<A pointer back to the CellML environment.
     LOGICAL :: CELLML_FIELD_MAPS_FINISHED !<Is .TRUE. if the CellML maps have finished being created, .FALSE. if not.
-    TYPE(FIELD_TYPE), POINTER :: SOURCE_GEOMETRIC_FIELD !<The source geometric field for the CellML environment.
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: SOURCE_FIELD_VARIABLE !<The source field variable for the CellML environment.
+    TYPE(FieldType), POINTER :: SOURCE_GEOMETRIC_FIELD !<The source geometric field for the CellML environment.
+    TYPE(FieldVariableType), POINTER :: SOURCE_FIELD_VARIABLE !<The source field variable for the CellML environment.
     TYPE(DomainType), POINTER :: SOURCE_FIELD_DOMAIN !<The source field domain for the CellML environment.
     INTEGER(INTG) :: SOURCE_FIELD_INTERPOLATION_TYPE !<The source field interpolation type for the CellML environment.
     TYPE(CELLML_MODEL_MAPS_PTR_TYPE), ALLOCATABLE :: MODEL_MAPS(:) !<MODEL_MAPS(model_idx). Contains information on the maps between the model_idx'th CellML model and external OpenCMISS fields.
@@ -2920,7 +2921,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: CELLML_FINISHED !<Is .TRUE. if the environment has finished being created, .FALSE. if not.
     INTEGER(INTG) :: NUMBER_OF_MODELS !< The number of models defined in the CellML environment
     INTEGER(INTG) :: MAXIMUM_NUMBER_OF_STATE !<The maximum number of state variables across all models.
-    INTEGER(INTG) :: MAXIMUM_NUMBER_OF_PARAMETERS !<The maximum number of parameters variables across all models.
+    INTEGER(INTG) :: maximumNumberOfParameters !<The maximum number of parameters variables across all models.
     INTEGER(INTG) :: MAXIMUM_NUMBER_OF_INTERMEDIATE !<The maximum number of intermediate variables across all models.
     TYPE(CELLML_MODEL_PTR_TYPE), ALLOCATABLE :: MODELS(:) !< MODELS(model_idx). The array of pointers to the models.
     TYPE(CELLML_FIELD_MAPS_TYPE), POINTER :: FIELD_MAPS !<A pointer the information on CellML<-->Field maps.
@@ -2934,7 +2935,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !> A buffer type to allow for an array of pointers to a CELLML_TYPE.
   !! \todo Is this needed? not currently used...
   TYPE CELLML_PTR_TYPE
-    TYPE(CELLML_TYPE), POINTER :: PTR !< The pointer to the CellML environment.
+    TYPE(CELLML_TYPE), POINTER :: ptr !< The pointer to the CellML environment.
   END TYPE CELLML_PTR_TYPE
 
   !>Contains information on the CellML environments defined.
@@ -2984,7 +2985,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a SOLVER_MATRIX_TYPE \see TYPES:SOLUTION_MATRIX_TYPE
   TYPE SOLVER_MATRIX_PTR_TYPE
-    TYPE(SOLVER_MATRIX_TYPE), POINTER :: PTR !<The pointer to the solver matrix.
+    TYPE(SOLVER_MATRIX_TYPE), POINTER :: ptr !<The pointer to the solver matrix.
   END TYPE SOLVER_MATRIX_PTR_TYPE
   
   !>Contains information on the solver matrices and rhs vector
@@ -3344,13 +3345,13 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfIncrements !<The number of increments used to apply the transformation.
     REAL(DP), ALLOCATABLE :: scalings(:) !scaling(loadIncrementIdx), the scaling factors for each load increment, apply the full transformation in 1 load increment if unallocated. Only allocated if there are multiple load steps and if the transformation is uni-directional.
     REAL(DP), ALLOCATABLE :: transformationMatrices(:,:,:) !<transformationMatrices(spatialCoord+1,spatialCoord+1,incrementIdx). 4x4 matrices for 3D transformation, 3x3 for 2D transformation
-    TYPE(FIELD_TYPE), POINTER :: field !<fields to which the geometric transformations are applied 
+    TYPE(FieldType), POINTER :: field !<fields to which the geometric transformations are applied 
     INTEGER(INTG) :: fieldVariableType !<The field variable type index to transform
   END TYPE GeometricTransformationSolverType
 
    !>A buffer type to allow for an array of pointers to a SOLVER_TYPE \see Types::SOLVER_TYPE
   TYPE SOLVER_PTR_TYPE
-    TYPE(SOLVER_TYPE), POINTER :: PTR
+    TYPE(SOLVER_TYPE), POINTER :: ptr
   END TYPE SOLVER_PTR_TYPE
 
  !>Contains information on the type of solver to be used. \see OpenCMISS::Iron::cmfe_SolverType
@@ -3440,7 +3441,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a EQUATIONS_TO_SOLVER_MAPS_TYPE \see Types::EQUATIONS_TO_SOLVER_MAPS_TYPE
   TYPE EQUATIONS_TO_SOLVER_MAPS_PTR_TYPE
-    TYPE(EQUATIONS_TO_SOLVER_MAPS_TYPE), POINTER :: PTR !<A pointer to the equations to solver maps
+    TYPE(EQUATIONS_TO_SOLVER_MAPS_TYPE), POINTER :: ptr !<A pointer to the equations to solver maps
   END TYPE EQUATIONS_TO_SOLVER_MAPS_PTR_TYPE
   
   TYPE INTERFACE_TO_SOLVER_MAPS_TYPE
@@ -3453,7 +3454,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a INTERFACE_TO_SOLVER_MAPS_TYPE \see Types::INTERFACE_TO_SOLVER_MAPS_TYPE
   TYPE INTERFACE_TO_SOLVER_MAPS_PTR_TYPE
-    TYPE(INTERFACE_TO_SOLVER_MAPS_TYPE), POINTER :: PTR !<A pointer to the interface to solver maps
+    TYPE(INTERFACE_TO_SOLVER_MAPS_TYPE), POINTER :: ptr !<A pointer to the interface to solver maps
   END TYPE INTERFACE_TO_SOLVER_MAPS_PTR_TYPE
   
   TYPE JACOBIAN_COL_TO_SOLVER_COLS_MAP_TYPE
@@ -3470,7 +3471,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE JACOBIAN_TO_SOLVER_MAP_TYPE
 
   TYPE JACOBIAN_TO_SOLVER_MAP_PTR_TYPE
-    TYPE(JACOBIAN_TO_SOLVER_MAP_TYPE), POINTER :: PTR !<A pointer to the Jacobian to solver map
+    TYPE(JACOBIAN_TO_SOLVER_MAP_TYPE), POINTER :: ptr !<A pointer to the Jacobian to solver map
   END TYPE JACOBIAN_TO_SOLVER_MAP_PTR_TYPE
 
   !>Contains information on the mappings between field variable dofs inequations and the solver matrix columns (solver dofs) \todo rename solver col to be solver dof here???
@@ -3490,9 +3491,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM_TYPE
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The number of the solver matrix for these mappings
 
-    INTEGER(INTG) :: NUMBER_OF_VARIABLES !<The number of variables mapped to this solver matrix
-    INTEGER(INTG), ALLOCATABLE :: VARIABLE_TYPES(:) !<VARIABLE_TYPES(variable_idx). The variable type for the variable_idx'th variable that is mapped to the solver matrix.
-    TYPE(FIELD_VARIABLE_PTR_TYPE), ALLOCATABLE :: VARIABLES(:) !<VARIABLES(variable_idx). VARIABLES(variable_idx)%PTR points to the variable_idx'th variable that is mapped to the solver matrix.
+    INTEGER(INTG) :: numberOfVariables !<The number of variables mapped to this solver matrix
+    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variable_idx). The variable type for the variable_idx'th variable that is mapped to the solver matrix.
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: VARIABLES(:) !<VARIABLES(variable_idx). VARIABLES(variable_idx)%PTR points to the variable_idx'th variable that is mapped to the solver matrix.
     TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE), ALLOCATABLE :: VARIABLE_TO_SOLVER_COL_MAPS(:) !<VARIABLE_TO_SOLVER_COL_MAPS(variable_idx). The mappings from the variable dofs to the solver dofs for the variable_idx'th variable in the equations set that is mapped to the solver matrix.
     INTEGER(INTG) :: NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES !<The number of dynamic equations matrices mapped to this solver matrix
     TYPE(EQUATIONS_TO_SOLVER_MAPS_PTR_TYPE), ALLOCATABLE :: DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS(:) !<DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS(equations_matrix_idx). The maps from the equations_idx'th linear equations matrix to solver matrix
@@ -3533,11 +3534,11 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The number of the solver matrix for these mappings
     INTEGER(INTG) :: LAGRANGE_VARIABLE_TYPE !<LThe variable type for the Lagrange variable that is mapped to the solver matrix.
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: LAGRANGE_VARIABLE !<A pointer to the Lagrange variable that is mapped to the solver matrix.
+    TYPE(FieldVariableType), POINTER :: LAGRANGE_VARIABLE !<A pointer to the Lagrange variable that is mapped to the solver matrix.
     TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE) :: LAGRANGE_VARIABLE_TO_SOLVER_COL_MAP !<The mappings from the Lagrange variable dofs to the solver dofs.
     INTEGER(INTG) :: NUMBER_OF_DEPENDENT_VARIABLES !<The number of dependent variables mapped to this solver matrix
     INTEGER(INTG), ALLOCATABLE :: DEPENDENT_VARIABLE_TYPES(:) !<DEPENDENT_VARIABLE_TYPES(variable_idx). The variable type for the variable_idx'th dependent variable that is mapped to the solver matrix.
-    TYPE(FIELD_VARIABLE_PTR_TYPE), ALLOCATABLE :: DEPENDENT_VARIABLES(:) !<DEPENDENT_VARIABLES(variable_idx). DEPENDENT_VARIABLES(variable_idx)%PTR points to the variable_idx'th dependent variable that is mapped to the solver matrix.
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: DEPENDENT_VARIABLES(:) !<DEPENDENT_VARIABLES(variable_idx). DEPENDENT_VARIABLES(variable_idx)%PTR points to the variable_idx'th dependent variable that is mapped to the solver matrix.
     TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE), ALLOCATABLE :: DEPENDENT_VARIABLE_TO_SOLVER_COL_MAPS(:) !<DEPENDENT_VARIABLE_TO_SOLVER_COL_MAPS(interface_matrix_idx). The mappings from the dependent variable dofs to the solver dofs for the interface_matrix_idx'th interface matrix dependent variable in the interface condition that is mapped to the solver matrix.
     INTEGER(INTG) :: NUMBER_OF_INTERFACE_MATRICES !<The number of interface matrices mapped to this solver matrix
     TYPE(INTERFACE_TO_SOLVER_MAPS_PTR_TYPE), ALLOCATABLE :: INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(:) !<INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interface_matrix_idx). The maps from the interface)matrix_idx'th interface matrix to solver matrix
@@ -3608,7 +3609,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: NUMBER_OF_EQUATION_DOFS !<The number of equation dofs this solver dof is mapped to
     INTEGER(INTG), ALLOCATABLE :: EQUATIONS_TYPES(:) !<EQUATION_TYPES(equation_idx). The type of equation of the equation_idx'th dof that the solver dof is mapped to.
     INTEGER(INTG), ALLOCATABLE :: EQUATIONS_INDICES(:) !<EQUATIONS_INDICES(equation_idx). The index of either the equations set or interface condition of the equation_idx'th dof that this solver dof is mapped to.
-    TYPE(FIELD_VARIABLE_PTR_TYPE), ALLOCATABLE :: VARIABLE(:) !<VARIABLE(equation_idx)%PTR is a pointer to the field variable that the solver dof is mapped to in the equation_idx'th equation
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: VARIABLE(:) !<VARIABLE(equation_idx)%PTR is a pointer to the field variable that the solver dof is mapped to in the equation_idx'th equation
     INTEGER(INTG), ALLOCATABLE :: VARIABLE_DOF(:) !<VARIABLE_DOF(equation_idx). The variable dof number that the solver dof is mapped to in the equation_idx'th equation
     REAL(DP), ALLOCATABLE :: VARIABLE_COEFFICIENT(:) !<VARIABLE_COEFFICIENT(equation_idx). The mulitplicative coefficient for the mapping to the equation_idx'th equations
     REAL(DP), ALLOCATABLE :: ADDITIVE_CONSTANT(:) !<ADDITIVE_CONSTANT(equation_idx). The additive constant for the mapping to the equation_idx'th equations
@@ -3676,8 +3677,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE SOLVER_MAPPING_CREATE_VALUES_CACHE_TYPE
 
   TYPE SOLVER_MAPPING_VARIABLE_TYPE
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: VARIABLE
-    INTEGER(INTG) :: VARIABLE_TYPE
+    TYPE(FieldVariableType), POINTER :: VARIABLE
+    INTEGER(INTG) :: variableType
     INTEGER(INTG) :: NUMBER_OF_EQUATIONS
     INTEGER(INTG), ALLOCATABLE :: EQUATION_TYPES(:)
     INTEGER(INTG), ALLOCATABLE :: EQUATION_INDICES(:)
@@ -3685,7 +3686,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information on the variables involved in a solver matrix
   TYPE SOLVER_MAPPING_VARIABLES_TYPE
-    INTEGER(INTG) :: NUMBER_OF_VARIABLES !<The number of variables involved in the solver matrix.
+    INTEGER(INTG) :: numberOfVariables !<The number of variables involved in the solver matrix.
     TYPE(SOLVER_MAPPING_VARIABLE_TYPE), ALLOCATABLE :: VARIABLES(:) !<VARIABLES(variable_idx). The variable information for the variable_idx'th variable involved in the solver matrix.
   END TYPE SOLVER_MAPPING_VARIABLES_TYPE
 
@@ -3779,7 +3780,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: FILE_FORMAT !<The format of the history file \see HISTORY_ROUTINES_FileFormatTypes,HISTORY_ROUTINES
     TYPE(VARYING_STRING) :: FILENAME !<The file name of the history file
     INTEGER(INTG) :: UNIT_NUMBER !<The unit number of the history file.
-    TYPE(FIELD_TYPE), POINTER :: FIELD !<A pointer to the field that will be read/written in the history file
+    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field that will be read/written in the history file
   END TYPE HISTORY_TYPE
 
   PUBLIC HISTORY_TYPE
@@ -3839,7 +3840,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information about a dependent field variable involved in a control loop solver.
   TYPE ControlLoopFieldVariableType
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable
     INTEGER(INTG) :: timeDependence !<The time dependence type of the field variable in the control loop solvers
     INTEGER(INTG) :: linearity !<The linearity type of the field variable in the control loop solvers.
   END TYPE ControlLoopFieldVariableType
@@ -3852,7 +3853,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>A buffer type to allow for an array of pointers to a CONTROL_LOOP_TYPE \see Types::CONTROL_LOOP_TYPE
   TYPE CONTROL_LOOP_PTR_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: PTR !<The pointer to the control loop
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: ptr !<The pointer to the control loop
   END TYPE CONTROL_LOOP_PTR_TYPE
 
   !>Contains information on a control loop. \see OpenCMISS::Iron::cmfe_ControlLoopType
@@ -3912,7 +3913,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>A buffer type to allow for an array of pointers to a PROBLEM_TYPE \see TYPES:PROBLEM_TYPE
   TYPE PROBLEM_PTR_TYPE
-    TYPE(PROBLEM_TYPE), POINTER :: PTR !<The pointer to the problem.
+    TYPE(PROBLEM_TYPE), POINTER :: ptr !<The pointer to the problem.
   END TYPE PROBLEM_PTR_TYPE
        
   !>Contains information on the problems defined.
@@ -3948,7 +3949,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(MeshesType), POINTER :: meshes !<A pointer to the meshes defined on the region.
     TYPE(GeneratedMeshesType), POINTER :: generatedMeshes !<A pointer to the generated meshes defined on the region.
     TYPE(DecomposersType), POINTER :: decomposers !<A pointer to the decomposers defined on the region.
-    TYPE(FIELDS_TYPE), POINTER :: fields !<A pointer to the fields defined on the region.
+    TYPE(FieldsType), POINTER :: fields !<A pointer to the fields defined on the region.
     TYPE(EQUATIONS_SETS_TYPE), POINTER :: EQUATIONS_SETS !<A pointer to the equation sets defined on the region.
     TYPE(CELLML_ENVIRONMENTS_TYPE), POINTER :: CELLML_ENVIRONMENTS !<A pointer to the CellML environments for the region.
     TYPE(RegionType), POINTER :: parentRegion !<A pointer to the parent region for the region. If the region has no parent region then it is the global (world) region and parentRegion is NULL.

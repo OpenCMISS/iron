@@ -82,7 +82,7 @@ contains
 
   ! initialize field
   subroutine bueno_orovio_initialize(field,err,error,*)
-    type(field_type), intent(inout), pointer :: field
+    TYPE(FieldType), INTENT(inout), POINTER :: field
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     
@@ -157,7 +157,7 @@ contains
 
   ! integrates all cell models
   subroutine bueno_orovio_integrate(cells,materials,t0,t1,err,error,*)
-    type(field_type), intent(inout), pointer :: cells, materials !<Independent field storing the cell data, and material field component 1 the activation flags
+    TYPE(FieldType), INTENT(inout), POINTER :: cells, materials !<Independent field storing the cell data, and material field component 1 the activation flags
     real(dp), intent(in)    :: t0, t1 !<Integrate from time t0 to t1 
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -169,15 +169,15 @@ contains
 
     integer(intg) :: ncells, i, d
     type(DomainPtrType), pointer :: domain
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: CELLS_VARIABLE, ACTIV_VARIABLE
+    TYPE(FieldVariableType), POINTER :: CELLS_VARIABLE, ACTIV_VARIABLE
 
     ENTERS('bueno_orovio_integrate',err,error,*999)
 
     domain=>cells%decomposition%domain(1)
     ncells = domain%ptr%topology%nodes%numberOfNodes ! local
 
-    CELLS_VARIABLE=>cells%VARIABLE_TYPE_MAP(field_u_variable_type)%PTR
-    ACTIV_VARIABLE=>materials%VARIABLE_TYPE_MAP(field_u_variable_type)%PTR
+    CELLS_VARIABLE=>cells%variableTypeMap(field_u_variable_type)%PTR
+    ACTIV_VARIABLE=>materials%variableTypeMap(field_u_variable_type)%PTR
 
     CALL FIELD_PARAMETER_SET_DATA_GET(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
     CALL FIELD_PARAMETER_SET_DATA_GET(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
@@ -186,10 +186,10 @@ contains
       !   field ->   y
       do d=1,celldim
         !Default to version 1 of each node derivative
-        y(d) = celldata(CELLS_VARIABLE%COMPONENTS(d)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(i)%DERIVATIVES(1)%VERSIONS(1))
+        y(d) = celldata(CELLS_VARIABLE%COMPONENTS(d)%paramToDOFMap%nodeParam2DOFMap%NODES(i)%DERIVATIVES(1)%VERSIONS(1))
       end do
       !Default to version 1 of each node derivative
-      activ = activdata(ACTIV_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(i)%DERIVATIVES(1)%VERSIONS(1))
+      activ = activdata(ACTIV_VARIABLE%COMPONENTS(1)%paramToDOFMap%nodeParam2DOFMap%NODES(i)%DERIVATIVES(1)%VERSIONS(1))
       
       t = t0
       do while (t < t1 - 1e-6)
@@ -206,7 +206,7 @@ contains
       do d=1,celldim
  !       call field_parameter_set_update_local_node(cells,field_u_variable_type,field_values_set_type,1,i,d,y(d), err,error,*999)
         !Default to version 1 of each node derivative
-        celldata(CELLS_VARIABLE%COMPONENTS(d)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(i)%DERIVATIVES(1)%VERSIONS(1)) = y(d)
+        celldata(CELLS_VARIABLE%COMPONENTS(d)%paramToDOFMap%nodeParam2DOFMap%NODES(i)%DERIVATIVES(1)%VERSIONS(1)) = y(d)
       end do
     end do
     CALL FIELD_PARAMETER_SET_DATA_RESTORE(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
@@ -225,7 +225,7 @@ contains
 
   ! initialize field
   subroutine tentusscher06_initialize(field,err,error,*)
-    type(field_type), intent(inout), pointer :: field
+    type(FieldType), intent(inout), pointer :: field
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     
@@ -367,7 +367,7 @@ contains
 
   ! integrates all cell models
   subroutine tentusscher06_integrate(cells,materials,t0,t1,err,error,*)
-    type(field_type), intent(inout), pointer :: cells, materials !<Independent field storing the cell data, and material field component 1 the activation flags
+    type(FieldType), intent(inout), pointer :: cells, materials !<Independent field storing the cell data, and material field component 1 the activation flags
     real(dp), intent(in)    :: t0, t1 !<Integrate from time t0 to t1 
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -380,26 +380,26 @@ contains
 
     integer(intg) :: ncells, i, d
     type(DomainPtrType), pointer :: domain
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: CELLS_VARIABLE, ACTIV_VARIABLE
+    TYPE(FieldVariableType), POINTER :: CELLS_VARIABLE, ACTIV_VARIABLE
 
     ENTERS('tentusscher06_integrate',err,error,*999)
 
     domain=>cells%decomposition%domain(1)
     ncells = domain%ptr%topology%nodes%numberOfNodes ! local
 
-    CELLS_VARIABLE=>cells%VARIABLE_TYPE_MAP(field_u_variable_type)%PTR
-    ACTIV_VARIABLE=>materials%VARIABLE_TYPE_MAP(field_u_variable_type)%PTR
+    CELLS_VARIABLE=>cells%variableTypeMap(field_u_variable_type)%PTR
+    ACTIV_VARIABLE=>materials%variableTypeMap(field_u_variable_type)%PTR
 
     CALL FIELD_PARAMETER_SET_DATA_GET(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)
     CALL FIELD_PARAMETER_SET_DATA_GET(materials,field_u_variable_type,field_values_set_type,activdata,ERR,ERROR,*999)
 
     do i=1,ncells
       !Default to version 1 of each node derivative
-      d = CELLS_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(i)%DERIVATIVES(1)%VERSIONS(1)
+      d = CELLS_VARIABLE%COMPONENTS(1)%paramToDOFMap%nodeParam2DOFMap%NODES(i)%DERIVATIVES(1)%VERSIONS(1)
       y => celldata(d:d+celldim-1)
       prev_v = y(1)
       !Default to version 1 of each node derivative
-      activ = activdata(ACTIV_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(i)%DERIVATIVES(1)%VERSIONS(1))
+      activ = activdata(ACTIV_VARIABLE%COMPONENTS(1)%paramToDOFMap%nodeParam2DOFMap%NODES(i)%DERIVATIVES(1)%VERSIONS(1))
       
   
       t = t0
@@ -433,7 +433,7 @@ contains
       end do
       if(prev_v < 0 .and. y(1) > 0) then ! store activation times, where else?
         !Default to version 1 of each node derivative
-        activdata(ACTIV_VARIABLE%COMPONENTS(7)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(i)%DERIVATIVES(1)%VERSIONS(1))=t1
+        activdata(ACTIV_VARIABLE%COMPONENTS(7)%paramToDOFMap%nodeParam2DOFMap%NODES(i)%DERIVATIVES(1)%VERSIONS(1))=t1
       end if
     end do ! for cells
     CALL FIELD_PARAMETER_SET_DATA_RESTORE(cells,field_u_variable_type,field_values_set_type,celldata,ERR,ERROR,*999)

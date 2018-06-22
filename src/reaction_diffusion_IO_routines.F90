@@ -97,7 +97,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(DomainType), POINTER :: COMPUTATION_DOMAIN
-    TYPE(FIELD_TYPE), POINTER :: SOURCE_FIELD
+    TYPE(FieldType), POINTER :: SOURCE_FIELD
     REAL(DP) :: NodeXValue,NodeYValue,NodeZValue,NodeUValue
     INTEGER(INTG):: myWorldComputationNodeNumber,NumberOfOutputFields,NumberOfDimensions,NumberOfElements,NumberOfNodes
     INTEGER(INTG):: NumberOfVariableComponents,NumberOfSourceComponents,I,J,K,ValueIndex,NODE_GLOBAL_NUMBER
@@ -205,18 +205,18 @@ CONTAINS
     !WRITE OUT NODE VALUES
     DO I = 1,NumberOfNodes
       NODE_GLOBAL_NUMBER = COMPUTATION_DOMAIN%TOPOLOGY%NODES%NODES(I)%globalNumber
-      NodeXValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-        & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I)
+      NodeXValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
+        & %parameterSets%parameterSets(1)%ptr%parameters%cmiss%dataDP(I)
       IF(NumberOfDimensions==2 .OR. NumberOfDimensions==3) THEN
-        NodeYValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I+NumberOfNodes)
+        NodeYValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
+          & %parameterSets%parameterSets(1)%ptr%parameters%cmiss%dataDP(I+NumberOfNodes)
       ENDIF
       IF(NumberOfDimensions==3) THEN
-        NodeZValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometric_field%variables(1) &
-          & %parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I+(2*NumberOfNodes))
+        NodeZValue = REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%geometry%geometricField%variables(1) &
+          & %parameterSets%parameterSets(1)%ptr%parameters%cmiss%dataDP(I+(2*NumberOfNodes))
       ENDIF
       NodeUValue=REGION%equations_sets%equations_sets(EQUATIONS_SET_GLOBAL_NUMBER)%ptr%dependent%dependent_field% &
-        & variables(1)%parameter_sets%parameter_sets(1)%ptr%parameters%cmiss%dataDP(I)
+        & variables(1)%parameterSets%parameterSets(1)%ptr%parameters%cmiss%dataDP(I)
 
       WRITE(myWorldComputationNodeNumber,*) ' Node: ',NODE_GLOBAL_NUMBER
       WRITE(myWorldComputationNodeNumber,'("    ", es25.16 )')NodeXValue

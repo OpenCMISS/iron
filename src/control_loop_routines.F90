@@ -528,14 +528,14 @@ CONTAINS
     TYPE(ControlLoopFieldVariablesType), POINTER :: controlLoopFieldVariables !<The control loop field variables to add the field variable to
     INTEGER(INTG), INTENT(IN) :: variableLinearity !<The linearity of the field variable
     INTEGER(INTG), INTENT(IN) :: variableTimeDependence !<The time dependence of the field variable
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to add.
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to add.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: variableIdx
     LOGICAL :: found
     TYPE(ControlLoopFieldVariableType), ALLOCATABLE :: newFieldVariables(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: controlLoopVariable
+    TYPE(FieldVariableType), POINTER :: controlLoopVariable
    
     ENTERS("ControlLoop_FieldVariableAdd",err,error,*999)
 
@@ -603,8 +603,8 @@ CONTAINS
     INTEGER(INTG) :: loopIdx,matrixIdx,solverIdx,variableIdx,variableLinearity,variableTimeDependence
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop2
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver
-    TYPE(FIELD_TYPE), POINTER :: field
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
@@ -699,7 +699,7 @@ CONTAINS
           !Loop over the solver matrices
           DO matrixIdx=1,solverMatrices%NUMBER_OF_MATRICES
             !Loop over the field variables associated with the solver mapping
-            DO variableIdx=1,solverMapping%VARIABLES_LIST(matrixIdx)%NUMBER_OF_VARIABLES
+            DO variableIdx=1,solverMapping%VARIABLES_LIST(matrixIdx)%numberOfVariables
               fieldVariable=>solverMapping%VARIABLES_LIST(matrixIdx)%variables(variableIdx)%variable
               IF(ASSOCIATED(fieldVariable)) THEN
                 CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
@@ -712,7 +712,7 @@ CONTAINS
             ENDDO !variableIdx
           ENDDO !matrixIdx
           !Add in the RHS
-          DO variableIdx=1,solverMapping%rhsVariablesList%NUMBER_OF_VARIABLES
+          DO variableIdx=1,solverMapping%rhsVariablesList%numberOfVariables
             fieldVariable=>solverMapping%rhsVariablesList%variables(variableIdx)%variable
             IF(ASSOCIATED(fieldVariable)) THEN
               CALL ControlLoop_FieldVariableAdd(controlLoop%fieldVariables,variableLinearity,variableTimeDependence, &
@@ -747,7 +747,7 @@ CONTAINS
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Variable index : ",variableIdx,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable field user number = ",field%userNumber, &
                   & err,error,*999)
-                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type = ",fieldVariable%VARIABLE_TYPE, &
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable type = ",fieldVariable%variableType, &
                   & err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Variable linearity = ",controlLoop%fieldVariables% &
                   & fieldVariables(variableIdx)%linearity,err,error,*999)
@@ -1703,7 +1703,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: linearity,timeDependence,variableIdx
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("ControlLoop_PreviousValuesUpdate",err,error,*999)

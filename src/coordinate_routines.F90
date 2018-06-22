@@ -636,18 +636,18 @@ CONTAINS
   !
 
   !>Calculates the covariant metric tensor GL(i,j), the contravariant metric tensor GU(i,J), the Jacobian and derivative of the interpolated coordinate system (XI_i) with respect to the given coordinate (X_j) system (DXI_DX) at a point (X - normally a Gauss point). Old cmiss name: XGMG
-  SUBROUTINE COORDINATE_METRICS_CALCULATE(COORDINATE_SYSTEM,JACOBIAN_TYPE,METRICS,err,error,*)
+  SUBROUTINE COORDINATE_METRICS_CALCULATE(COORDINATE_SYSTEM,jacobianType,METRICS,err,error,*)
 
     !Argument variables
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to calculate the metrics for
-    INTEGER(INTG), INTENT(IN) :: JACOBIAN_TYPE !<The type of Jacobian to calculate \see COORDINATE_ROUTINES_JacobianTypes,COORDINATE_ROUTINES
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: METRICS !<A pointer to the metrics to calculate
+    INTEGER(INTG), INTENT(IN) :: jacobianType !<The type of Jacobian to calculate \see COORDINATE_ROUTINES_JacobianTypes,COORDINATE_ROUTINES
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: METRICS !<A pointer to the metrics to calculate
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: mi,ni,nu
     REAL(DP) :: DET_GL,DET_DX_DXI,DX_DXI2(3),DX_DXI3(3),FF,G1,G3,LENGTH,MU,R,RC,RCRC,RR,SCALE
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     NULLIFY(INTERPOLATED_POINT)
@@ -656,23 +656,23 @@ CONTAINS
 
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(ASSOCIATED(METRICS)) THEN
-        INTERPOLATED_POINT=>METRICS%INTERPOLATED_POINT
+        INTERPOLATED_POINT=>METRICS%interpolatedPoint
         IF(ASSOCIATED(INTERPOLATED_POINT)) THEN
-          IF(INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE>=FIRST_PART_DERIV) THEN
+          IF(INTERPOLATED_POINT%partialDerivativeType>=FIRST_PART_DERIV) THEN
 
             SELECT CASE(METRICS%numberOfXiDimensions)
             CASE(1)
               !Calculate the derivatives of X with respect to XI
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1)
-              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
+              METRICS%dXdXi(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               !Initialise the covariant metric tensor to the identity matrix
               METRICS%GL(1,1)=1.0_DP
             CASE(2)
               !Calculate the derivatives of X with respect to XI
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1)
-              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
+              METRICS%dXdXi(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(2)
-              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,2)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
+              METRICS%dXdXi(1:METRICS%numberOfXDimensions,2)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               !Initialise the covariant metric tensor to the identity matrix
               METRICS%GL(1,1)=1.0_DP
               METRICS%GL(1,2)=0.0_DP
@@ -681,11 +681,11 @@ CONTAINS
             CASE(3)
               !Calculate the derivatives of X with respect to XI
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(1)
-              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
+              METRICS%dXdXi(1:METRICS%numberOfXDimensions,1)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(2)
-              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,2)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
+              METRICS%dXdXi(1:METRICS%numberOfXDimensions,2)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               nu=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(3)
-              METRICS%DX_DXI(1:METRICS%numberOfXDimensions,3)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
+              METRICS%dXdXi(1:METRICS%numberOfXDimensions,3)=INTERPOLATED_POINT%VALUES(1:METRICS%numberOfXDimensions,nu)
               !Initialise the covariant metric tensor to the identity matrix
               METRICS%GL(1,1)=1.0_DP
               METRICS%GL(1,2)=0.0_DP
@@ -707,22 +707,22 @@ CONTAINS
               CASE(1)
                 DO mi=1,METRICS%numberOfXiDimensions
                   DO ni=1,METRICS%numberOfXiDimensions
-                    METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)                    
+                    METRICS%GL(mi,ni)=METRICS%dXdXi(1,mi)*METRICS%dXdXi(1,ni)                    
                   ENDDO !ni
                 ENDDO !mi
               CASE(2)
                 DO mi=1,METRICS%numberOfXiDimensions
                   DO ni=1,METRICS%numberOfXiDimensions
-                    METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+ &
-                      & METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)
+                    METRICS%GL(mi,ni)=METRICS%dXdXi(1,mi)*METRICS%dXdXi(1,ni)+ &
+                      & METRICS%dXdXi(2,mi)*METRICS%dXdXi(2,ni)
                   ENDDO !ni
                 ENDDO !mi
               CASE(3)
                 DO mi=1,METRICS%numberOfXiDimensions
                   DO ni=1,METRICS%numberOfXiDimensions
-                    METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+ &
-                      & METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)+ &
-                      & METRICS%DX_DXI(3,mi)*METRICS%DX_DXI(3,ni)
+                    METRICS%GL(mi,ni)=METRICS%dXdXi(1,mi)*METRICS%dXdXi(1,ni)+ &
+                      & METRICS%dXdXi(2,mi)*METRICS%dXdXi(2,ni)+ &
+                      & METRICS%dXdXi(3,mi)*METRICS%dXdXi(3,ni)
                   ENDDO !ni
                 ENDDO !mi
               CASE DEFAULT
@@ -736,14 +736,14 @@ CONTAINS
               IF(METRICS%numberOfXDimensions==2) THEN
                 DO mi=1,METRICS%numberOfXiDimensions
                   DO ni=1,METRICS%numberOfXiDimensions
-                    METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+RR*METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)
+                    METRICS%GL(mi,ni)=METRICS%dXdXi(1,mi)*METRICS%dXdXi(1,ni)+RR*METRICS%dXdXi(2,mi)*METRICS%dXdXi(2,ni)
                   ENDDO !ni
                 ENDDO !mi
               ELSE IF(METRICS%numberOfXDimensions==3) THEN
                 DO mi=1,METRICS%numberOfXiDimensions
                   DO ni=1,METRICS%numberOfXiDimensions
-                    METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+RR*METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)+ &
-                      & METRICS%DX_DXI(3,mi)*METRICS%DX_DXI(3,ni)
+                    METRICS%GL(mi,ni)=METRICS%dXdXi(1,mi)*METRICS%dXdXi(1,ni)+RR*METRICS%dXdXi(2,mi)*METRICS%dXdXi(2,ni)+ &
+                      & METRICS%dXdXi(3,mi)*METRICS%dXdXi(3,ni)
                   ENDDO !ni
                 ENDDO !mi
               ELSE
@@ -758,8 +758,8 @@ CONTAINS
               RCRC=RC*RC          
               DO mi=1,METRICS%numberOfXiDimensions
                 DO ni=1,METRICS%numberOfXiDimensions
-                  METRICS%GL(mi,ni)=METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+RCRC*METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni)+ &
-                    & RR*METRICS%DX_DXI(3,mi)*METRICS%DX_DXI(3,ni)
+                  METRICS%GL(mi,ni)=METRICS%dXdXi(1,mi)*METRICS%dXdXi(1,ni)+RCRC*METRICS%dXdXi(2,mi)*METRICS%dXdXi(2,ni)+ &
+                    & RR*METRICS%dXdXi(3,mi)*METRICS%dXdXi(3,ni)
                 ENDDO !ni
               ENDDO !mi
             CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
@@ -774,14 +774,14 @@ CONTAINS
                 IF(METRICS%numberOfXDimensions==2) THEN
                   DO mi=1,METRICS%numberOfXiDimensions
                     DO ni=1,METRICS%numberOfXiDimensions
-                      METRICS%GL(mi,ni)=G1*(METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni))
+                      METRICS%GL(mi,ni)=G1*(METRICS%dXdXi(1,mi)*METRICS%dXdXi(1,ni)+METRICS%dXdXi(2,mi)*METRICS%dXdXi(2,ni))
                     ENDDO !ni
                   ENDDO !mi
                 ELSE IF(METRICS%numberOfXDimensions==3) THEN
                   DO mi=1,METRICS%numberOfXiDimensions
                     DO ni=1,METRICS%numberOfXiDimensions
-                      METRICS%GL(mi,ni)=G1*(METRICS%DX_DXI(1,mi)*METRICS%DX_DXI(1,ni)+METRICS%DX_DXI(2,mi)*METRICS%DX_DXI(2,ni))+ &
-                        & G3*METRICS%DX_DXI(3,mi)*METRICS%DX_DXI(3,ni)
+                      METRICS%GL(mi,ni)=G1*(METRICS%dXdXi(1,mi)*METRICS%dXdXi(1,ni)+METRICS%dXdXi(2,mi)*METRICS%dXdXi(2,ni))+ &
+                        & G3*METRICS%dXdXi(3,mi)*METRICS%dXdXi(3,ni)
                     ENDDO !ni
                   ENDDO !mi
                 ELSE
@@ -804,32 +804,32 @@ CONTAINS
               & err,error,*999)
 
             !Calculate the Jacobian
-            SELECT CASE(JACOBIAN_TYPE)
+            SELECT CASE(jacobianType)
             CASE(COORDINATE_JACOBIAN_NO_TYPE)
-              METRICS%JACOBIAN=0.0
-              METRICS%JACOBIAN_TYPE=COORDINATE_JACOBIAN_NO_TYPE
+              METRICS%jacobian=0.0
+              METRICS%jacobianType=COORDINATE_JACOBIAN_NO_TYPE
             CASE(COORDINATE_JACOBIAN_LINE_TYPE)
-              METRICS%JACOBIAN=SQRT(ABS(METRICS%GL(1,1)))
-              METRICS%JACOBIAN_TYPE=COORDINATE_JACOBIAN_LINE_TYPE
+              METRICS%jacobian=SQRT(ABS(METRICS%GL(1,1)))
+              METRICS%jacobianType=COORDINATE_JACOBIAN_LINE_TYPE
             CASE(COORDINATE_JACOBIAN_AREA_TYPE)
               IF(METRICS%numberOfXiDimensions==3) THEN
-                METRICS%JACOBIAN=SQRT(ABS(DET_GL*METRICS%GU(3,3)))
+                METRICS%jacobian=SQRT(ABS(DET_GL*METRICS%GU(3,3)))
               ELSE
-                METRICS%JACOBIAN=SQRT(ABS(DET_GL))
+                METRICS%jacobian=SQRT(ABS(DET_GL))
               ENDIF
-              METRICS%JACOBIAN_TYPE=COORDINATE_JACOBIAN_AREA_TYPE
+              METRICS%jacobianType=COORDINATE_JACOBIAN_AREA_TYPE
             CASE(COORDINATE_JACOBIAN_VOLUME_TYPE)
-              METRICS%JACOBIAN=SQRT(ABS(DET_GL))
-              METRICS%JACOBIAN_TYPE=COORDINATE_JACOBIAN_VOLUME_TYPE
+              METRICS%jacobian=SQRT(ABS(DET_GL))
+              METRICS%jacobianType=COORDINATE_JACOBIAN_VOLUME_TYPE
             CASE DEFAULT
-              LOCAL_ERROR="The Jacobian type of "//TRIM(NUMBER_TO_VSTRING(JACOBIAN_TYPE,"*",err,error))// &
+              LOCAL_ERROR="The Jacobian type of "//TRIM(NUMBER_TO_VSTRING(jacobianType,"*",err,error))// &
                 & " is invalid."
               CALL FlagError(LOCAL_ERROR,err,error,*999)
             END SELECT
             
             !Calculate the derivatives of Xi with respect to X - DXI_DX
             IF(METRICS%numberOfXiDimensions==METRICS%numberOfXDimensions) THEN
-              CALL INVERT(METRICS%DX_DXI,METRICS%DXI_DX,DET_DX_DXI,err,error,*999)
+              CALL INVERT(METRICS%dXdXi,METRICS%dXidX,DET_DX_DXI,err,error,*999)
             ELSE
               !We have a line or a surface embedded in a higher dimensional space
               SELECT CASE(METRICS%numberOfXiDimensions)
@@ -837,59 +837,59 @@ CONTAINS
                 !Line in space
                 SELECT CASE(METRICS%numberOfXDimensions)
                 CASE(2)
-                  IF(INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE>FIRST_PART_DERIV) THEN
+                  IF(INTERPOLATED_POINT%partialDerivativeType>FIRST_PART_DERIV) THEN
                     !We have curvature information. Form the frenet vector frame.
                     !Calculate the normal vector from the normalised second derivative of the position vector.
                     nu=PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(1)
                     CALL Normalise(INTERPOLATED_POINT%VALUES(1:2,nu),DX_DXI2,err,error,*999)
                   ELSE
                     !No curvature information but obtain other normal frenet vector by rotating tangent vector 90 deg.
-                    DX_DXI2(1)=-1.0_DP*METRICS%DX_DXI(2,1)
-                    DX_DXI2(2)=METRICS%DX_DXI(1,1)                    
+                    DX_DXI2(1)=-1.0_DP*METRICS%dXdXi(2,1)
+                    DX_DXI2(2)=METRICS%dXdXi(1,1)                    
                   ENDIF
-                  DET_DX_DXI=METRICS%DX_DXI(1,1)*DX_DXI2(2)-METRICS%DX_DXI(2,1)*DX_DXI2(1)
+                  DET_DX_DXI=METRICS%dXdXi(1,1)*DX_DXI2(2)-METRICS%dXdXi(2,1)*DX_DXI2(1)
                   IF(ABS(DET_DX_DXI)>ZERO_TOLERANCE) THEN
-                    METRICS%DXI_DX(1,1)=DX_DXI2(2)/DET_DX_DXI
-                    METRICS%DXI_DX(1,2)=-1.0_DP*DX_DXI2(1)/DET_DX_DXI
+                    METRICS%dXidX(1,1)=DX_DXI2(2)/DET_DX_DXI
+                    METRICS%dXidX(1,2)=-1.0_DP*DX_DXI2(1)/DET_DX_DXI
                     !Normalise to ensure that g^11=g^1.g^1
-                    CALL L2Norm(METRICS%DXI_DX(1,1:2),LENGTH,err,error,*999)
+                    CALL L2Norm(METRICS%dXidX(1,1:2),LENGTH,err,error,*999)
                     SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
-                    METRICS%DXI_DX(1,1:2)=SCALE*METRICS%DXI_DX(1,1:2)
+                    METRICS%dXidX(1,1:2)=SCALE*METRICS%dXidX(1,1:2)
                   ELSE
                     CALL FlagWarning("Zero determinant. Unable to obtain dxi/dx.",err,error,*999)
-                    METRICS%DXI_DX=0.0_DP                    
+                    METRICS%dXidX=0.0_DP                    
                   ENDIF
                 CASE(3)
-                  IF(INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE>FIRST_PART_DERIV) THEN
+                  IF(INTERPOLATED_POINT%partialDerivativeType>FIRST_PART_DERIV) THEN
                     !We have curvature information. Form the frenet vector frame.
                     !Calculate the normal vector from the normalised second derivative of the position vector.
                     nu=PARTIAL_DERIVATIVE_SECOND_DERIVATIVE_MAP(1)
                     CALL Normalise(INTERPOLATED_POINT%VALUES(1:3,nu),DX_DXI2,err,error,*999)
                     !Calculate the bi-normal vector from the normalised cross product of the tangent and normal vectors
-                    CALL NormaliseCrossProduct(METRICS%DX_DXI(1:3,1),DX_DXI2,DX_DXI3,err,error,*999)
-                    DET_DX_DXI=METRICS%DX_DXI(1,1)*(DX_DXI2(2)*DX_DXI3(3)-DX_DXI2(3)*DX_DXI3(2))+ &
-                      & DX_DXI2(1)*(METRICS%DX_DXI(3,1)*DX_DXI3(2)-DX_DXI3(3)*METRICS%DX_DXI(2,1))+ &
-                      & DX_DXI3(1)*(METRICS%DX_DXI(2,1)*DX_DXI2(3)-METRICS%DX_DXI(3,1)*DX_DXI2(2))
+                    CALL NormaliseCrossProduct(METRICS%dXdXi(1:3,1),DX_DXI2,DX_DXI3,err,error,*999)
+                    DET_DX_DXI=METRICS%dXdXi(1,1)*(DX_DXI2(2)*DX_DXI3(3)-DX_DXI2(3)*DX_DXI3(2))+ &
+                      & DX_DXI2(1)*(METRICS%dXdXi(3,1)*DX_DXI3(2)-DX_DXI3(3)*METRICS%dXdXi(2,1))+ &
+                      & DX_DXI3(1)*(METRICS%dXdXi(2,1)*DX_DXI2(3)-METRICS%dXdXi(3,1)*DX_DXI2(2))
                     IF(ABS(DET_DX_DXI)>ZERO_TOLERANCE) THEN
-                      METRICS%DXI_DX(1,1)=(DX_DXI3(3)*DX_DXI2(2)-DX_DXI2(3)*DX_DXI3(2))/DET_DX_DXI
-                      METRICS%DXI_DX(1,2)=-1.0_DP*(DX_DXI3(3)*DX_DXI2(1)-DX_DXI2(3)*DX_DXI3(1))/DET_DX_DXI
-                      METRICS%DXI_DX(1,3)=(DX_DXI3(2)*DX_DXI2(1)-DX_DXI2(2)*DX_DXI3(1))/DET_DX_DXI
+                      METRICS%dXidX(1,1)=(DX_DXI3(3)*DX_DXI2(2)-DX_DXI2(3)*DX_DXI3(2))/DET_DX_DXI
+                      METRICS%dXidX(1,2)=-1.0_DP*(DX_DXI3(3)*DX_DXI2(1)-DX_DXI2(3)*DX_DXI3(1))/DET_DX_DXI
+                      METRICS%dXidX(1,3)=(DX_DXI3(2)*DX_DXI2(1)-DX_DXI2(2)*DX_DXI3(1))/DET_DX_DXI
                       !Normalise to ensure that g^11=g^1.g^1
-                      CALL L2Norm(METRICS%DXI_DX(1,1:3),LENGTH,err,error,*999)
+                      CALL L2Norm(METRICS%dXidX(1,1:3),LENGTH,err,error,*999)
                       SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
-                      METRICS%DXI_DX(1,1:3)=SCALE*METRICS%DX_DXI(1,1:3)
+                      METRICS%dXidX(1,1:3)=SCALE*METRICS%dXdXi(1,1:3)
                     ELSE
                       CALL FlagWarning("Zero determinant. Unable to obtain dxi/dx.",err,error,*999)
-                      METRICS%DXI_DX=0.0_DP                    
+                      METRICS%dXidX=0.0_DP                    
                     ENDIF
                   ELSE
-                    METRICS%DXI_DX(1,1)=METRICS%DX_DXI(1,1)
-                    METRICS%DXI_DX(1,2)=METRICS%DX_DXI(2,1)
-                    METRICS%DXI_DX(1,3)=METRICS%DX_DXI(3,1)
+                    METRICS%dXidX(1,1)=METRICS%dXdXi(1,1)
+                    METRICS%dXidX(1,2)=METRICS%dXdXi(2,1)
+                    METRICS%dXidX(1,3)=METRICS%dXdXi(3,1)
                     !Normalise to ensure that g^11=g^1.g^1
-                    CALL L2Norm(METRICS%DXI_DX(1,1:3),LENGTH,err,error,*999)
+                    CALL L2Norm(METRICS%dXidX(1,1:3),LENGTH,err,error,*999)
                     SCALE=SQRT(ABS(METRICS%GU(1,1)))/LENGTH
-                    METRICS%DXI_DX(1,1:3)=SCALE*METRICS%DXI_DX(1,1:3)
+                    METRICS%dXidX(1,1:3)=SCALE*METRICS%dXidX(1,1:3)
                   ENDIF
                 CASE DEFAULT
                   CALL FlagError("Invalid embedding of a line in space.",err,error,*999)
@@ -902,22 +902,22 @@ CONTAINS
                   !First define g_3=g_1 x g_2, and then define g^1=((g_2 x g_3)_b)/DET_GL and g^2=((g_3 x g_1)_b)/DET_GL. 
                   !The _b means lowering the index with the metric tensor of the curvilinear coordinate system.
                   !This way we have a consistent set of covariant and covariant vectors, i.e.  <g_M,g^N>=delta_M^N.
-                  METRICS%DXI_DX(1,1:3)=(METRICS%GL(2,2)*METRICS%DX_DXI(1:3,1)-METRICS%GL(1,2)*METRICS%DX_DXI(1:3,2))/DET_GL
-                  METRICS%DXI_DX(2,1:3)=(METRICS%GL(1,1)*METRICS%DX_DXI(1:3,2)-METRICS%GL(2,1)*METRICS%DX_DXI(1:3,1))/DET_GL
+                  METRICS%dXidX(1,1:3)=(METRICS%GL(2,2)*METRICS%dXdXi(1:3,1)-METRICS%GL(1,2)*METRICS%dXdXi(1:3,2))/DET_GL
+                  METRICS%dXidX(2,1:3)=(METRICS%GL(1,1)*METRICS%dXdXi(1:3,2)-METRICS%GL(2,1)*METRICS%dXdXi(1:3,1))/DET_GL
                   SELECT CASE(COORDINATE_SYSTEM%TYPE)
                   CASE(COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
                     !Do nothing
                   CASE(COORDINATE_CYLINDRICAL_POLAR_TYPE)
                     R=INTERPOLATED_POINT%VALUES(1,1)
                     RR=R*R
-                    METRICS%DXI_DX(1:2,2)=METRICS%DXI_DX(1:2,2)*RR
+                    METRICS%dXidX(1:2,2)=METRICS%dXidX(1:2,2)*RR
                   CASE(COORDINATE_SPHERICAL_POLAR_TYPE)
                     R=INTERPOLATED_POINT%VALUES(1,1)
                     RR=R*R
                     RC=R*COS(INTERPOLATED_POINT%VALUES(3,1))
                     RCRC=RC*RC          
-                    METRICS%DXI_DX(1:2,2)=METRICS%DXI_DX(1:2,2)*RCRC
-                    METRICS%DXI_DX(1:2,3)=METRICS%DXI_DX(1:2,3)*RR
+                    METRICS%dXidX(1:2,2)=METRICS%dXidX(1:2,2)*RCRC
+                    METRICS%dXidX(1:2,3)=METRICS%dXidX(1:2,3)*RR
                   CASE(COORDINATE_PROLATE_SPHEROIDAL_TYPE)
                     IF(ABS(INTERPOLATED_POINT%VALUES(2,1))<ZERO_TOLERANCE) THEN
                       CALL FlagWarning("Mu is zero.",err,error,*999)
@@ -927,9 +927,9 @@ CONTAINS
                       MU=INTERPOLATED_POINT%VALUES(2,1)
                       G1=FF*(SINH(R)*SINH(R)+SIN(MU)*SIN(MU))
                       G3=FF*SINH(R)*SINH(R)*SIN(MU)*SIN(MU)
-                      METRICS%DXI_DX(1:2,1)=METRICS%DXI_DX(1:2,1)*G1
-                      METRICS%DXI_DX(1:2,2)=METRICS%DXI_DX(1:2,2)*G1
-                      METRICS%DXI_DX(1:2,3)=METRICS%DXI_DX(1:2,3)*G3
+                      METRICS%dXidX(1:2,1)=METRICS%dXidX(1:2,1)*G1
+                      METRICS%dXidX(1:2,2)=METRICS%dXidX(1:2,2)*G1
+                      METRICS%dXidX(1:2,3)=METRICS%dXidX(1:2,3)*G3
                     ENDIF
                   CASE(COORDINATE_OBLATE_SPHEROIDAL_TYPE)
                     CALL FlagError("Not implemented.",err,error,*999)
@@ -970,7 +970,7 @@ CONTAINS
         & '("    X           :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)      
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt Xi:",err,error,*999)
       CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXDimensions,1,1,METRICS%numberOfXiDimensions, &
-        & 3,3,METRICS%DX_DXI,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dX_dXi','(",I1,",:)',' :",3(X,E13.6))', &
+        & 3,3,METRICS%dXdXi,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dX_dXi','(",I1,",:)',' :",3(X,E13.6))', &
         & '(17X,3(X,E13.6))',err,error,*999)
       IF(METRICS%numberOfXDimensions/=METRICS%numberOfXiDimensions) THEN
         CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Constructed derivative of X wrt Xi:",err,error,*999)
@@ -1005,7 +1005,7 @@ CONTAINS
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  det dX_dXi    = ",DET_DX_DXI,err,error,*999)
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Xi wrt X:",err,error,*999)
       CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXiDimensions,1,1,METRICS%numberOfXDimensions, &
-        & 3,3,METRICS%DXI_DX,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dXi_dX','(",I1,",:)',' :",3(X,E13.6))', &
+        & 3,3,METRICS%dXidX,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    dXi_dX','(",I1,",:)',' :",3(X,E13.6))', &
         & '(17X,3(X,E13.6))',err,error,*999)
       CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"  Covariant metric tensor:",err,error,*999)
       CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXiDimensions,1,1,METRICS%numberOfXiDimensions, &
@@ -1015,8 +1015,8 @@ CONTAINS
       CALL WRITE_STRING_MATRIX(DIAGNOSTIC_OUTPUT_TYPE,1,1,METRICS%numberOfXiDimensions,1,1,METRICS%numberOfXiDimensions, &
         & 3,3,METRICS%GU,WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    GU','(",I1,",:)','     :",3(X,E13.6))','(17X,3(X,E13.6))', &
         & err,error,*999)      
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian type = ",METRICS%JACOBIAN_TYPE,err,error,*999)
-      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian      = ",METRICS%JACOBIAN,err,error,*999)
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian type = ",METRICS%jacobianType,err,error,*999)
+      CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Jacobian      = ",METRICS%jacobian,err,error,*999)
     ENDIF
     
     EXITS("COORDINATE_METRICS_CALCULATE")
@@ -3576,7 +3576,7 @@ CONTAINS
     !Argument variables
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to calculate the derivative norm for
     INTEGER(INTG), INTENT(IN) :: PART_DERIV_INDEX !<The partial derivative index to select the direction to normalise
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: INTERPOLATED_POINT !<A pointer to the interpolated point 
+    TYPE(FieldInterpolatedPointType), POINTER :: INTERPOLATED_POINT !<A pointer to the interpolated point 
     REAL(DP), INTENT(OUT) :: DERIV_NORM !<On exit, the derivative norm of the coordinate
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3590,7 +3590,7 @@ CONTAINS
     DERIV_NORM=0.0_DP
     IF(ASSOCIATED(COORDINATE_SYSTEM)) THEN
       IF(ASSOCIATED(INTERPOLATED_POINT)) THEN
-        IF(INTERPOLATED_POINT%PARTIAL_DERIVATIVE_TYPE>=FIRST_PART_DERIV) THEN
+        IF(INTERPOLATED_POINT%partialDerivativeType>=FIRST_PART_DERIV) THEN
           IF(PART_DERIV_INDEX<=INTERPOLATED_POINT%maximumPartialDerivativeIndex) THEN
             NUMBER_OF_COMPONENTS=SIZE(INTERPOLATED_POINT%VALUES,1)
             SELECT CASE(PART_DERIV_INDEX)
@@ -3775,7 +3775,7 @@ CONTAINS
   
     !Argument variables
     TYPE(CoordinateSystemType), POINTER :: COORDINATE_SYSTEM !<A pointer to the coordinate system to adjust
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_TYPE), POINTER :: INTERPOLATION_PARAMETERS !<A pointer to the interpolation parameters to adjust
+    TYPE(FieldInterpolationParametersType), POINTER :: INTERPOLATION_PARAMETERS !<A pointer to the interpolation parameters to adjust
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -3852,8 +3852,8 @@ CONTAINS
   SUBROUTINE Coordinates_MaterialSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudX,dXdNu,dNudXi,dXidNu,err,error,*)
   
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
     REAL(DP), INTENT(OUT) :: dNudX(:,:) !<dNudX(nuIdx,xIdx). On return, the tensor to transform from the material system to the geometric coordinate system
     REAL(DP), INTENT(OUT) :: dXdNu(:,:) !<dXdNu(xIdx,nuIdx). On return, the tensor to transform from the geometric coordinate system to the material coordinate system
     REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). On return, the tensor to transform from the material system to the xi coordinate system
@@ -3897,7 +3897,7 @@ CONTAINS
         !No fibre field
         numberOfNuDimensions=0
         DO xiIdx=1,numberOfXiDimensions
-          dNudXiTemp(1:numberOfXDimensions,xiIdx)=geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,xiIdx)
+          dNudXiTemp(1:numberOfXDimensions,xiIdx)=geometricInterpPointMetrics%dXdXi(1:numberOfXDimensions,xiIdx)
           CALL Normalise(dNudXiTemp(1:numberOfXDimensions,xiIdx),dXdNu(1:numberOfXDimensions,xiIdx),err,error,*999)
         ENDDO !xiIdx
       ENDIF
@@ -3906,7 +3906,7 @@ CONTAINS
         & numberOfXDimensions),err,error,*999)
       !Calculate dNu/dXi = dNu/dX * dX/dXi and its inverse dXi/dNu
       CALL MatrixProduct(dNudX(1:numberOfXDimensions,1:numberOfXDimensions), &
-        & geometricInterpPointMetrics%DX_DXI(1:numberOfXDimensions,1:numberOfXiDimensions), &
+        & geometricInterpPointMetrics%dXdXi(1:numberOfXDimensions,1:numberOfXiDimensions), &
         & dNudXiTemp(1:numberOfXDimensions,1:numberOfXiDimensions),err,error,*999)
       !Setup dNudXi
       CALL IdentityMatrix(dNudXi,err,error,*999)
@@ -3965,7 +3965,7 @@ CONTAINS
   SUBROUTINE Coordinates_MaterialSystemCalculatedXdNu2D(geometricInterpPointMetrics,angle,dXdNu,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to calculate dXdNu at. 
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to calculate dXdNu at. 
     REAL(DP), INTENT(IN) :: angle(:) !<angle(fibreIdx). The fibre angle (in radians) 
     REAL(DP), INTENT(OUT) :: dXdNu(:,:) !<dXdNu(coordinateIdx,coordinateIdx). On exit, the dXdNu tensor.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -3980,7 +3980,7 @@ CONTAINS
       !First calculate reference material CS
       
       !Reference material direction 1.
-      f(1:2) = [ geometricInterpPointMetrics%DX_DXI(1,1),geometricInterpPointMetrics%DX_DXI(2,1) ]
+      f(1:2) = [ geometricInterpPointMetrics%dXdXi(1,1),geometricInterpPointMetrics%dXdXi(2,1) ]
       
       !Compute (normalised) vector orthogonal to material direction 1 to form material direction 2
       g(1:2) = [ -1.0_DP*f(2),f(1) ]
@@ -4041,7 +4041,7 @@ CONTAINS
   SUBROUTINE Coordinates_MaterialSystemCalculatedXdNu3D(geometricInterpPointMetrics,angle,dXdNu,err,error,*)
 
     !Argument variables
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to calculate dXdNu at. 
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to calculate dXdNu at. 
     REAL(DP), INTENT(IN) :: angle(:) !<angles(fibreIdx). The fibre, imbrication and sheet (in radians) 
     REAL(DP), INTENT(OUT) :: dXdNu(:,:) !<dXdNu(coordinateIdx,coordinateIdx). On exit, the dXdNu tensor.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -4059,8 +4059,8 @@ CONTAINS
       angles(1:SIZE(angle,1))=angle(1:SIZE(angle,1))
       
       !First calculate reference material CS
-      f(1:3)=geometricInterpPointMetrics%DX_DXI(1:3,1) !reference material direction 1.
-      CALL CrossProduct(geometricInterpPointMetrics%DX_DXI(1:3,1),geometricInterpPointMetrics%DX_DXI(1:3,2),h,err,error,*999) !reference material direction 3.    
+      f(1:3)=geometricInterpPointMetrics%dXdXi(1:3,1) !reference material direction 1.
+      CALL CrossProduct(geometricInterpPointMetrics%dXdXi(1:3,1),geometricInterpPointMetrics%dXdXi(1:3,2),h,err,error,*999) !reference material direction 3.    
       CALL CrossProduct(h,f,g,err,error,*999) !reference material direction 2.      
 
       CALL Normalise(f,dXdNuR(1:3,1),err,error,*999)

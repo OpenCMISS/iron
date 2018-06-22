@@ -438,7 +438,7 @@ CONTAINS
       ELSE
         !Allocate the list
         IF(LIST%DATA_DIMENSION==1) THEN
-          SELECT CASE(LIST%DATA_TYPE)
+          SELECT CASE(LIST%dataType)
           CASE(LIST_INTG_TYPE)
             ALLOCATE(LIST%LIST_INTG(LIST%INITIAL_SIZE),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate list integer data.",ERR,ERROR,*999)
@@ -449,11 +449,11 @@ CONTAINS
             ALLOCATE(LIST%LIST_DP(LIST%INITIAL_SIZE),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate list double precision data.",ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ELSE
-          SELECT CASE(LIST%DATA_TYPE)
+          SELECT CASE(LIST%dataType)
           CASE(LIST_INTG_TYPE)
             ALLOCATE(LIST%LIST_INTG2(LIST%DATA_DIMENSION,LIST%INITIAL_SIZE),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate list integer data.",ERR,ERROR,*999)
@@ -464,7 +464,7 @@ CONTAINS
             ALLOCATE(LIST%LIST_DP2(LIST%DATA_DIMENSION,LIST%INITIAL_SIZE),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate list double precision data.",ERR,ERROR,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         ENDIF
@@ -598,11 +598,11 @@ CONTAINS
       ELSE
         SELECT CASE(DATA_TYPE)
         CASE(LIST_INTG_TYPE)
-          LIST%DATA_TYPE=LIST_INTG_TYPE
+          LIST%dataType=LIST_INTG_TYPE
         CASE(LIST_SP_TYPE)
-          LIST%DATA_TYPE=LIST_SP_TYPE
+          LIST%dataType=LIST_SP_TYPE
         CASE(LIST_DP_TYPE)
-          LIST%DATA_TYPE=LIST_DP_TYPE
+          LIST%dataType=LIST_DP_TYPE
         CASE DEFAULT
           LOCAL_ERROR="The data type of "//TRIM(NumberToVString(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
@@ -701,11 +701,11 @@ CONTAINS
       IF(list%LIST_FINISHED) THEN
         IF(ASSOCIATED(appendedList)) THEN
           IF(appendedList%LIST_FINISHED) THEN
-            IF(list%DATA_TYPE==appendedList%DATA_TYPE) THEN
+            IF(list%dataType==appendedList%dataType) THEN
               IF(list%DATA_DIMENSION==appendedList%DATA_DIMENSION) THEN
                 SELECT CASE(list%DATA_DIMENSION)
                 CASE(1)
-                  SELECT CASE(list%DATA_TYPE)
+                  SELECT CASE(list%dataType)
                   CASE(LIST_INTG_TYPE)
                     IF(list%SIZE<list%NUMBER_IN_LIST+appendedList%NUMBER_IN_LIST) THEN
                       !Reallocate
@@ -746,7 +746,7 @@ CONTAINS
                       & appendedList%LIST_DP(1:appendedList%NUMBER_IN_LIST)
                     list%NUMBER_IN_LIST=list%NUMBER_IN_LIST+appendedList%NUMBER_IN_LIST
                   CASE DEFAULT
-                    CALL FlagError("The list data type of "//TRIM(NumberToVString(list%DATA_TYPE,"*",err,error))// &
+                    CALL FlagError("The list data type of "//TRIM(NumberToVString(list%dataType,"*",err,error))// &
                       & " is invalid.",err,error,*999)
                   END SELECT
                 CASE DEFAULT
@@ -759,7 +759,7 @@ CONTAINS
                 CALL FlagError(localError,err,error,*999)
               ENDIF
             ELSE
-              localError="The list data type of "//TRIM(NumberToVString(list%DATA_TYPE,"*",err,error))// &
+              localError="The list data type of "//TRIM(NumberToVString(list%dataType,"*",err,error))// &
                 & " does not match the data type of the list to append"
               CALL FlagError(localError,err,error,*999)
             ENDIF
@@ -846,7 +846,7 @@ CONTAINS
       LIST%DATA_DIMENSION=1
       LIST%INITIAL_SIZE=10
       LIST%SIZE=0
-      LIST%DATA_TYPE=LIST_INTG_TYPE
+      LIST%dataType=LIST_INTG_TYPE
       LIST%KEY_DIMENSION=1
       LIST%SORT_ORDER=LIST_SORT_ASCENDING_TYPE
       LIST%SORT_METHOD=LIST_HEAP_SORT_METHOD
@@ -918,7 +918,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+        IF(LIST%dataType==LIST_INTG_TYPE) THEN
           IF(LIST%DATA_DIMENSION==1) THEN
             IF(LIST%NUMBER_IN_LIST==LIST%SIZE) THEN
               !Reallocate
@@ -937,7 +937,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the integer type of the supplied list item"
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -975,7 +975,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+        IF(LIST%dataType==LIST_INTG_TYPE) THEN
           IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
             IF(LIST%NUMBER_IN_LIST==LIST%SIZE) THEN
               !Reallocate
@@ -995,7 +995,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the integer type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1035,7 +1035,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+        IF(LIST%dataType==LIST_SP_TYPE) THEN
           IF(LIST%DATA_DIMENSION==1) THEN
             IF(LIST%NUMBER_IN_LIST==LIST%SIZE) THEN
               !Reallocate
@@ -1053,7 +1053,7 @@ CONTAINS
               & TRIM(NumberToVString(LIST%DATA_DIMENSION,"*",ERR,ERROR))//"."
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1091,7 +1091,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+        IF(LIST%dataType==LIST_SP_TYPE) THEN
           IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
             IF(LIST%NUMBER_IN_LIST==LIST%SIZE) THEN
               !Reallocate
@@ -1111,7 +1111,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1149,7 +1149,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+        IF(LIST%dataType==LIST_DP_TYPE) THEN
           IF(LIST%DATA_DIMENSION==1) THEN
             IF(LIST%NUMBER_IN_LIST==LIST%SIZE) THEN
               !Reallocate
@@ -1168,7 +1168,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the double precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1206,7 +1206,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+        IF(LIST%dataType==LIST_DP_TYPE) THEN
           IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
             IF(LIST%NUMBER_IN_LIST==LIST%SIZE) THEN
               !Reallocate
@@ -1226,7 +1226,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the double precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1262,7 +1262,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+        IF(LIST%dataType==LIST_INTG_TYPE) THEN
           IF(LIST%DATA_DIMENSION==1) THEN
             IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
               IF(LIST%MUTABLE) THEN
@@ -1282,7 +1282,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the integer type of the supplied list item"
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1318,7 +1318,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+        IF(LIST%dataType==LIST_INTG_TYPE) THEN
           IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
             IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
               IF(LIST%MUTABLE) THEN
@@ -1339,7 +1339,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the integer type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1377,7 +1377,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+        IF(LIST%dataType==LIST_SP_TYPE) THEN
           IF(LIST%DATA_DIMENSION==1) THEN
             IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
               IF(LIST%MUTABLE) THEN
@@ -1396,7 +1396,7 @@ CONTAINS
               & TRIM(NumberToVString(LIST%DATA_DIMENSION,"*",ERR,ERROR))//"."
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1432,7 +1432,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+        IF(LIST%dataType==LIST_SP_TYPE) THEN
           IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
             IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
               IF(LIST%MUTABLE) THEN
@@ -1453,7 +1453,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1489,7 +1489,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+        IF(LIST%dataType==LIST_DP_TYPE) THEN
           IF(LIST%DATA_DIMENSION==1) THEN
             IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
               IF(LIST%MUTABLE) THEN
@@ -1509,7 +1509,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the double precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1545,7 +1545,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+        IF(LIST%dataType==LIST_DP_TYPE) THEN
           IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
             IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
               IF(LIST%MUTABLE) THEN
@@ -1566,7 +1566,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the double precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1602,7 +1602,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+        IF(LIST%dataType==LIST_INTG_TYPE) THEN
           IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
             IF(LIST%DATA_DIMENSION==1) THEN
               ITEM=LIST%LIST_INTG(LIST_ITEM)
@@ -1618,7 +1618,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the integer type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1655,7 +1655,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+        IF(LIST%dataType==LIST_INTG_TYPE) THEN
           IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
             IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
               ITEM=LIST%LIST_INTG2(:,LIST_ITEM)
@@ -1672,7 +1672,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the integer type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1709,7 +1709,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+        IF(LIST%dataType==LIST_SP_TYPE) THEN
           IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
             IF(LIST%DATA_DIMENSION==1) THEN
               ITEM=LIST%LIST_SP(LIST_ITEM)
@@ -1725,7 +1725,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1762,7 +1762,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+        IF(LIST%dataType==LIST_SP_TYPE) THEN
           IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
             IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
               ITEM=LIST%LIST_SP2(:,LIST_ITEM)
@@ -1779,7 +1779,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1816,7 +1816,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+        IF(LIST%dataType==LIST_DP_TYPE) THEN
           IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
             IF(LIST%DATA_DIMENSION==1) THEN
               ITEM=LIST%LIST_DP(LIST_ITEM)
@@ -1832,7 +1832,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the double precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1869,7 +1869,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+        IF(LIST%dataType==LIST_DP_TYPE) THEN
           IF(LIST_ITEM>0.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
             IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
               ITEM=LIST%LIST_DP2(:,LIST_ITEM)
@@ -1886,7 +1886,7 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the double precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1923,7 +1923,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+        IF(LIST%dataType==LIST_INTG_TYPE) THEN
 !!TODO: Could search better but requires list to be sorted.
           IF(LIST%DATA_DIMENSION==1) THEN
             CALL LIST_SEARCH_LINEAR(LIST%LIST_INTG(1:LIST%NUMBER_IN_LIST),ITEM,LIST_ITEM,ERR,ERROR,*999)
@@ -1931,7 +1931,7 @@ CONTAINS
             CALL LIST_SEARCH_LINEAR(LIST%LIST_INTG2(LIST%KEY_DIMENSION,1:LIST%NUMBER_IN_LIST),ITEM,LIST_ITEM,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the integer type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -1968,7 +1968,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+        IF(LIST%dataType==LIST_INTG_TYPE) THEN
 !!TODO: Could search better but requires list to be sorted.
           IF(LIST%DATA_DIMENSION==1) THEN
             CALL LIST_SEARCH_LINEAR(LIST%LIST_INTG(1:LIST%NUMBER_IN_LIST),ITEM(LIST%KEY_DIMENSION),LIST_ITEM,ERR,ERROR,*999)
@@ -1977,7 +1977,7 @@ CONTAINS
               & LIST_ITEM,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the integer type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -2015,7 +2015,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+        IF(LIST%dataType==LIST_SP_TYPE) THEN
 !!TODO: Could search better but requires list to be sorted.
           IF(LIST%DATA_DIMENSION==1) THEN
             CALL LIST_SEARCH_LINEAR(LIST%LIST_SP(1:LIST%NUMBER_IN_LIST),ITEM,LIST_ITEM,ERR,ERROR,*999)
@@ -2023,7 +2023,7 @@ CONTAINS
             CALL LIST_SEARCH_LINEAR(LIST%LIST_SP2(lIST%KEY_DIMENSION,1:LIST%NUMBER_IN_LIST),ITEM,LIST_ITEM,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -2061,7 +2061,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+        IF(LIST%dataType==LIST_SP_TYPE) THEN
 !!TODO: Could search better but requires list to be sorted.
           IF(LIST%DATA_DIMENSION==1) THEN
             CALL LIST_SEARCH_LINEAR(LIST%LIST_SP(1:LIST%NUMBER_IN_LIST),ITEM(LIST%KEY_DIMENSION),LIST_ITEM,ERR,ERROR,*999)
@@ -2070,7 +2070,7 @@ CONTAINS
               & LIST_ITEM,ERR,ERROR,*999)
           ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -2108,7 +2108,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+        IF(LIST%dataType==LIST_DP_TYPE) THEN
 !!TODO: Could search better but requires list to be sorted.
           IF(LIST%DATA_DIMENSION==1) THEN
             CALL LIST_SEARCH_LINEAR(LIST%LIST_DP(1:LIST%NUMBER_IN_LIST),ITEM,LIST_ITEM,ERR,ERROR,*999)
@@ -2116,7 +2116,7 @@ CONTAINS
             CALL LIST_SEARCH_LINEAR(LIST%LIST_DP2(LIST%KEY_DIMENSION,1:LIST%NUMBER_IN_LIST),ITEM,LIST_ITEM,ERR,ERROR,*999)
          ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -2154,7 +2154,7 @@ CONTAINS
 
     IF(ASSOCIATED(LIST)) THEN
       IF(LIST%LIST_FINISHED) THEN
-        IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+        IF(LIST%dataType==LIST_DP_TYPE) THEN
 !!TODO: Could search better but requires list to be sorted.
           IF(LIST%DATA_DIMENSION==1) THEN
             CALL LIST_SEARCH_LINEAR(LIST%LIST_DP(1:LIST%NUMBER_IN_LIST),ITEM(LIST%KEY_DIMENSION),LIST_ITEM,ERR,ERROR,*999)
@@ -2163,7 +2163,7 @@ CONTAINS
               & LIST_ITEM,ERR,ERROR,*999)
          ENDIF
         ELSE
-          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
             & " does not match the single precision type of the supplied list item."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
@@ -2201,7 +2201,7 @@ CONTAINS
       IF(LIST%LIST_FINISHED) THEN
         IF(LIST_ITEM>=1.AND.LIST_ITEM<=LIST%NUMBER_IN_LIST) THEN
           IF(LIST%DATA_DIMENSION==1) THEN
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)
               LIST%LIST_INTG(1:LIST_ITEM-1)=LIST%LIST_INTG(1:LIST_ITEM-1)
               LIST%LIST_INTG(LIST_ITEM:LIST%NUMBER_IN_LIST-1)=LIST%LIST_INTG(LIST_ITEM+1:LIST%NUMBER_IN_LIST)
@@ -2212,11 +2212,11 @@ CONTAINS
               LIST%LIST_DP(1:LIST_ITEM-1)=LIST%LIST_DP(1:LIST_ITEM-1)
               LIST%LIST_DP(LIST_ITEM:LIST%NUMBER_IN_LIST-1)=LIST%LIST_DP(LIST_ITEM+1:LIST%NUMBER_IN_LIST)
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)
               LIST%LIST_INTG2(:,1:LIST_ITEM-1)=LIST%LIST_INTG2(:,1:LIST_ITEM-1)
               LIST%LIST_INTG2(:,LIST_ITEM:LIST%NUMBER_IN_LIST-1)=LIST%LIST_INTG2(:,LIST_ITEM+1:LIST%NUMBER_IN_LIST)
@@ -2227,7 +2227,7 @@ CONTAINS
               LIST%LIST_DP2(:,1:LIST_ITEM-1)=LIST%LIST_DP2(:,1:LIST_ITEM-1)
               LIST%LIST_DP2(:,LIST_ITEM:LIST%NUMBER_IN_LIST-1)=LIST%LIST_DP2(:,LIST_ITEM+1:LIST%NUMBER_IN_LIST)
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ENDIF
@@ -2343,7 +2343,7 @@ CONTAINS
         IF(ALLOCATED(LIST_VALUES)) THEN
           CALL FlagError("List values is allocated.",ERR,ERROR,*999)
         ELSE
-          IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+          IF(LIST%dataType==LIST_INTG_TYPE) THEN
             IF(LIST%DATA_DIMENSION==1) THEN
               NUMBER_IN_LIST=LIST%NUMBER_IN_LIST
               !Note this will return more memory as the list will be bigger. Maybe copy to an array the correct size?
@@ -2355,7 +2355,7 @@ CONTAINS
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
               & " does not match the integer type of the supplied list values item."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
@@ -2398,7 +2398,7 @@ CONTAINS
         IF(ALLOCATED(LIST_VALUES)) THEN
           CALL FlagError("List values is allocated.",ERR,ERROR,*999)
         ELSE
-          IF(LIST%DATA_TYPE==LIST_INTG_TYPE) THEN
+          IF(LIST%dataType==LIST_INTG_TYPE) THEN
             IF(LIST%DATA_DIMENSION>1) THEN
               NUMBER_IN_LIST=LIST%NUMBER_IN_LIST
               !Note this will return more memory as the list will be bigger. Maybe copy to an array the correct size?
@@ -2409,7 +2409,7 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
               & " does not match the integer type of the supplied list values item."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
@@ -2452,7 +2452,7 @@ CONTAINS
         IF(ALLOCATED(LIST_VALUES)) THEN
           CALL FlagError("List values is associated.",ERR,ERROR,*999)
         ELSE
-          IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+          IF(LIST%dataType==LIST_SP_TYPE) THEN
             IF(LIST%DATA_DIMENSION==1) THEN
               NUMBER_IN_LIST=LIST%NUMBER_IN_LIST
               !Note this will return more memory as the list will be bigger. Maybe copy to an array the correct size?
@@ -2464,7 +2464,7 @@ CONTAINS
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
               & " does not match the single precision type of the supplied list values item."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
@@ -2506,7 +2506,7 @@ CONTAINS
         IF(ALLOCATED(LIST_VALUES)) THEN
           CALL FlagError("List values is associated.",ERR,ERROR,*999)
         ELSE
-          IF(LIST%DATA_TYPE==LIST_SP_TYPE) THEN
+          IF(LIST%dataType==LIST_SP_TYPE) THEN
             IF(LIST%DATA_DIMENSION>1) THEN
               NUMBER_IN_LIST=LIST%NUMBER_IN_LIST
               !Note this will return more memory as the list will be bigger. Maybe copy to an array the correct size?
@@ -2517,7 +2517,7 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
               & " does not match the single precision type of the supplied list values item."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
@@ -2560,7 +2560,7 @@ CONTAINS
         IF(ALLOCATED(LIST_VALUES)) THEN
           CALL FlagError("List values is associated.",ERR,ERROR,*999)
         ELSE
-          IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+          IF(LIST%dataType==LIST_DP_TYPE) THEN
             IF(LIST%DATA_DIMENSION==1) THEN
               NUMBER_IN_LIST=LIST%NUMBER_IN_LIST
               !Note this will return more memory as the list will be bigger. Maybe copy to an array the correct size?
@@ -2572,7 +2572,7 @@ CONTAINS
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
               & " does not match the double precision type of the supplied list values item."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
@@ -2615,7 +2615,7 @@ CONTAINS
         IF(ALLOCATED(LIST_VALUES)) THEN
           CALL FlagError("List values is associated.",ERR,ERROR,*999)
         ELSE
-          IF(LIST%DATA_TYPE==LIST_DP_TYPE) THEN
+          IF(LIST%dataType==LIST_DP_TYPE) THEN
             IF(LIST%DATA_DIMENSION>1) THEN
               NUMBER_IN_LIST=LIST%NUMBER_IN_LIST
               !Note this will return more memory as the list will be bigger. Maybe copy to an array the correct size?
@@ -2626,7 +2626,7 @@ CONTAINS
                 & ERR,ERROR,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))// &
+            LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))// &
               & " does not match the double precision type of the supplied list values item."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
@@ -2666,7 +2666,7 @@ CONTAINS
       IF(LIST%LIST_FINISHED) THEN
         IF(LIST%NUMBER_IN_LIST>0) THEN
           IF(LIST%DATA_DIMENSION==1) THEN
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)              
               CALL LIST_SORT(LIST%LIST_INTG(1:LIST%NUMBER_IN_LIST),ERR,ERROR,*999)
               i=1
@@ -2749,11 +2749,11 @@ CONTAINS
                 i=i+1
               ENDDO !i
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ELSE
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)              
               CALL LIST_SORT(LIST%LIST_INTG2(:,1:LIST%NUMBER_IN_LIST),LIST%KEY_DIMENSION,ERR,ERROR,*999)
               i=1
@@ -2836,7 +2836,7 @@ CONTAINS
                 i=i+1
               ENDDO !i
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           ENDIF
@@ -3139,7 +3139,7 @@ CONTAINS
         SELECT CASE(LIST%SORT_METHOD)
         CASE(LIST_BUBBLE_SORT_METHOD)
           IF(LIST%DATA_DIMENSION==1) THEN
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)
               CALL LIST_SORT_BUBBLE_INTG1_ARRAY(LIST%LIST_INTG(1:LIST%NUMBER_IN_LIST),ERR,ERROR,*999)
             CASE(LIST_SP_TYPE)
@@ -3147,11 +3147,11 @@ CONTAINS
             CASE(LIST_DP_TYPE)
               CALL LIST_SORT_BUBBLE_DP1_ARRAY(LIST%LIST_DP(1:LIST%NUMBER_IN_LIST),ERR,ERROR,*999) 
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT            
           ELSE
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)
               CALL LIST_SORT_BUBBLE_INTG2_ARRAY(LIST%LIST_INTG2(:,1:LIST%NUMBER_IN_LIST),LIST%KEY_DIMENSION, &
                 & ERR,ERROR,*999)
@@ -3162,13 +3162,13 @@ CONTAINS
               CALL LIST_SORT_BUBBLE_DP2_ARRAY(LIST%LIST_DP2(:,1:LIST%NUMBER_IN_LIST),LIST%KEY_DIMENSION, &
                 & ERR,ERROR,*999)                            
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT            
           ENDIF
         CASE(LIST_SHELL_SORT_METHOD)
           IF(LIST%DATA_DIMENSION==1) THEN
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)
               CALL LIST_SORT_SHELL_INTG1_ARRAY(LIST%LIST_INTG(1:LIST%NUMBER_IN_LIST),ERR,ERROR,*999)
             CASE(LIST_SP_TYPE)
@@ -3176,11 +3176,11 @@ CONTAINS
             CASE(LIST_DP_TYPE)
               CALL LIST_SORT_SHELL_DP1_ARRAY(LIST%LIST_DP(1:LIST%NUMBER_IN_LIST),ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT            
           ELSE
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)
               CALL LIST_SORT_SHELL_INTG2_ARRAY(LIST%LIST_INTG2(:,1:LIST%NUMBER_IN_LIST),LIST%KEY_DIMENSION, &
                 & ERR,ERROR,*999)
@@ -3191,13 +3191,13 @@ CONTAINS
               CALL LIST_SORT_SHELL_DP2_ARRAY(LIST%LIST_DP2(:,1:LIST%NUMBER_IN_LIST),LIST%KEY_DIMENSION, &
                 & ERR,ERROR,*999)                            
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT            
           ENDIF
         CASE(LIST_HEAP_SORT_METHOD)
           IF(LIST%DATA_DIMENSION==1) THEN
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)
               CALL LIST_SORT_HEAP_INTG1_ARRAY(LIST%LIST_INTG(1:LIST%NUMBER_IN_LIST),ERR,ERROR,*999)
             CASE(LIST_SP_TYPE)
@@ -3205,11 +3205,11 @@ CONTAINS
             CASE(LIST_DP_TYPE)
               CALL LIST_SORT_HEAP_DP1_ARRAY(LIST%LIST_DP(1:LIST%NUMBER_IN_LIST),ERR,ERROR,*999)                            
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT            
           ELSE
-            SELECT CASE(LIST%DATA_TYPE)
+            SELECT CASE(LIST%dataType)
             CASE(LIST_INTG_TYPE)
               CALL LIST_SORT_HEAP_INTG2_ARRAY(LIST%LIST_INTG2(:,1:LIST%NUMBER_IN_LIST),LIST%KEY_DIMENSION, &
                 & ERR,ERROR,*999)
@@ -3220,7 +3220,7 @@ CONTAINS
               CALL LIST_SORT_HEAP_DP2_ARRAY(LIST%LIST_DP2(:,1:LIST%NUMBER_IN_LIST),LIST%KEY_DIMENSION, &
                 & ERR,ERROR,*999)                            
             CASE DEFAULT
-              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%DATA_TYPE,"*",ERR,ERROR))//" is invalid."
+              LOCAL_ERROR="The list data type of "//TRIM(NumberToVString(LIST%dataType,"*",ERR,ERROR))//" is invalid."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT            
           ENDIF

@@ -181,7 +181,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD
+    TYPE(FieldType), POINTER :: ANALYTIC_FIELD
 
     ENTERS("EQUATIONS_SET_ANALYTIC_CREATE_FINISH",err,error,*999)
 
@@ -231,13 +231,13 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to start the creation of an analytic for.
     INTEGER(INTG), INTENT(IN) :: ANALYTIC_FUNCTION_TYPE !<The analytic function type to setup \see EquationsSetConstants_AnalyticFunctionTypes,EquationsSetConstants
     INTEGER(INTG), INTENT(IN) :: ANALYTIC_FIELD_USER_NUMBER !<The user specified analytic field number
-    TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD !<If associated on entry, a pointer to the user created analytic field which has the same user number as the specified analytic field user number. If not associated on entry, on exit, a pointer to the created analytic field for the equations set.
+    TYPE(FieldType), POINTER :: ANALYTIC_FIELD !<If associated on entry, a pointer to the user created analytic field which has the same user number as the specified analytic field user number. If not associated on entry, on exit, a pointer to the created analytic field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
+    TYPE(FieldType), POINTER :: FIELD,GEOMETRIC_FIELD
     TYPE(RegionType), POINTER :: REGION,ANALYTIC_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -250,41 +250,37 @@ CONTAINS
         REGION=>EQUATIONS_SET%REGION
         IF(ASSOCIATED(REGION)) THEN
           IF(ASSOCIATED(ANALYTIC_FIELD)) THEN
-            !Check the analytic field has been finished
-            IF(ANALYTIC_FIELD%FIELD_FINISHED) THEN
-              !Check the user numbers match
-              IF(ANALYTIC_FIELD_USER_NUMBER/=ANALYTIC_FIELD%userNumber) THEN
-                localError="The specified analytic field user number of "// &
-                  & TRIM(NumberToVString(ANALYTIC_FIELD_USER_NUMBER,"*",err,error))// &
-                  & " does not match the user number of the specified analytic field of "// &
-                  & TRIM(NumberToVString(ANALYTIC_FIELD%userNumber,"*",err,error))//"."
+            CALL Field_AssertIsFinished(ANALYTIC_FIELD,err,error,*999)
+            !Check the user numbers match
+            IF(ANALYTIC_FIELD_USER_NUMBER/=ANALYTIC_FIELD%userNumber) THEN
+              localError="The specified analytic field user number of "// &
+                & TRIM(NumberToVString(ANALYTIC_FIELD_USER_NUMBER,"*",err,error))// &
+                & " does not match the user number of the specified analytic field of "// &
+                & TRIM(NumberToVString(ANALYTIC_FIELD%userNumber,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            ANALYTIC_FIELD_REGION=>ANALYTIC_FIELD%REGION
+            IF(ASSOCIATED(ANALYTIC_FIELD_REGION)) THEN                
+              !Check the field is defined on the same region as the equations set
+              IF(ANALYTIC_FIELD_REGION%userNumber/=REGION%userNumber) THEN
+                localError="Invalid region setup. The specified analytic field has been created on region number "// &
+                  & TRIM(NumberToVString(ANALYTIC_FIELD_REGION%userNumber,"*",err,error))// &
+                  & " and the specified equations set has been created on region number "// &
+                  & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
-              ANALYTIC_FIELD_REGION=>ANALYTIC_FIELD%REGION
-              IF(ASSOCIATED(ANALYTIC_FIELD_REGION)) THEN                
-                !Check the field is defined on the same region as the equations set
-                IF(ANALYTIC_FIELD_REGION%userNumber/=REGION%userNumber) THEN
-                  localError="Invalid region setup. The specified analytic field has been created on region number "// &
-                    & TRIM(NumberToVString(ANALYTIC_FIELD_REGION%userNumber,"*",err,error))// &
-                    & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)
-                ENDIF
-                !Check the specified analytic field has the same decomposition as the geometric field
-                GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,ANALYTIC_FIELD%DECOMPOSITION)) THEN
-                    CALL FlagError("The specified analytic field does not have the same decomposition as the geometric "// &
-                      & "field for the specified equations set.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
+              !Check the specified analytic field has the same decomposition as the geometric field
+              GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
+              IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
+                IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,ANALYTIC_FIELD%DECOMPOSITION)) THEN
+                  CALL FlagError("The specified analytic field does not have the same decomposition as the geometric "// &
+                    & "field for the specified equations set.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FlagError("The specified analytic field region is not associated.",err,error,*999)
+                CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("The specified analytic field has not been finished.",err,error,*999)
+              CALL FlagError("The specified analytic field region is not associated.",err,error,*999)
             ENDIF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -325,18 +321,19 @@ CONTAINS
     ELSE
       CALL FlagError("Equations set is not associated.",err,error,*998)
     ENDIF
-       
+    
     EXITS("EQUATIONS_SET_ANALYTIC_CREATE_START")
     RETURN
 999 CALL EQUATIONS_SET_ANALYTIC_FINALISE(EQUATIONS_SET%ANALYTIC,dummyErr,dummyError,*998)
 998 ERRORSEXITS("EQUATIONS_SET_ANALYTIC_CREATE_START",err,error)
     RETURN 1
+    
   END SUBROUTINE EQUATIONS_SET_ANALYTIC_CREATE_START
   
   !
   !================================================================================================================================
   !
-
+  
   !>Destroy the analytic solution for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticDestroy
   SUBROUTINE EQUATIONS_SET_ANALYTIC_DESTROY(EQUATIONS_SET,err,error,*)
 
@@ -387,14 +384,14 @@ CONTAINS
     TYPE(DomainType), POINTER :: DOMAIN
     TYPE(DomainElementsType), POINTER :: DOMAIN_ELEMENTS
     TYPE(DomainNodesType), POINTER :: DOMAIN_NODES
-    TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,dependentField,GEOMETRIC_FIELD,MATERIALS_FIELD
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: ANALYTIC_INTERP_PARAMETERS(:),GEOMETRIC_INTERP_PARAMETERS(:), &
+    TYPE(FieldType), POINTER :: ANALYTIC_FIELD,dependentField,GEOMETRIC_FIELD,MATERIALS_FIELD
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: ANALYTIC_INTERP_PARAMETERS(:),GEOMETRIC_INTERP_PARAMETERS(:), &
       & MATERIALS_INTERP_PARAMETERS(:)
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: ANALYTIC_INTERP_POINT(:),GEOMETRIC_INTERP_POINT(:), &
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: ANALYTIC_INTERP_POINT(:),GEOMETRIC_INTERP_POINT(:), &
       & MATERIALS_INTERP_POINT(:)
-    TYPE(FIELD_INTERPOLATED_POINT_METRICS_PTR_TYPE), POINTER :: GEOMETRIC_INTERPOLATED_POINT_METRICS(:)
-    TYPE(FIELD_PHYSICAL_POINT_PTR_TYPE), POINTER :: ANALYTIC_PHYSICAL_POINT(:),MATERIALS_PHYSICAL_POINT(:)
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: GEOMETRIC_INTERPOLATED_POINT_METRICS(:)
+    TYPE(FieldPhysicalPointPtrType), POINTER :: ANALYTIC_PHYSICAL_POINT(:),MATERIALS_PHYSICAL_POINT(:)
+    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EQUATIONS_SET_ANALYTIC_EVALUATE",err,error,*999)
@@ -404,7 +401,7 @@ CONTAINS
         IF(EQUATIONS_SET%ANALYTIC%ANALYTIC_FINISHED) THEN
           dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
           IF(ASSOCIATED(dependentField)) THEN
-            GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
+            GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
             IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN            
               CALL Field_NumberOfComponentsGet(GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
               CALL Field_InterpolationParametersInitialise(GEOMETRIC_FIELD,GEOMETRIC_INTERP_PARAMETERS,err,error,*999)
@@ -430,9 +427,9 @@ CONTAINS
                 CALL Field_PhysicalPointsInitialise(MATERIALS_INTERP_POINT,GEOMETRIC_INTERP_POINT,MATERIALS_PHYSICAL_POINT, &
                   & err,error,*999)
               ENDIF
-              DO variable_idx=1,dependentField%NUMBER_OF_VARIABLES
-                variable_type=dependentField%variables(variable_idx)%VARIABLE_TYPE
-                FIELD_VARIABLE=>dependentField%VARIABLE_TYPE_MAP(variable_type)%ptr
+              DO variable_idx=1,dependentField%numberOfVariables
+                variable_type=dependentField%variables(variable_idx)%variableType
+                FIELD_VARIABLE=>dependentField%variableTypeMap(variable_type)%ptr
                 IF(ASSOCIATED(FIELD_VARIABLE)) THEN
                   DO component_idx=1,FIELD_VARIABLE%numberOfComponents
                     DOMAIN=>FIELD_VARIABLE%COMPONENTS(component_idx)%DOMAIN
@@ -503,10 +500,8 @@ CONTAINS
                                     & MATERIALS_DUMMY_VALUES,VALUE,err,error,*999)
                                 ENDIF
                               ENDIF
-                              local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                & ELEMENT_PARAM2DOF_MAP%ELEMENTS(element_idx)
-                              CALL Field_ParameterSetUpdateLocalDOF(dependentField,variable_type, &
-                                & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
+                              CALL Field_ParameterSetUpdateLocalElement(dependentField,variable_type, &
+                                & FIELD_ANALYTIC_VALUES_SET_TYPE,element_idx,component_idx,VALUE,err,error,*999)
                             ENDDO !element_idx
                           ELSE
                             CALL FlagError("Domain topology elements is not associated.",err,error,*999)
@@ -562,10 +557,9 @@ CONTAINS
                                 ENDIF
                                 !Loop over the versions
                                 DO version_idx=1,DOMAIN_NODES%NODES(node_idx)%DERIVATIVES(derivative_idx)%numberOfVersions
-                                  local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                    & NODE_PARAM2DOF_MAP%NODES(node_idx)%DERIVATIVES(derivative_idx)%VERSIONS(version_idx)
-                                  CALL Field_ParameterSetUpdateLocalDOF(dependentField,variable_type, &
-                                    & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
+                                  CALL Field_ParameterSetUpdateLocalNode(dependentField,variable_type, &
+                                    & FIELD_ANALYTIC_VALUES_SET_TYPE,version_idx,derivative_idx,node_idx, &
+                                    & component_idx,VALUE,err,error,*999)
                                 ENDDO !version_idx
                               ENDDO !deriv_idx
                             ENDDO !node_idx
@@ -638,10 +632,9 @@ CONTAINS
                                       & MATERIALS_DUMMY_VALUES,VALUE,err,error,*999)
                                   ENDIF
                                 ENDIF
-                                local_ny=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP% &
-                                  & GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(Gauss_idx,element_idx)
-                                CALL Field_ParameterSetUpdateLocalDOF(dependentField,variable_type, &
-                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,local_ny,VALUE,err,error,*999)
+                                CALL Field_ParameterSetUpdateLocalGaussPoint(dependentField,variable_type, &
+                                  & FIELD_ANALYTIC_VALUES_SET_TYPE,gauss_idx,element_idx,component_idx, &
+                                  & VALUE,err,error,*999)
                               ENDDO !Gauss_idx
                             ENDDO !element_idx
                           ELSE
@@ -1096,7 +1089,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     
     ENTERS("EquationsSet_AssembleDynamicLinearFEM",err,error,*999)
 
@@ -1218,7 +1211,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     
 !#ifdef TAUPROF
 !    CHARACTER(28) :: CVAR
@@ -1386,7 +1379,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     
     ENTERS("EquationsSet_AssembleStaticNonlinearFEM",err,error,*999)
 
@@ -1533,7 +1526,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     
     ENTERS("EquationsSet_AssembleQuasistaticLinearFEM",err,error,*999)
 
@@ -1668,8 +1661,8 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE,rhsVariable
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,rhsVariable
     TYPE(VARYING_STRING) :: localError
 
     NULLIFY(DEPENDENT_PARAMETERS)
@@ -1717,8 +1710,8 @@ CONTAINS
                           ENDIF
                           rhsVariable=>rhsMapping%rhsVariable
                           IF(ASSOCIATED(rhsVariable)) THEN
-                            rhsVariableType=rhsVariable%VARIABLE_TYPE
-                            RHS_DOMAIN_MAPPING=>rhsVariable%DOMAIN_MAPPING
+                            rhsVariableType=rhsVariable%variableType
+                            RHS_DOMAIN_MAPPING=>rhsVariable%domainMapping
                             IF(ASSOCIATED(RHS_DOMAIN_MAPPING)) THEN
                               CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,rhsVariable,RHS_BOUNDARY_CONDITIONS, &
                                 & err,error,*999)
@@ -1727,7 +1720,7 @@ CONTAINS
                                 DO equations_matrix_idx=1,linearMatrices%numberOfLinearMatrices
                                   DEPENDENT_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
                                   IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                                    VARIABLE_TYPE=DEPENDENT_VARIABLE%VARIABLE_TYPE
+                                    VARIABLE_TYPE=DEPENDENT_VARIABLE%variableType
                                     !Get the dependent field variable parameters
                                     CALL Field_ParameterSetDataGet(dependentField,VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                       & DEPENDENT_PARAMETERS,err,error,*999)
@@ -1749,7 +1742,7 @@ CONTAINS
                                               RHS_VALUE=0.0_DP
                                               rhs_variable_dof=rhsMapping%equationsRowToRHSDOFMap(equations_row_number)
                                               rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(rhs_variable_dof)
-                                              rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
+                                              rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOFTypes(rhs_global_dof)
                                               !For free RHS DOFs, set the right hand side field values by multiplying the
                                               !row by the dependent variable value
                                               SELECT CASE(rhs_boundary_condition)
@@ -1798,7 +1791,7 @@ CONTAINS
                                               RHS_VALUE=0.0_DP
                                               rhs_variable_dof=rhsMapping%equationsRowToRHSDOFMap(equations_row_number)
                                               rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(rhs_variable_dof)
-                                              rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
+                                              rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOFTypes(rhs_global_dof)
                                               SELECT CASE(rhs_boundary_condition)
                                               CASE(BOUNDARY_CONDITION_DOF_FREE)
                                                 !Back substitute
@@ -1938,8 +1931,8 @@ CONTAINS
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(DistributedVectorType), POINTER :: residualVector
-    TYPE(FIELD_TYPE), POINTER :: RHS_FIELD
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rhsVariable,residualVariable
+    TYPE(FieldType), POINTER :: RHS_FIELD
+    TYPE(FieldVariableType), POINTER :: rhsVariable,residualVariable
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: RHS_BOUNDARY_CONDITIONS
     TYPE(DomainMappingType), POINTER :: RHS_DOMAIN_MAPPING
     TYPE(VARYING_STRING) :: localError
@@ -1959,7 +1952,7 @@ CONTAINS
             IF(ASSOCIATED(rhsVariable)) THEN
               !Get the right hand side variable
               RHS_FIELD=>rhsVariable%FIELD
-              VARIABLE_TYPE=rhsVariable%VARIABLE_TYPE
+              VARIABLE_TYPE=rhsVariable%variableType
             ELSE
               CALL FlagError("RHS mapping RHS variable is not associated.",err,error,*999)
             ENDIF
@@ -1968,7 +1961,7 @@ CONTAINS
           ENDIF
           IF(ASSOCIATED(RHS_FIELD)) THEN
             IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
-              RHS_DOMAIN_MAPPING=>rhsVariable%DOMAIN_MAPPING
+              RHS_DOMAIN_MAPPING=>rhsVariable%domainMapping
               IF(ASSOCIATED(RHS_DOMAIN_MAPPING)) THEN
                 CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,rhsVariable,RHS_BOUNDARY_CONDITIONS, &
                   & err,error,*999)
@@ -1989,7 +1982,7 @@ CONTAINS
                               DO row_idx=1,vectorMapping%numberOfRows
                                 variable_dof=rhsMapping%equationsRowToRHSDOFMap(row_idx)
                                 rhs_global_dof=RHS_DOMAIN_MAPPING%localToGlobalMap(variable_dof)
-                                rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOF_TYPES(rhs_global_dof)
+                                rhs_boundary_condition=RHS_BOUNDARY_CONDITIONS%DOFTypes(rhs_global_dof)
                                 SELECT CASE(rhs_boundary_condition)
                                 CASE(BOUNDARY_CONDITION_DOF_FREE)
                                   !Add residual to field value
@@ -2186,10 +2179,10 @@ CONTAINS
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: USER_NUMBER !<The user number of the equations set
     TYPE(RegionType), POINTER :: REGION !<A pointer to the region to create the equations set on
-    TYPE(FIELD_TYPE), POINTER :: GEOM_FIBRE_FIELD !<A pointer to the either the geometry or, if appropriate, the fibre field for the equation set
+    TYPE(FieldType), POINTER :: GEOM_FIBRE_FIELD !<A pointer to the either the geometry or, if appropriate, the fibre field for the equation set
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_SPECIFICATION(:) !<The equations set specification array to set
     INTEGER(INTG), INTENT(IN) :: EQUATIONS_SET_FIELD_USER_NUMBER !<The user number of the equations set field
-    TYPE(FIELD_TYPE), POINTER :: EQUATIONS_SET_FIELD_FIELD !<On return, a pointer to the equations set field
+    TYPE(FieldType), POINTER :: EQUATIONS_SET_FIELD_FIELD !<On return, a pointer to the equations set field
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<On return, a pointer to the equations set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2201,7 +2194,7 @@ CONTAINS
     TYPE(RegionType), POINTER :: GEOM_FIBRE_FIELD_REGION,EQUATIONS_SET_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
     TYPE(EQUATIONS_SET_EQUATIONS_SET_FIELD_TYPE), POINTER :: EQUATIONS_EQUATIONS_SET_FIELD
-    TYPE(FIELD_TYPE), POINTER :: FIELD
+    TYPE(FieldType), POINTER :: FIELD
 
     NULLIFY(NEW_EQUATIONS_SET)
     NULLIFY(NEW_EQUATIONS_SETS)
@@ -2218,136 +2211,125 @@ CONTAINS
           CALL FlagError(localError,err,error,*997)
         ELSE
           NULLIFY(NEW_EQUATIONS_SET)
-          IF(ASSOCIATED(GEOM_FIBRE_FIELD)) THEN
-            IF(GEOM_FIBRE_FIELD%FIELD_FINISHED) THEN
-              IF(GEOM_FIBRE_FIELD%TYPE==FIELD_GEOMETRIC_TYPE.OR.GEOM_FIBRE_FIELD%TYPE==FIELD_FIBRE_TYPE) THEN
-                GEOM_FIBRE_FIELD_REGION=>GEOM_FIBRE_FIELD%REGION
-                IF(ASSOCIATED(GEOM_FIBRE_FIELD_REGION)) THEN
-                  IF(GEOM_FIBRE_FIELD_REGION%userNumber==REGION%userNumber) THEN
-                      IF(ASSOCIATED(EQUATIONS_SET_FIELD_FIELD)) THEN
-                        !Check the equations set field has been finished
-                        IF(EQUATIONS_SET_FIELD_FIELD%FIELD_FINISHED.eqv..TRUE.) THEN
-                          !Check the user numbers match
-                          IF(EQUATIONS_SET_FIELD_USER_NUMBER/=EQUATIONS_SET_FIELD_FIELD%userNumber) THEN
-                            localError="The specified equations set field user number of "// &
-                              & TRIM(NumberToVString(EQUATIONS_SET_FIELD_USER_NUMBER,"*",err,error))// &
-                              & " does not match the user number of the specified equations set field of "// &
-                              & TRIM(NumberToVString(EQUATIONS_SET_FIELD_FIELD%userNumber,"*",err,error))//"."
-                            CALL FlagError(localError,err,error,*999)
-                          ENDIF
-                          EQUATIONS_SET_FIELD_REGION=>EQUATIONS_SET_FIELD_FIELD%REGION
-                          IF(ASSOCIATED(EQUATIONS_SET_FIELD_REGION)) THEN                
-                            !Check the field is defined on the same region as the equations set
-                            IF(EQUATIONS_SET_FIELD_REGION%userNumber/=REGION%userNumber) THEN
-                              localError="Invalid region setup. The specified equations set field was created on region no. "// &
-                                & TRIM(NumberToVString(EQUATIONS_SET_FIELD_REGION%userNumber,"*",err,error))// &
-                                & " and the specified equations set has been created on region number "// &
-                                & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-                              CALL FlagError(localError,err,error,*999)
-                            ENDIF
-                            !Check the specified equations set field has the same decomposition as the geometric field
-                            IF(ASSOCIATED(GEOM_FIBRE_FIELD)) THEN
-                              IF(.NOT.ASSOCIATED(GEOM_FIBRE_FIELD%DECOMPOSITION,EQUATIONS_SET_FIELD_FIELD%DECOMPOSITION)) THEN
-                                CALL FlagError("The specified equations set field does not have the same decomposition "// &
-                                  & "as the geometric field for the specified equations set.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("The geom. field is not associated for the specified equations set.",err,error,*999)
-                            ENDIF
-                              
-                          ELSE
-                            CALL FlagError("The specified equations set field region is not associated.",err,error,*999)
-                          ENDIF
-                        ELSE
-                          CALL FlagError("The specified equations set field has not been finished.",err,error,*999)
-                        ENDIF
-                      ELSE
-                        !Check the user number has not already been used for a field in this region.
-                        NULLIFY(FIELD)
-                        CALL FIELD_USER_NUMBER_FIND(EQUATIONS_SET_FIELD_USER_NUMBER,REGION,FIELD,err,error,*999)
-                        IF(ASSOCIATED(FIELD)) THEN
-                          localError="The specified equations set field user number of "// &
-                            & TRIM(NumberToVString(EQUATIONS_SET_FIELD_USER_NUMBER,"*",err,error))// &
-                            & "has already been used to create a field on region number "// &
-                            & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-                          CALL FlagError(localError,err,error,*999)
-                        ENDIF
+          CALL Field_AssertIsFinished(GEOM_FIBRE_FIELD,err,error,*999)
+          IF(GEOM_FIBRE_FIELD%TYPE==FIELD_GEOMETRIC_TYPE.OR.GEOM_FIBRE_FIELD%TYPE==FIELD_FIBRE_TYPE) THEN
+            GEOM_FIBRE_FIELD_REGION=>GEOM_FIBRE_FIELD%REGION
+            IF(ASSOCIATED(GEOM_FIBRE_FIELD_REGION)) THEN
+              IF(GEOM_FIBRE_FIELD_REGION%userNumber==REGION%userNumber) THEN
+                IF(ASSOCIATED(EQUATIONS_SET_FIELD_FIELD)) THEN
+                  !Check the equations set field has been finished
+                  CALL Field_AssertIsFinished(EQUATIONS_SET_FIELD_FIELD,err,error,*999)
+                  !Check the user numbers match
+                  IF(EQUATIONS_SET_FIELD_USER_NUMBER/=EQUATIONS_SET_FIELD_FIELD%userNumber) THEN
+                    localError="The specified equations set field user number of "// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_FIELD_USER_NUMBER,"*",err,error))// &
+                      & " does not match the user number of the specified equations set field of "// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_FIELD_FIELD%userNumber,"*",err,error))//"."
+                    CALL FlagError(localError,err,error,*999)
+                  ENDIF
+                  EQUATIONS_SET_FIELD_REGION=>EQUATIONS_SET_FIELD_FIELD%REGION
+                  IF(ASSOCIATED(EQUATIONS_SET_FIELD_REGION)) THEN                
+                    !Check the field is defined on the same region as the equations set
+                    IF(EQUATIONS_SET_FIELD_REGION%userNumber/=REGION%userNumber) THEN
+                      localError="Invalid region setup. The specified equations set field was created on region no. "// &
+                        & TRIM(NumberToVString(EQUATIONS_SET_FIELD_REGION%userNumber,"*",err,error))// &
+                        & " and the specified equations set has been created on region number "// &
+                        & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
+                      CALL FlagError(localError,err,error,*999)
+                    ENDIF
+                    !Check the specified equations set field has the same decomposition as the geometric field
+                    IF(ASSOCIATED(GEOM_FIBRE_FIELD)) THEN
+                      IF(.NOT.ASSOCIATED(GEOM_FIBRE_FIELD%DECOMPOSITION,EQUATIONS_SET_FIELD_FIELD%DECOMPOSITION)) THEN
+                        CALL FlagError("The specified equations set field does not have the same decomposition "// &
+                          & "as the geometric field for the specified equations set.",err,error,*999)
                       ENDIF
-                      !Initalise equations set
-                      CALL EQUATIONS_SET_INITIALISE(NEW_EQUATIONS_SET,err,error,*999)
-                      !Set default equations set values
-                      NEW_EQUATIONS_SET%userNumber=USER_NUMBER
-                      NEW_EQUATIONS_SET%globalNumber=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1
-                      NEW_EQUATIONS_SET%EQUATIONS_SETS=>REGION%EQUATIONS_SETS
-                      NEW_EQUATIONS_SET%label="Equations Set "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))
-                      NEW_EQUATIONS_SET%REGION=>REGION
-                      !Set the equations set class, type and subtype
-                      CALL EquationsSet_SpecificationSet(NEW_EQUATIONS_SET,EQUATIONS_SET_SPECIFICATION,err,error,*999)
-                      NEW_EQUATIONS_SET%EQUATIONS_SET_FINISHED=.FALSE.
-                      !Initialise the setup
-                      CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
-                      EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_INITIAL_TYPE
-                      EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-                      !Here, we get a pointer to the equations_set_field; default is null
-                      EQUATIONS_SET_SETUP_INFO%fieldUserNumber=EQUATIONS_SET_FIELD_USER_NUMBER
-                      EQUATIONS_SET_SETUP_INFO%FIELD=>EQUATIONS_SET_FIELD_FIELD
-                      !Start equations set specific setup
-                      CALL EQUATIONS_SET_SETUP(NEW_EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
-                      CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
-                      !Set up the equations set geometric fields
-                      CALL EQUATIONS_SET_GEOMETRY_INITIALISE(NEW_EQUATIONS_SET,err,error,*999)
-                      IF(GEOM_FIBRE_FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
-                        NEW_EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD=>GEOM_FIBRE_FIELD
-                        NULLIFY(NEW_EQUATIONS_SET%GEOMETRY%FIBRE_FIELD)
-                      ELSE
-                        NEW_EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD=>GEOM_FIBRE_FIELD%GEOMETRIC_FIELD
-                        NEW_EQUATIONS_SET%GEOMETRY%FIBRE_FIELD=>GEOM_FIBRE_FIELD
-                      ENDIF
-                      EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_GEOMETRY_TYPE
-                      EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
-                      EQUATIONS_SET_SETUP_INFO%fieldUserNumber=GEOM_FIBRE_FIELD%userNumber
-                      EQUATIONS_SET_SETUP_INFO%FIELD=>GEOM_FIBRE_FIELD
-                      !Set up equations set specific geometry
-                      CALL EQUATIONS_SET_SETUP(NEW_EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
-                      !Finalise the setup
-                      CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
-                      !Add new equations set into list of equations set in the region
-                      ALLOCATE(NEW_EQUATIONS_SETS(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
-                      IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",err,error,*999)
-                      DO equations_set_idx=1,REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS
-                        NEW_EQUATIONS_SETS(equations_set_idx)%ptr=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr
-                      ENDDO !equations_set_idx
-                      NEW_EQUATIONS_SETS(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1)%ptr=>NEW_EQUATIONS_SET
-                      IF(ASSOCIATED(REGION%EQUATIONS_SETS%EQUATIONS_SETS)) DEALLOCATE(REGION%EQUATIONS_SETS%EQUATIONS_SETS)
-                      REGION%EQUATIONS_SETS%EQUATIONS_SETS=>NEW_EQUATIONS_SETS
-                      REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1
-                      EQUATIONS_SET=>NEW_EQUATIONS_SET
-                      EQUATIONS_EQUATIONS_SET_FIELD=>EQUATIONS_SET%EQUATIONS_SET_FIELD
-                      !\todo check pointer setup
-                      IF(EQUATIONS_EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
-                        EQUATIONS_SET_FIELD_FIELD=>EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
-                      ELSE
-                        EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD=>EQUATIONS_SET_FIELD_FIELD
-                      ENDIF
+                    ELSE
+                      CALL FlagError("The geom. field is not associated for the specified equations set.",err,error,*999)
+                    ENDIF                    
                   ELSE
-                    localError="The geometric field region and the specified region do not match. "// &
-                      & "The geometric field was created on region number "// &
-                      & TRIM(NumberToVString(GEOM_FIBRE_FIELD_REGION%userNumber,"*",err,error))// &
-                      & " and the specified region number is "// &
-                      & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-                    CALL FlagError(localError,err,error,*997)
+                    CALL FlagError("The specified equations set field region is not associated.",err,error,*999)
                   ENDIF
                 ELSE
-                  CALL FlagError("The specified geometric fields region is not associated.",err,error,*997)
+                  !Check the user number has not already been used for a field in this region.
+                  NULLIFY(FIELD)
+                  CALL FIELD_USER_NUMBER_FIND(EQUATIONS_SET_FIELD_USER_NUMBER,REGION,FIELD,err,error,*999)
+                  IF(ASSOCIATED(FIELD)) THEN
+                    localError="The specified equations set field user number of "// &
+                      & TRIM(NumberToVString(EQUATIONS_SET_FIELD_USER_NUMBER,"*",err,error))// &
+                      & "has already been used to create a field on region number "// &
+                      & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
+                    CALL FlagError(localError,err,error,*999)
+                  ENDIF
+                ENDIF
+                !Initalise equations set
+                CALL EQUATIONS_SET_INITIALISE(NEW_EQUATIONS_SET,err,error,*999)
+                !Set default equations set values
+                NEW_EQUATIONS_SET%userNumber=USER_NUMBER
+                NEW_EQUATIONS_SET%globalNumber=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1
+                NEW_EQUATIONS_SET%EQUATIONS_SETS=>REGION%EQUATIONS_SETS
+                NEW_EQUATIONS_SET%label="Equations Set "//TRIM(NumberToVString(USER_NUMBER,"*",err,error))
+                NEW_EQUATIONS_SET%REGION=>REGION
+                !Set the equations set class, type and subtype
+                CALL EquationsSet_SpecificationSet(NEW_EQUATIONS_SET,EQUATIONS_SET_SPECIFICATION,err,error,*999)
+                NEW_EQUATIONS_SET%EQUATIONS_SET_FINISHED=.FALSE.
+                !Initialise the setup
+                CALL EQUATIONS_SET_SETUP_INITIALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
+                EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_INITIAL_TYPE
+                EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+                !Here, we get a pointer to the equations_set_field; default is null
+                EQUATIONS_SET_SETUP_INFO%fieldUserNumber=EQUATIONS_SET_FIELD_USER_NUMBER
+                EQUATIONS_SET_SETUP_INFO%FIELD=>EQUATIONS_SET_FIELD_FIELD
+                !Start equations set specific setup
+                CALL EQUATIONS_SET_SETUP(NEW_EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
+                CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
+                !Set up the equations set geometric fields
+                CALL EQUATIONS_SET_GEOMETRY_INITIALISE(NEW_EQUATIONS_SET,err,error,*999)
+                IF(GEOM_FIBRE_FIELD%TYPE==FIELD_GEOMETRIC_TYPE) THEN
+                  NEW_EQUATIONS_SET%GEOMETRY%geometricField=>GEOM_FIBRE_FIELD
+                  NULLIFY(NEW_EQUATIONS_SET%GEOMETRY%FIBRE_FIELD)
+                ELSE
+                  NEW_EQUATIONS_SET%GEOMETRY%geometricField=>GEOM_FIBRE_FIELD%geometricField
+                  NEW_EQUATIONS_SET%GEOMETRY%FIBRE_FIELD=>GEOM_FIBRE_FIELD
+                ENDIF
+                EQUATIONS_SET_SETUP_INFO%SETUP_TYPE=EQUATIONS_SET_SETUP_GEOMETRY_TYPE
+                EQUATIONS_SET_SETUP_INFO%ACTION_TYPE=EQUATIONS_SET_SETUP_START_ACTION
+                EQUATIONS_SET_SETUP_INFO%fieldUserNumber=GEOM_FIBRE_FIELD%userNumber
+                EQUATIONS_SET_SETUP_INFO%FIELD=>GEOM_FIBRE_FIELD
+                !Set up equations set specific geometry
+                CALL EQUATIONS_SET_SETUP(NEW_EQUATIONS_SET,EQUATIONS_SET_SETUP_INFO,err,error,*999)
+                !Finalise the setup
+                CALL EQUATIONS_SET_SETUP_FINALISE(EQUATIONS_SET_SETUP_INFO,err,error,*999)
+                !Add new equations set into list of equations set in the region
+                ALLOCATE(NEW_EQUATIONS_SETS(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1),STAT=ERR)
+                IF(ERR/=0) CALL FlagError("Could not allocate new equations sets.",err,error,*999)
+                DO equations_set_idx=1,REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS
+                  NEW_EQUATIONS_SETS(equations_set_idx)%ptr=>REGION%EQUATIONS_SETS%EQUATIONS_SETS(equations_set_idx)%ptr
+                ENDDO !equations_set_idx
+                NEW_EQUATIONS_SETS(REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1)%ptr=>NEW_EQUATIONS_SET
+                IF(ASSOCIATED(REGION%EQUATIONS_SETS%EQUATIONS_SETS)) DEALLOCATE(REGION%EQUATIONS_SETS%EQUATIONS_SETS)
+                REGION%EQUATIONS_SETS%EQUATIONS_SETS=>NEW_EQUATIONS_SETS
+                REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS=REGION%EQUATIONS_SETS%NUMBER_OF_EQUATIONS_SETS+1
+                EQUATIONS_SET=>NEW_EQUATIONS_SET
+                EQUATIONS_EQUATIONS_SET_FIELD=>EQUATIONS_SET%EQUATIONS_SET_FIELD
+                !\todo check pointer setup
+                IF(EQUATIONS_EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_AUTO_CREATED) THEN
+                  EQUATIONS_SET_FIELD_FIELD=>EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD
+                ELSE
+                  EQUATIONS_SET%EQUATIONS_SET_FIELD%EQUATIONS_SET_FIELD_FIELD=>EQUATIONS_SET_FIELD_FIELD
                 ENDIF
               ELSE
-                CALL FlagError("The specified geometric field is not a geometric or fibre field.",err,error,*997)
+                localError="The geometric field region and the specified region do not match. "// &
+                  & "The geometric field was created on region number "// &
+                  & TRIM(NumberToVString(GEOM_FIBRE_FIELD_REGION%userNumber,"*",err,error))// &
+                  & " and the specified region number is "// &
+                  & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*997)
               ENDIF
             ELSE
-              CALL FlagError("The specified geometric field is not finished.",err,error,*997)
+              CALL FlagError("The specified geometric fields region is not associated.",err,error,*997)
             ENDIF
           ELSE
-            CALL FlagError("The specified geometric field is not associated.",err,error,*997)
+            CALL FlagError("The specified geometric field is not a geometric or fibre field.",err,error,*997)
           ENDIF
         ENDIF
       ELSE
@@ -2775,7 +2757,8 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: rowVariable,columnVariable
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+    TYPE(FieldVariableType), POINTER :: rowVariable,columnVariable
     TYPE(ElementVectorType) :: elementVector
     INTEGER(INTG) :: componentIdx,localDOF,version,derivativeIdx,derivative,nodeIdx,node,column
     INTEGER(INTG) :: componentInterpolationType
@@ -2815,7 +2798,10 @@ CONTAINS
       ! while pertubing parameters from the column variable.
       ! For non coupled problems these two variables will be the same
       columnVariable=>nonlinearMapping%residualVariables(jacobianNumber)%ptr
-      parameters=>columnVariable%PARAMETER_SETS%PARAMETER_SETS(FIELD_VALUES_SET_TYPE)%ptr%PARAMETERS  
+      NULLIFY(parameterSet)
+      CALL FieldVariable_ParameterSetGet(columnVariable,FIELD_VALUES_SET_TYPE,parameterSet,err,error,*999)
+      NULLIFY(parameters)
+      CALL FieldParameterSet_ParametersGet(parameterSet,parameters,err,error,*999)
       numberOfRows=nonlinearMatrices%jacobians(jacobianNumber)%ptr%elementJacobian%numberOfRows
       IF(numberOfRows/=nonlinearMatrices%elementResidual%numberOfRows) &
         & CALL FlagError("Element matrix number of rows does not match element residual vector size.",err,error,*999)
@@ -2837,8 +2823,8 @@ CONTAINS
             DO derivativeIdx=1,basis%numberOfDerivatives(nodeIdx)
               derivative=elementsTopology%ELEMENTS(elementNumber)%elementDerivatives(derivativeIdx,nodeIdx)
               version=elementsTopology%ELEMENTS(elementNumber)%elementVersions(derivativeIdx,nodeIdx)
-              localDOF=columnVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP%NODES(node)% &
-                & DERIVATIVES(derivative)%VERSIONS(version)
+              CALL FieldVariable_LocalNodeDOFGet(columnVariable,version,derivative,node,componentIdx,localDOF, &
+                & err,error,*999)
               ! one-sided finite difference
               CALL DistributedVector_ValuesGet(parameters,localDOF,origDepVar,err,error,*999)
               CALL DistributedVector_ValuesSet(parameters,localDOF,origDepVar+delta,err,error,*999)
@@ -2851,7 +2837,7 @@ CONTAINS
             ENDDO !derivativeIdx
           ENDDO !nodeIdx
         CASE (FIELD_ELEMENT_BASED_INTERPOLATION)
-          localDOF=columnVariable%COMPONENTS(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%ELEMENTS(elementNumber)
+          CALL FieldVariable_LocalElementDOFGet(columnVariable,elementNumber,componentIdx,localDOF,err,error,*999)
           ! one-sided finite difference
           CALL DistributedVector_ValuesGet(parameters,localDOF,origDepVar,err,error,*999)
           CALL DistributedVector_ValuesSet(parameters,localDOF,origDepVar+delta,err,error,*999)
@@ -3069,7 +3055,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: independentField
+    TYPE(FieldType), POINTER :: independentField
 
     ENTERS("EQUATIONS_SET_INDEPENDENT_CREATE_FINISH",err,error,*999)
 
@@ -3119,13 +3105,13 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to start the creation of the materials field for
     INTEGER(INTG), INTENT(IN) :: INDEPENDENT_FIELD_USER_NUMBER !<The user specified independent field number
-    TYPE(FIELD_TYPE), POINTER :: independentField !<If associated on entry, a pointer to the user created independent field which has the same user number as the specified independent field user number. If not associated on entry, on exit, a pointer to the created independent field for the equations set.
+    TYPE(FieldType), POINTER :: independentField !<If associated on entry, a pointer to the user created independent field which has the same user number as the specified independent field user number. If not associated on entry, on exit, a pointer to the created independent field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
+    TYPE(FieldType), POINTER :: FIELD,GEOMETRIC_FIELD
     TYPE(RegionType), POINTER :: REGION,INDEPENDENT_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -3138,41 +3124,37 @@ CONTAINS
         REGION=>EQUATIONS_SET%REGION
         IF(ASSOCIATED(REGION)) THEN
           IF(ASSOCIATED(independentField)) THEN
-            !Check the independent field has been finished
-            IF(independentField%FIELD_FINISHED) THEN
-              !Check the user numbers match
-              IF(INDEPENDENT_FIELD_USER_NUMBER/=independentField%userNumber) THEN
-                localError="The specified independent field user number of "// &
-                  & TRIM(NumberToVString(INDEPENDENT_FIELD_USER_NUMBER,"*",err,error))// &
-                  & " does not match the user number of the specified independent field of "// &
-                  & TRIM(NumberToVString(independentField%userNumber,"*",err,error))//"."
+            CALL Field_AssertIsFinished(independentField,err,error,*999)
+            !Check the user numbers match
+            IF(INDEPENDENT_FIELD_USER_NUMBER/=independentField%userNumber) THEN
+              localError="The specified independent field user number of "// &
+                & TRIM(NumberToVString(INDEPENDENT_FIELD_USER_NUMBER,"*",err,error))// &
+                & " does not match the user number of the specified independent field of "// &
+                & TRIM(NumberToVString(independentField%userNumber,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            INDEPENDENT_FIELD_REGION=>independentField%REGION
+            IF(ASSOCIATED(INDEPENDENT_FIELD_REGION)) THEN                
+              !Check the field is defined on the same region as the equations set
+              IF(INDEPENDENT_FIELD_REGION%userNumber/=REGION%userNumber) THEN
+                localError="Invalid region setup. The specified independent field has been created on region number "// &
+                  & TRIM(NumberToVString(INDEPENDENT_FIELD_REGION%userNumber,"*",err,error))// &
+                  & " and the specified equations set has been created on region number "// &
+                  & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
-              INDEPENDENT_FIELD_REGION=>independentField%REGION
-              IF(ASSOCIATED(INDEPENDENT_FIELD_REGION)) THEN                
-                !Check the field is defined on the same region as the equations set
-                IF(INDEPENDENT_FIELD_REGION%userNumber/=REGION%userNumber) THEN
-                  localError="Invalid region setup. The specified independent field has been created on region number "// &
-                    & TRIM(NumberToVString(INDEPENDENT_FIELD_REGION%userNumber,"*",err,error))// &
-                    & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)
-                ENDIF
-                !Check the specified independent field has the same decomposition as the geometric field
-                GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,independentField%DECOMPOSITION)) THEN
-                    CALL FlagError("The specified independent field does not have the same decomposition as the geometric "// &
-                      & "field for the specified equations set.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
+              !Check the specified independent field has the same decomposition as the geometric field
+              GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
+              IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
+                IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,independentField%DECOMPOSITION)) THEN
+                  CALL FlagError("The specified independent field does not have the same decomposition as the geometric "// &
+                    & "field for the specified equations set.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FlagError("The specified independent field region is not associated.",err,error,*999)
+                CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("The specified independent field has not been finished.",err,error,*999)
+              CALL FlagError("The specified independent field region is not associated.",err,error,*999)
             ENDIF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -3381,7 +3363,7 @@ CONTAINS
 
     ENTERS("EQUATIONS_SET_GEOMETRY_FINALISE",err,error,*999)
     
-    NULLIFY(EQUATIONS_SET_GEOMETRY%GEOMETRIC_FIELD)
+    NULLIFY(EQUATIONS_SET_GEOMETRY%geometricField)
     NULLIFY(EQUATIONS_SET_GEOMETRY%FIBRE_FIELD)
        
     EXITS("EQUATIONS_SET_GEOMETRY_FINALISE")
@@ -3407,7 +3389,7 @@ CONTAINS
 
     IF(ASSOCIATED(EQUATIONS_SET)) THEN
       EQUATIONS_SET%GEOMETRY%EQUATIONS_SET=>EQUATIONS_SET
-      NULLIFY(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD)
+      NULLIFY(EQUATIONS_SET%GEOMETRY%geometricField)
       NULLIFY(EQUATIONS_SET%GEOMETRY%FIBRE_FIELD)
     ELSE
       CALL FlagError("Equations set is not associated.",err,error,*999)
@@ -3432,7 +3414,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: MATERIALS_FIELD
+    TYPE(FieldType), POINTER :: MATERIALS_FIELD
 
     ENTERS("EQUATIONS_SET_MATERIALS_CREATE_FINISH",err,error,*999)
 
@@ -3482,13 +3464,13 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to start the creation of the materials field for
     INTEGER(INTG), INTENT(IN) :: MATERIALS_FIELD_USER_NUMBER !<The user specified materials field number
-    TYPE(FIELD_TYPE), POINTER :: MATERIALS_FIELD !<If associated on entry, a pointer to the user created materials field which has the same user number as the specified materials field user number. If not associated on entry, on exit, a pointer to the created materials field for the equations set.
+    TYPE(FieldType), POINTER :: MATERIALS_FIELD !<If associated on entry, a pointer to the user created materials field which has the same user number as the specified materials field user number. If not associated on entry, on exit, a pointer to the created materials field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
+    TYPE(FieldType), POINTER :: FIELD,GEOMETRIC_FIELD
     TYPE(RegionType), POINTER :: REGION,MATERIALS_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -3502,42 +3484,39 @@ CONTAINS
         IF(ASSOCIATED(REGION)) THEN
           IF(ASSOCIATED(MATERIALS_FIELD)) THEN
             !Check the materials field has been finished
-            IF(MATERIALS_FIELD%FIELD_FINISHED) THEN
-              !Check the user numbers match
-              IF(MATERIALS_FIELD_USER_NUMBER/=MATERIALS_FIELD%userNumber) THEN
-                localError="The specified materials field user number of "// &
-                  & TRIM(NumberToVString(MATERIALS_FIELD_USER_NUMBER,"*",err,error))// &
-                  & " does not match the user number of the specified materials field of "// &
-                  & TRIM(NumberToVString(MATERIALS_FIELD%userNumber,"*",err,error))//"."
+            CALL Field_AssertIsFinished(MATERIALS_FIELD,err,error,*999)
+            !Check the user numbers match
+            IF(MATERIALS_FIELD_USER_NUMBER/=MATERIALS_FIELD%userNumber) THEN
+              localError="The specified materials field user number of "// &
+                & TRIM(NumberToVString(MATERIALS_FIELD_USER_NUMBER,"*",err,error))// &
+                & " does not match the user number of the specified materials field of "// &
+                & TRIM(NumberToVString(MATERIALS_FIELD%userNumber,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            MATERIALS_FIELD_REGION=>MATERIALS_FIELD%REGION
+            IF(ASSOCIATED(MATERIALS_FIELD_REGION)) THEN                
+              !Check the field is defined on the same region as the equations set
+              IF(MATERIALS_FIELD_REGION%userNumber/=REGION%userNumber) THEN
+                localError="Invalid region setup. The specified materials field has been created on region number "// &
+                  & TRIM(NumberToVString(MATERIALS_FIELD_REGION%userNumber,"*",err,error))// &
+                  & " and the specified equations set has been created on region number "// &
+                  & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
-              MATERIALS_FIELD_REGION=>MATERIALS_FIELD%REGION
-              IF(ASSOCIATED(MATERIALS_FIELD_REGION)) THEN                
-                !Check the field is defined on the same region as the equations set
-                IF(MATERIALS_FIELD_REGION%userNumber/=REGION%userNumber) THEN
-                  localError="Invalid region setup. The specified materials field has been created on region number "// &
-                    & TRIM(NumberToVString(MATERIALS_FIELD_REGION%userNumber,"*",err,error))// &
-                    & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)
-                ENDIF
-                !Check the specified materials field has the same decomposition as the geometric field
-                GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,MATERIALS_FIELD%DECOMPOSITION)) THEN
-                    CALL FlagError("The specified materials field does not have the same decomposition as the geometric "// &
-                      & "field for the specified equations set.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
+              !Check the specified materials field has the same decomposition as the geometric field
+              GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
+              IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
+                IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,MATERIALS_FIELD%DECOMPOSITION)) THEN
+                  CALL FlagError("The specified materials field does not have the same decomposition as the geometric "// &
+                    & "field for the specified equations set.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FlagError("The specified materials field region is not associated.",err,error,*999)
+                CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("The specified materials field has not been finished.",err,error,*999)
+              CALL FlagError("The specified materials field region is not associated.",err,error,*999)
             ENDIF
-          ELSE
+           ELSE
             !Check the user number has not already been used for a field in this region.
             NULLIFY(FIELD)
             CALL FIELD_USER_NUMBER_FIND(MATERIALS_FIELD_USER_NUMBER,REGION,FIELD,err,error,*999)
@@ -3692,7 +3671,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
 
     ENTERS("EQUATIONS_SET_DEPENDENT_CREATE_FINISH",err,error,*999)
 
@@ -3738,13 +3717,13 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to start the creation of a dependent field on
     INTEGER(INTG), INTENT(IN) :: DEPENDENT_FIELD_USER_NUMBER !<The user specified dependent field number
-    TYPE(FIELD_TYPE), POINTER :: dependentField !<If associated on entry, a pointer to the user created dependent field which has the same user number as the specified dependent field user number. If not associated on entry, on exit, a pointer to the created dependent field for the equations set.
+    TYPE(FieldType), POINTER :: dependentField !<If associated on entry, a pointer to the user created dependent field which has the same user number as the specified dependent field user number. If not associated on entry, on exit, a pointer to the created dependent field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
+    TYPE(FieldType), POINTER :: FIELD,GEOMETRIC_FIELD
     TYPE(RegionType), POINTER :: REGION,DEPENDENT_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
     
@@ -3758,40 +3737,37 @@ CONTAINS
         IF(ASSOCIATED(REGION)) THEN
           IF(ASSOCIATED(dependentField)) THEN
             !Check the dependent field has been finished
-            IF(dependentField%FIELD_FINISHED) THEN
-              !Check the user numbers match
-              IF(DEPENDENT_FIELD_USER_NUMBER/=dependentField%userNumber) THEN
-                localError="The specified dependent field user number of "// &
-                  & TRIM(NumberToVString(DEPENDENT_FIELD_USER_NUMBER,"*",err,error))// &
-                  & " does not match the user number of the specified dependent field of "// &
-                  & TRIM(NumberToVString(dependentField%userNumber,"*",err,error))//"."
+            CALL Field_AssertIsFinished(dependentField,err,error,*999)
+            !Check the user numbers match
+            IF(DEPENDENT_FIELD_USER_NUMBER/=dependentField%userNumber) THEN
+              localError="The specified dependent field user number of "// &
+                & TRIM(NumberToVString(DEPENDENT_FIELD_USER_NUMBER,"*",err,error))// &
+                & " does not match the user number of the specified dependent field of "// &
+                & TRIM(NumberToVString(dependentField%userNumber,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            DEPENDENT_FIELD_REGION=>dependentField%REGION
+            IF(ASSOCIATED(DEPENDENT_FIELD_REGION)) THEN                
+              !Check the field is defined on the same region as the equations set
+              IF(DEPENDENT_FIELD_REGION%userNumber/=REGION%userNumber) THEN
+                localError="Invalid region setup. The specified dependent field has been created on region number "// &
+                  & TRIM(NumberToVString(DEPENDENT_FIELD_REGION%userNumber,"*",err,error))// &
+                  & " and the specified equations set has been created on region number "// &
+                  & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
-              DEPENDENT_FIELD_REGION=>dependentField%REGION
-              IF(ASSOCIATED(DEPENDENT_FIELD_REGION)) THEN                
-                !Check the field is defined on the same region as the equations set
-                IF(DEPENDENT_FIELD_REGION%userNumber/=REGION%userNumber) THEN
-                  localError="Invalid region setup. The specified dependent field has been created on region number "// &
-                    & TRIM(NumberToVString(DEPENDENT_FIELD_REGION%userNumber,"*",err,error))// &
-                    & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)
-                ENDIF
-                !Check the specified dependent field has the same decomposition as the geometric field
-                GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,dependentField%DECOMPOSITION)) THEN
-                    CALL FlagError("The specified dependent field does not have the same decomposition as the geometric "// &
-                      & "field for the specified equations set.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
+              !Check the specified dependent field has the same decomposition as the geometric field
+              GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
+              IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
+                IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,dependentField%DECOMPOSITION)) THEN
+                  CALL FlagError("The specified dependent field does not have the same decomposition as the geometric "// &
+                    & "field for the specified equations set.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FlagError("The specified dependent field region is not associated.",err,error,*999)
+                CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("The specified dependent field has not been finished.",err,error,*999)
+              CALL FlagError("The specified dependent field region is not associated.",err,error,*999)
             ENDIF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -3933,7 +3909,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: equationsSetSetupInfo
-    TYPE(FIELD_TYPE), POINTER :: derivedField
+    TYPE(FieldType), POINTER :: derivedField
 
     ENTERS("EquationsSet_DerivedCreateFinish",err,error,*999)
 
@@ -3983,13 +3959,13 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set to start the creation of a derived field on
     INTEGER(INTG), INTENT(IN) :: derivedFieldUserNumber !<The user specified derived field number
-    TYPE(FIELD_TYPE), POINTER :: derivedField !<If associated on entry, a pointer to the user created derived field which has the same user number as the specified derived field user number. If not associated on entry, on exit, a pointer to the created derived field for the equations set.
+    TYPE(FieldType), POINTER :: derivedField !<If associated on entry, a pointer to the user created derived field which has the same user number as the specified derived field user number. If not associated on entry, on exit, a pointer to the created derived field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: equationsSetSetupInfo
-    TYPE(FIELD_TYPE), POINTER :: field,geometricField
+    TYPE(FieldType), POINTER :: field,geometricField
     TYPE(RegionType), POINTER :: region,derivedFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -4003,40 +3979,37 @@ CONTAINS
         IF(ASSOCIATED(region)) THEN
           IF(ASSOCIATED(derivedField)) THEN
             !Check the derived field has been finished
-            IF(derivedField%FIELD_FINISHED) THEN
-              !Check the user numbers match
-              IF(derivedFieldUserNumber/=derivedField%userNumber) THEN
-                localError="The specified derived field user number of "// &
-                  & TRIM(NumberToVString(derivedFieldUserNumber,"*",err,error))// &
-                  & " does not match the user number of the specified derived field of "// &
-                  & TRIM(NumberToVString(derivedField%userNumber,"*",err,error))//"."
+            CALL Field_AssertIsFinished(derivedField,err,error,*999)
+            !Check the user numbers match
+            IF(derivedFieldUserNumber/=derivedField%userNumber) THEN
+              localError="The specified derived field user number of "// &
+                & TRIM(NumberToVString(derivedFieldUserNumber,"*",err,error))// &
+                & " does not match the user number of the specified derived field of "// &
+                & TRIM(NumberToVString(derivedField%userNumber,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            END IF
+            derivedFieldRegion=>derivedField%REGION
+            IF(ASSOCIATED(derivedFieldRegion)) THEN
+              !Check the field is defined on the same region as the equations set
+              IF(derivedFieldRegion%userNumber/=region%userNumber) THEN
+                localError="Invalid region setup. The specified derived field has been created on region number "// &
+                  & TRIM(NumberToVString(derivedFieldRegion%userNumber,"*",err,error))// &
+                  & " and the specified equations set has been created on region number "// &
+                  & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               END IF
-              derivedFieldRegion=>derivedField%REGION
-              IF(ASSOCIATED(derivedFieldRegion)) THEN
-                !Check the field is defined on the same region as the equations set
-                IF(derivedFieldRegion%userNumber/=region%userNumber) THEN
-                  localError="Invalid region setup. The specified derived field has been created on region number "// &
-                    & TRIM(NumberToVString(derivedFieldRegion%userNumber,"*",err,error))// &
-                    & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(region%userNumber,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)
-                END IF
-                !Check the specified derived field has the same decomposition as the geometric field
-                geometricField=>equationsSet%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(geometricField)) THEN
-                  IF(.NOT.ASSOCIATED(geometricField%DECOMPOSITION,derivedField%DECOMPOSITION)) THEN
-                    CALL FlagError("The specified derived field does not have the same decomposition as the geometric "// &
-                      & "field for the specified equations set.",err,error,*999)
-                  END IF
-                ELSE
-                  CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
+              !Check the specified derived field has the same decomposition as the geometric field
+              geometricField=>equationsSet%GEOMETRY%geometricField
+              IF(ASSOCIATED(geometricField)) THEN
+                IF(.NOT.ASSOCIATED(geometricField%DECOMPOSITION,derivedField%DECOMPOSITION)) THEN
+                  CALL FlagError("The specified derived field does not have the same decomposition as the geometric "// &
+                    & "field for the specified equations set.",err,error,*999)
                 END IF
               ELSE
-                CALL FlagError("The specified derived field region is not associated.",err,error,*999)
+                CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
               END IF
             ELSE
-              CALL FlagError("The specified derived field has not been finished.",err,error,*999)
+              CALL FlagError("The specified derived field region is not associated.",err,error,*999)
             END IF
           ELSE
             !Check the user number has not already been used for a field in this region.
@@ -4609,7 +4582,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
   
     ENTERS("EquationsSet_JacobianEvaluateStaticFEM",err,error,*999)
 
@@ -4730,7 +4703,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
   
     ENTERS("EquationsSet_JacobianEvaluateDynamicFEM",err,error,*999)
 
@@ -4851,8 +4824,8 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: residualParameterSet
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: residualVariable
+    TYPE(FieldParameterSetType), POINTER :: residualParameterSet
+    TYPE(FieldVariableType), POINTER :: residualVariable
     TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsSet_ResidualEvaluate",err,error,*999)
@@ -4941,7 +4914,8 @@ CONTAINS
           & TRIM(NumberToVString(residualVariableIdx,"*",err,error))//" is not associated."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-      residualParameterSet=>residualVariable%PARAMETER_SETS%SET_TYPE(FIELD_RESIDUAL_SET_TYPE)%ptr
+      NULLIFY(residualParameterSet)
+      CALL FieldVariable_ParameterSetCheck(residualVariable,FIELD_RESIDUAL_SET_TYPE,residualParameterSet,err,error,*999)
       IF(ASSOCIATED(residualParameterSet)) THEN
         !Residual parameter set exists. Copy the residual vector to the residuals parameter set.
         CALL DistributedVector_Copy(nonlinearMatrices%residual,residualParameterSet%parameters,1.0_DP,err,error,*999)
@@ -4975,7 +4949,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
  
     ENTERS("EquationsSet_ResidualEvaluateDynamicFEM",err,error,*999)
 
@@ -5096,7 +5070,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
  
     ENTERS("EquationsSet_ResidualEvaluateStaticFEM",err,error,*999)
 
@@ -5428,7 +5402,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: SOURCE_FIELD
+    TYPE(FieldType), POINTER :: SOURCE_FIELD
 
     ENTERS("EQUATIONS_SET_SOURCE_CREATE_FINISH",err,error,*999)
 
@@ -5478,13 +5452,13 @@ CONTAINS
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set to start the creation of a source for
     INTEGER(INTG), INTENT(IN) :: SOURCE_FIELD_USER_NUMBER !<The user specified source field number
-    TYPE(FIELD_TYPE), POINTER :: SOURCE_FIELD !<If associated on entry, a pointer to the user created source field which has the same user number as the specified source field user number. If not associated on entry, on exit, a pointer to the created source field for the equations set.
+    TYPE(FieldType), POINTER :: SOURCE_FIELD !<If associated on entry, a pointer to the user created source field which has the same user number as the specified source field user number. If not associated on entry, on exit, a pointer to the created source field for the equations set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
     TYPE(EQUATIONS_SET_SETUP_TYPE) :: EQUATIONS_SET_SETUP_INFO
-    TYPE(FIELD_TYPE), POINTER :: FIELD,GEOMETRIC_FIELD
+    TYPE(FieldType), POINTER :: FIELD,GEOMETRIC_FIELD
     TYPE(RegionType), POINTER :: REGION,SOURCE_FIELD_REGION
     TYPE(VARYING_STRING) :: dummyError,localError
 
@@ -5498,42 +5472,39 @@ CONTAINS
         IF(ASSOCIATED(REGION)) THEN
           IF(ASSOCIATED(SOURCE_FIELD)) THEN
             !Check the source field has been finished
-            IF(SOURCE_FIELD%FIELD_FINISHED) THEN
-              !Check the user numbers match
-              IF(SOURCE_FIELD_USER_NUMBER/=SOURCE_FIELD%userNumber) THEN
-                localError="The specified source field user number of "// &
-                  & TRIM(NumberToVString(SOURCE_FIELD_USER_NUMBER,"*",err,error))// &
-                  & " does not match the user number of the specified source field of "// &
-                  & TRIM(NumberToVString(SOURCE_FIELD%userNumber,"*",err,error))//"."
+            CALL Field_AssertIsFinished(SOURCE_FIELD,err,error,*999)
+            !Check the user numbers match
+            IF(SOURCE_FIELD_USER_NUMBER/=SOURCE_FIELD%userNumber) THEN
+              localError="The specified source field user number of "// &
+                & TRIM(NumberToVString(SOURCE_FIELD_USER_NUMBER,"*",err,error))// &
+                & " does not match the user number of the specified source field of "// &
+                & TRIM(NumberToVString(SOURCE_FIELD%userNumber,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            SOURCE_FIELD_REGION=>SOURCE_FIELD%REGION
+            IF(ASSOCIATED(SOURCE_FIELD_REGION)) THEN                
+              !Check the field is defined on the same region as the equations set
+              IF(SOURCE_FIELD_REGION%userNumber/=REGION%userNumber) THEN
+                localError="Invalid region setup. The specified source field has been created on region number "// &
+                  & TRIM(NumberToVString(SOURCE_FIELD_REGION%userNumber,"*",err,error))// &
+                  & " and the specified equations set has been created on region number "// &
+                  & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
                 CALL FlagError(localError,err,error,*999)
               ENDIF
-              SOURCE_FIELD_REGION=>SOURCE_FIELD%REGION
-              IF(ASSOCIATED(SOURCE_FIELD_REGION)) THEN                
-                !Check the field is defined on the same region as the equations set
-                IF(SOURCE_FIELD_REGION%userNumber/=REGION%userNumber) THEN
-                  localError="Invalid region setup. The specified source field has been created on region number "// &
-                    & TRIM(NumberToVString(SOURCE_FIELD_REGION%userNumber,"*",err,error))// &
-                    & " and the specified equations set has been created on region number "// &
-                    & TRIM(NumberToVString(REGION%userNumber,"*",err,error))//"."
-                  CALL FlagError(localError,err,error,*999)
-                ENDIF
-                !Check the specified source field has the same decomposition as the geometric field
-                GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD
-                IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-                  IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,SOURCE_FIELD%DECOMPOSITION)) THEN
-                    CALL FlagError("The specified source field does not have the same decomposition as the geometric "// &
-                      & "field for the specified equations set.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
+              !Check the specified source field has the same decomposition as the geometric field
+              GEOMETRIC_FIELD=>EQUATIONS_SET%GEOMETRY%geometricField
+              IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
+                IF(.NOT.ASSOCIATED(GEOMETRIC_FIELD%DECOMPOSITION,SOURCE_FIELD%DECOMPOSITION)) THEN
+                  CALL FlagError("The specified source field does not have the same decomposition as the geometric "// &
+                    & "field for the specified equations set.",err,error,*999)
                 ENDIF
               ELSE
-                CALL FlagError("The specified source field region is not associated.",err,error,*999)
+                CALL FlagError("The geometric field is not associated for the specified equations set.",err,error,*999)
               ENDIF
             ELSE
-              CALL FlagError("The specified source field has not been finished.",err,error,*999)
+              CALL FlagError("The specified source field region is not associated.",err,error,*999)
             ENDIF
-          ELSE
+           ELSE
             !Check the user number has not already been used for a field in this region.
             NULLIFY(FIELD)
             CALL FIELD_USER_NUMBER_FIND(SOURCE_FIELD_USER_NUMBER,REGION,FIELD,err,error,*999)
@@ -5879,17 +5850,17 @@ CONTAINS
   !
 
   !>Sets the field variable type of the derived field to be used to store a derived variable. \see OpenCMISS::cmfe_EquationsSet_DerivedVariableSet
-  SUBROUTINE EquationsSet_DerivedVariableSet(equationsSet,derivedType,fieldVariableType,err,error,*)
+  SUBROUTINE EquationsSet_DerivedVariableSet(equationsSet,derivedType,variableType,err,error,*)
 
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate a derived field for
     INTEGER(INTG), INTENT(IN) :: derivedType !<The derived value type to calculate. \see EquationsSetConstants_DerivedTypes.
-    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type used to store the calculated derived value
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type used to store the calculated derived value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_TYPE), POINTER :: derivedField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldType), POINTER :: derivedField
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsSet_DerivedVariableSet",err,error,*999)
@@ -5907,11 +5878,11 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     NULLIFY(fieldVariable)
-    CALL Field_VariableGet(derivedField,fieldVariableType,fieldVariable,err,error,*999)
+    CALL Field_VariableGet(derivedField,variableType,fieldVariable,err,error,*999)
     
     IF(equationsSet%derived%variableTypes(derivedType)==0) &
       & equationsSet%derived%numberOfVariables=equationsSet%derived%numberOfVariables+1
-    equationsSet%derived%variableTypes(derivedType)=fieldVariableType
+    equationsSet%derived%variableTypes(derivedType)=variableType
 
     EXITS("EquationsSet_DerivedVariableSet")
     RETURN
@@ -6189,8 +6160,8 @@ CONTAINS
 
     !Local variables
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(FIELD_TYPE), POINTER :: dependentField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: DEPENDENT_VARIABLE
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE
     TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE),   POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: DIRICHLET_BOUNDARY_CONDITIONS
@@ -6229,13 +6200,13 @@ CONTAINS
           IF(ALLOCATED(dependentField%VARIABLES)) THEN
             !Loop over the variables associated with this equations set
             !\todo: Looping over all field variables is not safe when volume-coupled problem is solved. Look at matrix and rhs mapping instead?
-            DO variable_idx=1,dependentField%NUMBER_OF_VARIABLES
+            DO variable_idx=1,dependentField%numberOfVariables
               DEPENDENT_VARIABLE=>dependentField%variables(variable_idx)
-              variable_type=DEPENDENT_VARIABLE%VARIABLE_TYPE
+              variable_type=DEPENDENT_VARIABLE%variableType
               CALL BOUNDARY_CONDITIONS_VARIABLE_GET(BOUNDARY_CONDITIONS,DEPENDENT_VARIABLE,BOUNDARY_CONDITIONS_VARIABLE, &
                 & err,error,*999)
               IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
-                DOMAIN_MAPPING=>DEPENDENT_VARIABLE%DOMAIN_MAPPING
+                DOMAIN_MAPPING=>DEPENDENT_VARIABLE%domainMapping
                 IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
 
                   ! Check if there are any incremented conditions applied for this boundary conditions variable
@@ -6542,7 +6513,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
     
     ENTERS("EquationsSet_AssembleStaticNonlinearNodal",err,error,*999)
 
@@ -6912,7 +6883,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField
+    TYPE(FieldType), POINTER :: dependentField
   
     ENTERS("EquationsSet_JacobianEvaluateStaticNodal",err,error,*999)
 
@@ -7031,7 +7002,7 @@ CONTAINS
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField
+    TYPE(FieldType), POINTER :: dependentField,geometricField
  
     ENTERS("EquationsSet_ResidualEvaluateStaticNodal",err,error,*999)
 

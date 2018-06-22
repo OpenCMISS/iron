@@ -139,7 +139,7 @@ CONTAINS
 
     !Argument variables
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the geometric field for
-    TYPE(FIELD_TYPE), POINTER :: geometricField !<On exit, a pointer to the geometric field in the specified interface condition. Must not be associated on entry
+    TYPE(FieldType), POINTER :: geometricField !<On exit, a pointer to the geometric field in the specified interface condition. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -150,7 +150,7 @@ CONTAINS
     IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("InterfaceCondition is not associated.",err,error,*999)
 
-    geometricField=>interfaceCondition%geometry%GEOMETRIC_FIELD
+    geometricField=>interfaceCondition%geometry%geometricField
     IF(.NOT.ASSOCIATED(geometricField)) THEN
       localError="Geometric field is not associated for interface condition number "// &
       & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."

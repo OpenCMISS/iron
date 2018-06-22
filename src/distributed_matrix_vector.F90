@@ -5097,18 +5097,18 @@ CONTAINS
         CALL DistributedVector_CMISSVectorGet(distributedProduct,cmissProduct,err,error,*999)
         matrix=>cmissMatrix%matrix
         IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("CMISS matrix matrix is not associated.",err,error,*999)
-        IF(matrix%data_Type/=distributedVector%dataType) THEN
+        IF(matrix%dataType/=distributedVector%dataType) THEN
           localError="The distributed vector data type of "// &
             & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
             & " does not match the distributed matrix data type of "// &
-            & TRIM(NumberToVString(matrix%data_Type,"*",err,error))//"."
+            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
-        IF(matrix%data_Type/=distributedProduct%dataType) THEN
+        IF(matrix%dataType/=distributedProduct%dataType) THEN
           localError="The distributed product vector data type of "// &
             & TRIM(NumberToVString(distributedProduct%dataType,"*",err,error))// &
             & " does not match the distributed matrix data type of "// &
-            & TRIM(NumberToVString(matrix%data_Type,"*",err,error))//"."
+            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
           
@@ -5123,7 +5123,7 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT
         numberOfColumns=columnMapping%numberOfGlobal
-        SELECT CASE(matrix%data_Type)
+        SELECT CASE(matrix%dataType)
         CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
@@ -5197,7 +5197,7 @@ CONTAINS
           CALL FlagError("Not implemented.",err,error,*999)
         CASE DEFAULT
           localError="The distributed matrix vector data type of "// &
-            & TRIM(NumberToVString(matrix%data_Type,"*",err,error))//" is invalid."
+            & TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
           CALL FlagError(localError,err,error,*999)
         END SELECT
      CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)

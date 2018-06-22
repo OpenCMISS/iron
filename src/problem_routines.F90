@@ -271,15 +271,15 @@ CONTAINS
     INTEGER(INTG), POINTER :: modelsData(:)
     REAL(DP), POINTER :: intermediateData(:),parameterData(:)
     TYPE(CELLML_MODEL_TYPE), POINTER :: model
-    TYPE(FIELD_TYPE), POINTER :: intermediateField,modelsField,parametersField
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: modelsVariable
+    TYPE(FieldType), POINTER :: intermediateField,modelsField,parametersField
+    TYPE(FieldVariableType), POINTER :: modelsVariable
     
     ENTERS("Problem_SolverDAECellMLRHSEvaluate",err,error,*999)
     
     IF(ASSOCIATED(cellML)) THEN
       maxNumberOfStates=cellML%MAXIMUM_NUMBER_OF_STATE
       maxNumberOfIntermediates=cellML%MAXIMUM_NUMBER_OF_INTERMEDIATE
-      maxNumberOfParameters=cellML%MAXIMUM_NUMBER_OF_PARAMETERS
+      maxNumberOfParameters=cellML%maximumNumberOfParameters
       !Make sure CellML fields have been updated to the current value of any mapped fields
       IF(ASSOCIATED(cellML%MODELS_FIELD)) THEN
         modelsField=>cellML%MODELS_FIELD%MODELS_FIELD
@@ -3004,7 +3004,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(FieldParameterSetType), POINTER :: boundaryConditionsParameterSet
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
@@ -3023,8 +3024,13 @@ CONTAINS
     
     IF(ASSOCIATED(geometricTransformationSolver)) THEN
       IF(ASSOCIATED(geometricTransformationSolver%field)) THEN
-        fieldVariable=>geometricTransformationSolver%field%VARIABLE_TYPE_MAP(geometricTransformationSolver%fieldVariableType)%PTR
-        IF(ASSOCIATED(fieldVariable%PARAMETER_SETS%SET_TYPE(FIELD_BOUNDARY_CONDITIONS_SET_TYPE)%PTR)) transformBC=.TRUE. !if the BC is defined on the field variable to be transformed
+        NULLIFY(fieldVariable)
+        CALL Field_VariableGet(geometricTransformationSolver%field,geometricTransformationSolver%fieldVariableType, &
+          & fieldVariable,err,error,*999)
+        NULLIFY(boundaryConditionsParameterSet)
+        CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_BOUNDARY_CONDITIONS_SET_TYPE,boundaryConditionsParameterSet, &
+          & err,error,*999)
+        IF(ASSOCIATED(boundaryConditionsParameterSet)) transformBC=.TRUE. !if the BC is defined on the field variable to be transformed
         noGeomComp=SIZE(geometricTransformationSolver%transformationMatrices,1)-1 ! Number of geometric components
         !**********************************************************************************************************************
         !Determine iteration/load increment number 
@@ -3346,7 +3352,7 @@ CONTAINS
     LOGICAL :: dirExists
     TYPE(RegionType), POINTER :: region !<A pointer to region to output the fields for
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping 
-    TYPE(FIELDS_TYPE), POINTER :: fields
+    TYPE(FieldsType), POINTER :: fields
     TYPE(VARYING_STRING) :: fileName,method,directory
     
     INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledMeshElementNumber, &
@@ -3354,10 +3360,10 @@ CONTAINS
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface 
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<A pointer to the interface points connectivity
-    TYPE(FIELD_TYPE), POINTER :: coupledMeshDependentField
-    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
-    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
+    TYPE(FieldType), POINTER :: coupledMeshDependentField
+    TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
+    TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoints(:)
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData !<A pointer to the decomposition data point topology
     TYPE(DataPointsType), POINTER :: interfaceDatapoints
     TYPE(DataProjectionType), POINTER :: dataProjection
