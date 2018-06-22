@@ -857,21 +857,23 @@ CONTAINS
                   DOMAIN_NUMBER=DECOMPOSITION%ELEMENT_DOMAIN(GLOBAL_ELEMENT_NUMBER)
                 
                     ! adding an output here!!!
-                    IF (DOMAIN_NUMBER==0) THEN
-                     CALL TREE_OUTPUT(1,MESH_ELEMENTS%ELEMENTS_TREE,ERR,ERROR,*999)
-                    END IF
+                    !IF (DOMAIN_NUMBER==0) THEN
+                    !  CALL TREE_OUTPUT(1,MESH_ELEMENTS%ELEMENTS_TREE,ERR,ERROR,*999)
+                    !END IF
 
                 ELSE
                   LOCAL_ERROR="Global element number found "//TRIM(NUMBER_TO_VSTRING(GLOBAL_ELEMENT_NUMBER,"*",ERR,ERROR))// &
                     & " is invalid. The limits are 1 to "// &
                     & TRIM(NUMBER_TO_VSTRING(MESH_TOPOLOGY%ELEMENTS%NUMBER_OF_ELEMENTS,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  !CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ELSE
                 LOCAL_ERROR="Decomposition mesh element corresponding to user element number "// &
                   & TRIM(NumberToVString(USER_ELEMENT_NUMBER,"*",err,error))//" is not found."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
+                  ! CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                  ! restore this flag!!!! 
+                  ERR = 1000
+             ENDIF
             ELSE
               CALL FlagError("Decomposition mesh elements are not associated.",ERR,ERROR,*999)
             ENDIF

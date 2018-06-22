@@ -974,7 +974,12 @@ CONTAINS
     INTEGER(INTG) :: dummyErr
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
-    
+
+    ! Hash variables
+    INTEGER(INTG), ALLOCATABLE :: S_key(:), S_val(:)
+    INTEGER(INTG) :: i,n, q, my_computational_node_number, index_found, value, tmp
+    LOGICAL :: is_found
+
     ENTERS("DistributedMatrix_CMISSInitialise",err,error,*998)
 
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*998)
@@ -1009,7 +1014,66 @@ CONTAINS
         & TRIM(NumberToVString(distributedMatrix%ghostingType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    
+
+! START my hash implementation    
+
+! use columnDomainMapping ltg info to create hash:
+! hash type in type of distributedMatrix%cmiss, move in future? petsc already handles. OK
+! cf. trees!!! USE SAME STYLE AND STRUCTURE (cf. Website!!)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! cf. err,error,*; enters, exits
+! hash_create_start using columnDomainMapping: set defaults
+! override (change) parameters, e.g. duplicates for tree, can be done here
+! create_finish finish_flag = true!
+! THEN, insert values, query, delete etc. (i.e. fill with relevant info)
+
+my_computational_node_number = ComputationalEnvironment_NodeNumberGet(ERR,ERROR)
+IF (my_computational_node_number==1) THEN
+ PRINT*, "Print out the map", columnDomainMapping%LOCAL_TO_GLOBAL_MAP
+END IF
+
+! Create the table if not done already
+SELECT CASE (ASSOCIATED (distributedMatrix%cmiss%columnHashTable))
+
+CASE (.FALSE.) ! No table yet: create and fill the column table
+CALL HashTable_CreateStart(distributedMatrix%cmiss%columnHashTable,ERR,ERROR,*999)
+!CALL TREE_INSERT_TYPE_SET(decompositionData%dataPointsTree,TREE_NO_DUPLICATES_ALLOWED,ERR,ERROR,*999)
+CALL HashTable_CreateFinish(distributedMatrix%cmiss%columnHashTable,ERR,ERROR,*999)
+
+n = size(columnDomainMapping%LOCAL_TO_GLOBAL_MAP)
+ALLOCATE(S_val(n-1),STAT=err)
+IF(ERR/=0) CALL FlagError("Could not allocate array",ERR,ERROR,*999)
+S_val = [ (i, i=1,n-1)] ! test 1-element insertion
+
+ALLOCATE(S_key(n-1),STAT=err)
+IF(ERR/=0) CALL FlagError("Could not allocate array",ERR,ERROR,*999)
+S_key = columnDomainMapping%LOCAL_TO_GLOBAL_MAP(1:(n-1))
+
+! FIX ERROR HANDLING, STYLE etc. in hash_routines!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Insert keys values until n-1
+CALL HashTable_Insert(distributedMatrix%cmiss%columnHashTable, S_key, S_val, ERR, ERROR, *999)
+! Test 1-element insertion and query
+CALL HashTable_Insert(distributedMatrix%cmiss%columnHashTable, columnDomainMapping%LOCAL_TO_GLOBAL_MAP(n), n,  ERR,ERROR,*999)
+
+! Test query for q
+IF (my_computational_node_number==1) THEN
+  DO q=1,100
+    CALL HashTable_Get(distributedMatrix%cmiss%columnHashTable, q, index_found, is_found, ERR, ERROR, *999)
+    !PRINT *, "Index ", index_found
+    IF (is_found) THEN
+     CALL HashTable_GetValue(distributedMatrix%cmiss%columnHashTable, index_found, value, ERR, ERROR, *999)
+     PRINT *, q, "Found! With value ", value
+    ELSE
+     PRINT *, q, "Key does not exist!"
+    END IF 
+  END DO
+END IF
+
+CASE (.TRUE.)
+! Do nothing, Table already computed!
+END SELECT
+
+! end my hash_implementation
+
     EXITS("DistributedMatrix_CMISSInitialise")
     RETURN
 999 IF(ASSOCIATED(distributedMatrix%cmiss)) &
@@ -2663,7 +2727,8 @@ CONTAINS
     distributedMatrix%petsc%useOverrideMatrix=.FALSE.
     CALL Petsc_MatInitialise(distributedMatrix%petsc%matrix,err,error,*999)
     CALL Petsc_MatInitialise(distributedMatrix%petsc%overrideMatrix,err,error,*999)
-   
+
+
     EXITS("DistributedMatrix_PETScInitialise")
     RETURN
 999 IF(ASSOCIATED(distributedMatrix%petsc)) &

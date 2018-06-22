@@ -314,7 +314,7 @@ CONTAINS
           !
           !--- Row mappings ---
           !
-          ! 2. Determine the number of rows in the solver matrix. Do this the by setting up a list of rows for each rank.
+          ! 2. Determine the number of rows in the solver matrix. Do this by setting up a list of rows for each rank.
           !    We can then later arrange the rows in rank order by looping over the ranks in the list and then the rows
           !    for each rank.
           !
@@ -395,9 +395,9 @@ CONTAINS
               ENDIF
             ENDDO !interface_condition_idx
           ENDDO !rank
-          !Calculate the number of local and global rows. Do this by looking at the boundary conditions for field variables
-          !involved in the row. If all the variables are set as a fixed boundary condition then do not include the row. If
-          !any variable is not fixed then include the row.
+          !Calculate the NUMBER of local and global rows. Do this by looking at the boundary conditions for field variables
+          !involved in the row. ONLY If ALL the variables are set as a fixed boundary condition then do NOT include the row. If
+          !any variable is not fixed then INCLUDE the row.
           equations_idx=0
           DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
             equations_idx=equations_idx+1
@@ -426,6 +426,7 @@ CONTAINS
                         IF(ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%LOCAL_TYPE(rank_idx)/=DOMAIN_LOCAL_GHOST) THEN
                           ROW_RANK=ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%DOMAIN_NUMBER(rank_idx)
                           local_row=ROW_DOFS_MAPPING%GLOBAL_TO_LOCAL_MAP(global_row)%LOCAL_NUMBER(rank_idx)
+                        ! EXCLUDE rows that are only ghosts!!!
                           EXIT
                         ENDIF
                       ENDDO !rank_idx
@@ -440,7 +441,9 @@ CONTAINS
                           IF(ASSOCIATED(BOUNDARY_CONDITIONS_VARIABLE)) THEN
                             !This is wrong as we only have the mappings for the local rank not the global ranks.
                             !For now assume 1-1 mapping between rows and dofs.
-                            global_dof=global_row
+                            ! In progress: Consider eigentransformations for constrained equations.
+                            global_dof=global_row ! assumption!!!
+
                             INCLUDE_ROW=INCLUDE_ROW.AND.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
                               & BOUNDARY_CONDITION_DOF_FREE)
                             CONSTRAINED_DOF=CONSTRAINED_DOF.OR.(BOUNDARY_CONDITIONS_VARIABLE%DOF_TYPES(global_dof)== &
@@ -562,7 +565,10 @@ CONTAINS
               CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
             ENDIF
           ENDDO !equations set idx
+
+          ! DO THE SAME FOR INTERFACE BLOCKS!!!
           !Now add in rows from any interface matrices
+          !WHICH are transpose, THEN look at the columns!!!
           DO interface_condition_idx=1,SOLVER_MAPPING%NUMBER_OF_INTERFACE_CONDITIONS
             equations_idx=equations_idx+1
             INTERFACE_CONDITION=>SOLVER_MAPPING%INTERFACE_CONDITIONS(interface_condition_idx)%PTR
@@ -745,7 +751,7 @@ CONTAINS
               CALL SolverMapping_InterfToSolMatMapsIMInitialise(SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP( &
                 & interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(interface_matrix_idx),ERR,ERROR,*999)
                       
-              !Allocate the interfafce row to solver row maps
+              !Allocate the interface row to solver row maps
               ALLOCATE(SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                 & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(interface_matrix_idx)%INTERFACE_ROW_TO_SOLVER_ROWS_MAP( &
                 & INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%TOTAL_NUMBER_OF_ROWS),STAT=ERR)
@@ -760,7 +766,7 @@ CONTAINS
               
             ENDDO !interface_matrix_idx
 
-            !Allocate the interface column to solver row maps
+            !Allocate the interface column(!!!!transpose!!!!!!) to solver row maps
             ALLOCATE(SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
               & INTERFACE_COLUMN_TO_SOLVER_ROWS_MAPS(INTERFACE_MAPPING%TOTAL_NUMBER_OF_COLUMNS),STAT=ERR)
             IF(ERR/=0)  &
@@ -841,6 +847,8 @@ CONTAINS
                   !Set up the row domain mappings.
                   !There are no ghosted rows for the solver matrices so there is only one domain for the global to local map.
                   !Initialise
+                  ! THESE global to local will have to be replaced with MPI communication (reduction)!!!!!!!!
+                  ! Knowledge of each rank about the rows in other ranks!
                   CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(ROW_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP( &
                     & NUMBER_OF_GLOBAL_SOLVER_ROWS),ERR,ERROR,*999)
                   !Allocate the global to local map arrays

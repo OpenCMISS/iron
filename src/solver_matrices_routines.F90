@@ -184,6 +184,8 @@ CONTAINS
     
     ENTERS("SOLVER_MATRICES_CREATE_FINISH",ERR,ERROR,*998)
 
+PRINT *, "We are here!!!!!!!!!1"
+
     IF(ASSOCIATED(SOLVER_MATRICES)) THEN
       IF(SOLVER_MATRICES%SOLVER_MATRICES_FINISHED) THEN
         CALL FlagError("Solver matrices have already been finished",ERR,ERROR,*998)
