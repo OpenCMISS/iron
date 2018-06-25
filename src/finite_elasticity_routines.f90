@@ -6541,7 +6541,7 @@ CONTAINS
           CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
             & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,err,error,*999)
           PIOLA_TENSOR(component_idx,component_idx)=PIOLA_TENSOR(component_idx,component_idx)+ &
-            & VALUE*(1.0_DP+1.45_DP*(lambda(component_idx)-1.0_DP))
+            & VALUE*(1.0_DP+1.45_DP*(lambda(component_idx)-1.0_DP))/DZDNU(component_idx,component_idx)
         ENDDO
       ENDIF
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE)
