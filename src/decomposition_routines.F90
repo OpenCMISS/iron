@@ -97,6 +97,7 @@ MODULE DecompositionRoutines
   PUBLIC Decomposition_CalculateLinesSet,Decomposition_CalculateFacesSet
 
   PUBLIC Decomposition_CreateStart,Decomposition_CreateFinish
+  
   PUBLIC Decomposition_Destroy
 
   PUBLIC Decomposition_ElementBasisGet
@@ -129,6 +130,32 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Calculate the decompositions for a decomposer.
+  SUBROUTINE Decomposer_Calculate(decomposer,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to calculate the decompositions for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Decomposer_Calculate",err,error,*999)
+
+    CALL Decomposer_AssertIsFinished(decomposer,err,error,*999)
+
+    CALL Decomposer_ElementDomainCalculate(decomposer,err,error,*999)    
+       
+    EXITS("Decomposer_Calculate")
+    RETURN
+999 ERRORSEXITS("Decomposer_Calculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposer_Calculate
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finish the creation of decomposer.
   SUBROUTINE Decomposer_CreateFinish(decomposer,err,error,*)
 
@@ -140,12 +167,14 @@ CONTAINS
 
     ENTERS("Decomposer_CreateFinish",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
-    IF(decomposer%decomposerFinished) CALL FlagError("Decomposer have already been finished.",err,error,*999)
+    CALL Decomposer_AssertNotFinished(decomposer,err,error,*999)
     
     !Set the finished flag
     decomposer%decomposerFinished=.TRUE.
-       
+
+    !Calculate the decompositions for the decomposer
+    CALL Decomposer_Calculate(decomposer,err,error,*999)
+           
     EXITS("Decomposer_CreateFinish")
     RETURN
 999 ERRORSEXITS("Decomposer_CreateFinish",err,error)
@@ -304,6 +333,49 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Decomposer_Destroy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculate the element domain for a decomposer.
+  SUBROUTINE Decomposer_ElementDomainCalculate(decomposer,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to calculate the element domains for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Decomposer_ElementDomainCalculate",err,error,*999)
+
+    CALL Decomposer_AssertIsFinished(decomposer,err,error,*999)
+    
+    CALL WorkGroup_GroupCommunicatorGet(decomposer%workGroup,groupCommunicator,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(decomposer%workGroup,numberOfComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(decomposer%workGroup,myComputationNodeNumber,err,error,*999)
+
+    IF(numberOfComputationalNodes==1) THEN
+    ELSE
+      !Calculate the number of elements in the combined decomposer mesh
+      numberOfElements=0
+      DO decompositionIdx=1,decomposer%numberOfDecompositions
+        NULLIFY(decomposition)
+        CALL Decomposer_DecompositionGet(decomposer,decompositionIdx,decomposition,err,error,*999)
+        NULLIFY(mesh)
+        CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
+        CALL Mesh_NumberOfElementsGet(mesh,numberOfMeshElements,err,error,*999)
+        numberOfElements=numberOfElements+numberOfMeshElements
+      ENDDO !decompositionIdx
+      numberOfElementsPerNode=REAL(numberOfElements,DP)/REAL(numberOfComputationNodes,DP)
+    ENDIF
+      
+    EXITS("Decomposer_ElementDomainCalculate")
+    RETURN
+999 ERRORSEXITS("Decomposer_ElementDomainCalculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposer_ElementDomainCalculate
 
   !
   !================================================================================================================================

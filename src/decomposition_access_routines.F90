@@ -82,6 +82,8 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC Decomposer_AssertIsFinished,Decomposer_AssertNotFinished
 
+  PUBLIC Decomposer_DecompositionGet
+
   PUBLIC Decomposer_RegionGet
 
   PUBLIC Decomposer_UserNumberFind
@@ -229,6 +231,55 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Decomposer_AssertNotFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the decomposition for a decomposer index
+  SUBROUTINE Decomposer_DecompositionGet(decomposer,decompositionIndex,decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to get the decomposition for
+    INTEGER(INTG), INTENT(IN) :: decompositionIndex !<The index of the decomposition to get.
+    TYPE(DecompositionType), POINTER :: decomposition !<On return, the specified decomposition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Decomposer_DecompositionGet",err,error,*999)
+
+    !Check input arguments
+    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
+    IF(decompositionIndex<1.OR.decompositionIndex>decomposer%numberOfDecompositions) THEN
+      localError="The specified decompoisition index of "//TRIM(NumberToVString(decompositionIndex,"*",err,error))// &
+        & " is invalid. The decomposition index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decomposer%numberOfDecompositions,"*",err,error))// &
+        & " of decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(decomposer%decomposition)) THEN
+      localError="Decompositions is not associated for decomposer number " &
+        & TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    decomposition=>decomposer%decompositions(decompositionIndex)%ptr
+    IF(.NOT.ASSOCIATED(decomposition)) THEN
+      localError="The decomposition is not associated for decomposition index "// &
+        & TRIM(NumberToVString(decompositionIndex,"*",err,error))// &
+        & " of decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("Decomposer_DecompositionGet")
+    RETURN
+999 ERRORSEXITS("Decomposer_DecompositionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposer_DecompositionGet
 
   !
   !================================================================================================================================
