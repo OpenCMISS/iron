@@ -1218,6 +1218,39 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DecompositionPtrType), ALLOCATABLE :: decompositions(:) !<decompositions(decompositionIdx). The array of pointers to the domain decompositions.
   END TYPE DecompositionsType
 
+  !>Contains information on a link between nodes in a decomposer graph
+  TYPE DecomposerGraphLinkType
+    TYPE(DecomposerGraphNodeType), POINTER :: parentGraphNode !<A pointer back to the parent node for the link
+    TYPE(DecomposerGraphNodeType), POINTER :: linkedGraphNode !<A pointer forward to the linked node for this link
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the interface decomposition for this link
+  END TYPE DecomposerGraphLinkType
+
+  !>A buffer type to allow for an array of pointers to DecomposerGraphLinkType
+  TYPE DecomposerGraphLinkPtrType
+    TYPE(DecomposerGraphLinkType), POINTER :: ptr !<The pointer to the DecomposerGraphLinkType
+  END TYPE DecomposerGraphLinkPtrType
+
+  !>Contains information on a node in a decomposer graph
+  TYPE DecomposerGraphNodeType
+    TYPE(DecomposerGraphType), POINTER :: decomposerGraph !<A pointer back to the decomposer graph
+    TYPE(DecompositionType), POINTER :: decomposition !<The decomposition for the graph node
+    LOGICAL :: rootNode !<Is .TRUE. if the node is a root of the graph, .FALSE. if not. 
+    INTEGER(INTG) :: numberOfGraphLinks !<The number of links to other decomposer graph nodes
+    TYPE(DecomposerGraphLinkPtrType), ALLOCATABLE :: graphLinks !<graphLinks(graphLinkIdx). graphLinks(graphLinkIdx)%ptr points to the graphLinkIdx'th link to another node in the decomposition graph.
+  END TYPE DecomposerGraphNodeType
+
+  !>A buffer type to allow for an array of pointers to DecomposerGraphNodeType
+  TYPE DecomposerGraphNodePtrType
+    TYPE(DecomposerGraphNodeType), POINTER :: ptr !<The pointer to the DecomposerGraphNodeType
+  END TYPE DecomposerGraphNodePtrType
+
+  !>Contains information on the decomposer graph of connected decompositions to decompose.
+  TYPE DecomposerGraphType
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer back to the decomposer.
+    INTEGER(INTG) :: numberOfGraphRoots !<The number of graph root pointers. A graph root points to a graph of connected decompositions
+    TYPE(DecomposerGraphNodePtrType), ALLOCATABLE :: graphRoots(:) !<graphRoots(graphRootIdx). graphRoots(graphRootIdx)%ptr points to the root of the graphRootIdx'th connected decompositions graph 
+  END TYPE DecomposerGraphType
+
   !>Contains information of a decomposer.
   TYPE DecomposerType
     INTEGER(INTG) :: userNumber !<The user number of the region decomposer
@@ -1226,6 +1259,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: decomposerFinished !<Is .TRUE. if the region decomposer has been finished
     INTEGER(INTG) :: numberOfDecompositions !<The number of decompositions in the region decomposer
     TYPE(DecompositionPtrType), ALLOCATABLE :: decompositions(:) !<decompositions(decompositionIdx)%ptr is the pointer to the decompositionIdx'th decomposition in the decomposer
+    TYPE(DecomposerGraphType), POINTER :: decomposerGraph !<A pointer to the decomposer graph of decompositions.
     TYPE(WorkGroupType), POINTER :: workGroup
   END TYPE DecomposerType
 
@@ -1252,6 +1286,12 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   PUBLIC DecompositionTopologyType
 
   PUBLIC DecompositionType,DecompositionPtrType,DecompositionsType
+
+  PUBLIC DecomposerGraphLinkType,DecomposerGraphLinkPtrType
+
+  PUBLIC DecomposerGraphNodeType,DecomposerGraphNodePtrType
+
+  PUBLIC DecomposerGraphType
 
   PUBLIC DecomposersType,DecomposerPtrType,DecomposerType
 

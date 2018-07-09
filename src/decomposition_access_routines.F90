@@ -96,6 +96,10 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC Decomposition_DomainGet
 
+  PUBLIC Decomposition_IsInterfaceDecomposition
+
+  PUBLIC Decomposition_IsRegionDecomposition
+
   PUBLIC Decomposition_MeshGet
 
   PUBLIC Decomposition_RegionGet
@@ -260,8 +264,8 @@ CONTAINS
         & " of decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ALLOCATED(decomposer%decomposition)) THEN
-      localError="Decompositions is not associated for decomposer number " &
+    IF(.NOT.ALLOCATED(decomposer%decompositions)) THEN
+      localError="Decompositions is not associated for decomposer number "// &
         & TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -550,6 +554,60 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Decomposition_DomainGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Determines if the given decomposition is an interface decomposition or not. 
+  SUBROUTINE Decomposition_IsInterfaceDecomposition(decomposition,interfaceDecomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition to determine if it is an interface decomposition or not.
+    LOGICAL :: interfaceDecomposition !<On exit, .TRUE. if the given decomposition is in an interface region, .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Decomposition_IsInterfaceDecomposition",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+
+    interfaceDecomposition = ASSOCIATED(decomposition%interface)
+    
+    EXITS("Decomposition_IsInterfaceDecomposition")
+    RETURN
+999 ERRORSEXITS("Decomposition_IsInterfaceDecomposition",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_IsInterfaceDecomposition
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Determines if the given decomposition is a region decomposition or not. 
+  SUBROUTINE Decomposition_IsRegionDecomposition(decomposition,regionDecomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition to determine if it is an region decomposition or not.
+    LOGICAL :: regionDecomposition !<On exit, .TRUE. if the given decomposition is in a region, .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Decomposition_IsRegionDecomposition",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+
+    regionDecomposition = ASSOCIATED(decomposition%region)
+    
+    EXITS("Decomposition_IsRegionDecomposition")
+    RETURN
+999 ERRORSEXITS("Decomposition_IsRegionDecomposition",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_IsRegionDecomposition
 
   !
   !================================================================================================================================

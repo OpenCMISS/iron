@@ -93,6 +93,10 @@ MODULE MeshAccessRoutines
 
   PUBLIC Mesh_DecompositionsGet
 
+  PUBLIC Mesh_IsInterfaceMesh
+
+  PUBLIC Mesh_IsRegionMesh
+
   PUBLIC Mesh_MeshesGet
 
   PUBLIC Mesh_MeshElementsGet
@@ -345,6 +349,60 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Mesh_DecompositionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Determines if the given mesh is an interface mesh or not. 
+  SUBROUTINE Mesh_IsInterfaceMesh(mesh,interfaceMesh,err,error,*)
+
+    !Argument variables
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to determine if it is an interface mesh or not.
+    LOGICAL :: interfaceMesh !<On exit, .TRUE. if the given mesh is in an interface region, .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Mesh_IsInterfaceMesh",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+
+    interfaceMesh = ASSOCIATED(mesh%interface)
+    
+    EXITS("Mesh_IsInterfaceMesh")
+    RETURN
+999 ERRORSEXITS("Mesh_IsInterfaceMesh",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Mesh_IsInterfaceMesh
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Determines if the given mesh is a region mesh or not. 
+  SUBROUTINE Mesh_IsRegionMesh(mesh,regionMesh,err,error,*)
+
+    !Argument variables
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to determine if it is an region mesh or not.
+    LOGICAL :: regionMesh !<On exit, .TRUE. if the given mesh is in a region, .FALSE. if not. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Mesh_IsRegionMesh",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+
+    regionMesh = ASSOCIATED(mesh%region)
+    
+    EXITS("Mesh_IsRegionMesh")
+    RETURN
+999 ERRORSEXITS("Mesh_IsRegionMesh",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Mesh_IsRegionMesh
 
   !
   !================================================================================================================================
