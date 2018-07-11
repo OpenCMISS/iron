@@ -685,7 +685,7 @@ CONTAINS
           ALLOCATE(SOLVER_MAPPING%ROW_DOFS_MAPPING,STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate solver mapping row dofs mapping.",ERR,ERROR,*999)
 !!TODO: what is the real number of domains for a solver???
-          CALL DomainMappings_MappingInitialise(workGroup,SOLVER_MAPPING%ROW_DOFS_MAPPING,ERR,ERROR,*999)
+          CALL DomainMappings_MappingInitialise(SOLVER_MAPPING%ROW_DOFS_MAPPING,ERR,ERROR,*999)
           ROW_DOMAIN_MAPPING=>SOLVER_MAPPING%ROW_DOFS_MAPPING
           ALLOCATE(ROW_DOMAIN_MAPPING%globalToLocalMap(NUMBER_OF_GLOBAL_SOLVER_ROWS),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate row dofs mapping global to local map.",ERR,ERROR,*999)
@@ -1877,7 +1877,7 @@ CONTAINS
             ALLOCATE(SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%COLUMN_DOFS_MAPPING,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate solver col to equations sets map column dofs mapping.",ERR,ERROR,*999)
 !!TODO: what is the real number of domains for a solver???
-            CALL DomainMappings_MappingInitialise (workGroup,SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
+            CALL DomainMappings_MappingInitialise (SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
               & COLUMN_DOFS_MAPPING,ERR,ERROR,*999)
             COL_DOMAIN_MAPPING=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%COLUMN_DOFS_MAPPING
             ALLOCATE(COL_DOMAIN_MAPPING%globalToLocalMap(NUMBER_OF_GLOBAL_SOLVER_DOFS),STAT=ERR)

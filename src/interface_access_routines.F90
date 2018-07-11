@@ -110,6 +110,8 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC INTERFACE_NODES_GET
 
+  PUBLIC Interface_ParentRegionGet
+
   PUBLIC Interface_PointsConnectivityGet
 
   PUBLIC Interface_UserNumberFind
@@ -137,8 +139,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
 
     IF(.NOT.interface%interfaceFinished) THEN
-      localError="Interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
-        & " has not been finished."
+      localError="Interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+       localError=localError//" has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -168,8 +172,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
 
     IF(interface%interfaceFinished) THEN
-      localError="Interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
-        & " has already been finished."
+      localError="Interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//" has already been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -203,9 +209,12 @@ CONTAINS
 
     coordinateSystem=>interface%coordinateSystem
     IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
-      localError="The coordinate system for interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
-        & " is not associated."
-      CALL FlagError(localError,err,error,*999)
+      localError="Coordinate system is not associated for interface number "// &
+        & TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
+     CALL FlagError(localError,err,error,*999)
     ENDIF
     
     EXITS("Interface_CoordinateSystemGet")
@@ -239,19 +248,28 @@ CONTAINS
       localError="The specified coupled mesh index of "//TRIM(NumberToVString(coupledMeshIndex,"*",err,error))// &
         & " is invalid. The coupled mesh index should be >=1 and <= "// &
         & TRIM(NumberToVString(INTERFACE%numberOfCoupledMeshes,"*",err,error))// &
-        & " for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+        & " for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(INTERFACE%coupledMeshes)) THEN
       localError="Coupled meshes is not allocated for interface number "// &
-        & TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+        & TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
     coupledMesh=>interface%coupledMeshes(coupledMeshIndex)%ptr
     IF(.NOT.ASSOCIATED(coupledMesh)) THEN
       localError="The coupled mesh for coupled mesh index "//TRIM(NumberToVString(coupledMeshIndex,"*",err,error))// &
-        & " is not associated for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+        & " is not associated for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
       
@@ -290,7 +308,10 @@ CONTAINS
     CALL DataPointSets_UserNumberFind(INTERFACE%dataPointSets,userNumber,dataPoints,err,error,*999)
     IF(.NOT.ASSOCIATED(dataPoints)) THEN
       localError="Data points with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
+        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
       
@@ -329,7 +350,10 @@ CONTAINS
     CALL Field_UserNumberFind(userNumber,interface,field,err,error,*999)
     IF(.NOT.ASSOCIATED(field)) THEN
       localError="A field with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
+        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -369,7 +393,10 @@ CONTAINS
     CALL InterfaceCondition_UserNumberFind(userNumber,interface,interfaceCondition,err,error,*999)
     IF(.NOT.ASSOCIATED(interfaceCondition)) THEN
       localError="An interface Condition with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
+        & " do not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
        
@@ -407,7 +434,10 @@ CONTAINS
     CALL Mesh_UserNumberFind(userNumber,interface,mesh,err,error,*999)
     IF(.NOT.ASSOCIATED(mesh)) THEN
       localError="A mesh with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
+        & " does not exist on interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -443,7 +473,10 @@ CONTAINS
     meshConnectivity=>interface%meshConnectivity
     IF(.NOT.ASSOCIATED(meshConnectivity)) THEN
       localError="Mesh connectivity is not associated on intereface number "// &
-        & TRIM(NumberToVString(interface%userNumber,"*",err,error))//"."
+        & TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -468,6 +501,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
  
     ENTERS("Interface_MeshesGet",err,error,*998)
 
@@ -475,7 +509,13 @@ CONTAINS
     CALL Interface_AssertIsFinished(interface,err,error,*998)
  
     meshes=>interface%meshes
-    IF(.NOT.ASSOCIATED(meshes)) CALL FlagError("Interface meshes is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(meshes)) THEN
+      localError="Meshes is not associated for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
        
     EXITS("Interface_MeshesGet")
     RETURN
@@ -498,7 +538,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
- 
+    TYPE(VARYING_STRING) :: localError
+    
     ENTERS("Interface_NodesGet",err,error,*998)
 
     IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
@@ -506,7 +547,13 @@ CONTAINS
     IF(ASSOCIATED(nodes)) CALL FlagError("Nodes is already associated.",err,error,*998)
 
     nodes=>interface%nodes
-    IF(.NOT.ASSOCIATED(nodes)) CALL FlagError("Interface nodes is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(nodes)) THEN
+      localError="Nodes is not associated for interface number "//TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
        
     EXITS("Interface_NodesGet")
     RETURN
@@ -515,6 +562,41 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Interface_NodesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the parent region for an interface. 
+  SUBROUTINE Interface_ParentRegionGet(INTERFACE,parentRegion,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the parent region for
+    TYPE(RegionType), POINTER :: parentRegion !<On exit, a pointer to the parent region for the interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_ParentRegionGet",err,error,*998)
+
+    IF(ASSOCIATED(parentRegion)) CALL FlagError("Parent region is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
+ 
+    parentRegion=>interface%parentRegion
+    IF(.NOT.ASSOCIATED(parentRegion)) THEN
+      localError="The parent region for interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("Interface_ParentRegionGet")
+    RETURN
+999 NULLIFY(parentRegion)
+998 ERRORSEXITS("Interface_ParentRegionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_ParentRegionGet
 
   !
   !================================================================================================================================

@@ -18485,8 +18485,7 @@ CONTAINS
           FIELD_VARIABLE%numberOfGlobalDofs=0
           ALLOCATE(FIELD_VARIABLE%domainMapping,STAT=err)
           IF(err/=0) CALL FlagError("Could not allocate field variable domain mapping.",err,error,*999)
-          CALL DomainMappings_MappingInitialise(FIELD%DECOMPOSITION%workGroup, &
-            & FIELD_VARIABLE%domainMapping,err,error,*999)
+          CALL DomainMappings_MappingInitialise(FIELD_VARIABLE%domainMapping,err,error,*999)
           CALL FIELD_dofToParamMap_INITIALISE(FIELD_VARIABLE%dofToParamMap,err,error,*999)
         ELSE
           localError="Variable number "//TRIM(NumberToVString(variableNumber,"*",err,error))// &

@@ -56,6 +56,7 @@ MODULE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DOMAIN_MAPPINGS
   USE INPUT_OUTPUT
+  USE InterfaceAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists
@@ -145,12 +146,12 @@ CONTAINS
     ENTERS("Decomposer_Calculate",err,error,*999)
 
     CALL Decomposer_AssertIsFinished(decomposer,err,error,*999)
-    NULLIFY(decompserGraph)
-    CALL Decomposer_DecomposerGraphGet(decomposer,decompserGraph,err,error,*999)
+    NULLIFY(decomposerGraph)
+    CALL Decomposer_DecomposerGraphGet(decomposer,decomposerGraph,err,error,*999)
     
     DO graphRootIdx=1,decomposerGraph%numberOfGraphRoots
       NULLIFY(graphRoot)
-      CALL DecomposerGraph_GraphRootGet(decomposerGraph,graphRootIdx,graphRoot,err,error,*999)
+      CALL DecomposerGraph_RootNodeGet(decomposerGraph,graphRootIdx,graphRoot,err,error,*999)
       CALL Decomposer_ElementDomainCalculate(graphRoot,err,error,*999)
     ENDDO !graphRootIdx
        
@@ -184,7 +185,9 @@ CONTAINS
     !Set the finished flag
     decomposer%decomposerFinished=.TRUE.
     !Calculate the decompositions for the decomposer
-    CALL Decomposer_Calculate(decomposer,err,error,*999)
+    CALL Decomposer_Calculate(decomposer,err,error,*999)    
+    !Calculate the decomposition topology
+    CALL Decomposer_TopologyCalculate(decomposer,err,error,*999)
            
     EXITS("Decomposer_CreateFinish")
     RETURN
@@ -317,7 +320,7 @@ CONTAINS
       ENDIF
       IF(ASSOCIATED(mesh,decomposer%decompositions(decompositionIdx)%ptr%mesh)) THEN
         localError="Mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))// &
-          & " with decomposition number "/TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+          & " with decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
           & " has already been added to decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))// &
           & " at position index "//TRIM(NumberToVString(decompositionIdx,"*",err,error))// &
           & ". The mesh can not be added more than once."
@@ -373,26 +376,36 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculate the element domain for a decomposer.
-  SUBROUTINE Decomposer_ElementDomainCalculate(decomposer,err,error,*)
+  !>Calculate the element domain for a decomposer graph root node.
+  SUBROUTINE Decomposer_ElementDomainCalculate(rootNode,err,error,*)
 
     !Argument variables
-    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to calculate the element domains for
+    TYPE(DecomposerGraphNodeType), POINTER :: rootNode !<A pointer to the decomposer graph root node to calculate the element domains for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: decompositionIdx,groupCommunicator,myComputationNodeNumber,numberOfComputationNodes,numberOfElements, &
+      & numberOfMeshElements,numberOfElementsPerNode
     INTEGER(INTG), ALLOCATABLE :: elementOffset(:)
-    LOGICAL :: interfaceMesh
+    LOGICAL :: isInterfaceMesh
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecomposerType), POINTER :: decomposer
+    TYPE(DecomposerGraphType), POINTER :: decomposerGraph
+    TYPE(MeshType), POINTER :: mesh
 
     ENTERS("Decomposer_ElementDomainCalculate",err,error,*999)
 
+    NULLIFY(decomposerGraph)
+    CALL DecomposerGraphNode_DecomposerGraphGet(rootNode,decomposerGraph,err,error,*999)
+    NULLIFY(decomposer)
+    CALL DecomposerGraph_DecomposerGet(decomposerGraph,decomposer,err,error,*999)
     CALL Decomposer_AssertIsFinished(decomposer,err,error,*999)
     
     CALL WorkGroup_GroupCommunicatorGet(decomposer%workGroup,groupCommunicator,err,error,*999)
     CALL WorkGroup_NumberOfGroupNodesGet(decomposer%workGroup,numberOfComputationNodes,err,error,*999)
     CALL WorkGroup_GroupNodeNumberGet(decomposer%workGroup,myComputationNodeNumber,err,error,*999)
 
-    IF(numberOfComputationalNodes==1) THEN
+    IF(numberOfComputationNodes==1) THEN
     ELSE
       !Calculate the number of elements in the combined decomposer mesh
       ALLOCATE(elementOffset(decomposer%numberOfDecompositions),STAT=err)
@@ -403,14 +416,14 @@ CONTAINS
         CALL Decomposer_DecompositionGet(decomposer,decompositionIdx,decomposition,err,error,*999)
         NULLIFY(mesh)
         CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
-        CALL Mesh_IsInterfaceMesh(mesh,interfaceMesh,err,error,*999)
+        CALL Mesh_IsInterfaceMesh(mesh,isInterfaceMesh,err,error,*999)
         elementOffset(decompositionIdx)=numberOfElements
-        IF(.NOT.interfaceMesh) THEN
+        IF(.NOT.isInterfaceMesh) THEN
           CALL Mesh_NumberOfElementsGet(mesh,numberOfMeshElements,err,error,*999)
           numberOfElements=numberOfElements+numberOfMeshElements
         ENDIF
       ENDDO !decompositionIdx
-      numberOfElementsPerNode=REAL(numberOfElements,DP)/REAL(numberOfComputationNodes,DP)
+      numberOfElementsPerNode=NINT(REAL(numberOfElements,DP)/REAL(numberOfComputationNodes,DP))
     ENDIF
       
     EXITS("Decomposer_ElementDomainCalculate")
@@ -433,7 +446,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: coupledMeshIdx,decompositionIdx,graphLinkIdx,graphRootIdx,numberOfGraphRoots,numberOfMatchedGraphNodes
+    INTEGER(INTG) :: coupledMeshIdx,decompositionIdx,graphLinkIdx,graphRootIdx,matchedNodeIdx,numberOfGraphRoots, &
+      & numberOfMatchedGraphNodes
     LOGICAL :: coupledMeshFound,isInterfaceDecomposition,isRegionDecomposition
     TYPE(DecomposerGraphType), POINTER :: decomposerGraph
     TYPE(DecomposerGraphLinkType), POINTER :: graphLink
@@ -462,7 +476,7 @@ CONTAINS
       IF(isRegionDecomposition) THEN
         !Create a new graph node for this decomposition
         NULLIFY(newGraphNode)
-        CALL DecompositionGraphNode_Initialise(newGraphNode,err,error,*999)
+        CALL DecomposerGraphNode_Initialise(newGraphNode,err,error,*999)
         newGraphNode%decomposerGraph=>decomposerGraph
         newGraphNode%decomposition=>decomposition
         newGraphNode%rootNode=.TRUE.
@@ -497,12 +511,13 @@ CONTAINS
           coupledMeshFound=.FALSE.
           DO graphRootIdx=1,decomposerGraph%numberOfGraphRoots
             NULLIFY(graphRoot)
-            CALL DecomposerGraph_GraphRootGet(decomposerGraph,graphRootIdx,graphRoot,err,error,*999)
+            CALL DecomposerGraph_RootNodeGet(decomposerGraph,graphRootIdx,graphRoot,err,error,*999)
             !Look at linked nodes first
             DO graphLinkIdx=1,graphRoot%numberOfGraphLinks
+              NULLIFY(graphLink)
+              CALL DecomposerGraphNode_DecomposerGraphLinkGet(graphRoot,graphLinkIdx,graphLink,err,error,*999)              
               NULLIFY(linkedNode)
-              CALL DecomposerGraphNode_GraphLinkGet(graphRoot,graphLinkIdx,linkedNode,err,error,*999)
-              CALL DecomposerGraphNode_MatchMesh(linkedNode,coupledMesh,coupledMeshFound,err,error,*999)
+              CALL DecomposerGraphLink_LinkedNodeGet(graphLink,linkedNode,err,error,*999)
               NULLIFY(linkedNodeDecomposition)
               CALL DecomposerGraphNode_DecompositionGet(linkedNode,linkedNodeDecomposition,err,error,*999)
               NULLIFY(decompositionMesh)
@@ -567,7 +582,7 @@ CONTAINS
             numberOfGraphRoots=0
             DO graphRootIdx=1,decomposerGraph%numberOfGraphRoots
               NULLIFY(graphRoot)
-              CALL DecomposerGraph_GraphRootGet(decomposerGraph,graphRootIdx,graphRoot,err,error,*999)
+              CALL DecomposerGraph_RootNodeGet(decomposerGraph,graphRootIdx,graphRoot,err,error,*999)
               IF(ASSOCIATED(graphRoot,linkedNode)) THEN
                 linkedNode%rootNode=.FALSE.
               ELSE
@@ -575,7 +590,7 @@ CONTAINS
                 newGraphRoots(numberOfGraphRoots+1)%ptr=>decomposerGraph%graphRoots(graphRootIdx)%ptr
               ENDIF
             ENDDO !graphRootIdx
-            CALL MOVE_ALLOC(newGraphRoots,decomposerGraph%graphRoots,err,error,*999)
+            CALL MOVE_ALLOC(newGraphRoots,decomposerGraph%graphRoots)
             decomposerGraph%numberOfGraphRoots=numberOfGraphRoots
           ENDIF
         ENDDO !matchedNodeIdx
@@ -603,7 +618,7 @@ CONTAINS
 999 IF(ALLOCATED(newGraphRoots)) DEALLOCATE(newGraphRoots)
     IF(ALLOCATED(matchedGraphNodes)) DEALLOCATE(matchedGraphNodes)
     IF(ALLOCATED(newGraphLinks)) DEALLOCATE(newGraphLinks)
-998 ERRORSEXITS("Decomposer_GraphCalculate",err,error)
+    ERRORSEXITS("Decomposer_GraphCalculate",err,error)
     RETURN 1
     
   END SUBROUTINE Decomposer_GraphCalculate
@@ -627,7 +642,7 @@ CONTAINS
     IF(ASSOCIATED(decomposerGraph)) THEN
       IF(ALLOCATED(decomposerGraph%graphRoots)) THEN
         DO graphRootIdx=1,SIZE(decomposerGraph%GraphRoots,1)
-          CALL DecomposerGraph_GraphNodeFinalise(decompOserGraph%graphRoots(graphRootIdx)%ptr,err,error,*999)
+          CALL DecomposerGraphNode_Finalise(decomposerGraph%graphRoots(graphRootIdx)%ptr,err,error,*999)
         ENDDO !graphRootIdx
         DEALLOCATE(decomposerGraph%graphRoots)
       ENDIF
@@ -751,6 +766,43 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Initialises a decomposer.
+  SUBROUTINE Decomposer_TopologyCalculate(decomposer,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to initialise. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: decompositionIdx
+    TYPE(DecompositionType), POINTER :: decomposition
+ 
+    ENTERS("Decomposer_TopologyCalculate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
+
+    DO decompositionIdx=1,decomposer%numberOfDecompositions
+      NULLIFY(decomposition)
+      CALL Decomposer_DecompositionGet(decomposer,decompositionIdx,decomposition,err,error,*999)
+      !Initialise the topology information for this decomposition
+      CALL Decomposition_TopologyInitialise(decomposition,err,error,*999)
+      !Initialise the domains for this decomposition
+      CALL Decomposition_DomainsInitialise(decomposition,err,error,*999)
+      !Calculate the decomposition topology
+      CALL Decomposition_TopologyCalculate(decomposition,err,error,*999)
+    ENDDO !decompositionIdx
+         
+    EXITS("Decomposer_TopologyCalculate")
+    RETURN
+999 ERRORSEXITS("Decomposer_TopologyCalculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposer_TopologyCalculate
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Initialises a decomposer graph link.
   SUBROUTINE DecomposerGraphLink_Initialise(decomposerGraphLink,err,error,*)
 
@@ -828,8 +880,8 @@ CONTAINS
  
     ENTERS("DecomposerGraphNode_Diagnostics",err,error,*999)
 
-    CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",decomposition%userNumber,err,error,*999)
-    CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Decomposer graph node information:",decomposition%userNumber,err,error,*999)
+    CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+    CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"    Decomposer graph node information:",err,error,*999)
     NULLIFY(decomposition)
     CALL DecomposerGraphNode_DecompositionGet(graphNode,decomposition,err,error,*999)
     CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Decomposition user number = ",decomposition%userNumber,err,error,*999)
@@ -843,7 +895,7 @@ CONTAINS
     DO graphLinkIdx=1,graphNode%numberOfGraphLinks
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Graph link : ",graphLinkIdx,err,error,*999)
       NULLIFY(graphLink)
-      CALL DecomposerGraphNode_GraphLinkGet(graphNode,graphLinkIdx,graphLink,err,error,*999)
+      CALL DecomposerGraphNode_DecomposerGraphLinkGet(graphNode,graphLinkIdx,graphLink,err,error,*999)
       NULLIFY(decomposition)
       CALL DecomposerGraphLink_DecompositionGet(graphLink,decomposition,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Decomposition user number = ",decomposition%userNumber,err,error,*999)
@@ -853,7 +905,7 @@ CONTAINS
       NULLIFY(interface)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          Interface user number = ",interface%userNumber,err,error,*999)
       NULLIFY(region)
-      CALL Interface_RegionGet(interface,region,err,error,*999)
+      CALL Interface_ParentRegionGet(interface,region,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"            Parent region user number = ",region%userNumber,err,error,*999)
       NULLIFY(linkedNode)
       CALL DecomposerGraphLink_LinkedNodeGet(graphLink,linkedNode,err,error,*999)
@@ -866,39 +918,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DecomposerGraphNode_Diagnostics
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Initialises a decomposer graph node.
-  SUBROUTINE DecomposerGraphNode_Initialise(decomposerGraphNode,err,error,*)
-
-    !Argument variables
-    TYPE(DecomposerGraphNodeType), POINTER :: decomposerGraphNode !<A pointer to the decomposer graph node to initialise. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: dummyErr
-    TYPE(VARYING_STRING) :: dummyError
- 
-    ENTERS("DecomposerGraphNode_Initialise",err,error,*998)
-
-    IF(ASSOCIATED(decomposerGraphNode)) CALL FlagError("Decomposer graph node is already associated.",err,error,*998)
-
-    ALLOCATE(decomposerGraphNode,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate decomposer graph node.",err,error,*999)
-    NULLIFY(decomposerGraphNode%decomposerGraph)
-    NULLIFY(decomposerGraphNode%decomposition)
-    decomposerGraphNode%numberOfGraphLinks=0
-        
-    EXITS("DecomposerGraphNode_Initialise")
-    RETURN
-999 CALL DecomposerGraphNode_Finalise(decomposerGraphNode,dummyErr,dummyError,*998)
-998 ERRORSEXITS("DecomposerGraphNode_Initialise",err,error)
-    RETURN 1
-    
-  END SUBROUTINE DecomposerGraphNode_Initialise
   
   !
   !================================================================================================================================
@@ -922,7 +941,7 @@ CONTAINS
         DO graphLinkIdx=1,SIZE(decomposerGraphNode%graphLinks,1)
           linkedNode => decomposerGraphNode%graphLinks(graphLinkIdx)%ptr%linkedGraphNode
           CALL DecomposerGraphNode_Finalise(linkedNode,err,error,*999)
-          CALL DecomposerGraphLink_Finalise(decompserGraphNode%graphLinks(graphLinkIdx)%ptr,err,error,*999)
+          CALL DecomposerGraphLink_Finalise(decomposerGraphNode%graphLinks(graphLinkIdx)%ptr,err,error,*999)
         ENDDO !graphLinkIdx
         DEALLOCATE(decomposerGraphNode%graphLinks)
       ENDIF
@@ -1101,14 +1120,6 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
     
-    !Calculate which elements belong to which domain
-    CALL Decomposition_ElementDomainCalculate(decomposition,err,error,*999)
-    !Initialise the topology information for this decomposition
-    CALL Decomposition_TopologyInitialise(decomposition,err,error,*999)
-    !Initialise the domains for this decomposition
-    CALL Decomposition_DomainsInitialise(decomposition,err,error,*999)
-    !Calculate the decomposition topology
-    CALL Decomposition_TopologyCalculate(decomposition,err,error,*999)
     decomposition%decompositionFinished=.TRUE.
     
     IF(diagnostics1) THEN
@@ -4497,8 +4508,7 @@ CONTAINS
      
     ALLOCATE(domainMappings%dofs,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate domain mappings dofs.",err,error,*999)
-    CALL DomainMappings_MappingInitialise(domainMappings%domain%decomposition%workGroup, &
-      & domainMappings%dofs,err,error,*999)
+    CALL DomainMappings_MappingInitialise(domainMappings%dofs,err,error,*999)
  
     EXITS("DomainMappings_DofsInitialise")
     RETURN
@@ -4797,7 +4807,7 @@ CONTAINS
     
     ALLOCATE(domainMappings%elements,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate domain mappings elements.",err,error,*999)
-    CALL DomainMappings_MappingInitialise(domainMappings%domain%decomposition%workGroup,domainMappings%elements,err,error,*999)
+    CALL DomainMappings_MappingInitialise(domainMappings%elements,err,error,*999)
  
     EXITS("DomainMappings_ElementsInitialise")
     RETURN
@@ -5334,7 +5344,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the node mapping in the given domain mapping. \todo finalise on error
+  !>Initialises the node mapping in the given domain mapping.
   SUBROUTINE DomainMappings_NodesInitialise(domainMappings,err,error,*)
 
     !Argument variables
@@ -5353,7 +5363,7 @@ CONTAINS
       
     ALLOCATE(domainMappings%nodes,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate domain mappings nodes.",err,error,*999)
-    CALL DomainMappings_MappingInitialise(domainMappings%domain%decomposition%workGroup,domainMappings%nodes,err,error,*999)
+    CALL DomainMappings_MappingInitialise(domainMappings%nodes,err,error,*999)
  
     EXITS("DomainMappings_NodesInitialise")
     RETURN

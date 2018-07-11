@@ -2285,7 +2285,7 @@ CONTAINS
         ! Create a domain mapping for the Neumann point DOFs, required for the distributed matrix columns
         ALLOCATE(pointDofMapping,stat=err)
         IF(err/=0) CALL FlagError("Could not allocate Neumann DOF domain mapping.",err,error,*999)
-        CALL DomainMappings_MappingInitialise(rowMapping%workGroup,pointDofMapping,err,error,*999)
+        CALL DomainMappings_MappingInitialise(pointDofMapping,err,error,*999)
         boundaryConditionsNeumann%pointDofMapping=>pointDofMapping
         ! Calculate global to local mapping for Neumann DOFs
         pointDofMapping%numberOfGlobal=numberOfPointDofs

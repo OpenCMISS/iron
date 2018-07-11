@@ -3129,7 +3129,7 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FieldVariable_ParameterSetGet",err,error,*999)
+    ENTERS("FieldVariable_ParameterSetGet",err,error,*998)
 
     CALL FieldVariable_ParameterSetCheck(fieldVariable,parameterSetType,parameterSet,err,error,*999)
     IF(.NOT.ASSOCIATED(parameterSet)) THEN

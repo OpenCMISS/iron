@@ -82,11 +82,27 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC Decomposer_AssertIsFinished,Decomposer_AssertNotFinished
 
+  PUBLIC Decomposer_DecomposerGraphGet
+
   PUBLIC Decomposer_DecompositionGet
 
   PUBLIC Decomposer_RegionGet
 
   PUBLIC Decomposer_UserNumberFind
+
+  PUBLIC DecomposerGraph_DecomposerGet
+
+  PUBLIC DecomposerGraph_RootNodeGet
+
+  PUBLIC DecomposerGraphLink_DecompositionGet
+
+  PUBLIC DecomposerGraphLink_LinkedNodeGet
+
+  PUBLIC DecomposerGraphNode_DecomposerGraphGet
+
+  PUBLIC DecomposerGraphNode_DecompositionGet
+
+  PUBLIC DecomposerGraphNode_DecomposerGraphLinkGet
   
   PUBLIC Decomposition_AssertIsFinished,Decomposition_AssertNotFinished
 
@@ -95,6 +111,8 @@ MODULE DecompositionAccessRoutines
   PUBLIC Decomposition_DecompositionsGet
 
   PUBLIC Decomposition_DomainGet
+
+  PUBLIC Decomposition_InterfaceGet
 
   PUBLIC Decomposition_IsInterfaceDecomposition
 
@@ -193,8 +211,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
 
     IF(.NOT.decomposer%decomposerFinished) THEN
-      localError="Decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))// &
-        & " has not been finished."
+      localError="Decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
+      IF(ASSOCIATED(decomposer%region)) localError=localError// &
+        & " of region number "//TRIM(NumberToVString(decomposer%region%userNumber,"*",err,error))
+      localError=localError//" has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -224,8 +244,10 @@ CONTAINS
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
 
     IF(decomposer%decomposerFinished) THEN
-      localError="Decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))// &
-        & " has already been finished."
+      localError="Decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
+      IF(ASSOCIATED(decomposer%region)) localError=localError// &
+        & " of region number "//TRIM(NumberToVString(decomposer%region%userNumber,"*",err,error))
+      localError=localError//" has already been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -252,21 +274,27 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Decomposer_DecompositionGet",err,error,*999)
+    ENTERS("Decomposer_DecompositionGet",err,error,*998)
 
     !Check input arguments
-    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*999)
+    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
     IF(decompositionIndex<1.OR.decompositionIndex>decomposer%numberOfDecompositions) THEN
       localError="The specified decompoisition index of "//TRIM(NumberToVString(decompositionIndex,"*",err,error))// &
         & " is invalid. The decomposition index should be >= 1 and <= "// &
         & TRIM(NumberToVString(decomposer%numberOfDecompositions,"*",err,error))// &
-        & " of decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
+        & " of decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
+      IF(ASSOCIATED(decomposer%region)) localError=localError// &
+        & " of region number "//TRIM(NumberToVString(decomposer%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(decomposer%decompositions)) THEN
-      localError="Decompositions is not associated for decomposer number "// &
-        & TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
+      localError="Decompositions is not allocated for decomposer number "// &
+        & TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
+      IF(ASSOCIATED(decomposer%region)) localError=localError// &
+        & " of region number "//TRIM(NumberToVString(decomposer%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
@@ -274,16 +302,59 @@ CONTAINS
     IF(.NOT.ASSOCIATED(decomposition)) THEN
       localError="The decomposition is not associated for decomposition index "// &
         & TRIM(NumberToVString(decompositionIndex,"*",err,error))// &
-        & " of decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
+        & " of decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
+      IF(ASSOCIATED(decomposer%region)) localError=localError// &
+        & " of region number "//TRIM(NumberToVString(decomposer%region%userNumber,"*",err,error))
+      localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
  
     EXITS("Decomposer_DecompositionGet")
     RETURN
-999 ERRORSEXITS("Decomposer_DecompositionGet",err,error)
+999 NULLIFY(decomposition)
+998 ERRORSEXITS("Decomposer_DecompositionGet",err,error)
     RETURN 1
     
   END SUBROUTINE Decomposer_DecompositionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the decomposer graph for a decomposer 
+  SUBROUTINE Decomposer_DecomposerGraphGet(decomposer,decomposerGraph,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to get the decomposition for
+    TYPE(DecomposerGraphType), POINTER :: decomposerGraph !<On return, the decomposer graph for the decomposer. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Decomposer_DecomposerGraphGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decomposerGraph)) CALL FlagError("Decomposer graph is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
+
+    decomposerGraph=>decomposer%decomposerGraph
+    IF(.NOT.ASSOCIATED(decomposerGraph)) THEN
+      localError="The decomposer graph is not associated for decomposer number "// &
+        & TRIM(NumberToVString(decomposer%userNumber,"*",err,error))
+      IF(ASSOCIATED(decomposer%region)) localError=localError// &
+        & " of region number "//TRIM(NumberToVString(decomposer%region%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("Decomposer_DecomposerGraphGet")
+    RETURN
+999 NULLIFY(decomposerGraph)
+998 ERRORSEXITS("Decomposer_DecomposerGraphGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposer_DecomposerGraphGet
 
   !
   !================================================================================================================================
@@ -300,10 +371,10 @@ CONTAINS
     !Local Variables
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Decomposer_RegionGet",err,error,*999)
+    ENTERS("Decomposer_RegionGet",err,error,*998 )
 
     !Check input arguments
-    IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*999)
+    IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("Decomposer is not associated.",err,error,*999)
 
     region=>decomposer%region
@@ -315,7 +386,8 @@ CONTAINS
  
     EXITS("Decomposer_RegionGet")
     RETURN
-999 ERRORSEXITS("Decomposer_RegionGet",err,error)
+999 NULLIFY(region)
+998 ERRORSEXITS("Decomposer_RegionGet",err,error)
     RETURN 1
     
   END SUBROUTINE Decomposer_RegionGet
@@ -337,17 +409,16 @@ CONTAINS
     INTEGER(INTG) :: decomposerIdx
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Decomposer_UserNumberFind",err,error,*999)
+    ENTERS("Decomposer_UserNumberFind",err,error,*998)
 
+    IF(ASSOCIATED(decomposer)) CALL FlagError("Decomposer is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(region)) CALL FlagError("Region is not associated.",err,error,*999)
-    IF(ASSOCIATED(decomposer)) CALL FlagError("Equations set is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(region%decomposers)) THEN
       localError="The decomposers on region number "//TRIM(NumberToVString(region%userNumber,"*",err,error))// &
         & " is not associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    NULLIFY(decomposer)
     IF(ALLOCATED(region%decomposers%decomposers)) THEN
       DO decomposerIdx=1,region%decomposers%numberOfDecomposers
         IF(ASSOCIATED(region%decomposers%decomposers(decomposerIdx)%ptr)) THEN
@@ -365,10 +436,334 @@ CONTAINS
     
     EXITS("Decomposer_UserNumberFind")
     RETURN
-999 ERRORSEXITS("Decomposer_UserNumberFind",err,error)
+999 NULLIFY(decomposer)
+998 ERRORSEXITS("Decomposer_UserNumberFind",err,error)
     RETURN 1
     
   END SUBROUTINE Decomposer_UserNumberFind
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the decomposer for a decomposer graph.
+  SUBROUTINE DecomposerGraph_DecomposerGet(decomposerGraph,decomposer,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerGraphType), POINTER :: decomposerGraph !<A pointer to the decomposer graph to get the decomposer for
+    TYPE(DecomposerType), POINTER :: decomposer !<On return, the decomposer for the specified decomposer graph. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecomposerGraph_DecomposerGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decomposer)) CALL FlagError("Decomposer is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decomposerGraph)) CALL FlagError("Decomposer graph is not associated.",err,error,*999)
+
+    decomposer=>decomposerGraph%decomposer
+    IF(.NOT.ASSOCIATED(decomposer)) CALL FlagError("The decomposer is not associated for the decomposer graph.",err,error,*999)
+ 
+    EXITS("DecomposerGraph_DecomposerGet")
+    RETURN
+999 NULLIFY(decomposer)
+998 ERRORSEXITS("DecomposerGraph_DecomposereGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposerGraph_DecomposerGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a root graph node for a decomposer root node index.
+  SUBROUTINE DecomposerGraph_RootNodeGet(decomposerGraph,rootNodeIndex,rootNode,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerGraphType), POINTER :: decomposerGraph !<A pointer to the decomposer graph to get the root node for
+    INTEGER(INTG), INTENT(IN) :: rootNodeIndex !<The index of the root graph node to get.
+    TYPE(DecomposerGraphNodeType), POINTER :: rootNode !<On return, the specified root graph node. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecomposerGraph_RootNodeGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(rootNode)) CALL FlagError("Root node is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decomposerGraph)) CALL FlagError("Decomposer graph is not associated.",err,error,*999)
+    IF(rootNodeIndex<1.OR.rootNodeIndex>decomposerGraph%numberOfGraphRoots) THEN
+      localError="The specified root node index of "//TRIM(NumberToVString(rootNodeIndex,"*",err,error))// &
+        & " is invalid. The root node index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(decomposerGraph%numberOfGraphRoots,"*",err,error))// &
+        & " for the decomposer graph"
+      IF(ASSOCIATED(decomposerGraph%decomposer)) THEN
+        localError=localError// " of decomposer number "// &
+          & TRIM(NumberToVString(decomposerGraph%decomposer%userNumber,"*",err,error))
+        IF(ASSOCIATED(decomposerGraph%decomposer%region)) localError=localError// &
+          & " of region number "//TRIM(NumberToVString(decomposerGraph%decomposer%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(decomposerGraph%graphRoots)) THEN
+      localError="Graph roots is not allocated for the decomposer graph"
+      IF(ASSOCIATED(decomposerGraph%decomposer)) THEN
+        localError=localError// " of decomposer number "// &
+          & TRIM(NumberToVString(decomposerGraph%decomposer%userNumber,"*",err,error))
+        IF(ASSOCIATED(decomposerGraph%decomposer%region)) localError=localError// &
+          & " of region number "//TRIM(NumberToVString(decomposerGraph%decomposer%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    rootNode=>decomposerGraph%graphRoots(rootNodeIndex)%ptr
+    IF(.NOT.ASSOCIATED(rootNode)) THEN
+      localError="The root node is not associated for root node index "// &
+        & TRIM(NumberToVString(rootNodeIndex,"*",err,error))// &
+        & " of the decomposer graph"
+      IF(ASSOCIATED(decomposerGraph%decomposer)) THEN
+        localError=localError// " of decomposer number "// &
+          & TRIM(NumberToVString(decomposerGraph%decomposer%userNumber,"*",err,error))
+        IF(ASSOCIATED(decomposerGraph%decomposer%region)) localError=localError// &
+          & " of region number "//TRIM(NumberToVString(decomposerGraph%decomposer%region%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("DecomposerGraph_RootNodeGet")
+    RETURN
+999 NULLIFY(rootNode)
+998 ERRORSEXITS("DecomposerGraph_RootNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposerGraph_RootNodeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the decomposition for a decomposer graph link
+  SUBROUTINE DecomposerGraphLink_DecompositionGet(graphLink,decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerGraphLinkType), POINTER :: graphLink !<A pointer to the decomposer graph link to get the decomposition for
+    TYPE(DecompositionType), POINTER :: decomposition !<On return, the decomposer graph link decomposition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecomposerGraphLink_DecompositionGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(graphLink)) CALL FlagError("Graph link is not associated.",err,error,*999)
+
+    decomposition=>graphLink%decomposition
+    IF(.NOT.ASSOCIATED(decomposition)) THEN
+      localError="The decomposition for the graph link is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("DecomposerGraphLink_DecompositionGet")
+    RETURN
+999 NULLIFY(decomposition)
+998 ERRORSEXITS("DecomposerGraphLink_DecompositionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposerGraphLink_DecompositionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the linked node for a decomposer graph link
+  SUBROUTINE DecomposerGraphLink_LinkedNodeGet(graphLink,linkedNode,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerGraphLinkType), POINTER :: graphLink !<A pointer to the decomposer graph link to get the linked node for
+    TYPE(DecomposerGraphNodeType), POINTER :: linkedNode !<On return, the decomposer graph link linked node. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecomposerGraphLink_LinkedNodeGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(linkedNode)) CALL FlagError("Linked node is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(graphLink)) CALL FlagError("Graph link is not associated.",err,error,*999)
+
+    linkedNode=>graphLink%linkedGraphNode
+    IF(.NOT.ASSOCIATED(linkedNode)) THEN
+      localError="The linked node for the graph link is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("DecomposerGraphLink_LinkedNodeGet")
+    RETURN
+999 NULLIFY(linkedNode)
+998 ERRORSEXITS("DecomposerGraphLink_LinkedNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposerGraphLink_LinkedNodeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the decomposer graph for a decomposer graph node
+  SUBROUTINE DecomposerGraphNode_DecomposerGraphGet(graphNode,decomposerGraph,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerGraphNodeType), POINTER :: graphNode !<A pointer to the decomposer graph node to get the decomposer graph for
+    TYPE(DecomposerGraphType), POINTER :: decomposerGraph !<On return, the decomposer graph for the decomposer graph node. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecomposerGraphNode_DecomposerGraphGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decomposerGraph)) CALL FlagError("Decomposer graph is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(graphNode)) CALL FlagError("Graph node is not associated.",err,error,*999)
+
+    decomposerGraph=>graphNode%decomposerGraph
+    IF(.NOT.ASSOCIATED(decomposerGraph)) THEN
+      localError="The decomposer graph for the graph node is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("DecomposerGraphLink_DecomposerGraphGet")
+    RETURN
+999 NULLIFY(decomposerGraph)
+998 ERRORSEXITS("DecomposerGraphLink_DecomposerGraphGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposerGraphNode_DecomposerGraphGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the decomposition for a decomposer graph node
+  SUBROUTINE DecomposerGraphNode_DecompositionGet(graphNode,decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerGraphNodeType), POINTER :: graphNode !<A pointer to the decomposer graph node to get the decomposition for
+    TYPE(DecompositionType), POINTER :: decomposition !<On return, the decomposer graph node decomposition. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecomposerGraphNode_DecompositionGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(graphNode)) CALL FlagError("Graph node is not associated.",err,error,*999)
+
+    decomposition=>graphNode%decomposition
+    IF(.NOT.ASSOCIATED(decomposition)) THEN
+      localError="The decomposition for the graph node is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("DecomposerGraphNode_DecompositionGet")
+    RETURN
+999 NULLIFY(decomposition)
+998 ERRORSEXITS("DecomposerGraphNode_DecompositionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposerGraphNode_DecompositionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposer graph link for a graph node index.
+  SUBROUTINE DecomposerGraphNode_DecomposerGraphLinkGet(graphNode,graphLinkIndex,graphLink,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerGraphNodeType), POINTER :: graphNode !<A pointer to the decomposer graph node to get the graph linkfor
+    INTEGER(INTG), INTENT(IN) :: graphLinkIndex !<The index of the graph link to get.
+    TYPE(DecomposerGraphLinkType), POINTER :: graphLink !<On return, the specified graph link. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecomposerGraphNode_GraphLinkGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(graphLink)) CALL FlagError("Graph link is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(graphNode)) CALL FlagError("Graph node is not associated.",err,error,*999)
+    IF(graphLinkIndex<1.OR.graphLinkIndex>graphNode%numberOfGraphLinks) THEN
+      localError="The specified graph link index of "//TRIM(NumberToVString(graphLinkIndex,"*",err,error))// &
+        & " is invalid. The graph link index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(graphNode%numberOfGraphLinks,"*",err,error))// &
+        & " for the decomposer graph node"
+      IF(ASSOCIATED(graphNode%decomposerGraph)) THEN
+        localError=localError//" of the decomposer graph"
+        IF(ASSOCIATED(graphNode%decomposerGraph%decomposer)) THEN
+          localError=localError// " of decomposer number "// &
+            & TRIM(NumberToVString(graphNode%decomposerGraph%decomposer%userNumber,"*",err,error))
+          IF(ASSOCIATED(graphNode%decomposerGraph%decomposer%region)) localError=localError// &
+            & " of region number "// &
+            & TRIM(NumberToVString(graphNode%decomposerGraph%decomposer%region%userNumber,"*",err,error))
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(graphNode%graphLinks)) THEN
+      localError="Graph links is not allocated for the decomposer graph node"
+      IF(ASSOCIATED(graphNode%decomposerGraph)) THEN
+        localError=localError//" of the decomposer graph"
+        IF(ASSOCIATED(graphNode%decomposerGraph%decomposer)) THEN
+          localError=localError// " of decomposer number "// &
+            & TRIM(NumberToVString(graphNode%decomposerGraph%decomposer%userNumber,"*",err,error))
+          IF(ASSOCIATED(graphNode%decomposerGraph%decomposer%region)) localError=localError// &
+            & " of region number "// &
+            & TRIM(NumberToVString(graphNode%decomposerGraph%decomposer%region%userNumber,"*",err,error))
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    graphLink=>graphNode%graphLinks(graphLinkIndex)%ptr
+    IF(.NOT.ASSOCIATED(graphLink)) THEN
+      localError="The graph link is not associated for graph link index "// &
+        & TRIM(NumberToVString(graphLinkIndex,"*",err,error))// &
+        & " of the decomposer graph node"
+      IF(ASSOCIATED(graphNode%decomposerGraph)) THEN
+        localError=localError//" of the decomposer graph"
+        IF(ASSOCIATED(graphNode%decomposerGraph%decomposer)) THEN
+          localError=localError// " of decomposer number "// &
+            & TRIM(NumberToVString(graphNode%decomposerGraph%decomposer%userNumber,"*",err,error))
+          IF(ASSOCIATED(graphNode%decomposerGraph%decomposer%region)) localError=localError// &
+            & " of region number "// &
+            & TRIM(NumberToVString(graphNode%decomposerGraph%decomposer%region%userNumber,"*",err,error))
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("DecomposerGraphNode_DecomposerGraphLinkGet")
+    RETURN
+999 NULLIFY(graphLink)
+998 ERRORSEXITS("DecomposerGraph_DecomposerGraphLinkGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DecomposerGraphNode_DecomposerGraphLinkGet
 
   !
   !=================================================================================================================================
@@ -554,6 +949,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Decomposition_DomainGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the interface for a decomposition
+  SUBROUTINE Decomposition_InterfaceGet(decomposition,interface,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition to get the interface for
+    TYPE(InterfaceType), POINTER :: interface !<On return, the decomposition interface. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Decomposition_InterfaceGet",err,error,*998)
+
+    !Check input arguments
+    IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+
+    interface=>decomposition%INTERFACE
+    IF(.NOT.ASSOCIATED(interface)) THEN
+      localError="The interface for decomposition number "// &
+        & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+ 
+    EXITS("Decomposition_InterfaceGet")
+    RETURN
+999 NULLIFY(interface)
+998 ERRORSEXITS("Decomposition_InterfaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_InterfaceGet
 
   !
   !================================================================================================================================

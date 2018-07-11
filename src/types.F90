@@ -1236,7 +1236,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DecompositionType), POINTER :: decomposition !<The decomposition for the graph node
     LOGICAL :: rootNode !<Is .TRUE. if the node is a root of the graph, .FALSE. if not. 
     INTEGER(INTG) :: numberOfGraphLinks !<The number of links to other decomposer graph nodes
-    TYPE(DecomposerGraphLinkPtrType), ALLOCATABLE :: graphLinks !<graphLinks(graphLinkIdx). graphLinks(graphLinkIdx)%ptr points to the graphLinkIdx'th link to another node in the decomposition graph.
+    TYPE(DecomposerGraphLinkPtrType), ALLOCATABLE :: graphLinks(:) !<graphLinks(graphLinkIdx). graphLinks(graphLinkIdx)%ptr points to the graphLinkIdx'th link to another node in the decomposition graph.
   END TYPE DecomposerGraphNodeType
 
   !>A buffer type to allow for an array of pointers to DecomposerGraphNodeType

@@ -733,28 +733,22 @@ CONTAINS
   !
 
   !>Initialises the mapping for a domain mappings mapping.
-  SUBROUTINE DomainMappings_MappingInitialise(workGroup,domainMapping,err,error,*)
+  SUBROUTINE DomainMappings_MappingInitialise(domainMapping,err,error,*)
 
     !Argument variables
-    TYPE(WorkGroupType), POINTER :: workGroup !<A pointer to the work group to initialise the mappings for
-    TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to initialise the mappings for
+   TYPE(DomainMappingType), POINTER :: domainMapping !<A pointer to the domain mapping to initialise the mappings for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: numberOfDomains
  
     ENTERS("DomainMappings_MappingInitialise",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("WorkGroup is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Domain mapping is not associated.",err,error,*999)
 
-    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfDomains,err,error,*999)
-
-    domainMapping%workGroup=>workGroup
     domainMapping%totalNumberOfLocal=0
     domainMapping%numberOfLocal=0
     domainMapping%numberOfGlobal=0
-    domainMapping%numberOfDomains=numberOfDomains
+    domainMapping%numberOfDomains=0
     domainMapping%numberOfInternal=0
     domainMapping%numberOfBoundary=0
     domainMapping%numberOfGhost=0
