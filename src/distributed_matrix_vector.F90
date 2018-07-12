@@ -2397,7 +2397,7 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       NULLIFY(petscMatrix)
       CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      IF(petscMatrix%useOverrideMatrix) CALL FlagError("PETSc override matrix is already set.",err,error,*999)
+      IF(.NOT.petscMatrix%useOverrideMatrix) CALL FlagError("PETSc override matrix is already set.",err,error,*999)
       petscMatrix%useOverrideMatrix=.TRUE.
       petscMatrix%overrideMatrix=overrideMatrix
     CASE DEFAULT
@@ -2439,7 +2439,7 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       NULLIFY(petscMatrix)
       CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      IF(.NOT.petscMatrix%useOverrideMatrix) CALL FlagError("PETSc override matrix is not set.",err,error,*999)
+      IF(petscMatrix%useOverrideMatrix) CALL FlagError("PETSc override matrix is not set.",err,error,*999)
       distributedMatrix%petsc%useOverrideMatrix=.FALSE.
       CALL Petsc_MatInitialise(distributedMatrix%petsc%overrideMatrix,err,error,*999)
     CASE DEFAULT
