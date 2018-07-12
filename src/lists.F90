@@ -112,7 +112,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_DATA_TYPE_SET
   END INTERFACE List_DataTypeSet
   
-  !>Detaches the list values from a list and returns them as a pointer to a array of base type before destroying the list \see Lists.
+  !>Detaches the list values from a list and returns them as a pointer to an array of base type before destroying the list \see Lists.
   INTERFACE LIST_DETACH_AND_DESTROY
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_INTG1
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_INTG2
@@ -122,7 +122,7 @@ MODULE LISTS
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_DP2
   END INTERFACE LIST_DETACH_AND_DESTROY
 
-  !>Detaches the list values from a list and returns them as a pointer to a array of base type before destroying the list \see Lists.
+  !>Detaches the list values from a list and returns them as a pointer to an array of base type before destroying the list \see Lists.
   INTERFACE List_DetachAndDestroy
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_INTG1
     MODULE PROCEDURE LIST_DETACH_AND_DESTROY_INTG2
@@ -412,6 +412,8 @@ MODULE LISTS
   PUBLIC LIST_SUBSET_OF
   
   PUBLIC List_SubsetOf
+ 
+  PUBLIC List_Resize
 
 CONTAINS
 
@@ -548,7 +550,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the data dimension for a list.
+  !>Sets/changes the mutability for a list.
   SUBROUTINE LIST_MUTABLE_SET(LIST,MUTABLE,ERR,ERROR,*)
 
     !Argument Variables
@@ -902,6 +904,110 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Resizes the list with a given size
+  ! Should be called BEFORE item_add to avoid doubling size 
+  SUBROUTINE List_Resize(list,newAddSize,err,error,*)
+   !Argument Variables
+    TYPE(LIST_TYPE), POINTER, INTENT(INOUT) :: LIST !<A pointer to the list
+    INTEGER(INTG), INTENT(IN) :: newAddSize !<The new size
+    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    !Local Variables
+    INTEGER(INTG) :: newSize
+    INTEGER(INTG), ALLOCATABLE :: NEW_LIST_INT1(:)
+    INTEGER(INTG), ALLOCATABLE :: NEW_LIST_INT2(:,:)
+    REAL(SP), ALLOCATABLE :: NEW_LIST_SP1(:)
+    REAL(SP), ALLOCATABLE :: NEW_LIST_SP2(:,:)
+    REAL(DP), ALLOCATABLE :: NEW_LIST_DP1(:)
+    REAL(DP), ALLOCATABLE :: NEW_LIST_DP2(:,:)
+
+    TYPE(VARYING_STRING) :: LOCAL_ERROR
+
+    ENTERS("List_Resize",ERR,ERROR,*999)
+
+    IF(ASSOCIATED(LIST)) THEN
+      IF(LIST%LIST_FINISHED) THEN
+        IF(LIST%NUMBER_IN_LIST==LIST%SIZE) THEN
+          newSize = LIST%NUMBER_IN_LIST + newAddSize   
+
+          SELECT CASE (LIST%DATA_TYPE)
+          CASE (LIST_INTG_TYPE)
+            SELECT CASE (LIST%DATA_DIMENSION)
+            CASE(1)
+              ALLOCATE(NEW_LIST_INT1(newSize),STAT=ERR)
+              IF(ERR/=0) CALL FlagError("Could not allocate new list.",ERR,ERROR,*999)
+              NEW_LIST_INT1(1:LIST%NUMBER_IN_LIST)=LIST%LIST_INTG(1:LIST%NUMBER_IN_LIST)
+              CALL MOVE_ALLOC(NEW_LIST_INT1,LIST%LIST_INTG)
+            CASE(2:) 
+              ALLOCATE(NEW_LIST_INT2(LIST%DATA_DIMENSION,newSize),STAT=ERR)
+              IF(ERR/=0) CALL FlagError("Could not allocate new list.",ERR,ERROR,*999)
+              NEW_LIST_INT2(:,1:LIST%NUMBER_IN_LIST)=LIST%LIST_INTG2(:,1:LIST%NUMBER_IN_LIST)
+              CALL MOVE_ALLOC(NEW_LIST_INT2,LIST%LIST_INTG2)
+            CASE DEFAULT
+              CALL FlagError("Invalid data dimension.",ERR,ERROR,*999)
+            END SELECT
+          CASE (LIST_SP_TYPE)  
+            SELECT CASE (LIST%DATA_DIMENSION)
+            CASE(1)
+              ALLOCATE(NEW_LIST_SP1(newSize),STAT=ERR)
+              IF(ERR/=0) CALL FlagError("Could not allocate new list.",ERR,ERROR,*999)
+              NEW_LIST_SP1(1:LIST%NUMBER_IN_LIST)=LIST%LIST_SP(1:LIST%NUMBER_IN_LIST)
+              CALL MOVE_ALLOC(NEW_LIST_SP1,LIST%LIST_SP)
+            CASE(2:) 
+              ALLOCATE(NEW_LIST_SP2(LIST%DATA_DIMENSION,newSize),STAT=ERR)
+              IF(ERR/=0) CALL FlagError("Could not allocate new list.",ERR,ERROR,*999)
+              NEW_LIST_SP2(:,1:LIST%NUMBER_IN_LIST)=LIST%LIST_SP2(:,1:LIST%NUMBER_IN_LIST)
+              CALL MOVE_ALLOC(NEW_LIST_SP2,LIST%LIST_SP2)
+            CASE DEFAULT
+              CALL FlagError("Invalid data dimension.",ERR,ERROR,*999)
+            END SELECT
+          CASE (LIST_DP_TYPE)
+            SELECT CASE (LIST%DATA_DIMENSION)
+            CASE(1)
+              ALLOCATE(NEW_LIST_DP1(newSize),STAT=ERR)
+              IF(ERR/=0) CALL FlagError("Could not allocate new list.",ERR,ERROR,*999)
+              NEW_LIST_DP1(1:LIST%NUMBER_IN_LIST)=LIST%LIST_DP(1:LIST%NUMBER_IN_LIST)
+              CALL MOVE_ALLOC(NEW_LIST_DP1,LIST%LIST_DP)
+            CASE(2:) 
+              ALLOCATE(NEW_LIST_DP2(LIST%DATA_DIMENSION,newSize),STAT=ERR)
+              IF(ERR/=0) CALL FlagError("Could not allocate new list.",ERR,ERROR,*999)
+              NEW_LIST_DP2(:,1:LIST%NUMBER_IN_LIST)=LIST%LIST_DP2(:,1:LIST%NUMBER_IN_LIST)
+              CALL MOVE_ALLOC(NEW_LIST_DP2,LIST%LIST_DP2)
+            CASE DEFAULT
+              CALL FlagError("Invalid data dimension.",ERR,ERROR,*999)
+            END SELECT
+          CASE DEFAULT
+            CALL FlagError("Invalid data type.",ERR,ERROR,*999)
+          END SELECT
+            
+          LIST%SIZE=newSize
+
+        ENDIF
+      ELSE
+        CALL FlagError("The list has not been finished.",ERR,ERROR,*999)
+      ENDIF
+    ELSE
+      CALL FlagError("List is not associated.",ERR,ERROR,*999)
+    ENDIF
+    
+    EXITS("List_Resize")
+    RETURN
+999 IF(ALLOCATED(NEW_LIST_INT1)) DEALLOCATE(NEW_LIST_INT1)
+    IF(ALLOCATED(NEW_LIST_INT2)) DEALLOCATE(NEW_LIST_INT2)
+    IF(ALLOCATED(NEW_LIST_SP1)) DEALLOCATE(NEW_LIST_SP1)
+    IF(ALLOCATED(NEW_LIST_SP2)) DEALLOCATE(NEW_LIST_SP2)
+    IF(ALLOCATED(NEW_LIST_DP1)) DEALLOCATE(NEW_LIST_DP1)
+    IF(ALLOCATED(NEW_LIST_DP2)) DEALLOCATE(NEW_LIST_DP2)
+    ERRORSEXITS("List_Resize",ERR,ERROR)
+    RETURN 1
+    
+  END SUBROUTINE List_Resize
+
+
+  !
+  !================================================================================================================================
+  !
+
   !>Adds an item to the end of an integer list of data dimension 1. 
   SUBROUTINE LIST_ITEM_ADD_INTG1(LIST,ITEM,ERR,ERROR,*)
    !Argument Variables
@@ -979,6 +1085,7 @@ CONTAINS
           IF(LIST%DATA_DIMENSION==SIZE(ITEM,1)) THEN
             IF(LIST%NUMBER_IN_LIST==LIST%SIZE) THEN
               !Reallocate
+              ! DOUBLE the existing list size if list is full
               NEW_SIZE=MAX(2*LIST%NUMBER_IN_LIST,1)
               ALLOCATE(NEW_LIST(LIST%DATA_DIMENSION,NEW_SIZE),STAT=ERR)
               IF(ERR/=0) CALL FlagError("Could not allocate new list.",ERR,ERROR,*999)

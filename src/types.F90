@@ -77,7 +77,6 @@ MODULE Types
   USE ISO_VARYING_STRING
   USE Trees
   use linkedlist_routines
-  USE hash_routines
 
   IMPLICIT NONE
 
@@ -98,7 +97,8 @@ MODULE Types
   TYPE INTEGER_CINT_ALLOC_TYPE
     INTEGER(C_INT), ALLOCATABLE :: ARRAY(:)
   END TYPE INTEGER_CINT_ALLOC_TYPE
-  
+
+
   !
   !================================================================================================================================
   !
@@ -131,6 +131,32 @@ MODULE Types
     INTEGER(C_INT), ALLOCATABLE :: LIST_C_INT(:) !<The integer data (dimension = 1) for integer lists. 
     INTEGER(C_INT), ALLOCATABLE :: LIST_C_INT2(:,:) !<The integer data (dimension > 1) for integer lists. 
   END TYPE LIST_TYPE
+
+
+  !
+  !================================================================================================================================
+  !
+  ! Hash Table type
+  !
+  TYPE HashTableType
+    !PRIVATE ! derived-type definition can be accessed outside (public), but not the components (below)
+
+    LOGICAL :: hashTableFinished !<Is .TRUE. if the table has finished being created, .FALSE. if not.
+
+    INTEGER(INTG), ALLOCATABLE :: vecTKey(:)   ! The hash vector of keys
+    INTEGER(INTG), ALLOCATABLE :: vecTVal(:)   ! The hash vector of indices of values
+
+    INTEGER(INTG), ALLOCATABLE :: vecSKey(:)   ! The original vector of keys
+ 
+    ! List of values
+    TYPE(List_Type), POINTER :: listSVal
+    ! Array of list of values to allow for multiple data
+    TYPE(LIST_PTR_TYPE), ALLOCATABLE :: arrayOfListSVal(:)
+
+
+    INTEGER(INTG) :: n !<The number of items currently in the table (number of keys)
+    INTEGER(INTG) :: p !<The prime number required from the table algorithm
+  END TYPE HashTableType
     
   !
   !================================================================================================================================
