@@ -587,7 +587,7 @@ CONTAINS
                 linkedNode%rootNode=.FALSE.
               ELSE
                 numberOfGraphRoots=numberOfGraphRoots+1
-                newGraphRoots(numberOfGraphRoots+1)%ptr=>decomposerGraph%graphRoots(graphRootIdx)%ptr
+                newGraphRoots(numberOfGraphRoots)%ptr=>decomposerGraph%graphRoots(graphRootIdx)%ptr
               ENDIF
             ENDDO !graphRootIdx
             CALL MOVE_ALLOC(newGraphRoots,decomposerGraph%graphRoots)
