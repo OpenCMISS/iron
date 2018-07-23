@@ -93,6 +93,8 @@ MODULE MeshAccessRoutines
 
   PUBLIC Mesh_DecompositionsGet
 
+  PUBLIC Mesh_InterfaceGet
+
   PUBLIC Mesh_IsInterfaceMesh
 
   PUBLIC Mesh_IsRegionMesh
@@ -350,6 +352,40 @@ CONTAINS
     
   END SUBROUTINE Mesh_DecompositionsGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the interface for a given mesh. 
+  SUBROUTINE Mesh_InterfaceGet(mesh,interface,err,error,*)
+
+    !Argument variables
+    TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh to get the interface for
+    TYPE(InterfaceType), POINTER :: interface !<On exit, a pointer to the interface for the mesh. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Mesh_InterfaceGet",err,error,*998)
+
+    IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(mesh)) CALL FlagError("Mesh is not associated.",err,error,*999)
+
+    INTERFACE=>mesh%INTERFACE
+    IF(.NOT.ASSOCIATED(interface)) THEN      
+      localError="The interface is not associated for mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Mesh_InterfaceGet")
+    RETURN
+999 NULLIFY(interface)
+998 ERRORSEXITS("Mesh_InterfaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Mesh_InterfaceGet
+  
   !
   !================================================================================================================================
   !

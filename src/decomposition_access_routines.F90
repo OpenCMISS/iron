@@ -68,6 +68,14 @@ MODULE DecompositionAccessRoutines
   INTEGER(INTG), PARAMETER :: DECOMPOSITION_USER_DEFINED_TYPE=3 !<The user will set the element decomposition. \see DecompositionRoutines_DecompositionTypes,DecompositionRoutines
   !>@}
   
+  !> \addtogroup DecompositionRoutines_DecomposerOutputTypes DecompositionRoutines::DecomposerOutputTypes
+  !> \brief The Decomposer output type parameters
+  !> \see DecompositionRoutines
+  !>@{
+  INTEGER(INTG), PARAMETER :: DECOMPOSER_NO_OUTPUT=0 !<No decomposer output. \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
+  INTEGER(INTG), PARAMETER :: DECOMPOSER_ALL_OUTPUT=1 !<All decomposer output. \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
+  !>@}
+  
   !Module types
 
   !Module variables
@@ -79,6 +87,8 @@ MODULE DecompositionAccessRoutines
   END INTERFACE DECOMPOSITION_USER_NUMBER_FIND
 
   PUBLIC DECOMPOSITION_ALL_TYPE,DECOMPOSITION_CALCULATED_TYPE,DECOMPOSITION_USER_DEFINED_TYPE
+
+  PUBLIC DECOMPOSER_NO_OUTPUT,DECOMPOSER_ALL_OUTPUT
 
   PUBLIC Decomposer_AssertIsFinished,Decomposer_AssertNotFinished
 

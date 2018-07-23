@@ -1237,6 +1237,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: rootNode !<Is .TRUE. if the node is a root of the graph, .FALSE. if not. 
     INTEGER(INTG) :: numberOfGraphLinks !<The number of links to other decomposer graph nodes
     TYPE(DecomposerGraphLinkPtrType), ALLOCATABLE :: graphLinks(:) !<graphLinks(graphLinkIdx). graphLinks(graphLinkIdx)%ptr points to the graphLinkIdx'th link to another node in the decomposition graph.
+    INTEGER(INTG) :: currentLinkIndex !<The current link index whilst the decomposer graph is being traversed.
+    TYPE(DecomposerGraphNodeType), POINTER :: previousNode !<The previous node whilst the decomposer graph is being traversed.
+    INTEGER(INTG) :: elementOffset !<The element number offset for this node in the supergraph.
   END TYPE DecomposerGraphNodeType
 
   !>A buffer type to allow for an array of pointers to DecomposerGraphNodeType
@@ -1261,6 +1264,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DecompositionPtrType), ALLOCATABLE :: decompositions(:) !<decompositions(decompositionIdx)%ptr is the pointer to the decompositionIdx'th decomposition in the decomposer
     TYPE(DecomposerGraphType), POINTER :: decomposerGraph !<A pointer to the decomposer graph of decompositions.
     TYPE(WorkGroupType), POINTER :: workGroup
+    INTEGER(INTG) :: outputType !<The output type for the decomposer \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
+    INTEGER(INTG) :: numberOfPartitions !<The number of partitions for the decomposer
+    INTEGER(INTG) :: numberOfEdgesCut !<The number of edges cut in the decomposition
   END TYPE DecomposerType
 
   !>A buffer type to allow for an array of pointers to DecomposerType

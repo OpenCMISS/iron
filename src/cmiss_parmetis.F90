@@ -42,10 +42,10 @@
 !>
 
 !> This module is a CMISS buffer module to the ParMETIS library.
-MODULE CMISS_PARMETIS
+MODULE CmissParMETIS
   
   USE BaseRoutines
-  USE KINDS
+  USE Kinds
   USE ISO_VARYING_STRING
   
 #include "macros.h"
@@ -63,12 +63,12 @@ MODULE CMISS_PARMETIS
   !Interfaces
   INTERFACE
 
-    SUBROUTINE ParMETIS_V3_PartKway(vtxdist, xadj, adjncy, vwgt, adjwgt, wgtflag, numflag, ncon, nparts, tpwgts, ubvec, &
+    FUNCTION ParMETIS_V3_PartKway(vtxdist, xadj, adjncy, vwgt, adjwgt, wgtflag, numflag, ncon, nparts, tpwgts, ubvec, &
       & options, edgecut, part, comm)
 #ifdef WIN32
       !DEC$ ATTRIBUTES C, reference, alias:'_ParMETIS_V3_PartKway' :: ParMETIS_V3_PartKway
 #endif      
-      USE KINDS
+      USE Kinds
       INTEGER(INTG) :: vtxdist(*)
       INTEGER(INTG) :: xadj(*)
       INTEGER(INTG) :: adjncy(*)
@@ -78,22 +78,22 @@ MODULE CMISS_PARMETIS
       INTEGER(INTG) :: numflag
       INTEGER(INTG) :: ncon
       INTEGER(INTG) :: nparts
-      !REAL(SP) :: tpwgts(*)
-      !REAL(SP) :: ubvec(*)
       REAL(DP) :: tpwgts(*)
       REAL(DP) :: ubvec(*)
       INTEGER(INTG) :: options(*)
       INTEGER(INTG) :: edgecut
       INTEGER(INTG) :: part(*)
       INTEGER(INTG) :: comm
-    END SUBROUTINE PARMETIS_V3_PARTKWAY
 
-    SUBROUTINE ParMETIS_V3_PartMeshKway(elmdist, eptr, eind, elmwgt, wgtflag, numflag, ncon, ncommonnodes, nparts, tpwgts, &
+      INTEGER(INTG) :: ParMETIS_V3_PartKway
+    END FUNCTION ParMETIS_V3_PartKWay
+
+    FUNCTION ParMETIS_V3_PartMeshKway(elmdist, eptr, eind, elmwgt, wgtflag, numflag, ncon, ncommonnodes, nparts, tpwgts, &
       & ubvec, options, edgecut, part, comm)
 #ifdef WIN32
       !DEC$ ATTRIBUTES C, reference, alias:'_ParMETIS_V3_PartMeshKway' :: ParMETIS_V3_PartMeshKway
 #endif      
-      USE KINDS
+      USE Kinds
       INTEGER(INTG) :: elmdist(*)
       INTEGER(INTG) :: eptr(*)
       INTEGER(INTG) :: eind(*)
@@ -103,19 +103,21 @@ MODULE CMISS_PARMETIS
       INTEGER(INTG) :: ncon
       INTEGER(INTG) :: ncommonnodes
       INTEGER(INTG) :: nparts
-      !REAL(SP) :: tpwgts(*)
-      !REAL(SP) :: ubvec(*)
       REAL(DP) :: tpwgts(*)
       REAL(DP) :: ubvec(*)
       INTEGER(INTG) :: options(*)
       INTEGER(INTG) :: edgecut
       INTEGER(INTG) :: part(*)
-      INTEGER(INTG) :: comm      
-    END SUBROUTINE ParMETIS_V3_PartMeshKway
+      INTEGER(INTG) :: comm
+
+      INTEGER(INTG) :: ParMETIS_V3_PartMeshKway
+    END FUNCTION ParMETIS_V3_PartMeshKway
     
   END INTERFACE
 
-  PUBLIC PARMETIS_PARTKWAY,PARMETIS_PARTMESHKWAY
+  PUBLIC ParMETIS_PartKWay
+
+  PUBLIC ParMETIS_PartMeshKWay
   
 CONTAINS
 
@@ -124,92 +126,89 @@ CONTAINS
   !
 
   !>Buffer routine to the ParMetis ParMETIS_V3_PartKway routine.
-  SUBROUTINE PARMETIS_PARTKWAY(VERTEX_DISTANCE,XADJ,ADJNCY,VERTEX_WEIGHT,ADJ_WEIGHT,WEIGHT_FLAG,NUM_FLAG,NCON, &
-    & NUMBER_PARTS,TP_WEIGHTS,UB_VEC,OPTIONS,NUMBER_EDGES_CUT,PARTITION,COMMUNICATOR,ERR,ERROR,*)
+  SUBROUTINE ParMETIS_PartKWay(vertexDistance,xadj,adjncy,vertexWeight,adjWeight,weightFlag,numFlag,nCon, &
+    & numberParts,tpWeights,ubVec,options,numberEdgesCut,partition,communicator,err,error,*)
 
     !Argument Variables
-    INTEGER(INTG), INTENT(IN) :: VERTEX_DISTANCE(:)
-    INTEGER(INTG), INTENT(IN) :: XADJ(:)
-    INTEGER(INTG), INTENT(IN) :: ADJNCY(:)
-    INTEGER(INTG), INTENT(IN) :: VERTEX_WEIGHT(:)
-    INTEGER(INTG), INTENT(IN) :: ADJ_WEIGHT(:)
-    INTEGER(INTG), INTENT(IN) :: WEIGHT_FLAG
-    INTEGER(INTG), INTENT(IN) :: NUM_FLAG
-    INTEGER(INTG), INTENT(IN) :: NCON
-    INTEGER(INTG), INTENT(IN) :: NUMBER_PARTS
-    !REAL(SP), INTENT(IN) :: TP_WEIGHTS(:)
-    !REAL(SP), INTENT(IN) :: UB_VEC(:)
-    REAL(DP), INTENT(IN) :: TP_WEIGHTS(:)
-    REAL(DP), INTENT(IN) :: UB_VEC(:)
-    INTEGER(INTG), INTENT(IN) :: OPTIONS(:)
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_EDGES_CUT
-    INTEGER(INTG), INTENT(OUT) :: PARTITION(:)
-    INTEGER(INTG), INTENT(IN) :: COMMUNICATOR
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(IN) :: vertexDistance(:)
+    INTEGER(INTG), INTENT(IN) :: xadj(:)
+    INTEGER(INTG), INTENT(IN) :: adjncy(:)
+    INTEGER(INTG), INTENT(IN) :: vertexWeight(:)
+    INTEGER(INTG), INTENT(IN) :: adjWeight(:)
+    INTEGER(INTG), INTENT(IN) :: weightFlag
+    INTEGER(INTG), INTENT(IN) :: numFlag
+    INTEGER(INTG), INTENT(IN) :: nCon
+    INTEGER(INTG), INTENT(IN) :: numberParts
+    REAL(DP), INTENT(IN) :: tpWeights(:)
+    REAL(DP), INTENT(IN) :: ubVec(:)
+    INTEGER(INTG), INTENT(IN) :: options(:)
+    INTEGER(INTG), INTENT(OUT) :: numberEdgesCut
+    INTEGER(INTG), INTENT(OUT) :: partition(:)
+    INTEGER(INTG), INTENT(IN) :: communicator
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
+    INTEGER(INTG) :: status
 
-    ENTERS("PARMETIS_PARTKWAY",ERR,ERROR,*999)
+    ENTERS("ParMETIS_PartKWay",err,error,*999)
 
-    CALL ParMETIS_V3_PartKway(VERTEX_DISTANCE,XADJ,ADJNCY,VERTEX_WEIGHT,ADJ_WEIGHT,WEIGHT_FLAG,NUM_FLAG,NCON, &
-      & NUMBER_PARTS,TP_WEIGHTS,UB_VEC,OPTIONS,NUMBER_EDGES_CUT,PARTITION,COMMUNICATOR)
-    IF(ERR/=0) THEN
-      CALL FlagError("ParMetis error in ParMETIS_V3_PartKway",ERR,ERROR,*999)
-    ENDIF
+    status=ParMETIS_V3_PartKway(vertexDistance,xadj,adjncy,vertexWeight,adjWeight,weightFlag,numFlag,nCon, &
+      & numberParts,tpWeights,ubVec,options,numberEdgesCut,partition,communicator)
     
-    EXITS("PARMETIS_PARTKWAY")
+    IF(status/=1) CALL FlagError("ParMetis error in ParMETIS_V3_PartKway",err,error,*999)
+    
+    EXITS("ParMETIS_PartKWay")
     RETURN
-999 ERRORSEXITS("PARMETIS_PARTKWAY",ERR,ERROR)
+999 ERRORSEXITS("ParMETIS_PartKWay",err,error)
     RETURN 1
-  END SUBROUTINE PARMETIS_PARTKWAY
+    
+  END SUBROUTINE ParMETIS_PartKWay
 
   !
   !================================================================================================================================
   !
 
   !>Buffer routine to the ParMetis ParMETIS_V3_PartMeshKway routine.
-  SUBROUTINE PARMETIS_PARTMESHKWAY(ELEMENT_DISTANCE,ELEMENT_PTR,ELEMENT_INDEX,ELEMENT_WEIGHT,WEIGHT_FLAG,NUM_FLAG,NCON, &
-    & NUMBER_COMMON_NODES,NUMBER_PARTS,TP_WEIGHTS,UB_VEC,OPTIONS,NUMBER_EDGES_CUT,PARTITION,COMMUNICATOR,ERR,ERROR,*)
+  SUBROUTINE ParMETIS_PartMeshKWay(elementDistance,elementPtr,elementIndex,elementWeight,weightFlag,numFlag,nCon, &
+    & numberCommonNodes,numberParts,tpWeights,ubVec,options,numberEdgesCut,partition,communicator,err,error,*)
 
     !Argument Variables
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_DISTANCE(:)
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_PTR(:)
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_INDEX(:)
-    INTEGER(INTG), INTENT(IN) :: ELEMENT_WEIGHT(:)
-    INTEGER(INTG), INTENT(IN) :: WEIGHT_FLAG
-    INTEGER(INTG), INTENT(IN) :: NUM_FLAG
-    INTEGER(INTG), INTENT(IN) :: NCON
-    INTEGER(INTG), INTENT(IN) :: NUMBER_COMMON_NODES
-    INTEGER(INTG), INTENT(IN) :: NUMBER_PARTS
-    !REAL(SP), INTENT(IN) :: TP_WEIGHTS(:)
-    !REAL(SP), INTENT(IN) :: UB_VEC(:)
-    REAL(DP), INTENT(IN) :: TP_WEIGHTS(:)
-    REAL(DP), INTENT(IN) :: UB_VEC(:)
-    INTEGER(INTG), INTENT(IN) :: OPTIONS(:)
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_EDGES_CUT
-    INTEGER(INTG), INTENT(OUT) :: PARTITION(:)
-    INTEGER(INTG), INTENT(IN) :: COMMUNICATOR
-    INTEGER(INTG), INTENT(OUT) :: ERR
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR
+    INTEGER(INTG), INTENT(IN) :: elementDistance(:)
+    INTEGER(INTG), INTENT(IN) :: elementPtr(:)
+    INTEGER(INTG), INTENT(IN) :: elementIndex(:)
+    INTEGER(INTG), INTENT(IN) :: elementWeight(:)
+    INTEGER(INTG), INTENT(IN) :: weightFlag
+    INTEGER(INTG), INTENT(IN) :: numFlag
+    INTEGER(INTG), INTENT(IN) :: nCon
+    INTEGER(INTG), INTENT(IN) :: numberCommonNodes
+    INTEGER(INTG), INTENT(IN) :: numberParts
+    REAL(DP), INTENT(IN) :: tpWeights(:)
+    REAL(DP), INTENT(IN) :: ubVec(:)
+    INTEGER(INTG), INTENT(IN) :: options(:)
+    INTEGER(INTG), INTENT(OUT) :: numberEdgesCut
+    INTEGER(INTG), INTENT(OUT) :: partition(:)
+    INTEGER(INTG), INTENT(IN) :: communicator
+    INTEGER(INTG), INTENT(OUT) :: err
+    TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
+    INTEGER(INTG) :: status
 
-    ENTERS("PARMETIS_PARTMESHKWAY",ERR,ERROR,*999)
+    ENTERS("ParMETIS_PartMeshKWay",err,error,*999)
     
-    CALL ParMETIS_V3_PartMeshKway(ELEMENT_DISTANCE,ELEMENT_PTR,ELEMENT_INDEX,ELEMENT_WEIGHT,WEIGHT_FLAG,NUM_FLAG,NCON, &
-      & NUMBER_COMMON_NODES,NUMBER_PARTS,TP_WEIGHTS,UB_VEC,OPTIONS,NUMBER_EDGES_CUT,PARTITION,COMMUNICATOR)
+    status=ParMETIS_V3_PartMeshKway(elementDistance,elementPtr,elementIndex,elementWeight,weightFlag,numflag,nCon, &
+      & numberCommonNodes,numberParts,tpWeights,ubVec,options,numberEdgesCut,partition,communicator)
     
-    IF(ERR/=0) THEN
-      CALL FlagError("ParMetis error in ParMETIS_V3_PartMeshKway",ERR,ERROR,*999)
-    ENDIF
+    IF(status/=1) CALL FlagError("ParMetis error in ParMETIS_V3_PartMeshKway",ERR,ERROR,*999)
     
-    EXITS("PARMETIS_PARTMESHKWAY")
+    EXITS("ParMETIS_PartMeshKWay")
     RETURN
-999 ERRORSEXITS("PARMETIS_PARTMESHKWAY",ERR,ERROR)
+999 ERRORSEXITS("ParMETIS_PartMeshKWay",err,error)
     RETURN 1
-  END SUBROUTINE PARMETIS_PARTMESHKWAY
+    
+  END SUBROUTINE ParMETIS_PartMeshKWay
 
   !
   !================================================================================================================================
   !
     
-END MODULE CMISS_PARMETIS
+END MODULE CmissParMETIS

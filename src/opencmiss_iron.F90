@@ -5694,11 +5694,11 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Decomposition_DestroyObj
  END INTERFACE cmfe_Decomposition_Destroy
 
- !>Calculates the element domains for the decomposition of a mesh.
- INTERFACE cmfe_Decomposition_ElementDomainCalculate
-   MODULE PROCEDURE cmfe_Decomposition_ElementDomainCalculateNumber
-   MODULE PROCEDURE cmfe_Decomposition_ElementDomainCalculateObj
- END INTERFACE cmfe_Decomposition_ElementDomainCalculate
+! !>Calculates the element domains for the decomposition of a mesh.
+! INTERFACE cmfe_Decomposition_ElementDomainCalculate
+!   MODULE PROCEDURE cmfe_Decomposition_ElementDomainCalculateNumber
+!   MODULE PROCEDURE cmfe_Decomposition_ElementDomainCalculateObj
+! END INTERFACE cmfe_Decomposition_ElementDomainCalculate
 
  !>Returns the domain for a given element in a decomposition of a mesh.
  INTERFACE cmfe_Decomposition_ElementDomainGet
@@ -5806,7 +5806,7 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_Decomposition_Destroy
 
- PUBLIC cmfe_Decomposition_ElementDomainCalculate
+! PUBLIC cmfe_Decomposition_ElementDomainCalculate
 
  PUBLIC cmfe_Decomposition_ElementDomainGet,cmfe_Decomposition_ElementDomainSet
 
@@ -48089,72 +48089,72 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates the element domains for a decomposition identified by a user number.
-  SUBROUTINE cmfe_Decomposition_ElementDomainCalculateNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
-    & decompositionUserNumber,err)
-    !DLLEXPORT(cmfe_Decomposition_ElementDomainCalculateNumber)
+!   !>Calculates the element domains for a decomposition identified by a user number.
+!   SUBROUTINE cmfe_Decomposition_ElementDomainCalculateNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+!     & decompositionUserNumber,err)
+!     !DLLEXPORT(cmfe_Decomposition_ElementDomainCalculateNumber)
 
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to calculate the element domains for.
-    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to calculate the element domains for.
-    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to calculate the element domains for.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-    TYPE(ContextType), POINTER :: context
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(MeshType), POINTER :: mesh
-    TYPE(RegionType), POINTER :: region
-    TYPE(RegionsType), POINTER :: regions
+!     !Argument variables
+!     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+!     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to calculate the element domains for.
+!     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to calculate the element domains for.
+!     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to calculate the element domains for.
+!     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+!     !Local variables
+!     TYPE(ContextType), POINTER :: context
+!     TYPE(DecompositionType), POINTER :: decomposition
+!     TYPE(MeshType), POINTER :: mesh
+!     TYPE(RegionType), POINTER :: region
+!     TYPE(RegionsType), POINTER :: regions
 
-    ENTERS("cmfe_Decomposition_ElementDomainCalculateNumber",err,error,*999)
+!     ENTERS("cmfe_Decomposition_ElementDomainCalculateNumber",err,error,*999)
 
-    NULLIFY(context)
-    NULLIFY(regions)
-    NULLIFY(region)
-    NULLIFY(mesh)
-    NULLIFY(decomposition)
-    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
-    CALL Context_RegionsGet(context,regions,err,error,*999)
-    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
-    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL Decomposition_ElementDomainCalculate(decomposition,err,error,*999)
+!     NULLIFY(context)
+!     NULLIFY(regions)
+!     NULLIFY(region)
+!     NULLIFY(mesh)
+!     NULLIFY(decomposition)
+!     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+!     CALL Context_RegionsGet(context,regions,err,error,*999)
+!     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+!     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+!     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+!     CALL Decomposition_ElementDomainCalculate(decomposition,err,error,*999)
 
-    EXITS("cmfe_Decomposition_ElementDomainCalculateNumber")
-    RETURN
-999 ERRORS("cmfe_Decomposition_ElementDomainCalculateNumber",err,error)
-    EXITS("cmfe_Decomposition_ElementDomainCalculateNumber")
-    CALL cmfe_HandleError(err,error)
-    RETURN
+!     EXITS("cmfe_Decomposition_ElementDomainCalculateNumber")
+!     RETURN
+! 999 ERRORS("cmfe_Decomposition_ElementDomainCalculateNumber",err,error)
+!     EXITS("cmfe_Decomposition_ElementDomainCalculateNumber")
+!     CALL cmfe_HandleError(err,error)
+!     RETURN
 
-  END SUBROUTINE cmfe_Decomposition_ElementDomainCalculateNumber
+!   END SUBROUTINE cmfe_Decomposition_ElementDomainCalculateNumber
 
   !
   !================================================================================================================================
   !
 
-  !>Calculates the element domains for a decomposition identified by an object.
-  SUBROUTINE cmfe_Decomposition_ElementDomainCalculateObj(decomposition,err)
-    !DLLEXPORT(cmfe_Decomposition_ElementDomainCalculateObj)
+!   !>Calculates the element domains for a decomposition identified by an object.
+!   SUBROUTINE cmfe_Decomposition_ElementDomainCalculateObj(decomposition,err)
+!     !DLLEXPORT(cmfe_Decomposition_ElementDomainCalculateObj)
 
-    !Argument variables
-    TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to calcualte the element domains for.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
+!     !Argument variables
+!     TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to calcualte the element domains for.
+!     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+!     !Local variables
 
-    ENTERS("cmfe_Decomposition_ElementDomainCalculateObj",err,error,*999)
+!     ENTERS("cmfe_Decomposition_ElementDomainCalculateObj",err,error,*999)
 
-    CALL Decomposition_ElementDomainCalculate(decomposition%decomposition,err,error,*999)
+!     CALL Decomposition_ElementDomainCalculate(decomposition%decomposition,err,error,*999)
 
-    EXITS("cmfe_Decomposition_ElementDomainCalculateObj")
-    RETURN
-999 ERRORS("cmfe_Decomposition_ElementDomainCalculateObj",err,error)
-    EXITS("cmfe_Decomposition_ElementDomainCalculateObj")
-    CALL cmfe_HandleError(err,error)
-    RETURN
+!     EXITS("cmfe_Decomposition_ElementDomainCalculateObj")
+!     RETURN
+! 999 ERRORS("cmfe_Decomposition_ElementDomainCalculateObj",err,error)
+!     EXITS("cmfe_Decomposition_ElementDomainCalculateObj")
+!     CALL cmfe_HandleError(err,error)
+!     RETURN
 
-  END SUBROUTINE cmfe_Decomposition_ElementDomainCalculateObj
+!   END SUBROUTINE cmfe_Decomposition_ElementDomainCalculateObj
 
   !
   !================================================================================================================================

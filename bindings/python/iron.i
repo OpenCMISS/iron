@@ -205,7 +205,8 @@
   len = PyObject_Length($input);
   for (i =0; i < len; i++) {
     o = PySequence_GetItem($input,i);
-    if (!PyString_Check(o)) {
+%#if PY_VERSION_HEX < 0x03000000
+    if (!PyString_Check(o))	{
       Py_XDECREF(o);
       PyErr_SetString(PyExc_ValueError,"Expected a sequence of strings");
       return NULL;
@@ -213,6 +214,22 @@
     if (PyString_Size(o) > max_strlen) {
       max_strlen = PyString_Size(o);
     }
+%#else
+    if (!PyUnicode_Check(o))	{
+      Py_XDECREF(o);
+      PyErr_SetString(PyExc_ValueError,"Expected a sequence of strings");
+      return NULL;
+    }
+%#if PY_VERSION_HEX < 0x03030000
+    if (PyUnicode_GetSize(o) > max_strlen) {
+      max_strlen = PyUnicode_GetSize(o);
+    }
+%#else
+    if (PyUnicode_GetLength(o) > max_strlen) {
+      max_strlen = PyUnicode_GetLength(o);
+    }
+%#endif
+%#endif
     Py_DECREF(o);
   }
   max_strlen = max_strlen + 1; /* Null terminator */
@@ -223,7 +240,15 @@
   } else {
     for (i=0; i < len; i++) {
       o = PySequence_GetItem($input,i);
+%#if PY_VERSION_HEX < 0x03000000
       strncpy($3+i*max_strlen, PyString_AsString(o), PyString_Size(o)+1);
+%#else
+%#if PY_VERSION_HEX < 0x03030000
+      strncpy($3+i*max_strlen, PyUnicode_AsASCIIString(o), PyUnicode_GetSize(o)+1);
+%#else
+      strncpy($3+i*max_strlen, PyUnicode_AsASCIIString(o), PyUnicode_GetLength(o)+1);
+%#endif
+%#endif
       Py_DECREF(o);
     }
   }
