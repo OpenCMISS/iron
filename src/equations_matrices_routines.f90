@@ -204,6 +204,8 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EquationsMatrices_JacobianTypesSet
 
+  PUBLIC EquationsMatrices_JacobianFiniteDifferenceStepSizeSet
+
   PUBLIC EquationsMatrices_LinearStorageTypeSet
 
   PUBLIC EquationsMatrices_LinearStructureTypeSet
@@ -351,6 +353,7 @@ CONTAINS
     CALL EquationsMatrices_ElementMatrixInitialise(nonlinearMatrices%jacobians(matrixNumber)%ptr%elementJacobian,err,error,*999)
     CALL EquationsMatrices_NodalMatrixInitialise(nonlinearMatrices%jacobians(matrixNumber)%ptr%nodalJacobian,err,error,*999)
     nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobianCalculationType=EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobianFiniteDifferenceStepSize=1.0E-6_DP
     
     EXITS("EquationsMatrices_JacobianInitialise")
     RETURN
@@ -3000,6 +3003,60 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsMatrices_JacobianTypesSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the finite difference step size used for calculating the Jacobian
+  SUBROUTINE EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,jacobianStepSizes,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices to set the Jacobian finite difference step sizes for.
+    REAL(DP), INTENT(IN) :: jacobianStepSizes(:) !<jacobianStepSizes(matrixIdx). The Jacobian finite difference step sizes for the matrixIdx'th Jacobian matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    INTEGER(INTG) :: matrixIdx,numberOfjacobians,jacobianStepSize
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
+    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*999)
+
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    numberOfJacobians=SIZE(jacobianStepSizes,1)
+    IF(numberOfJacobians/=nonlinearMatrices%numberOfJacobians) THEN
+      localError="Invalid number of Jacobian step sizes. The number of steps sizes "// &
+        & TRIM(NumberToVString(numberOfJacobians,"*",err,error))//" should be "// &
+        & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    DO matrixIdx=1,numberOfJacobians
+      jacobianStepSize=jacobianStepSizes(matrixIdx)
+      NULLIFY(jacobianMatrix)
+      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+      SELECT CASE(jacobianMatrix%jacobianCalculationType)
+      CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
+        jacobianMatrix%jacobianFiniteDifferenceStepSize=jacobianStepSize
+      CASE DEFAULT
+        localError="The Jacobian calculation type of "//TRIM(NumberToVString(jacobianMatrix%jacobianCalculationType,"*", &
+          & err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
+
+    EXITS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet")
+    RETURN
+999 ERRORSEXITS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet",err,error)
+    RETURN 1
+
+  END SUBROUTINE EquationsMatrices_JacobianFiniteDifferenceStepSizeSet
 
   !
   !================================================================================================================================

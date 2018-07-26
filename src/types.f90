@@ -1518,6 +1518,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(ElementMatrixType) :: elementJacobian !<The element matrix for this Jacobian matrix. This is not used if the Jacobian is not supplied.
     TYPE(NodalMatrixType) :: nodalJacobian !<The nodal matrix for this Jacobian matrix. This is not used if the Jacobian is not supplied.
     INTEGER(INTG) :: jacobianCalculationType !<The calculation type (analytic of finite difference) of the Jacobian.
+    REAL(DP) :: jacobianFiniteDifferenceStepSize !<The finite difference step size used for calculating the Jacobian.
   END TYPE EquationsJacobianType
 
   !>A buffer type to allow for an array of pointers to a EquationsJacobianType \see Types::EquationsJacobianType.
