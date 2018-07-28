@@ -2290,8 +2290,8 @@ CONTAINS
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
                 ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
+                !CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
+                !  & err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
@@ -2330,8 +2330,8 @@ CONTAINS
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
                 ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
+                !CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
+                !  & err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
@@ -2418,7 +2418,7 @@ CONTAINS
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
                 ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED],err,error,*999)
+                !CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED],err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE, &
@@ -2496,8 +2496,8 @@ CONTAINS
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
                 ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
+                !CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
+                !  & err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &

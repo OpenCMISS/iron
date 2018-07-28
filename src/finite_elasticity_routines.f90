@@ -10525,7 +10525,9 @@ CONTAINS
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
               !Set Jacobian matrices calculation type to default finite difference. 
-              CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED], &
+              !CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED], &
+              !  & err,error,*999)
+              CALL EquationsMatrices_JacobianTypesSet(equations_set%equations,EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED, &
                 & err,error,*999)
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)

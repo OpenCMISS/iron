@@ -2943,8 +2943,10 @@ CONTAINS
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               ! Use the analytic Jacobian calculation
-              CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                & err,error,*999)
+              !CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
+              ! & err,error,*999)
+              !CALL EquationsMatrices_JacobianTypesSet(equations_set%equations,EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED, &
+              !  & err,error,*999)
               !Set up matrix storage and structure
               IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                 !Set up lumping

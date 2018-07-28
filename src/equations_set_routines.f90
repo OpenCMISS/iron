@@ -2759,7 +2759,8 @@ CONTAINS
       & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
 
     DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
-      SELECT CASE(nonlinearMatrices%jacobians(matrixIdx)%ptr%jacobianCalculationType)
+      !SELECT CASE(nonlinearMatrices%jacobians(matrixIdx)%ptr%jacobianCalculationType)
+      SELECT CASE(equationsSet%equations%jacobianCalculationType)
       CASE(EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
         ! None of these routines currently support calculating off diagonal terms for coupled problems,
         ! but when one does we will have to pass through the matrixIdx parameter
@@ -2788,9 +2789,10 @@ CONTAINS
       CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
         CALL EquationsSet_FiniteElementJacobianEvaluateFD(equationsSet,elementNumber,matrixIdx,err,error,*999)
       CASE DEFAULT
-        localError="The Jacobian calculation type of "//TRIM(NumberToVString(nonlinearMatrices%jacobians(matrixIdx)%ptr% &
-          & jacobianCalculationType,"*",err,error))//" is not valid for matrix index "// &
-          & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+!        localError="The Jacobian calculation type of "//TRIM(NumberToVString(nonlinearMatrices%jacobians(matrixIdx)%ptr% &
+!          & jacobianCalculationType,"*",err,error))//" is not valid for matrix index "// &
+!          & TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+        localError="The Jacobian calculation type is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     END DO !matrixIdx
@@ -2901,7 +2903,8 @@ CONTAINS
         & CALL FlagError("Element matrix number of rows does not match element residual vector size.",err,error,*999)
       ! determine step size
       CALL DistributedVector_L2Norm(parameters,delta,err,error,*999)
-      delta=(1.0_DP+delta)*1.0E-6_DP
+      !delta=(1.0_DP+delta)*1.0E-6_DP
+      delta=(1.0_DP+delta)*equationsSet%equations%jacobianFiniteDifferenceStepSize
       ! the actual finite differencing algorithm is about 4 lines but since the parameters are all
       ! distributed out, have to use proper field accessing routines..
       ! so let's just loop over component, node/el, derivative
@@ -6757,7 +6760,8 @@ CONTAINS
       & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
     
     DO matrixIdx=1,nonlinearMatrices%numberOfJacobians
-      SELECT CASE(nonlinearMatrices%jacobians(matrixIdx)%ptr%jacobianCalculationType)
+      !SELECT CASE(nonlinearMatrices%jacobians(matrixIdx)%ptr%jacobianCalculationType)
+      SELECT CASE(equationsSet%equations%jacobianCalculationType)
       CASE(EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
         ! None of these routines currently support calculating off diagonal terms for coupled problems,
         ! but when one does we will have to pass through the matrixIdx parameter
@@ -6785,9 +6789,10 @@ CONTAINS
       CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
-        localError="The Jacobian calculation type of "// &
-          & TRIM(NumberToVString(nonlinearMatrices%jacobians(matrixIdx)%ptr%jacobianCalculationType,"*",err,error))// &
-          & " is not valid for matrix index number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+!        localError="The Jacobian calculation type of "// &
+!          & TRIM(NumberToVString(nonlinearMatrices%jacobians(matrixIdx)%ptr%jacobianCalculationType,"*",err,error))// &
+!          & " is not valid for matrix index number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//"."
+        localError="The Jacobian calculation type is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     END DO !matrixIdx
