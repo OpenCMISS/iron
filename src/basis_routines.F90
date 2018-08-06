@@ -7099,7 +7099,7 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         ENDIF
         lC=1.0_DP/3.0_DP
-        wC=-3.0_DP/4.0
+        wC=-3.0_DP/4.0_DP
         alpha1=2.0_DP/5.0_DP
         wAlpha1=25.0_DP/48.0_DP
         l1Alpha1=(1.0_DP+2.0_DP*alpha1)/3.0_DP
