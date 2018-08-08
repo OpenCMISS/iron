@@ -605,7 +605,7 @@ CONTAINS
     decomposition=>field%decomposition
     !Check field decomposition is associated.
     IF(.NOT.ASSOCIATED(decomposition)) THEN
-      localError="Field decomposition is not associated for decomposition "// &
+      localError="Field decomposition is not associated for field number "// &
         & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -636,12 +636,7 @@ CONTAINS
 
     IF(ASSOCIATED(geometricField)) CALL FlagError("Geometric field is already associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
-    IF(.NOT.field%fieldFinished) THEN
-      localError="Field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
-        & " has not been finished."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
+     
     geometricField=>field%geometricField
     IF(.NOT.ASSOCIATED(geometricField)) THEN
       localError="The geometric field for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &

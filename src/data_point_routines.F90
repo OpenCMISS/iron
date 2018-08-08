@@ -99,9 +99,11 @@ MODULE DataPointRoutines
 
   PUBLIC DataPoint_CheckExists
 
-  PUBLIC DataPoints_CreateFinish,DataPoints_CreateStart,DataPoints_Destroy
+  PUBLIC DataPoints_CreateFinish,DataPoints_CreateStart
+
+  PUBLIC DataPoints_Destroy
   
-  PUBLIC DataPoints_DataProjectionGet,DataPoints_DataProjectionGlobalNumberGet
+  PUBLIC DataPoints_DataProjectionGlobalNumberGet
 
   PUBLIC DataPoints_GlobalNumberGet
 
@@ -134,7 +136,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeNodeType), POINTER :: treeNode
    
     ENTERS("DataPoint_CheckExists",err,error,*999)
 
@@ -1105,42 +1107,6 @@ CONTAINS
   !================================================================================================================================
   !  
 
-  !>Gets the data projection identified by a given user number. 
-  SUBROUTINE DataPoints_DataProjectionGet(dataPoints,userNumber,dataProjection,err,error,*)
-
-    !Argument variables
-    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the data projection for
-    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the data projection for
-    TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, a pointer to the data projection for the data points. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("DataPoints_DataProjectionGet",err,error,*998)
-    
-    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
-    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
-    
-    CALL DataProjection_UserNumberFind(dataPoints,userNumber,dataProjection,err,error,*999)
-    IF(.NOT.ASSOCIATED(dataProjection)) THEN
-      localError="A data projection with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
-        & " does not exist."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
-    EXITS("DataPoints_DataProjectionGet")
-    RETURN
-999 NULLIFY(dataProjection)   
-998 ERRORSEXITS("DataPoints_DataProjectionGet",err,error)    
-    RETURN 1
-   
-  END SUBROUTINE DataPoints_DataProjectionGet
-
-  !
-  !================================================================================================================================
-  !  
-
   !>Gets the user number for a data point identified by a given global number. \todo Is this routine necessary?
   SUBROUTINE DataPoints_DataProjectionGlobalNumberGet(dataPoints,userNumber,globalNumber,err,error,*)
 
@@ -1156,7 +1122,7 @@ CONTAINS
     ENTERS("DataPoints_DataProjectionGlobalNumberGet",err,error,*999)
 
     CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,userNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,userNumber,dataProjection,err,error,*999)
     globalNumber=dataProjection%globalNumber
     
     EXITS("DataPoints_DataProjectionGlobalNumberGet")

@@ -53,7 +53,7 @@ MODULE LAPLACE_EQUATIONS_ROUTINES
   USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES  
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines

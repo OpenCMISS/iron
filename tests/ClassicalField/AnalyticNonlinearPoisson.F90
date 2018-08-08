@@ -76,13 +76,14 @@ PROGRAM NonlinearPoissonExample
   INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=4
   INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=5
   INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=6
-  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=7
-  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=8
-  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumber=9
-  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumber=10
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=11
-  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=12
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=13
+  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=7
+  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=8
+  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=9
+  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumber=10
+  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumber=11
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=12
+  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=13
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=14
 
   !Program variables
 
@@ -97,13 +98,15 @@ PROGRAM NonlinearPoissonExample
   !CMISS variables
 
   TYPE(cmfe_BasisType) :: Basis
+  TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
   TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
   TYPE(cmfe_ContextType) :: context
   TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem,WorldCoordinateSystem
   TYPE(cmfe_DecompositionType) :: Decomposition
+  TYPE(cmfe_DecomposerType) :: Decomposer
   TYPE(cmfe_EquationsType) :: Equations
   TYPE(cmfe_EquationsSetType) :: EquationsSet
-  TYPE(cmfe_FieldType) :: GeometricField,DependentField,MaterialsField,AnalyticField
+  TYPE(cmfe_FieldType) :: EquationsSetField,GeometricField,DependentField,MaterialsField,AnalyticField
   TYPE(cmfe_FieldsType) :: Fields
   TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
   TYPE(cmfe_MeshType) :: Mesh
@@ -111,12 +114,11 @@ PROGRAM NonlinearPoissonExample
   TYPE(cmfe_RegionType) :: Region,WorldRegion
   TYPE(cmfe_SolverType) :: Solver,LinearSolver
   TYPE(cmfe_SolverEquationsType) :: SolverEquations
-  TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
-  TYPE(cmfe_FieldType) :: EquationsSetField
+  TYPE(cmfe_WorkGroupType) :: worldWorkGroup
 
   !Generic CMISS variables
 
-  INTEGER(CMISSIntg) :: EquationsSetIndex
+  INTEGER(CMISSIntg) :: DecompositionIndex,EquationsSetIndex
   INTEGER(CMISSIntg) :: Err
   INTEGER(CMISSIntg) :: NumberOfComputationNodes,ComputationNodeNumber
 
@@ -187,8 +189,11 @@ PROGRAM NonlinearPoissonExample
   !Get the computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
   CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
-  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
-  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
+  
+  CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+  CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
+  CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
 
   !Start the creation of a new RC coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
@@ -273,12 +278,17 @@ PROGRAM NonlinearPoissonExample
   !Create a decomposition
   CALL cmfe_Decomposition_Initialise(Decomposition,Err)
   CALL cmfe_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
-  !Set the decomposition to be a general decomposition with the specified number of domains
-  CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
-  CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfComputationNodes,Err)
   !Finish the decomposition
   CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
 
+  !Decompose
+  CALL cmfe_Decomposer_Initialise(decomposer,err)
+  CALL cmfe_Decomposer_CreateStart(decomposerUserNumber,region,worldWorkGroup,decomposer,err)
+  !Add in the decomposition
+  CALL cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
+  !Finish the decomposer
+  CALL cmfe_Decomposer_CreateFinish(decomposer,err)
+  
   !Start to create a default (geometric) field on the region
   CALL cmfe_Field_Initialise(GeometricField,Err)
   CALL cmfe_Field_CreateStart(GeometricFieldUserNumber,Region,GeometricField,Err)

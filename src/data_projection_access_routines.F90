@@ -94,6 +94,8 @@ MODULE DataProjectionAccessRoutines
 
   PUBLIC DataProjection_ResultRMSErrorGet
 
+  PUBLIC DataProjection_UserNumberFind
+  
 CONTAINS
 
   !
@@ -402,6 +404,57 @@ CONTAINS
 
   END SUBROUTINE DataProjection_ResultRMSErrorGet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds an returns a pointer to a data projection identified by a user number.
+  SUBROUTINE DataProjection_UserNumberFind(dataPoints,userNumber,dataProjection,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to find the user number for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find
+    TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, the pointer to the data projection with the specified user number. If no data projection with the specified user number exists the pointer is returned NULL. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: projectionIdx
+    TYPE(DataProjectionType), POINTER :: listDataProjection
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_UserNumberFind",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(dataPoints)) CALL FlagError("Data points is not associated.",err,error,*999)
+    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dataPoints%dataProjections)) &
+      & CALL FlagError("Data points data projections is not associated.",err,error,*999)
+    
+    NULLIFY(dataProjection)
+    IF(ALLOCATED(dataPoints%dataProjections%dataProjections)) THEN
+      projectionIdx=1
+      DO WHILE(projectionIdx<=dataPoints%dataProjections%numberOfDataProjections)
+        listDataProjection=>dataPoints%dataProjections%dataProjections(projectionIdx)%ptr
+        IF(ASSOCIATED(listDataProjection)) THEN
+          IF(listDataProjection%userNumber==userNumber) THEN
+            dataProjection=>dataPoints%dataProjections%dataProjections(projectionIdx)%ptr
+            EXIT
+          ENDIF
+        ELSE
+          localError="The data points data projections is not associated for projection index "// &
+            & TRIM(NumberToVString(projectionIdx,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO
+    ENDIF
+     
+    EXITS("DataProjection_UserNumberFind")
+    RETURN
+999 NULLIFY(dataProjection)
+998 ERRORSEXITS("DataProjection_UserNumberFind",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataProjection_UserNumberFind
+  
   !
   !================================================================================================================================
   !

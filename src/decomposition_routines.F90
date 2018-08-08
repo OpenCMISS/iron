@@ -54,7 +54,7 @@ MODULE DecompositionRoutines
   USE Constants
   USE ContextAccessRoutines
   USE DecompositionAccessRoutines
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE INPUT_OUTPUT
   USE InterfaceAccessRoutines
   USE ISO_VARYING_STRING
@@ -93,6 +93,8 @@ MODULE DecompositionRoutines
 
   PUBLIC Decomposer_Destroy
 
+  PUBLIC Decomposer_OutputTypeGet,Decomposer_OutputTypeSet
+
   PUBLIC Decomposers_Initialise,Decomposers_Finalise
 
   PUBLIC Decomposition_CalculateLinesSet,Decomposition_CalculateFacesSet
@@ -108,8 +110,6 @@ MODULE DecompositionRoutines
   PUBLIC Decomposition_MeshComponentNumberGet,Decomposition_MeshComponentNumberSet
   
   PUBLIC Decomposition_NodeDomainGet
-
-  PUBLIC DECOMPOSITION_NUMBER_OF_DOMAINS_GET,DECOMPOSITION_NUMBER_OF_DOMAINS_SET
 
   PUBLIC Decomposition_TypeGet,Decomposition_TypeSet
   
@@ -285,6 +285,7 @@ CONTAINS
 
     CALL Decomposer_AssertNotFinished(decomposer,err,error,*999)
     CALL Decomposition_AssertIsFinished(decomposition,err,error,*999)
+    CALL Decomposition_AssertNotDecomposed(decomposition,err,error,*999)
 
     NULLIFY(decomposerRegion)
     CALL Decomposer_RegionGet(decomposer,decomposerRegion,err,error,*999)
@@ -296,11 +297,6 @@ CONTAINS
         & " is in region number "//TRIM(NumberToVString(decompositionRegion%userNumber,"*",err,error))// &
         & " which is not a sub-region of region number "//TRIM(NumberToVString(decomposerRegion%userNumber,"*",err,error))// &
         & " which has decomposer number "//TRIM(NumberToVString(decomposer%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(ASSOCIATED(decomposition%decomposer)) THEN
-      localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
-        & " already has an decomposer associated."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     !Get the decomposer mesh
@@ -374,7 +370,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculate the element domain for a decomposer graph root node.
+  !>Calculate the element domain for a decomposer graph root node. To find the partition we form a dual graph of all the meshes contained in the decomposer graph. The meshes are linked using any interfaces. To ensure that elements on either side of an interface are on the same rank we take the combined super graph and then coarsen the graph by collapsing the vertices across the interface into a super vertex. 
   SUBROUTINE Decomposer_ElementDomainCalculate(rootNode,err,error,*)
 
     !Argument variables
@@ -382,15 +378,23 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: adjacentElementIdx,adjacentElementNodeNumber,adjacentElementNumber,computationNodeIdx,decompositionIdx, &
-      & edgeNumber,elementIdx,elementNodeNumber,elementRankNumber,elementStart,elementStop,graphElement,graphNodeElement, &
-      & groupCommunicator,interfaceElementIdx,linkedElement,linkedNodeElement,maxNumberOfElementsPerNode,mpiIError, &
-      & myElementStart,myElementStop,myNumberOfElements,myComputationNodeNumber,myTotalNumberOfEdges,numberFlag, &
-      & numberOfComputationNodes,numberOfConstraints,numberOfEdges,numberOfElements,numberOfGraphNodes,numberOfMeshElements, &
-      & numberOfNodeElements,parmetisOptions(0:2),randomSeedsSize,sumEdges,vertexWeights(1),weightFlag,xicIdx
-    INTEGER(INTG), ALLOCATABLE :: adjacency(:),adjacencyWeights(:),displacements(:),elementDomain(:),elementOffset(:), &
-      & myNumberOfEdges(:),randomSeeds(:),receiveCounts(:),vertexDistance(:),xAdjacency(:)
-    REAL(DP) :: numberOfElementsPerNode,ubVec(1)
+    INTEGER(INTG) :: adjacentElementIdx,adjacentElementNodeNumber,adjacentElementNumber,adjacencyWeights(1), &
+      & adjacentVertexNumber,computationNodeIdx,decompositionIdx,domainNumber, &
+      & edgeNumber,elementIdx,elementNodeNumber,elementNumber,elementRankNumber,elementStart,elementStop,graphElement, &
+      & graphNodeElement,groupCommunicator,insertStatus,interfaceElementIdx,linkedElement,linkedNodeElement, &
+      & maxNumberOfElementsPerNode,maxNumberOfVerticesPerNode,mpiIError, &
+      & myElementStart,myElementStop,myNumberOfElements,myComputationNodeNumber,myTotalNumberOfEdges,myVertexStart, &
+      & myVertexStop,myNumberOfVertices,numberFlag, &
+      & numberOfComputationNodes,numberOfConstraints,numberOfEdges,numberOfGraphNodes,numberOfMeshElements, &
+      & numberOfNodes,numberOfNodeElements,numberOfNodeVertices,numberOfVertices, &
+      & oldSuperVertexNumber,parmetisOptions(0:2),randomSeedsSize,sumEdges,superVertexNumber,totalNumberOfElements, &
+      & totalNumberOfVertices,vertexIdx,vertexNumber,vertexStart,vertexStop,vertexRankNumber,weightFlag,xicIdx
+    INTEGER(INTG), ALLOCATABLE :: adjacency(:),elementCounts(:),elementDisplacements(:),elementOffset(:),element2VertexMap(:), &
+      & elementStarts(:),elementStops(:),numberOfElements(:),myNumberOfEdges(:),vertexDomain(:),numberOfSuperVertices(:), &
+      & randomSeeds(:),elementReceiveCounts(:),vertexDisplacements(:),vertexDistance(:),vertexReceiveCounts(:), &
+      & vertexWeights(:),xAdjacency(:)
+    INTEGER(INTG), POINTER :: vertex2ElementMap(:,:)
+    REAL(DP) :: numberOfElementsPerNode,numberOfVerticesPerNode,ubVec(1)
     REAL(DP), ALLOCATABLE :: tpwgts(:)
     TYPE(ContextType), POINTER :: context
     TYPE(DecompositionType), POINTER :: decomposition
@@ -402,6 +406,8 @@ CONTAINS
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
+    TYPE(TreeType), POINTER :: superNodeTree,vertex2ElementTree
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Decomposer_ElementDomainCalculate",err,error,*999)
 
@@ -416,11 +422,11 @@ CONTAINS
     CALL WorkGroup_GroupCommunicatorGet(decomposer%workGroup,groupCommunicator,err,error,*999)
     CALL WorkGroup_NumberOfGroupNodesGet(decomposer%workGroup,numberOfComputationNodes,err,error,*999)
     CALL WorkGroup_GroupNodeNumberGet(decomposer%workGroup,myComputationNodeNumber,err,error,*999)
+    NULLIFY(context)
+    CALL WorkGroup_ContextGet(decomposer%workGroup,context,err,error,*999)
 
-    !Calculate the number of elements in the combined decomposer graph. The number of decompositions will be the maximum number in the graph.
-    numberOfGraphNodes=0
-    numberOfEdges=0
-    numberOfElements=0
+    !Calculate the total number of elements in the combined decomposer graph. The number of decompositions will be the maximum number in the graph.
+    totalNumberOfElements=0
     graphNode=>rootNode
     NULLIFY(graphNode%previousNode)
     graphNode%currentLinkIndex=0
@@ -428,14 +434,13 @@ CONTAINS
       graphNode%currentLinkIndex=graphNode%currentLinkIndex+1
       IF(graphNode%currentLinkIndex == 1) THEN
         !Process the number of elements in this graph node
-        numberOfGraphNodes=numberOfGraphNodes+1
-        graphNode%elementOffset=numberOfElements
+        graphNode%elementOffset=totalNumberOfElements
         NULLIFY(decomposition)
         CALL DecomposerGraphNode_DecompositionGet(graphNode,decomposition,err,error,*999)
         NULLIFY(mesh)
         CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
         CALL Mesh_NumberOfElementsGet(mesh,numberOfMeshElements,err,error,*999)
-        numberOfElements=numberOfElements+numberOfMeshElements
+        totalNumberOfElements=totalNumberOfElements+numberOfMeshElements
       ENDIF
       !Now process any graph links
       IF(graphNode%currentLinkIndex<=graphNode%numberOfGraphLinks) THEN
@@ -452,77 +457,56 @@ CONTAINS
       !If we have processed all the links then fall back to the previous node
       graphNode=>graphNode%previousNode
     ENDDO graphNodeLoop
-    numberOfElementsPerNode=REAL(numberOfElements,DP)/REAL(numberOfComputationNodes,DP)
-      
+    numberOfElementsPerNode=REAL(totalNumberOfElements,DP)/REAL(numberOfComputationNodes,DP)
+
+    !For now use the element2vertexMap and the inverse vertex2elementMap. These are both large global sized arrays and they will need to be replaced with a local size array. Maybe they can be trees so that only the super vertices are included and then search the tree to see if it is a super vertex or not. 
+    ALLOCATE(element2VertexMap(totalNumberOfElements),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element to node map.",err,error,*999)
+    element2VertexMap=0
+
+    !Work out what elements this rank will process for the distributed graph.
+    ALLOCATE(elementStarts(0:numberOfComputationNodes-1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element starts.",err,error,*999)
+    ALLOCATE(elementStops(0:numberOfComputationNodes-1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element stops.",err,error,*999)
+    ALLOCATE(numberOfElements(0:numberOfComputationNodes-1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate number of elements.",err,error,*999)        
+    ALLOCATE(elementReceiveCounts(0:numberOfComputationNodes-1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate recieve counts.",err,error,*999)
+    ALLOCATE(elementDisplacements(0:numberOfComputationNodes-1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate displacements.",err,error,*999)
     elementStart=1
     elementStop=0
+    numberOfElements=0
     maxNumberOfElementsPerNode=-1
-    ALLOCATE(receiveCounts(0:numberOfComputationNodes-1),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate recieve counts.",err,error,*999)
-    ALLOCATE(displacements(0:numberOfComputationNodes-1),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate displacements.",err,error,*999)
-    ALLOCATE(vertexDistance(0:numberOfComputationNodes),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate vtxdist.",err,error,*999)
-    vertexDistance(0)=0
+    elementDisplacements(0)=0
     DO computationNodeIdx=0,numberOfComputationNodes-1
       elementStart=elementStop+1
       IF(computationNodeIdx==numberOfComputationNodes-1) THEN
-        elementStop=numberOfElements
+        elementStop=totalNumberOfElements
       ELSE
         elementStop=elementStart+NINT(numberOfElementsPerNode,INTG)-1
       ENDIF
-      IF((numberOfComputationNodes-1-computationNodeIdx)>(numberOfElements-elementStop)) &
-        & elementStop=numberOfElements-(numberOfComputationNodes-1-computationNodeIdx)
-      IF(elementStart>numberOfElements) elementStart=numberOfElements
-      IF(elementStop>numberOfElements) elementStop=numberOfElements
-      displacements(computationNodeIdx)=elementStart-1
-      vertexDistance(computationNodeIdx+1)=elementStop !C numbering
+      IF((numberOfComputationNodes-1-computationNodeIdx)>(totalNumberOfElements-elementStop)) &
+        & elementStop=totalNumberOfElements-(numberOfComputationNodes-1-computationNodeIdx)
+      IF(elementStart>totalNumberOfElements) elementStart=totalNumberOfElements
+      IF(elementStop>totalNumberOfElements) elementStop=totalNumberOfElements
+      elementDisplacements(computationNodeIdx)=elementStart-1
       numberOfNodeElements=elementStop-elementStart+1
-      receiveCounts(computationNodeIdx)=numberOfElements
+      elementReceiveCounts(computationNodeIdx)=numberOfNodeElements
       IF(numberOfNodeElements>maxNumberOfElementsPerNode) maxNumberOfElementsPerNode=numberOfNodeElements
-      IF(computationNodeIdx==myComputationNodeNumber) THEN
-        myElementStart=elementStart
-        myElementStop=elementStop
-        myNumberOfElements=elementStop-elementStart+1
-      ENDIF
+      elementStarts(computationNodeIdx)=elementStart
+      elementStops(computationNodeIdx)=elementStop
+      numberOfElements(computationNodeIdx)=elementStop-elementStart+1
     ENDDO !computationNodeIdx
-    
-    ALLOCATE(myNumberOfEdges(myNumberOfElements),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate number of edges.",err,error,*999)
-    myNumberOfEdges=0
-    ALLOCATE(elementDomain(numberOfElements),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate element domain.",err,error,*999)
 
-    !Find the number of edges (adjacent elements) for each node (element)
+    !Find the number of super vertices and start the element2vertexMap
+    superVertexNumber=0
     graphNode=>rootNode
     NULLIFY(graphNode%previousNode)
     graphNode%currentLinkIndex=0
     graphNodeLoop2: DO WHILE(ASSOCIATED(graphNode))
       graphNode%currentLinkIndex=graphNode%currentLinkIndex+1
-      IF(graphNode%currentLinkIndex == 1) THEN
-        !Process the number of elements in this graph node
-        NULLIFY(decomposition)
-        CALL DecomposerGraphNode_DecompositionGet(graphNode,decomposition,err,error,*999)
-        NULLIFY(mesh)
-        CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
-        CALL Mesh_NumberOfElementsGet(mesh,numberOfMeshElements,err,error,*999)
-        !Work out the number of edges
-        NULLIFY(meshElements)
-        CALL Mesh_MeshElementsGet(mesh,1,meshElements,err,error,*999)
-        !Process any elements on my rank
-        DO elementIdx=MAX(graphNode%elementOffset+1,myElementStart), &
-          & MIN(graphNode%elementOffset+numberOfMeshElements,myElementStop)
-          elementNodeNumber=elementIdx-graphNode%elementOffset
-          elementRankNumber=elementIdx-myElementStart+1
-          numberOfEdges=0
-          DO xicIdx=LBOUND(meshElements%elements(elementNodeNumber)%adjacentElements,1), &
-            & UBOUND(meshElements%elements(elementNodeNumber)%adjacentElements,1)
-            IF(xicIdx/=0) numberOfEdges=numberOfEdges+ &
-              & meshElements%elements(elementNodeNumber)%adjacentElements(xicIdx)%numberOfAdjacentElements
-          ENDDO !xicIdx
-          myNumberOfEdges(elementRankNumber)=myNumberOfEdges(elementRankNumber)+numberOfEdges
-        ENDDO !elementIdx        
-      ENDIF      
       !Now process any graph links
       IF(graphNode%currentLinkIndex<=graphNode%numberOfGraphLinks) THEN
         NULLIFY(graphLink)
@@ -538,18 +522,23 @@ CONTAINS
         CALL Interface_MeshConnectivityGet(INTERFACE,meshConnectivity,err,error,*999)
         !Add in any graph edges from the mesh connectivity.
         DO interfaceElementIdx=1,meshConnectivity%numberOfInterfaceElements
-          graphNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,1)%coupledMeshElementNumber
+          graphNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,1)%coupledElementNumber
           graphElement=graphNodeElement+graphNode%elementOffset
           linkedNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,graphNode%currentLinkIndex+1)% &
-            & coupledMeshElementNumber
+            & coupledElementNumber
           linkedElement=linkedNodeElement+linkedNode%elementOffset
-          IF(graphElement>=myElementStart.AND.graphElement<=myElementStop) THEN
-            elementRankNumber=graphElement-myElementStart+1
-            myNumberOfEdges(elementRankNumber)=myNumberOfEdges(elementRankNumber)+1            
-          ENDIF
-          IF(linkedElement>=myElementStart.AND.linkedElement<=myElementStop) THEN
-            elementRankNumber=linkedElement-myElementStart+1
-            myNumberOfEdges(elementRankNumber)=myNumberOfEdges(elementRankNumber)+1            
+          IF(element2VertexMap(graphElement)==0.AND.element2VertexMap(linkedElement)==0) THEN
+            superVertexNumber=superVertexNumber+1
+            element2VertexMap(graphElement)=superVertexNumber
+            element2VertexMap(linkedElement)=superVertexNumber
+          ELSE
+            IF(element2VertexMap(graphElement)==0) THEN
+              oldSuperVertexNumber=element2VertexMap(linkedElement)
+              element2VertexMap(graphElement)=oldSuperVertexNumber
+            ELSE
+              oldSuperVertexNumber=element2VertexMap(graphElement)
+              element2VertexMap(linkedElement)=oldSuperVertexNumber
+            ENDIF
           ENDIF
         ENDDO !interfaceElementIdx
         !Now process the linked Node
@@ -561,32 +550,141 @@ CONTAINS
       !If we have processed all the links then fall back to the previous node
       graphNode=>graphNode%previousNode
     ENDDO graphNodeLoop2
-    
-    myTotalNumberOfEdges = SUM(myNumberOfEdges)
-    ALLOCATE(xAdjacency(myNumberOfElements+1),STAT=err)
+
+    !Complete the element2VertexMap and create the inverse vertex2ElementMap tree
+    NULLIFY(vertex2ElementTree)
+    CALL Tree_CreateStart(vertex2ElementTree,err,error,*999)
+    CALL Tree_InsertTypeSet(vertex2ElementTree,TREE_DUPLICATES_ALLOWED_TYPE,err,error,*999)
+    CALL Tree_CreateFinish(vertex2ElementTree,err,error,*999)    
+    numberOfVertices=superVertexNumber
+    DO elementIdx=1,totalNumberOfElements
+      IF(element2VertexMap(elementIdx)==0) THEN
+        numberOfVertices=numberOfVertices+1
+        vertexNumber=numberOfVertices
+        element2VertexMap(elementIdx)=vertexNumber
+      ELSE
+        vertexNumber=element2VertexMap(elementIdx)
+      ENDIF
+      CALL Tree_ItemInsert(vertex2ElementTree,vertexNumber,elementIdx,insertStatus,err,error,*999)
+    ENDDO !elementIdx
+    NULLIFY(vertex2ElementMap)
+    CALL Tree_DetachAndDestroy(vertex2ElementTree,totalNumberOfVertices,vertex2ElementMap,err,error,*999)
+    totalNumberOfVertices=numberOfVertices
+    numberOfVerticesPerNode=REAL(totalNumberOfVertices,DP)/REAL(numberOfComputationNodes,DP)
+
+    !Work out what vertices this rank will deal with in the distributed graph.
+    vertexStart=1
+    vertexStop=0
+    numberOfvertices=0
+    maxNumberOfVerticesPerNode=-1
+    ALLOCATE(vertexReceiveCounts(0:numberOfComputationNodes-1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate vertex recieve counts.",err,error,*999)
+    ALLOCATE(vertexDisplacements(0:numberOfComputationNodes-1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate vertex displacements.",err,error,*999)
+    ALLOCATE(vertexDistance(0:numberOfComputationNodes),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate vertex distance.",err,error,*999)
+    vertexDistance(0)=0
+    DO computationNodeIdx=0,numberOfComputationNodes-1
+      vertexStart=vertexStop+1
+      IF(computationNodeIdx==numberOfComputationNodes-1) THEN
+        vertexStop=totalNumberOfVertices
+      ELSE
+        vertexStop=vertexStart+NINT(numberOfVerticesPerNode,INTG)-1
+      ENDIF
+      IF((numberOfComputationNodes-1-computationNodeIdx)>(totalNumberOfVertices-vertexStop)) &
+        & vertexStop=totalNumberOfVertices-(numberOfComputationNodes-1-computationNodeIdx)
+      IF(vertexStart>totalNumberOfVertices) vertexStart=totalNumberOfVertices
+      IF(vertexStop>totalNumberOfVertices) vertexStop=totalNumberOfVertices
+      vertexDisplacements(computationNodeIdx)=vertexStart-1
+      vertexDistance(computationNodeIdx+1)=vertexStop !C numbering
+      numberOfNodeVertices=vertexStop-vertexStart+1
+      vertexReceiveCounts(computationNodeIdx)=numberOfNodeVertices
+      IF(numberOfNodeVertices>maxNumberOfVerticesPerNode) maxNumberOfVerticesPerNode=numberOfNodeVertices
+      IF(computationNodeIdx==myComputationNodeNumber) THEN
+        myVertexStart=vertexStart
+        myVertexStop=vertexStop
+        myNumberOfVertices=vertexStop-vertexStart+1
+      ENDIF
+    ENDDO !computationNodeIdx
+   
+    !Find the number of edges (adjacent elements) for each vertex on this rank
+    ALLOCATE(myNumberOfEdges(myNumberOfVertices),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate number of edges.",err,error,*999)
+    myNumberOfEdges=0
+    graphNode=>rootNode
+    NULLIFY(graphNode%previousNode)
+    graphNode%currentLinkIndex=0
+    graphNodeLoop3: DO WHILE(ASSOCIATED(graphNode))
+      graphNode%currentLinkIndex=graphNode%currentLinkIndex+1
+      IF(graphNode%currentLinkIndex == 1) THEN
+        !Process the number of elements in this graph node
+        NULLIFY(decomposition)
+        CALL DecomposerGraphNode_DecompositionGet(graphNode,decomposition,err,error,*999)
+        NULLIFY(mesh)
+        CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
+        CALL Mesh_NumberOfElementsGet(mesh,numberOfMeshElements,err,error,*999)
+        !Work out the number of edges
+        NULLIFY(meshElements)
+        CALL Mesh_MeshElementsGet(mesh,1,meshElements,err,error,*999)
+        !Process any vertices on my rank
+        DO vertexIdx=myVertexStart,myVertexStop
+          DO elementIdx=1,SIZE(vertex2ElementMap,2)
+            elementNumber=vertex2ElementMap(vertexIdx,elementIdx)
+            !Check if the element is on the current decomposer graph node being processed
+            IF(elementNumber>=(graphNode%elementOffset+1).AND. &
+              & elementNumber<=(graphNode%elementOffset+numberOfMeshElements)) THEN
+              elementNodeNumber=elementNumber-graphNode%elementOffset
+              vertexRankNumber=vertexIdx-myVertexStart+1
+              numberOfEdges=0
+              DO xicIdx=LBOUND(meshElements%elements(elementNodeNumber)%adjacentElements,1), &
+                & UBOUND(meshElements%elements(elementNodeNumber)%adjacentElements,1)
+                IF(xicIdx/=0) numberOfEdges=numberOfEdges+ &
+                  & meshElements%elements(elementNodeNumber)%adjacentElements(xicIdx)%numberOfAdjacentElements
+              ENDDO !xicIdx
+              myNumberOfEdges(vertexRankNumber)=myNumberOfEdges(vertexRankNumber)+numberOfEdges
+            ENDIF
+          ENDDO !elementIdx
+        ENDDO !vertexIdx
+      ENDIF      
+      !Now process any graph links
+      IF(graphNode%currentLinkIndex<=graphNode%numberOfGraphLinks) THEN
+        NULLIFY(graphLink)
+        CALL DecomposerGraphNode_DecomposerGraphLinkGet(graphNode,graphNode%currentLinkIndex,graphLink,err,error,*999)
+        NULLIFY(linkedNode)
+        CALL DecomposerGraphLink_LinkedNodeGet(graphLink,linkedNode,err,error,*999)
+        !Now process the linked Node
+        linkedNode%previousNode=>graphNode
+        graphNode=>linkedNode
+        graphNode%currentLinkIndex=0
+        CYCLE graphNodeLoop3
+      ENDIF !graphLinkIndex
+      !If we have processed all the links then fall back to the previous node
+      graphNode=>graphNode%previousNode
+    ENDDO graphNodeLoop3
+
+    !Computed the distributed graph to partition
+    myTotalNumberOfEdges = SUM(myNumberOfEdges)    
+    ALLOCATE(xAdjacency(myNumberOfVertices+1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate xadj.",err,error,*999)
     ALLOCATE(adjacency(myTotalNumberOfEdges),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate adjncy.",err,error,*999)
-    ALLOCATE(adjacencyWeights(myTotalNumberOfEdges),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate vwgt.",err,error,*999)
-
+    ALLOCATE(vertexWeights(myNumberOfVertices),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate vertex weights.",err,error,*999)
     !Fill in the xAdjacency array from my number of edges
     sumEdges=0
-    DO elementIdx=1,myNumberOfElements
-      xAdjacency(elementIdx)=sumEdges
-      sumEdges=sumEdges+myNumberOfEdges(elementIdx)
-    ENDDO !elementIdx
-    xAdjacency(myNumberOfElements+1)=sumEdges
+    DO vertexIdx=1,myNumberOfVertices
+      xAdjacency(vertexIdx)=sumEdges
+      sumEdges=sumEdges+myNumberOfEdges(vertexIdx)
+    ENDDO !vertexIdx
+    xAdjacency(myNumberOfVertices+1)=sumEdges
     adjacency=0
-    adjacencyWeights=1
+    vertexWeights=1
     !Fill in the graph distributed CSR arrays
     myNumberOfEdges=0
     graphNode=>rootNode
     NULLIFY(graphNode%previousNode)
     graphNode%currentLinkIndex=0
-    numberOfElements=0
-    numberOfEdges=0
-    graphNodeLoop3: DO WHILE(ASSOCIATED(graphNode))
+    graphNodeLoop4: DO WHILE(ASSOCIATED(graphNode))
       graphNode%currentLinkIndex=graphNode%currentLinkIndex+1
       IF(graphNode%currentLinkIndex == 1) THEN
         !Process the number of elements in this graph node
@@ -598,25 +696,36 @@ CONTAINS
         !Compute the edge numbers
         NULLIFY(meshElements)
         CALL Mesh_MeshElementsGet(mesh,1,meshElements,err,error,*999)
-        !Process any elements on my rank
-        DO elementIdx=MAX(graphNode%elementOffset+1,myElementStart), &
-          & MIN(graphNode%elementOffset+numberOfMeshElements,myElementStop)
-          elementNodeNumber=elementIdx-graphNode%elementOffset
-          elementRankNumber=elementIdx-myElementStart+1
-          DO xicIdx=LBOUND(meshElements%elements(elementNodeNumber)%adjacentElements,1), &
-            & UBOUND(meshElements%elements(elementNodeNumber)%adjacentElements,1)
-            IF(xicIdx/=0) THEN
-              DO adjacentElementIdx=1,meshElements%elements(elementNodeNumber)%adjacentElements(xicIdx)%numberOfAdjacentElements
-                myNumberOfEdges(elementRankNumber)=myNumberOfEdges(elementRankNumber)+1
-                adjacentElementNodeNumber=meshElements%elements(elementNodeNumber)%adjacentElements(xicIdx)% &
-                  & adjacentElements(adjacentElementIdx)
-                adjacentElementNumber=adjacentElementNodeNumber+graphNode%elementOffset
-                edgeNumber=xAdjacency(elementRankNumber)+myNumberOfEdges(elementRankNumber)
-                adjacency(edgeNumber)=adjacentElementNumber-1 !C numbering
-              ENDDO !adjacentElementIdx
+        !Process any vertices on my rank
+        DO vertexIdx=myVertexStart,myVertexStop
+          vertexRankNumber=vertexIdx-myVertexStart+1
+          DO elementIdx=1,SIZE(vertex2ElementMap,2)
+            elementNumber=vertex2ElementMap(vertexIdx,elementIdx)
+            !Check if the element is on the current decomposer graph node being considered
+            IF(elementNumber>=(graphNode%elementOffset+1).AND. &
+              & elementNumber<=(graphNode%elementOffset+numberOfMeshElements)) THEN
+              elementNodeNumber=elementNumber-graphNode%elementOffset
+              DO xicIdx=LBOUND(meshElements%elements(elementNodeNumber)%adjacentElements,1), &
+                & UBOUND(meshElements%elements(elementNodeNumber)%adjacentElements,1)
+                IF(xicIdx/=0) THEN
+                  DO adjacentElementIdx=1,meshElements%elements(elementNodeNumber)%adjacentElements(xicIdx)% &
+                    & numberOfAdjacentElements
+                    mynumberOfEdges(vertexRankNumber)=myNumberOfEdges(vertexRankNumber)+1
+                    adjacentElementNodeNumber=meshElements%elements(elementNodeNumber)%adjacentElements(xicIdx)% &
+                      & adjacentElements(adjacentElementIdx)
+                    adjacentElementNumber=adjacentElementNodeNumber+graphNode%elementOffset
+                    adjacentVertexNumber=element2VertexMap(adjacentElementNumber)
+                    edgeNumber=xAdjacency(vertexRankNumber)+myNumberOfEdges(vertexRankNumber)
+                    adjacency(edgeNumber)=adjacentVertexNumber-1 !C numbering
+                  ENDDO !adjacentElementIdx
+                ENDIF
+              ENDDO !xicIdx
             ENDIF
-          ENDDO !xicIdx
-        ENDDO !elementIdx        
+          ENDDO !elementIdx
+          !Set the vertex weights to how many elements the vertex represents. 
+          !1 for a normal vertex. Number of elements involved for a super vertex.
+          vertexWeights(vertexRankNumber)=COUNT(vertex2ElementMap(vertexIdx,:)/=0)
+        ENDDO !vertexIdx
       ENDIF      
       !Now process any graph links
       IF(graphNode%currentLinkIndex<=graphNode%numberOfGraphLinks) THEN
@@ -624,55 +733,25 @@ CONTAINS
         CALL DecomposerGraphNode_DecomposerGraphLinkGet(graphNode,graphNode%currentLinkIndex,graphLink,err,error,*999)
         NULLIFY(linkedNode)
         CALL DecomposerGraphLink_LinkedNodeGet(graphLink,linkedNode,err,error,*999)
-        !Work out the number of edges
-        NULLIFY(decomposition)
-        CALL DecomposerGraphLink_DecompositionGet(graphLink,decomposition,err,error,*999)
-        NULLIFY(interface)
-        CALL Decomposition_InterfaceGet(decomposition,interface,err,error,*999)
-        NULLIFY(meshConnectivity)
-        CALL Interface_MeshConnectivityGet(INTERFACE,meshConnectivity,err,error,*999)
-        !Add in any graph edges from the mesh connectivity.
-        DO interfaceElementIdx=1,meshConnectivity%numberOfInterfaceElements
-          graphNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,1)%coupledMeshElementNumber
-          graphElement=graphNodeElement+graphNode%elementOffset
-          linkedNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,graphNode%currentLinkIndex+1)% &
-            & coupledMeshElementNumber
-          linkedElement=linkedNodeElement+linkedNode%elementOffset
-          IF(graphElement>=myElementStart.AND.graphElement<=myElementStop) THEN
-            elementRankNumber=graphElement-myElementStart+1
-            myNumberOfEdges(elementRankNumber)=myNumberOfEdges(elementRankNumber)+1
-            edgeNumber=xAdjacency(elementRankNumber)+myNumberOfEdges(elementRankNumber)
-            adjacency(edgeNumber)=linkedElement-1 !C numbering
-            adjacencyWeights(edgeNumber)=-9999
-          ENDIF
-          IF(linkedElement>=myElementStart.AND.linkedElement<=myElementStop) THEN
-            elementRankNumber=linkedElement-myElementStart+1
-            myNumberOfEdges(elementRankNumber)=myNumberOfEdges(elementRankNumber)+1            
-            edgeNumber=xAdjacency(elementRankNumber)+myNumberOfEdges(elementRankNumber)
-            adjacency(edgeNumber)=graphElement
-            adjacencyWeights(edgeNumber)=-9999
-          ENDIF
-        ENDDO !interfaceElementIdx
         !Now process the linked Node
         linkedNode%previousNode=>graphNode
         graphNode=>linkedNode
         graphNode%currentLinkIndex=0
-        CYCLE graphNodeLoop3
+        CYCLE graphNodeLoop4
       ENDIF !graphLinkIndex
       !If we have processed all the links then fall back to the previous node
       graphNode=>graphNode%previousNode
-    ENDDO graphNodeLoop3
+    ENDDO graphNodeLoop4
 
+    !Partition the graph to find the decompositions
     decomposer%numberOfPartitions=numberOfComputationNodes
     decomposer%numberOfEdgesCut=0
     !Set up ParMETIS variables and options
-    NULLIFY(context)
-    CALL WorkGroup_ContextGet(decomposer%workGroup,context,err,error,*999)
     CALL Context_RandomSeedsSizeGet(context,randomSeedsSize,err,error,*999)
     ALLOCATE(randomSeeds(randomSeedsSize),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate random seeds.",err,error,*999)
     CALL Context_RandomSeedsGet(context,randomSeeds,err,error,*999)              
-    weightFlag=1 !Weights on the edges only
+    weightFlag=2 !Weights on the vertices only
     numberFlag=0 !C-style numbering, starts from zero
     numberOfConstraints=1
     ALLOCATE(tpwgts(numberOfComputationNodes),STAT=err)
@@ -680,21 +759,139 @@ CONTAINS
     tpwgts=1.0_DP/REAL(numberOfComputationNodes,DP)
     ubVec=1.05_DP
     parmetisOptions(0)=1 !If zero, defaults are used, otherwise next two values are used
-    parmetisOptions(1)=64 !Level of information to output
+    !Set the level of information to output
+    SELECT CASE(decomposer%outputType)
+    CASE(DECOMPOSER_NO_OUTPUT)
+      parmetisOptions(1)=0 
+    CASE(DECOMPOSER_TIMING_OUTPUT)
+      parmetisOptions(1)=2+1 
+    CASE(DECOMPOSER_ALL_OUTPUT)
+      parmetisOptions(1)=64+32+16+8+4+2+1 
+    CASE DEFAULT
+      localError="The decomposer output type of "//TRIM(NumberToVString(decomposer%outputType,"*",err,error))//"is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
     parmetisOptions(2)=randomSeeds(1) !Seed for random number generator
     IF(ALLOCATED(randomSeeds)) DEALLOCATE(randomSeeds)
-        
+    ALLOCATE(vertexDomain(totalNumberOfVertices),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate vertex domain.",err,error,*999)
+    vertexDomain=0
+
+    !Call ParMETIS to partition the graph
     CALL ParMETIS_PartKWay(vertexDistance,xAdjacency,adjacency,vertexWeights,adjacencyWeights,weightFlag,numberFlag, &
       & numberOfConstraints,decomposer%numberOfPartitions,tpwgts,ubvec,parmetisOptions,decomposer%numberOfEdgesCut, &
-      & elementDomain(displacements(myComputationNodeNumber)+1:),groupCommunicator,err,error,*999)
+      & vertexDomain(vertexDisplacements(myComputationNodeNumber)+1:),groupCommunicator,err,error,*999)
 
-    !Transfer all the element domain information to the other computation nodes so that each rank has all the info
+    !Transfer all the vertex domain information to the other computation nodes so that each rank has all the info
     IF(numberOfComputationNodes>1) THEN
       !This should work on a single processor but doesn't for mpich2 under windows. Maybe a bug? Avoid for now.
-      CALL MPI_ALLGATHERV(MPI_IN_PLACE,maxNumberOfElementsPerNode,MPI_INTEGER,elementDomain, &
-        & receiveCounts,displacements,MPI_INTEGER,groupCommunicator,mpiIError)
+      CALL MPI_ALLGATHERV(MPI_IN_PLACE,maxNumberOfVerticesPerNode,MPI_INTEGER,vertexDomain, &
+        & vertexReceiveCounts,vertexDisplacements,MPI_INTEGER,groupCommunicator,mpiIError)
       CALL MPI_ErrorCheck("MPI_ALLGATHERV",mpiIError,err,error,*999)
     ENDIF
+
+    !Now set the element domain information in all the decompositions in the decomposer graph and
+    !check the decompositions to ensure that each domain has an element in it.
+    ALLOCATE(elementCounts(0:numberOfComputationNodes-1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate element count.",err,error,*999)
+    graphNode=>rootNode
+    NULLIFY(graphNode%previousNode)
+    graphNode%currentLinkIndex=0
+    graphNodeLoop5: DO WHILE(ASSOCIATED(graphNode))
+      graphNode%currentLinkIndex=graphNode%currentLinkIndex+1
+      IF(graphNode%currentLinkIndex == 1) THEN
+        elementCounts=0
+        !Process the number of elements in this graph node
+        numberOfGraphNodes=numberOfGraphNodes+1
+        NULLIFY(decomposition)
+        CALL DecomposerGraphNode_DecompositionGet(graphNode,decomposition,err,error,*999)
+        NULLIFY(mesh)
+        CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
+        CALL Mesh_NumberOfElementsGet(mesh,numberOfMeshElements,err,error,*999)
+        DO elementIdx=graphNode%elementOffset+1,graphNode%elementOffset+numberOfMeshElements
+          elementNodeNumber=elementIdx-graphNode%elementOffset
+          vertexNumber=element2VertexMap(elementIdx)
+          domainNumber=vertexDomain(vertexNumber)
+          IF(domainNumber>=0.AND.domainNumber<numberOfComputationNodes) THEN
+            elementCounts(domainNumber)=elementCounts(domainNumber)+1
+          ELSE
+            localError="The computation node number of "//TRIM(NumberToVString(domainNumber,"*",err,error))// &
+              & " for element number "//TRIM(NumberToVString(elementNodeNumber,"*",err,error))// &
+              & " of decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+              & " of mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))// &
+              & " is invalid. The computation node number must be between 0 and "// &
+              & TRIM(NumberToVString(numberOfComputationNodes-1,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          decomposition%elementDomain(elementNodeNumber)=domainNumber
+        ENDDO !elementIdx
+        !Check all ranks have some elements
+        DO computationNodeIdx=0,numberOfComputationNodes-1
+          IF(elementCounts(computationNodeIdx)==0) THEN
+            localError="The decomposition for decomposition number "// &
+              & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+              & " of mesh number "//TRIM(NumberToVString(mesh%userNumber,"*",err,error))// &
+              & " is invalid. There are no elements in computation node "// &
+              & TRIM(NumberToVString(computationNodeIdx,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDDO !computationNodeIdx
+        decomposition%decomposer=>decomposer
+        decomposition%workGroup=>decomposer%workGroup
+      ENDIF
+      !Now process any graph links
+      IF(graphNode%currentLinkIndex<=graphNode%numberOfGraphLinks) THEN
+        elementCounts=0
+        NULLIFY(graphLink)
+        CALL DecomposerGraphNode_DecomposerGraphLinkGet(graphNode,graphNode%currentLinkIndex,graphLink,err,error,*999)
+        NULLIFY(decomposition)
+        CALL DecomposerGraphLink_DecompositionGet(graphLink,decomposition,err,error,*999)
+        NULLIFY(interface)
+        CALL Decomposition_InterfaceGet(decomposition,interface,err,error,*999)
+        NULLIFY(meshConnectivity)
+        CALL Interface_MeshConnectivityGet(interface,meshConnectivity,err,error,*999)
+        DO interfaceElementIdx=1,meshConnectivity%numberOfInterfaceElements
+          graphNodeElement=meshConnectivity%elementConnectivity(interfaceElementIdx,1)%coupledElementNumber
+          graphElement=graphNodeElement+graphNode%elementOffset
+          vertexNumber=element2VertexMap(graphElement)
+          domainNumber=vertexDomain(vertexNumber)
+          IF(domainNumber>=0.AND.domainNumber<numberOfComputationNodes) THEN
+            elementCounts(domainNumber)=elementCounts(domainNumber)+1
+          ELSE
+            localError="The computation node number of "//TRIM(NumberToVString(domainNumber,"*",err,error))// &
+              & " for element number "//TRIM(NumberToVString(elementNodeNumber,"*",err,error))// &
+              & " of decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+              & " of interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
+              & " is invalid. The computation node number must be between 0 and "// &
+              & TRIM(NumberToVString(numberOfComputationNodes-1,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          decomposition%elementDomain(interfaceElementIdx)=domainNumber
+        ENDDO !interfaceElementIdx
+        !Check all ranks have some elements
+        DO computationNodeIdx=0,numberOfComputationNodes-1
+          IF(elementCounts(computationNodeIdx)==0) THEN
+            localError="The decomposition for decomposition number "// &
+              & TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+              & " of interface number "//TRIM(NumberToVString(interface%userNumber,"*",err,error))// &
+              & " is invalid. There are no elements in computation node "// &
+              & TRIM(NumberToVString(computationNodeIdx,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDDO !computationNodeIdx
+        decomposition%decomposer=>decomposer
+        decomposition%workGroup=>decomposer%workGroup
+        !Now process the linked Node
+        linkedNode%previousNode=>graphNode
+        graphNode=>linkedNode
+        graphNode%currentLinkIndex=0
+        CYCLE graphNodeLoop5
+      ENDIF !graphLinkIndex
+      !If we have processed all the links then fall back to the previous node
+      graphNode=>graphNode%previousNode
+    ENDDO graphNodeLoop5   
+    
+     DEALLOCATE(elementCounts)
     
     EXITS("Decomposer_ElementDomainCalculate")
     RETURN
@@ -1039,15 +1236,81 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the output type for a decomposer \see OpenCMISS::Iron::cmfe_Decomposer_OutputTypeGet
+  SUBROUTINE Decomposer_OutputTypeGet(decomposer,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to set the output type for
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the decomposer \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Decomposer_OutputTypeGet",err,error,*999)
+
+    CALL Decomposer_AssertIsFinished(decomposer,err,error,*999)
+
+    outputType=decomposer%outputType
+       
+    EXITS("Decomposer_OutputTypeGet")
+    RETURN
+999 ERRORSEXITS("Decomposer_OutputTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposer_OutputTypeGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output type for a decomposer \see OpenCMISS::Iron::cmfe_Decomposer_OutputTypeSet
+  SUBROUTINE Decomposer_OutputTypeSet(decomposer,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to set the output type for
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Decomposer_OutputTypeSet",err,error,*999)
+
+    CALL Decomposer_AssertNotFinished(decomposer,err,error,*999)
+    
+    SELECT CASE(outputType)
+    CASE(DECOMPOSER_NO_OUTPUT)
+      decomposer%outputType=DECOMPOSER_NO_OUTPUT
+    CASE(DECOMPOSER_TIMING_OUTPUT)
+      decomposer%outputType=DECOMPOSER_TIMING_OUTPUT
+    CASE(DECOMPOSER_ALL_OUTPUT)
+      decomposer%outputType=DECOMPOSER_ALL_OUTPUT
+    CASE DEFAULT
+      localError="The specified output type of "//TRIM(NumberToVString(outputType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+       
+    EXITS("Decomposer_OutputTypeSet")
+    RETURN
+999 ERRORSEXITS("Decomposer_OutputTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposer_OutputTypeSet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Initialises a decomposer.
   SUBROUTINE Decomposer_TopologyCalculate(decomposer,err,error,*)
 
     !Argument variables
-    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to initialise. Must not be associated on entry.
+    TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer to initialise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: decompositionIdx
+    LOGICAL :: isInterfaceDecomposition
     TYPE(DecompositionType), POINTER :: decomposition
  
     ENTERS("Decomposer_TopologyCalculate",err,error,*999)
@@ -1063,6 +1326,9 @@ CONTAINS
       CALL Decomposition_DomainsInitialise(decomposition,err,error,*999)
       !Calculate the decomposition topology
       CALL Decomposition_TopologyCalculate(decomposition,err,error,*999)
+      !Calculate any coupling
+      CALL Decomposition_IsInterfaceDecomposition(decomposition,isInterfaceDecomposition,err,error,*999)
+      IF(isInterfaceDecomposition) CALL Decomposition_CouplingCalculate(decomposition,err,error,*999)
     ENDDO !decompositionIdx
          
     EXITS("Decomposer_TopologyCalculate")
@@ -1357,6 +1623,7 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
   !>Initalises a decomposition adjacent element information.
   SUBROUTINE Decomposition_AdjacentElementInitialise(decompositionAdjacentElement,err,error,*)
     
@@ -1376,6 +1643,143 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE Decomposition_AdjacentElementInitialise
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Finalises a decomposition connectivity and deallocates all memory.
+  SUBROUTINE DecompositionConnectivity_Finalise(decompositionConnectivity,err,error,*)
+    
+    !Argument variables
+    TYPE(DecompositionConnectivityType), POINTER :: decompositionConnectivity !<The decomposition connectivity to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: coupledDecompositionIdx,elementIdx
+
+    ENTERS("DecompositionConnectivity_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(decompositionConnectivity)) THEN
+      IF(ALLOCATED(decompositionConnectivity%elementConnectivity)) THEN
+        DO coupledDecompositionIdx=1,SIZE(decompositionConnectivity%elementConnectivity,2)
+          DO elementIdx=1,SIZE(decompositionConnectivity%elementConnectivity,1)
+            CALL DecompositionElementConnectivity_Finalise(decompositionConnectivity% &
+              & elementConnectivity(elementIdx,coupledDecompositionIdx),err,error,*999)
+          ENDDO !elementIdx
+        ENDDO !coupledDecompositionIdx
+        DEALLOCATE(decompositionConnectivity%elementConnectivity)
+      ENDIF
+      IF(ALLOCATED(decompositionCoupling%coupledNodes)) DEALLOCATE(decompositionCoupling%coupledNodes
+      DEALLOCATE(decompositionConnectivity)
+    ENDIF
+       
+    EXITS("DecompositionConnectivity_Finalise")
+    RETURN
+999 ERRORSEXITS("DecompositionConnectivity_Finalise",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DecompositionConnectivity_Finalise
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Initialises a decomposition connectivity for a decomposition coupling.
+  SUBROUTINE DecompositionConnectivity_Initialise(decompositionCoupling,err,error,*)
+    
+    !Argument variables
+    TYPE(DecompositionCouplingType), POINTER :: decompositionCoupling !<The decomposition coupling to initialise the connectivity for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("DecompositionConnectivity_Initialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(decompositionCoupling)) CALL FlagError("Decomposition coupling is not associated.",err,error,*998)
+    IF(ASSOCIATED(decompositionCoupling%decompositionConnectivity)) &
+      & CALL FlagError("Decomposition connectivity is already associated.",err,error,*998)
+
+    ALLOCATE(decompositionCoupling%decompositionConnectivity,STAT=ERR)
+    IF(err/=0) CALL FlagError("Could not allocate decomposition connectivity.",err,error,*999)
+    decompositionCoupling%decompositionConnectivity%decompositionCoupling=>decompositionCoupling
+    NULLIFY(decompositionCoupling%basis)
+    decompositionCoupling%numberOfInterfaceElements=0
+    decompositionCoupling%totalNumberOfInterfaceElements=0
+    decompositionCoupling%numberOfGlobalInterfaceElements=0
+    decompositionCoupling%numberOfCoupledDecompositions=0
+    
+    EXITS("DecompositionConnectivity_Initialise")
+    RETURN
+999 CALL DecompositionConnectivity_Finalise(decompositionCoupling%decompositionConnectivity,dummyErr,dummyError,*998)
+998 ERRORSEXITS("DecompositionConnectivity_Initialise",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DecompositionConnectivity_Initialise
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Finalises a decomposition coupling and deallocates all memory.
+  SUBROUTINE DecompositionCoupling_Finalise(decompositionCoupling,err,error,*)
+    
+    !Argument variables
+    TYPE(DecompositionCouplingType), POINTER :: decompositionCoupling !<The decomposition coupling to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionCoupling_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(decompositionCoupling)) THEN
+      IF(ALLOCATED(decompositionCoupling%coupledDecompositions)) DEALLOCATE(decompositionCoupling%coupledDecompositions
+      CALL Decomposition_ConnectivityFinalise(decompositionCoupling%decompositionConnectivity,err,error,*999)
+      DEALLOCATE(decompositionCoupling)
+    ENDIF
+       
+    EXITS("DecompositionCoupling_Finalise")
+    RETURN
+999 ERRORSEXITS("DecompositionCoupling_Finalise",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DecompositionCoupling_Finalise
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Finalises a decomposition coupling and deallocates all memory.
+  SUBROUTINE DecompositionCoupling_Initialise(decomposition,err,error,*)
+    
+    !Argument variables
+    TYPE(DecompositionType), POINTER :: decomposition !<The decomposition coupling to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+
+    ENTERS("DecompositionCoupling_Initialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*998)
+    IF(ASSOCIATED(decomposition%decompositionCoupling)) &
+      & CALL FlagError("Decomposition coupling is already associated.",err,error,*998)
+
+    ALLOCATE(decomposition%decompositionCoupling,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate decomposition coupling.",err,error,*999)
+    decomposition%decompositionCoupling%decomposition=>decomposition
+    decomposition%decompositionCoupling%numberOfCoupledDecompositions=0
+        
+    EXITS("DecompositionCoupling_Initialise")
+    RETURN
+999 CALL DecompositionCoupling_Finalise(decomposition%decompositionCoupling,dummyErr,dummyError,*998)
+998 ERRORSEXITS("DecompositionCoupling_Initialise",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DecompositionCoupling_Initialise
 
   !
   !================================================================================================================================
@@ -1447,8 +1851,6 @@ CONTAINS
     TYPE(VARYING_STRING) :: dummyError,localError
     TYPE(WorkGroupType), POINTER :: worldWorkGroup
 
-    NULLIFY(newDecomposition)
-
     ENTERS("Decomposition_CreateStart",err,error,*999)
     
     IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*999)
@@ -1471,7 +1873,8 @@ CONTAINS
     newDecomposition%decompositions=>decompositions
     newDecomposition%mesh=>mesh
     newDecomposition%region=>mesh%region
-    newDecomposition%interface=>mesh%interface
+    newDecomposition%INTERFACE=>mesh%INTERFACE
+    NULLIFY(newDecomposition%decomposer)
     newDecomposition%numberOfDimensions=mesh%numberOfDimensions
     newDecomposition%numberOfComponents=mesh%numberOfComponents
     !By default, the process of decompostion was done on the first mesh components. But the decomposition is the
@@ -1479,16 +1882,6 @@ CONTAINS
     newDecomposition%meshComponentNumber=1
     !Default decomposition is all the mesh with one domain.
     newDecomposition%domainDecompositionType=DECOMPOSITION_ALL_TYPE
-    NULLIFY(region)
-    CALL Mesh_RegionGet(mesh,region,err,error,*999)
-    NULLIFY(context)
-    CALL Region_ContextGet(region,context,err,error,*999)
-    NULLIFY(computationEnvironment)
-    CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
-    NULLIFY(worldWorkGroup)
-    CALL ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err,error,*999)
-    newDecomposition%workGroup=>worldWorkGroup
-    newDecomposition%numberOfDomains=1
     newDecomposition%numberOfElements=mesh%numberOfElements
     ALLOCATE(newDecomposition%elementDomain(mesh%numberOfElements),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate new decomposition element domain.",err,error,*999)
@@ -1630,6 +2023,57 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Decomposition_ElementBasisGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Finalises a decomposition element connectivity type and deallocates all memory.
+  SUBROUTINE DecompositionElementConnectivity_Finalise(elementConnectivity,err,error,*)
+    
+    !Argument variables
+    TYPE(DecompositionElementConnectivityType) :: elementConnectivity !<The decomposition element connectivity to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionElementConnectivity_Finalise",err,error,*999)
+
+    elementConnectivity%coupledElementNumber=0
+    IF(ALLOCATED(elementConnectivity%xi)) DEALLOCATE(elementConnectivity%xi)
+    elementConnectivity%connectedLineFace=0
+       
+    EXITS("DecompositionElementConnectivity_Finalise")
+    RETURN
+999 ERRORSEXITS("DecompositionElementConnectivity_Finalise",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DecompositionElementConnectivity_Finalise
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Initialises a decomposition element connectivity.
+  SUBROUTINE DecompositionElementConnectivity_Initialise(elementConnectivity,err,error,*)
+    
+    !Argument variables
+    TYPE(DecompositionElementConnectivityType):: elementConnectivity !<The decomposition element connectivity to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DecompositionElementConnectivity_Initialise",err,error,*998)
+
+    elementConnectivity%coupledElementNumber=0
+    elementConnectivity%connectedLineFace=0
+        
+    EXITS("DecompositionElementConnectivity_Initialise")
+    RETURN
+999 ERRORSEXITS("DecompositionElementConnectivity_Initialise",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DecompositionElementConnectivity_Initialise
 
   !
   !================================================================================================================================
@@ -1877,6 +2321,8 @@ CONTAINS
     CALL Decomposition_AssertIsFinished(decomposition,err,error,*999)       
     NULLIFY(mesh)
     CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
+    NULLIFY(meshTopology)
+    CALL Mesh_MeshTopologyGet(mesh,1,meshTopology,err,error,*999)
     NULLIFY(meshElements)
     CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
     CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
@@ -1915,7 +2361,7 @@ CONTAINS
     NULLIFY(mesh)
     CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
     NULLIFY(meshTopology)
-    CALL Mesh_MeshTopologyGet(mesh,0,meshTopology,err,error,*999)
+    CALL Mesh_MeshTopologyGet(mesh,1,meshTopology,err,error,*999)
     NULLIFY(meshElements)
     CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
     CALL MeshElements_GlobalElementNumberGet(meshElements,userElementNumber,globalElementNumber,err,error,*999)
@@ -1955,6 +2401,7 @@ CONTAINS
       IF(ALLOCATED(decomposition%elementDomain)) DEALLOCATE(decomposition%elementDomain)
       CALL Decomposition_TopologyFinalise(decomposition%topology,err,error,*999)
       CALL Decomposition_DomainsFinalise(decomposition,err,error,*999)
+      CALL DecompositionCoupling_Finalise(decomposition%decompositionCoupling,err,error,*999)
       DEALLOCATE(decomposition)
     ENDIF
     
@@ -1998,10 +2445,9 @@ CONTAINS
     decomposition%numberOfComponents=0
     decomposition%domainDecompositionType=DECOMPOSITION_ALL_TYPE
     NULLIFY(decomposition%workGroup)
-    decomposition%numberOfDomains=0
-    decomposition%numberOfEdgesCut=0
     decomposition%numberOfElements=0
     NULLIFY(decomposition%topology)
+    NULLIFY(decomposition%decompositionCoupling)
     decomposition%calculateLines=.TRUE. 
     decomposition%calculateFaces=.TRUE.
     
@@ -2124,109 +2570,6 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE Decomposition_NodeDomainGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the number of domains for a decomposition. \see OpenCMISS::Iron::cmfe_DecompositionNumberOfDomainsGet
-  SUBROUTINE DECOMPOSITION_NUMBER_OF_DOMAINS_GET(decomposition,numberOfDomains,err,error,*)
-
-    !Argument variables
-    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition to get the number of domains for.
-    INTEGER(INTG), INTENT(OUT) :: numberOfDomains !<On return, the number of domains to get.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("decomposition_NUMBER_OF_DOMAINS_GET",err,error,*999)
-
-    IF(ASSOCIATED(decomposition)) THEN
-      IF(decomposition%decompositionFinished) THEN
-        CALL FlagError("Decomposition has been finished.",err,error,*999)
-      ELSE
-        numberOfDomains=decomposition%numberOfDomains
-      ENDIF
-    ELSE
-      CALL FlagError("Decomposition is not associated.",err,error,*999)
-    ENDIF
-
-    EXITS("DECOMPOSITION_NUMBER_OF_DOMAINS_GET")
-    RETURN
-999 ERRORSEXITS("DECOMPOSITION_NUMBER_OF_DOMAINS_GET",err,error)
-    RETURN 1
-  END SUBROUTINE DECOMPOSITION_NUMBER_OF_DOMAINS_GET
-
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the number of domains for a decomposition. \see OpenCMISS::Iron::cmfe_DecompositionNumberOfDomainsSet
-  SUBROUTINE DECOMPOSITION_NUMBER_OF_DOMAINS_SET(decomposition,numberOfDomains,err,error,*)
-
-    !Argument variables
-    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition to set the number of domains for.
-    INTEGER(INTG), INTENT(IN) :: numberOfDomains !<The number of domains to set.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: numberOfGroupComputationNodes
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("DECOMPOSITION_NUMBER_OF_DOMAINS_SET",err,error,*999)
-
-    IF(ASSOCIATED(decomposition)) THEN
-      IF(decomposition%decompositionFinished) THEN
-        CALL FlagError("Decomposition has been finished.",err,error,*999)
-      ELSE
-        SELECT CASE(decomposition%domainDecompositionType)
-        CASE(DECOMPOSITION_ALL_TYPE)
-          IF(numberOfDomains==1) THEN
-            decomposition%numberOfDomains=1
-          ELSE
-            CALL FlagError("Can only have one domain for all decomposition type.",err,error,*999)
-          ENDIF
-        CASE(DECOMPOSITION_CALCULATED_TYPE,DECOMPOSITION_USER_DEFINED_TYPE)
-          IF(numberOfDomains>=1) THEN
-            !wolfye???<=?
-            IF(numberOfDomains<=decomposition%numberOfElements) THEN
-              !Get the number of computation nodes
-              CALL WorkGroup_NumberOfGroupNodesGet(decomposition%workGroup,numberOfGroupComputationNodes, &
-                & err,error,*999)
-!!TODO: relax this later
-              !IF(numberOfDomains==numberOfGroupComputationNodes) THEN
-              decomposition%numberOfDomains=numberOfDomains             
-              !ELSE
-              !  localError="The number of domains ("//TRIM(NumberToVString(numberOfDomainsS,"*",err,error))// &
-              !    & ") is not equal to the number of computation nodes ("// &
-              !    & TRIM(NumberToVString(numberOfGroupComputationNodes,"*",err,error))//")"
-              !  CALL FlagError(localError,err,error,*999)
-              !ENDIF
-            ELSE
-              localError="The number of domains ("//TRIM(NumberToVString(numberOfDomains,"*",err,error))// &
-                & ") must be <= the number of global elements ("// &
-                & TRIM(NumberToVString(decomposition%numberOfElements,"*",err,error))//") in the mesh."
-              CALL FlagError(localError,err,error,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Number of domains must be >= 1.",err,error,*999)
-          ENDIF
-        CASE DEFAULT
-          localError="Decomposition type "//TRIM(NumberToVString(decomposition%domainDecompositionType,"*",err,error))// &
-            & " is not valid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Decomposition is not associated.",err,error,*999)
-    ENDIF
-
-    EXITS("DECOMPOSITION_NUMBER_OF_DOMAINS_SET")
-    RETURN
-999 ERRORSEXITS("DECOMPOSITION_NUMBER_OF_DOMAINS_SET",err,error)
-    RETURN 1
-  END SUBROUTINE DECOMPOSITION_NUMBER_OF_DOMAINS_SET
 
   !
   !================================================================================================================================
@@ -3436,6 +3779,7 @@ CONTAINS
     CALL DecompositionTopology_DecompositionGet(decompositionTopology,decomposition,err,error,*999)
     !Process the mesh component number (component number the decomposition was calculated from) first to establish line
     !topology then process the other mesh components.
+    NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
     NULLIFY(domainTopology)
     CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
@@ -4662,6 +5006,43 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Calculates the mappings and topology for a domain.
+  SUBROUTINE Domain_Calculate(domain,err,error,*)
+
+    !Argument variables
+    TYPE(DomainType), POINTER :: domain !<A pointer to the domain to calculate for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DomainMappingsType), POINTER :: domainMappings
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+ 
+    ENTERS("Domain_Calculate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(domain)) CALL FlagError("Domain is not associated.",err,error,*999)
+    
+    NULLIFY(domainMappings)
+    CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
+    NULLIFY(domainTopology)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    !Calculate the domain mappings information.
+    CALL DomainMappings_Calculate(domainMappings,err,error,*999)
+    !Initialise the domain topology from the domain mappings and the mesh it came from
+    CALL DomainTopology_InitialiseFromMesh(domainTopology,err,error,*999)
+    !Calculate the topological information.
+    CALL DomainTopology_Calculate(domainTopology,err,error,*999)
+    
+    EXITS("Domain_Calculate")
+    RETURN
+999 ERRORSEXITS("Domain_Calculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Domain_Calculate
+
+  !
+  !================================================================================================================================
+  !
+
   !>Allocates and initialises a domain.
   SUBROUTINE Domain_Initialise(domain,err,error,*)
 
@@ -4729,6 +5110,7 @@ CONTAINS
       decomposition%domain(componentIdx)%ptr%meshComponentNumber=componentIdx
       decomposition%domain(componentIdx)%ptr%region=>decomposition%region
       decomposition%domain(componentIdx)%ptr%numberOfDimensions=decomposition%numberOfDimensions
+      CALL Domain_Calculate(decomposition%domain(componentIdx)%ptr,err,error,*999)
     ENDDO !componentIdx
     
     EXITS("Decomposition_DomainsInitialise")
@@ -4754,7 +5136,7 @@ CONTAINS
     
     ENTERS("DomainMappings_DofsFinalise",err,error,*999)
 
-    CALL DOMAIN_MAPPINGS_MAPPING_FINALISE(dofsMapping,err,error,*999)
+    CALL DomainMapping_Finalise(dofsMapping,err,error,*999)
  
     EXITS("DomainMappings_DofsFinalise")
     RETURN
@@ -4783,9 +5165,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*998)
     IF(ASSOCIATED(domainMappings%dofs)) CALL FlagError("Domain dofs mappings are already associated.",err,error,*998)
      
-    ALLOCATE(domainMappings%dofs,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate domain mappings dofs.",err,error,*999)
-    CALL DomainMappings_MappingInitialise(domainMappings%dofs,err,error,*999)
+    CALL DomainMapping_Initialise(domainMappings%dofs,err,error,*999)
  
     EXITS("DomainMappings_DofsInitialise")
     RETURN
@@ -4807,8 +5187,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,adjacentElementIdx,adjacentElement,domainNumber,domainIdx,elementIdx,localNodeIdx,nodeNumber, &
-      & numberOfDomains,numberOfAdjacentElements,componentIdx
+    INTEGER(INTG) :: dummyErr,adjacentElementIdx,adjacentElement,domainNumber,domainIdx,elementIdx,localNodeIdx, &
+      & myGroupComputationNodeNumber,nodeNumber,numberOfDomains,numberOfAdjacentElements,numberOfGroupComputationNodes, &
+      & componentIdx
     INTEGER(INTG), ALLOCATABLE :: adjacentElements(:),domains(:),localElementNumbers(:)
     TYPE(BasisType), POINTER :: basis
     TYPE(DecompositionType), POINTER :: decomposition
@@ -4821,6 +5202,7 @@ CONTAINS
     TYPE(MeshNodesType), POINTER :: meshNodes
     TYPE(MeshTopologyType), POINTER :: meshTopology
     TYPE(VARYING_STRING) :: dummyError
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     NULLIFY(elementsMapping)
     
@@ -4835,29 +5217,34 @@ CONTAINS
     CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
     NULLIFY(mesh)
     CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
-    componentIdx=decomposition%meshComponentNumber
+    componentIdx=domain%meshComponentNumber
     NULLIFY(meshTopology)
     CALL Mesh_MeshTopologyGet(mesh,componentIdx,meshTopology,err,error,*999)
     NULLIFY(meshElements)
     CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
     NULLIFY(meshNodes)
     CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*999)
-                            
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+    CALL DomainMapping_WorkGroupSet(elementsMapping,workGroup,err,error,*999)
+    
     !Calculate the local and global numbers and set up the mappings                           
     ALLOCATE(elementsMapping%globalToLocalMap(mesh%numberOfElements),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate element mapping global to local map.",err,error,*999)
     elementsMapping%numberOfGlobal=meshElements%numberOfElements
     !Loop over the global elements and calculate local numbers
-    ALLOCATE(localElementNumbers(0:decomposition%numberOfDomains-1),STAT=err)
+    ALLOCATE(localElementNumbers(0:numberOfGroupComputationNodes-1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate local element numbers.",err,error,*999)
     localElementNumbers=0
-    ALLOCATE(adjacentElementsList(0:decomposition%numberOfDomains-1),STAT=err)
+    ALLOCATE(adjacentElementsList(0:numberOfGroupComputationNodes-1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate adjacent elements list.",err,error,*999)
-    DO domainIdx=0,decomposition%numberOfDomains-1
+    DO domainIdx=0,numberOfGroupComputationNodes-1
       NULLIFY(adjacentElementsList(domainIdx)%ptr)
       CALL List_CreateStart(adjacentElementsList(domainIdx)%ptr,err,error,*999)
       CALL List_DataTypeSet(adjacentElementsList(domainIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
-      CALL List_InitialSizeSet(adjacentElementsList(domainIdx)%ptr,MAX(INT(MESH%numberOfElements/2),1),err,error,*999)
+      CALL List_InitialSizeSet(adjacentElementsList(domainIdx)%ptr,MAX(INT(mesh%numberOfElements/2),1),err,error,*999)
       CALL List_CreateFinish(adjacentElementsList(domainIdx)%ptr,err,error,*999)
     ENDDO !domainIdx
     
@@ -4871,7 +5258,7 @@ CONTAINS
       NULLIFY(adjacentDomainsList)
       CALL List_CreateStart(adjacentDomainsList,err,error,*999)
       CALL List_DataTypeSet(adjacentDomainsList,LIST_INTG_TYPE,err,error,*999)
-      CALL List_InitialSizeSet(adjacentDomainsList,decomposition%numberOfDomains,err,error,*999)
+      CALL List_InitialSizeSet(adjacentDomainsList,numberOfGroupComputationNodes,err,error,*999)
       CALL List_CreateFinish(adjacentDomainsList,err,error,*999)
       CALL List_ItemAdd(adjacentDomainsList,domainNumber,err,error,*999)
       DO localNodeIdx=1,basis%numberOfNodes
@@ -4887,7 +5274,7 @@ CONTAINS
       CALL List_RemoveDuplicates(adjacentDomainsList,err,error,*999)
       CALL List_DetachAndDestroy(adjacentDomainsList,numberOfDomains,domains,err,error,*999)
       DEALLOCATE(domains)
-      CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(elementsMapping%globalToLocalMap(elementIdx),err,error,*999)
+      CALL DomainGlobalMapping_Initialise(elementsMapping%globalToLocalMap(elementIdx),err,error,*999)
       ALLOCATE(elementsMapping%globalToLocalMap(elementIdx)%localNumber(numberOfDomains),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate element global to local map local number.",err,error,*999)
       ALLOCATE(elementsMapping%globalToLocalMap(elementIdx)%domainNumber(numberOfDomains),STAT=err)
@@ -4907,7 +5294,7 @@ CONTAINS
     ENDDO !elementIdx
     
     !Compute ghost element mappings
-    DO domainIdx=0,decomposition%numberOfDomains-1
+    DO domainIdx=0,numberOfGroupComputationNodes-1
       CALL List_RemoveDuplicates(adjacentElementsList(domainIdx)%ptr,err,error,*999)
       CALL List_DetachAndDestroy(adjacentElementsList(domainIdx)%ptr,numberOfAdjacentElements,adjacentElements,err,error,*999)
       DO adjacentElementIdx=1,numberOfAdjacentElements
@@ -4929,7 +5316,7 @@ CONTAINS
     DEALLOCATE(localElementNumbers)
     
     !Calculate element local to global maps from global to local map
-    CALL DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(elementsMapping,err,error,*999)
+    CALL DomainMapping_LocalFromGlobalCalculate(elementsMapping,err,error,*999)
         
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Element mappings :",err,error,*999)
@@ -4977,10 +5364,10 @@ CONTAINS
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Adjacent domains :",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of adjacent domains = ", &
         & elementsMapping%numberOfAdjacentDomains,err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,elementsMapping%numberOfDomains+1,8,8, &
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfGroupComputationNodes+1,8,8, &
         & elementsMapping%adjacentDomainsPtr,'("    Adjacent domains ptr  :",8(X,I7))','(27X,8(X,I7))',err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,elementsMapping%adjacentDomainsPtr( &
-        & elementsMapping%numberOfDomains)-1,8,8,elementsMapping%adjacentDomainsList, &
+        & numberOfGroupComputationNodes)-1,8,8,elementsMapping%adjacentDomainsList, &
         '("    Adjacent domains list :",8(X,I7))','(27X,8(X,I7))',err,error,*999)
       DO domainIdx=1,elementsMapping%numberOfAdjacentDomains
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Adjacent domain idx : ",domainIdx,err,error,*999)
@@ -5042,6 +5429,31 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Calculates the domain mappings. 
+  SUBROUTINE DomainMappings_Calculate(domainMappings,err,error,*)
+
+    !Argument variables
+    TYPE(DomainMappingsType), POINTER :: domainMappings !<A pointer to the domain mappings to calculate.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("DomainMappings_Calculate",err,error,*999)
+
+    CALL DomainMappings_ElementsCalculate(domainMappings,err,error,*999)
+    CALL DomainMappings_NodesDofsCalculate(domainMappings,err,error,*999)
+ 
+    EXITS("DomainMappings_Calculate")
+    RETURN
+999 ERRORSEXITS("DomainMappings_Calculate",err,error)
+    RETURN 1
+   
+  END SUBROUTINE DomainMappings_Calculate
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finalises the element mapping in the given domain mapping. 
   SUBROUTINE DomainMappings_ElementsFinalise(domainElementsMapping,err,error,*)
 
@@ -5082,9 +5494,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*999)
     IF(ASSOCIATED(domainMappings%elements)) CALL FlagError("Domain elements mappings are already associated.",err,error,*999)
     
-    ALLOCATE(domainMappings%elements,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate domain mappings elements.",err,error,*999)
-    CALL DomainMappings_MappingInitialise(domainMappings%elements,err,error,*999)
+    CALL DomainMapping_Initialise(domainMappings%elements,err,error,*999)
  
     EXITS("DomainMappings_ElementsInitialise")
     RETURN
@@ -5124,8 +5534,6 @@ CONTAINS
     CALL DomainMappings_ElementsInitialise(domain%mappings,err,error,*999)
     CALL DomainMappings_NodesInitialise(domain%mappings,err,error,*999)
     CALL DomainMappings_DofsInitialise(domain%mappings,err,error,*999)
-    CALL DomainMappings_ElementsCalculate(domain%mappings,err,error,*999)
-    CALL DomainMappings_NodesDofsCalculate(domain%mappings,err,error,*999)
    
     EXITS("Domain_MappingsInitialise")
     RETURN
@@ -5164,6 +5572,7 @@ CONTAINS
     TYPE(DomainMappingType), POINTER :: nodesMapping
     TYPE(DomainMappingType), POINTER :: dofsMapping
     TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     ENTERS("DomainMappings_NodesDofsCalculate",err,error,*999)
 
@@ -5181,39 +5590,42 @@ CONTAINS
     CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
     NULLIFY(mesh)
     CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
-    componentIdx=decomposition%meshComponentNumber
+    componentIdx=domain%meshComponentNumber
     NULLIFY(meshTopology)
     CALL Mesh_MeshTopologyGet(mesh,componentIdx,meshTopology,err,error,*999)
- 
-    CALL WorkGroup_NumberOfGroupNodesGet(nodesMapping%workGroup,numberOfGroupComputationNodes,err,error,*999)
-    CALL WorkGroup_GroupNodeNumberGet(nodesMapping%workGroup,myGroupComputationNodeNumber,err,error,*999)
+    NULLIFY(workGroup)
+    CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+    CALL DomainMapping_WorkGroupSet(nodesMapping,workGroup,err,error,*999)
+    CALL DomainMapping_WorkGroupSet(dofsMapping,workGroup,err,error,*999)
                    
     !Calculate the local and global numbers and set up the mappings
     ALLOCATE(nodesMapping%globalToLocalMap(meshTopology%nodes%numberOfNodes),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate node mapping global to local map.",err,error,*999)
     nodesMapping%numberOfGlobal=meshTopology%nodes%numberOfNodes
-    ALLOCATE(localNodeNumbers(0:decomposition%numberOfDomains-1),STAT=err)
+    ALLOCATE(localNodeNumbers(0:numberOfGroupComputationNodes-1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate local node numbers.",err,error,*999)
     localNodeNumbers=0
     ALLOCATE(dofsMapping%globalToLocalMap(meshTopology%dofs%numberOfDofs),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate dofs mapping global to local map.",err,error,*999)
     dofsMapping%numberOfGlobal=meshTopology%dofs%numberOfDofs
-    ALLOCATE(localDofNumbers(0:decomposition%numberOfDomains-1),STAT=err)
+    ALLOCATE(localDofNumbers(0:numberOfGroupComputationNodes-1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate local dof numbers.",err,error,*999)
     localDofNumbers=0
-    ALLOCATE(ghostNodesList(0:decomposition%numberOfDomains-1),STAT=err)
+    ALLOCATE(ghostNodesList(0:numberOfGroupComputationNodes-1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate ghost nodes list.",err,error,*999)
-    DO domainIdx=0,decomposition%numberOfDomains-1
+    DO domainIdx=0,numberOfGroupComputationNodes-1
       NULLIFY(ghostNodesList(domainIdx)%ptr)
       CALL List_CreateStart(ghostNodesList(domainIdx)%ptr,err,error,*999)
       CALL List_DataTypeSet(ghostNodesList(domainIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
       CALL List_InitialSizeSet(ghostNodesList(domainIdx)%ptr,INT(meshTopology%nodes%numberOfNodes/2),err,error,*999)
       CALL List_CreateFinish(ghostNodesList(domainIdx)%ptr,err,error,*999)
     ENDDO !domainIdx
-    ALLOCATE(numberInternalNodes(0:decomposition%numberOfDomains-1),STAT=err)
+    ALLOCATE(numberInternalNodes(0:numberOfGroupComputationNodes-1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate number of internal nodes.",err,error,*999)
     numberInternalNodes=0
-    ALLOCATE(numberBoundaryNodes(0:decomposition%numberOfDomains-1),STAT=err)
+    ALLOCATE(numberBoundaryNodes(0:numberOfGroupComputationNodes-1),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate number of boundary nodes.",err,error,*999)
     numberBoundaryNodes=0
     
@@ -5222,12 +5634,12 @@ CONTAINS
       NULLIFY(adjacentDomainsList)
       CALL List_CreateStart(adjacentDomainsList,err,error,*999)
       CALL List_DataTypeSet(adjacentDomainsList,LIST_INTG_TYPE,err,error,*999)
-      CALL List_InitialSizeSet(adjacentDomainsList,decomposition%numberOfDomains,err,error,*999)
+      CALL List_InitialSizeSet(adjacentDomainsList,numberOfGroupComputationNodes,err,error,*999)
       CALL List_CreateFinish(adjacentDomainsList,err,error,*999)
       NULLIFY(allAdjacentDomainsList)
       CALL List_CreateStart(allAdjacentDomainsList,err,error,*999)
       CALL List_DataTypeSet(allAdjacentDomainsList,LIST_INTG_TYPE,err,error,*999)
-      CALL List_InitialSizeSet(allAdjacentDomainsList,decomposition%numberOfDomains,err,error,*999)
+      CALL List_InitialSizeSet(allAdjacentDomainsList,numberOfGroupComputationNodes,err,error,*999)
       CALL List_CreateFinish(allAdjacentDomainsList,err,error,*999)
       DO adjacentElementIdx=1,meshTopology%nodes%nodes(nodeIdx)%numberOfSurroundingElements
         adjacentElement=meshTopology%nodes%nodes(nodeIdx)%surroundingElements(adjacentElementIdx)
@@ -5322,7 +5734,7 @@ CONTAINS
     ENDDO !nodeIdx
     
     !For the second pass assign boundary nodes to one domain on the boundary and set local node numbers.
-    numberOfNodesPerDomain=FLOOR(REAL(meshTopology%nodes%numberOfNodes,DP)/REAL(decomposition%numberOfDomains,DP))
+    numberOfNodesPerDomain=FLOOR(REAL(meshTopology%nodes%numberOfNodes,DP)/REAL(numberOfGroupComputationNodes,DP))
     ALLOCATE(domain%nodeDomain(meshTopology%nodes%numberOfNodes),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate node domain",err,error,*999)
     domain%nodeDomain=-1
@@ -5380,7 +5792,7 @@ CONTAINS
     DEALLOCATE(numberInternalNodes)
                   
     !Calculate ghost node and dof mappings
-    DO domainIdx=0,decomposition%numberOfDomains-1
+    DO domainIdx=0,numberOfGroupComputationNodes-1
       CALL List_RemoveDuplicates(ghostNodesList(domainIdx)%ptr,err,error,*999)
       CALL List_DetachAndDestroy(ghostNodesList(domainIdx)%ptr,numberOfGhostNodes,ghostNodes,err,error,*999)
       DO ghostNodeIdx=1,numberOfGhostNodes
@@ -5438,8 +5850,8 @@ CONTAINS
     DEALLOCATE(localNodeNumbers)
                   
     !Calculate node and dof local to global maps from global to local map
-    CALL DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(nodesMapping,err,error,*999)
-    CALL DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(dofsMapping,err,error,*999)
+    CALL DomainMapping_LocalFromGlobalCalculate(nodesMapping,err,error,*999)
+    CALL DomainMapping_LocalFromGlobalCalculate(dofsMapping,err,error,*999)
         
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Node decomposition :",err,error,*999)
@@ -5492,10 +5904,10 @@ CONTAINS
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Adjacent domains :",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of adjacent domains = ", &
         & nodesMapping%numberOfAdjacentDomains,err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,nodesMapping%numberOfDomains+1,8,8, &
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfGroupComputationNodes+1,8,8, &
         & nodesMapping%adjacentDomainsPtr,'("    Adjacent domains ptr  :",8(X,I7))','(27X,8(X,I7))',err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,nodesMapping%adjacentDomainsPtr( &
-        & nodesMapping%numberOfDomains)-1,8,8,nodesMapping%adjacentDomainsList, &
+        & numberOfGroupComputationNodes)-1,8,8,nodesMapping%adjacentDomainsList, &
         '("    Adjacent domains list :",8(X,I7))','(27X,8(X,I7))',err,error,*999)
       DO domainIdx=1,nodesMapping%numberOfAdjacentDomains
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Adjacent domain idx : ",domainIdx,err,error,*999)
@@ -5557,10 +5969,10 @@ CONTAINS
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Adjacent domains :",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of adjacent domains = ", &
         & dofsMapping%numberOfAdjacentDomains,err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dofsMapping%numberOfDomains+1,8,8, &
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfGroupComputationNodes+1,8,8, &
         & dofsMapping%adjacentDomainsPtr,'("    Adjacent domains ptr  :",8(X,I7))','(27X,8(X,I7))',err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,dofsMapping%adjacentDomainsPtr( &
-        & dofsMapping%numberOfDomains)-1,8,8,dofsMapping%adjacentDomainsList, &
+        & numberOfGroupComputationNodes)-1,8,8,dofsMapping%adjacentDomainsList, &
         '("    Adjacent domains list :",8(X,I7))','(27X,8(X,I7))',err,error,*999)
       DO domainIdx=1,dofsMapping%numberOfAdjacentDomains
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Adjacent domain idx : ",domainIdx,err,error,*999)
@@ -5635,12 +6047,9 @@ CONTAINS
     ENTERS("DomainMappings_NodesInitialise",err,error,*998)
 
     IF(.NOT.ASSOCIATED(domainMappings)) CALL FlagError("Domain mappings is not associated.",err,error,*998)
-    IF(ASSOCIATED(domainMappings%nodes)) &
-        & CALL FlagError("Domain nodes mappings are already associated.",err,error,*998)
+    IF(ASSOCIATED(domainMappings%nodes)) CALL FlagError("Domain nodes mappings are already associated.",err,error,*998)
       
-    ALLOCATE(domainMappings%nodes,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate domain mappings nodes.",err,error,*999)
-    CALL DomainMappings_MappingInitialise(domainMappings%nodes,err,error,*999)
+    CALL DomainMapping_Initialise(domainMappings%nodes,err,error,*999)
  
     EXITS("DomainMappings_NodesInitialise")
     RETURN
@@ -5742,7 +6151,7 @@ CONTAINS
     CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
     NULLIFY(mesh)
     CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
-    componentIdx=decomposition%meshComponentNumber
+    componentIdx=domain%meshComponentNumber
     NULLIFY(meshTopology)
     CALL Mesh_MeshTopologyGet(mesh,componentIdx,meshTopology,err,error,*999)
     NULLIFY(meshElements)
@@ -6178,10 +6587,6 @@ CONTAINS
     CALL DomainTopology_DOFsInitialise(domain%topology,err,error,*999)
     CALL DomainTopology_LinesInitialise(domain%topology,err,error,*999)
     CALL DomainTopology_FacesInitialise(domain%topology,err,error,*999)
-    !Initialise the domain topology from the domain mappings and the mesh it came from
-    CALL DomainTopology_InitialiseFromMesh(domain%topology,err,error,*999)
-    !Calculate the topological information.
-    CALL DomainTopology_Calculate(domain%topology,err,error,*999)
     
     EXITS("Domain_TopologyInitialise")
     RETURN

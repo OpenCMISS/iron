@@ -50,6 +50,7 @@ MODULE DistributedMatrixVector
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE DistributedMatrixVectorAccessRoutines
+  USE DomainMappings
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
   USE ISO_C_BINDING
@@ -907,24 +908,29 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: dummyErr,numberOfGroupComputationNodes
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DomainMappingType), POINTER :: domainMapping
-    INTEGER(INTG) :: dummyErr
     TYPE(VARYING_STRING) :: dummyError
+    TYPE(WorkGroupType), POINTER :: workGroup
     
     ENTERS("DistributedMatrix_CMISSCreateFinish",err,error,*998)
 
     IF(.NOT.ASSOCIATED(cmissMatrix)) CALL FlagError("Distributed matrix CMISS is not associated.",err,error,*998)
     
     cmissMatrix%baseTagNumber=distributedDataId
+    NULLIFY(distributedMatrix)
+    CALL DistributedMatrixCMISS_DistributedMatrixGet(cmissMatrix,distributedMatrix,err,error,*999)
     NULLIFY(domainMapping)
-    domainMapping=>cmissMatrix%distributedMatrix%rowDomainMapping
-    IF(.NOT.ASSOCIATED(domainMapping)) CALL FlagError("Distributed matrix row domain mapping is not associated.",err,error,*998)
-    IF(domainMapping%numberOfDomains==1) THEN
+    CALL DistributedMatrix_RowMappingGet(distributedMatrix,domainMapping,err,error,*999)
+    NULLIFY(workGroup)
+    CALL DomainMapping_WorkGroupGet(domainMapping,workGroup,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
+    IF(numberOfGroupComputationNodes==1) THEN
       distributedDataId=distributedDataId+1
     ELSE
-      distributedDataId=distributedDataId+ &
-        & domainMapping%adjacentDomainsPtr(domainMapping%numberOfDomains)
-    END IF
+      distributedDataId=distributedDataId+domainMapping%adjacentDomainsPtr(numberOfGroupComputationNodes)
+    ENDIF
     CALL Matrix_CreateFinish(cmissMatrix%matrix,err,error,*999)
    
     EXITS("DistributedMatrix_CMISSCreateFinish")
@@ -1076,24 +1082,24 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
+    TYPE(WorkGroupType), POINTER :: columnWorkGroup,rowWorkGroup
     
     ENTERS("DistributedMatrix_CreateStart",err,error,*998)
 
     IF(.NOT.ASSOCIATED(rowDomainMapping)) CALL FlagError("Row domain mapping is not associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(columnDomainMapping)) CALL FlagError("Column domain mapping is not associated.",err,error,*998)
     IF(ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is already associated.",err,error,*998)
+    NULLIFY(rowWorkGroup)
+    CALL DomainMapping_WorkGroupGet(rowDomainMapping,rowWorkGroup,err,error,*999)
+    NULLIFY(columnWorkGroup)
+    CALL DomainMapping_WorkGroupGet(columnDomainMapping,columnWorkGroup,err,error,*999)
+    IF(.NOT.ASSOCIATED(rowWorkGroup,columnWorkGroup)) &
+      & CALL FlagError("The work group for the row mapping is not associated with the work group for the column mapping.", &
+      & err,error,*999)
     
-    IF(rowDomainMapping%numberOfDomains==columnDomainMapping%numberOfDomains) THEN
-      CALL DistributedMatrix_Initialise(rowDomainMapping,columnDomainMapping,distributedMatrix,err,error,*999)
-      !Set the defaults
-    ELSE
-      localError="The number of domains in the row domain mapping ("// &
-        & TRIM(NumberToVString(rowDomainMapping%numberOfDomains,"*",err,error))// &
-        & ") does not match the number of domains in the column domain mapping ("// &
-        & TRIM(NumberToVString(columnDomainMapping%numberOfDomains,"*",err,error))//")."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedMatrix_Initialise(rowDomainMapping,columnDomainMapping,distributedMatrix,err,error,*999)    
+    !Set any defaults
     
     EXITS("DistributedMatrix_CreateStart")
     RETURN
@@ -5790,11 +5796,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: domainIdx,domainIdx2,domainNumber,dummyErr,myComputationNodeNumber
+    INTEGER(INTG) :: domainIdx,domainIdx2,domainNumber,dummyErr,myGroupNodeNumber,numberOfGroupNodes
     LOGICAL :: found
     TYPE(DistributedVectorType), POINTER :: distributedVector
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(WorkGroupType), POINTER :: workGroup
     
     ENTERS("DistributedVector_CMISSCreateFinish",err,error,*999)
 
@@ -5803,6 +5810,10 @@ CONTAINS
     CALL DistributedVectorCMISS_DistributedVectorGet(cmissVector,distributedVector,err,error,*999)
     NULLIFY(domainMapping)
     CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
+    NULLIFY(workGroup)
+    CALL DomainMapping_WorkGroupGet(domainMapping,workGroup,err,error,*999)
+    CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupNodes,err,error,*999)
+    CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupNodeNumber,err,error,*999)
     
     cmissVector%dataSize=cmissVector%n    
     SELECT CASE(distributedVector%dataType)
@@ -5828,13 +5839,12 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     cmissVector%baseTagNumber=distributedDataId
-    IF(domainMapping%numberOfDomains==1) THEN
+    IF(numberOfGroupNodes==1) THEN
       distributedDataId=distributedDataId+1
     ELSE
-      distributedDataId=distributedDataId+domainMapping%adjacentDomainsPtr(domainMapping%numberOfDomains)
+      distributedDataId=distributedDataId+domainMapping%adjacentDomainsPtr(numberOfGroupNodes)
     END IF
     IF(domainMapping%numberOfAdjacentDomains>0) THEN
-      CALL WorkGroup_GroupNodeNumberGet(domainMapping%workGroup,myComputationNodeNumber,err,error,*999)
       IF(distributedVector%ghostingType==DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE) THEN
         ALLOCATE(cmissVector%transfers(domainMapping%numberOfAdjacentDomains),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate CMISS distributed vector transfer buffers.",err,error,*999)
@@ -5844,11 +5854,11 @@ CONTAINS
           cmissVector%transfers(domainIdx)%receiveBufferSize=domainMapping%adjacentDomains(domainIdx)%numberOfReceiveGhosts
           cmissVector%transfers(domainIdx)%dataType=distributedVector%dataType
           cmissVector%transfers(domainIdx)%sendTagNumber=cmissVector%baseTagNumber+ &
-            & domainMapping%adjacentDomainsPtr(myComputationNodeNumber)+domainIdx-1
+            & domainMapping%adjacentDomainsPtr(myGroupNodeNumber)+domainIdx-1
           domainNumber=domainMapping%adjacentDomains(domainIdx)%domainNumber
           found=.FALSE.
           DO domainIdx2=domainMapping%adjacentDomainsPtr(domainNumber),domainMapping%adjacentDomainsPtr(domainNumber+1)-1
-            IF(domainMapping%adjacentDomainsList(domainIdx2)==myComputationNodeNumber) THEN
+            IF(domainMapping%adjacentDomainsList(domainIdx2)==myGroupNodeNumber) THEN
               found=.TRUE.
               EXIT
             ENDIF

@@ -399,8 +399,8 @@ MODULE Types
     INTEGER(INTG) :: numberOfDimensions !<The number of dimensions for the data points.
     INTEGER(INTG) :: numberOfDataPoints !<The number of data points defined on the region/interface.
     TYPE(DataPointType), ALLOCATABLE :: dataPoints(:) !<dataPoints(dataPointIdx). The data point information for the dataPointIdx'th global data point.
-    TYPE(TREE_TYPE), POINTER :: dataPointsTree !<The tree for user to global data point mapping.
-    TYPE(DataProjectionsType), POINTER :: dataProjections !<dataProjections(projection_idx). A pointer to the projection_idx'th data projection for the data points.
+    TYPE(TreeType), POINTER :: dataPointsTree !<The tree for user to global data point mapping.
+    TYPE(DataProjectionsType), POINTER :: dataProjections !<dataProjections(projectionIdx). A pointer to the projectionIdx'th data projection for the data points.
   END TYPE DataPointsType
 
   !>A buffer type to allow for an array of pointers to a DataPointsType.
@@ -414,7 +414,7 @@ MODULE Types
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containg the data points. If the data points are in a region rather than an interface then this pointer will be NULL and the region pointer should be used.
     INTEGER(INTG) :: numberOfDataPointSets !<The number of data point sets defined on the region.
     TYPE(DataPointsPtrType), ALLOCATABLE :: dataPointSets(:) !<dataPointSets(setIdx). The array of pointers to the data points.
-    TYPE(TREE_TYPE), POINTER :: dataPointSetsTree !<The tree for user to global data point sets mapping.
+    TYPE(TreeType), POINTER :: dataPointSetsTree !<The tree for user to global data point sets mapping.
   END TYPE DataPointSetsType
 
   PUBLIC DataPointType,DataPointsType,DataPointsPtrType,DataPointSetsType
@@ -439,8 +439,7 @@ MODULE Types
     LOGICAL :: nodesFinished !<Is .TRUE. if the nodes have finished being created, .FALSE. if not.
     INTEGER(INTG) :: numberOfNodes!<The number of nodes defined on the region.
     TYPE(NodeType), ALLOCATABLE :: nodes(:) !<nodes(nodesIdx). The nodal information for the nodesIdx'th global node.
-    INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<Coupled meshes nodes numbers
-    TYPE(TREE_TYPE), POINTER :: nodesTree !<The tree for user to global node mapping
+    TYPE(TreeType), POINTER :: nodesTree !<The tree for user to global node mapping
   END TYPE NodesType
 
   PUBLIC NodeType,NodesType
@@ -484,7 +483,7 @@ MODULE Types
     INTEGER(INTG) :: numberOfElements !< The number of elements in the mesh.
     LOGICAL :: elementsFinished !<Is .TRUE. if the mesh elements have finished being created, .FALSE. if not.
     TYPE(MeshElementType), ALLOCATABLE :: elements(:) !<elements(elementIdx). The array of information for the elements of this mesh. elements(elementIdx) contains the information for the elementIdx'th global element of the mesh. 
-    TYPE(TREE_TYPE), POINTER :: elementsTree !<A tree mapping the mesh global element number to the mesh user element number.
+    TYPE(TreeType), POINTER :: elementsTree !<A tree mapping the mesh global element number to the mesh user element number.
   END TYPE MeshElementsType
 
   !>Contains the information for a node derivative of a mesh.
@@ -513,7 +512,7 @@ MODULE Types
     TYPE(MeshTopologyType), POINTER :: meshTopology !<The pointer to the mesh component topology for the nodes information.
     INTEGER(INTG) :: numberOfnodes !<The number of nodes in the mesh.
     TYPE(MeshNodeType), ALLOCATABLE :: nodes(:) !<nodes(nodeIdx). The pointer to the array of topology information for the nodes of the mesh. node(nodeIdx) contains the topological information for the nodeIdx'th global node of the mesh. 
-    TYPE(TREE_TYPE), POINTER :: nodesTree !<A tree mapping the mesh global number to the region nodes global number.
+    TYPE(TreeType), POINTER :: nodesTree !<A tree mapping the mesh global number to the region nodes global number.
   END TYPE MeshNodesType
   
   TYPE MeshElementDataPointType
@@ -811,7 +810,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfGlobalNodes !<The number of global nodes in this domain topology.
     INTEGER(INTG) :: maximumNumberOfDerivatives !<The maximum number of derivatives over the nodes in this domain topology.
     TYPE(DomainNodeType), ALLOCATABLE :: nodes(:) !<nodes(nodeIdx). The pointer to the array of topology information for the nodes of this domain. nodes(nodeIdx) contains the topological information for the nodeIdx'th local node of the domain.
-    TYPE(TREE_TYPE), POINTER :: nodesTree !<A tree mapping the domain local number to the region nodes user number.
+    TYPE(TreeType), POINTER :: nodesTree !<A tree mapping the domain local number to the region nodes user number.
   END TYPE DomainNodesType
 
   !>Contains the topology information for a domain
@@ -1017,13 +1016,13 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information on the domain mappings (i.e., local and global numberings).
   TYPE DomainMappingType
-    TYPE(WorkGroupType), POINTER :: workGroup !<A pointer to the work group for the domain mapping \TODO temp until permanent fix.
+    TYPE(WorkGroupType), POINTER :: workGroup !<A pointer to the work group for the domain mapping
     INTEGER(INTG) :: numberOfLocal !<The number of local numbers in the domain excluding ghost numbers
     INTEGER(INTG) :: totalNumberOfLocal !<The total number of local numbers in the domain including ghost numbers.
-    INTEGER(INTG), ALLOCATABLE :: numberOfDomainLocal(:) !<numberOfDomainLocal(domain_no). The number of locals for domain_no'th domain. NOTE: the domain_no goes from 0 to the number of domains-1.
-    INTEGER(INTG), ALLOCATABLE :: numberOfDomainGhost(:) !<numberOfDomainGhost(domain_no). The total number of ghosts for domain_no'th domain. NOTE: the domain_no goes from 0 to the number of domains-1.
+    INTEGER(INTG), ALLOCATABLE :: numberOfDomainLocal(:) !<numberOfDomainLocal(domainNumber). The number of locals for domainNumber'th domain. NOTE: the domain_no goes from 0 to the number of domains-1.
+    INTEGER(INTG), ALLOCATABLE :: numberOfDomainGhost(:) !<numberOfDomainGhost(domainNumber). The total number of ghosts for domainNumber'th domain. NOTE: the domain_no goes from 0 to the number of domains-1.
     INTEGER(INTG) :: numberOfGlobal !<The number of global numbers for this mapping.
-    INTEGER(INTG) :: numberOfDomains !<The number of domains in this mapping.
+    !INTEGER(INTG) :: numberOfDomains !<The number of domains in this mapping.
     INTEGER(INTG) :: numberOfInternal !<The number of internal numbers in this mapping.
     INTEGER(INTG) :: numberOfBoundary !<The number of boundary numbers in this mapping.
     INTEGER(INTG) :: numberOfGhost !<The number of ghost numbers in this mapping.
@@ -1037,8 +1036,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: localToGlobalMap(:) !<localToGlobalMap(i). The global number for the i'th local number for the mapping.
     TYPE(DomainGlobalMappingType), ALLOCATABLE :: globalToLocalMap(:) !<globalToLocalMap(i). The local information for the i'th global number for the mapping.
     INTEGER(INTG) :: numberOfAdjacentDomains !<The number of domains that are adjacent to this domain in the mapping.
-    INTEGER(INTG), ALLOCATABLE :: adjacentDomainsPtr(:) !<adjacentDomainsPtr(domain_no). The pointer to the list of adjacent domains for domain_no. adjacentDomainsPtr(domain_no) gives the starting position in adjacentDomainsList for the first adjacent domain number for domain number domain_no. adjacentDomainsPtr(domain_no+1) gives the last+1 position in adjacentDomainsList for the last adjacent domain number for domain number domain_no. NOTE: the index for adjacentDomainsPtr varies from 0 to the number of domains.
-    INTEGER(INTG), ALLOCATABLE :: adjacentDomainsList(:) !<adjacentDomainsList(i). The list of adjacent domains for each domain. The start and end positions for the list for domain number domain_no are given by adjacentDomainPtr(domain_no) and adjacentDomainPtr(domain_no+1)-1 respectively.
+    INTEGER(INTG), ALLOCATABLE :: adjacentDomainsPtr(:) !<adjacentDomainsPtr(domainNumber). The pointer to the list of adjacent domains for domain_no. adjacentDomainsPtr(domain_no) gives the starting position in adjacentDomainsList for the first adjacent domain number for domain number domain_no. adjacentDomainsPtr(domain_no+1) gives the last+1 position in adjacentDomainsList for the last adjacent domain number for domain number domain_no. NOTE: the index for adjacentDomainsPtr varies from 0 to the number of domains.
+    INTEGER(INTG), ALLOCATABLE :: adjacentDomainsList(:) !<adjacentDomainsList(i). The list of adjacent domains for each domain. The start and end positions for the list for domain number domainNumber are given by adjacentDomainPtr(domainNumber) and adjacentDomainPtr(domainNumber+1)-1 respectively.
     TYPE(DomainAdjacentDomainType), ALLOCATABLE :: adjacentDomains(:) !<adjacentDomains(adjacentDomainIdx). The adjacent domain information for the adjacentDomainIdx'th adjacent domain to this domain. 
   END TYPE DomainMappingType
 
@@ -1142,7 +1141,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: totalNumberOfElements !<The total number of elements in this decomposition topology.
     INTEGER(INTG) :: numberOfGlobalElements !<The number of global elements in this decomposition topology.
     TYPE(DecompositionElementType), ALLOCATABLE :: elements(:) !<elements(elementIdx). The pointer to the array of topology information for the elements of this decomposition. elements(elementIdx) contains the topological information for the elementIdx'th local element of the decomposition. 
-    TYPE(TREE_TYPE), POINTER :: elementsTree !<A tree mapping the decomposition local element number to the decomposition user element number.
+    TYPE(TreeType), POINTER :: elementsTree !<A tree mapping the decomposition local element number to the decomposition user element number.
   END TYPE DecompositionElementsType
   
   !>Contains data point information
@@ -1169,7 +1168,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: numberOfDomainGhost(:) !<numberOfDomainGhost(compDomainIdx). Number of ghost data points in each computation domain 
     INTEGER(INTG), ALLOCATABLE :: numberOfElementDataPoints(:) !<numberOfElementDataPoints(elementIdx). Number of data points in each global element
     TYPE(DecompositionElementDataPointsType), ALLOCATABLE :: elementDataPoints(:) !<elementDataPoints(elementIdx). Information of the projected data on the elements for decomposition of data points
-    TYPE(TREE_TYPE), POINTER :: dataPointsTree !<A tree mapping the domain local number to the region data point user number.
+    TYPE(TreeType), POINTER :: dataPointsTree !<A tree mapping the domain local number to the region data point user number.
   END TYPE DecompositionDataPointsType
 
    !>Contains the topology information for a decomposition
@@ -1181,6 +1180,33 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints !<The pointer to the topology information for the data of this decomposition.
   END TYPE DecompositionTopologyType
 
+  !>Contains information on the decomposition connectivity for a given coupled mesh element
+  TYPE DecompositionElementConnectivityType
+    INTEGER(INTG) :: coupledElementNumber !< The coupled number to define the connectivity for.
+    REAL(DP), ALLOCATABLE :: xi(:,:,:) !<xi(xiIdx,decompositionComponent,elementParameterIdx) The xiIdx'th xi of a coupled element to be copuled to a decompositionsh's decompositionMeshComponentIdx'th decomposition components's elementParameterIdx'th element parameter. !\todo the XI array needs to be restructured to efficiently utilize memory when coupling bodies with 2xi directions to bodies with 3xi directions using an interface.
+    INTEGER(INTG) :: connectedLineFace !<The coupled element line/face number to be connected to the decomposition.
+  END TYPE DecompositionElementConnectivityType
+
+  !>Contains information on the coupling between decompositions in an interface
+  TYPE DecompositionConnectivityType
+    TYPE(DecompositionCouplingType), POINTER :: decompositionCoupling !<A pointer back to the decomposition coupling
+    TYPE(BasisType), POINTER :: basis !<A pointer to the inteface basis
+    INTEGER(INTG) :: numberOfInterfaceElements !<The number of elements in the interface
+    INTEGER(INTG) :: totalNumberOfInterfaceElements !<The total number of elements in the interface
+    INTEGER(INTG) :: numberOfGlobalInterfaceElements !<The global number of elements in the interface
+    INTEGER(INTG) :: numberOfCoupledDecompositions !<The number of coupled decompositions in the interface
+    TYPE(DecompositionElementConnectivityType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledDecompositionIdx) !<The decomposition connectivity for a given interface element
+    INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
+  END TYPE DecompositionConnectivityType
+  
+  !>Contains information on coupling decompositions (across interfaces)
+  TYPE DecompositionCouplingType
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer back to the decomposition
+    INTEGER(INTG) :: numberOfCoupledDecompositions !<The number of decompositions coupled to this decomposition
+    TYPE(DecompositionPtrType), ALLOCATABLE :: coupledDecompositions(:) !<coupledDecompositions(coupledDecompositionIdx). The array of pointers to the coupled decompositions
+    TYPE(DecompositionConnectivityType), POINTER :: decompositionConnectivity !<A pointer to information on the decompositon node element connectivity
+  END TYPE DecompositionCouplingType
+
   !>Contains information on the mesh decomposition. \see OpenCMISS::Iron::cmfe_DecompositionType
   TYPE DecompositionType
     INTEGER(INTG) :: userNumber!<The user defined identifier for the domain decomposition. The user number must be unique.
@@ -1189,19 +1215,18 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DecompositionsType), POINTER :: decompositions !<A pointer to the decompositions for this decomposition.
     TYPE(MeshType), POINTER :: mesh !<A pointer to the mesh for this decomposition.
     TYPE(RegionType), POINTER :: region !<A pointer to the region containing the mesh. If the mesh is in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
-    TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface containing the mesh. If the mesh is in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containing the mesh. If the mesh is in a region rather than an interface then this pointer will be NULL and the interface pointer should be used.
     TYPE(DecomposerType), POINTER :: decomposer !<A pointer to the decomposer for this decomposition.
     INTEGER(INTG) :: numberOfDimensions !<The number of dimensions (Xi directions) for this decomposition/mesh.
     INTEGER(INTG) :: numberOfComponents !<The number of mesh components in this decomposition/mesh.
     INTEGER(INTG) :: meshComponentNumber !<The component number (index) of the mesh component that this decomposition belongs to (i.e., was generated from).
     INTEGER(INTG) :: domainDecompositionType !<The type of the domain decomposition \see MESH_ROUTINES_DecompositionTypes.
     TYPE(WorkGroupType), POINTER :: workGroup !<The work group to use for this decomposition
-    INTEGER(INTG) :: numberOfDomains !<The number of domains that this decomposition contains.
-    INTEGER(INTG) :: numberOfEdgesCut !<For automatically calculated decompositions, the number of edges of the mesh dual graph that were cut for the composition. It provides an indication of the optimally of the automatic decomposition.
     INTEGER(INTG) :: numberOfElements !<The number of elements in the decomposition
     INTEGER(INTG), ALLOCATABLE :: elementDomain(:) !<elementDomain(elementIdx). The domain number that the elementIdx'th global element is in for the decomposition. Note: the domain numbers start at 0 and go up to the numberOfDomains-1.
     TYPE(DecompositionTopologyType), POINTER :: topology !<A pointer to the topology for this decomposition.
-    TYPE(DomainPtrType), ALLOCATABLE :: domain(:) !<domain(meshComponentIdx). A pointer to the domain for mesh component for the domain associated with the computation node. 
+    TYPE(DomainPtrType), ALLOCATABLE :: domain(:) !<domain(meshComponentIdx). A pointer to the domain for mesh component for the domain associated with the computation node.
+    TYPE(DecompositionCouplingType), POINTER :: decompositionCoupling !<A pointer to the decomposition coupling if any.
     LOGICAL :: calculateFaces !<Boolean flag to determine whether faces should be calculated
     LOGICAL :: calculateLines !<Boolean flag to determine whether lines should be calculated
   END TYPE DecompositionType
@@ -1240,6 +1265,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: currentLinkIndex !<The current link index whilst the decomposer graph is being traversed.
     TYPE(DecomposerGraphNodeType), POINTER :: previousNode !<The previous node whilst the decomposer graph is being traversed.
     INTEGER(INTG) :: elementOffset !<The element number offset for this node in the supergraph.
+    INTEGER(INTG) :: vertexOffset !<The vertex number offset for this node in the supergraph.
   END TYPE DecomposerGraphNodeType
 
   !>A buffer type to allow for an array of pointers to DecomposerGraphNodeType
@@ -1290,6 +1316,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   PUBLIC DecompositionElementDataPointType,DecompositionElementDataPointsType,DecompositionDataPointsType
 
   PUBLIC DecompositionTopologyType
+
+  PUBLIC DecompositionCouplingType,DecompositionConnectivityType,DecompositionElementConnectivityType
 
   PUBLIC DecompositionType,DecompositionPtrType,DecompositionsType
 
@@ -2730,10 +2758,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information on the mesh connectivity for a given coupled mesh element
   TYPE InterfaceElementConnectivityType
-    INTEGER(INTG) :: coupledMeshElementNumber !< The coupled mesh number to define the connectivity for.
-    REAL(DP), ALLOCATABLE :: xi(:,:,:) !<xi(xiIdx,meshComponent,elementParameterIdx) The xiIdx'th xi of a coupled mesh element to be copuled to an interface mesh's interfaceMeshComponentIdx'th interface_mesh_components's element_parameter_idx'th element_parameter. !\todo the XI array needs to be restructured to efficiently utilize memory when coupling bodies with 2xi directions to bodies with 3xi directions using an interface.
-    INTEGER(INTG) :: connectedFace !<The coupled mesh element face number to be connected to the interface mesh.
-    INTEGER(INTG) :: connectedLine !<The coupled mesh element line number to be connected to the interface mesh.
+    INTEGER(INTG) :: coupledElementNumber !< The coupled number to define the connectivity for.
+    REAL(DP), ALLOCATABLE :: xi(:,:,:) !<xi(xiIdx,meshComponent,elementParameterIdx) The xiIdx'th xi of a coupled element to be copuled to an interface mesh's interfaceMeshComponentIdx'th interface mesh components's elementParameterIdx'th element parameter. !\todo the XI array needs to be restructured to efficiently utilize memory when coupling bodies with 2xi directions to bodies with 3xi directions using an interface.
+    INTEGER(INTG) :: connectedLineFace !<The coupled  element line/face number to be connected to the interface mesh.
   END TYPE InterfaceElementConnectivityType
 
   !>Contains information on the coupling between meshes in an interface
@@ -2745,11 +2772,12 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfInterfaceElements !<The number of elements in the interface
     INTEGER(INTG) :: numberOfCoupledMeshes !<The number of coupled meshes in the interface
     TYPE(InterfaceElementConnectivityType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledMeshIdx) !<The mesh connectivity for a given interface mesh element
+    INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
   END TYPE InterfaceMeshConnectivityType
-  
+
   !>Contains information on a data connectivity point 
   TYPE InterfacePointConnectivityType
-    INTEGER(INTG) :: coupledMeshElementNumber !<The element number this point is connected to in the coupled mesh
+    INTEGER(INTG) :: coupledElementNumber !<The element number this point is connected to in the coupled mesh
     INTEGER(INTG) :: elementLineFaceNumber !<The local connected face/line number in the coupled mesh
     REAL(DP), ALLOCATABLE :: xi(:) !<xi(xiIdx). The full xi location the data point is connected to in this coupled mesh
     REAL(DP), ALLOCATABLE :: reducedXi(:) !<reducedXi(xiIdx). The reduced (face/line) xi location the data point is connected to in this coupled mesh
@@ -2763,7 +2791,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information on the data point coupling/points connectivity between meshes in the an interface
   TYPE InterfacePointsConnectivityType
-    TYPE(InterfaceType), POINTER :: interface !<A pointer back to the interface for the coupled mesh connectivity
+    TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer back to the interface for the coupled mesh connectivity
     TYPE(MeshType), POINTER :: interfaceMesh !<A pointer to the interface mesh where the xi locations of data points are defined
     LOGICAL :: pointsConnectivityFinished !<Is .TRUE. if the data points connectivity has finished being created, .FALSE. if not.
     TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points defined on the interface for the connectivity
@@ -2783,6 +2811,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(RegionType), POINTER :: parentRegion !<A point to the parent region containing the interface.
     INTEGER(INTG) :: numberOfCoupledMeshes !<The number of coupled meshes in the interface.
     TYPE(MeshPtrType), ALLOCATABLE :: coupledMeshes(:) !<coupledMeshes(meshIdx). coupledMeshes(meshIdx)%ptr is the pointer to the meshIdx'th mesh involved in the interface.
+    TYPE(InterfaceDecompositionConnectivityType), POINTER :: decompositionConnectivity !<A pointer to the decomposition connectivity the interface.
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity !<A pointer to the meshes connectivity the interface.
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<A pointer to the points connectivity the interface.
     TYPE(DataPointSetsType), POINTER :: dataPointSets  !<A pointer to the data points defined in an interface.
@@ -2802,7 +2831,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE InterfacesType
     TYPE(RegionType), POINTER :: parentRegion !<A pointer back to the parent region containing the interfaces.
     INTEGER(INTG) :: numberOfInterfaces !<The number of interfaces
-    TYPE(InterfacePtrType), POINTER :: interfaces(:) !<interfaces(interfaceIdx). A pointer to the interface_idx'th interface.
+    TYPE(InterfacePtrType), ALLOCATABLE :: interfaces(:) !<interfaces(interfaceIdx). A pointer to the interfaceIdx'th interface.
   END TYPE InterfacesType
 
   PUBLIC INTERFACE_MATRIX_TYPE,INTERFACE_MATRIX_PTR_TYPE
@@ -2837,6 +2866,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   PUBLIC INTERFACE_CONDITION_TYPE,INTERFACE_CONDITION_PTR_TYPE,INTERFACE_CONDITIONS_TYPE
 
+  PUBLIC InterfaceDecompositionConnectivityType
+  
   PUBLIC InterfaceElementConnectivityType
 
   PUBLIC InterfaceMeshConnectivityType

@@ -98,7 +98,7 @@ MODULE OpenCMISS_Iron
  USE HAMILTON_JACOBI_EQUATIONS_ROUTINES
  USE HISTORY_ROUTINES
  USE INPUT_OUTPUT
- USE INTERFACE_ROUTINES
+ USE InterfaceRoutines
  USE InterfaceAccessRoutines
  USE INTERFACE_CONDITIONS_CONSTANTS
  USE INTERFACE_CONDITIONS_ROUTINES
@@ -5639,6 +5639,19 @@ MODULE OpenCMISS_Iron
 !
 !==================================================================================================================================
 
+ !> \addtogroup OpenCMISS_DecomposerConstants OpenCMISS::Iron::Decomposer::Constants
+ !> \brief Decomposer constants.
+ !>@{
+ !> \addtogroup OpenCMISS_DecomposerOutputTypes  OpenCMISS::Iron::Decomposer::DecomposerOutputTypes
+ !> \brief The Decomposer output type parameters
+ !> \see OpenCMISS::Iron::Decomposer,OpenCMISS
+ !>@{
+ INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSER_NO_OUTPUT=DECOMPOSER_NO_OUTPUT !<No decomposer output. \see OpenCMISS_DecomposerTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSER_TIMING_OUTPUT=DECOMPOSER_TIMING_OUTPUT !<Timing decomposer output. \see OpenCMISS_DecomposerTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_DECOMPOSER_ALL_OUTPUT=DECOMPOSER_ALL_OUTPUT !<All decomposer output. \see OpenCMISS_DecomposerTypes,OpenCMISS
+ !>@}
+ !>@}
+ 
  !> \addtogroup OpenCMISS_DecompositionConstants OpenCMISS::Iron::Decomposition::Constants
  !> \brief Decomposition constants.
  !>@{
@@ -5675,6 +5688,18 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Decomposer_DestroyNumber
    MODULE PROCEDURE cmfe_Decomposer_DestroyObj
  END INTERFACE cmfe_Decomposer_Destroy
+
+ !>Returns the output type for a decomposer.
+ INTERFACE cmfe_Decomposer_OutputTypeGet
+   MODULE PROCEDURE cmfe_Decomposer_OutputTypeGetNumber
+   MODULE PROCEDURE cmfe_Decomposer_OutputTypeGetObj
+ END INTERFACE cmfe_Decomposer_OutputTypeGet
+
+ !>Sets/changes the output type for a decomposer.
+ INTERFACE cmfe_Decomposer_OutputTypeSet
+   MODULE PROCEDURE cmfe_Decomposer_OutputTypeSetNumber
+   MODULE PROCEDURE cmfe_Decomposer_OutputTypeSetObj
+ END INTERFACE cmfe_Decomposer_OutputTypeSet
 
  !>Finishes the creation of a domain decomposition. \see OpenCMISS::Iron::cmfe_Decomposition_CreateStart
  INTERFACE cmfe_Decomposition_CreateFinish
@@ -5723,18 +5748,6 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Decomposition_MeshComponentSetNumber
    MODULE PROCEDURE cmfe_Decomposition_MeshComponentSetObj
  END INTERFACE cmfe_Decomposition_MeshComponentSet
-
- !>Returns the number of domains used for the decomposition of a mesh.
- INTERFACE cmfe_Decomposition_NumberOfDomainsGet
-   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsGetNumber
-   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsGetObj
- END INTERFACE cmfe_Decomposition_NumberOfDomainsGet
-
- !>Sets/changes the number of domains used for the decomposition of a mesh.
- INTERFACE cmfe_Decomposition_NumberOfDomainsSet
-   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsSetNumber
-   MODULE PROCEDURE cmfe_Decomposition_NumberOfDomainsSetObj
- END INTERFACE cmfe_Decomposition_NumberOfDomainsSet
 
  !>Returns the type of decomposition.
  INTERFACE cmfe_Decomposition_TypeGet
@@ -5792,6 +5805,8 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Decomposition_NumberOfElementDataPointsGetObj
  END INTERFACE cmfe_Decomposition_NumberOfElementDataPointsGet
 
+ PUBLIC CMFE_DECOMPOSER_NO_OUTPUT,CMFE_DECOMPOSER_TIMING_OUTPUT,CMFE_DECOMPOSER_ALL_OUTPUT
+
  PUBLIC CMFE_DECOMPOSITION_ALL_TYPE,CMFE_DECOMPOSITION_CALCULATED_TYPE,CMFE_DECOMPOSITION_USER_DEFINED_TYPE
 
  PUBLIC cmfe_Decomposer_CreateFinish,cmfe_Decomposer_CreateStart
@@ -5799,6 +5814,8 @@ MODULE OpenCMISS_Iron
  PUBLIC cmfe_Decomposer_DecompositionAdd
 
  PUBLIC cmfe_Decomposer_Destroy
+
+ PUBLIC cmfe_Decomposer_OutputTypeGet,cmfe_Decomposer_OutputTypeSet
 
  PUBLIC cmfe_Decomposition_CreateFinish,cmfe_Decomposition_CreateStart
 
@@ -5814,8 +5831,6 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_Decomposition_NodeDomainGet
  
- PUBLIC cmfe_Decomposition_NumberOfDomainsGet,cmfe_Decomposition_NumberOfDomainsSet
-
  PUBLIC cmfe_Decomposition_DataProjectionCalculate
 
  PUBLIC cmfe_Decomposition_ElementDataPointLocalNumberGet
@@ -9377,7 +9392,7 @@ CONTAINS
      ENTERS("cmfe_InterfaceMeshConnectivity_Finalise",err,error,*999)
 
      IF(ASSOCIATED(cmfe_InterfaceMeshConnectivity%meshConnectivity)) &
-       & CALL INTERFACE_MESH_CONNECTIVITY_DESTROY(cmfe_InterfaceMeshConnectivity%meshConnectivity,err,error,*999)
+       & CALL InterfaceMeshConnectivity_Destroy(cmfe_InterfaceMeshConnectivity%meshConnectivity,err,error,*999)
 
      EXITS("cmfe_InterfaceMeshConnectivity_Finalise")
      RETURN
@@ -22326,7 +22341,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_AbsoluteToleranceGet(dataProjection,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_DataProjection_AbsoluteToleranceGetNumber")
@@ -22398,7 +22413,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_AbsoluteToleranceSet(dataProjection,absoluteTolerance,err,error,*999)
 
     EXITS("cmfe_DataProjection_AbsoluteToleranceSetNumber")
@@ -22469,7 +22484,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_CreateFinish(dataProjection,err,error,*999)
 
     EXITS("cmfe_DataProjection_CreateFinishNumber")
@@ -22617,7 +22632,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_Destroy(dataProjection,err,error,*999)
 
     EXITS("cmfe_DataProjection_DestroyNumber")
@@ -22692,7 +22707,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_DataPointsPositionEvaluate(dataProjection,field,fieldVariableType,fieldParameterSetType,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber")
@@ -22747,7 +22762,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL Interface_FieldGet(interface,fieldUserNumber,field,err,error,*999)
     CALL DataProjection_DataPointsPositionEvaluate(dataProjection,field,fieldVariableType,fieldParameterSetType, &
       & err,error,*999)
@@ -22857,7 +22872,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCancelByDataPoints(dataProjection,dataPointUserNumbers,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsRegionNumber1")
@@ -22940,7 +22955,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCancelByDataPoints(dataProjection,dataPointUserNumbers,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCancelByDataPointsInterNum1")
@@ -23041,7 +23056,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCancelByDistance(dataProjection,distanceRelation,distance,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCancelByDistanceRegionNumber")
@@ -23092,7 +23107,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCancelByDistance(dataProjection,distanceRelation,distance,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCancelByDistanceInterfaceNumber")
@@ -23198,7 +23213,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCancelByExitTags(dataProjection,exitTags,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsRegionNumber1")
@@ -23281,7 +23296,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCancelByExitTags(dataProjection,exitTags,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCancelByExitTagsInterfaceNumber1")
@@ -23381,7 +23396,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCandidateElementsSet(dataProjection,candidateElementUserNumbers,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateElementsSetRegionNumber")
@@ -23431,7 +23446,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCandidateElementsSet(dataProjection,candidateElementUserNumbers,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateElementsSetIntNum")
@@ -23604,7 +23619,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionDataCandidateElementsSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
       & err,error,*999)
 
@@ -23758,7 +23773,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionDataCandidateElementsSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
       & err,error,*999)
 
@@ -23925,7 +23940,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCandidateFacesSet(dataProjection,candidateElementUserNumbers,candidateFaceNormals,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateFacesSetRegionNumber")
@@ -23976,7 +23991,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCandidateFacesSet(dataProjection,candidateElementUserNumbers,candidateFaceNormals,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateFacesSetInterfaceNumber")
@@ -24155,7 +24170,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionDataCandidateFacesSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
       & candidateFaceNormals,err,error,*999)
 
@@ -24320,7 +24335,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionDataCandidateFacesSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
       & candidateFaceNormals,err,error,*999)
 
@@ -24492,7 +24507,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCandidateLinesSet(dataProjection,candidateElementUserNumbers,candidateLineNormals,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateLinesSetRegionNumber")
@@ -24543,7 +24558,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionCandidateLinesSet(dataProjection,candidateElementUserNumbers,candidateLineNormals,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionCandidateLinesSetInterfaceNumber")
@@ -24726,7 +24741,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionDataCandidateLinesSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
       & candidateLineNormals,err,error,*999)
 
@@ -24891,7 +24906,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionDataCandidateLinesSet(dataProjection,dataPointUserNumbers,candidateElementUserNumbers, &
       & candidateLineNormals,err,error,*999)
 
@@ -25062,7 +25077,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_DataPointsProjectionEvaluate(dataProjection,projectionFieldSetType,err,error,*999)
 
     EXITS("cmfe_DataProjection_DataPointsProjectionEvaluateNumber")
@@ -25135,7 +25150,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_MaximumInterationUpdateGet(dataProjection,maximumIterationUpdate,err,error,*999)
 
     EXITS("cmfe_DataProjection_MaximumIterationUpdateGetNumber")
@@ -25208,7 +25223,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_MaximumInterationUpdateSet(dataProjection,maximumIterationUpdate,err,error,*999)
 
     EXITS("cmfe_DataProjection_MaximumIterationUpdateSetNumber")
@@ -25281,7 +25296,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_MaximumNumberOfIterationsGet(dataProjection,maximumNumberOfIterations,err,error,*999)
 
     EXITS("cmfe_DataProjection_MaximumNumberOfIterationsGetNumber")
@@ -25354,7 +25369,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultAnalysisOutput(dataProjection,filename,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultAnalysisOutputNumber")
@@ -25427,7 +25442,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultDistanceGet(dataProjection,dataPointUserNumber,ProjectionDistance,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultDistanceGetNumber")
@@ -25502,7 +25517,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultElementNumberGet(dataProjection,dataPointUserNumber,projectionElementNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultElementNumberGetNumber")
@@ -25578,7 +25593,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultElementFaceNumberGet(dataProjection,dataPointUserNumber,projectionElementFaceNumber,err, &
       & error,*999)
 
@@ -25656,7 +25671,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultElementLineNumberGet(dataProjection,dataPointUserNumber,projectionElementLineNumber,err, &
       & error,*999)
 
@@ -25734,7 +25749,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultExitTagGet(dataProjection,dataPointUserNumber,projectionExitTag,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultExitTagGetNumber")
@@ -25808,7 +25823,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultMaximumErrorGet(dataProjection,maximumDataPointUserNumber,maximumError,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultMaximumErrorGetNumber")
@@ -25884,7 +25899,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultMinimumErrorGet(dataProjection,minimumDataPointUserNumber,minimumError,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultMinimumErrorGetNumber")
@@ -25959,7 +25974,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultRMSErrorGet(dataProjection,rmsError,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultRMSErrorGetNumber")
@@ -26031,7 +26046,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultXiGet(dataProjection,dataPointUserNumber,projectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultXiGetNumber")
@@ -26104,7 +26119,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultXiSet(dataProjection,dataPointUserNumber,ProjectionXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultXiSetNumber")
@@ -26177,7 +26192,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ResultProjectionVectorGet(dataProjection,dataPointUserNumber,projectionVector,err,error,*999)
 
     EXITS("cmfe_DataProjection_ResultProjectionVectorGetNumber")
@@ -26252,7 +26267,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_MaximumNumberOfIterationsSet(dataProjection,maximumNumberOfIterations,err,error,*999)
 
     EXITS("cmfe_DataProjection_MaximumNumberOfIterationsSetNumber")
@@ -26325,7 +26340,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_NumberOfClosestElementsGet(dataProjection,numberOfClosestElements,err,error,*999)
 
     EXITS("cmfe_DataProjection_NumberOfClosestElementsGetNumber")
@@ -26398,7 +26413,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_NumberOfClosestElementsSet(dataProjection,numberOfClosestElements,err,error,*999)
 
     EXITS("cmfe_DataProjection_NumberOfClosestElementsSetNumber")
@@ -26471,7 +26486,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionTypeGet(dataProjection,projectionType,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionTypeGetNumber")
@@ -26542,7 +26557,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ProjectionTypeSet(dataProjection,projectionType,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionTypeSetNumber")
@@ -26613,7 +26628,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_RelativeToleranceGet(dataProjection,relativeTolerance,err,error,*999)
 
     EXITS("cmfe_DataProjection_RelativeToleranceGetNumber")
@@ -26685,7 +26700,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_RelativeToleranceSet(dataProjection,relativeTolerance,err,error,*999)
 
     EXITS("cmfe_DataProjection_RelativeToleranceSetNumber")
@@ -26757,7 +26772,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_StartingXiGet(dataProjection,startingXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_StartingXiGetNumber")
@@ -26829,7 +26844,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_StartingXiSet(dataProjection,startingXi,err,error,*999)
 
     EXITS("cmfe_DataProjection_StartingXiSetNumber")
@@ -26905,7 +26920,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ElementSet(dataProjection,dataPointNumber,elementNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ElementSetInterfaceNumber")
@@ -26952,7 +26967,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_ElementSet(dataProjection,dataPointNumber,elementNumber,err,error,*999)
 
     EXITS("cmfe_DataProjection_ElementSetRegionNumber")
@@ -27028,7 +27043,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
 
     EXITS("cmfe_DataProjection_LabelGetCInterfaceNumber")
@@ -27078,7 +27093,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
 
     EXITS("cmfe_DataProjection_LabelGetVSInterfaceNumber")
@@ -27124,7 +27139,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
 
     EXITS("cmfe_DataProjection_LabelGetCRegionNumber")
@@ -27169,7 +27184,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelGet(dataProjection,label,err,error,*999)
 
     EXITS("cmfe_DataProjection_LabelGetVSRegionNumber")
@@ -27270,7 +27285,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
 
     EXITS("cmfe_DataProjection_LabelSetCInterfaceNumber")
@@ -27320,7 +27335,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
 
     EXITS("cmfe_DataProjection_LabelSetVSInterfaceNumber")
@@ -27366,7 +27381,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
 
     EXITS("cmfe_DataProjection_LabelSetCRegionNumber")
@@ -27411,7 +27426,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL DataProjection_LabelSet(dataProjection,label,err,error,*999)
 
     EXITS("cmfe_DataProjection_LabelSetVSRegionNumber")
@@ -34364,7 +34379,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
     CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL Field_DataProjectionSet(field,dataProjection,err,error,*999)
 
     EXITS("cmfe_Field_DataProjectionSetNumber")
@@ -43320,7 +43335,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! INTERFACE_ROUTINES
+!! InterfaceRoutines
 !!
 !!==================================================================================================================================
 
@@ -43349,7 +43364,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_CREATE_FINISH(interface,err,error,*999)
+    CALL Interface_CreateFinish(interface,err,error,*999)
 
     EXITS("cmfe_Interface_CreateFinishNumber")
     RETURN
@@ -43374,7 +43389,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_CreateFinishObj",err,error,*999)
 
-    CALL INTERFACE_CREATE_FINISH(interface%interface,err,error,*999)
+    CALL Interface_CreateFinish(interface%interface,err,error,*999)
 
     EXITS("cmfe_Interface_CreateFinishObj")
     RETURN
@@ -43412,7 +43427,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL INTERFACE_CREATE_START(interfaceUserNumber,region,interface,err,error,*999)
+    CALL Interface_CreateStart(interfaceUserNumber,region,interface,err,error,*999)
 
     EXITS("cmfe_Interface_CreateStartNumber")
     RETURN
@@ -43439,7 +43454,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_CreateStartObj",err,error,*999)
 
-    CALL INTERFACE_CREATE_START(interfaceUserNumber,region%region,interface%interface,err,error,*999)
+    CALL Interface_CreateStart(interfaceUserNumber,region%region,interface%interface,err,error,*999)
 
     EXITS("cmfe_Interface_CreateStartObj")
     RETURN
@@ -43486,7 +43501,7 @@ CONTAINS
     CALL Region_Get(regions,parentRegionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL CoordinateSystem_Get(coordinateSystems,coordinateSystemUserNumber,coordinateSystem,err,error,*999)
-    CALL INTERFACE_COORDINATE_SYSTEM_SET(interface,coordinateSystem,err,error,*999)
+    CALL Interface_CoordinateSystemSet(interface,coordinateSystem,err,error,*999)
 
     EXITS("cmfe_Interface_CoordinateSystemSetNumber")
     RETURN
@@ -43512,7 +43527,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_CoordinateSystemSetObj",err,error,*999)
 
-    CALL INTERFACE_COORDINATE_SYSTEM_SET(interface%interface,coordinateSystem%coordinateSystem,err,error,*999)
+    CALL Interface_CoordinateSystemSet(interface%interface,coordinateSystem%coordinateSystem,err,error,*999)
 
     EXITS("cmfe_Interface_CoordinateSystemSetObj")
     RETURN
@@ -43685,7 +43700,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_LABEL_GET(interface,label,err,error,*999)
+    CALL Interface_LabelGet(interface,label,err,error,*999)
 
     EXITS("cmfe_Interface_LabelGetCNumber")
     RETURN
@@ -43711,7 +43726,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_LabelGetCObj",err,error,*999)
 
-    CALL INTERFACE_LABEL_GET(interface%interface,label,err,error,*999)
+    CALL Interface_LabelGet(interface%interface,label,err,error,*999)
 
     EXITS("cmfe_Interface_LabelGetCObj")
     RETURN
@@ -43751,7 +43766,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_LABEL_GET(interface,label,err,error,*999)
+    CALL Interface_LabelGet(interface,label,err,error,*999)
 
     EXITS("cmfe_Interface_LabelGetVSNumber")
     RETURN
@@ -43777,7 +43792,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_LabelGetVSObj",err,error,*999)
 
-    CALL INTERFACE_LABEL_GET(interface%interface,label,err,error,*999)
+    CALL Interface_LabelGet(interface%interface,label,err,error,*999)
 
     EXITS("cmfe_Interface_LabelGetVSObj")
     RETURN
@@ -43817,7 +43832,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_LABEL_SET(interface,label,err,error,*999)
+    CALL Interface_LabelSet(interface,label,err,error,*999)
 
     EXITS("cmfe_Interface_LabelSetCNumber")
     RETURN
@@ -43843,7 +43858,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_LabelSetCObj",err,error,*999)
 
-    CALL INTERFACE_LABEL_SET(interface%interface,label,err,error,*999)
+    CALL Interface_LabelSet(interface%interface,label,err,error,*999)
 
     EXITS("cmfe_Interface_LabelSetCObj")
     RETURN
@@ -43883,7 +43898,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,parentRegionUserNumber,parentRegion,err,error,*999)
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_LABEL_SET(interface,CHAR(label),err,error,*999)
+    CALL Interface_LabelSet(interface,CHAR(label),err,error,*999)
 
     EXITS("cmfe_Interface_LabelSetVSNumber")
     RETURN
@@ -43909,7 +43924,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_LabelSetVSObj",err,error,*999)
 
-    CALL INTERFACE_LABEL_SET(interface%interface,CHAR(label),err,error,*999)
+    CALL Interface_LabelSet(interface%interface,CHAR(label),err,error,*999)
 
     EXITS("cmfe_Interface_LabelSetVSObj")
     RETURN
@@ -43935,7 +43950,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_NodesGetObj",err,error,*999)
 
-    CALL INTERFACE_NODES_GET(interface%interface,nodes%nodes,err,error,*999)
+    CALL Interface_NodesGet(interface%interface,nodes%nodes,err,error,*999)
 
     EXITS("cmfe_Interface_NodesGetObj")
     RETURN
@@ -43983,7 +43998,7 @@ CONTAINS
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Region_Get(regions,meshRegionUserNumber,meshRegion,err,error,*999)
     CALL Region_MeshGet(meshRegion,meshUserNumber,mesh,err,error,*999)
-    CALL INTERFACE_MESH_ADD(interface,mesh,meshIndex,err,error,*999)
+    CALL Interface_MeshAdd(interface,mesh,meshIndex,err,error,*999)
 
     EXITS("cmfe_Interface_MeshAddNumber")
     RETURN
@@ -44010,7 +44025,7 @@ CONTAINS
 
     ENTERS("cmfe_Interface_MeshAddObj",err,error,*999)
 
-    CALL INTERFACE_MESH_ADD(interface%interface,mesh%mesh,meshIndex,err,error,*999)
+    CALL Interface_MeshAdd(interface%interface,mesh%mesh,meshIndex,err,error,*999)
 
     EXITS("cmfe_Interface_MeshAddObj")
     RETURN
@@ -44049,7 +44064,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_CREATE_FINISH(interface%meshConnectivity,err,error,*999)
+    CALL InterfaceMeshConnectivity_CreateFinish(interface%meshConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_CreateFinishNumber")
     RETURN
@@ -44075,7 +44090,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceMeshConnectivity_CreateFinishObj",err,error,*999)
 
-    CALL INTERFACE_MESH_CONNECTIVITY_CREATE_FINISH(interfaceMeshConnectivity%meshConnectivity,err,error,*999)
+    CALL InterfaceMeshConnectivity_CreateFinish(interfaceMeshConnectivity%meshConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_CreateFinishObj")
     RETURN
@@ -44121,7 +44136,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_MeshGet(interface,meshNumber,mesh,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_CREATE_START(interface,mesh,interfaceMeshConnectivity,err,error,*999)
+    CALL InterfaceMeshConnectivity_CreateStart(interface,mesh,interfaceMeshConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_CreateStartNumber")
     RETURN
@@ -44149,7 +44164,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceMeshConnectivity_CreateStartObj",err,error,*999)
 
-    CALL INTERFACE_MESH_CONNECTIVITY_CREATE_START(interface%interface,interfaceMesh%mesh, &
+    CALL interfaceMeshConnectivity_CreateStart(interface%interface,interfaceMesh%mesh, &
       & interfaceMeshConnectivity%meshConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_CreateStartObj")
@@ -44168,7 +44183,7 @@ CONTAINS
 
   !>Sets the connectivity between an element in a coupled mesh to an element in the interface mesh
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber(contextUserNumber,regionUserNumber,interfaceUserNumber, &
-     &  interfaceElementNumber,coupledMeshIndexNumber,coupledMeshElementNumber,err)
+     &  interfaceElementNumber,coupledMeshIndexNumber,coupledElementNumber,err)
     !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber)
 
     !Argument variables
@@ -44177,7 +44192,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceElementNumber !<The interface mesh element number to which the specified coupled mesh element would be connected
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index of the coupled mesh at the interface to set the element connectivity for
-    INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The coupled mesh element to be connected to the interface
+    INTEGER(INTG), INTENT(IN) :: coupledElementNumber !<The coupled mesh element to be connected to the interface
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -44196,7 +44211,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL InterfaceMeshConnectivity_ElementNumberSet(interface%meshConnectivity,interfaceElementNumber, &
-      & coupledMeshIndexNumber,coupledMeshElementNumber,err,error,*999)
+      & coupledMeshIndexNumber,coupledElementNumber,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_ElementNumberSetNumber")
     RETURN
@@ -44213,21 +44228,21 @@ CONTAINS
 
   !>Sets the connectivity between an element in a coupled mesh to an element in the interface mesh
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementNumberSetObj(interfaceMeshConnectivity,interfaceElementNumber, &
-     &  coupledMeshIndexNumber,coupledMeshElementNumber,err)
+     &  coupledMeshIndexNumber,coupledElementNumber,err)
     !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementNumberSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(IN) :: interfaceMeshConnectivity !<The interface mesh connectivity for the interface mesh
     INTEGER(INTG), INTENT(IN) :: interfaceElementNumber  !<The interface mesh element number to which the specified coupled mesh element would be connected
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index of the coupled mesh at the interface to set the element connectivity for
-    INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The coupled mesh element to be connected to the interface
+    INTEGER(INTG), INTENT(IN) :: coupledElementNumber !<The coupled mesh element to be connected to the interface
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_InterfaceMeshConnectivity_ElementNumberSetObj",err,error,*999)
 
     CALL InterfaceMeshConnectivity_ElementNumberSet(interfaceMeshConnectivity%meshConnectivity, &
-      & interfaceElementNumber,coupledMeshIndexNumber,coupledMeshElementNumber,err,error,*999)
+      & interfaceElementNumber,coupledMeshIndexNumber,coupledElementNumber,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_ElementNumberSetObj")
     RETURN
@@ -44245,7 +44260,7 @@ CONTAINS
 
   !>Sets the connectivity between an element in a coupled mesh to an element in the interface mesh
   SUBROUTINE cmfe_InterfaceMeshConnectivity_NodeNumberSetNumber(contextUserNumber,regionUserNumber,interfaceUserNumber, &
-     &  interfaceElementNumber,coupledMeshIndexNumber,coupledMeshElementNumber,err)
+     &  interfaceElementNumber,coupledMeshIndexNumber,coupledElementNumber,err)
     !DLLEXPORT(cmfe_InterfaceMeshConnectivity_NodeNumberSetNumber)
 
     !Argument variables
@@ -44254,7 +44269,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface.
     INTEGER(INTG), INTENT(IN) :: interfaceElementNumber !<The interface mesh element number to which the specified coupled mesh element would be connected
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index of the coupled mesh at the interface to set the element connectivity for
-    INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The coupled mesh element to be connected to the interface
+    INTEGER(INTG), INTENT(IN) :: coupledElementNumber !<The coupled mesh element to be connected to the interface
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -44291,17 +44306,9 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceMeshConnectivity_NodeNumberSetObj",err,error,*999)
 
-    IF(SIZE(interfaceNodeNumbers(:))==SIZE(firstCoupledMeshNodeNumbers(:)) &
-      & .AND.SIZE(interfaceNodeNumbers(:))==SIZE(secondCoupledMeshNodeNumbers(:))) THEN
-      !TODO Check pointers
-      !Set interface mesh connectivity node connectivity
-      CALL INTERFACE_MESH_CONNECTIVITY_NODE_NUMBER_SET(interfaceMeshConnectivity%meshConnectivity%interface%nodes, &
-        & interfaceNodeNumbers,firstCoupledMeshIndexNumber,firstCoupledMeshNodeNumbers, &
-        & secondCoupledMeshIndexNumber,secondCoupledMeshNodeNumbers,err,error,*999)
-    ELSE
-      localError="Interface number of nodes does not match coupled meshes number of nodes."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL InterfaceMeshConnectivity_NodeNumbersSet(interfaceMeshConnectivity%meshConnectivity, &
+      & interfaceNodeNumbers,firstCoupledMeshIndexNumber,firstCoupledMeshNodeNumbers, &
+      & secondCoupledMeshIndexNumber,secondCoupledMeshNodeNumbers,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_NodeNumberSetObj")
     RETURN
@@ -44318,7 +44325,7 @@ CONTAINS
 
   !>Sets the mapping from an xi position of a coupled mesh element to a node of an interface mesh element
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementXiSetNumber(contextUserNumber,regionUserNumber,interfaceUserNumber, &
-    &  interfaceElementNumber,coupledMeshIndexNumber,coupledMeshElementNumber,interfaceMeshLocalNodeNumber, &
+    &  interfaceElementNumber,coupledMeshIndexNumber,coupledElementNumber,interfaceMeshLocalNodeNumber, &
     & interfaceMeshComponentNodeNumber,xi,err)
     !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementXiSetNumber)
 
@@ -44328,7 +44335,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface to start the creation of the meshes connectivity for.
     INTEGER(INTG), INTENT(IN) :: interfaceElementNumber !<The interface mesh element number to which the specified coupled mesh element would be connected
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index of the coupled mesh at the interface to set the element connectivity for
-    INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The coupled mesh element to define the element xi connectivity from
+    INTEGER(INTG), INTENT(IN) :: coupledElementNumber !<The coupled mesh element to define the element xi connectivity from
     INTEGER(INTG), INTENT(IN) :: interfaceMeshLocalNodeNumber !<The interface mesh node to assign the coupled mesh element xi to
     INTEGER(INTG), INTENT(IN) :: interfaceMeshComponentNodeNumber !<The interface mesh node's component to assign the coupled mesh element xi to
     REAL(DP), INTENT(IN) :: xi(:) !<The xi value for the xi_idx'th xi direction in the coupled mesh element.
@@ -44349,8 +44356,8 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_ELEMENT_XI_SET(interface%meshConnectivity,interfaceElementNumber, &
-      & coupledMeshIndexNumber,coupledMeshElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi, &
+    CALL InterfaceMeshConnectivity_ElementXiSet(interface%meshConnectivity,interfaceElementNumber, &
+      & coupledMeshIndexNumber,coupledElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi, &
       & err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_ElementXiSetNumber")
@@ -44368,14 +44375,14 @@ CONTAINS
 
   !>Sets the mapping from an xi position of a coupled mesh element to a node of an interface mesh element
   SUBROUTINE cmfe_InterfaceMeshConnectivity_ElementXiSetObj(interfaceMeshConnectivity,interfaceElementNumber, &
-     &  coupledMeshIndexNumber,coupledMeshElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi,err)
+     &  coupledMeshIndexNumber,coupledElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi,err)
     !DLLEXPORT(cmfe_InterfaceMeshConnectivity_ElementXiSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfaceMeshConnectivityType), INTENT(IN) :: interfaceMeshConnectivity !<The interface to start the creation of the meshes connectivity for
     INTEGER(INTG), INTENT(IN) :: interfaceElementNumber !<The interface mesh element number to which the specified coupled mesh element would be connected
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index of the coupled mesh at the interface to set the element connectivity for
-    INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The coupled mesh element to define the element xi connectivity from
+    INTEGER(INTG), INTENT(IN) :: coupledElementNumber !<The coupled mesh element to define the element xi connectivity from
     INTEGER(INTG), INTENT(IN) :: interfaceMeshLocalNodeNumber !<The interface mesh node to assign the coupled mesh element xi to
     INTEGER(INTG), INTENT(IN) :: interfaceMeshComponentNodeNumber !<The interface mesh node's component to assign the coupled mesh element xi to
     REAL(DP), INTENT(IN) :: xi(:) !<The xi value for the xi_idx'th xi direction in the coupled mesh element.
@@ -44384,8 +44391,8 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceMeshConnectivity_ElementXiSetObj",err,error,*999)
 
-    CALL INTERFACE_MESH_CONNECTIVITY_ELEMENT_XI_SET(interfaceMeshConnectivity%meshConnectivity,interfaceElementNumber, &
-      & coupledMeshIndexNumber,coupledMeshElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi, &
+    CALL InterfaceMeshConnectivity_ElementXiSet(interfaceMeshConnectivity%meshConnectivity,interfaceElementNumber, &
+      & coupledMeshIndexNumber,coupledElementNumber,interfaceMeshLocalNodeNumber,interfaceMeshComponentNodeNumber,xi, &
       & err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_ElementXiSetObj")
@@ -44433,7 +44440,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Basis_Get(basisFunctions,interfaceBasisNumber,basis,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_BASIS_SET(interface%meshConnectivity,basis,err,error,*999)
+    CALL InterfaceMeshConnectivity_BasisSet(interface%meshConnectivity,basis,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_BasisSetNumber")
     RETURN
@@ -44460,7 +44467,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceMeshConnectivity_BasisSetObj",err,error,*999)
 
-    CALL INTERFACE_MESH_CONNECTIVITY_BASIS_SET(interfaceMeshConnectivity%meshConnectivity,interfaceMappingBasis%basis, &
+    CALL InterfaceMeshConnectivity_BasisSet(interfaceMeshConnectivity%meshConnectivity,interfaceMappingBasis%basis, &
       & err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_BasisSetObj")
@@ -44500,7 +44507,7 @@ CONTAINS
     CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
-    CALL INTERFACE_MESH_CONNECTIVITY_DESTROY(interface%meshConnectivity,err,error,*999)
+    CALL InterfaceMeshConnectivity_Destroy(interface%meshConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_DestroyNumber")
     RETURN
@@ -44526,8 +44533,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceMeshConnectivity_DestroyObj",err,error,*999)
 
-    IF(ASSOCIATED(interfaceMeshConnectivity%meshConnectivity)) &
-      &  CALL INTERFACE_MESH_CONNECTIVITY_DESTROY(interfaceMeshConnectivity%meshConnectivity,err,error,*999)
+    CALL InterfaceMeshConnectivity_Destroy(interfaceMeshConnectivity%meshConnectivity,err,error,*999)
 
     EXITS("cmfe_InterfaceMeshConnectivity_DestroyObj")
     RETURN
@@ -44755,7 +44761,7 @@ CONTAINS
 
   !>Gets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberGetNumber(contextUserNumber,regionUserNumber,interfaceUserNumber, &
-     &  interfaceDataPointIndexNumber,coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err)
+     &  interfaceDataPointIndexNumber,coupledMeshIndexNumber,meshComponentNumber,coupledElementNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberGetNumber)
 
     !Argument variables
@@ -44765,7 +44771,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the interface mesh that points connectivity is associated to
-    INTEGER(INTG), INTENT(OUT) :: coupledMeshElementNumber !<The element number where the data point is connected to.
+    INTEGER(INTG), INTENT(OUT) :: coupledElementNumber !<The element number where the data point is connected to.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -44784,7 +44790,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL InterfacePointsConnectivity_ElementNumberGet(interface%pointsConnectivity,interfaceDataPointIndexNumber, &
-      & coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err,error,*999)
+      & coupledMeshIndexNumber,meshComponentNumber,coupledElementNumber,err,error,*999)
 
     EXITS("cmfe_InterfacePointsConnectivity_ElementNumberGetNumber")
     RETURN
@@ -44801,7 +44807,7 @@ CONTAINS
 
   !>Gets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberGetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, &
-      & coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err)
+      & coupledMeshIndexNumber,meshComponentNumber,coupledElementNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberGetObj)
 
     !Argument variables
@@ -44809,14 +44815,14 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the interface mesh that points connectivity is associated to
-    INTEGER(INTG), INTENT(OUT) :: coupledMeshElementNumber !<The element number where the data point is projected to.
+    INTEGER(INTG), INTENT(OUT) :: coupledElementNumber !<The element number where the data point is projected to.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
     ENTERS("cmfe_InterfacePointsConnectivity_ElementNumberGetObj",err,error,*999)
 
     CALL InterfacePointsConnectivity_ElementNumberGet(InterfacePointsConnectivity%pointsConnectivity, &
-      & interfaceDataPointIndexNumber,coupledMeshIndexNumber,meshComponentNumber,coupledMeshElementNumber,err,error,*999)
+      & interfaceDataPointIndexNumber,coupledMeshIndexNumber,meshComponentNumber,coupledElementNumber,err,error,*999)
 
     EXITS("cmfe_InterfacePointsConnectivity_ElementNumberGetObj")
     RETURN
@@ -44833,7 +44839,7 @@ CONTAINS
 
   !>Sets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberSetNumber(contextUserNumber,regionUserNumber,interfaceUserNumber, &
-     &  interfaceDataPointIndexNumber,coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err)
+     &  interfaceDataPointIndexNumber,coupledMeshIndexNumber,coupledElementNumber,meshComponentNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberSetNumber)
 
     !Argument variables
@@ -44842,7 +44848,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
-    INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The element number where the data point is projected to.
+    INTEGER(INTG), INTENT(IN) :: coupledElementNumber !<The element number where the data point is projected to.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to set the points connectivity element number for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -44862,7 +44868,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL InterfacePointsConnectivity_ElementNumberSet(interface%pointsConnectivity,interfaceDataPointIndexNumber, &
-      & coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err,error,*999)
+      & coupledMeshIndexNumber,coupledElementNumber,meshComponentNumber,err,error,*999)
 
     EXITS("cmfe_InterfacePointsConnectivity_ElementNumberSetNumber")
     RETURN
@@ -44879,14 +44885,14 @@ CONTAINS
 
   !>Sets coupled mesh element number that the data point in the interface is connected to
   SUBROUTINE cmfe_InterfacePointsConnectivity_ElementNumberSetObj(interfacePointsConnectivity,interfaceDataPointIndexNumber, &
-      & coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err)
+      & coupledMeshIndexNumber,coupledElementNumber,meshComponentNumber,err)
     !DLLEXPORT(cmfe_InterfacePointsConnectivity_ElementNumberSetObj)
 
     !Argument variables
     TYPE(cmfe_InterfacePointsConnectivityType), INTENT(IN) :: InterfacePointsConnectivity !<The interface points connectivity to set the element number for
     INTEGER(INTG), INTENT(IN) :: interfaceDataPointIndexNumber !<The index of the interface data point, i.e.user defined global number
     INTEGER(INTG), INTENT(IN) :: coupledMeshIndexNumber !<The index number of the coupled mesh
-    INTEGER(INTG), INTENT(IN) :: coupledMeshElementNumber !<The element number where the data point is projected to.
+    INTEGER(INTG), INTENT(IN) :: coupledElementNumber !<The element number where the data point is projected to.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to set the points connectivity element number for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -44894,7 +44900,7 @@ CONTAINS
     ENTERS("cmfe_InterfacePointsConnectivity_ElementNumberSetObj",err,error,*999)
 
     CALL InterfacePointsConnectivity_ElementNumberSet(InterfacePointsConnectivity%pointsConnectivity, &
-      & interfaceDataPointIndexNumber,coupledMeshIndexNumber,coupledMeshElementNumber,meshComponentNumber,err,error,*999)
+      & interfaceDataPointIndexNumber,coupledMeshIndexNumber,coupledElementNumber,meshComponentNumber,err,error,*999)
 
     EXITS("cmfe_InterfacePointsConnectivity_ElementNumberSetObj")
     RETURN
@@ -45098,7 +45104,7 @@ CONTAINS
     CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
     CALL Region_Get(regions,dataPointsRegionUserNumber,dataPointsRegion,err,error,*999)
     CALL Region_DataPointsGet(dataPointsRegion,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL InterfacePointsConnectivity_UpdateFromProjection(interface%PointsConnectivity, &
       & dataProjection,coupledMeshIndex,err,error,*999)
 
@@ -45155,7 +45161,7 @@ CONTAINS
     CALL Region_Get(regions,dataPointsRegionUserNumber,dataPointsRegion,err,error,*999)
     CALL Region_InterfaceGet(dataPointsRegion,dataPointsInterfaceUserNumber,dataPointsInterface,err,error,*999)
     CALL Interface_DataPointsGet(dataPointsInterface,dataPointsUserNumber,dataPoints,err,error,*999)
-    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataPoints_DataProjectionUserGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
     CALL InterfacePointsConnectivity_UpdateFromProjection(interface%PointsConnectivity, &
       & dataProjection,coupledMeshIndex,err,error,*999)
 
@@ -47751,6 +47757,138 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the output type for a decomposer identified by a user number.
+  SUBROUTINE cmfe_Decomposer_OutputTypeGetNumber(contextUserNumber,regionUserNumber,decomposerUserNumber,outputType,err)
+    !DLLEXPORT(cmfe_Decomposer_OutputTypeGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the decomposer.
+    INTEGER(INTG), INTENT(IN) :: decomposerUserNumber !<The user number of the decomposer to get the output type for.
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the specified decomposer \see OpenCMISS_DecomposerOutputTypes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecomposerType), POINTER :: decomposer
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Decomposer_OutputTypeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(decomposer)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_DecomposerGet(region,decomposerUserNumber,decomposer,err,error,*999)
+    CALL Decomposer_OutputTypeGet(decomposer,outputType,err,error,*999)
+
+    EXITS("cmfe_Decomposer_OutputTypeGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_OutputTypeGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_OutputTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the output type for a decomposer identified by an object.
+  SUBROUTINE cmfe_Decomposer_OutputTypeGetObj(decomposer,outputType,err)
+    !DLLEXPORT(cmfe_Decomposition_OutputTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to get the output type for.
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the output type of the specified decomposer \see OpenCMISS_DecomposerOutputTypes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposer_OutputTypeGetObj",err,error,*999)
+
+    CALL Decomposer_OutputTypeGet(decomposer%decomposer,outputTYpe,err,error,*999)
+
+    EXITS("cmfe_Decomposer_OutputTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_OutputTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_OutputTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output type for a decomposer identified by a user number.
+  SUBROUTINE cmfe_Decomposer_OutputTypeSetNumber(contextUserNumber,regionUserNumber,decomposerUserNumber,outputType,err)
+    !DLLEXPORT(cmfe_Decomposer_OutputTypeSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the decomposer.
+    INTEGER(INTG), INTENT(IN) :: decomposerUserNumber !<The user number of the decomposer to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: outputType !The output type to set \see OpenCMISS_DecomposerOutputTypes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecomposerType), POINTER :: decomposer
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Decomposer_OutputTypeSetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(decomposer)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_DecomposerGet(region,decomposerUserNumber,decomposer,err,error,*999)
+    CALL Decomposer_OutputTypeSet(decomposer,outputType,err,error,*999)
+
+    EXITS("cmfe_Decomposer_OutputTypeSetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_OutputTypeSetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_OutputTypeSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the output type for a decomposer identified by an object.
+  SUBROUTINE cmfe_Decomposer_OutputTypeSetObj(decomposer,outputType,err)
+    !DLLEXPORT(cmfe_Decomposition_OutputTYpeSetObj)
+
+    !Argument variables
+    TYPE(cmfe_DecomposerType), INTENT(IN) :: decomposer !<The decomposer to set the output type for.
+    INTEGER(INTG), INTENT(IN) :: outputType !The output type to set \see OpenCMISS_DecomposerOutputTypes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Decomposer_OutputTypeSetObj",err,error,*999)
+
+    CALL Decomposer_OutputTypeSet(decomposer%decomposer,outputTYpe,err,error,*999)
+
+    EXITS("cmfe_Decomposer_OutputTypeSetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Decomposer_OutputTypeSetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Decomposer_OutputTypeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finishes the creation of a domain decomposition for a decomposition identified by a user number.
   SUBROUTINE cmfe_Decomposition_CreateFinishNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber,err)
     !DLLEXPORT(cmfe_Decomposition_CreateFinishNumber)
@@ -48443,148 +48581,6 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Decomposition_MeshComponentSetObj
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the number of domains for a decomposition identified by a user number.
-  SUBROUTINE cmfe_Decomposition_NumberOfDomainsGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
-    & decompositionUserNumber,numberOfDomains,err)
-    !DLLEXPORT(cmfe_Decomposition_NumberOfDomainsGetNumber)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the number of domains for.
-    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the number of domains for.
-    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the number of domains for.
-    INTEGER(INTG), INTENT(OUT) :: numberOfDomains !<On return, the number of domains in the decomposition.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-    TYPE(ContextType), POINTER :: context
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(MeshType), POINTER :: mesh
-    TYPE(RegionType), POINTER :: region
-    TYPE(RegionsType), POINTER :: regions
-
-    ENTERS("cmfe_Decomposition_NumberOfDomainsGetNumber",err,error,*999)
-
-    NULLIFY(context)
-    NULLIFY(regions)
-    NULLIFY(region)
-    NULLIFY(mesh)
-    NULLIFY(decomposition)
-    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
-    CALL Context_RegionsGet(context,regions,err,error,*999)
-    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
-    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_NUMBER_OF_DOMAINS_GET(decomposition,numberOfDomains,err,error,*999)
-
-    EXITS("cmfe_Decomposition_NumberOfDomainsGetNumber")
-    RETURN
-999 ERRORSEXITS("cmfe_Decomposition_NumberOfDomainsGetNumber",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Decomposition_NumberOfDomainsGetNumber
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns the number of domains for a decomposition identified by an object.
-  SUBROUTINE cmfe_Decomposition_NumberOfDomainsGetObj(decomposition,numberOfDomains,err)
-    !DLLEXPORT(cmfe_Decomposition_NumberOfDomainsGetObj)
-
-    !Argument variables
-    TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the number of domains for.
-    INTEGER(INTG), INTENT(OUT) :: numberOfDomains !<On return, the number of domains in the decomposition.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_Decomposition_NumberOfDomainsGetObj",err,error,*999)
-
-    CALL DECOMPOSITION_NUMBER_OF_DOMAINS_GET(decomposition%decomposition,numberOfDomains,err,error,*999)
-
-    EXITS("cmfe_Decomposition_NumberOfDomainsGetObj")
-    RETURN
-999 ERRORSEXITS("cmfe_Decomposition_NumberOfDomainsGetObj",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Decomposition_NumberOfDomainsGetObj
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the number of domains for a decomposition identified by a user number.
-  SUBROUTINE cmfe_Decomposition_NumberOfDomainsSetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
-    & decompositionUserNumber,numberOfDomains,err)
-    !DLLEXPORT(cmfe_Decomposition_NumberOfDomainsSetNumber)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to set the number of domains for.
-    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to set the number of domains for.
-    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to set the number of domains for.
-    INTEGER(INTG), INTENT(IN) :: numberOfDomains !<The number of domains in the decomposition to set.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-    TYPE(ContextType), POINTER :: context
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(MeshType), POINTER :: mesh
-    TYPE(RegionType), POINTER :: region
-    TYPE(RegionsType), POINTER :: regions
- 
-    ENTERS("cmfe_Decomposition_NumberOfDomainsSetNumber",err,error,*999)
-
-    NULLIFY(context)
-    NULLIFY(regions)
-    NULLIFY(region)
-    NULLIFY(mesh)
-    NULLIFY(decomposition)
-    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
-    CALL Context_RegionsGet(context,regions,err,error,*999)
-    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
-    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_NUMBER_OF_DOMAINS_SET(decomposition,numberOfDomains,err,error,*999)
-
-    EXITS("cmfe_Decomposition_NumberOfDomainsSetNumber")
-    RETURN
-999 ERRORSEXITS("cmfe_Decomposition_NumberOfDomainsSetNumber",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Decomposition_NumberOfDomainsSetNumber
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets/changes the number of domains for a decomposition identified by an object.
-  SUBROUTINE cmfe_Decomposition_NumberOfDomainsSetObj(decomposition,numberOfDomains,err)
-    !DLLEXPORT(cmfe_Decomposition_NumberOfDomainsSetObj)
-
-    !Argument variables
-    TYPE(cmfe_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to set the number of domains for.
-    INTEGER(INTG), INTENT(IN) :: numberOfDomains !<The number of domains in the decomposition to set.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_Decomposition_NumberOfDomainsSetObj",err,error,*999)
-
-    CALL DECOMPOSITION_NUMBER_OF_DOMAINS_SET(decomposition%decomposition,numberOfDomains,err,error,*999)
-
-    EXITS("cmfe_Decomposition_NumberOfDomainsSetObj")
-    RETURN
-999 ERRORSEXITS("cmfe_Decomposition_NumberOfDomainsSetObj",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Decomposition_NumberOfDomainsSetObj
 
   !
   !================================================================================================================================

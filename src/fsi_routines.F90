@@ -682,7 +682,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: geometricVariable
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(InterfaceType), POINTER :: fsInterface
-    TYPE(NodesType), POINTER :: interfaceNodes
+    TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: dynamicSolver,linearSolver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
@@ -769,8 +769,8 @@ CONTAINS
     CALL SolverMapping_InterfaceConditionGet(dynamicSolverMapping,1,interfaceCondition,err,error,*999)
     NULLIFY(fsInterface)
     CALL InterfaceCondition_InterfaceGet(interfaceCondition,fsInterface,err,error,*999)
-    NULLIFY(interfaceNodes)
-    CALL Interface_NodesGet(fsInterface,interfaceNodes,err,error,*999)
+    NULLIFY(meshConnectivity)
+    CALL Interface_MeshConnectivityGet(fsInterface,meshConnectivity,err,error,*999)
     NULLIFY(interfaceGeometricField)
     CALL InterfaceCondition_GeometricFieldGet(interfaceCondition,interfaceGeometricField,err,error,*999)
     !===============================================================================================================
@@ -786,7 +786,7 @@ CONTAINS
         NULLIFY(domain)
         CALL FieldVariable_DomainGet(geometricVariable,componentIdx,domain,err,error,*999)
         DO nodeIdx=1,domain%topology%nodes%totalNumberOfNodes
-          solidNode=interfaceNodes%coupledNodes(1,nodeIdx)
+          solidNode=meshConnectivity%coupledNodes(1,nodeIdx)
           DO derivativeIdx=1,domain%topology%nodes%nodes(nodeIdx)%numberOfDerivatives
             DO versionIdx=1,domain%topology%nodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
               CALL Field_ParameterSetGetNode(solidDependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &

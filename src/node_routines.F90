@@ -805,7 +805,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: nodeIdx,insertStatus
-    TYPE(TREE_TYPE), POINTER :: newNodesTree
+    TYPE(TreeType), POINTER :: newNodesTree
     TYPE(VARYING_STRING) :: localError
 
     NULLIFY(newNodesTree)

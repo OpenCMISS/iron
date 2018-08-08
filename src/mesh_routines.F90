@@ -2067,7 +2067,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: globalElementNumber,insertStatus
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeNodeType), POINTER :: treeNode
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("MeshElements_ElementUserNumberSet",err,error,*999)
@@ -2114,7 +2114,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,insertStatus
-    TYPE(TREE_TYPE), POINTER :: newElementsTree
+    TYPE(TreeType), POINTER :: newElementsTree
     TYPE(VARYING_STRING) :: localError
 
     NULLIFY(newElementsTree)
@@ -2523,8 +2523,8 @@ CONTAINS
     TYPE(MeshElementsType), POINTER :: meshElements
     TYPE(MeshNodesType), POINTER :: meshNodes
     TYPE(NodesType), POINTER :: nodes
-    TYPE(TREE_TYPE), POINTER :: globalNodesTree
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeType), POINTER :: globalNodesTree
+    TYPE(TreeNodeType), POINTER :: treeNode
     TYPE(VARYING_STRING) :: dummyError,localError
 
     NULLIFY(globalNodeNumbers)

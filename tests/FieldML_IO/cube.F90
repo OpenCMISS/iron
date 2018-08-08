@@ -124,9 +124,11 @@ CONTAINS
     TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
     TYPE(cmfe_CoordinateSystemType) :: coordinateSystem
     TYPE(cmfe_DecompositionType) :: decomposition
+    TYPE(cmfe_DecomposerType) :: decomposer
     TYPE(cmfe_NodesType) :: nodes
     TYPE(cmfe_FieldMLIOType) :: fieldmlInfo
-    INTEGER(CMISSIntg) :: numberOfComputationNodes, computationNodeNumber
+    TYPE(cmfe_WorkGroupType) :: worldWorkGroup
+    INTEGER(CMISSIntg) :: numberOfComputationNodes, computationNodeNumber, decompositionIndex
     INTEGER(CMISSIntg) :: err
 
     err = 0
@@ -134,8 +136,11 @@ CONTAINS
     ! Get computation nodes information
     CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
     CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
-    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
-    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
+  
+    CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+    CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+    CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
+    CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
 
     ! Initialise FieldML and parse input file
 
@@ -183,9 +188,16 @@ CONTAINS
 
     CALL cmfe_Decomposition_Initialise(decomposition, err)
     CALL cmfe_Decomposition_CreateStart(AUTO_USER_NUMBER(), mesh, decomposition, err)
-    CALL cmfe_Decomposition_TypeSet(decomposition, CMFE_DECOMPOSITION_ALL_TYPE, err)
-    CALL cmfe_Decomposition_NumberOfDomainsSet(decomposition, numberOfComputationNodes, err)
     CALL cmfe_Decomposition_CreateFinish(decomposition, err)
+
+    ! Create decomposer
+    
+    CALL cmfe_Decomposer_Initialise(decomposer,err)
+    CALL cmfe_Decomposer_CreateStart(AUTO_USER_NUMBER(), region, worldWorkGroup, decomposer, err)
+    ! Add in the decomposition
+    CALL cmfe_Decomposer_DecompositionAdd(decomposer, decomposition, decompositionIndex, err)
+    ! Finish the decomposer
+    CALL cmfe_Decomposer_CreateFinish(decomposer, err)
 
     ! Define Geometric Field
 

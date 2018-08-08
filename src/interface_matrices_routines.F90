@@ -343,7 +343,7 @@ CONTAINS
                           rowsElementNumber=InterfaceElementNumber
                         ELSE
                           rowsElementNumber=meshConnectivity%elementConnectivity(InterfaceElementNumber,rowsMeshIdx)% &
-                            & coupledMeshElementNumber
+                            & coupledElementNumber
                         ENDIF
                         CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%ELEMENT_MATRIX, &
                           & interfaceMatrix%UPDATE_MATRIX,[rowsElementNumber],[interfaceElementNumber],rowsFieldVariable, &
@@ -731,11 +731,11 @@ CONTAINS
                                           DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
                                             !Set up list
                                             NULLIFY(COLUMN_INDICES_LISTS(local_row)%ptr)
-                                            CALL LIST_CREATE_START(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
-                                            CALL LIST_DATA_TYPE_SET(COLUMN_INDICES_LISTS(local_row)%ptr,LIST_INTG_TYPE, &
+                                            CALL List_CreateStart(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
+                                            CALL List_DataTypeSet(COLUMN_INDICES_LISTS(local_row)%ptr,LIST_INTG_TYPE, &
                                               & ERR,ERROR,*999)
-                                            CALL LIST_INITIAL_SIZE_SET(COLUMN_INDICES_LISTS(local_row)%ptr,50,ERR,ERROR,*999)
-                                            CALL LIST_CREATE_FINISH(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
+                                            CALL List_InitialSizeSet(COLUMN_INDICES_LISTS(local_row)%ptr,50,ERR,ERROR,*999)
+                                            CALL List_CreateFinish(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
                                           ENDDO !local_row
                                           !Allocate row indices
                                           ALLOCATE(ROW_INDICES(ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal+1),STAT=ERR)
@@ -749,13 +749,13 @@ CONTAINS
                                             DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
                                               !Set up list
                                               NULLIFY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr)
-                                              CALL LIST_CREATE_START(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                              CALL List_CreateStart(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & ERR,ERROR,*999)
-                                              CALL LIST_DATA_TYPE_SET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                              CALL List_DataTypeSet(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & LIST_INTG_TYPE,ERR,ERROR,*999)
-                                              CALL LIST_INITIAL_SIZE_SET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr,50, &
+                                              CALL List_InitialSizeSet(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr,50, &
                                                 & ERR,ERROR,*999)
-                                              CALL LIST_CREATE_FINISH(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                              CALL List_CreateFinish(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & ERR,ERROR,*999)
                                             ENDDO !local_column
                                             !Allocate transpose row indices
@@ -792,31 +792,31 @@ CONTAINS
                                                       CASE(FIELD_CONSTANT_INTERPOLATION)
                                                         CALL FieldVariable_ConstantDOFGet(ROW_VARIABLE,row_component_idx, &
                                                           & local_row,err,error,*999)
-                                                        CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
+                                                        CALL List_ItemAdd(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                           & ERR,ERROR,*999)
                                                         IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                                           global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
-                                                          CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                                          CALL List_ItemAdd(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                             & global_row,ERR,ERROR,*999)
                                                         ENDIF
                                                       CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
                                                         domain_element=MESH_CONNECTIVITY% &
                                                           & elementConnectivity(interface_element_idx,INTERFACE_MESH_INDEX)% &
-                                                          & coupledMeshElementNumber
+                                                          & coupledElementNumber
                                                         CALL FieldVariable_LocalElementDOFGet(ROW_VARIABLE,domain_element, &
                                                           & row_component_idx,local_row,err,error,*999)
-                                                        CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
+                                                        CALL List_ItemAdd(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                           & ERR,ERROR,*999)
                                                         IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                                           global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
-                                                          CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                                          CALL List_ItemAdd(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                             & global_row,ERR,ERROR,*999)
                                                         ENDIF
                                                       CASE(FIELD_NODE_BASED_INTERPOLATION)
                                                         ROW_DOMAIN_ELEMENTS=>ROW_VARIABLE%COMPONENTS(row_component_idx)%DOMAIN% &
                                                           & TOPOLOGY%ELEMENTS
                                                         domain_element=MESH_CONNECTIVITY%elementConnectivity( &
-                                                          & interface_element_idx,INTERFACE_MESH_INDEX)%coupledMeshElementNumber
+                                                          & interface_element_idx,INTERFACE_MESH_INDEX)%coupledElementNumber
                                                         ROW_BASIS=>ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)%BASIS
                                                         !Loop over the row DOFs in the domain mesh element
                                                         DO row_local_node_idx=1,ROW_BASIS%numberOfNodes
@@ -831,11 +831,11 @@ CONTAINS
                                                             CALL FieldVariable_LocalNodeDOFGet(ROW_VARIABLE,row_version, &
                                                               & row_derivative,row_node,row_component_idx,local_row, &
                                                               & err,error,*999)
-                                                            CALL LIST_ITEM_ADD(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
+                                                            CALL List_ItemAdd(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
                                                               & ERR,ERROR,*999)
                                                             IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
                                                               global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
-                                                              CALL LIST_ITEM_ADD(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                                              CALL List_ItemAdd(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                                 & global_row,ERR,ERROR,*999)
                                                             ENDIF
                                                           ENDDO !row_local_derivative_idx
@@ -860,8 +860,8 @@ CONTAINS
                                           ENDDO !column_component_idx
                                           ROW_INDICES(1)=1
                                           DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                            CALL LIST_REMOVE_DUPLICATES(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
-                                            CALL LIST_NUMBER_OF_ITEMS_GET(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
+                                            CALL List_RemoveDuplicates(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
+                                            CALL List_NumberOfItemsGet(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
                                               & ERR,ERROR,*999)
                                             NUMBER_OF_NON_ZEROS=NUMBER_OF_NON_ZEROS+NUMBER_OF_COLUMNS
                                             ROW_INDICES(local_row+1)=NUMBER_OF_NON_ZEROS+1
@@ -870,9 +870,9 @@ CONTAINS
                                             TRANSPOSE_NUMBER_OF_NON_ZEROS=0
                                             TRANSPOSE_ROW_INDICES(1)=1
                                             DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                              CALL LIST_REMOVE_DUPLICATES(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                              CALL List_RemoveDuplicates(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & ERR,ERROR,*999)
-                                              CALL LIST_NUMBER_OF_ITEMS_GET(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                              CALL List_NumberOfItemsGet(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & NUMBER_OF_COLUMNS,ERR,ERROR,*999)
                                               TRANSPOSE_NUMBER_OF_NON_ZEROS=TRANSPOSE_NUMBER_OF_NON_ZEROS+NUMBER_OF_COLUMNS
                                               TRANSPOSE_ROW_INDICES(local_column+1)=TRANSPOSE_NUMBER_OF_NON_ZEROS+1
@@ -891,7 +891,7 @@ CONTAINS
                                           ALLOCATE(COLUMN_INDICES(NUMBER_OF_NON_ZEROS),STAT=ERR)
                                           IF(ERR/=0) CALL FlagError("Could not allocate column indices.",ERR,ERROR,*999)
                                           DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                            CALL LIST_DETACH_AND_DESTROY(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
+                                            CALL List_DetachAndDestroy(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
                                               & COLUMNS,ERR,ERROR,*999)
                                             DO column_idx=1,NUMBER_OF_COLUMNS
                                               COLUMN_INDICES(ROW_INDICES(local_row)+column_idx-1)=COLUMNS(column_idx)
@@ -904,7 +904,7 @@ CONTAINS
                                             IF(ERR/=0) &
                                               & CALL FlagError("Could not allocate transpose column indices.",ERR,ERROR,*999)
                                             DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                              CALL LIST_DETACH_AND_DESTROY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
+                                              CALL List_DetachAndDestroy(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
                                                 & NUMBER_OF_ROWS,TRANSPOSE_COLUMNS,ERR,ERROR,*999)
                                               DO row_idx=1,NUMBER_OF_ROWS
                                                 TRANSPOSE_COLUMN_INDICES(TRANSPOSE_ROW_INDICES(local_column)+row_idx-1)= &

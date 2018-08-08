@@ -86,6 +86,7 @@ PROGRAM SimpleShearExample
   INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=1
+  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: FieldGeometryUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: FieldFibreUserNumber=2
   INTEGER(CMISSIntg), PARAMETER :: FieldMaterialUserNumber=3
@@ -99,7 +100,7 @@ PROGRAM SimpleShearExample
   !Program variables
 
   INTEGER(CMISSIntg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
-  INTEGER(CMISSIntg) :: EquationsSetIndex
+  INTEGER(CMISSIntg) :: decompositionIndex,EquationsSetIndex
   INTEGER(CMISSIntg) :: NumberOfComputationNodes,NumberOfDomains,ComputationNodeNumber
   INTEGER(CMISSIntg) :: NodeNumber,NodeDomain,node_idx
   INTEGER(CMISSIntg),ALLOCATABLE :: LeftSurfaceNodes(:)
@@ -118,17 +119,19 @@ PROGRAM SimpleShearExample
   TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
   TYPE(cmfe_ContextType) :: context
   TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
-  TYPE(cmfe_MeshType) :: Mesh
   TYPE(cmfe_DecompositionType) :: Decomposition
+  TYPE(cmfe_DecomposerType) :: decomposer
   TYPE(cmfe_EquationsType) :: Equations
   TYPE(cmfe_EquationsSetType) :: EquationsSet
   TYPE(cmfe_FieldType) :: GeometricField,FibreField,MaterialField,DependentField,EquationsSetField
   TYPE(cmfe_FieldsType) :: Fields
   TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
+  TYPE(cmfe_MeshType) :: Mesh
   TYPE(cmfe_ProblemType) :: Problem
   TYPE(cmfe_RegionType) :: Region,WorldRegion
   TYPE(cmfe_SolverType) :: Solver,LinearSolver
   TYPE(cmfe_SolverEquationsType) :: SolverEquations
+  TYPE(cmfe_WorkGroupType) :: worldWorkGroup
 
 #ifdef WIN32
   !Quickwin type
@@ -166,13 +169,15 @@ PROGRAM SimpleShearExample
   !Get the number of computation nodes and this computation node number
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
   CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
-  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
-  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
+  
+  CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+  CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
+  CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
 
   NumberGlobalXElements=2
   NumberGlobalYElements=2
   NumberGlobalZElements=2
-  NumberOfDomains=NumberOfComputationNodes
 
   !Create a 3D rectangular cartesian coordinate system
   CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
@@ -264,10 +269,16 @@ PROGRAM SimpleShearExample
   !Create a decomposition
   CALL cmfe_Decomposition_Initialise(Decomposition,Err)
   CALL cmfe_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
-  CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
-  CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfDomains,Err)
   CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
 
+  !Decompose
+  CALL cmfe_Decomposer_Initialise(decomposer,err)
+  CALL cmfe_Decomposer_CreateStart(decomposerUserNumber,region,worldWorkGroup,decomposer,err)
+  !Add in the decomposition
+  CALL cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
+  !Finish the decomposer
+  CALL cmfe_Decomposer_CreateFinish(decomposer,err)
+  
   !Create a field to put the geometry (default is geometry)
   CALL cmfe_Field_Initialise(GeometricField,Err)
   CALL cmfe_Field_CreateStart(FieldGeometryUserNumber,Region,GeometricField,Err)

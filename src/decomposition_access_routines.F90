@@ -73,7 +73,8 @@ MODULE DecompositionAccessRoutines
   !> \see DecompositionRoutines
   !>@{
   INTEGER(INTG), PARAMETER :: DECOMPOSER_NO_OUTPUT=0 !<No decomposer output. \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
-  INTEGER(INTG), PARAMETER :: DECOMPOSER_ALL_OUTPUT=1 !<All decomposer output. \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
+  INTEGER(INTG), PARAMETER :: DECOMPOSER_TIMING_OUTPUT=1 !<Timing decomposer output. \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
+  INTEGER(INTG), PARAMETER :: DECOMPOSER_ALL_OUTPUT=2 !<All decomposer output. \see DecompositionRoutines_DecomposerOutputTypes,DecompositionRoutines
   !>@}
   
   !Module types
@@ -88,7 +89,7 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DECOMPOSITION_ALL_TYPE,DECOMPOSITION_CALCULATED_TYPE,DECOMPOSITION_USER_DEFINED_TYPE
 
-  PUBLIC DECOMPOSER_NO_OUTPUT,DECOMPOSER_ALL_OUTPUT
+  PUBLIC DECOMPOSER_NO_OUTPUT,DECOMPOSER_TIMING_OUTPUT,DECOMPOSER_ALL_OUTPUT
 
   PUBLIC Decomposer_AssertIsFinished,Decomposer_AssertNotFinished
 
@@ -114,6 +115,8 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DecomposerGraphNode_DecomposerGraphLinkGet
   
+  PUBLIC Decomposition_AssertIsDecomposed,Decomposition_AssertNotDecomposed
+
   PUBLIC Decomposition_AssertIsFinished,Decomposition_AssertNotFinished
 
   PUBLIC Decomposition_CoordinateSystemGet
@@ -779,6 +782,68 @@ CONTAINS
   !=================================================================================================================================
   !
 
+  !>Assert that a decomposition has been decomposed
+  SUBROUTINE Decomposition_AssertIsDecomposed(decomposition,err,error,*)
+
+    !Argument Variables
+    TYPE(DecompositionType), POINTER, INTENT(INOUT) :: decomposition !<The decomposition to assert the decomposed status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Decomposition_AssertIsDecomposed",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(decomposition%decomposer)) THEN
+      localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+        & " has not been decomposed."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Decomposition_AssertIsDecomposed")
+    RETURN
+999 ERRORSEXITS("Decomposition_AssertIsDecomposed",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_AssertIsDecomposed
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a decomposition has not been decomposed
+  SUBROUTINE Decomposition_AssertNotDecomposed(decomposition,err,error,*)
+
+    !Argument Variables
+    TYPE(DecompositionType), POINTER, INTENT(INOUT) :: decomposition !<The decomposition to assert the decomposition status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Decomposition_AssertNotDecomposed",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)
+
+    IF(ASSOCIATED(decomposition%decomposer)) THEN
+      localError="Decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))// &
+        & " has already been decomposed."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Decomposition_AssertNotDecomposed")
+    RETURN
+999 ERRORSEXITS("Decomposition_AssertNotDecomposed",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_AssertNotDecomposed
+
+  !
+  !=================================================================================================================================
+  !
+
   !>Assert that a decomposition has been finished
   SUBROUTINE Decomposition_AssertIsFinished(decomposition,err,error,*)
 
@@ -1264,7 +1329,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeNodeType), POINTER :: treeNode
 
     ENTERS("DecompositionDataPoints_DataPointCheckExists",ERR,error,*999)
 
@@ -1356,7 +1421,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeNodeType), POINTER :: treeNode
 
     ENTERS("DecompositionElements_ElementCheckExists",err,error,*999)
 
@@ -2060,7 +2125,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeNodeType), POINTER :: treeNode
     
     ENTERS("DomainNodes_NodeCheckExists",err,error,*999)
 

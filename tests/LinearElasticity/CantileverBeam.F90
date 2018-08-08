@@ -72,13 +72,12 @@ PROGRAM CantileverBeamExample
   REAL(CMISSRP), PARAMETER :: WIDTH=2.0_CMISSRP
   REAL(CMISSRP), PARAMETER :: HEIGHT=2.0_CMISSRP
 
-  INTEGER(CMISSIntg), PARAMETER :: NumberOfDomains=1
-
   INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber = 1
   INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=1
+  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=1
 
   INTEGER(CMISSIntg), PARAMETER :: FieldGeometryUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: FieldGeometryNumberOfVariables=1
@@ -187,16 +186,18 @@ CONTAINS
     INTEGER(CMISSIntg) :: AnalyticFunction,Interpolation(3),NumberOfGaussPoints(3),EquationSetSubtype
     INTEGER(CMISSIntg) :: FieldGeometryNumberOfComponents,FieldDependentNumberOfComponents,NumberOfElements(3)
     INTEGER(CMISSIntg) :: MPI_IERROR
-    INTEGER(CMISSIntg) :: EquationsSetIndex,FieldComponentIndex,FieldMaterialNumberOfComponents,NumberOfXi
+    INTEGER(CMISSIntg) :: decompositionIndex,EquationsSetIndex,FieldComponentIndex,FieldMaterialNumberOfComponents,NumberOfXi
     INTEGER(CMISSIntg) :: NumberOfComputationNodes,ComputationNodeNumber
 
     !CMISS variables
 
     TYPE(cmfe_BasisType) :: Basis
+    TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
     TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
     TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
     TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
     TYPE(cmfe_DecompositionType) :: Decomposition
+    TYPE(cmfe_DecomposerType) :: Decomposer
     TYPE(cmfe_EquationsType) :: Equations
     TYPE(cmfe_EquationsSetType) :: EquationsSet
     TYPE(cmfe_FieldType) :: AnalyticField,GeometricField,EquationsSetField,MaterialField
@@ -205,7 +206,7 @@ CONTAINS
     TYPE(cmfe_RegionType) :: Region
     TYPE(cmfe_SolverType) :: Solver
     TYPE(cmfe_SolverEquationsType) :: SolverEquations
-    TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
+    TYPE(cmfe_WorkGroupType) :: worldWorkGroup
 
 !    IF((NumberGlobalYElements == 0) .AND. (NumberGlobalZElements == 0)) THEN
 !      NumberOfXi = 1
@@ -239,14 +240,16 @@ CONTAINS
     !Get the number of computation nodes and this computation node number
     CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
     CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
-    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
-    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
+  
+    CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+    CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+    CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
+    CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
 
     !Broadcast the number of elements in the X,Y and Z directions and the number of partitions to the other computation nodes
     CALL MPI_BCAST(NumberGlobalXElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NumberGlobalYElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NumberGlobalZElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
-    CALL MPI_BCAST(NumberOfDomains,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
 
     !Create a CS - default is 3D rectangular cartesian CS with 0,0,0 as origin
     CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
@@ -286,10 +289,16 @@ CONTAINS
     !Create a decomposition
     CALL cmfe_Decomposition_Initialise(Decomposition,Err)
     CALL cmfe_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
-    CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
-    CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NumberOfDomains,Err)
     CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
 
+    !Decompose
+    CALL cmfe_Decomposer_Initialise(decomposer,err)
+    CALL cmfe_Decomposer_CreateStart(decomposerUserNumber,region,worldWorkGroup,decomposer,err)
+    !Add in the decomposition
+    CALL cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
+    !Finish the decomposer
+    CALL cmfe_Decomposer_CreateFinish(decomposer,err)
+  
     !Create a field to put the geometry (defualt is geometry)
     CALL cmfe_Field_Initialise(GeometricField,Err)
     CALL cmfe_Field_CreateStart(FieldGeometryUserNumber,Region,GeometricField,Err)

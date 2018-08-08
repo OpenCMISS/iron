@@ -50,10 +50,11 @@ PROGRAM IRON_TEST_FIELDML_IO
   ! CMISS variables
   TYPE(cmfe_ContextType) :: context
   TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
+  TYPE(cmfe_WorkGroupType) :: worldWorkGroup
 
   ! Generic CMISS variables
 
-  INTEGER(CMISSIntg) :: numberOfComputationNodes, computationNodeNumber
+  INTEGER(CMISSIntg) :: numberOfComputationNodes, computationNodeNumber, decompositionIndex
   INTEGER(CMISSIntg) :: err
 
   CALL INITIALISE_TESTS()
@@ -67,8 +68,11 @@ PROGRAM IRON_TEST_FIELDML_IO
   ! Get computation nodes information
   CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
   CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
-  CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(ComputationEnvironment,NumberOfComputationNodes,Err)
-  CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(ComputationEnvironment,ComputationNodeNumber,Err)
+  
+  CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+  CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
+  CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
 
   CALL TestFieldMLIOCube(context)
   CALL TestFieldMLArguments(context)

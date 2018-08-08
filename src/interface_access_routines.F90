@@ -100,6 +100,8 @@ MODULE InterfaceAccessRoutines
 
   PUBLIC Interface_InterfaceConditionGet
 
+  PUBLIC Interface_InterfacesGet
+
   PUBLIC Interface_MeshGet
 
   PUBLIC Interface_MeshConnectivityGet
@@ -117,6 +119,22 @@ MODULE InterfaceAccessRoutines
   PUBLIC Interface_UserNumberFind
 
   PUBLIC INTERFACE_USER_NUMBER_FIND
+
+  PUBLIC InterfaceMeshConnectivity_AssertIsFinished,InterfaceMeshConnectivity_AssertNotFinished
+
+  PUBLIC InterfaceMeshConnectivity_BasisGet
+
+  PUBLIC InterfaceMeshConnectivity_InterfaceGet
+
+  PUBLIC InterfaceMeshConnectivity_InterfaceMeshGet
+
+  PUBLIC InterfacePointsConnectivity_AssertIsFinished,InterfacePointsConnectivity_AssertNotFinished
+
+  PUBLIC InterfacePointsConnectivity_DataPointsGet
+
+  PUBLIC InterfacePointsConnectivity_InterfaceGet
+
+  PUBLIC InterfacePointsConnectivity_InterfaceMeshGet
 
 CONTAINS
 
@@ -412,6 +430,44 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the interfaces for a given interface. 
+  SUBROUTINE Interface_InterfacesGet(INTERFACE,interfaces,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the mesh for
+    TYPE(InterfacesType), POINTER :: interfaces !<On return, a pointer to the interfaces for the interface. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Interface_InterfacesGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaces)) CALL FlagError("Interfaces is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
+
+    interfaces=>interface%interfaces
+    IF(.NOT.ASSOCIATED(interfaces)) THEN
+      localError="Interfaces is not associated for interface number "// &
+        & TRIM(NumberToVString(interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(INTERFACE%parentRegion)) localError=localError// &
+        & " of parent region number "//TRIM(NumberToVString(INTERFACE%parentRegion%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Interface_InterfacesGet")
+    RETURN
+999 NULLIFY(interfaces)
+998 ERRORSEXITS("Interface_InterfacesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Interface_InterfacesGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the mesh for a given user number in a interface. \see OPENCMISS::Iron::cmfe_Interface_MeshGet
   SUBROUTINE Interface_MeshGet(interface,userNumber,mesh,err,error,*)
 
@@ -664,7 +720,7 @@ CONTAINS
     
     !Get the interface from the user number
     NULLIFY(INTERFACE)
-    IF(ASSOCIATED(parentRegion%interfaces%interfaces)) THEN
+    IF(ALLOCATED(parentRegion%interfaces%interfaces)) THEN
       DO interfaceIdx=1,parentRegion%interfaces%numberOfInterfaces
         IF(ASSOCIATED(parentRegion%interfaces%interfaces(interfaceIdx)%ptr)) THEN
           IF(parentRegion%interfaces%interfaces(interfaceIdx)%ptr%userNumber==userNumber) THEN
@@ -685,6 +741,351 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Interface_UserNumberFind
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a interface mesh connectivity has been finished
+  SUBROUTINE InterfaceMeshConnectivity_AssertIsFinished(interfaceMeshConnectivity,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceMeshConnectivity_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+
+    IF(.NOT.interfaceMeshConnectivity%meshConnectivityFinished) THEN
+      localError="Interface mesh connectivity "
+      IF(ASSOCIATED(interfaceMeshConnectivity%INTERFACE)) THEN
+        localError=localError//" for interface number "// &
+          & TRIM(NumberToVString(interfaceMeshConnectivity%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(interfaceMeshConnectivity%interface%parentRegion)) localError=localError//" of parent region number "// &
+          & TRIM(NumberToVString(interfaceMeshConnectivity%INTERFACE%parentRegion%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//" has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("InterfaceMeshConnectivity_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceMeshConnectivity_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a interface mesh connectivity has not been finished
+  SUBROUTINE InterfaceMeshConnectivity_AssertNotFinished(interfaceMeshConnectivity,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceMeshConnectivity_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+
+    IF(interfaceMeshConnectivity%meshConnectivityFinished) THEN
+      localError="Interface mesh connectivity "
+      IF(ASSOCIATED(interfaceMeshConnectivity%INTERFACE)) THEN
+        localError=localError//" for interface number "// &
+          & TRIM(NumberToVString(interfaceMeshConnectivity%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(interfaceMeshConnectivity%interface%parentRegion)) localError=localError//" of parent region number "// &
+          & TRIM(NumberToVString(interfaceMeshConnectivity%INTERFACE%parentRegion%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//" has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("InterfaceMeshConnectivity_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceMeshConnectivity_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_AssertNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the basis for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_BasisGet(interfaceMeshConnectivity,basis,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the basis for
+    TYPE(BasisType), POINTER, INTENT(OUT) :: basis !<On return, the basis for the interface mesh connectivity. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMeshConnectivity_BasisGet",err,error,*998)
+
+    IF(ASSOCIATED(basis)) CALL FlagError("Basis is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+
+    basis=>interfaceMeshConnectivity%basis
+    IF(.NOT.ASSOCIATED(basis)) &
+      & CALL FlagError("The interface mesh connectivity basis is not associated.",err,error,*999)
+    
+    EXITS("InterfaceMeshConnectivity_BasisGet")
+    RETURN
+999 NULLIFY(basis)
+998 ERRORSEXITS("InterfaceMeshConnectivity_BasisGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_BasisGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the interface for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_InterfaceGet(interfaceMeshConnectivity,interface,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the interface for
+    TYPE(InterfaceType), POINTER, INTENT(OUT) :: INTERFACE !<On return, the interface for the interface mesh connectivity. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMeshConnectivity_InterfaceGet",err,error,*998)
+
+    IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+
+    INTERFACE=>interfaceMeshConnectivity%INTERFACE
+    IF(.NOT.ASSOCIATED(INTERFACE)) &
+      & CALL FlagError("The interface mesh connectivity interface is not associated.",err,error,*999)
+    
+    EXITS("InterfaceMeshConnectivity_InterfaceGet")
+    RETURN
+999 NULLIFY(interface)
+998 ERRORSEXITS("InterfaceMeshConnectivity_InterfaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_InterfaceGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the interface mesh for an interface mesh connectivity
+  SUBROUTINE InterfaceMeshConnectivity_InterfaceMeshGet(interfaceMeshConnectivity,interfaceMesh,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the interface mesh for
+    TYPE(MeshType), POINTER, INTENT(OUT) :: interfaceMesh !<On return, the interface mesh for the interface mesh connectivity. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMeshConnectivity_InterfaceMeshGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceMesh)) CALL FlagError("Interface mesh is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMeshConnectivity)) &
+      & CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)
+
+    interfaceMesh=>interfaceMeshConnectivity%interfaceMesh
+    IF(.NOT.ASSOCIATED(interfaceMesh)) &
+      & CALL FlagError("The interface mesh connectivity interface mesh is not associated.",err,error,*999)
+    
+    EXITS("InterfaceMeshConnectivity_InterfaceMeshGet")
+    RETURN
+999 NULLIFY(interfaceMesh)
+998 ERRORSEXITS("InterfaceMeshConnectivity_InterfaceMeshGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMeshConnectivity_InterfaceMeshGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a interface points connectivity has been finished
+  SUBROUTINE InterfacePointsConnectivity_AssertIsFinished(interfacePointsConnectivity,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfacePointsConnectivity_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
+      & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+
+    IF(.NOT.interfacePointsConnectivity%pointsConnectivityFinished) THEN
+      localError="Interface points connectivity "
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) THEN
+        localError=localError//" for interface number "// &
+          & TRIM(NumberToVString(interfacePointsConnectivity%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(interfacePointsConnectivity%interface%parentRegion)) localError=localError//" of parent region number "// &
+          & TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%parentRegion%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//" has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("InterfacePointsConnectivity_AssertIsFinished")
+    RETURN
+999 ERRORS("InterfacePointsConnectivity_AssertIsFinished",err,error)
+    EXITS("InterfacePointsConnectivity_AssertIsFinished")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointsConnectivity_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a interface points connectivity has not been finished
+  SUBROUTINE InterfacePointsConnectivity_AssertNotFinished(interfacePointsConnectivity,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfacePointsConnectivity_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
+      & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+
+    IF(interfacePointsConnectivity%pointsConnectivityFinished) THEN
+      localError="Interface points connectivity "
+      IF(ASSOCIATED(interfacePointsConnectivity%INTERFACE)) THEN
+        localError=localError//" for interface number "// &
+          & TRIM(NumberToVString(interfacePointsConnectivity%interface%userNumber,"*",err,error))
+        IF(ASSOCIATED(interfacePointsConnectivity%interface%parentRegion)) localError=localError//" of parent region number "// &
+          & TRIM(NumberToVString(interfacePointsConnectivity%INTERFACE%parentRegion%userNumber,"*",err,error))
+      ENDIF
+      localError=localError//" has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("InterfacePointsConnectivity_AssertNotFinished")
+    RETURN
+999 ERRORS("InterfacePointsConnectivity_AssertNotFinished",err,error)
+    EXITS("InterfacePointsConnectivity_AssertNotFinished")
+    RETURN 1   
+    
+  END SUBROUTINE InterfacePointsConnectivity_AssertNotFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the data points for an interface points connectivity
+  SUBROUTINE InterfacePointsConnectivity_DataPointsGet(interfacePointsConnectivity,dataPoints,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the data points for
+    TYPE(DataPointsType), POINTER, INTENT(OUT) :: dataPoints !<On return, the data points for the interface points connectivity. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfacePointsConnectivity_DataPointsGet",err,error,*998)
+
+    IF(ASSOCIATED(dataPoints)) CALL FlagError("Data points is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
+      & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+
+    dataPoints=>interfacePointsConnectivity%dataPoints
+    IF(.NOT.ASSOCIATED(dataPoints)) &
+      & CALL FlagError("The interface points connectivity data points is not associated.",err,error,*999)
+    
+    EXITS("InterfacePointsConnectivity_DataPointsGet")
+    RETURN
+999 NULLIFY(dataPoints)
+998 ERRORSEXITS("InterfacePointsConnectivity_DataPointsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointsConnectivity_DataPointsGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the interface for an interface points connectivity
+  SUBROUTINE InterfacePointsConnectivity_InterfaceGet(interfacePointsConnectivity,interface,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the interface for
+    TYPE(InterfaceType), POINTER, INTENT(OUT) :: INTERFACE !<On return, the interface for the interface points connectivity. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfacePointsConnectivity_InterfaceGet",err,error,*998)
+
+    IF(ASSOCIATED(INTERFACE)) CALL FlagError("Interface is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
+      & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+
+    INTERFACE=>interfacePointsConnectivity%INTERFACE
+    IF(.NOT.ASSOCIATED(INTERFACE)) &
+      & CALL FlagError("The interface points connectivity interface is not associated.",err,error,*999)
+    
+    EXITS("InterfacePointsConnectivity_InterfaceGet")
+    RETURN
+999 NULLIFY(interface)
+998 ERRORSEXITS("InterfacePointsConnectivity_InterfaceGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointsConnectivity_InterfaceGet
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Returns the interface mesh for an interface points connectivity
+  SUBROUTINE InterfacePointsConnectivity_InterfaceMeshGet(interfacePointsConnectivity,interfaceMesh,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the interface mesh for
+    TYPE(MeshType), POINTER, INTENT(OUT) :: interfaceMesh !<On return, the interface mesh for the interface points connectivity. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfacePointsConnectivity_InterfaceMeshGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceMesh)) CALL FlagError("Interface mesh is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfacePointsConnectivity)) &
+      & CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
+
+    interfaceMesh=>interfacePointsConnectivity%interfaceMesh
+    IF(.NOT.ASSOCIATED(interfaceMesh)) &
+      & CALL FlagError("The interface points connectivity interface mesh is not associated.",err,error,*999)
+    
+    EXITS("InterfacePointsConnectivity_InterfaceMeshGet")
+    RETURN
+999 NULLIFY(interfaceMesh)
+998 ERRORS("InterfacePointsConnectivity_InterfaceMeshGet",err,error)
+    EXITS("InterfacePointsConnectivity_InterfaceMeshGet")
+    RETURN 1
+    
+  END SUBROUTINE InterfacePointsConnectivity_InterfaceMeshGet
 
   !
   !================================================================================================================================

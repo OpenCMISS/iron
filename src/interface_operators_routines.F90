@@ -96,8 +96,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: GaussPoint, rowComponentIdx, rowIdx, rowParameterIdx, colComponentIdx, colIdx, colParameterIdx
     INTEGER(INTG) :: rowMeshComponentNumber,derivativeIdx,derivative,localElementNode,interfaceNode,interfaceDerivative
-    INTEGER(INTG) :: coupledMeshElementNumber,coupledMeshIdx,coupledMeshVariableType,lagrangeVariableType
-    INTEGER(INTG) :: connectedLine,decompositionLineNumber,localLineNodeIdx,connectedFace,decompositionFaceNumber,localFaceNodeIdx
+    INTEGER(INTG) :: coupledElementNumber,coupledMeshIdx,coupledMeshVariableType,lagrangeVariableType
+    INTEGER(INTG) :: connectedLineFace,decompositionLineNumber,localLineNodeIdx,decompositionFaceNumber,localFaceNodeIdx
     REAL(DP) :: XI(3),rwg,PGMSI,PGNSI,matrixCoefficient
     TYPE(BasisType), POINTER :: interfaceDependentBasis,coupledMeshBasis,interfaceGeometricBasis, &
       & interfacePenaltyBasis,interfaceConnectivityBasis
@@ -175,7 +175,7 @@ CONTAINS
             !Pointers to the coupledMeshIdx'th coupled mesh variables (rows of interface element matrix)
             coupledMeshDependentField=>interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)%DEPENDENT_FIELD
             elementConnectivity=>interfaceCondition%INTERFACE%meshConnectivity%elementConnectivity(elementNumber,coupledMeshIdx)
-            coupledMeshElementNumber=elementConnectivity%coupledMeshElementNumber
+            coupledElementNumber=elementConnectivity%coupledElementNumber
             interfaceMatrixVariable=> &
               & interfaceEquations%INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(coupledMeshIdx)%VARIABLE
             coupledMeshVariableType=interfaceMatrixVariable%variableType
@@ -226,20 +226,20 @@ CONTAINS
                 DO rowComponentIdx=1,lagrangeVariable%numberOfComponents
                   rowMeshComponentNumber=interfaceMatrixVariable%COMPONENTS(rowComponentIdx)%meshComponentNumber
                   coupledMeshBasis=>coupledMeshDependentField%DECOMPOSITION%DOMAIN(rowMeshComponentNumber)%PTR%TOPOLOGY% & 
-                    & ELEMENTS%ELEMENTS(coupledMeshElementNumber)%BASIS
+                    & ELEMENTS%ELEMENTS(coupledElementNumber)%BASIS
 
                   SELECT CASE(interfaceDependentBasis%numberOfXi)
 
                   CASE(1) !1D interface (line)
-                    connectedLine = elementConnectivity%connectedLine
+                    connectedLineFace = elementConnectivity%connectedLineFace
                     decompositionLineNumber=coupledMeshDependentField%DECOMPOSITION%TOPOLOGY% &
-                      & ELEMENTS%ELEMENTS(coupledMeshElementNumber)%elementLines(connectedLine)
+                      & ELEMENTS%ELEMENTS(coupledElementNumber)%elementLines(connectedLineFace)
                     coupledMeshDomainLine=>coupledMeshDependentField%DECOMPOSITION%DOMAIN(rowMeshComponentNumber)%PTR%TOPOLOGY% &
                       & LINES%LINES(decompositionLineNumber)
-                    DO localLineNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalLine(connectedLine)
-                      localElementNode=coupledMeshBasis%nodeNumbersInLocalLine(localLineNodeIdx,connectedLine)
+                    DO localLineNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalLine(connectedLineFace)
+                      localElementNode=coupledMeshBasis%nodeNumbersInLocalLine(localLineNodeIdx,connectedLineFace)
                       DO derivativeIdx=1,coupledMeshDomainLine%BASIS%numberOfDerivatives(localLineNodeIdx)
-                        derivative=coupledMeshBasis%derivativeNumbersInLocalLine(localLineNodeIdx,connectedLine)
+                        derivative=coupledMeshBasis%derivativeNumbersInLocalLine(localLineNodeIdx,connectedLineFace)
                         derivative=coupledMeshDomainLine%derivativesInLine(1,derivativeIdx,localLineNodeIdx)
                         rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
                         PGMSI=BASIS_EVALUATE_XI(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV,XI(1:2),err,error)
@@ -284,16 +284,16 @@ CONTAINS
                       ENDDO !localElementNode
 
                     CASE(3) !Coupled Mesh has 3 xi directions
-                      connectedFace = elementConnectivity%connectedFace
+                      connectedLineFace = elementConnectivity%connectedLineFace
                       decompositionFaceNumber=coupledMeshDependentField%DECOMPOSITION%TOPOLOGY% &
-                        & ELEMENTS%ELEMENTS(coupledMeshElementNumber)%elementFaces(connectedFace)
+                        & ELEMENTS%ELEMENTS(coupledElementNumber)%elementFaces(connectedLineFace)
                       coupledMeshDomainFace=>coupledMeshDependentField%DECOMPOSITION%DOMAIN(rowMeshComponentNumber)%PTR%TOPOLOGY% &
                         & FACES%FACES(decompositionFaceNumber)
-                      DO localFaceNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalFace(connectedFace)
-                        localElementNode=coupledMeshBasis%nodeNumbersInLocalFace(localFaceNodeIdx,connectedFace)
+                      DO localFaceNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalFace(connectedLineFace)
+                        localElementNode=coupledMeshBasis%nodeNumbersInLocalFace(localFaceNodeIdx,connectedLineFace)
                         DO derivativeIdx=1,coupledMeshDomainFace%BASIS%numberOfDerivatives(localFaceNodeIdx)
                           derivative=coupledMeshBasis% &
-                            & derivativeNumbersInLocalFace(derivativeIdx,localFaceNodeIdx,connectedFace)
+                            & derivativeNumbersInLocalFace(derivativeIdx,localFaceNodeIdx,connectedLineFace)
                           rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
                           PGMSI=BASIS_EVALUATE_XI(coupledMeshBasis,rowParameterIdx,NO_PART_DERIV, &
                             & XI(1:coupledMeshBasis%numberOfXi),err,error)
@@ -355,7 +355,7 @@ CONTAINS
                 DO rowComponentIdx=1,lagrangeVariable%numberOfComponents
                   rowMeshComponentNumber=interfaceMatrixVariable%COMPONENTS(rowComponentIdx)%meshComponentNumber
                   coupledMeshBasis=>coupledMeshDependentField%DECOMPOSITION%DOMAIN(rowMeshComponentNumber)%PTR%TOPOLOGY% & 
-                    & ELEMENTS%ELEMENTS(coupledMeshElementNumber)%BASIS
+                    & ELEMENTS%ELEMENTS(coupledElementNumber)%BASIS
                   !Loop over element rows
                   DO rowParameterIdx=1,coupledMeshBasis%numberOfElementParameters
                     rowIdx=rowIdx+1
@@ -374,7 +374,7 @@ CONTAINS
               ENDIF
               !Scale factor adjustment for the row dependent variable
               IF(coupledMeshDependentField%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
-                CALL Field_InterpolationParametersScaleFactorsElementGet(coupledMeshElementNumber, &
+                CALL Field_InterpolationParametersScaleFactorsElementGet(coupledElementNumber, &
                   & interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)% &
                   & DEPENDENT_INTERPOLATION(1)%interpolationParameters(coupledMeshVariableType)%PTR,err,error,*999)
                 rowIdx=0
@@ -429,7 +429,7 @@ CONTAINS
               meshComponentNumber=coupledMeshDependentField%VARIABLES(FIELD_U_VARIABLE_TYPE)%COMPONENTS(1)%meshComponentNumber
               DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
                 localElementNumber=pointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIdx)% &
-                  & coupledMeshElementNumber
+                  & coupledElementNumber
 
                 !Calculate the element index (non-conforming element) for this interface matrix
                 matrixElementIdx=1
@@ -458,7 +458,7 @@ CONTAINS
               IF(coupledMeshDependentField%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
                 DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
                   localElementNumber=pointsConnectivity%pointsConnectivity(dataPointIdx,coupledMeshIdx)% &
-                    & coupledMeshElementNumber
+                    & coupledElementNumber
                   CALL Field_InterpolationParametersScaleFactorsElementGet(localElementNumber,interfaceEquations% &
                     & INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)%DEPENDENT_INTERPOLATION(1)% &
                     & interpolationParameters(FIELD_U_VARIABLE_TYPE)%PTR,ERR,ERROR,*999)
@@ -630,7 +630,7 @@ CONTAINS
                     !\todo: Allow the user to choose to only include orthogonally projected points or not (currenlty commented out).  
                     !IF(orthogonallyProjected(dataPointIdx)) THEN
                       localElementNumber=pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
-                        & coupledMeshElementNumber
+                        & coupledElementNumber
                       localFaceLineNumber=coupledMeshDependentField%DECOMPOSITION%TOPOLOGY%ELEMENTS%ELEMENTS(localElementNumber)% &
                         & elementFaces(pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
                         & elementLineFaceNumber)
@@ -703,7 +703,7 @@ CONTAINS
                       !\todo: Allow the user to choose gap tolerance or default to zero tolerance (currently commented out).  
                       !IF(gaps(dataPointIdx)>1.0E-10) THEN !Only add contact point contribution if the gap is a penetration
                         localElementNumber=pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
-                          & coupledMeshElementNumber
+                          & coupledElementNumber
                         !Calculate the element index (non-conforming element) for this interface matrix
                         matrixElementIdx=1
                         DO WHILE (localElementNumber/=pointsConnectivity%coupledElements(interfaceElementNumber,coupledMeshIdx)% &
@@ -868,8 +868,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: GaussPoint, rowComponentIdx, rowIdx, rowParameterIdx, colComponentIdx, colIdx, colParameterIdx
     INTEGER(INTG) :: rowMeshComponentNumber,derivativeIdx,derivative,localElementNode,interfaceNode,interfaceDerivative
-    INTEGER(INTG) :: coupledMeshElementNumber,coupledMeshIdx,coupledMeshVariableType,lagrangeVariableType
-    INTEGER(INTG) :: connectedLine,decompositionLineNumber,localLineNodeIdx,connectedFace,decompositionFaceNumber,localFaceNodeIdx
+    INTEGER(INTG) :: coupledElementNumber,coupledMeshIdx,coupledMeshVariableType,lagrangeVariableType
+    INTEGER(INTG) :: connectedLineFace,decompositionLineNumber,localLineNodeIdx,decompositionFaceNumber,localFaceNodeIdx
     REAL(DP) :: XI(3),rwg,PGMSI,PGNSI,matrixCoefficient
     TYPE(BasisType), POINTER :: interfaceDependentBasis,coupledMeshBasis,interfaceGeometricBasis, &
       & interfaceConnectivityBasis
@@ -930,7 +930,7 @@ CONTAINS
             !Pointers to the coupledMeshIdx'th coupled mesh variables (rows of interface element matrix)
             coupledMeshDependentField=>interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)%DEPENDENT_FIELD
             elementConnectivity=>interfaceCondition%INTERFACE%meshConnectivity%elementConnectivity(elementNumber,coupledMeshIdx)
-            coupledMeshElementNumber=elementConnectivity%coupledMeshElementNumber
+            coupledElementNumber=elementConnectivity%coupledElementNumber
             interfaceMatrixVariable=> &
               & interfaceEquations%INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(coupledMeshIdx)%VARIABLE
             coupledMeshVariableType=interfaceMatrixVariable%variableType
@@ -973,21 +973,21 @@ CONTAINS
                 DO rowComponentIdx=1,lagrangeVariable%numberOfComponents
                   rowMeshComponentNumber=interfaceMatrixVariable%COMPONENTS(rowComponentIdx)%meshComponentNumber
                   coupledMeshBasis=>coupledMeshDependentField%DECOMPOSITION%DOMAIN(rowMeshComponentNumber)%PTR%TOPOLOGY% &
-                    & ELEMENTS%ELEMENTS(coupledMeshElementNumber)%BASIS
+                    & ELEMENTS%ELEMENTS(coupledElementNumber)%BASIS
 
                   SELECT CASE(interfaceDependentBasis%numberOfXi)
 
                   CASE(1) !1D interface (line)
-                    connectedLine=elementConnectivity%connectedLine
+                    connectedLineFace=elementConnectivity%connectedLineFace
                     decompositionLineNumber=coupledMeshDependentField%DECOMPOSITION%TOPOLOGY% &
-                      & ELEMENTS%ELEMENTS(coupledMeshElementNumber)%elementLines(connectedLine)
+                      & ELEMENTS%ELEMENTS(coupledElementNumber)%elementLines(connectedLineFace)
                     coupledMeshDomainLine=>coupledMeshDependentField%DECOMPOSITION%DOMAIN(rowMeshComponentNumber)%PTR%TOPOLOGY% &
                       & LINES%LINES(decompositionLineNumber)
-                    DO localLineNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalLine(connectedLine)
-                      localElementNode=coupledMeshBasis%nodeNumbersInLocalLine(localLineNodeIdx,connectedLine)
+                    DO localLineNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalLine(connectedLineFace)
+                      localElementNode=coupledMeshBasis%nodeNumbersInLocalLine(localLineNodeIdx,connectedLineFace)
                       DO derivativeIdx=1,coupledMeshDomainLine%BASIS%numberOfDerivatives(localLineNodeIdx)
                       !???????????????????
-                        derivative=coupledMeshBasis%derivativeNumbersInLocalLine(localLineNodeIdx,connectedLine)
+                        derivative=coupledMeshBasis%derivativeNumbersInLocalLine(localLineNodeIdx,connectedLineFace)
                         derivative=coupledMeshDomainLine%derivativesInLine(1,derivativeIdx,localLineNodeIdx)
                       !???????????????????
                         rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
@@ -1042,16 +1042,16 @@ CONTAINS
                       ENDDO !localElementNode
 
                     CASE(3) !Coupled Mesh has 3 xi directions
-                      connectedFace = elementConnectivity%connectedFace
+                      connectedLineFace = elementConnectivity%connectedLineFace
                       decompositionFaceNumber=coupledMeshDependentField%DECOMPOSITION%TOPOLOGY% &
-                        & ELEMENTS%ELEMENTS(coupledMeshElementNumber)%elementFaces(connectedFace)
+                        & ELEMENTS%ELEMENTS(coupledElementNumber)%elementFaces(connectedLineFace)
                       coupledMeshDomainFace=>coupledMeshDependentField%DECOMPOSITION%DOMAIN(rowMeshComponentNumber)%PTR%TOPOLOGY% &
                         & FACES%FACES(decompositionFaceNumber)
-                      DO localFaceNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalFace(connectedFace)
-                        localElementNode=coupledMeshBasis%nodeNumbersInLocalFace(localFaceNodeIdx,connectedFace)
+                      DO localFaceNodeIdx=1,coupledMeshBasis%numberOfNodesInLocalFace(connectedLineFace)
+                        localElementNode=coupledMeshBasis%nodeNumbersInLocalFace(localFaceNodeIdx,connectedLineFace)
                         DO derivativeIdx=1,coupledMeshDomainFace%BASIS%numberOfDerivatives(localFaceNodeIdx)
                           derivative=coupledMeshBasis% &
-                            & derivativeNumbersInLocalFace(derivativeIdx,localFaceNodeIdx,connectedFace)
+                            & derivativeNumbersInLocalFace(derivativeIdx,localFaceNodeIdx,connectedLineFace)
                           rowParameterIdx=coupledMeshBasis%elementParameterIndex(derivative,localElementNode)
                           !=========================================================================================================
                           ! P G M S I
@@ -1100,7 +1100,7 @@ CONTAINS
                 DO rowComponentIdx=1,lagrangeVariable%numberOfComponents
                   rowMeshComponentNumber=interfaceMatrixVariable%COMPONENTS(rowComponentIdx)%meshComponentNumber
                   coupledMeshBasis=>coupledMeshDependentField%DECOMPOSITION%DOMAIN(rowMeshComponentNumber)%PTR%TOPOLOGY% & 
-                    & ELEMENTS%ELEMENTS(coupledMeshElementNumber)%BASIS
+                    & ELEMENTS%ELEMENTS(coupledElementNumber)%BASIS
                   !Loop over element rows
                   DO rowParameterIdx=1,coupledMeshBasis%numberOfElementParameters
                     rowIdx=rowIdx+1
@@ -1119,7 +1119,7 @@ CONTAINS
               ENDIF
               !Scale factor adjustment for the row dependent variable
               IF(coupledMeshDependentField%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
-                CALL Field_InterpolationParametersScaleFactorsElementGet(coupledMeshElementNumber, &
+                CALL Field_InterpolationParametersScaleFactorsElementGet(coupledElementNumber, &
                   & interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)% &
                   & DEPENDENT_INTERPOLATION(1)%interpolationParameters(coupledMeshVariableType)%PTR,err,error,*999)
                 rowIdx=0

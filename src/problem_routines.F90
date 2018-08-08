@@ -64,7 +64,7 @@ MODULE PROBLEM_ROUTINES
   USE INPUT_OUTPUT
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE INTERFACE_CONDITIONS_ROUTINES
-  USE INTERFACE_ROUTINES
+  USE InterfaceRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE MULTI_PHYSICS_ROUTINES
@@ -3355,7 +3355,7 @@ CONTAINS
     TYPE(FieldsType), POINTER :: fields
     TYPE(VARYING_STRING) :: fileName,method,directory
     
-    INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledMeshElementNumber, &
+    INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledElementNumber, &
       & coupledMeshFaceLineNumber, coupledMeshIdx,component
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface 
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
@@ -3521,10 +3521,10 @@ CONTAINS
                       DO component=1,3
                         WRITE(IUNIT,'(1X,3E25.15)') interfaceDatapoints%dataPoints(globalDataPointNumber)%position(component)
                       ENDDO !component
-                      coupledMeshElementNumber=pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
-                        & coupledMeshElementNumber
+                      coupledElementNumber=pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
+                        & coupledElementNumber
                       coupledMeshFaceLineNumber=coupledMeshDependentField%DECOMPOSITION%TOPOLOGY%ELEMENTS% &
-                        & ELEMENTS(coupledMeshElementNumber)% &
+                        & ELEMENTS(coupledElementNumber)% &
                         & elementFaces(pointsConnectivity%pointsConnectivity(globalDataPointNumber,coupledMeshIdx)% &
                         & elementLineFaceNumber)
                       CALL FIELD_INTERPOLATION_PARAMETERS_FACE_GET(FIELD_VALUES_SET_TYPE,coupledMeshFaceLineNumber, &

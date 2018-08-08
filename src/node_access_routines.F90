@@ -94,7 +94,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeNodeType), POINTER :: treeNode
    
     ENTERS("Nodes_NodeCheckExists",err,error,*999)
 

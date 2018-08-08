@@ -89,13 +89,14 @@ PROGRAM DarcyAnalyticExample
   INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=2
   INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=3
   INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=4
-  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=5
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=6
-  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumberDarcy=7
-  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumberDarcy=8
-  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumberDarcy=9
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumberDarcy=10
-  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=11
+  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=5
+  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=6
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=7
+  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumberDarcy=8
+  INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumberDarcy=9
+  INTEGER(CMISSIntg), PARAMETER :: AnalyticFieldUserNumberDarcy=10
+  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumberDarcy=11
+  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=12
 
   INTEGER(CMISSIntg), PARAMETER :: DomainUserNumber=1
   INTEGER(CMISSIntg), PARAMETER :: SolverDarcyUserNumber=1
@@ -167,6 +168,8 @@ PROGRAM DarcyAnalyticExample
 
   !Context
   TYPE(cmfe_ContextType) :: context
+  !Computation environment
+  TYPE(cmfe_ComputationEnvironmentType) :: computationEnvironment
   !Regions  
   TYPE(cmfe_RegionType) :: Region
   TYPE(cmfe_RegionType) :: WorldRegion
@@ -186,6 +189,7 @@ PROGRAM DarcyAnalyticExample
   TYPE(cmfe_MeshType) :: Mesh
   !Decompositions
   TYPE(cmfe_DecompositionType) :: Decomposition
+  TYPE(cmfe_DecomposerType) :: Decomposer
   !Fields
   TYPE(cmfe_FieldsType) :: Fields
   !Field types
@@ -207,6 +211,8 @@ PROGRAM DarcyAnalyticExample
   !Solver equations
   TYPE(cmfe_SolverEquationsType) :: SolverEquationsDarcy
   TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
+  !Work group
+  TYPE(cmfe_WorkGroupType) :: worldWorkGroup
 
 #ifdef WIN32
   !Quickwin type
@@ -216,7 +222,8 @@ PROGRAM DarcyAnalyticExample
   
   !Generic CMISS variables
   
-  INTEGER(CMISSIntg) :: EquationsSetIndex
+  INTEGER(CMISSIntg) :: decompositionIndex,EquationsSetIndex
+  INTEGER(CMISSIntg) :: computationNodeNumber,numberOfComputationNodes
   INTEGER(CMISSIntg) :: Err
 
 
@@ -250,7 +257,16 @@ PROGRAM DarcyAnalyticExample
 
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
 
-  !
+  !Get the computation nodes information
+  CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
+  CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
+  
+  CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+  CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
+  CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
+  
+  !  
   !================================================================================================================================
   !
 
@@ -544,12 +560,17 @@ PROGRAM DarcyAnalyticExample
   !Create a decomposition
   CALL cmfe_Decomposition_Initialise(Decomposition,Err)
   CALL cmfe_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
-  !Set the decomposition to be a general decomposition with the specified number of domains
-  CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
-  CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,DomainUserNumber,Err)
   !Finish the decomposition
   CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
 
+  !Decompose
+  CALL cmfe_Decomposer_Initialise(decomposer,err)
+  CALL cmfe_Decomposer_CreateStart(decomposerUserNumber,region,worldWorkGroup,decomposer,err)
+  !Add in the decomposition
+  CALL cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
+  !Finish the decomposer
+  CALL cmfe_Decomposer_CreateFinish(decomposer,err)
+  
   !Start to create a default (geometric) field on the region
   CALL cmfe_Field_Initialise(GeometricField,Err)
   CALL cmfe_Field_CreateStart(GeometricFieldUserNumber,Region,GeometricField,Err)

@@ -52,7 +52,7 @@ MODULE MONODOMAIN_EQUATIONS_ROUTINES
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE ELECTROPHYSIOLOGY_CELL_ROUTINES
   USE EquationsRoutines
   USE EquationsAccessRoutines

@@ -51,11 +51,11 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE CmissMPI
   USE ComputationRoutines
   USE ComputationAccessRoutines
-  USE CONSTANTS
+  USE Constants
   USE COORDINATE_ROUTINES
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
@@ -2249,6 +2249,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: myGroupNodeNumber,numberOfGroupNodes
+    INTEGER(INTG) :: numberOfPointDofs, numberNonZeros, numberRowEntries, neumannConditionNumber, localNeumannConditionIdx
+    INTEGER(INTG) :: neumannIdx, globalDof, localDof, localDofNyy, domainIdx, numberOfDomains, domainNumber, componentNumber
+    INTEGER(INTG) :: nodeIdx, derivIdx, nodeNumber, versionNumber, derivativeNumber, columnNodeNumber, lineIdx, faceIdx, columnDof
+    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG), ALLOCATABLE :: rowIndices(:), columnIndices(:), localDofNumbers(:)
+    REAL(DP) :: pointValue
     TYPE(BoundaryConditionsNeumannType), POINTER :: boundaryConditionsNeumann
     TYPE(FieldVariableType), POINTER :: rhsVariable
     TYPE(DecompositionType), POINTER :: decomposition
@@ -2257,13 +2264,6 @@ CONTAINS
     TYPE(DomainLineType), POINTER :: line
     TYPE(DomainFaceType), POINTER :: face
     TYPE(LIST_TYPE), POINTER :: columnIndicesList, rowColumnIndicesList
-    INTEGER(INTG) :: myGroupComputationNodeNumber
-    INTEGER(INTG) :: numberOfPointDofs, numberNonZeros, numberRowEntries, neumannConditionNumber, localNeumannConditionIdx
-    INTEGER(INTG) :: neumannIdx, globalDof, localDof, localDofNyy, domainIdx, numberOfDomains, domainNumber, componentNumber
-    INTEGER(INTG) :: nodeIdx, derivIdx, nodeNumber, versionNumber, derivativeNumber, columnNodeNumber, lineIdx, faceIdx, columnDof
-    INTEGER(INTG), ALLOCATABLE :: rowIndices(:), columnIndices(:), localDofNumbers(:)
-    REAL(DP) :: pointValue
-    INTEGER(INTG) :: dummyErr
     TYPE(VARYING_STRING) :: dummyError
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -2278,20 +2278,21 @@ CONTAINS
       boundaryConditionsNeumann=>boundaryConditionsVariable%neumannBoundaryConditions
       IF(ASSOCIATED(boundaryConditionsNeumann)) THEN
         ! For rows we can re-use the RHS variable row mapping
-        rowMapping=>rhsVariable%domainMapping
-        IF(.NOT.ASSOCIATED(rowMapping)) &
-          & CALL FlagError("RHS field variable mapping is not associated.",err,error,*998)
+        NULLIFY(rowMapping)
+        CALL FieldVariable_DomainMappingGet(rhsVariable,rowMapping,err,error,*999)
+        NULLIFY(workGroup)
+        CALL DomainMapping_WorkGroupGet(rowMapping,workGroup,err,error,*999)
+        CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupNodes,err,error,*999)
 
         ! Create a domain mapping for the Neumann point DOFs, required for the distributed matrix columns
-        ALLOCATE(pointDofMapping,stat=err)
-        IF(err/=0) CALL FlagError("Could not allocate Neumann DOF domain mapping.",err,error,*999)
-        CALL DomainMappings_MappingInitialise(pointDofMapping,err,error,*999)
+        CALL DomainMapping_Initialise(pointDofMapping,err,error,*999)
+        CALL DomainMapping_WorkGroupSet(pointDofMapping,workGroup,err,error,*999)
         boundaryConditionsNeumann%pointDofMapping=>pointDofMapping
         ! Calculate global to local mapping for Neumann DOFs
         pointDofMapping%numberOfGlobal=numberOfPointDofs
         ALLOCATE(pointDofMapping%globalToLocalMap(numberOfPointDofs),stat=err)
         IF(err/=0) CALL FlagError("Could not allocate Neumann point DOF global to local mapping.",err,error,*999)
-        ALLOCATE(localDofNumbers(0:rowMapping%numberOfDomains-1),stat=err)
+        ALLOCATE(localDofNumbers(0:numberOfGroupNodes-1),stat=err)
         IF(ERR/=0) CALL FlagError("Could not allocate local Neumann DOF numbers.",err,error,*999)
         localDofNumbers=0
 
@@ -2355,7 +2356,7 @@ CONTAINS
           END DO
         END DO
 
-        CALL DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(pointDofMapping,err,error,*999)
+        CALL DomainMapping_LocalFromGlobalCalculate(pointDofMapping,err,error,*999)
 
         CALL DistributedMatrix_CreateStart(rowMapping,pointDofMapping,boundaryConditionsNeumann%integrationMatrix,err,error,*999)
         SELECT CASE(boundaryConditionsVariable%BOUNDARY_CONDITIONS%neumannMatrixSparsity)
@@ -2557,11 +2558,11 @@ CONTAINS
         CALL Field_DecompositionGet(rhsVariable%field,decomposition,err,error,*999)
         NULLIFY(workGroup)
         CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
-        CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+        CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupNodeNumber,err,error,*999)
         !Set point values vector from boundary conditions field parameter set
         DO neumannIdx=1,numberOfPointDofs
           globalDof=boundaryConditionsNeumann%setDofs(neumannIdx)
-          IF(rhsVariable%domainMapping%globalToLocalMap(globalDof)%domainNumber(1)==myGroupComputationNodeNumber) THEN
+          IF(rhsVariable%domainMapping%globalToLocalMap(globalDof)%domainNumber(1)==myGroupNodeNumber) THEN
             localDof=rhsVariable%domainMapping%globalToLocalMap(globalDof)%localNumber(1)
             ! Set point DOF vector value
             localNeumannConditionIdx=boundaryConditionsNeumann%pointDofMapping%globalToLocalMap(neumannIdx)%localNumber(1)
@@ -2657,7 +2658,7 @@ CONTAINS
           & CALL DistributedMatrix_Destroy(boundaryConditionsNeumann%integrationMatrix,err,error,*999)
         IF(ASSOCIATED(boundaryConditionsNeumann%pointValues)) &
           & CALL DistributedVector_Destroy(boundaryConditionsNeumann%pointValues,err,error,*999)
-        CALL DOMAIN_MAPPINGS_MAPPING_FINALISE(boundaryConditionsNeumann%pointDofMapping,err,error,*999)
+        CALL DomainMapping_Finalise(boundaryConditionsNeumann%pointDofMapping,err,error,*999)
       END IF
     ELSE
       CALL FlagError("Boundary conditions variable is not associated.",err,error,*999)
@@ -2683,7 +2684,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local variables
-    INTEGER(INTG) :: componentNumber,globalDof,localDof,neumannDofIdx,myGroupComputationNodeNumber
+    INTEGER(INTG) :: componentNumber,globalDof,localDof,neumannDofIdx,myGroupNodeNumber
     INTEGER(INTG) :: numberOfNeumann,neumannLocalDof,neumannDofNyy
     INTEGER(INTG) :: neumannGlobalDof,neumannNodeNumber,neumannLocalNodeNumber,neumannLocalDerivNumber
     INTEGER(INTG) :: faceIdx,lineIdx,nodeIdx,derivIdx,gaussIdx
@@ -2736,7 +2737,7 @@ CONTAINS
       CALL Field_DecompositionGet(rhsVariable%field,decomposition,err,error,*999)
       NULLIFY(workGroup)
       CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
-      CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
+      CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupNodeNumber,err,error,*999)
 
       ! Initialise field interpolation parameters for the geometric field, which are required for the
       ! face/line Jacobian and scale factors
@@ -2749,7 +2750,7 @@ CONTAINS
       ! and integrating over them
       DO neumannDofIdx=1,numberOfNeumann
         neumannGlobalDof=neumannConditions%setDofs(neumannDofIdx)
-        IF(rhsVariable%domainMapping%globalToLocalMap(neumannGlobalDof)%domainNumber(1)==myGroupComputationNodeNumber) THEN
+        IF(rhsVariable%domainMapping%globalToLocalMap(neumannGlobalDof)%domainNumber(1)==myGroupNodeNumber) THEN
           neumannLocalDof=rhsVariable%domainMapping%globalToLocalMap(neumannGlobalDof)%localNumber(1)
           ! Get Neumann DOF component and topology for that component
           neumannDofNyy=rhsVariable%dofToParamMap%DOFType(2,neumannLocalDof)
@@ -3357,7 +3358,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: constraintIdx,dofIdx,thisDofDomain,otherDofDomain
     INTEGER(INTG) :: globalDof,globalDof2,localDof,localDof2
-    INTEGER(INTG) :: numberOfCoupledDofs
+    INTEGER(INTG) :: numberOfCoupledDofs,numberOfGroupNodes
     INTEGER(INTG), ALLOCATABLE :: newCoupledGlobalDofs(:),newCoupledLocalDofs(:)
     REAL(DP), ALLOCATABLE :: newCoefficients(:)
     TYPE(BoundaryConditionsDofConstraintsType), POINTER :: dofConstraints
@@ -3365,6 +3366,7 @@ CONTAINS
     TYPE(BoundaryConditionsCoupledDofsType), POINTER :: dofCoupling
     TYPE(DomainMappingType), POINTER :: variableDomainMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(WorkGroupType), POINTER :: workGroup
 
     ENTERS("BoundaryConditions_DofConstraintsCreateFinish",err,error,*998)
 
@@ -3385,11 +3387,11 @@ CONTAINS
           CALL FlagError("Boundary conditions DOF constraints are not associated.",err,error,*998)
         END IF
 
-        variableDomainMapping=>fieldVariable%domainMapping
-        IF(.NOT.ASSOCIATED(variableDomainMapping)) THEN
-          CALL FlagError("Field variable domain mapping is not associated for variable type "// &
-            & TRIM(NumberToVstring(fieldVariable%variableType,"*",err,error))//".",err,error,*998)
-        END IF
+        NULLIFY(variableDomainMapping)
+        CALL FieldVariable_DomainMappingGet(fieldVariable,variableDomainMapping,err,error,*999)
+        NULLIFY(workGroup)
+        CALL DomainMapping_WorkGroupGet(variableDomainMapping,workGroup,err,error,*999)
+        CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupNodes,err,error,*999)
 
         !Allocate an array of pointers to DOF couplings
         IF(dofConstraints%numberOfConstraints>0) THEN
@@ -3436,7 +3438,7 @@ CONTAINS
 
             !Check we don't have DOF constraints that are split over domains
             !\todo Implement support for DOF constraints that are split over domains
-            IF(variableDomainMapping%numberOfDomains>1) THEN
+            IF(numberOfGroupNodes>1) THEN
               otherDofDomain=variableDomainMapping%globalToLocalMap(globalDof2)%domainNumber(1)
               IF(thisDofDomain/=otherDofDomain) THEN
                 CALL FlagError("An equal DOF constraint is split over multiple domains, "// &

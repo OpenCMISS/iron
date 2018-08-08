@@ -42,13 +42,13 @@
 !>
 
 !> Implements trees of base types.
-MODULE TREES
+MODULE Trees
 
   USE BaseRoutines
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE STRINGS
+  USE Kinds
+  USE Strings
 
 #include "macros.h"  
 
@@ -58,1330 +58,1583 @@ MODULE TREES
 
   !Module parameters
 
-  !> \addtogroup TREES_TreeNodeColourTypes TREES::TreeNodeColourTypes
+  !> \addtogroup Trees_TreeNodeColourTypes Trees::TreeNodeColourTypes
   !> \brief The colour of the tree nodes
   !> \see TREES
   !>@{
-  INTEGER(INTG), PARAMETER :: TREE_BLACK_NODE=0 !<The black colour type for a tree node \see TREES_TreeNodeColourTypes,TREES
-  INTEGER(INTG), PARAMETER :: TREE_RED_NODE=1 !<The red colour type for a tree node \see TREES_TreeNodeColourTypes,TREES
+  INTEGER(INTG), PARAMETER :: TREE_BLACK_NODE=0 !<The black colour type for a tree node \see Trees_TreeNodeColourTypes,Trees
+  INTEGER(INTG), PARAMETER :: TREE_RED_NODE=1 !<The red colour type for a tree node \see Trees_TreeNodeColourTypes,Trees
   !>@}
 
-  !> \addtogroup TREES_TreeNodeInsertStatus TREES::TreeNodeInsertStatus
+  !> \addtogroup Trees_TreeNodeInsertStatus Trees::TreeNodeInsertStatus
   !> \brief The insert status for tree nodes
   !> \see TREES
   !>@{
-  INTEGER(INTG), PARAMETER :: TREE_NODE_INSERT_SUCESSFUL=1 !<Successful insert status \see TREES_TreeNodeInsertStatus,TREES
-  INTEGER(INTG), PARAMETER :: TREE_NODE_DUPLICATE_KEY=2 !<Duplicate key found for those trees that do not allow duplicate keys \see TREES_TreeNodeInsertStatus,TREES
+  INTEGER(INTG), PARAMETER :: TREE_NODE_INSERT_SUCESSFUL=1 !<Successful insert status \see Trees_TreeNodeInsertStatus,Trees
+  INTEGER(INTG), PARAMETER :: TREE_NODE_DUPLICATE_KEY=2 !<Duplicate key found for those trees that do not allow duplicate keys \see Trees_TreeNodeInsertStatus,Trees
   !>@}
 
-  !> \addtogroup TREES_TreeInsertTypes TREES::TreeInsertTypes
+  !> \addtogroup Trees_TreeInsertTypes Trees::TreeInsertTypes
   !> \brief The insert type for a tree
   !> \see TREES
   !>@{
-  INTEGER(INTG), PARAMETER :: TREE_DUPLICATES_ALLOWED_TYPE=1 !<Duplicate keys allowed tree type \see TREES_TreeInsertTypes,TREES
-  INTEGER(INTG), PARAMETER :: TREE_NO_DUPLICATES_ALLOWED=2 !<No duplicate keys allowed tree type \see TREES_TreeInsertTypes,TREES
+  INTEGER(INTG), PARAMETER :: TREE_DUPLICATES_ALLOWED_TYPE=1 !<Duplicate keys allowed tree type \see Trees_TreeInsertTypes,Trees
+  INTEGER(INTG), PARAMETER :: TREE_NO_DUPLICATES_ALLOWED=2 !<No duplicate keys allowed tree type \see Trees_TreeInsertTypes,Trees
   !>@}
 
   !Module types
 
-  TYPE TREE_NODE_TYPE
+  !>Contains information for a node in a binary search tree
+  TYPE TreeNodeType
     PRIVATE
-    INTEGER(INTG) :: KEY !<The key for the tree node
-    INTEGER(INTG) :: VALUE !<The value stored at the tree node
-    INTEGER(INTG) :: COLOUR !<The colour of the node for the red-black tree
-    TYPE(TREE_NODE_TYPE), POINTER :: LEFT !<The pointer to the left daughter tree node if any
-    TYPE(TREE_NODE_TYPE), POINTER :: RIGHT !<The pointer to the right daughter tree node if any
-    TYPE(TREE_NODE_TYPE), POINTER :: PARENT !<The pointer to the parent tree node
-  END TYPE TREE_NODE_TYPE
+    INTEGER(INTG) :: key !<The key for the tree node
+    INTEGER(INTG), ALLOCATABLE :: values(:) !<The values stored at the tree node
+    INTEGER(INTG) :: colour !<The colour of the node for the red-black tree
+    TYPE(TreeNodeType), POINTER :: left !<The pointer to the left daughter tree node if any
+    TYPE(TreeNodeType), POINTER :: right !<The pointer to the right daughter tree node if any
+    TYPE(TreeNodeType), POINTER :: parent !<The pointer to the parent tree node
+  END TYPE TreeNodeType
 
-  TYPE TREE_TYPE
+  !>Contains information on a Red-Black binary search tree
+  TYPE TreeType
     PRIVATE
-    LOGICAL :: TREE_FINISHED !<Is .TRUE. if the tree has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: INSERT_TYPE !<The insert type for duplicate keys for the tree
-    INTEGER(INTG) :: NUMBER_IN_TREE !<The number of items currently in the tree
-    TYPE(TREE_NODE_TYPE), POINTER :: ROOT !<The pointer to the root of the tree
-    TYPE(TREE_NODE_TYPE), POINTER :: NIL !<The pointer to the nil of the tree
-  END TYPE TREE_TYPE
+    LOGICAL :: treeFinished !<Is .TRUE. if the tree has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: insertType !<The insert type for duplicate keys for the tree
+    INTEGER(INTG) :: numberInTree !<The number of items currently in the tree
+    INTEGER(INTG) :: maximumNumberOfValues !<The maximum number of values in the tree nodes
+    INTEGER(INTG) :: valueInitialise !<The value to initialise the tree node values to.
+    TYPE(TreeNodeType), POINTER :: root !<The pointer to the root of the tree
+    TYPE(TreeNodeType), POINTER :: nil !<The pointer to the nil of the tree
+  END TYPE TreeType
+
+  !>A buffer type to allow for arrays of pointers to tree types
+  TYPE TreePtrType
+    TYPE(TreeType), POINTER :: ptr !<The pointer to the tree
+  END TYPE TreePtrType
 
   !Module variables
   
   !Interfaces
 
-  INTERFACE Tree_CreateFinish
-    MODULE PROCEDURE TREE_CREATE_FINISH
-  END INTERFACE Tree_CreateFinish
+  INTERFACE Tree_Detach
+    MODULE PROCEDURE Tree_Detach1
+    MODULE PROCEDURE Tree_Detach2
+  END INTERFACE Tree_Detach
   
-  INTERFACE Tree_CreateStart
-    MODULE PROCEDURE TREE_CREATE_START
-  END INTERFACE Tree_CreateStart
-
   INTERFACE Tree_DetachAndDestroy
-    MODULE PROCEDURE TREE_DETACH_AND_DESTROY
+    MODULE PROCEDURE Tree_DetachAndDestroy1
+    MODULE PROCEDURE Tree_DetachAndDestroy2
   END INTERFACE Tree_DetachAndDestroy
   
-  INTERFACE Tree_InsertTypeSet
-    MODULE PROCEDURE TREE_INSERT_TYPE_SET
-  END INTERFACE Tree_InsertTypeSet
-  
-  INTERFACE Tree_ItemDelete
-    MODULE PROCEDURE TREE_ITEM_DELETE
-  END INTERFACE Tree_ItemDelete
+  INTERFACE Tree_DetachInOrder
+    MODULE PROCEDURE Tree_DetachInOrder1
+    MODULE PROCEDURE Tree_DetachInOrder2
+  END INTERFACE Tree_DetachInOrder
   
   INTERFACE Tree_ItemInsert
-    MODULE PROCEDURE TREE_ITEM_INSERT
+    MODULE PROCEDURE Tree_ItemInsert0
+    MODULE PROCEDURE Tree_ItemInsert1
   END INTERFACE Tree_ItemInsert
   
-  INTERFACE Tree_NodeKeyGet
-    MODULE PROCEDURE TREE_NODE_KEY_GET
-  END INTERFACE Tree_NodeKeyGet
-  
   INTERFACE Tree_NodeValueGet
-    MODULE PROCEDURE TREE_NODE_VALUE_GET
+    MODULE PROCEDURE Tree_NodeValueGet0
+    MODULE PROCEDURE Tree_NodeValueGet1
   END INTERFACE Tree_NodeValueGet
-  
+
   INTERFACE Tree_NodeValueSet
-    MODULE PROCEDURE TREE_NODE_VALUE_SET
+    MODULE PROCEDURE Tree_NodeValueSet0
+    MODULE PROCEDURE Tree_NodeValueSet1
   END INTERFACE Tree_NodeValueSet
   
-  PUBLIC TREE_TYPE,TREE_NODE_TYPE
+  PUBLIC TreeType,TreeNodeType,TreePtrType
 
   PUBLIC TREE_NODE_INSERT_SUCESSFUL,TREE_NODE_DUPLICATE_KEY
 
   PUBLIC TREE_DUPLICATES_ALLOWED_TYPE,TREE_NO_DUPLICATES_ALLOWED
   
-  PUBLIC TREE_CREATE_FINISH,TREE_CREATE_START
-
   PUBLIC Tree_CreateFinish,Tree_CreateStart
 
   PUBLIC Tree_Destroy
 
-  PUBLIC TREE_DETACH_AND_DESTROY
-
   PUBLIC Tree_Detach,Tree_DetachAndDestroy
-
-  PUBLIC TREE_INSERT_TYPE_SET
 
   PUBLIC Tree_InsertTypeSet
 
-  PUBLIC TREE_ITEM_DELETE,TREE_ITEM_INSERT
-
   PUBLIC Tree_ItemDelete,Tree_ItemInsert
 
-  PUBLIC TREE_NODE_KEY_GET
-
   PUBLIC Tree_NodeKeyGet
-
-  PUBLIC TREE_NODE_VALUE_GET,TREE_NODE_VALUE_SET
 
   PUBLIC Tree_NodeValueGet,Tree_NodeValueSet
 
   PUBLIC Tree_Output
 
-  PUBLIC Tree_Search 
+  PUBLIC Tree_Search
+
+  PUBLIC Tree_ValueInitialiseSet
 
 CONTAINS
   
   !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a tree has been finished
+  SUBROUTINE Tree_AssertIsFinished(tree,err,error,*)
+
+    !Argument Variables
+    TYPE(TreeType), POINTER, INTENT(INOUT) :: tree !<The tree to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Tree_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+
+    IF(.NOT.tree%treeFinished) CALL FlagError("Tree has not been finished.",err,error,*999)
+    
+    EXITS("Tree_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("Tree_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_AssertIsFinished
+
+  !
+  !=================================================================================================================================
+  !
+
+  !>Assert that a tree has not been finished
+  SUBROUTINE Tree_AssertNotFinished(tree,err,error,*)
+
+    !Argument Variables
+    TYPE(TreeType), POINTER, INTENT(INOUT) :: tree !<The tree to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Tree_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+
+    IF(tree%treeFinished) CALL FlagError("Tree has already been finished.",err,error,*999)
+    
+    EXITS("Tree_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("Tree_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_AssertNotFinished
+
+  !
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a tree created with TREE_CREATE_START \see{TREES::TREE_CREATE_START}.
-  SUBROUTINE TREE_CREATE_FINISH(TREE,ERR,ERROR,*)
+  !>Finishes the creation of a tree created with Tree_CreateStart \see{Trees::Tree_CreateStart}.
+  SUBROUTINE Tree_CreateFinish(tree,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to finish
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to finish
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_CREATE_FINISH",ERR,ERROR,*998)
+    ENTERS("Tree_CreateFinish",err,error,*998)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        CALL FlagError("Tree is already finished",ERR,ERROR,*998)
-      ELSE
-        !Allocate the nil tree node
-        ALLOCATE(TREE%NIL,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate NIL tree node",ERR,ERROR,*999)
-        CALL TREE_NODE_INITIALISE(TREE,TREE%NIL,ERR,ERROR,*999)
-        TREE%NIL%KEY=-99999999 !Set it to something identifiable for debugging
-        TREE%NIL%LEFT=>TREE%NIL
-        TREE%NIL%RIGHT=>TREE%NIL
-        TREE%NIL%PARENT=>TREE%NIL
-        !Set the root tree node to NIL        
-        TREE%ROOT=>TREE%NIL
-        !Finish the tree creation
-        TREE%TREE_FINISHED=.TRUE.
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*998)
-    ENDIF
+    CALL Tree_AssertNotFinished(tree,err,error,*998)
 
-    EXITS("TREE_CREATE_FINISH")
+    !Allocate the nil tree node
+    ALLOCATE(tree%nil,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate NIL tree node.",err,error,*999)
+    CALL Tree_NodeInitialise(tree,tree%nil,err,error,*999)
+    tree%nil%key=-99999999 !Set it to something identifiable for debugging
+    tree%nil%left=>tree%nil
+    tree%nil%right=>tree%nil
+    tree%nil%parent=>tree%nil
+    !Set the root tree node to NIL        
+    tree%root=>tree%nil
+    !Finish the tree creation
+    tree%treeFinished=.TRUE.
+
+    EXITS("Tree_CreateFinish")
     RETURN
-999 CALL TREE_FINALISE(TREE,ERR,ERROR,*998)
-998 ERRORSEXITS("TREE_CREATE_FINISH",ERR,ERROR)
+999 CALL Tree_Finalise(tree,err,error,*998)
+998 ERRORSEXITS("Tree_CreateFinish",err,error)
     RETURN 1
-  END SUBROUTINE TREE_CREATE_FINISH
+    
+  END SUBROUTINE Tree_CreateFinish
 
   !
   !================================================================================================================================
   !
 
-  !>Starts the creation of a tree and returns a pointer to the created tree \see{TREES::TREE_CREATE_FINISH}.
-  SUBROUTINE TREE_CREATE_START(TREE,ERR,ERROR,*)
+  !>Starts the creation of a tree and returns a pointer to the created tree \see{Trees::Tree_CreateFinish}.
+  SUBROUTINE Tree_CreateStart(tree,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to create. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code.
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to create. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variable
 
-    ENTERS("TREE_CREATE_START",ERR,ERROR,*998)
+    ENTERS("Tree_CreateStart",err,error,*998)
 
-    IF(ASSOCIATED(TREE)) THEN
-      CALL FlagError("Tree is already associated",ERR,ERROR,*998)
-    ELSE
-      ALLOCATE(TREE,STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate tree",ERR,ERROR,*999)
-      CALL TREE_INITIALISE(TREE,ERR,ERROR,*999)
-      !Set Defaults
-      TREE%INSERT_TYPE=TREE_DUPLICATES_ALLOWED_TYPE
-    ENDIF
+    IF(ASSOCIATED(tree)) CALL FlagError("Tree is already associated.",err,error,*998)
+    
+    ALLOCATE(tree,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate tree.",err,error,*999)
+    CALL Tree_Initialise(tree,err,error,*999)
+    !Set Defaults
+    tree%insertType=TREE_DUPLICATES_ALLOWED_TYPE
 
-    EXITS("TREE_CREATE_START")
+    EXITS("Tree_CreateStart")
     RETURN
-999 CALL TREE_FINALISE(TREE,ERR,ERROR,*998)
-998 ERRORSEXITS("TREE_CREATE_START",ERR,ERROR)
+999 CALL Tree_Finalise(tree,err,error,*998)
+998 ERRORSEXITS("Tree_CreateStart",err,error)
     RETURN 1
-  END SUBROUTINE TREE_CREATE_START
+    
+  END SUBROUTINE Tree_CreateStart
 
   !
   !================================================================================================================================
   !
 
   !>Destroys a tree
-  SUBROUTINE TREE_DESTROY(TREE,ERR,ERROR,*)
+  SUBROUTINE Tree_Destroy(tree,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_DESTROY",ERR,ERROR,*999)
+    ENTERS("Tree_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      CALL TREE_FINALISE(TREE,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    
+    CALL Tree_Finalise(tree,err,error,*999)
 
-    EXITS("TREE_DESTROY")
+    EXITS("Tree_Destroy")
     RETURN
-999 ERRORSEXITS("TREE_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("Tree_Destroy",err,error)
     RETURN 1
-  END SUBROUTINE TREE_DESTROY
+    
+  END SUBROUTINE Tree_Destroy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Detaches the tree values and returns them as a pointer to an array
+  SUBROUTINE Tree_Detach1(tree,numberInTree,treeValues,err,error,*)
+
+    !Argument Variables
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to detach
+    INTEGER(INTG), INTENT(OUT) :: numberInTree !<On exit, the number in the array that has been detached
+    INTEGER(INTG), POINTER :: treeValues(:) !<On exit, a pointer to the dettached tree values. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Tree_Detach1",err,error,*998)
+
+    CALL Tree_AssertIsFinished(tree,err,error,*998)
+    IF(ASSOCIATED(treeValues)) CALL FlagError("Tree values is already associated.",err,error,*998)
+    IF(tree%maximumNumberOfValues/=1) THEN
+      localError="The maximum number of values in the tree nodes is "// &
+        & TRIM(NumberToVString(tree%maximumNumberOfValues,"*",err,error))// &
+        & " which does not match the rank of one of the supplied values pointer."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    NULLIFY(treeValues)
+    ALLOCATE(treeValues(tree%numberInTree),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate tree values.",err,error,*999)
+    treeValues=tree%valueInitialise
+    numberInTree=0
+    CALL Tree_DetachInOrder1(tree,tree%root,numberInTree,treeValues,err,error,*999)
+
+    EXITS("Tree_Detach1")
+    RETURN
+999 IF(ASSOCIATED(treeValues)) DEALLOCATE(treeValues)
+    numberInTree=0
+998 ERRORSEXITS("Tree_Detach1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_Detach1
 
   !
   !================================================================================================================================
   !
 
   !>Detaches the tree values and returns them as a pointer to the an array
-  SUBROUTINE TREE_DETACH(TREE,NUMBER_IN_TREE,TREE_VALUES,ERR,ERROR,*)
+  SUBROUTINE Tree_Detach2(tree,numberInTree,treeValues,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to detach
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_IN_TREE !<On exit, the number in the array that has been detached
-    INTEGER(INTG), POINTER :: TREE_VALUES(:) !<On exit, a pointer to the dettached tree values. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to detach
+    INTEGER(INTG), INTENT(OUT) :: numberInTree !<On exit, the number in the array that has been detached
+    INTEGER(INTG), POINTER :: treeValues(:,:) !<On exit, a pointer to the dettached tree values. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_DETACH",ERR,ERROR,*998)
+    ENTERS("Tree_Detach2",err,error,*998)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        IF(ASSOCIATED(TREE_VALUES)) THEN
-          CALL FlagError("Tree values is already associated.",ERR,ERROR,*998)
-        ELSE
-          NULLIFY(TREE_VALUES)
-          ALLOCATE(TREE_VALUES(TREE%NUMBER_IN_TREE),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate tree values.",ERR,ERROR,*999)
-          NUMBER_IN_TREE=0
-          CALL TREE_DETACH_IN_ORDER(TREE,TREE%ROOT,NUMBER_IN_TREE,TREE_VALUES,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Tree has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated.",ERR,ERROR,*998)
-    ENDIF
+    CALL Tree_AssertIsFinished(tree,err,error,*998)
+    IF(ASSOCIATED(treeValues)) CALL FlagError("Tree values is already associated.",err,error,*998)
+    
+    NULLIFY(treeValues)
+    ALLOCATE(treeValues(tree%numberInTree,tree%maximumNumberOfValues),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate tree values.",err,error,*999)
+    treeValues=tree%valueInitialise
+    numberInTree=0
+    CALL Tree_DetachInOrder2(tree,tree%root,numberInTree,treeValues,err,error,*999)
 
-    EXITS("TREE_DETACH")
+    EXITS("Tree_Detach2")
     RETURN
-999 IF(ASSOCIATED(TREE_VALUES)) DEALLOCATE(TREE_VALUES)
-    NUMBER_IN_TREE=0
-998 ERRORSEXITS("TREE_DETACH",ERR,ERROR)
+999 IF(ASSOCIATED(treeValues)) DEALLOCATE(treeValues)
+    numberInTree=0
+998 ERRORSEXITS("Tree_Detach2",err,error)
     RETURN 1
-  END SUBROUTINE TREE_DETACH
+    
+  END SUBROUTINE Tree_Detach2
 
   !
   !================================================================================================================================
   !
 
   !>Detaches the tree values and returns them as a pointer to the an array and then destroys the tree
-  SUBROUTINE TREE_DETACH_AND_DESTROY(TREE,NUMBER_IN_TREE,TREE_VALUES,ERR,ERROR,*)
+  SUBROUTINE Tree_DetachAndDestroy1(tree,numberInTree,treeValues,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to detach and destroy
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_IN_TREE !<On exit, the number in the array that has been detached
-    INTEGER(INTG), POINTER :: TREE_VALUES(:) !<On exit, a pointer to the dettached tree values. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to detach and destroy
+    INTEGER(INTG), INTENT(OUT) :: numberInTree !<On exit, the number in the array that has been detached
+    INTEGER(INTG), POINTER :: treeValues(:) !<On exit, a pointer to the dettached tree values. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Tree_DetachAndDestroy1",err,error,*998)
+
+    CALL Tree_AssertIsFinished(tree,err,error,*998)
+    IF(ASSOCIATED(treeValues)) CALL FlagError("Tree values is already associated.",err,error,*998)
+    IF(tree%maximumNumberOfValues/=1) THEN
+      localError="The maximum number of values in the tree nodes is "// &
+        & TRIM(NumberToVString(tree%maximumNumberOfValues,"*",err,error))// &
+        & " which does not match the rank of one of the supplied values pointer."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    NULLIFY(treeValues)
+    ALLOCATE(treeValues(tree%numberInTree),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate tree values.",err,error,*999)
+    treeValues=tree%valueInitialise
+    numberInTree=0
+    CALL Tree_DetachInOrder1(tree,tree%root,numberInTree,treeValues,err,error,*999)
+    CALL Tree_Finalise(tree,err,error,*999)
+
+    EXITS("Tree_DetachAndDestroy1")
+    RETURN
+999 IF(ASSOCIATED(treeValues)) DEALLOCATE(treeValues)
+    numberInTree=0
+998 ERRORSEXITS("Tree_DetachAndDestroy1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_DetachAndDestroy1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Detaches the tree values and returns them as a pointer to the an array and then destroys the tree
+  SUBROUTINE Tree_DetachAndDestroy2(tree,numberInTree,treeValues,err,error,*)
+
+    !Argument Variables
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to detach and destroy
+    INTEGER(INTG), INTENT(OUT) :: numberInTree !<On exit, the number in the array that has been detached
+    INTEGER(INTG), POINTER :: treeValues(:,:) !<On exit, a pointer to the dettached tree values. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_DETACH_AND_DESTROY",ERR,ERROR,*998)
+    ENTERS("Tree_DetachAndDestroy2",err,error,*998)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        IF(ASSOCIATED(TREE_VALUES)) THEN
-          CALL FlagError("Tree values is associated",ERR,ERROR,*998)
-        ELSE
-          NULLIFY(TREE_VALUES)
-          ALLOCATE(TREE_VALUES(TREE%NUMBER_IN_TREE),STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate tree values",ERR,ERROR,*999)
-          NUMBER_IN_TREE=0
-          CALL TREE_DETACH_IN_ORDER(TREE,TREE%ROOT,NUMBER_IN_TREE,TREE_VALUES,ERR,ERROR,*999)
-          CALL TREE_FINALISE(TREE,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Tree has not been finished",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*998)
-    ENDIF
+    CALL Tree_AssertIsFinished(tree,err,error,*998)
+    IF(ASSOCIATED(treeValues)) CALL FlagError("Tree values is already associated.",err,error,*998)
+    
+    NULLIFY(treeValues)
+    ALLOCATE(treeValues(tree%numberInTree,tree%maximumNumberOfValues),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate tree values.",err,error,*999)
+    treeValues=tree%valueInitialise
+    numberInTree=0
+    CALL Tree_DetachInOrder2(tree,tree%root,numberInTree,treeValues,err,error,*999)
+    CALL Tree_Finalise(tree,err,error,*999)
 
-    EXITS("TREE_DETACH_AND_DESTROY")
+    EXITS("Tree_DetachAndDestroy2")
     RETURN
-999 IF(ASSOCIATED(TREE_VALUES)) DEALLOCATE(TREE_VALUES)
-    NUMBER_IN_TREE=0
-998 ERRORSEXITS("TREE_DETACH_AND_DESTROY",ERR,ERROR)
+999 IF(ASSOCIATED(treeValues)) DEALLOCATE(treeValues)
+    numberInTree=0
+998 ERRORSEXITS("Tree_DetachAndDestroy2",err,error)
     RETURN 1
-  END SUBROUTINE TREE_DETACH_AND_DESTROY
+    
+  END SUBROUTINE Tree_DetachAndDestroy2
 
   !
   !================================================================================================================================
   !
 
   !>Detaches the tree values in order from the specified tree node and adds them to the tree values array
-  RECURSIVE SUBROUTINE TREE_DETACH_IN_ORDER(TREE,X,COUNT,TREE_VALUES,ERR,ERROR,*)
+  RECURSIVE SUBROUTINE Tree_DetachInOrder1(tree,x,count,treeValues,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to detach
-    TYPE(TREE_NODE_TYPE), POINTER :: X !<A pointer to the specified tree node to detach from
-    INTEGER(INTG), INTENT(INOUT) :: COUNT !<The current number in the detached tree values array
-    INTEGER(INTG), INTENT(INOUT) :: TREE_VALUES(:) !<The current detached tree values array
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to detach
+    TYPE(TreeNodeType), POINTER :: x !<A pointer to the specified tree node to detach from
+    INTEGER(INTG), INTENT(INOUT) :: count !<The current number in the detached tree values array
+    INTEGER(INTG), INTENT(INOUT) :: treeValues(:) !<The current detached tree values array
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("TREE_DETACH_IN_ORDER",ERR,ERROR,*999)
+    ENTERS("Tree_DetachInOrder1",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(.NOT.ASSOCIATED(X,TREE%NIL)) THEN
-        CALL TREE_DETACH_IN_ORDER(TREE,X%LEFT,COUNT,TREE_VALUES,ERR,ERROR,*999)
-        COUNT=COUNT+1
-        IF(COUNT<=SIZE(TREE_VALUES,1)) THEN
-          TREE_VALUES(COUNT)=X%VALUE
-        ELSE
-          LOCAL_ERROR="The current count of the tree values ("//TRIM(NUMBER_TO_VSTRING(COUNT,"*",ERR,ERROR))// &
-            & ") is greater than the size of the tree values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(TREE_VALUES,1),"*",ERR,ERROR))//")"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(x,tree%nil)) THEN
+      CALL Tree_DetachInOrder(tree,x%left,count,treeValues,err,error,*999)
+      count=count+1
+      IF(count<=SIZE(treeValues,1)) THEN
+        IF(.NOT.ALLOCATED(x%values)) THEN
+          localError="Tree node values is not allocated for key "//TRIM(NumberToVString(x%key,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
-        CALL TREE_DETACH_IN_ORDER(TREE,X%RIGHT,COUNT,TREE_VALUES,ERR,ERROR,*999)
+        treeValues(count)=x%values(1)
+      ELSE
+        localError="The current count of the tree values of "//TRIM(NumberToVString(count,"*",err,error))// &
+          & " is greater than the size of the tree values array of "// &
+          & TRIM(NumberToVString(SIZE(treeValues,1),"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
+      CALL Tree_DetachInOrder(tree,x%right,count,treeValues,err,error,*999)
     ENDIF
 
-    EXITS("TREE_DETACH_IN_ORDER")
+    EXITS("Tree_DetachInOrder1")
     RETURN
-999 ERRORSEXITS("TREE_DETACH_IN_ORDER",ERR,ERROR)
+999 ERRORSEXITS("Tree_DetachInOrder1",err,error)
     RETURN 1
-  END SUBROUTINE TREE_DETACH_IN_ORDER
+    
+  END SUBROUTINE Tree_DetachInOrder1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Detaches the tree values in order from the specified tree node and adds them to the tree values array
+  RECURSIVE SUBROUTINE Tree_DetachInOrder2(tree,x,count,treeValues,err,error,*)
+
+    !Argument Variables
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to detach
+    TYPE(TreeNodeType), POINTER :: x !<A pointer to the specified tree node to detach from
+    INTEGER(INTG), INTENT(INOUT) :: count !<The current number in the detached tree values array
+    INTEGER(INTG), INTENT(INOUT) :: treeValues(:,:) !<The current detached tree values array
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
+    !Local Variables
+    INTEGER(INTG) :: valueIdx
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Tree_DetachInOrder2",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(x,tree%nil)) THEN
+      CALL Tree_DetachInOrder2(tree,x%left,count,treeValues,err,error,*999)
+      count=count+1
+      IF(count<=SIZE(treeValues,1)) THEN
+        IF(.NOT.ALLOCATED(x%values)) THEN
+          localError="Tree node values is not allocated for key "//TRIM(NumberToVString(x%key,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        IF(SIZE(x%values,1)>SIZE(treeValues,2)) THEN
+          localError="The second dimension of the supplied tree values array of "// &
+            & TRIM(NumberToVString(SIZE(treeValues,2),"*",err,error))// &
+            & " is too small. The size of the second dimension must be >= "// &
+            & TRIM(NumberToVString(SIZE(x%values,1),"*",err,error))// &
+            & " for key number "//TRIM(NumberToVString(x%key,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        DO valueIdx=1,SIZE(x%values,1)
+          treeValues(count,valueIdx)=x%values(valueIdx)
+        ENDDO !valueIdx
+      ELSE
+        localError="The current count of the tree values of "//TRIM(NumberToVString(count,"*",err,error))// &
+          & " is greater than the size of the tree values array of "// &
+          & TRIM(NumberToVString(SIZE(treeValues,1),"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      CALL Tree_DetachInOrder2(tree,x%right,count,treeValues,err,error,*999)
+    ENDIF
+
+    EXITS("Tree_DetachInOrder2")
+    RETURN
+999 ERRORSEXITS("Tree_DetachInOrder2",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_DetachInOrder2
 
   !
   !================================================================================================================================
   !
 
   !>Finalises a tree and deallocates all memory
-  SUBROUTINE TREE_FINALISE(TREE,ERR,ERROR,*)
+  SUBROUTINE Tree_Finalise(tree,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_FINALISE",ERR,ERROR,*999)
+    ENTERS("Tree_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      CALL TREE_NODE_FINALISE(TREE,TREE%ROOT,ERR,ERROR,*999)
-      IF(ASSOCIATED(TREE%NIL)) DEALLOCATE(TREE%NIL)
-      DEALLOCATE(TREE)
+    IF(ASSOCIATED(tree)) THEN
+      CALL Tree_NodeFinalise(tree,tree%root,err,error,*999)
+      IF(ASSOCIATED(tree%nil)) DEALLOCATE(tree%nil)
+      DEALLOCATE(tree)
     ENDIF
 
-    EXITS("TREE_FINALISE")
+    EXITS("Tree_Finalise")
     RETURN
-999 ERRORSEXITS("TREE_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("Tree_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE TREE_FINALISE
+    
+  END SUBROUTINE Tree_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises a tree
-  SUBROUTINE TREE_INITIALISE(TREE,ERR,ERROR,*)
+  SUBROUTINE Tree_Initialise(tree,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_INITIALISE",ERR,ERROR,*999)
+    ENTERS("Tree_Initialise",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      TREE%TREE_FINISHED=.FALSE.
-      TREE%INSERT_TYPE=0
-      TREE%NUMBER_IN_TREE=0
-      NULLIFY(TREE%ROOT)
-      NULLIFY(TREE%NIL)
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    
+    tree%treeFinished=.FALSE.
+    tree%insertType=0
+    tree%numberInTree=0
+    tree%maximumNumberOfValues=0
+    tree%valueInitialise=0
+    NULLIFY(tree%root)
+    NULLIFY(tree%nil)
 
-    EXITS("TREE_INITIALISE")
+    EXITS("Tree_Initialise")
     RETURN
-999 ERRORSEXITS("TREE_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("Tree_Initialise",err,error)
     RETURN 1
-  END SUBROUTINE TREE_INITIALISE
+    
+  END SUBROUTINE Tree_Initialise
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the insert type for a tree
-  SUBROUTINE TREE_INSERT_TYPE_SET(TREE,INSERT_TYPE,ERR,ERROR,*)
+  SUBROUTINE Tree_InsertTypeSet(tree,insertType,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree
-    INTEGER(INTG), INTENT(IN) :: INSERT_TYPE !<The insert type to set \see TREES_TreeInsertTypes,TREES::TreeInsertTypes
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree
+    INTEGER(INTG), INTENT(IN) :: insertType !<The insert type to set \see Trees_TreeInsertTypes,Trees::TreeInsertTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("TREE_INSERT_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("Tree_InsertTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        CALL FlagError("Tree has been finished",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(INSERT_TYPE)
-        CASE(TREE_DUPLICATES_ALLOWED_TYPE)
-          TREE%INSERT_TYPE=TREE_DUPLICATES_ALLOWED_TYPE
-        CASE(TREE_NO_DUPLICATES_ALLOWED)
-          TREE%INSERT_TYPE=TREE_NO_DUPLICATES_ALLOWED
-        CASE DEFAULT
-          LOCAL_ERROR="The insert type of "//TRIM(NUMBER_TO_VSTRING(INSERT_TYPE,"*",ERR,ERROR))//" is invalid"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
-    ENDIF
+    CALL Tree_AssertNotFinished(tree,err,error,*999)
+    
+    SELECT CASE(insertType)
+    CASE(TREE_DUPLICATES_ALLOWED_TYPE)
+      tree%insertType=TREE_DUPLICATES_ALLOWED_TYPE
+    CASE(TREE_NO_DUPLICATES_ALLOWED)
+      tree%insertType=TREE_NO_DUPLICATES_ALLOWED
+    CASE DEFAULT
+      localError="The specified insert type of "//TRIM(NumberToVString(insertType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("TREE_INSERT_TYPE_SET")
+    EXITS("Tree_InsertTypeSet")
     RETURN
-999 ERRORSEXITS("TREE_INSERT_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("Tree_InsertTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE TREE_INSERT_TYPE_SET
+    
+  END SUBROUTINE Tree_InsertTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Deletes a tree node specified by a key from a tree 
-  SUBROUTINE TREE_ITEM_DELETE(TREE,KEY,ERR,ERROR,*)
+  SUBROUTINE Tree_ItemDelete(tree,key,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the Red-Black tree to delete from
-    INTEGER(INTG), INTENT(IN) :: KEY !<A pointer to the tree node to delete
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the Red-Black tree to delete from
+    INTEGER(INTG), INTENT(IN) :: key !<A pointer to the tree node to delete
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
-    INTEGER(INTG) :: COMPARE_VALUE
-    TYPE(TREE_NODE_TYPE), POINTER :: U,V,W,X,Y,Z
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: compareValue
+    TYPE(TreeNodeType), POINTER :: u,v,w,x,y,z
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("TREE_ITEM_DELETE",ERR,ERROR,*999)
+    ENTERS("Tree_ItemDelete",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        !Try and find the key to delete
-        Z=>TREE%ROOT
-        IF(.NOT.ASSOCIATED(Z,TREE%NIL)) THEN
-          COMPARE_VALUE=Z%KEY-KEY
-          DO WHILE(COMPARE_VALUE/=0)
-            IF(COMPARE_VALUE>0) THEN !Z%KEY > KEY
-              Z=>Z%LEFT
-            ELSE !Z%KEY < KEY
-              Z=>Z%RIGHT
-            ENDIF
-            IF(ASSOCIATED(Z,TREE%NIL)) THEN
-              EXIT
-            ELSE
-              COMPARE_VALUE=Z%KEY-KEY
-            ENDIF
-          ENDDO
-          IF(COMPARE_VALUE==0) THEN
-            !Found the key so delete it
-            IF(ASSOCIATED(Z%LEFT,TREE%NIL).OR.ASSOCIATED(Z%RIGHT,TREE%NIL)) THEN
-              Y=>Z
-            ELSE
-              Y=>TREE_SUCCESSOR(TREE,Z,ERR,ERROR)
-              IF(ERR/=0) GOTO 999
-            ENDIF
-            IF(.NOT.ASSOCIATED(Y%LEFT,TREE%NIL)) THEN
-              X=>Y%LEFT
-            ELSE
-              X=>Y%RIGHT
-            ENDIF
-            X%PARENT=>Y%PARENT
-            IF(ASSOCIATED(Y%PARENT,TREE%NIL)) THEN
-              TREE%ROOT=>X
-            ELSE
-              IF(ASSOCIATED(Y,Y%PARENT%LEFT)) THEN
-                Y%PARENT%LEFT=>X
-              ELSE
-                Y%PARENT%RIGHT=>X
-              ENDIF
-            ENDIF
-            IF(Y%COLOUR==TREE_BLACK_NODE) THEN
-              !Fixup the delete to ensure the tree has red black properties
-              !Note: Due to Fortran restrictions on aliasing pointers in dummy arguments we need to do the fixup and rotations
-              !inside this routine rather than call fixup and rotate left and rotate right subroutines.
-              DO WHILE(.NOT.ASSOCIATED(X,TREE%ROOT).AND.X%COLOUR==TREE_BLACK_NODE)
-                IF(ASSOCIATED(X,X%PARENT%LEFT)) THEN
-                  W=>X%PARENT%RIGHT
-                  IF(W%COLOUR==TREE_RED_NODE) THEN
-                    W%COLOUR=TREE_BLACK_NODE
-                    X%PARENT%COLOUR=TREE_RED_NODE
-                    !Rotate left on X->Parent
-                    U=>X%PARENT
-                    V=>U%RIGHT
-                    U%RIGHT=>V%LEFT
-                    IF(.NOT.ASSOCIATED(V%LEFT,TREE%NIL)) V%LEFT%PARENT=>U
-                    V%PARENT=>U%PARENT
-                    IF(ASSOCIATED(U%PARENT,TREE%NIL)) THEN
-                      TREE%ROOT=>V
-                    ELSE
-                      IF(ASSOCIATED(U,U%PARENT%LEFT)) THEN
-                        U%PARENT%LEFT=>V
-                      ELSE
-                        U%PARENT%RIGHT=>V
-                      ENDIF
-                    ENDIF
-                    V%LEFT=>U
-                    U%PARENT=>V
-                    W=>X%PARENT%RIGHT
-                  ENDIF
-                  IF(W%LEFT%COLOUR==TREE_BLACK_NODE.AND.W%RIGHT%COLOUR==TREE_BLACK_NODE) THEN
-                    W%COLOUR=TREE_RED_NODE
-                    X=>X%PARENT
-                  ELSE
-                    IF(W%RIGHT%COLOUR==TREE_BLACK_NODE) THEN
-                      W%LEFT%COLOUR=TREE_BLACK_NODE
-                      W%COLOUR=TREE_RED_NODE
-                      !Rotate right on W
-                      U=>W
-                      V=>U%LEFT
-                      U%LEFT=>V%RIGHT
-                      IF(.NOT.ASSOCIATED(V%RIGHT,TREE%NIL)) V%RIGHT%PARENT=>U
-                      V%PARENT=>U%PARENT
-                      IF(ASSOCIATED(V%PARENT,TREE%NIL)) THEN
-                        TREE%ROOT=>V
-                      ELSE
-                        IF(ASSOCIATED(U,U%PARENT%RIGHT)) THEN
-                          U%PARENT%RIGHT=>V
-                        ELSE
-                          U%PARENT%LEFT=>V
-                        ENDIF
-                      ENDIF
-                      V%RIGHT=>U
-                      U%PARENT=>V
-                      W=>X%PARENT%RIGHT
-                    ENDIF
-                    W%COLOUR=X%PARENT%COLOUR
-                    X%PARENT%COLOUR=TREE_BLACK_NODE
-                    W%RIGHT%COLOUR=TREE_BLACK_NODE
-                    !Rotate left on X->Parent
-                    U=>X%PARENT
-                    V=>U%RIGHT
-                    U%RIGHT=>V%LEFT
-                    IF(.NOT.ASSOCIATED(V%LEFT,TREE%NIL)) V%LEFT%PARENT=>U
-                    V%PARENT=>U%PARENT
-                    IF(ASSOCIATED(U%PARENT,TREE%NIL)) THEN
-                      TREE%ROOT=>V
-                    ELSE
-                      IF(ASSOCIATED(U,U%PARENT%LEFT)) THEN
-                        U%PARENT%LEFT=>V
-                      ELSE
-                        U%PARENT%RIGHT=>V
-                      ENDIF
-                    ENDIF
-                    V%LEFT=>U
-                    U%PARENT=>V
-                    X=>TREE%ROOT
-                  ENDIF
+    CALL Tree_AssertIsFinished(tree,err,error,*999)
+    
+    !Try and find the key to delete
+    z=>tree%root
+    IF(.NOT.ASSOCIATED(z,tree%nil)) THEN
+      compareValue=z%key-key
+      DO WHILE(compareValue/=0)
+        IF(compareValue>0) THEN !z%key > key
+          z=>z%left
+        ELSE !z%key < key
+          z=>z%right
+        ENDIF
+        IF(ASSOCIATED(z,tree%nil)) THEN
+          EXIT
+        ELSE
+          compareValue=z%key-key
+        ENDIF
+      ENDDO
+      IF(compareValue==0) THEN
+        !Found the key so delete it
+        IF(ASSOCIATED(z%left,tree%nil).OR.ASSOCIATED(z%right,tree%nil)) THEN
+          y=>z
+        ELSE
+          y=>Tree_Successor(tree,z,err,error)
+          IF(err/=0) GOTO 999
+        ENDIF
+        IF(.NOT.ASSOCIATED(y%left,tree%nil)) THEN
+          x=>y%left
+        ELSE
+          x=>y%right
+        ENDIF
+        x%parent=>y%parent
+        IF(ASSOCIATED(y%parent,tree%nil)) THEN
+          tree%root=>x
+        ELSE
+          IF(ASSOCIATED(y,y%parent%left)) THEN
+            y%parent%left=>x
+          ELSE
+            y%parent%right=>x
+          ENDIF
+        ENDIF
+        IF(y%colour==TREE_BLACK_NODE) THEN
+          !Fixup the delete to ensure the tree has red black properties
+          !Note: Due to Fortran restrictions on aliasing pointers in dummy arguments we need to do the fixup and rotations
+          !inside this routine rather than call fixup and rotate left and rotate right subroutines.
+          DO WHILE(.NOT.ASSOCIATED(x,tree%root).AND.x%colour==TREE_BLACK_NODE)
+            IF(ASSOCIATED(x,x%parent%left)) THEN
+              w=>x%parent%right
+              IF(w%colour==TREE_RED_NODE) THEN
+                w%colour=TREE_BLACK_NODE
+                x%parent%colour=TREE_RED_NODE
+                !Rotate left on x->parent
+                u=>x%parent
+                v=>u%right
+                u%right=>v%left
+                IF(.NOT.ASSOCIATED(v%left,tree%nil)) v%left%parent=>u
+                v%parent=>u%parent
+                IF(ASSOCIATED(u%parent,tree%nil)) THEN
+                  tree%root=>v
                 ELSE
-                  W=>X%PARENT%LEFT
-                  IF(W%COLOUR==TREE_RED_NODE) THEN
-                    W%COLOUR=TREE_BLACK_NODE
-                    X%PARENT%COLOUR=TREE_RED_NODE
-                    !Rotate right on X->Parent
-                    U=>X%PARENT
-                    V=>U%LEFT
-                    U%LEFT=>V%RIGHT
-                    IF(.NOT.ASSOCIATED(V%RIGHT,TREE%NIL)) V%RIGHT%PARENT=>U
-                    V%PARENT=>U%PARENT
-                    IF(ASSOCIATED(V%PARENT,TREE%NIL)) THEN
-                      TREE%ROOT=>V
-                    ELSE
-                      IF(ASSOCIATED(U,U%PARENT%RIGHT)) THEN
-                        U%PARENT%RIGHT=>V
-                      ELSE
-                        U%PARENT%LEFT=>V
-                      ENDIF
-                    ENDIF
-                    V%RIGHT=>U
-                    U%PARENT=>V
-                    W=>X%PARENT%LEFT
-                  ENDIF
-                  IF(W%RIGHT%COLOUR==TREE_BLACK_NODE.AND.W%LEFT%COLOUR==TREE_BLACK_NODE) THEN
-                    W%COLOUR=TREE_RED_NODE
-                    X=>X%PARENT
+                  IF(ASSOCIATED(u,u%parent%left)) THEN
+                    u%parent%left=>v
                   ELSE
-                    IF(W%LEFT%COLOUR==TREE_BLACK_NODE) THEN
-                      W%RIGHT%COLOUR=TREE_BLACK_NODE
-                      W%COLOUR=TREE_RED_NODE
-                      !Rotate left on W
-                      U=>W
-                      V=>U%RIGHT
-                      U%RIGHT=>V%LEFT
-                      IF(.NOT.ASSOCIATED(V%LEFT,TREE%NIL)) V%LEFT%PARENT=>U
-                      V%PARENT=>U%PARENT
-                      IF(ASSOCIATED(U%PARENT,TREE%NIL)) THEN
-                        TREE%ROOT=>V
-                      ELSE
-                        IF(ASSOCIATED(U,U%PARENT%LEFT)) THEN
-                          U%PARENT%LEFT=>V
-                        ELSE
-                          U%PARENT%RIGHT=>V
-                        ENDIF
-                      ENDIF
-                      V%LEFT=>U
-                      U%PARENT=>V
-                      W=>X%PARENT%LEFT
-                    ENDIF
-                    W%COLOUR=X%PARENT%COLOUR
-                    X%PARENT%COLOUR=TREE_BLACK_NODE
-                    W%LEFT%COLOUR=TREE_BLACK_NODE
-                    !Rotate right on X->Parent
-                    U=>X%PARENT
-                    V=>U%LEFT
-                    U%LEFT=>V%RIGHT
-                    IF(.NOT.ASSOCIATED(V%RIGHT,TREE%NIL)) V%RIGHT%PARENT=>U
-                    V%PARENT=>U%PARENT
-                    IF(ASSOCIATED(V%PARENT,TREE%NIL)) THEN
-                      TREE%ROOT=>V
-                    ELSE
-                      IF(ASSOCIATED(U,U%PARENT%RIGHT)) THEN
-                        U%PARENT%RIGHT=>V
-                      ELSE
-                        U%PARENT%LEFT=>V
-                      ENDIF
-                    ENDIF
-                    V%RIGHT=>U
-                    U%PARENT=>V
-                    X=>TREE%ROOT
+                    u%parent%right=>v
                   ENDIF
                 ENDIF
-              ENDDO
-              X%COLOUR=TREE_BLACK_NODE
-            ENDIF
-            IF(.NOT.ASSOCIATED(Y,Z)) THEN
-              Y%LEFT=>Z%LEFT
-              Y%RIGHT=>Z%RIGHT
-              Y%PARENT=>Z%PARENT
-              Y%COLOUR=Z%COLOUR
-              Z%LEFT%PARENT=>Y
-              Z%RIGHT%PARENT=>Y
-              IF(ASSOCIATED(Z,Z%PARENT%LEFT)) THEN
-                Z%PARENT%LEFT=>Y              
+                v%left=>u
+                u%parent=>v
+                w=>x%parent%right
+              ENDIF
+              IF(w%left%colour==TREE_BLACK_NODE.AND.w%right%colour==TREE_BLACK_NODE) THEN
+                w%colour=TREE_RED_NODE
+                x=>x%parent
               ELSE
-                Z%PARENT%RIGHT=>Y
+                IF(w%right%colour==TREE_BLACK_NODE) THEN
+                  w%left%colour=TREE_BLACK_NODE
+                  w%colour=TREE_RED_NODE
+                  !Rotate right on w
+                  u=>w
+                  v=>u%left
+                  u%left=>v%right
+                  IF(.NOT.ASSOCIATED(v%right,tree%nil)) v%right%parent=>u
+                  v%parent=>u%parent
+                  IF(ASSOCIATED(v%parent,tree%nil)) THEN
+                    tree%root=>v
+                  ELSE
+                    IF(ASSOCIATED(u,u%parent%right)) THEN
+                      u%parent%right=>v
+                    ELSE
+                      u%parent%left=>v
+                    ENDIF
+                  ENDIF
+                  v%right=>u
+                  u%parent=>v
+                  w=>x%parent%right
+                ENDIF
+                w%colour=x%parent%colour
+                x%parent%colour=TREE_BLACK_NODE
+                w%right%colour=TREE_BLACK_NODE
+                !Rotate left on x->parent
+                u=>x%parent
+                v=>u%right
+                u%right=>v%left
+                IF(.NOT.ASSOCIATED(v%left,tree%nil)) v%left%parent=>u
+                v%parent=>u%parent
+                IF(ASSOCIATED(u%parent,tree%nil)) THEN
+                  tree%root=>v
+                ELSE
+                  IF(ASSOCIATED(u,u%parent%left)) THEN
+                    u%parent%left=>v
+                  ELSE
+                    u%parent%right=>v
+                  ENDIF
+                ENDIF
+                v%left=>u
+                u%parent=>v
+                x=>tree%root
+              ENDIF
+            ELSE
+              w=>x%parent%left
+              IF(w%colour==TREE_RED_NODE) THEN
+                w%colour=TREE_BLACK_NODE
+                x%parent%colour=TREE_RED_NODE
+                !Rotate right on x->parent
+                u=>x%parent
+                v=>u%left
+                u%left=>v%right
+                IF(.NOT.ASSOCIATED(v%right,tree%nil)) v%right%parent=>u
+                v%parent=>u%parent
+                IF(ASSOCIATED(v%parent,tree%nil)) THEN
+                  tree%root=>v
+                ELSE
+                  IF(ASSOCIATED(u,u%parent%right)) THEN
+                    u%parent%right=>v
+                  ELSE
+                    u%parent%left=>v
+                  ENDIF
+                ENDIF
+                v%right=>u
+                u%parent=>v
+                w=>x%parent%left
+              ENDIF
+              IF(w%right%colour==TREE_BLACK_NODE.AND.w%left%colour==TREE_BLACK_NODE) THEN
+                w%colour=TREE_RED_NODE
+                x=>x%parent
+              ELSE
+                IF(w%left%colour==TREE_BLACK_NODE) THEN
+                  w%right%colour=TREE_BLACK_NODE
+                  w%colour=TREE_RED_NODE
+                  !Rotate left on w
+                  u=>w
+                  v=>u%right
+                  u%right=>v%left
+                  IF(.NOT.ASSOCIATED(v%left,tree%nil)) v%left%parent=>U
+                  v%parent=>u%parent
+                  IF(ASSOCIATED(u%parent,tree%nil)) THEN
+                    tree%root=>v
+                  ELSE
+                    IF(ASSOCIATED(u,u%parent%left)) THEN
+                      u%parent%left=>v
+                    ELSE
+                      u%parent%right=>v
+                    ENDIF
+                  ENDIF
+                  v%left=>u
+                  u%parent=>v
+                  w=>x%parent%left
+                ENDIF
+                w%colour=x%parent%colour
+                x%parent%colour=TREE_BLACK_NODE
+                w%left%colour=TREE_BLACK_NODE
+                !Rotate right on x->parent
+                u=>x%parent
+                v=>u%left
+                u%left=>v%right
+                IF(.NOT.ASSOCIATED(v%right,tree%nil)) v%right%parent=>u
+                v%parent=>u%parent
+                IF(ASSOCIATED(v%parent,tree%nil)) THEN
+                  tree%root=>v
+                ELSE
+                  IF(ASSOCIATED(U,u%parent%right)) THEN
+                    u%parent%right=>v
+                  ELSE
+                    u%parent%left=>v
+                  ENDIF
+                ENDIF
+                v%right=>u
+                u%parent=>v
+                x=>tree%root
               ENDIF
             ENDIF
-            DEALLOCATE(Z)
-            TREE%NUMBER_IN_TREE=TREE%NUMBER_IN_TREE-1
-          ELSE
-            LOCAL_ERROR="Could not find the key "//TRIM(NUMBER_TO_VSTRING(KEY,"*",ERR,ERROR))//" in the tree"
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The tree root is NIL. Can not delete the key",ERR,ERROR,*999)
+          ENDDO
+          x%colour=TREE_BLACK_NODE
         ENDIF
+        IF(.NOT.ASSOCIATED(Y,Z)) THEN
+          y%left=>z%left
+          y%right=>z%right
+          y%parent=>z%parent
+          y%colour=z%colour
+          z%left%parent=>y
+          z%right%parent=>y
+          IF(ASSOCIATED(Z,z%parent%left)) THEN
+            z%parent%left=>y              
+          ELSE
+            z%parent%right=>y
+          ENDIF
+        ENDIF
+        DEALLOCATE(z)
+        tree%numberInTree=tree%numberInTree-1
       ELSE
-        CALL FlagError("The tree has not been finished",ERR,ERROR,*999)
+        localError="Could not find the key "//TRIM(NumberToVString(key,"*",err,error))//" in the tree."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
+      CALL FlagError("The tree root is NIL. Can not delete the key.",err,error,*999)
     ENDIF
-    
-    EXITS("TREE_ITEM_DELETE")
+
+    EXITS("Tree_ItemDelete")
     RETURN
-999 ERRORSEXITS("TREE_ITEM_DELETE",ERR,ERROR)
+999 ERRORSEXITS("Tree_ItemDelete",err,error)
     RETURN 1
-  END SUBROUTINE TREE_ITEM_DELETE
+    
+  END SUBROUTINE Tree_ItemDelete
 
   !
   !================================================================================================================================
   !
 
   !>Inserts a tree node into a red-black tree 
-  SUBROUTINE TREE_ITEM_INSERT(TREE,KEY,VALUE,INSERT_STATUS,ERR,ERROR,*)
+  SUBROUTINE Tree_ItemInsert0(tree,key,value,insertStatus,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the Red-Black tree to insert into
-    INTEGER(INTG), INTENT(IN) :: KEY !<The key to insert
-    INTEGER(INTG), INTENT(IN) :: VALUE !<The value to insert
-    INTEGER(INTG), INTENT(OUT) :: INSERT_STATUS !<On exit, the status of the insert \see TREES_TreeNodeInsertStatus,TREES::TreeNodeInsertStatus
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the Red-Black tree to insert into
+    INTEGER(INTG), INTENT(IN) :: key !<The key to insert
+    INTEGER(INTG), INTENT(IN) :: value !<The value to insert
+    INTEGER(INTG), INTENT(OUT) :: insertStatus !<On exit, the status of the insert \see Trees_TreeNodeInsertStatus,Trees::TreeNodeInsertStatus
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
-    LOGICAL :: DUPLICATE_KEY
-    TYPE(TREE_NODE_TYPE), POINTER :: NEW_TREE_NODE,X,Y,Z
-
-    NULLIFY(NEW_TREE_NODE)
     
-    ENTERS("TREE_ITEM_INSERT",ERR,ERROR,*998)
+    ENTERS("Tree_ItemInsert0",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        !Find the position to insert
-        Y=>TREE%NIL
-        X=>TREE%ROOT
-        DUPLICATE_KEY=.FALSE.
-        DO WHILE(.NOT.ASSOCIATED(X,TREE%NIL))
-          Y=>X
-          DUPLICATE_KEY=TREE%INSERT_TYPE==TREE_NO_DUPLICATES_ALLOWED.AND.KEY==X%KEY
-          IF(DUPLICATE_KEY) THEN
-            EXIT
-          ELSE IF(KEY<X%KEY) THEN
-            X=>X%LEFT
-          ELSE
-            X=>X%RIGHT
-          ENDIF
-        ENDDO
-        IF(DUPLICATE_KEY) THEN
-          INSERT_STATUS=TREE_NODE_DUPLICATE_KEY
-        ELSE
-          !Allocate the new tree node and set its key and value
-          ALLOCATE(NEW_TREE_NODE,STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate new tree node",ERR,ERROR,*999)
-          CALL TREE_NODE_INITIALISE(TREE,NEW_TREE_NODE,ERR,ERROR,*999)
-          NEW_TREE_NODE%KEY=KEY
-          NEW_TREE_NODE%VALUE=VALUE
-          !Insert the new tree node into the tree
-          NEW_TREE_NODE%COLOUR=TREE_RED_NODE
-          NEW_TREE_NODE%LEFT=>TREE%NIL
-          NEW_TREE_NODE%RIGHT=>TREE%NIL
-          NEW_TREE_NODE%PARENT=>Y
-          IF(ASSOCIATED(Y,TREE%NIL)) THEN
-            TREE%ROOT=>NEW_TREE_NODE
-          ELSE
-            IF(NEW_TREE_NODE%KEY<Y%KEY) THEN
-              Y%LEFT=>NEW_TREE_NODE
-            ELSE
-              Y%RIGHT=>NEW_TREE_NODE
-            ENDIF
-          ENDIF
-          !Fix up the tree to keep red-black properties
-          !Note: Due to Fortran restrictions on aliasing pointers in dummy arguments we need to do the fixup and rotations
-          !inside this routine rather than call fixup and rotate left and rotate right subroutines.
-          Z=>NEW_TREE_NODE
-          DO WHILE(Z%PARENT%COLOUR==TREE_RED_NODE)
-            IF(ASSOCIATED(Z%PARENT,Z%PARENT%PARENT%LEFT)) THEN
-              Y=>Z%PARENT%PARENT%RIGHT
-              IF(Y%COLOUR==TREE_RED_NODE) THEN
-                Z%PARENT%COLOUR=TREE_BLACK_NODE
-                Y%COLOUR=TREE_BLACK_NODE
-                Z%PARENT%PARENT%COLOUR=TREE_RED_NODE
-                Z=>Z%PARENT%PARENT
-              ELSE
-                IF(ASSOCIATED(Z,Z%PARENT%RIGHT)) THEN
-                  Z=>Z%PARENT
-                  !Rotate the tree left at Z
-                  X=>Z                  
-                  Y=>X%RIGHT
-                  X%RIGHT=>Y%LEFT
-                  IF(.NOT.ASSOCIATED(Y%LEFT,TREE%NIL)) Y%LEFT%PARENT=>X
-                  Y%PARENT=>X%PARENT
-                  IF(ASSOCIATED(X%PARENT,TREE%NIL)) THEN
-                    TREE%ROOT=>Y
-                  ELSE
-                    IF(ASSOCIATED(X,X%PARENT%LEFT)) THEN
-                      X%PARENT%LEFT=>Y
-                    ELSE
-                      X%PARENT%RIGHT=>Y
-                    ENDIF
-                  ENDIF
-                  Y%LEFT=>X
-                  X%PARENT=>Y
-                ENDIF
-                Z%PARENT%COLOUR=TREE_BLACK_NODE
-                Z%PARENT%PARENT%COLOUR=TREE_RED_NODE
-                !Rotate the tree right at Z->Parent->Parent
-                X=>Z%PARENT%PARENT
-                Y=>X%LEFT
-                X%LEFT=>Y%RIGHT
-                IF(.NOT.ASSOCIATED(Y%RIGHT,TREE%NIL)) Y%RIGHT%PARENT=>X
-                Y%PARENT=>X%PARENT
-                IF(ASSOCIATED(X%PARENT,TREE%NIL)) THEN
-                  TREE%ROOT=>Y
-                ELSE
-                  IF(ASSOCIATED(X,X%PARENT%RIGHT)) THEN
-                    X%PARENT%RIGHT=>Y
-                  ELSE
-                    X%PARENT%LEFT=>Y
-                  ENDIF
-                ENDIF
-                Y%RIGHT=>X
-                X%PARENT=>Y
-             ENDIF
-            ELSE
-              Y=>Z%PARENT%PARENT%LEFT
-              IF(Y%COLOUR==TREE_RED_NODE) THEN
-                Z%PARENT%COLOUR=TREE_BLACK_NODE
-                Y%COLOUR=TREE_BLACK_NODE
-                Z%PARENT%PARENT%COLOUR=TREE_RED_NODE
-                Z=>Z%PARENT%PARENT
-              ELSE
-                IF(ASSOCIATED(Z,Z%PARENT%LEFT)) THEN
-                  Z=>Z%PARENT
-                  X=>Z
-                  !Rotate the tree right at Z
-                  Y=>X%LEFT
-                  X%LEFT=>Y%RIGHT
-                  IF(.NOT.ASSOCIATED(Y%RIGHT,TREE%NIL)) Y%RIGHT%PARENT=>X
-                  Y%PARENT=>X%PARENT
-                  IF(ASSOCIATED(X%PARENT,TREE%NIL)) THEN
-                    TREE%ROOT=>Y
-                  ELSE
-                    IF(ASSOCIATED(X,X%PARENT%RIGHT)) THEN
-                      X%PARENT%RIGHT=>Y
-                    ELSE
-                      X%PARENT%LEFT=>Y
-                    ENDIF
-                  ENDIF
-                  Y%RIGHT=>X
-                  X%PARENT=>Y
-                ENDIF
-                Z%PARENT%COLOUR=TREE_BLACK_NODE
-                Z%PARENT%PARENT%COLOUR=TREE_RED_NODE
-                !Rotate the tree left at Z->Parent->Parent
-                X=>Z%PARENT%PARENT
-                Y=>X%RIGHT
-                X%RIGHT=>Y%LEFT
-                IF(.NOT.ASSOCIATED(Y%LEFT,TREE%NIL)) Y%LEFT%PARENT=>X
-                Y%PARENT=>X%PARENT
-                IF(ASSOCIATED(X%PARENT,TREE%NIL)) THEN
-                  TREE%ROOT=>Y
-                ELSE
-                  IF(ASSOCIATED(X,X%PARENT%LEFT)) THEN
-                    X%PARENT%LEFT=>Y
-                  ELSE
-                    X%PARENT%RIGHT=>Y
-                  ENDIF
-                ENDIF
-                Y%LEFT=>X
-                X%PARENT=>Y
-              ENDIF
-            ENDIF
-          ENDDO
-          TREE%ROOT%COLOUR=TREE_BLACK_NODE
-          !Increment the number in the tree and indicate a successful insertion
-          TREE%NUMBER_IN_TREE=TREE%NUMBER_IN_TREE+1
-          INSERT_STATUS=TREE_NODE_INSERT_SUCESSFUL
-        ENDIF
+    CALL Tree_ItemInsert1(tree,key,[value],insertStatus,err,error,*999)
+
+    EXITS("Tree_ItemInsert0")
+    RETURN
+999 ERRORSEXITS("Tree_ItemInsert0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_ItemInsert0
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Inserts a tree node into a red-black tree 
+  SUBROUTINE Tree_ItemInsert1(tree,key,values,insertStatus,err,error,*)
+
+    !Argument Variables
+    TYPE(TreeType), POINTER :: tree !<A pointer to the Red-Black tree to insert into
+    INTEGER(INTG), INTENT(IN) :: key !<The key to insert
+    INTEGER(INTG), INTENT(IN) :: values(:) !<The value to insert
+    INTEGER(INTG), INTENT(OUT) :: insertStatus !<On exit, the status of the insert \see Trees_TreeNodeInsertStatus,Trees::TreeNodeInsertStatus
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
+    !Local Variables
+    INTEGER(INTG), ALLOCATABLE :: newValues(:)
+    LOGICAL :: duplicateKey
+    TYPE(TreeNodeType), POINTER :: newTreeNode,x,y,z
+
+    NULLIFY(newTreeNode)
+    
+    ENTERS("Tree_ItemInsert1",err,error,*998)
+
+    CALL Tree_AssertIsFinished(tree,err,error,*999)
+    
+    !Find the position to insert
+    y=>tree%nil
+    x=>tree%root
+    duplicateKey=.FALSE.
+    DO WHILE(.NOT.ASSOCIATED(x,tree%nil))
+      y=>x
+      duplicateKey=(key==x%key)
+      IF(duplicateKey) THEN
+        EXIT
+      ELSE IF(key<x%key) THEN
+        x=>x%left
       ELSE
-        CALL FlagError("The tree has not been finished",ERR,ERROR,*998)
+        x=>x%right
+      ENDIF
+    ENDDO
+    IF(duplicateKey) THEN
+      IF(tree%insertType==TREE_NO_DUPLICATES_ALLOWED) THEN
+        insertStatus=TREE_NODE_DUPLICATE_KEY
+      ELSE
+        !Append the values to the current values
+        ALLOCATE(newValues(SIZE(x%values,1)+SIZE(values,1)),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate new values.",err,error,*999)
+        newValues(1:SIZE(x%values,1))=x%values(1:SIZE(x%values,1))
+        newValues(SIZE(x%values,1)+1:SIZE(x%values,1)+SIZE(values,1))=values(1:SIZE(values,1))
+        CALL MOVE_ALLOC(newValues,x%values)
+        IF((SIZE(x%values,1)+SIZE(values,1))>tree%maximumNumberOfValues) &
+          & tree%maximumNumberOfValues=SIZE(x%values,1)+SIZE(values,1)
+        insertStatus=TREE_NODE_INSERT_SUCESSFUL
       ENDIF
     ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*998)
+      !Allocate the new tree node and set its key and value
+      ALLOCATE(newTreeNode,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new tree node.",err,error,*999)
+      CALL Tree_NodeInitialise(tree,newTreeNode,err,error,*999)
+      newTreeNode%key=key
+      ALLOCATE(newTreeNode%values(SIZE(values,1)),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new tree node values.",err,error,*999)      
+      newTreeNode%values(1:SIZE(values,1))=values(1:SIZE(values,1))
+      IF(SIZE(values,1)>tree%maximumNumberOfValues) tree%maximumNumberOfValues=SIZE(values,1)
+      !Insert the new tree node into the tree
+      newTreeNode%colour=TREE_RED_NODE
+      newTreeNode%left=>tree%nil
+      newTreeNode%right=>tree%nil
+      newTreeNode%parent=>y
+      IF(ASSOCIATED(y,tree%nil)) THEN
+        tree%root=>newTreeNode
+      ELSE
+        IF(newTreeNode%key<y%key) THEN
+          y%left=>newTreeNode
+        ELSE
+          y%right=>newTreeNode
+        ENDIF
+      ENDIF
+      !Fix up the tree to keep red-black properties
+      !Note: Due to Fortran restrictions on aliasing pointers in dummy arguments we need to do the fixup and rotations
+      !inside this routine rather than call fixup and rotate left and rotate right subroutines.
+      z=>newTreeNode
+      DO WHILE(z%parent%colour==TREE_RED_NODE)
+        IF(ASSOCIATED(z%parent,z%parent%parent%left)) THEN
+          y=>z%parent%parent%right
+          IF(y%colour==TREE_RED_NODE) THEN
+            z%parent%colour=TREE_BLACK_NODE
+            y%colour=TREE_BLACK_NODE
+            z%parent%parent%colour=TREE_RED_NODE
+            z=>z%parent%parent
+          ELSE
+            IF(ASSOCIATED(z,z%parent%right)) THEN
+              z=>z%parent
+              !Rotate the tree left at z
+              x=>z                  
+              y=>x%right
+              x%right=>y%left
+              IF(.NOT.ASSOCIATED(y%left,tree%nil)) y%left%parent=>x
+              y%parent=>x%parent
+              IF(ASSOCIATED(x%parent,tree%nil)) THEN
+                tree%root=>y
+              ELSE
+                IF(ASSOCIATED(x,x%parent%left)) THEN
+                  x%parent%left=>y
+                ELSE
+                  x%parent%right=>y
+                ENDIF
+              ENDIF
+              y%left=>x
+              x%parent=>y
+            ENDIF
+            z%parent%colour=TREE_BLACK_NODE
+            z%parent%parent%colour=TREE_RED_NODE
+            !Rotate the tree right at z->parent->parent
+            x=>z%parent%parent
+            y=>x%left
+            x%left=>y%right
+            IF(.NOT.ASSOCIATED(y%right,tree%nil)) y%right%parent=>x
+            y%parent=>x%parent
+            IF(ASSOCIATED(x%parent,tree%nil)) THEN
+              tree%root=>y
+            ELSE
+              IF(ASSOCIATED(x,x%parent%right)) THEN
+                x%parent%right=>y
+              ELSE
+                x%parent%left=>y
+              ENDIF
+            ENDIF
+            y%right=>x
+            x%parent=>y
+          ENDIF
+        ELSE
+          y=>z%parent%parent%left
+          IF(y%colour==TREE_RED_NODE) THEN
+            z%parent%colour=TREE_BLACK_NODE
+            y%colour=TREE_BLACK_NODE
+            z%parent%parent%colour=TREE_RED_NODE
+            z=>z%parent%parent
+          ELSE
+            IF(ASSOCIATED(z,z%parent%left)) THEN
+              z=>z%parent
+              x=>z
+              !Rotate the tree right at z
+              y=>x%left
+              x%left=>y%right
+              IF(.NOT.ASSOCIATED(y%right,tree%nil)) y%right%parent=>x
+              y%parent=>x%parent
+              IF(ASSOCIATED(x%parent,tree%nil)) THEN
+                tree%root=>y
+              ELSE
+                IF(ASSOCIATED(x,x%parent%right)) THEN
+                  x%parent%right=>y
+                ELSE
+                  x%parent%left=>y
+                ENDIF
+              ENDIF
+              y%right=>x
+              x%parent=>y
+            ENDIF
+            z%parent%colour=TREE_BLACK_NODE
+            z%parent%parent%colour=TREE_RED_NODE
+            !Rotate the tree left at z->parent->parent
+            x=>z%parent%parent
+            y=>x%right
+            x%right=>y%left
+            IF(.NOT.ASSOCIATED(y%left,tree%nil)) y%left%parent=>x
+            y%parent=>x%parent
+            IF(ASSOCIATED(x%parent,tree%nil)) THEN
+              tree%root=>y
+            ELSE
+              IF(ASSOCIATED(X,x%parent%left)) THEN
+                x%parent%left=>y
+              ELSE
+                x%parent%right=>y
+              ENDIF
+            ENDIF
+            y%left=>x
+            x%parent=>y
+          ENDIF
+        ENDIF
+      ENDDO
+      tree%root%colour=TREE_BLACK_NODE
+      !Increment the number in the tree and indicate a successful insertion
+      tree%numberInTree=tree%numberInTree+1
+      insertStatus=TREE_NODE_INSERT_SUCESSFUL
     ENDIF
 
-    EXITS("TREE_ITEM_INSERT")
+    EXITS("Tree_ItemInsert1")
     RETURN
-999 IF(ASSOCIATED(NEW_TREE_NODE)) DEALLOCATE(NEW_TREE_NODE)
-998 ERRORSEXITS("TREE_ITEM_INSERT",ERR,ERROR)
+999 IF(ASSOCIATED(newTreeNode)) DEALLOCATE(newTreeNode)
+    IF(ALLOCATED(newValues)) DEALLOCATE(newValues)
+998 ERRORSEXITS("Tree_ItemInsert1",err,error)
     RETURN 1
-  END SUBROUTINE TREE_ITEM_INSERT
+    
+  END SUBROUTINE Tree_ItemInsert1
 
   !
   !================================================================================================================================
   !
 
   !>Finalises a tree node and deallocates all memory
-  RECURSIVE SUBROUTINE TREE_NODE_FINALISE(TREE,TREE_NODE,ERR,ERROR,*)
+  RECURSIVE SUBROUTINE Tree_NodeFinalise(tree,treeNode,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree containing the tree node to finalise
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE !<A pointer to the tree node to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree containing the tree node to finalise
+    TYPE(TreeNodeType), POINTER :: treeNode !<A pointer to the tree node to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_NODE_FINALISE",ERR,ERROR,*999)
+    ENTERS("Tree_NodeFinalise",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(.NOT.ASSOCIATED(TREE_NODE,TREE%NIL)) THEN
-        CALL TREE_NODE_FINALISE(TREE,TREE_NODE%LEFT,ERR,ERROR,*999)
-        CALL TREE_NODE_FINALISE(TREE,TREE_NODE%RIGHT,ERR,ERROR,*999)
-        DEALLOCATE(TREE_NODE)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(treeNode,tree%nil)) THEN
+      CALL Tree_NodeFinalise(tree,treeNode%left,err,error,*999)
+      CALL Tree_NodeFinalise(tree,treeNode%right,err,error,*999)
+      IF(ALLOCATED(treeNode%values)) DEALLOCATE(treeNode%values)
+      DEALLOCATE(treeNode)
     ENDIF
 
-    EXITS("TREE_NODE_FINALISE")
+    EXITS("Tree_NodeFinalise")
     RETURN
-999 ERRORSEXITS("TREE_NODE_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("Tree_NodeFinalise",err,error)
     RETURN 1
-  END SUBROUTINE TREE_NODE_FINALISE
+    
+  END SUBROUTINE Tree_NodeFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises a tree node
-  SUBROUTINE TREE_NODE_INITIALISE(TREE,TREE_NODE,ERR,ERROR,*)
+  SUBROUTINE Tree_NodeInitialise(tree,treeNode,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree containing the tree node to initialise
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE !<A pointer to the tree node to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree containing the tree node to initialise
+    TYPE(TreeNodeType), POINTER :: treeNode !<A pointer to the tree node to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_NODE_INITIALISE",ERR,ERROR,*999)
+    ENTERS("Tree_NodeInitialise",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(ASSOCIATED(TREE_NODE)) THEN
-        TREE_NODE%KEY=0
-        TREE_NODE%VALUE=0
-        TREE_NODE%COLOUR=TREE_BLACK_NODE
-        NULLIFY(TREE_NODE%LEFT)
-        NULLIFY(TREE_NODE%RIGHT)
-        NULLIFY(TREE_NODE%PARENT)
-      ELSE
-        CALL FlagError("Tree node is not associated",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(treeNode)) CALL FlagError("Tree node is not associated.",err,error,*999)
+    
+    treeNode%key=0
+    treeNode%colour=TREE_BLACK_NODE
+    NULLIFY(treeNode%left)
+    NULLIFY(treeNode%right)
+    NULLIFY(treeNode%parent)
 
-    EXITS("TREE_NODE_INITIALISE")
+    EXITS("Tree_NodeInitialise")
     RETURN
-999 ERRORSEXITS("TREE_NODE_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("Tree_NodeInitialise",err,error)
     RETURN 1
-  END SUBROUTINE TREE_NODE_INITIALISE
+    
+  END SUBROUTINE Tree_NodeInitialise
 
   !
   !================================================================================================================================
   !
 
   !>Gets the key at a specified tree node
-  SUBROUTINE TREE_NODE_KEY_GET(TREE,TREE_NODE,KEY,ERR,ERROR,*)
+  SUBROUTINE Tree_NodeKeyGet(tree,treeNode,key,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree containing the tree node 
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE !<A pointer to the tree node to get the key of
-    INTEGER(INTG), INTENT(OUT) :: KEY !<On exit, the key of the specified tree node
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree containing the tree node 
+    TYPE(TreeNodeType), POINTER :: treeNode !<A pointer to the tree node to get the key of
+    INTEGER(INTG), INTENT(OUT) :: key !<On exit, the key of the specified tree node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_NODE_KEY_GET",ERR,ERROR,*999)
+    ENTERS("Tree_NodeKeyGet",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        IF(ASSOCIATED(TREE_NODE)) THEN
-          KEY=TREE_NODE%KEY
-        ELSE
-          CALL FlagError("Tree node is not associated",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Tree has not been finished",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
-    ENDIF
+    CALL Tree_AssertIsFinished(tree,err,error,*999)
+    IF(.NOT.ASSOCIATED(treeNode)) CALL FlagError("Tree node is not associated.",err,error,*999)
+    
+    key=treeNode%key
 
-    EXITS("TREE_NODE_KEY_GET")
+    EXITS("Tree_NodeKeyGet")
     RETURN
-999 ERRORSEXITS("TREE_NODE_KEY_GET",ERR,ERROR)
+999 ERRORSEXITS("Tree_NodeKeyGet",err,error)
     RETURN 1
-  END SUBROUTINE TREE_NODE_KEY_GET
+    
+  END SUBROUTINE Tree_NodeKeyGet
 
   !
   !================================================================================================================================
   !
 
   !>Gets the value at a specified tree node
-  SUBROUTINE TREE_NODE_VALUE_GET(TREE,TREE_NODE,VALUE,ERR,ERROR,*)
+  SUBROUTINE Tree_NodeValueGet0(tree,treeNode,value,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree containing the tree node 
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE !<A pointer to the tree node to get the value of
-    INTEGER(INTG), INTENT(OUT) :: VALUE !<On exit, the value of the specified tree node
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree containing the tree node 
+    TYPE(TreeNodeType), POINTER :: treeNode !<A pointer to the tree node to get the value of
+    INTEGER(INTG), INTENT(OUT) :: value !<On exit, the value of the specified tree node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
+    INTEGER(INTG) :: values(1)
     
-    ENTERS("TREE_NODE_VALUE_GET",ERR,ERROR,*999)
+    ENTERS("Tree_NodeValueGet0",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        IF(ASSOCIATED(TREE_NODE)) THEN
-          VALUE=TREE_NODE%VALUE
-        ELSE
-          CALL FlagError("Tree node is not associated",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Tree has not been finished",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
-    ENDIF
+    CALL Tree_NodeValueGet1(tree,treeNode,values,err,error,*999)
+    value=values(1)
 
-    EXITS("TREE_NODE_VALUE_GET")
+    EXITS("Tree_NodeValueGet0")
     RETURN
-999 ERRORSEXITS("TREE_NODE_VALUE_GET",ERR,ERROR)
+999 ERRORSEXITS("Tree_NodeValueGet0",err,error)
     RETURN 1
-  END SUBROUTINE TREE_NODE_VALUE_GET
+    
+  END SUBROUTINE Tree_NodeValueGet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the value at a specified tree node
+  SUBROUTINE Tree_NodeValueGet1(tree,treeNode,values,err,error,*)
+
+    !Argument Variables
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree containing the tree node 
+    TYPE(TreeNodeType), POINTER :: treeNode !<A pointer to the tree node to get the value of
+    INTEGER(INTG), INTENT(OUT) :: values(:) !<On exit, the value of the specified tree node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Tree_NodeValueGet1",err,error,*999)
+
+    CALL Tree_AssertIsFinished(tree,err,error,*999)
+    IF(.NOT.ASSOCIATED(treeNode)) CALL FlagError("Tree node is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(treeNode%values)) THEN
+      localError="The tree node values is not allocated for tree node key "// &
+        & TRIM(NumberToVString(treeNode%key,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(values,1)<SIZE(treeNode%values,1)) THEN
+      localError="The size of the supplied values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))// &
+        & " is too small. The size should be > "//TRIM(NumberToVString(SIZE(treeNode%values,1),"*",err,error))// &
+        & " for tree node key "//TRIM(NumberToVString(treeNode%key,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    values(1:SIZE(treeNode%values,1))=treeNode%values(1:SIZE(treeNode%values,1))
+
+    EXITS("Tree_NodeValueGet1")
+    RETURN
+999 ERRORSEXITS("Tree_NodeValueGet1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_NodeValueGet1
 
   !
   !================================================================================================================================
   !
 
   !>Sets the value at a specified tree node
-  SUBROUTINE TREE_NODE_VALUE_SET(TREE,TREE_NODE,VALUE,ERR,ERROR,*)
+  SUBROUTINE Tree_NodeValueSet0(tree,treeNode,value,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree containing the tree node 
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_NODE !<A pointer to the tree node to set the value of
-    INTEGER(INTG), INTENT(IN) :: VALUE !<The value of the specified tree node to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree containing the tree node 
+    TYPE(TreeNodeType), POINTER :: treeNode !<A pointer to the tree node to set the value of
+    INTEGER(INTG), INTENT(IN) :: value !<The value of the specified tree node to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_NODE_VALUE_SET",ERR,ERROR,*999)
+    ENTERS("Tree_NodeValueSet0",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        IF(ASSOCIATED(TREE_NODE)) THEN
-          TREE_NODE%VALUE=VALUE
-        ELSE
-          CALL FlagError("Tree node is not associated",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Tree has not been finished",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("TREE_NODE_VALUE_SET")
+    CALL Tree_NodeValueSet1(tree,treeNode,[value],err,error,*999)
+    
+    EXITS("Tree_NodeValueSet0")
     RETURN
-999 ERRORSEXITS("TREE_NODE_VALUE_SET",ERR,ERROR)
+999 ERRORSEXITS("Tree_NodeValueSet0",err,error)
     RETURN 1
-  END SUBROUTINE TREE_NODE_VALUE_SET
+    
+  END SUBROUTINE Tree_NodeValueSet0
 
   !
   !================================================================================================================================
   !
 
-  !>Outputs a tree to the specified output stream ID
-  SUBROUTINE TREE_OUTPUT(ID,TREE,ERR,ERROR,*)
+  !>Sets the value at a specified tree node
+  SUBROUTINE Tree_NodeValueSet1(tree,treeNode,values,err,error,*)
 
     !Argument Variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to search
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree containing the tree node 
+    TYPE(TreeNodeType), POINTER :: treeNode !<A pointer to the tree node to set the value of
+    INTEGER(INTG), INTENT(IN) :: values(:) !<The value of the specified tree node to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
+    INTEGER(INTG), ALLOCATABLE :: newValues(:)
     
-    ENTERS("TREE_OUTPUT",ERR,ERROR,*999)
+    ENTERS("Tree_NodeValueSet1",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        CALL WRITE_STRING(ID,"Tree:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(ID,"Number of tree nodes = ",TREE%NUMBER_IN_TREE,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(ID,"Tree insert type = ",TREE%INSERT_TYPE,ERR,ERROR,*999)
-        CALL TREE_OUTPUT_IN_ORDER(ID,TREE,TREE%ROOT,ERR,ERROR,*999)
-      ELSE
-        CALL FlagError("The tree has not been finished",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
-    ENDIF
+    CALL Tree_AssertIsFinished(tree,err,error,*999)
+    IF(.NOT.ASSOCIATED(treeNode)) CALL FlagError("Tree node is not associated.",err,error,*999)
 
-    EXITS("TREE_OUTPUT")
+    ALLOCATE(newValues(SIZE(values,1)),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new values.",err,error,*999)
+    newValues(1:SIZE(values,1))=values(1:SIZE(values,1))
+    CALL MOVE_ALLOC(newValues,treeNode%values)
+    IF(SIZE(values,1)>tree%maximumNumberOfValues) tree%maximumNumberOfValues=SIZE(values,1)
+
+    EXITS("Tree_NodeValueSet1")
     RETURN
-999 ERRORSEXITS("TREE_OUTPUT",ERR,ERROR)
+999 IF(ALLOCATED(newValues)) DEALLOCATE(newValues)
+    ERRORSEXITS("Tree_NodeValueSet1",err,error)
     RETURN 1
-  END SUBROUTINE TREE_OUTPUT
+    
+  END SUBROUTINE Tree_NodeValueSet1
 
   !
   !================================================================================================================================
   !
 
-  !>Outputs a tree in order to the specified output stream ID from the specified tree node
-  RECURSIVE SUBROUTINE TREE_OUTPUT_IN_ORDER(ID,TREE,X,ERR,ERROR,*)
+  !>Outputs a tree to the specified output stream id
+  SUBROUTINE Tree_Output(id,tree,err,error,*)
 
     !Argument Variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the output stream
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to search
-    TYPE(TREE_NODE_TYPE), POINTER :: X !<A pointer to the tree node to output from
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    INTEGER(INTG), INTENT(IN) :: id !<The id of the output stream
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to search
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
     
-    ENTERS("TREE_OUTPUT_IN_ORDER",ERR,ERROR,*999)
+    ENTERS("Tree_Output",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(.NOT.ASSOCIATED(X,TREE%NIL)) THEN
-        !Output the left subtree first
-        CALL TREE_OUTPUT_IN_ORDER(ID,TREE,X%LEFT,ERR,ERROR,*999)
-        !Now output the information for this node
-        CALL WRITE_STRING(ID,"  Tree Node:",ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(ID,"    Key = ",X%KEY,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(ID,"    Value = ",X%VALUE,ERR,ERROR,*999)
-        CALL WRITE_STRING_VALUE(ID,"    Colour = ",X%COLOUR,ERR,ERROR,*999)
-        IF(ASSOCIATED(X%LEFT,TREE%NIL)) THEN
-          CALL WRITE_STRING(ID,"    Left Key = NIL",ERR,ERROR,*999)
-        ELSE
-          CALL WRITE_STRING_VALUE(ID,"    Left Key = ",X%LEFT%KEY,ERR,ERROR,*999)
-        ENDIF
-        IF(ASSOCIATED(X%RIGHT,TREE%NIL)) THEN
-          CALL WRITE_STRING(ID,"    Right Key = NIL",ERR,ERROR,*999)
-        ELSE
-          CALL WRITE_STRING_VALUE(ID,"    Right Key = ",X%RIGHT%KEY,ERR,ERROR,*999)
-        ENDIF
-        IF(ASSOCIATED(X%PARENT,TREE%NIL)) THEN
-          CALL WRITE_STRING(ID,"    Parent Key = NIL",ERR,ERROR,*999)
-        ELSE
-          CALL WRITE_STRING_VALUE(ID,"    Parent Key = ",X%PARENT%KEY,ERR,ERROR,*999)
-        ENDIF
-        !Output the right subtree last
-        CALL TREE_OUTPUT_IN_ORDER(ID,TREE,X%RIGHT,ERR,ERROR,*999)
+    CALL Tree_AssertIsFinished(tree,err,error,*999)
+    
+    CALL WriteString(id,"Tree:",err,error,*999)
+    CALL WriteStringValue(id,"Number of tree nodes = ",tree%numberInTree,err,error,*999)
+    CALL WriteStringValue(id,"Maximum number of values = ",tree%maximumNumberOfValues,err,error,*999)
+    CALL WriteStringValue(id,"Tree insert type = ",tree%insertType,err,error,*999)
+    CALL Tree_OutputInOrder(id,tree,tree%root,err,error,*999)
+
+    EXITS("Tree_Output")
+    RETURN
+999 ERRORSEXITS("Tree_Output",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_Output
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Outputs a tree in order to the specified output stream id from the specified tree node
+  RECURSIVE SUBROUTINE Tree_OutputInOrder(id,tree,x,err,error,*)
+
+    !Argument Variables
+    INTEGER(INTG), INTENT(IN) :: id !<The id of the output stream
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to search
+    TYPE(TreeNodeType), POINTER :: x !<A pointer to the tree node to output from
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
+    !Local Variables
+    
+    ENTERS("Tree_OutputInOrder",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(x,tree%nil)) THEN
+      !Output the left subtree first
+      CALL Tree_OutputInOrder(id,tree,x%left,err,error,*999)
+      !Now output the information for this node
+      CALL WriteString(id,"  Tree Node:",err,error,*999)
+      CALL WriteStringValue(id,"    Key = ",x%key,err,error,*999)
+      IF(ALLOCATED(x%values)) CALL WriteStringValue(id,"    Value = ",x%values(1),err,error,*999)
+      CALL WriteStringValue(id,"    Colour = ",x%colour,err,error,*999)
+      IF(ASSOCIATED(x%left,tree%nil)) THEN
+        CALL WriteString(id,"    Left Key = NIL",err,error,*999)
+      ELSE
+        CALL WriteStringValue(id,"    Left Key = ",x%left%key,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
+      IF(ASSOCIATED(x%right,tree%nil)) THEN
+        CALL WriteString(id,"    Right Key = NIL",err,error,*999)
+      ELSE
+        CALL WriteStringValue(id,"    Right Key = ",x%right%key,err,error,*999)
+      ENDIF
+      IF(ASSOCIATED(x%parent,tree%nil)) THEN
+        CALL WriteString(id,"    Parent Key = NIL",err,error,*999)
+      ELSE
+        CALL WriteStringValue(id,"    Parent Key = ",x%parent%key,err,error,*999)
+      ENDIF
+      !Output the right subtree last
+      CALL Tree_OutputInOrder(id,tree,x%right,err,error,*999)
     ENDIF
 
-    EXITS("TREE_OUTPUT_IN_ORDER")
+    EXITS("Tree_OutputInOrder")
     RETURN
-999 ERRORSEXITS("TREE_OUTPUT_IN_ORDER",ERR,ERROR)
+999 ERRORSEXITS("Tree_OutputInOrder",err,error)
     RETURN 1
-  END SUBROUTINE TREE_OUTPUT_IN_ORDER
+    
+  END SUBROUTINE Tree_OutputInOrder
 
   !
   !================================================================================================================================
   !
 
   !>Returns the predeccessor of a tree at a specified tree node
-  FUNCTION TREE_PREDECESSOR(TREE,X,ERR,ERROR)
+  FUNCTION Tree_Predecessor(tree,x,err,error)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the Red-Black tree to find the predecessor of
-    TYPE(TREE_NODE_TYPE), POINTER :: X !<A pointer to the tree node to return the predecessor of
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the Red-Black tree to find the predecessor of
+    TYPE(TreeNodeType), POINTER :: x !<A pointer to the tree node to return the predecessor of
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Function variable
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_PREDECESSOR !<On return the pointer to the predecessor of X or NIL if no predecessor exits
+    TYPE(TreeNodeType), POINTER :: Tree_Predecessor !<On return the pointer to the predecessor of X or NIL if no predecessor exits
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: Y
+    TYPE(TreeNodeType), POINTER :: y
 
-    NULLIFY(TREE_PREDECESSOR)
+    NULLIFY(Tree_Predecessor)
     
-    ENTERS("TREE_PREDECESSOR",ERR,ERROR,*999)
+    ENTERS("Tree_Predecessor",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(ASSOCIATED(X)) THEN
-        Y=>X%LEFT
-        IF(ASSOCIATED(Y,TREE%NIL)) THEN
-          DO WHILE(.NOT.ASSOCIATED(Y%RIGHT,TREE%NIL))
-            Y=>Y%RIGHT
-          ENDDO
-          TREE_PREDECESSOR=>Y
-        ELSE
-          Y=>X%PARENT
-          DO WHILE(ASSOCIATED(X,Y%LEFT))
-            IF(ASSOCIATED(Y,TREE%ROOT)) THEN
-              TREE_PREDECESSOR=>TREE%NIL
-              EXIT
-            ELSE
-              X=>Y
-              Y=>Y%PARENT
-            ENDIF
-          ENDDO
-          IF(.NOT.ASSOCIATED(TREE_PREDECESSOR)) TREE_PREDECESSOR=>Y
-        ENDIF
-       ELSE
-        CALL FlagError("Tree node X is not associated",ERR,ERROR,*999)
-      ENDIF
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(x)) CALL FlagError("Tree node x is not associated.",err,error,*999)
+    
+    y=>x%left
+    IF(ASSOCIATED(y,tree%nil)) THEN
+      DO WHILE(.NOT.ASSOCIATED(y%right,tree%nil))
+        y=>y%right
+      ENDDO
+      Tree_Predecessor=>y
     ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
+      y=>x%parent
+      DO WHILE(ASSOCIATED(x,y%left))
+        IF(ASSOCIATED(y,tree%root)) THEN
+          Tree_Predecessor=>tree%nil
+          EXIT
+        ELSE
+          x=>y
+          y=>y%parent
+        ENDIF
+      ENDDO
+      IF(.NOT.ASSOCIATED(Tree_Predecessor)) Tree_Predecessor=>y
     ENDIF
 
-    EXITS("TREE_PREDECESSOR")
+    EXITS("Tree_Predecessor")
     RETURN
-999 ERRORSEXITS("TREE_PREDECESSOR",ERR,ERROR)
-    RETURN 
-  END FUNCTION TREE_PREDECESSOR
+999 ERRORSEXITS("Tree_Predecessor",err,error)
+    RETURN
+    
+  END FUNCTION Tree_Predecessor
 
   !
   !================================================================================================================================
   !
 
   !>Searches a tree to see if it contains a key
-  SUBROUTINE TREE_SEARCH(TREE,KEY,X,ERR,ERROR,*)
+  SUBROUTINE Tree_Search(tree,key,x,err,error,*)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the tree to search
-    INTEGER(INTG), INTENT(IN) :: KEY !<The key to search for
-    TYPE(TREE_NODE_TYPE), POINTER :: X !<On return a pointer to the tree node containing the key. If the key does not exist NULL is returned
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree to search
+    INTEGER(INTG), INTENT(IN) :: key !<The key to search for
+    TYPE(TreeNodeType), POINTER :: x !<On return a pointer to the tree node containing the key. If the key does not exist NULL is returned
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
-    INTEGER(INTG) :: COMPARE_VALUE
-    TYPE(TREE_NODE_TYPE), POINTER :: Y
+    INTEGER(INTG) :: compareValue
+    TYPE(TreeNodeType), POINTER :: y
     
-    ENTERS("TREE_SEARCH",ERR,ERROR,*999)
+    ENTERS("Tree_Search",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(TREE%TREE_FINISHED) THEN
-        IF(ASSOCIATED(X)) THEN
-          CALL FlagError("The tree node X is already associated",ERR,ERROR,*999)
-        ELSE
-          NULLIFY(X)
-          Y=>TREE%ROOT
-          IF(.NOT.ASSOCIATED(Y,TREE%NIL)) THEN
-            COMPARE_VALUE=Y%KEY-KEY
-            DO WHILE(COMPARE_VALUE/=0)
-              IF(COMPARE_VALUE>0) THEN !Y%KEY > KEY
-                Y=>Y%LEFT
-              ELSE !Y%KEY < KEY
-                Y=>Y%RIGHT
-              ENDIF
-              IF(ASSOCIATED(Y,TREE%NIL)) THEN
-                EXIT
-              ELSE
-                COMPARE_VALUE=Y%KEY-KEY
-              ENDIF
-            ENDDO
-            IF(COMPARE_VALUE==0) X=>Y
-          ENDIF          
+    CALL Tree_AssertIsFinished(tree,err,error,*999)
+    IF(ASSOCIATED(x)) CALL FlagError("The tree node x is already associated.",err,error,*999)
+    
+    NULLIFY(x)
+    y=>tree%root
+    IF(.NOT.ASSOCIATED(y,tree%nil)) THEN
+      compareValue=y%key-key
+      DO WHILE(compareValue/=0)
+        IF(compareValue>0) THEN !y%key > key
+          y=>y%left
+        ELSE !y%key < key
+          y=>y%right
         ENDIF
-      ELSE
-        CALL FlagError("The tree has not been finished",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
+        IF(ASSOCIATED(y,tree%nil)) THEN
+          EXIT
+        ELSE
+          compareValue=y%key-key
+        ENDIF
+      ENDDO
+      IF(compareValue==0) x=>y
     ENDIF
 
-    EXITS("TREE_SEARCH")
+    EXITS("Tree_Search")
     RETURN
-999 ERRORSEXITS("TREE_SEARCH",ERR,ERROR)
+999 ERRORSEXITS("Tree_Search",err,error)
     RETURN 1
-  END SUBROUTINE TREE_SEARCH
+    
+  END SUBROUTINE Tree_Search
 
   !
   !================================================================================================================================
   !
 
   !>Returns the successor of a tree at a specified tree node
-  FUNCTION TREE_SUCCESSOR(TREE,X,ERR,ERROR)
+  FUNCTION Tree_Successor(tree,x,err,error)
 
     !Argument Variables
-    TYPE(TREE_TYPE), POINTER :: TREE !<A pointer to the Red-Black tree to find the successor of
-    TYPE(TREE_NODE_TYPE), POINTER :: X !<A pointer to the tree node to return the successor of
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string.
+    TYPE(TreeType), POINTER :: tree !<A pointer to the Red-Black tree to find the successor of
+    TYPE(TreeNodeType), POINTER :: x !<A pointer to the tree node to return the successor of
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Function variable
-    TYPE(TREE_NODE_TYPE), POINTER :: TREE_SUCCESSOR !<On return the pointer to the successor of X or NIL if no sucessor exits
+    TYPE(TreeNodeType), POINTER :: Tree_Successor !<On return the pointer to the successor of X or NIL if no sucessor exits
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: Y
+    TYPE(TreeNodeType), POINTER :: y
 
-    NULLIFY(TREE_SUCCESSOR)
+    NULLIFY(Tree_Successor)
     
-    ENTERS("TREE_SUCCESSOR",ERR,ERROR,*999)
+    ENTERS("Tree_Successor",err,error,*999)
 
-    IF(ASSOCIATED(TREE)) THEN
-      IF(ASSOCIATED(X)) THEN
-        Y=>X%RIGHT
-        IF(ASSOCIATED(Y,TREE%NIL)) THEN
-          DO WHILE(.NOT.ASSOCIATED(Y%LEFT,TREE%NIL))
-            Y=>Y%LEFT
-          ENDDO
-          TREE_SUCCESSOR=>Y
-          EXITS("TREE_SUCCESSOR")
-          RETURN
-        ELSE
-          Y=>X%PARENT
-          DO WHILE(ASSOCIATED(X,Y%RIGHT))
-            X=>Y
-            Y=>Y%PARENT
-          ENDDO
-          IF(ASSOCIATED(Y,TREE%ROOT)) THEN
-            TREE_SUCCESSOR=>TREE%NIL
-          ELSE
-            TREE_SUCCESSOR=>Y
-          ENDIF
-        ENDIF
-       ELSE
-        CALL FlagError("Tree node X is not associated",ERR,ERROR,*999)
-      ENDIF
+    IF(.NOT.ASSOCIATED(tree)) CALL FlagError("Tree is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(x)) CALL FlagError("Tree node x is not associated.",err,error,*999)
+    
+    y=>x%right
+    IF(ASSOCIATED(y,tree%nil)) THEN
+      DO WHILE(.NOT.ASSOCIATED(y%left,tree%nil))
+        y=>y%left
+      ENDDO
+      Tree_Successor=>y
+      EXITS("Tree_Successor")
+      RETURN
     ELSE
-      CALL FlagError("Tree is not associated",ERR,ERROR,*999)
+      y=>x%parent
+      DO WHILE(ASSOCIATED(x,y%right))
+        x=>y
+        y=>y%parent
+      ENDDO
+      IF(ASSOCIATED(y,tree%root)) THEN
+        Tree_Successor=>tree%nil
+      ELSE
+        Tree_Successor=>y
+      ENDIF
     ENDIF
 
-    EXITS("TREE_SUCCESSOR")
+    EXITS("Tree_Successor")
     RETURN
-999 ERRORSEXITS("TREE_SUCCESSOR",ERR,ERROR)
-    RETURN 
-  END FUNCTION TREE_SUCCESSOR
+999 ERRORSEXITS("Tree_Successor",err,error)
+    RETURN
+    
+  END FUNCTION Tree_Successor
 
   !
   !================================================================================================================================
   !
 
-END MODULE TREES
+  !>Sets/changes the values initalise value for a tree
+  SUBROUTINE Tree_ValueInitialiseSet(tree,valueInitialise,err,error,*)
+
+    !Argument Variables
+    TYPE(TreeType), POINTER :: tree !<A pointer to the tree
+    INTEGER(INTG), INTENT(IN) :: valueInitialise !<The value initialise for the tree to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Tree_ValueInitialiseSet",err,error,*999)
+
+    CALL Tree_AssertNotFinished(tree,err,error,*999)
+    
+    tree%valueInitialise=valueInitialise
+
+    EXITS("Tree_ValueInitaliseSet")
+    RETURN
+999 ERRORSEXITS("Tree_ValueInitialiseSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Tree_ValueInitialiseSet
+  
+  !  
+  !================================================================================================================================
+  !
+
+
+END MODULE Trees

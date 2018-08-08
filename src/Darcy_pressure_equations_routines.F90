@@ -51,7 +51,7 @@ MODULE DARCY_PRESSURE_EQUATIONS_ROUTINES
   USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines

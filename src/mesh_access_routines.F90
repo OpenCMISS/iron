@@ -1063,7 +1063,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeNodeType), POINTER :: treeNode
     
     ENTERS("MeshElements_ElementCheckExists",err,error,*999)
 
@@ -1470,7 +1470,7 @@ CONTAINS
     TYPE(MeshType), POINTER :: mesh
     TYPE(MeshTopologyType), POINTER :: meshTopology
     TYPE(NodesType), POINTER :: nodes
-    TYPE(TREE_NODE_TYPE), POINTER :: treeNode
+    TYPE(TreeNodeType), POINTER :: treeNode
     
     ENTERS("MeshNodes_NodeCheckExists",err,error,*999)
 

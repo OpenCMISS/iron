@@ -58,7 +58,7 @@ MODULE Stree_EQUATION_ROUTINES
   USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines

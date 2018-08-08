@@ -61,7 +61,7 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines
@@ -8559,13 +8559,13 @@ CONTAINS
                                             FluidNodeNumber=node_idx
                                             DO search_idx=1,SIZE(Solver2%SOLVER_equations%SOLVER_MAPPING% &
                                               & interfaceConditions(1)%ptr%INTERFACE% &
-                                              & NODES%coupledNodes(2,:))
+                                              & meshConnectivity%coupledNodes(2,:))
                                               IF(Solver2%SOLVER_equations%SOLVER_MAPPING% &
                                                 & interfaceConditions(1)%ptr%INTERFACE% &
-                                                & NODES%coupledNodes(2,search_idx)==node_idx) THEN
+                                                & meshConnectivity%coupledNodes(2,search_idx)==node_idx) THEN
                                                 SolidNodeNumber=Solver2%SOLVER_equations%SOLVER_MAPPING% &
                                                   & interfaceConditions(1)%ptr%INTERFACE% &
-                                                  & NODES%coupledNodes(1,search_idx)!might wanna put a break here
+                                                  & meshConnectivity%coupledNodes(1,search_idx)!might wanna put a break here
                                                 SolidNodeFound=.TRUE.
                                               END IF
                                             END DO
@@ -8773,7 +8773,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: fluidGeometricVariable,interfaceGeometricVariable
     TYPE(InterfaceType), POINTER :: fsiInterface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: fsiInterfaceCondition
-    TYPE(NodesType), POINTER :: interfaceNodes
+    TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: laplaceSolverEquations,fluidSolverEquations,fsiSolverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: laplaceSolverMapping,fsiSolverMapping,fluidSolverMapping,solidSolverMapping
@@ -8804,13 +8804,13 @@ CONTAINS
     NULLIFY(fsiSolverMapping)
     NULLIFY(interfaceGeometricField)
     NULLIFY(interfaceGeometricVariable)
-    NULLIFY(interfaceNodes)
     NULLIFY(laplaceEquationsSet)
     NULLIFY(laplaceDependentField)
     NULLIFY(laplaceGeometricField)
     NULLIFY(laplaceSolver)
     NULLIFY(laplaceSolverEquations)
     NULLIFY(laplaceSolverMapping)
+    NULLIFY(meshConnectivity)
     NULLIFY(meshDisplacementValues)
     NULLIFY(problem)
     NULLIFY(solidDependentField)
@@ -9075,7 +9075,7 @@ CONTAINS
               !beginning of the time loop. Add this change to the mesh displacements.
               CALL SolverMapping_InterfaceConditionGet(fsiSolverMapping,1,fsiInterfaceCondition,err,error,*999)
               CALL InterfaceCondition_InterfaceGet(fsiInterfaceCondition,fsiInterface,err,error,*999)
-              CALL Interface_NodesGet(fsiInterface,interfaceNodes,err,error,*999)
+              CALL Interface_MeshConnectivityGet(fsiInterface,meshConnectivity,err,error,*999)
               CALL InterfaceCondition_GeometricFieldGet(fsiInterfaceCondition,interfaceGeometricField,err,error,*999)
               CALL Field_NumberOfComponentsGet(interfaceGeometricField,FIELD_U_VARIABLE_TYPE,interfaceNumberOfDimensions, &
                 & err,error,*999)
@@ -9090,8 +9090,8 @@ CONTAINS
                   NULLIFY(domainNodes)
                   CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
                   DO nodeIdx=1,domainNodes%totalNumberOfNodes
-                    solidNode=interfaceNodes%coupledNodes(1,nodeIdx)
-                    fluidNode=interfaceNodes%coupledNodes(2,nodeIdx)
+                    solidNode=meshConnectivity%coupledNodes(1,nodeIdx)
+                    fluidNode=meshConnectivity%coupledNodes(2,nodeIdx)
                     DO derivativeIdx=1,domainNodes%nodes(nodeIdx)%numberOfDerivatives
                       DO versionIdx=1,domainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
                         CALL Field_ParameterSetGetNode(solidDependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &

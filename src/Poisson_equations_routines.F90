@@ -48,12 +48,12 @@ MODULE POISSON_EQUATIONS_ROUTINES
   USE BasisRoutines
   USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
-  USE CONSTANTS
+  USE Constants
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES  
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines

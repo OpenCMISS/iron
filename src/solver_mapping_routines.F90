@@ -50,7 +50,7 @@ MODULE SOLVER_MAPPING_ROUTINES
   USE ComputationAccessRoutines
   USE DistributedMatrixVector
   USE EquationsAccessRoutines
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsMappingAccessRoutines
   USE EquationsSetConstants
   USE EquationsSetAccessRoutines
@@ -682,10 +682,8 @@ CONTAINS
           SOLVER_MAPPING%NUMBER_OF_ROWS=NUMBER_OF_LOCAL_SOLVER_ROWS
           SOLVER_MAPPING%NUMBER_OF_GLOBAL_ROWS=NUMBER_OF_GLOBAL_SOLVER_ROWS
           !Allocate the solver rows domain mapping
-          ALLOCATE(SOLVER_MAPPING%ROW_DOFS_MAPPING,STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate solver mapping row dofs mapping.",ERR,ERROR,*999)
-!!TODO: what is the real number of domains for a solver???
-          CALL DomainMappings_MappingInitialise(SOLVER_MAPPING%ROW_DOFS_MAPPING,ERR,ERROR,*999)
+          CALL DomainMapping_Initialise(SOLVER_MAPPING%ROW_DOFS_MAPPING,ERR,ERROR,*999)
+          CALL DomainMapping_WorkGroupSet(SOLVER_MAPPING%ROW_DOFS_MAPPING,workGroup,err,error,*999)
           ROW_DOMAIN_MAPPING=>SOLVER_MAPPING%ROW_DOFS_MAPPING
           ALLOCATE(ROW_DOMAIN_MAPPING%globalToLocalMap(NUMBER_OF_GLOBAL_SOLVER_ROWS),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate row dofs mapping global to local map.",ERR,ERROR,*999)
@@ -849,7 +847,7 @@ CONTAINS
                   !Set up the row domain mappings.
                   !There are no ghosted rows for the solver matrices so there is only one domain for the global to local map.
                   !Initialise
-                  CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(ROW_DOMAIN_MAPPING%globalToLocalMap( &
+                  CALL DomainGlobalMapping_Initialise(ROW_DOMAIN_MAPPING%globalToLocalMap( &
                     & NUMBER_OF_GLOBAL_SOLVER_ROWS),ERR,ERROR,*999)
                   !Allocate the global to local map arrays
                   ALLOCATE(ROW_DOMAIN_MAPPING%globalToLocalMap(NUMBER_OF_GLOBAL_SOLVER_ROWS)%localNumber(1),STAT=ERR)
@@ -993,7 +991,7 @@ CONTAINS
                   !Set up the row domain mappings.
                   !There are no ghosted rows for the solver matrices so there is only one domain for the global to local map.
                   !Initialise
-                  CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(ROW_DOMAIN_MAPPING%globalToLocalMap( &
+                  CALL DomainGlobalMapping_Initialise(ROW_DOMAIN_MAPPING%globalToLocalMap( &
                     & NUMBER_OF_GLOBAL_SOLVER_ROWS),ERR,ERROR,*999)
                   !Allocate the global to local map arrays
                   ALLOCATE(ROW_DOMAIN_MAPPING%globalToLocalMap(NUMBER_OF_GLOBAL_SOLVER_ROWS)%localNumber(1),STAT=ERR)
@@ -1084,7 +1082,7 @@ CONTAINS
           ENDDO !rank
           CALL SolverDofCouplings_Finalise(rowCouplings,err,error,*999)
 
-          CALL DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(ROW_DOMAIN_MAPPING,ERR,ERROR,*999)
+          CALL DomainMapping_LocalFromGlobalCalculate(ROW_DOMAIN_MAPPING,ERR,ERROR,*999)
           !
           !--- Column mappings ---
           !
@@ -1874,11 +1872,10 @@ CONTAINS
               & TOTAL_NUMBER_OF_LOCAL_SOLVER_DOFS
             SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%numberOfGlobalDofs=NUMBER_OF_GLOBAL_SOLVER_DOFS
             !Allocate the columns domain mapping
-            ALLOCATE(SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%COLUMN_DOFS_MAPPING,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate solver col to equations sets map column dofs mapping.",ERR,ERROR,*999)
-!!TODO: what is the real number of domains for a solver???
-            CALL DomainMappings_MappingInitialise (SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
+            CALL DomainMapping_Initialise(SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
               & COLUMN_DOFS_MAPPING,ERR,ERROR,*999)
+            CALL DomainMapping_WorkGroupSet(SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
+              & COLUMN_DOFS_MAPPING,workGroup,err,error,*999)
             COL_DOMAIN_MAPPING=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%COLUMN_DOFS_MAPPING
             ALLOCATE(COL_DOMAIN_MAPPING%globalToLocalMap(NUMBER_OF_GLOBAL_SOLVER_DOFS),STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate column dofs mapping global to local.",ERR,ERROR,*999)
@@ -2389,7 +2386,7 @@ CONTAINS
                               IF(.NOT.VARIABLE_RANK_PROCESSED(solver_variable_idx,rank)) THEN
                                 
                                 !Set up the column domain mappings.
-                                CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(COL_DOMAIN_MAPPING%globalToLocalMap( &
+                                CALL DomainGlobalMapping_Initialise(COL_DOMAIN_MAPPING%globalToLocalMap( &
                                   & solver_global_dof),ERR,ERROR,*999)
                                 !There are no ghosted cols for the solver matrices so there is only 1 domain for the global to
                                 !local map.
@@ -2607,7 +2604,7 @@ CONTAINS
                               IF(.NOT.VARIABLE_RANK_PROCESSED(solver_variable_idx,rank)) THEN
                                 
                                 !Set up the column domain mappings.
-                                CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(COL_DOMAIN_MAPPING%globalToLocalMap( &
+                                CALL DomainGlobalMapping_Initialise(COL_DOMAIN_MAPPING%globalToLocalMap( &
                                   & solver_global_dof),ERR,ERROR,*999)
                                 !There are no ghosted cols for the solver matrices so there is only 1 domain for the global to
                                 !local map.
@@ -2755,7 +2752,7 @@ CONTAINS
                                 IF(.NOT.VARIABLE_RANK_PROCESSED(solver_variable_idx,rank)) THEN
                                 
                                   !Set up the column domain mappings.
-                                  CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(COL_DOMAIN_MAPPING%globalToLocalMap( &
+                                  CALL DomainGlobalMapping_Initialise(COL_DOMAIN_MAPPING%globalToLocalMap( &
                                     & solver_global_dof),ERR,ERROR,*999)
                                   !There are no ghosted cols for the solver matrices so there is only 1 domain for the global to
                                   !local map.
@@ -2925,7 +2922,7 @@ CONTAINS
                                 IF(.NOT.VARIABLE_RANK_PROCESSED(solver_variable_idx,rank)) THEN
                                   
                                   !Set up the column domain mappings.
-                                  CALL DOMAIN_MAPPINGS_MAPPING_GLOBAL_INITIALISE(COL_DOMAIN_MAPPING%globalToLocalMap( &
+                                  CALL DomainGlobalMapping_Initialise(COL_DOMAIN_MAPPING%globalToLocalMap( &
                                     & solver_global_dof),ERR,ERROR,*999)
                                   !There are no ghosted cols for the solver matrices so there is only 1 domain for the global to
                                   !local map.
@@ -3026,7 +3023,7 @@ CONTAINS
             !Deallocate solver local dof
             IF(ALLOCATED(solver_local_dof)) DEALLOCATE(solver_local_dof)
             
-            CALL DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE(COL_DOMAIN_MAPPING,ERR,ERROR,*999)
+            CALL DomainMapping_LocalFromGlobalCalculate(COL_DOMAIN_MAPPING,ERR,ERROR,*999)
             
             IF(ALLOCATED(SUB_MATRIX_INFORMATION)) DEALLOCATE(SUB_MATRIX_INFORMATION)
             IF(ALLOCATED(SUB_MATRIX_LIST)) DEALLOCATE(SUB_MATRIX_LIST)
@@ -5322,7 +5319,7 @@ CONTAINS
         ENDDO !row_idx
         DEALLOCATE(SOLVER_MAPPING%SOLVER_ROW_TO_EQUATIONS_ROWS_MAP)
       ENDIF
-      CALL DOMAIN_MAPPINGS_MAPPING_FINALISE(SOLVER_MAPPING%ROW_DOFS_MAPPING,ERR,ERROR,*999)
+      CALL DomainMapping_Finalise(SOLVER_MAPPING%ROW_DOFS_MAPPING,ERR,ERROR,*999)
       CALL SOLVER_MAPPING_CREATE_VALUES_CACHE_FINALISE(SOLVER_MAPPING%CREATE_VALUES_CACHE,ERR,ERROR,*999)
       DEALLOCATE(SOLVER_MAPPING)
     ENDIF
@@ -6434,7 +6431,7 @@ CONTAINS
       ENDDO !col_idx
       DEALLOCATE(SOLVER_COL_TO_EQUATIONS_MAPS%SOLVER_DOF_TO_VARIABLE_MAPS)
     ENDIF
-    CALL DOMAIN_MAPPINGS_MAPPING_FINALISE(SOLVER_COL_TO_EQUATIONS_MAPS%COLUMN_DOFS_MAPPING,ERR,ERROR,*999)
+    CALL DomainMapping_Finalise(SOLVER_COL_TO_EQUATIONS_MAPS%COLUMN_DOFS_MAPPING,ERR,ERROR,*999)
     
     EXITS("SolverMapping_SolColToEquationsMapsFinalise")
     RETURN

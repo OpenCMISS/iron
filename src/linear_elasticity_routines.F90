@@ -52,7 +52,7 @@ MODULE LINEAR_ELASTICITY_ROUTINES
   USE CONTROL_LOOP_ROUTINES
   USE ControlLoopAccessRoutines
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines

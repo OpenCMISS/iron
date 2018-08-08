@@ -45,6 +45,7 @@
 MODULE DataPointAccessRoutines
   
   USE BaseRoutines
+  USE DataProjectionAccessRoutines
   USE Kinds
   USE ISO_VARYING_STRING
   USE Strings
@@ -67,6 +68,10 @@ MODULE DataPointAccessRoutines
   PUBLIC DataPoints_AssertIsFinished,DataPoints_AssertNotFinished
 
   PUBLIC DataPoints_CoordinateSystemGet
+
+  PUBLIC DataPoints_DataProjectionIndexGet
+
+  PUBLIC DataPoints_DataProjectionUserGet
 
   PUBLIC DataPointSets_UserNumberFind
 
@@ -92,10 +97,13 @@ CONTAINS
 
     IF(.NOT.dataPoints%dataPointsFinished) THEN
       localError="Data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
-      IF(ASSOCIATED(dataPoints%region)) localError=localError// &
-        & " for region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
-      IF(ASSOCIATED(dataPoints%interface)) localError=localError// &
-        & " for interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" for region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" for interface number "//TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%INTERFACE%parentRegion%userNumber,"*",err,error))        
+      ENDIF
       localError=localError//" has not been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -127,10 +135,13 @@ CONTAINS
 
     IF(dataPoints%dataPointsFinished) THEN
       localError="Data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
-      IF(ASSOCIATED(dataPoints%region)) localError=localError// &
-        & " for region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
-      IF(ASSOCIATED(dataPoints%interface)) localError=localError// &
-        & " for interface number "//TRIM(NumberToVString(dataPoints%interface%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" for region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" for interface number "//TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%INTERFACE%parentRegion%userNumber,"*",err,error))        
+      ENDIF
       localError=localError//" has already been finished."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -175,7 +186,10 @@ CONTAINS
       coordinateSystem=>dataPoints%interface%coordinateSystem
       IF(.NOT.ASSOCIATED(coordinateSystem)) THEN
         localError="The coordinate system for interface number "// &
-          & TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))//" is not associated."
+          & TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%INTERFACE%parentRegion%userNumber,"*",err,error))
+        localError=localError//" is not associated."
         CALL FlagError(localError,err,error,*999)
       ENDIF
     ELSE
@@ -189,6 +203,135 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE DataPoints_CoordinateSystemGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a data projection for data points
+  SUBROUTINE DataPoints_DataProjectionIndexGet(dataPoints,dataProjectionIndex,dataProjection,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the coordinate system for
+    INTEGER(INTG), INTENT(IN) :: dataProjectionIndex !<The index of the dat projection to get
+    TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, a pointer to the specified data projeciton for the data points. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataPoints_DataProjectionIndexGet",err,error,*998)
+
+    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",ERR,ERROR,*998)
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    IF(.NOT.ASSOCIATED(dataPoints%dataProjections)) THEN
+      localError="The data projections is not associated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" of interface number "//TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(dataProjectionIndex<=0.OR.dataProjectionIndex>dataPoints%dataProjections%numberOfDataProjections) THEN
+      localError="The specified data projection index of "//TRIM(NumberToVString(dataProjectionIndex,"*",err,error))// &
+        & " is invalid for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" of interface number "//TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%interface%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//". The data projection index should be >=1 and <= "// &
+        & TRIM(NumberToVString(dataPoints%dataProjections%numberOfDataProjections,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(dataPoints%dataProjections%dataProjections)) THEN
+      localError="The data projections data projections have not been allocated for data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" of interface number "//TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%INTERFACE%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    dataProjection=>dataPoints%dataProjections%dataProjections(dataProjectionIndex)%ptr
+    IF(ASSOCIATED(dataProjection)) THEN
+      localError="The data projection is not associated for data projection index "// &
+        & TRIM(NumberToVString(dataProjectionIndex,"*",err,error))//" of data points number "// &
+        & TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" of interface number "//TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%INTERFACE%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+   
+    EXITS("DataPoints_DataProjectionIndexGet")
+    RETURN
+999 NULLIFY(dataProjection)
+998 ERRORSEXITS("DataPoints_DataProjectionIndexGet",err,error)
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_DataProjectionIndexGet
+
+  !
+  !================================================================================================================================
+  !  
+
+  !>Gets the data projection identified by a given user number. 
+  SUBROUTINE DataPoints_DataProjectionUserGet(dataPoints,userNumber,dataProjection,err,error,*)
+
+    !Argument variables
+    TYPE(DataPointsType), POINTER :: dataPoints !<A pointer to the data points to get the data projection for
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to get the data projection for
+    TYPE(DataProjectionType), POINTER :: dataProjection !<On exit, a pointer to the data projection for the data points. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataPoints_DataProjectionUserGet",err,error,*998)
+    
+    IF(ASSOCIATED(dataProjection)) CALL FlagError("Data projection is already associated.",err,error,*998)
+    CALL DataPoints_AssertIsFinished(dataPoints,err,error,*999)
+    
+    CALL DataProjection_UserNumberFind(dataPoints,userNumber,dataProjection,err,error,*999)
+    IF(.NOT.ASSOCIATED(dataProjection)) THEN
+      localError="A data projection with a user number of "//TRIM(NumberToVString(userNumber,"*",err,error))// &
+        & " does not exist for data points number "//TRIM(NumberToVString(dataPoints%userNumber,"*",err,error))
+      IF(ASSOCIATED(dataPoints%region)) THEN
+        localError=localError//" of region number "//TRIM(NumberToVString(dataPoints%region%userNumber,"*",err,error))
+      ELSE IF(ASSOCIATED(dataPoints%INTERFACE)) THEN
+        localError=localError//" of interface number "//TRIM(NumberToVString(dataPoints%INTERFACE%userNumber,"*",err,error))
+        IF(ASSOCIATED(dataPoints%INTERFACE%parentRegion)) localError=localError// &
+          & " of parent region number "//TRIM(NumberToVString(dataPoints%INTERFACE%parentRegion%userNumber,"*",err,error))        
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DataPoints_DataProjectionUserGet")
+    RETURN
+999 NULLIFY(dataProjection)   
+998 ERRORSEXITS("DataPoints_DataProjectionUserGet",err,error)    
+    RETURN 1
+   
+  END SUBROUTINE DataPoints_DataProjectionUserGet
 
   !
   !================================================================================================================================

@@ -55,7 +55,7 @@ MODULE DIFFUSION_EQUATION_ROUTINES
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
-  USE DOMAIN_MAPPINGS
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingRoutines

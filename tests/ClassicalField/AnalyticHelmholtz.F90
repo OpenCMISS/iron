@@ -253,7 +253,7 @@ CONTAINS
     INTEGER(CMISSIntg) :: MPI_IERROR
 
     INTEGER(CMISSIntg) :: AnalyticFunction
-    INTEGER(CMISSIntg) :: EquationsSetIndex
+    INTEGER(CMISSIntg) :: decompositionIndex,EquationsSetIndex
 
     INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=1
     INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=1
@@ -261,6 +261,7 @@ CONTAINS
     INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=1
     INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=1
     INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=1
+    INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=1
     INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=1
     INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=2
     INTEGER(CMISSIntg), PARAMETER :: MaterialsFieldUserNumber=3
@@ -270,26 +271,33 @@ CONTAINS
     INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=1
 
     TYPE(cmfe_BasisType) :: Basis
+    TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
+    TYPE(cmfe_ComputationEnvironmentType) :: computationEnvironment
     TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
-    TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
-    TYPE(cmfe_MeshType) :: Mesh
     TYPE(cmfe_DecompositionType) :: Decomposition
+    TYPE(cmfe_DecomposerType) :: Decomposer
     TYPE(cmfe_EquationsType) :: Equations
     TYPE(cmfe_EquationsSetType) :: EquationsSet
     TYPE(cmfe_FieldType) :: AnalyticField,GeometricField,EquationsSetField,MaterialsField
+    TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh
+    TYPE(cmfe_MeshType) :: Mesh
     TYPE(cmfe_ProblemType) :: Problem
     TYPE(cmfe_RegionType) :: Region
     TYPE(cmfe_SolverType) :: Solver
     TYPE(cmfe_SolverEquationsType) :: SolverEquations
-    TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
+    TYPE(cmfe_WorkGroupType) :: worldWorkGroup
+   
+    !Get the computation nodes information
+    CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
+    CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
     
-    NUMBER_OF_DOMAINS=1
-
+    CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+    CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+    
     !Broadcast the number of elements in the X & Y directions and the number of partitions to the other computation nodes
     CALL MPI_BCAST(NUMBER_GLOBAL_X_ELEMENTS,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NUMBER_GLOBAL_Y_ELEMENTS,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NUMBER_GLOBAL_Z_ELEMENTS,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
-    CALL MPI_BCAST(NUMBER_OF_DOMAINS,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(INTERPOLATION_SPECIFICATIONS,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
 
     !Start the creation of a new RC coordinate system
@@ -353,11 +361,16 @@ CONTAINS
     !Create a decomposition
     CALL cmfe_Decomposition_Initialise(Decomposition,Err)
     CALL cmfe_Decomposition_CreateStart(1,Mesh,Decomposition,Err)
-    !Set the decomposition to be a general decomposition with the specified number of domains
-    CALL cmfe_Decomposition_TypeSet(Decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
-    CALL cmfe_Decomposition_NumberOfDomainsSet(Decomposition,NUMBER_OF_DOMAINS,Err)
     CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
 
+    !Decompose
+    CALL cmfe_Decomposer_Initialise(decomposer,err)
+    CALL cmfe_Decomposer_CreateStart(1,region,worldWorkGroup,decomposer,err)
+    !Add in the decomposition
+    CALL cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
+    !Finish the decomposer
+    CALL cmfe_Decomposer_CreateFinish(decomposer,err)
+  
     !Start to create a default (geometric) field on the region
     CALL cmfe_Field_Initialise(GeometricField,Err)
     CALL cmfe_Field_CreateStart(GeometricFieldUserNumber,Region,GeometricField,Err)
