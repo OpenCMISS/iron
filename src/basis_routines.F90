@@ -811,10 +811,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: basisIdx
+    INTEGER(INTG) :: basisIdx,dummyErr
     TYPE(BASIS_TYPE), POINTER :: newBasis
     TYPE(BASIS_PTR_TYPE), ALLOCATABLE :: newBases(:)
-    TYPE(VARYING_STRING) :: localError
+    TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("Basis_CreateStart",err,error,*999)
 
@@ -860,7 +860,7 @@ CONTAINS
     
     EXITS("Basis_CreateStart")
     RETURN
-999 IF(ASSOCIATED(newBasis)) CALL BASIS_DESTROY(newBasis,err,error,*998)
+999 IF(ASSOCIATED(newBasis)) CALL BASIS_DESTROY(newBasis,dummyErr,dummyError,*998)
 998 IF(ALLOCATED(newBases)) DEALLOCATE(newBases)
     ERRORSEXITS("Basis_CreateStart",err,error)
     RETURN 1
