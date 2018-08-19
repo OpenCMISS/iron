@@ -13404,7 +13404,7 @@ CONTAINS
 
       ! If the solution hasn't converged, need to revert field values to pre-solve state
       ! before continued iteration. This will counteract the field updates that occur
-      ! in SOLVER_DYNAMIC_MEAN_PREDICTED_CALCULATE. Ignore for initialisation
+      ! in Solver_DynamicMeanPredictedCalculate. Ignore for initialisation
       IF(timestep == 0) THEN
         iterativeLoop%CONTINUE_LOOP=.FALSE.
       END IF
@@ -13702,7 +13702,7 @@ CONTAINS
 
     ! If the solution hasn't converged, need to revert field values to pre-solve state
     ! before continued iteration. This will counteract the field updates that occur
-    ! in SOLVER_DYNAMIC_MEAN_PREDICTED_CALCULATE. Ignore for initialisation
+    ! in Solver_DynamicMeanPredictedCalculate. Ignore for initialisation
     IF(timestep == 0) THEN
       iterativeLoop%CONTINUE_LOOP=.FALSE.
     END IF

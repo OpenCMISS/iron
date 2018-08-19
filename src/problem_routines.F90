@@ -1199,7 +1199,7 @@ CONTAINS
                     CALL EquationsSet_JacobianEvaluate(EQUATIONS_SET,err,error,*999)
                   ENDDO !equations_set_idx
                   !Assemble the dynamic nonlinear solver matrices
-                  CALL SOLVER_MATRICES_DYNAMIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
+                  CALL Solver_DynamicAssemble(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
                 ELSE
                   CALL FlagError("Solver equations linking solver mapping is not dynamic.",err,error,*999)
                 END IF
@@ -1232,7 +1232,7 @@ CONTAINS
 !                  CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
 !                ENDDO
                 !Assemble the static nonlinear solver matrices
-                CALL SOLVER_MATRICES_STATIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
+                CALL Solver_StaticAssemble(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
               END IF       
             ELSE
               CALL FlagError("Solver equations solver type is not associated.",err,error,*999)
@@ -1345,7 +1345,7 @@ CONTAINS
                     END SELECT
                   ENDDO !equations_set_idx
                   !Assemble the final solver residual.
-                  CALL SOLVER_MATRICES_DYNAMIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
+                  CALL Solver_DynamicAssemble(SOLVER,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
                 ELSE
                   CALL FlagError("Solver equations linking solver mapping is not dynamic.",err,error,*999)
                 END IF
@@ -1389,7 +1389,7 @@ CONTAINS
 !                  CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
 !                ENDDO
                 !Assemble the solver matrices
-                CALL SOLVER_MATRICES_STATIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
+                CALL Solver_StaticAssemble(SOLVER,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
               END IF
             ELSE
                CALL FlagError("Solver equations solver type is not associated.",err,error,*999)

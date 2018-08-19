@@ -84,19 +84,7 @@ MODULE SOLVER_MATRICES_ROUTINES
   !Module variables
 
   !Interfaces
-
-  INTERFACE SolverMatrix_EquationsMatrixAdd
-    MODULE PROCEDURE SOLVER_MATRIX_EQUATIONS_MATRIX_ADD
-  END INTERFACE SolverMatrix_EquationsMatrixAdd
-  
-  INTERFACE SolverMatrix_InterfaceMatrixAdd
-    MODULE PROCEDURE SOLVER_MATRIX_INTERFACE_MATRIX_ADD
-  END INTERFACE SolverMatrix_InterfaceMatrixAdd
-  
-  INTERFACE SolverMatrix_JacobianMatrixAdd
-    MODULE PROCEDURE SOLVER_MATRIX_JACOBIAN_MATRIX_ADD
-  END INTERFACE SolverMatrix_JacobianMatrixAdd
-
+ 
   INTERFACE SolverMatrices_CreateFinish
     MODULE PROCEDURE SOLVER_MATRICES_CREATE_FINISH
   END INTERFACE SolverMatrices_CreateFinish
@@ -125,15 +113,9 @@ MODULE SOLVER_MATRICES_ROUTINES
     & SOLVER_MATRICES_JACOBIAN_ONLY,SOLVER_MATRICES_RESIDUAL_ONLY,SOLVER_MATRICES_RHS_ONLY, & 
     & SOLVER_MATRICES_RHS_RESIDUAL_ONLY !,SOLVER_MATRICES_DYNAMIC_ONLY
 
-  PUBLIC SOLVER_MATRIX_EQUATIONS_MATRIX_ADD
-
   PUBLIC SolverMatrix_EquationsMatrixAdd
 
-  PUBLIC SOLVER_MATRIX_INTERFACE_MATRIX_ADD
-
   PUBLIC SolverMatrix_InterfaceMatrixAdd
-
-  PUBLIC SOLVER_MATRIX_JACOBIAN_MATRIX_ADD
 
   PUBLIC SolverMatrix_JacobianMatrixAdd
 
@@ -803,7 +785,7 @@ CONTAINS
   !
 
   !>Adds alpha times the equations matrix into the solver matrix
-  SUBROUTINE SOLVER_MATRIX_EQUATIONS_MATRIX_ADD(SOLVER_MATRIX,equations_set_idx,ALPHA,equationsMatrix,ERR,ERROR,*)
+  SUBROUTINE SolverMatrix_EquationsMatrixAdd(SOLVER_MATRIX,equations_set_idx,ALPHA,equationsMatrix,ERR,ERROR,*)
 
     !Argument variables
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix
@@ -827,7 +809,7 @@ CONTAINS
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("SOLVER_MATRIX_EQUATIONS_MATRIX_ADD",ERR,ERROR,*999)
+    ENTERS("SolverMatrix_EquationsMatrixAdd",ERR,ERROR,*999)
 
     NULLIFY(EQUATIONS_MATRIX_DATA)
     NULLIFY(COLUMN_INDICES)
@@ -1016,18 +998,19 @@ CONTAINS
       CALL FlagError("Solver matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("SOLVER_MATRIX_EQUATIONS_MATRIX_ADD")
+    EXITS("SolverMatrix_EquationsMatrixAdd")
     RETURN
-999 ERRORSEXITS("SOLVER_MATRIX_EQUATIONS_MATRIX_ADD",ERR,ERROR)
+999 ERRORSEXITS("SolverMatrix_EquationsMatrixAdd",ERR,ERROR)
     RETURN 1
-  END SUBROUTINE SOLVER_MATRIX_EQUATIONS_MATRIX_ADD
+    
+  END SUBROUTINE SolverMatrix_EquationsMatrixAdd
 
   !
   !================================================================================================================================
   !
 
   !>Adds alpha times the interface matrix into the solver matrix
-  SUBROUTINE SOLVER_MATRIX_INTERFACE_MATRIX_ADD(SOLVER_MATRIX,interface_condition_idx,ALPHA,INTERFACE_MATRIX,ERR,ERROR,*)
+  SUBROUTINE SolverMatrix_InterfaceMatrixAdd(SOLVER_MATRIX,interface_condition_idx,ALPHA,INTERFACE_MATRIX,ERR,ERROR,*)
 
     !Argument variables
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix
@@ -1049,7 +1032,7 @@ CONTAINS
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("SOLVER_MATRIX_INTERFACE_MATRIX_ADD",ERR,ERROR,*999)
+    ENTERS("SolverMatrix_InterfaceMatrixAdd",ERR,ERROR,*999)
 
     NULLIFY(INTERFACE_MATRIX_DATA)
     NULLIFY(COLUMN_INDICES)
@@ -1372,18 +1355,19 @@ CONTAINS
       CALL FlagError("Solver matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("SOLVER_MATRIX_INTERFACE_MATRIX_ADD")
+    EXITS("SolverMatrix_InterfaceMatrixAdd")
     RETURN
-999 ERRORSEXITS("SOLVER_MATRIX_INTERFACE_MATRIX_ADD",ERR,ERROR)
+999 ERRORSEXITS("SolverMatrix_InterfaceMatrixAdd",ERR,ERROR)
     RETURN 1
-  END SUBROUTINE SOLVER_MATRIX_INTERFACE_MATRIX_ADD
+    
+  END SUBROUTINE SolverMatrix_InterfaceMatrixAdd
 
   !
   !================================================================================================================================
   !
 
   !>Adds alpha times the Jacobian matrix into the solver matrix
-  SUBROUTINE SOLVER_MATRIX_JACOBIAN_MATRIX_ADD(SOLVER_MATRIX,equations_set_idx,ALPHA,jacobianMatrix,ERR,ERROR,*)
+  SUBROUTINE SolverMatrix_JacobianMatrixAdd(SOLVER_MATRIX,equations_set_idx,ALPHA,jacobianMatrix,ERR,ERROR,*)
 
     !Argument variables
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix
@@ -1406,7 +1390,7 @@ CONTAINS
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
-    ENTERS("SOLVER_MATRIX_JACOBIAN_MATRIX_ADD",ERR,ERROR,*999)
+    ENTERS("SolverMatrix_JacobianMatrixAdd",ERR,ERROR,*999)
 
     IF(ASSOCIATED(SOLVER_MATRIX)) THEN
       NULLIFY(SOLVER_MATRICES)
@@ -1598,11 +1582,11 @@ CONTAINS
       CALL FlagError("Solver matrix is not associated.",ERR,ERROR,*999)
     ENDIF
     
-    EXITS("SOLVER_MATRIX_JACOBIAN_MATRIX_ADD")
+    EXITS("SolverMatrix_JacobianMatrixAdd")
     RETURN
-999 ERRORSEXITS("SOLVER_MATRIX_JACOBIAN_MATRIX_ADD",ERR,ERROR)
+999 ERRORSEXITS("SolverMatrix_JacobianMatrixAdd",ERR,ERROR)
     RETURN 1
-  END SUBROUTINE SOLVER_MATRIX_JACOBIAN_MATRIX_ADD
+  END SUBROUTINE SolverMatrix_JacobianMatrixAdd
 
   !
   !================================================================================================================================

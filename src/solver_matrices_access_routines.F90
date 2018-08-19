@@ -65,6 +65,8 @@ MODULE SolverMatricesAccessRoutines
 
   PUBLIC SolverMatrices_LibraryTypeGet
 
+  PUBLIC SolverMatrices_RHSVectorGet
+
   PUBLIC SolverMatrices_SolverMappingGet
 
   PUBLIC SolverMatrices_SolverMatrixGet
@@ -100,6 +102,38 @@ CONTAINS
     
   END SUBROUTINE SolverMatrices_LibraryTypeGet
           
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to specified solver RHS for solver matrices.
+  SUBROUTINE SolverMatrices_RHSVectorGet(solverMatrices,rhsVector,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices !<A pointer to the solver matrices to get the solver matrix for
+    TYPE(DistributedVectorType), POINTER :: rhsVector !<On exit, a pointer to the solver RHS vector. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMatrices_RHSVectorGet",err,error,*998)
+
+    IF(ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+    
+    rhsVector=>solverMatrices%RHS_VECTOR
+    IF(.NOT.ASSOCIATED(rhsVector)) THEN
+      CALL FlagError("The RHS vector is not associated for the solver matrices.",err,error,*999)
+    ENDIF
+      
+    EXITS("SolverMatrices_RHSVectorGet")
+    RETURN
+999 NULLIFY(rhsVector)
+998 ERRORSEXITS("SolverMatrices_RHSVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_RHSVectorGet
+  
   !
   !================================================================================================================================
   !

@@ -1736,8 +1736,12 @@ CONTAINS
           END SELECT
         CASE(CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC)
           !Copy field variable values to the previous values
-          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-            & 1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS3_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS2_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
           !Copy velocity values to the previous velocity
           CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VELOCITY_VALUES_SET_TYPE, &
             & FIELD_PREVIOUS_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
@@ -1745,9 +1749,13 @@ CONTAINS
           CASE(CONTROL_LOOP_FIELD_VARIABLE_LINEAR)
             !Do nothing additional
           CASE(CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR)
-            !Copy residual to the previous residual
-            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
-              & 1.0_DP,err,error,*999)
+            !Copy residuals to the previous residuals
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS2_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
           CASE DEFAULT
             localError="The control loop variable linearity of "//TRIM(NumberToVString(linearity,"*",err,error))// &
               & " is invalid."
@@ -1755,8 +1763,12 @@ CONTAINS
           END SELECT
         CASE(CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC)
           !Copy field variable values to the previous values
-          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-            & 1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS3_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS2_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
           !Copy velocity values to the previous velocity
           CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VELOCITY_VALUES_SET_TYPE, &
             & FIELD_PREVIOUS_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
@@ -1767,9 +1779,13 @@ CONTAINS
           CASE(CONTROL_LOOP_FIELD_VARIABLE_LINEAR)
             !Do nothing additional
           CASE(CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR)
-            !Copy residual to the previous residual
-            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
-              & 1.0_DP,err,error,*999)
+            !Copy residuals to the previous residuals
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS2_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
           CASE DEFAULT
             localError="The control loop variable linearity of "//TRIM(NumberToVString(linearity,"*",err,error))// &
               & " is invalid."
