@@ -553,7 +553,7 @@ CONTAINS
         & " is invalid. The number must be >= 1 and <= 3."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    
+
     EXITS("Basis_AreaToXiCoordinates")
     RETURN
 999 ERRORSEXITS("Basis_AreaToXiCoordinates",err,error)
