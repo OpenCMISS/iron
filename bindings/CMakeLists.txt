@@ -27,7 +27,7 @@ if (WITH_C_BINDINGS)
     add_custom_command(OUTPUT ${OPENCMISS_C_F90} ${OPENCMISS_H}
         DEPENDS ${Iron_SOURCE_DIR}/src/opencmiss_iron.F90 # Need to re-build if that file changes!
         COMMAND "${Python_EXECUTABLE}" generate_bindings "${Iron_SOURCE_DIR}" C "${OPENCMISS_H}" "${OPENCMISS_C_F90}"
-        WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings
+        WORKING_DIRECTORY ${Iron_SOURCE_DIR}/bindings 
     )
     list(APPEND _CLEANUP ${OPENCMISS_H} ${OPENCMISS_C_F90})
     

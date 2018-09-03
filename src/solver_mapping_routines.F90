@@ -1984,13 +1984,13 @@ CONTAINS
               !Allocate the equations to solver matrix maps sm equations to solver maps
               IF(ASSOCIATED(dynamicMapping)) THEN
                 ALLOCATE(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM( &
-                  & solver_matrix_idx)%DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS(NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES),STAT=ERR)
+                  & solver_matrix_idx)%DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS(dynamicMapping%numberOfDynamicMatrices),STAT=ERR)
                 IF(ERR/=0) CALL FlagError("Could not allocate equations to solver matrix maps sm dynamic equations "// &
                   & "to solver matrix maps.",ERR,ERROR,*999)
                 !Set up dynamic arrays
                 SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM( &
-                  & solver_matrix_idx)%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
-                DO equations_matrix_idx=1,NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES
+                  & solver_matrix_idx)%NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES=dynamicMapping%numberOfDynamicMatrices
+                DO equations_matrix_idx=1,dynamicMapping%numberOfDynamicMatrices
                   NULLIFY(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM( &
                     & solver_matrix_idx)%DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS(equations_matrix_idx)%PTR)
                   ALLOCATE(SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM( &

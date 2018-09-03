@@ -1457,7 +1457,10 @@ CONTAINS
                       CALL FlagError("Can not pre-evaluate a residual for linear equations.",err,error,*999)
                     CASE(EQUATIONS_NONLINEAR)
                       SELECT CASE(EQUATIONS%timeDependence)
-                      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC) ! quasistatic handled like static
+                      CASE(EQUATIONS_STATIC, &
+                        & EQUATIONS_QUASISTATIC, &
+                        & EQUATIONS_FIRST_ORDER_DYNAMIC, &
+                        & EQUATIONS_SECOND_ORDER_DYNAMIC)                        
                         SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                           IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -1510,8 +1513,6 @@ CONTAINS
                             & " is invalid."
                           CALL FlagError(localError,err,error,*999)
                         END SELECT !EQUATIONS_SET%SOLUTION_METHOD
-                      CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
-                        CALL FlagError("Not implemented.",err,error,*999)
                       CASE(EQUATIONS_TIME_STEPPING)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
@@ -1598,7 +1599,7 @@ CONTAINS
                       CALL FlagError("Can not post-evaluate a residual for linear equations.",err,error,*999)
                     CASE(EQUATIONS_NONLINEAR)
                       SELECT CASE(EQUATIONS%timeDependence)
-                      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC) ! quasistatic handled like static
+                      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
                         SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                           IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -1652,8 +1653,6 @@ CONTAINS
                             & " is invalid."
                           CALL FlagError(localError,err,error,*999)
                         END SELECT !EQUATIONS_SET%SOLUTION_METHOD
-                      CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
-                        CALL FlagError("Not implemented.",err,error,*999)
                       CASE(EQUATIONS_TIME_STEPPING)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT

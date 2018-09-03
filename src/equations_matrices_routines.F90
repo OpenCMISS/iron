@@ -4237,9 +4237,9 @@ CONTAINS
       & numberOfDerivatives,numberOfVersions,version,versionIdx
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
-    TYPE(BASIS_TYPE), POINTER :: basis
+    TYPE(BASIS_TYPE), POINTER :: basis,basis2
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: dependentDofsDomainMapping
-    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements,domainElements2
     TYPE(DOMAIN_NODES_TYPE), POINTER :: domainNodes
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -4319,48 +4319,131 @@ CONTAINS
         !First, loop over the rows and calculate the number of non-zeros
         numberOfNonZeros=0
         DO localDOFIdx=1,dependentDofsDomainMapping%TOTAL_NUMBER_OF_LOCAL
-          IF(dependentDofsParamMapping%DOF_TYPE(1,localDOFIdx)/=FIELD_NODE_DOF_TYPE) THEN
-            localError="Local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" is not a node based DOF."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-          dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDOFIdx) !value for a particular field dof (localDOFIdx)
-          node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx) !node number of the field parameter
-          component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx) !component number of the field parameter
-          domainNodes=>fieldVariable%components(component)%domain%topology%nodes          
-          !Set up list
-          NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
-          CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
-          CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
-          CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,domainNodes%nodes(node)% &
-            & NUMBER_OF_SURROUNDING_ELEMENTS*fieldVariable%components(component)% &
-            & maxNumberElementInterpolationParameters,err,error,*999)
-          CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
-          !Loop over all elements containing the dof
-          DO elementIdx=1,domainNodes%nodes(node)%NUMBER_OF_SURROUNDING_ELEMENTS
-            element=domainNodes%nodes(node)%SURROUNDING_ELEMENTS(elementIdx)
-            DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
-              domainElements=>fieldVariable%components(componentIdx)%domain%topology%elements
-              basis=>domainElements%elements(element)%basis
-              DO localNodeIdx=1,basis%NUMBER_OF_NODES
-                node2=domainElements%elements(element)%ELEMENT_NODES(localNodeIdx)
-                DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
-                  derivative=domainElements%elements(element)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
-                  version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
-                  !Find the local and global column and add the global column to the indices list
-                  localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
-                    & nodes(node2)%derivatives(derivative)%versions(version)
+          SELECT CASE(dependentDofsParamMapping%DOF_TYPE(1,localDOFIdx))
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_NODE_DOF_TYPE)
+            dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDOFIdx) !value for a particular field dof (localDOFIdx)
+            node=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(3,dofIdx) !node number of the field parameter
+            component=dependentDofsParamMapping%NODE_DOF2PARAM_MAP(4,dofIdx) !component number of the field parameter
+            domainNodes=>fieldVariable%components(component)%domain%topology%nodes          
+            !Set up list
+            NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
+            CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,domainNodes%nodes(node)% &
+              & NUMBER_OF_SURROUNDING_ELEMENTS*fieldVariable%components(component)% &
+              & maxNumberElementInterpolationParameters,err,error,*999)
+            CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            !Loop over all elements containing the dof
+            DO elementIdx=1,domainNodes%nodes(node)%NUMBER_OF_SURROUNDING_ELEMENTS
+              element=domainNodes%nodes(node)%SURROUNDING_ELEMENTS(elementIdx)
+              DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+                SELECT CASE(fieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+                CASE(FIELD_CONSTANT_INTERPOLATION)
+                  ! do nothing? this will probably never be encountered...?
+                  CALL FlagError("Not implemented?",err,error,*999)
+                CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                  localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(element)
                   globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
-                  
                   CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
-                  
-                ENDDO !derivative
-              ENDDO !localNodeIdx
+                CASE(FIELD_NODE_BASED_INTERPOLATION)
+                  domainElements=>fieldVariable%components(componentIdx)%domain%topology%elements
+                  basis=>domainElements%elements(element)%basis
+                  DO localNodeIdx=1,basis%NUMBER_OF_NODES
+                    node2=domainElements%elements(element)%ELEMENT_NODES(localNodeIdx)
+                    DO derivativeIdx=1,basis%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                      derivative=domainElements%elements(element)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                      version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
+                      !Find the local and global column and add the global column to the indices list
+                      localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
+                        & nodes(node2)%derivatives(derivative)%versions(version)
+                      globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                      
+                      CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+                      
+                    ENDDO !derivative
+                  ENDDO !localNodeIdx
+                CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                  CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+                CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                  CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+                CASE DEFAULT
+                  localError="The interpolation type of "// &
+                    & TRIM(NumberToVString(fieldVariable%components(componentIdx)%INTERPOLATION_TYPE,"*",err,error))// &
+                    & " for local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              ENDDO !componentIdx
+            ENDDO !elementIdx
+            CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,err,error,*999)
+            numberOfNonZeros=numberOfNonZeros+numberOfColumns
+            rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+          CASE(FIELD_ELEMENT_DOF_TYPE)
+            ! row corresponds to a variable that's element-wisely interpolated
+            dofIdx=dependentDofsParamMapping%DOF_TYPE(2,localDOFIdx)          ! dofIdx = index in ELEMENT_DOF2PARAM_MAP
+            element=dependentDofsParamMapping%ELEMENT_DOF2PARAM_MAP(1,dofIdx)   ! current element (i.e. corresponds to current dof)
+            component=dependentDofsParamMapping%ELEMENT_DOF2PARAM_MAP(2,dofIdx)   ! current variable component
+            domainElements=>fieldVariable%components(component)%domain%topology%ELEMENTS
+            basis=>domainElements%elements(element)%BASIS
+            !Set up list
+            NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
+            CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr, &
+              & fieldVariable%components(component)%maxNumberElementInterpolationParameters+1,err,error,*999) ! size = all nodal dofs + itself
+            CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            DO componentIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+              domainElements2=>fieldVariable%components(componentIdx)%domain%topology%elements
+              basis2=>domainElements2%elements(element)%basis
+              SELECT CASE(fieldVariable%components(componentIdx)%INTERPOLATION_TYPE)
+              CASE(FIELD_CONSTANT_INTERPOLATION)
+                CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
+              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                ! it's assumed that element-based variables arne't directly coupled
+                ! put a diagonal entry
+                localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%ELEMENT_PARAM2DOF_MAP%elements(element)
+                globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                ! loop over all nodes in the element (and dofs belonging to them)
+                DO localNodeIdx=1,basis2%NUMBER_OF_NODES
+                  node2=domainElements2%elements(element)%ELEMENT_NODES(localNodeIdx)
+                  DO derivativeIdx=1,basis2%NUMBER_OF_DERIVATIVES(localNodeIdx)
+                    derivative=domainElements2%elements(element)%ELEMENT_DERIVATIVES(derivativeIdx,localNodeIdx)
+                    version=domainElements2%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
+                    !Find the local and global column and add the global column to the indices list
+                    localColumn=fieldVariable%components(componentIdx)%PARAM_TO_DOF_MAP%NODE_PARAM2DOF_MAP% &
+                      & nodes(node2)%derivatives(derivative)%versions(version)
+                    globalColumn=fieldVariable%DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(localColumn)
+                    CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+                  ENDDO !derivativeIdx
+                ENDDO !localNodeIdx
+              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+              CASE DEFAULT
+                localError="Local dof number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+                  & " has invalid interpolation type."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
             ENDDO !componentIdx
-          ENDDO !elementIdx
-          CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
-          CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,err,error,*999)
-          numberOfNonZeros=numberOfNonZeros+numberOfColumns
-          rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+            !Clean up the list
+            CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,err,error,*999)
+            numberOfNonZeros=numberOfNonZeros+numberOfColumns
+            rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+          CASE DEFAULT
+            localError="Local dof number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" has an invalid type."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
         ENDDO !localDOFIdx
         
       CASE DEFAULT

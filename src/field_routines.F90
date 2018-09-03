@@ -10344,8 +10344,7 @@ CONTAINS
                    & MAX_NGP,DOMAIN_TOPOLOGY%ELEMENTS%TOTAL_NUMBER_OF_ELEMENTS),STAT=ERR)
                   IF(ERR/=0) CALL FlagError("Could not allocate field component parameter to dof Gauss point map.",ERR,ERROR,*999)
                   ! this might be wasteful in worst case, but should generally be ok
-                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS= &
-                  &  DOMAIN_TOPOLOGY%ELEMENTS%TOTAL_NUMBER_OF_ELEMENTS*MAX_NGP
+                  FIELD_COMPONENT%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%NUMBER_OF_GAUSS_POINT_PARAMETERS=MAX_NGP
                   !Handle global dofs domain mapping
                   DO ny=1,elementsMapping%NUMBER_OF_GLOBAL
                    DO gp=1,MAX_NGP !

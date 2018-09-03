@@ -2642,7 +2642,12 @@ CONTAINS
           ENDIF
         ENDIF
       CASE(EQUATIONS_NONLINEAR)
-        CALL FlagError("Not implemented.",err,error,*999)
+        IF(numberOfLinearMatrices<0.OR.numberOfLinearMatrices>FIELD_NUMBER_OF_VARIABLE_TYPES-2) THEN
+          localError="The specified number of linear matrices of "//TRIM(NumberToVString(numberOfLinearMatrices,"*", &
+            & err,error))//" is invalid. For non-dynamic non-linear problems the number must be between >= 0 and <= "// &
+            & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES-2,"*",err,error))
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
       CASE DEFAULT
         localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -2733,7 +2738,14 @@ CONTAINS
               ENDIF
             ENDDO !matrixIdx
           CASE(EQUATIONS_NONLINEAR)
-            CALL FlagError("Not implemented.",err,error,*999)
+            DO matrixIdx=1,createValuesCache%numberOfLinearMatrices
+              IF(ASSOCIATED(dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr)) THEN
+                createValuesCache%linearMatrixVariableTypes(matrixIdx)=dependentField%VARIABLE_TYPE_MAP(matrixIdx+2)%ptr% &
+                  & VARIABLE_TYPE
+              ELSE
+                CALL FlagError("Not implemented.",err,error,*999)
+              ENDIF
+            ENDDO !matrixIdx
           CASE DEFAULT
             localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)

@@ -7700,10 +7700,10 @@ CONTAINS
                     SELECT CASE(EQUATIONS%timeDependence)
                     CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC)
                       !Not implemented, this needs to be checked to see that it works
-                      TIME_COMPATIBLE=.FALSE.
-                      localError="Static or first order dynamic equations set equations with a second order dynamic "// &
-                        & "solver equations is not yet implemented."
-                      CALL FlagError(localError,err,error,*999)
+                      !TIME_COMPATIBLE=.FALSE.
+                      !localError="Static or first order dynamic equations set equations with a second order dynamic "// &
+                      !  & "solver equations is not yet implemented."
+                      !CALL FlagError(localError,err,error,*999)
                     CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
                       !OK
                     CASE DEFAULT
@@ -12924,7 +12924,7 @@ CONTAINS
                   nonlinearMapping=>vectorMapping%nonlinearMapping
                   IF(ASSOCIATED(nonlinearMapping)) THEN
                     residualVariableDOF=nonlinearMapping%equationsRowToResidualDOFMap(equationsRowNumber)
-                    nonlinearValue=nonlinearValue+previousResidualParameters(residualVariableDOF)*previousFunctionFactor
+                    nonlinearValue=previousResidualParameters(residualVariableDOF)*previousFunctionFactor
                     IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                       nonlinearValue=nonlinearValue+previous2ResidualParameters(residualVariableDOF)*previous2FunctionFactor
                       IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) &

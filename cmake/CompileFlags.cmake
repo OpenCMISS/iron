@@ -88,6 +88,7 @@ if (CMAKE_COMPILER_IS_GNUC OR CMAKE_C_COMPILER_ID STREQUAL "GNU" OR MINGW)
         endif()
         # Newer versions
         addFlag("-fcheck=all" Fortran DEBUG)
+	addFlag("-ffpe-trap=invalid,zero,overflow" Fortran DEBUG)
     endif()
     
     # Thus far all compilers seem to use the -p flag for profiling
