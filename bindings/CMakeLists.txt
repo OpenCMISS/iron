@@ -166,6 +166,7 @@ if (WITH_Python_BINDINGS)
         
     # Generate Python module
     # Step 1: Configuration phase - replaces variables
+    #$<TARGET_FILE_NAME:@IRON_PYTHON_MODULE@> HERE
     set(SETUP_PY ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/python/setup.in.py ${SETUP_PY} @ONLY)
 

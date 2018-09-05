@@ -4,16 +4,20 @@ import os
 from sys import platform
 from setuptools import setup
 
-requires = []#['numpy']
-package_data = {'opencmiss.iron': ['$<TARGET_FILE_NAME:@IRON_PYTHON_MODULE@>']}
+requires = ['numpy']
+package_data = {'opencmiss.iron': [@SETUP_PY_PACKAGE_FILES_STR@]}
 
-#try:
-    #if platform == 'darwin':
-    #    os.symlink('@IRON_TARGET_FILE@', 'opencmiss/iron/libiron.dylib')
-    #    package_data['opencmiss.iron'].append('libiron.dylib')
+
+class BinaryDistribution(Distribution):
+    def is_pure(self):
+        return False
+
+    def has_ext_modules(self):
+        return True
+
 
 setup(
-    name='OpenCMISS-Iron',
+    name='opencmiss.iron',
     version='@Iron_VERSION@',
     description=('Python bindings for the OpenCMISS computational '
             'modelling library Iron.'),
@@ -26,13 +30,12 @@ setup(
             'of OpenCMISS.'),
     author='Adam Reeve',
     license='Mozilla Tri-license',
-    author_email='hsorby@aucklanduni.ac.nz',
+    author_email='hsorby@auckland.ac.nz',
     url='http://www.opencmiss.org/',
-    install_requires=requires,
+    requires=requires,
     packages=['opencmiss', 'opencmiss.iron'],
-    package_data=package_data
+    package_data=package_data,
+    distclass=BinaryDistribution,
+    include_package_data=True,
+    zip_safe=False,
 )
-#finally:
-    
-#    if platform == 'darwin':
-#        os.unlink('opencmiss/iron/libiron.dylib')
