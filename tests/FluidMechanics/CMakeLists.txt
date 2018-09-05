@@ -1,5 +1,5 @@
 file(COPY input/ DESTINATION input)
-add_executable(Darcy Darcy.f90)
+add_executable(Darcy Darcy.F90)
 set_target_properties(Darcy PROPERTIES LINKER_LANGUAGE Fortran)
 target_link_libraries(Darcy iron)
 add_custom_command(TARGET Darcy POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory output)

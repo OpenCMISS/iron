@@ -4,39 +4,39 @@ file(TO_NATIVE_PATH "${BINDINGS_BIN_DIR}/$<CONFIG>" NATIVE_PYTHON_BINDINGS_DIR)
 # Add the tests
 set(PYTHONTESTS )
 add_test(NAME Python_Bindings_Import
-    COMMAND ${PYTHON_EXECUTABLE} -c "from opencmiss.iron import iron"
+    COMMAND ${Python_EXECUTABLE} -c "from opencmiss.iron import iron"
 )
 list(APPEND PYTHONTESTS Python_Bindings_Import)
 
 add_test(NAME Python_Bindings_Cantilever
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Cantilever.py
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Cantilever.py
 )
 list(APPEND PYTHONTESTS Python_Bindings_Cantilever)
 
 
 add_test(NAME Python_Bindings_CellMLModelIntegration_n98_Euler
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml euler 0.01
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml euler 0.01
 )
 list(APPEND PYTHONTESTS Python_Bindings_CellMLModelIntegration_n98_Euler)
 
 add_test(NAME Python_Bindings_CellMLModelIntegration_n98_BDF
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml bdf 0.01
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml bdf 0.01
 )
 list(APPEND PYTHONTESTS Python_Bindings_CellMLModelIntegration_n98_BDF)
 
 add_test(NAME Python_Bindings_CellMLModelIntegration_n98_Euler_0.005
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml euler 0.005
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml euler 0.005
 )
 list(APPEND PYTHONTESTS Python_Bindings_CellMLModelIntegration_n98_Euler_0.005)
 
 add_test(NAME Python_Bindings_Laplace
-    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Laplace.py
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Laplace.py
 )
 list(APPEND PYTHONTESTS Python_Bindings_Laplace)
 
 # Does not seem to converge! Needs checking
 #add_test(NAME Python_Bindings_Monodomain2DSquare
-#    COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Monodomain2DSquare.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml
+#    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Monodomain2DSquare.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml
 #)
 #list(APPEND PYTHONTESTS Python_Bindings_Monodomain2DSquare)
 

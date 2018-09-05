@@ -92,7 +92,7 @@ void CPUTimer(double *return_time,
   int *err,
   char error_string[])
 
-/* keep these up to date with timer_f.f90 */
+/* keep these up to date with timer_f.F90 */
 
 #define USER_CPU   1
 #define SYSTEM_CPU 2
@@ -155,7 +155,7 @@ void CPUTimer(double *return_time,
     default:
     {
       *err=1;
-      strcpy(error_string,"Invalid operation code");
+      strcpy(error_string,"Invalid operation code.");
       *return_time = -99999.0; /* get some attention! */
     }
   }     
