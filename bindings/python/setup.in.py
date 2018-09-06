@@ -3,6 +3,7 @@
 import os
 from sys import platform
 from setuptools import setup
+from setuptools.dist import Distribution
 
 requires = ['numpy']
 package_data = {'opencmiss.iron': [@SETUP_PY_PACKAGE_FILES_STR@]}
@@ -18,7 +19,7 @@ class BinaryDistribution(Distribution):
 
 setup(
     name='opencmiss.iron',
-    version='@Iron_VERSION@',
+    version='@Iron_VERSION@@IRON_DEVELOPER_VERSION@',
     description=('Python bindings for the OpenCMISS computational '
             'modelling library Iron.'),
     long_description=('Python bindings to OpenCMISS-Iron. '
@@ -28,7 +29,7 @@ setup(
             'analysis techniques to a variety of complex '
             'bioengineering problems. OpenCMISS-Iron is the computational backend component '
             'of OpenCMISS.'),
-    author='Adam Reeve',
+    author='Hugh Sorby',
     license='Mozilla Tri-license',
     author_email='hsorby@auckland.ac.nz',
     url='http://www.opencmiss.org/',
