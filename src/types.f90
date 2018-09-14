@@ -1982,6 +1982,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EquationsInterpolationType), POINTER :: interpolation !<A pointer to the interpolation information used in the equations.
     TYPE(EquationsScalarType), POINTER :: scalarEquations !<A pointer to the scalar equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations !<A pointer to the vector equations
+    INTEGER(INTG) :: jacobianCalculationType !<The calculation type (analytic of finite difference) of the Jacobian.
+    REAL(DP) :: jacobianFiniteDifferenceStepSize !<The finite difference step size used for calculating the Jacobian.
   END TYPE EquationsType
 
   TYPE EquationsPtrType
