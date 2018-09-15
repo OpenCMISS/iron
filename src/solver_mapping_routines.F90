@@ -61,6 +61,7 @@ MODULE SOLVER_MAPPING_ROUTINES
   USE Lists
   USE MatrixVector
   USE PROBLEM_CONSTANTS
+  USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
   USE Strings
   USE Types

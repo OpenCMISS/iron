@@ -13,6 +13,7 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE ComputationEnvironment
   USE Constants
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS

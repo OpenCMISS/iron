@@ -1180,7 +1180,7 @@ CONTAINS
               IF(ASSOCIATED(LINKING_SOLVER)) THEN
                 IF(LINKING_SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
                   !Update the field values from the dynamic factor * current solver values AND add in mean predicted displacements/
-                  CALL SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE(SOLVER,err,error,*999)
+                  CALL Solver_VariablesDynamicNonlinearUpdate(SOLVER,err,error,*999)
                 !check for a linked CellML solver 
 !!TODO: This should be generalised for nonlinear solvers in general and not just Newton solvers.
                   NEWTON_SOLVER=>SOLVER%NONLINEAR_SOLVER%NEWTON_SOLVER
@@ -1315,7 +1315,7 @@ CONTAINS
               IF(ASSOCIATED(LINKING_SOLVER)) THEN
                 IF(LINKING_SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
                   !Update the field values from the dynamic factor*current solver values AND add in predicted displacements
-                  CALL SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE(SOLVER,err,error,*999)
+                  CALL Solver_VariablesDynamicNonlinearUpdate(SOLVER,err,error,*999)
                   !Caculate the strain field for an CellML evaluator solver
                   CALL PROBLEM_PRE_RESIDUAL_EVALUATE(SOLVER,err,error,*999)
                   !check for a linked CellML solver
@@ -3806,6 +3806,7 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   USE KINDS
   USE PROBLEM_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE SOLVER_MATRICES_ROUTINES
   USE STRINGS
   USE TYPES
@@ -3915,6 +3916,7 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   USE PROBLEM_ROUTINES
   USE SOLVER_MATRICES_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE STRINGS
   USE TYPES
   
@@ -4114,6 +4116,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   USE KINDS
   USE PROBLEM_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE STRINGS
   USE TYPES
 
@@ -4238,6 +4241,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
   USE KINDS
   USE PROBLEM_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE STRINGS
   USE TYPES
  

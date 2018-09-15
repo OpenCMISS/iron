@@ -71,6 +71,7 @@ MODULE SolverMatricesAccessRoutines
 
   PUBLIC SolverMatrices_SolverMatrixGet
 
+  PUBLIC SolverMatrix_SolverVectorGet
   
 CONTAINS
 
@@ -205,6 +206,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE SolverMatrices_SolverMatrixGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to solver vector for a solver matrix.
+  SUBROUTINE SolverMatrix_SolverVectorGet(solverMatrix,solverVector,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix !<A pointer to the solver matrix to get the solver vector for
+    TYPE(DistributedVectorType), POINTER :: solverVector !<On exit, a pointer to the solver vector for the specified solver matrix. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMatrix_SolverVectorGet",err,error,*998)
+
+    IF(ASSOCIATED(solverVector)) CALL FlagError("Solver vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrix)) CALL FlagError("Solver matrix is not associated.",err,error,*999)
+    
+    solverVector=>solverMatrix%SOLVER_VECTOR
+    IF(.NOT.ASSOCIATED(solverVector)) &
+      & CALL FlagError("The solver vector is not associated for the solver matrix.",err,error,*999)
+      
+    EXITS("SolverMatrix_SolverVectorGet")
+    RETURN
+999 NULLIFY(solverVector)
+998 ERRORSEXITS("SolverMatrix_SolverVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrix_SolverVectorGet
   
   !
   !================================================================================================================================

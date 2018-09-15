@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Kumar Mithraratne, Jack Lee, Alice Hung, Sander Arens
+!> Contributor(s): Chris Bradley, Kumar Mithraratne, Jack Lee, Alice Hung, Sander Arens
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -145,6 +145,8 @@ MODULE FINITE_ELASTICITY_ROUTINES
     & FiniteElasticity_StressStrainCalculate
     
   PUBLIC FiniteElasticityEquationsSet_DerivedVariableCalculate
+
+  PUBLIC FiniteElasticity_PostLoop
   
   PUBLIC FiniteElasticity_TensorInterpolateGaussPoint
   
@@ -729,13 +731,13 @@ CONTAINS
     C=>MATERIALS_INTERPOLATED_POINT%VALUES(:,NO_PART_DERIV)
 
     ELASTICITY_TENSOR=0.0_DP
+    STRESS_TENSOR=0.0_DP
+    HYDRO_ELASTICITY_VOIGT=0.0_DP
 
     SELECT CASE(EQUATIONS_SET%specification(3))
     CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
       & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
-      LOCAL_ERROR="Analytic Jacobian has not been validated for the Mooney-Rivlin equations, please use finite differences instead."
-      CALL FlagWarning(LOCAL_ERROR,ERR,ERROR,*999)
       PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
       P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       !Form of constitutive model is:
@@ -768,7 +770,7 @@ CONTAINS
 
       ! Calculate material elasticity tensor (in Voigt form) as
       ! this will be compensated for in the push-forward with the modified deformation gradient.
-      TEMPTERM1=4.0_DP*C(2)
+      TEMPTERM1=2.0_DP*C(2)
       TEMPTERM2=-2.0_DP*C(2)
       ELASTICITY_TENSOR(2,1)=TEMPTERM1
       ELASTICITY_TENSOR(3,1)=TEMPTERM1
@@ -845,6 +847,97 @@ CONTAINS
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
+      
+    CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE)
+
+      !W = lambda/2.[tr(E)]^2+mu.tr(E^2)+p/2*(I3-1)^2
+      !S = lambda.tr(E).I + 2.mu.E + p*J*C^(-1)
+      
+      PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+      P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
+      
+       !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
+      I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
+      TEMPTERM1=C(2)*I1
+      TEMPTERM2=2.0_DP*C(3)
+      STRESS_TENSOR(1)=TEMPTERM1+TEMPTERM2*AZL(1,1)
+      STRESS_TENSOR(2)=TEMPTERM1+TEMPTERM2*AZL(2,2)
+      STRESS_TENSOR(3)=TEMPTERM1+TEMPTERM2*AZL(3,3)
+      STRESS_TENSOR(4)=TEMPTERM2*AZL(2,1)
+      STRESS_TENSOR(5)=TEMPTERM2*AZL(3,1)
+      STRESS_TENSOR(6)=TEMPTERM2*AZL(3,2)
+      
+      ELASTICITY_TENSOR(1,1)=C(2)+2.0_DP*C(3)      
+      ELASTICITY_TENSOR(1,2)=C(2)
+      ELASTICITY_TENSOR(1,3)=C(2)
+      ELASTICITY_TENSOR(2,1)=C(2)
+      ELASTICITY_TENSOR(2,2)=C(2)+2.0_DP*C(3)
+      ELASTICITY_TENSOR(2,3)=C(2)
+      ELASTICITY_TENSOR(3,1)=C(2)
+      ELASTICITY_TENSOR(3,2)=C(2)
+      ELASTICITY_TENSOR(3,3)=C(2)+2.0_DP*C(3)
+      ELASTICITY_TENSOR(4,4)=C(3)
+      ELASTICITY_TENSOR(5,5)=C(3)
+      ELASTICITY_TENSOR(6,6)=C(3)
+      
+      !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
+      ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
+
+      !Hydrostatic portion of the elasticity tensor (dS/dp)
+      HYDRO_ELASTICITY_VOIGT = AZUv
+
+      !Do push-forward of 2nd Piola tensor and the material elasticity tensor.
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
+      CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
+      
+      !Add volumetric parts.
+      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)+P
+
+    CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+      !Form of constitutive model is:
+      ! W=c1*(I1-3)+c2*(I2-3)+p/2*(I3-1)
+
+      PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+      P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
+      
+      ! Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
+      I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
+      TEMPTERM1=-2.0_DP*C(3)
+      TEMPTERM2=2.0_DP*(C(2)+I1*C(3))
+      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2
+      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2
+      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2
+      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)
+      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
+      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
+      ! Calculate material elasticity tensor (in Voigt form) as
+      ! this will be compensated for in the push-forward with the modified deformation gradient.
+      TEMPTERM1=2.0_DP*C(3)
+      TEMPTERM2=-2.0_DP*C(3)
+      ELASTICITY_TENSOR(2,1)=TEMPTERM1
+      ELASTICITY_TENSOR(3,1)=TEMPTERM1
+      ELASTICITY_TENSOR(1,2)=TEMPTERM1
+      ELASTICITY_TENSOR(3,2)=TEMPTERM1
+      ELASTICITY_TENSOR(1,3)=TEMPTERM1
+      ELASTICITY_TENSOR(2,3)=TEMPTERM1
+      ELASTICITY_TENSOR(4,4)=TEMPTERM2
+      ELASTICITY_TENSOR(5,5)=TEMPTERM2
+      ELASTICITY_TENSOR(6,6)=TEMPTERM2
+      !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
+      ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
+
+      !Hydrostatic portion of the elasticity tensor (dS/dp)
+      HYDRO_ELASTICITY_VOIGT = AZUv
+
+      ! Do push-forward of 2nd Piola tensor and the material elasticity tensor.
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
+      CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
+
+      ! Add volumetric parts.
+      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)+P
+
     CASE DEFAULT
       LOCAL_ERROR="Analytic Jacobian has not been implemented for the third equations set specification of "// &
         & TRIM(NumberToVString(EQUATIONS_SET%specification(3),"*",ERR,ERROR))
@@ -3707,6 +3800,94 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Runs after each control loop iteration. Exports fields etc.
+  SUBROUTINE FiniteElasticity_PostLoop(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: componentIdx,currentIteration,numberOfDimensions,outputIteration
+    REAL(DP) :: currentTime,timeIncrement,startTIme,stopTime
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FIELD_TYPE), POINTER :: dependentField,geometricField
+    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(REGION_TYPE), POINTER :: region
+    TYPE(SOLVER_TYPE), POINTER :: solver
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SOLVERS_TYPE), POINTER :: solvers
+    TYPE(VARYING_STRING) :: filename,method
+    
+    ENTERS("FiniteElasticity_PostLoop",err,error,*999)
+    
+    !Check pointers
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop not associated.",err,error,*999)
+    
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+
+    SELECT CASE(problem%specification(3))
+    CASE(PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_NO_SUBTYPE)
+      IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
+        CALL FiniteElasticity_ControlLoadIncrementLoopPostLoop(controlLoop,err,error,*999)
+      ENDIF
+    CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
+      !Check if we are a time loop.
+      IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+        !Get times
+        CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
+          & outputIteration,err,error,*999)
+        NULLIFY(solvers)
+        IF(outputIteration/=0) THEN
+          IF(MOD(currentIteration,outputIteration)==0) THEN
+            CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)      
+            !Get solver
+            IF(problem%specification(3)==PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE) THEN
+              NULLIFY(solver)
+              !Get Nonlinear solver
+              CALL Solvers_SolverGet(solvers,3,solver,err,error,*999)
+            ELSE
+              NULLIFY(solver)
+              !Get dynamic solver
+              CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+            ENDIF
+            NULLIFY(solverEquations)
+            CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+            NULLIFY(solverMapping)
+            CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+            !DO equationSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+            NULLIFY(equationsSet)
+            CALL SolverMapping_EquationsSetGet(solverMapping,1,equationsSet,err,error,*999)
+            NULLIFY(region)
+            CALL EquationsSet_RegionGet(equationsSet,region,err,error,*999)
+            filename="Elasticity_"//TRIM(NumberToVString(INT(currentIteration),"*",err,error))
+            method="FORTRAN"
+            CALL FIELD_IO_NODES_EXPORT(region%fields,filename,method,err,error,*999)
+            CALL FIELD_IO_ELEMENTS_EXPORT(region%fields,filename,method,err,error,*999)
+            !ENDDO !equationsSetIdx            
+          ENDIF
+        ENDIF
+      ELSE IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
+        CALL FiniteElasticity_ControlLoadIncrementLoopPostLoop(controlLoop,err,error,*999)
+      ENDIF
+    CASE DEFAULT
+      !Do nothing
+    END SELECT
+    
+    EXITS("FiniteElasticity_PostLoop")
+    RETURN
+999 ERRORSEXITS("FiniteElasticity_PostLoop",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FiniteElasticity_PostLoop
+
+
+    !
+  !================================================================================================================================
+  !
+
   !>Calculates the strain field for a finite elasticity finite element equations set.
   SUBROUTINE FiniteElasticity_StressStrainCalculate(equationsSet,derivedType,fieldVariable,err,error,*)
 
@@ -5256,7 +5437,7 @@ CONTAINS
     REAL(DP) :: AZL_SQUARED(3,3)
     REAL(DP) :: I1,I2,I3            !Invariants, if needed
     REAL(DP) :: ACTIVE_STRESS_11,ACTIVE_STRESS_22,ACTIVE_STRESS_33 !Active stress to be copied in from independent field.
-    REAL(DP) :: TEMP(3,3),TEMPTERM  !Temporary variables
+    REAL(DP) :: TEMP(3,3),TEMPTERM,TEMPTERM1,TEMPTERM2 !Temporary variables
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     REAL(DP), DIMENSION (:), POINTER :: C !Parameters for constitutive laws
@@ -5269,7 +5450,8 @@ CONTAINS
     REAL(DP) :: REFERENCE_VOLUME,XB_STIFFNESS,XB_DISTORTION,V_MAX
     REAL(DP) :: SARCO_LENGTH,FREE_ENERGY,FREE_ENERGY_0,XB_ENERGY_PER_VOLUME,SLOPE,lambda_f,A_1,A_2,x_1,x_2
     REAL(DP) :: MAX_XB_NUMBER_PER_VOLUME,ENERGY_PER_XB,FORCE_LENGTH,I_1e,EVALUES(3),EVECTOR_1(3),EVECTOR_2(3),EVECTOR_3(3)
-    REAL(DP) :: EMATRIX_1(3,3),EMATRIX_2(3,3),EMATRIX_3(3,3),TEMP1(3,3),TEMP2(3,3),TEMP3(3,3),N1(3,3),N2(3,3),N3(3,3) 
+    REAL(DP) :: EMATRIX_1(3,3),EMATRIX_2(3,3),EMATRIX_3(3,3),TEMP1(3,3),TEMP2(3,3),TEMP3(3,3),N1(3,3),N2(3,3),N3(3,3)
+    REAL(DP) :: STRESS_TENSOR(6),ONETHIRD_TRACE,MOD_DZDNU(3,3),MOD_DZDNUT(3,3)
     REAL(DP), DIMENSION(5) :: PAR
     INTEGER(INTG) :: LWORK,node1,node2
     INTEGER(INTG), PARAMETER :: LWMAX=1000
@@ -6826,40 +7008,88 @@ CONTAINS
 
     CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE)
       ! Form of constitutive model is:
-      ! W = 0.5*lambda*tr(E)^2 + mu*tr(E^2)
-      ! S = dW/dE = lambda*tr(E)*I + 2*mu*E
-      PIOLA_TENSOR(1,1)=C(2)*(E(1,1)+E(2,2)+E(3,3))+(2.0_DP*E(1,1)*C(3)+(2.0_DP*P*AZU(1,1)))
-      PIOLA_TENSOR(1,2)=(2.0_DP*C(3)*E(1,2))+(2.0_DP*P*AZU(1,2))
-      PIOLA_TENSOR(1,3)=(2.0_DP*C(3)*E(1,3))+(2.0_DP*P*AZU(1,3))
-      PIOLA_TENSOR(2,2)=C(2)*(E(1,1)+E(2,2)+E(3,3))+(2.0_DP*E(2,2)*C(3)+(2.0_DP*P*AZU(2,2)))
-      PIOLA_TENSOR(2,3)=(2.0_DP*C(3)*E(2,3))+(2.0_DP*P*AZU(2,3))
-      PIOLA_TENSOR(3,3)=C(2)*(E(1,1)+E(2,2)+E(3,3))+(2.0_DP*E(3,3)*C(3)+(2.0_DP*P*AZU(3,3)))
-      PIOLA_TENSOR(2,1)=PIOLA_TENSOR(1,2)
-      PIOLA_TENSOR(3,1)=PIOLA_TENSOR(1,3)
-      PIOLA_TENSOR(3,2)=PIOLA_TENSOR(2,3)
+      ! W = 0.5*lambda*tr(E)^2 + mu*tr(E^2) + p/2*(I3-1)^2
+      ! S = dW/dE = lambda*tr(E)*I + 2*mu*E + p*J*C^(-1)
+
+!!TODO: Should we add in hydrostatic pressure?
+      
+      MOD_DZDNU=DZDNU*Jznu**(-1.0_DP/3.0_DP)
+      CALL MatrixTranspose(MOD_DZDNU,MOD_DZDNUT,err,error,*999)
+      CALL MatrixProduct(MOD_DZDNUT,MOD_DZDNU,AZL,err,error,*999)
+      
+      !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
+      I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
+      TEMPTERM1=C(2)*I1
+      TEMPTERM2=2.0_DP*C(3)
+      STRESS_TENSOR(1)=TEMPTERM1+TEMPTERM2*AZL(1,1)+2.0_DP*P*AZU(1,1)
+      STRESS_TENSOR(4)=TEMPTERM2*AZL(1,2)+2.0_DP*P*AZU(1,2)
+      STRESS_TENSOR(5)=TEMPTERM2*AZL(1,3)+2.0_DP*P*AZU(1,3)
+      STRESS_TENSOR(2)=TEMPTERM1+TEMPTERM2*AZL(2,2)+2.0_DP*P*AZU(2,2)
+      STRESS_TENSOR(6)=TEMPTERM2*AZL(2,3)+2.0_DP*P*AZU(2,3)
+      STRESS_TENSOR(3)=TEMPTERM1+TEMPTERM2*AZL(3,3)+2.0_DP*P*AZU(3,3)
+      !Do push-forward of 2nd Piola tensor. 
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,MOD_DZDNU,Jznu,err,error,*999)
+      !Calculate isochoric Cauchy tensor (the deviatoric part) and add the volumetric part (the hydrostatic pressure).
+      ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:3))/3.0_DP
+      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)-ONETHIRD_TRACE+P
+     
+      CAUCHY_TENSOR(1,1)=STRESS_TENSOR(1)
+      CAUCHY_TENSOR(2,2)=STRESS_TENSOR(2)
+      CAUCHY_TENSOR(3,3)=STRESS_TENSOR(3)
+      CAUCHY_TENSOR(1,2)=STRESS_TENSOR(4)
+      CAUCHY_TENSOR(1,3)=STRESS_TENSOR(5)
+      CAUCHY_TENSOR(2,3)=STRESS_TENSOR(6)
+      CAUCHY_TENSOR(2,1)=CAUCHY_TENSOR(1,2)
+      CAUCHY_TENSOR(3,1)=CAUCHY_TENSOR(1,3)
+      CAUCHY_TENSOR(3,2)=CAUCHY_TENSOR(2,3)
       
     CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
       !Form of constitutive model is:
       ! W_hat=c1*(I1_hat-3)+c2*(I2_hat-3)+p*J*C^(-1)
 
-      !compute the invariants, I3 a few lines up
-      I1 = AZL(1,1) + AZL(2,2) + AZL(3,3)
-      CALL MatrixProduct(AZL,AZL,AZL_SQUARED,err,error,*999)
-      I2 = 0.5_DP * (I1**2 - AZL_SQUARED(1,1) - AZL_SQUARED(2,2) - AZL_SQUARED(3,3))
+      MOD_DZDNU=DZDNU*Jznu**(-1.0_DP/3.0_DP)
+      CALL MatrixTranspose(MOD_DZDNU,MOD_DZDNUT,err,error,*999)
+      CALL MatrixProduct(MOD_DZDNUT,MOD_DZDNU,AZL,err,error,*999)
+      
+      !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
+      I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
+      TEMPTERM1=-2.0_DP*C(2)
+      TEMPTERM2=2.0_DP*(C(1)+I1*C(2))
+      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2
+      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2
+      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2
+      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)
+      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
+      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
 
-      PIOLA_TENSOR=2.0_DP*Jznu**(-2.0_DP/3.0_DP)*((C(2)+C(3)*I1)*IDENTITY-C(3)*AZL &
-        & -(C(2)*I1+2.0_DP*C(2)*I2-1.5_DP*P*Jznu**(5.0_DP/3.0_DP))/3.0_DP*AZU)
-
+      !Do push-forward of 2nd Piola tensor. 
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,MOD_DZDNU,Jznu,err,error,*999)
+      !Calculate isochoric Cauchy tensor (the deviatoric part) and add the volumetric part (the hydrostatic pressure).
+      ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:3))/3.0_DP
+      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)-ONETHIRD_TRACE+P
+     
+      CAUCHY_TENSOR(1,1)=STRESS_TENSOR(1)
+      CAUCHY_TENSOR(2,2)=STRESS_TENSOR(2)
+      CAUCHY_TENSOR(3,3)=STRESS_TENSOR(3)
+      CAUCHY_TENSOR(1,2)=STRESS_TENSOR(4)
+      CAUCHY_TENSOR(1,3)=STRESS_TENSOR(5)
+      CAUCHY_TENSOR(2,3)=STRESS_TENSOR(6)
+      CAUCHY_TENSOR(2,1)=CAUCHY_TENSOR(1,2)
+      CAUCHY_TENSOR(3,1)=CAUCHY_TENSOR(1,3)
+      CAUCHY_TENSOR(3,2)=CAUCHY_TENSOR(2,3)
+      
     CASE DEFAULT
       LOCAL_ERROR="The third equations set specification of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
         & " is not valid for a finite elasticity type of an elasticity equation set."
       CALL FlagError(LOCAL_ERROR,err,error,*999)
     END SELECT
 
-    CALL MatrixProduct(DZDNU,PIOLA_TENSOR,TEMP,err,error,*999)
-    CALL MatrixProduct(TEMP,DZDNUT,CAUCHY_TENSOR,err,error,*999)
-    
-    CAUCHY_TENSOR=CAUCHY_TENSOR/Jznu
+    IF(EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.AND. &
+      & EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
+      CALL MatrixProduct(DZDNU,PIOLA_TENSOR,TEMP,err,error,*999)
+      CALL MatrixProduct(TEMP,DZDNUT,CAUCHY_TENSOR,err,error,*999)      
+      CAUCHY_TENSOR=CAUCHY_TENSOR/Jznu
+    ENDIF
     IF(DIAGNOSTICS1) THEN
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  ELEMENT_NUMBER = ",ELEMENT_NUMBER,err,error,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  gauss_idx = ",GAUSS_POINT_NUMBER,err,error,*999)
@@ -7850,6 +8080,10 @@ CONTAINS
                   & FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
                 CALL FIELD_PARAMETER_SET_CREATE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,err,error,*999)
+              ELSE IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+                & EQUATIONS_SET%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
+                CALL FIELD_PARAMETER_SET_CREATE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,err,error,*999)                
               ENDIF
             CASE DEFAULT
               LOCAL_ERROR="The action type of "//TRIM(NumberToVString(EQUATIONS_SET_SETUP%ACTION_TYPE,"*",err,error))// &
@@ -11880,8 +12114,11 @@ CONTAINS
         NULLIFY(nonlinearSolver)
         CALL SOLVER_DYNAMIC_NONLINEAR_SOLVER_GET(solver,nonlinearSolver,err,error,*999)
         CALL Solver_NonlinearDivergenceExit(nonlinearSolver,err,error,*999)
+        CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)
+!!TODO: shOULDNT THIS BE IN A POSTLOOP?
+        !Output results
         CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)          
-      ENDIF
+     ENDIF
     CASE(PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
       IF(solver%GLOBAL_NUMBER==2) THEN
         !Nonlinear solver
@@ -12194,42 +12431,40 @@ CONTAINS
     ENTERS("FiniteElasticity_ControlLoadIncrementLoopPostLoop",err,error,*999)
 
     IF(ASSOCIATED(controlLoop)) THEN
-      IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
-        incrementIdx=controlLoop%LOAD_INCREMENT_LOOP%ITERATION_NUMBER
-        outputNumber=controlLoop%LOAD_INCREMENT_LOOP%OUTPUT_NUMBER
-        IF(outputNumber>0) THEN
-          IF(MOD(incrementIdx,outputNumber)==0) THEN
-            solvers=>controlLoop%SOLVERS
-            IF(ASSOCIATED(solvers)) THEN
-              DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
-                solver=>solvers%SOLVERS(solverIdx)%ptr
-                IF(ASSOCIATED(solver)) THEN
-                  solverEquations=>SOLVER%SOLVER_EQUATIONS
-                  IF(ASSOCIATED(solverEquations)) THEN
-                    solverMapping=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING
-                    IF(ASSOCIATED(solverMapping)) THEN
-                      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
-                        region=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%ptr%REGION
-                        NULLIFY(fields)
-                        fields=>region%FIELDS
-                        directory="results_load/"
-                        INQUIRE(FILE=CHAR(directory),EXIST=dirExist)
-                        IF(.NOT.dirExist) THEN
-                          CALL SYSTEM(CHAR("mkdir "//directory))
-                        ENDIF
-                        fileName=directory//"mesh"//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
-                          & "_load"//TRIM(NumberToVString(incrementIdx,"*",err,error))
-                        method="FORTRAN"
-                        CALL FIELD_IO_ELEMENTS_EXPORT(fields,fileName,method,err,error,*999)
-                        CALL FIELD_IO_NODES_EXPORT(fields,fileName,method,err,error,*999)
-                      ENDDO !equationsSetIdx
-                    ENDIF
+      incrementIdx=controlLoop%LOAD_INCREMENT_LOOP%ITERATION_NUMBER
+      outputNumber=controlLoop%LOAD_INCREMENT_LOOP%OUTPUT_NUMBER
+      IF(outputNumber>0) THEN
+        IF(MOD(incrementIdx,outputNumber)==0) THEN
+          solvers=>controlLoop%SOLVERS
+          IF(ASSOCIATED(solvers)) THEN
+            DO solverIdx=1,solvers%NUMBER_OF_SOLVERS
+              solver=>solvers%SOLVERS(solverIdx)%ptr
+              IF(ASSOCIATED(solver)) THEN
+                solverEquations=>SOLVER%SOLVER_EQUATIONS
+                IF(ASSOCIATED(solverEquations)) THEN
+                  solverMapping=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING
+                  IF(ASSOCIATED(solverMapping)) THEN
+                    DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+                      region=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%ptr%REGION
+                      NULLIFY(fields)
+                      fields=>region%FIELDS
+                      directory="results_load/"
+                      INQUIRE(FILE=CHAR(directory),EXIST=dirExist)
+                      IF(.NOT.dirExist) THEN
+                        CALL SYSTEM(CHAR("mkdir "//directory))
+                      ENDIF
+                      fileName=directory//"mesh"//TRIM(NumberToVString(equationsSetIdx,"*",err,error))// &
+                        & "_load"//TRIM(NumberToVString(incrementIdx,"*",err,error))
+                      method="FORTRAN"
+                      CALL FIELD_IO_ELEMENTS_EXPORT(fields,fileName,method,err,error,*999)
+                      CALL FIELD_IO_NODES_EXPORT(fields,fileName,method,err,error,*999)
+                    ENDDO !equationsSetIdx
                   ENDIF
                 ENDIF
-              ENDDO !solverIdx
-            ELSE
-              CALL FlagError("Control loop solvers is not associated.",err,error,*999)
-            ENDIF
+              ENDIF
+            ENDDO !solverIdx
+          ELSE
+            CALL FlagError("Control loop solvers is not associated.",err,error,*999)
           ENDIF
         ENDIF
       ENDIF

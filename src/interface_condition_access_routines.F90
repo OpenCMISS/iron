@@ -91,6 +91,8 @@ MODULE InterfaceConditionAccessRoutines
 
   PUBLIC InterfaceCondition_LabelGet,InterfaceCondition_LabelSet
 
+  PUBLIC InterfaceCondition_LagrangeFieldGet
+
   PUBLIC InterfaceCondition_UserNumberFind
 
   PUBLIC INTERFACE_CONDITION_USER_NUMBER_FIND
@@ -312,6 +314,46 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceCondition_LabelSetVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the Lagrange field for an interface condition.
+  SUBROUTINE InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the Lagrange field for
+    TYPE(FIELD_TYPE), POINTER :: lagrangeField !<On exit, a pointer to the Lagrange field in the specified interface condition. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceCondition_LagrangeFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(lagrangeField)) CALL FlagError("Lagrange field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceCondition%lagrange)) THEN
+      localError="Lagrange is not associated for interface condition number "// &
+      & TRIM(NumberToVString(interfaceCondition%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    lagrangeField=>interfaceCondition%lagrange%LAGRANGE_FIELD
+    IF(.NOT.ASSOCIATED(lagrangeField)) THEN
+      localError="Lagrange field is not associated for interface condition number "// &
+      & TRIM(NumberToVString(interfaceCondition%USER_NUMBER,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("InterfaceCondition_LagrangeFieldGet")
+    RETURN
+999 NULLIFY(lagrangeField)
+998 ERRORSEXITS("InterfaceCondition_LagrangeFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_LagrangeFieldGet
 
   !
   !================================================================================================================================

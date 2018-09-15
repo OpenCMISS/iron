@@ -46,6 +46,7 @@ MODULE ELASTICITY_ROUTINES
 
   USE BaseRoutines
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE EquationsSetConstants
   USE FINITE_ELASTICITY_ROUTINES
   USE INPUT_OUTPUT
@@ -886,40 +887,30 @@ CONTAINS
 
     ENTERS("Elasticity_ControlLoopPostLoop",err,error,*999)
 
-    IF(ASSOCIATED(controlLoop)) THEN
-      problem=>controlLoop%PROBLEM
-      IF(ASSOCIATED(problem)) THEN
-        SELECT CASE(controlLoop%LOOP_TYPE)
-        CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
-          IF(.NOT.ALLOCATED(problem%specification)) THEN
-            CALL FlagError("Problem specification is not allocated.",err,error,*999)
-          ELSE IF(SIZE(problem%specification,1)<2) THEN
-            CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
-          END IF
-          SELECT CASE(problem%specification(2))
-          CASE(PROBLEM_LINEAR_ELASTICITY_TYPE,PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
-            !Do nothing
-          CASE(PROBLEM_FINITE_ELASTICITY_TYPE,PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
-            CALL FiniteElasticity_ControlLoadIncrementLoopPostLoop(controlLoop,err,error,*999)
-          CASE DEFAULT
-            localError="Problem type "//TRIM(NUMBER_TO_VSTRING(PROBLEM%SPECIFICATION(2),"*",err,error))// &
-              & " is not valid for a elasticity problem class."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          !do nothing
-        END SELECT
-      ELSE
-        CALL FlagError("Problem is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Control loop is not associated.",err,error,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    NULLIFY(problem)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
+    IF(SIZE(problem%specification,1)<2) &
+      & CALL FlagError("Problem specification must have at least two entries for an elasticity problem.",err,error,*999)
+    
+    SELECT CASE(problem%specification(2))      
+    CASE(PROBLEM_LINEAR_ELASTICITY_TYPE,PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE)
+      !Do nothing
+    CASE(PROBLEM_FINITE_ELASTICITY_TYPE,PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
+      CALL FiniteElasticity_PostLoop(controlLoop,err,error,*999)
+    CASE DEFAULT
+      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+        & " is not valid for a elasticity problem class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
     EXITS("Elasticity_ControlLoopPostLoop")
     RETURN
 999 ERRORSEXITS("Elasticity_ControlLoopPostLoop",err,error)
     RETURN 1
+    
   END SUBROUTINE Elasticity_ControlLoopPostLoop
 
   !
