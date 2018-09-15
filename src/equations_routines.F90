@@ -493,6 +493,8 @@ CONTAINS
     NULLIFY(equationsSet%equations%scalarEquations)
     NULLIFY(equationsSet%equations%vectorEquations)
     CALL Equations_VectorInitialise(equationsSet%equations,err,error,*999)
+    equationsSet%equations%jacobianCalculationType=EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
+    equationsSet%equations%jacobianFiniteDifferenceStepSize=1.0E-6_DP
        
     EXITS("Equations_Initialise")
     RETURN

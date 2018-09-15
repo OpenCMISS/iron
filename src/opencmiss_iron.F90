@@ -2392,6 +2392,8 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_Equations_JacobianMatricesTypesSet
 
+  PUBLIC cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
+
   PUBLIC cmfe_Equations_NumberOfLinearMatricesGet
 
   PUBLIC cmfe_Equations_NumberOfJacobianMatricesGet
@@ -25171,24 +25173,26 @@ CONTAINS
   !
 
   !>Setting Jacobian matrix evaluation type
-  SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet(equations,jacobianTypes,err)
+  SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet(equations,jacobianType,err)
     !DLLEXPORT(cmfe_Equations_JacobianMatricesTypesSet)
     
     !Argument variables
     TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian evaluation type for. 
-    INTEGER(INTG), INTENT(IN) :: jacobianTypes !<The type of Jacobian evaluation. \see OpenCMISS_EquationsJacobianCalculated 
+    INTEGER(INTG), INTENT(IN) :: jacobianType !<The type of Jacobian evaluation. \see OpenCMISS_EquationsJacobianCalculated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
-    TYPE(EquationsVectorType), POINTER :: vectorEquations 
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    !TYPE(EquationsVectorType), POINTER :: vectorEquations
+    !TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
 
     ENTERS("cmfe_Equations_JacobianMatricesTypesSet",err,error,*999)
 
-    NULLIFY(vectorEquations)
-    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)    
-    NULLIFY(vectorMatrices)
-    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[jacobianTypes],err,error,*999)
+    !NULLIFY(vectorEquations)
+    !CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    !NULLIFY(vectorMatrices)
+    !CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    !CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[jacobianTypes],err,error,*999)
+    CALL EquationsMatrices_JacobianTypesSet(equations%equations,jacobianType,err,error,*999)
+
 
     EXITS("cmfe_Equations_JacobianMatricesTypesSet")
     RETURN
@@ -25199,6 +25203,44 @@ CONTAINS
 
   END SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the finite difference step size used for calculating the Jacobian
+  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSet(equations,jacobianFiniteDifferenceStepSize,err)
+    !DLLEXPORT(cmfe_Equations_JacobianFiniteDifferenceStepSizeSet)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian finite difference step size for.
+    REAL(DP), INTENT(IN) :: jacobianFiniteDifferenceStepSize !<The finite difference step size to calculate the Jacobian with.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    !TYPE(EquationsVectorType), POINTER :: vectorEquations
+    !TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+
+    ENTERS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSet",err,error,*999)
+
+    !NULLIFY(vectorEquations)
+    !CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    !NULLIFY(vectorMatrices)
+    !CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+
+    !CALL Equations_JacobianMatrixGet(equations%equations, &
+    !  & residualIndex,variableType,matrix%distributedMatrix,err,error,*999)
+
+    CALL EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(equations%equations,jacobianFiniteDifferenceStepSize,err,error,*999)
+    !CALL EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,[jacobianFiniteDifferenceStepSize],err,error,*999)
+
+
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSet")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSet",err,error)
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSet")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
 
   !
   !================================================================================================================================
