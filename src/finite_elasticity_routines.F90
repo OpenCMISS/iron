@@ -10597,12 +10597,10 @@ CONTAINS
                     & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
-              !Set Jacobian matrices calculation type to default finite difference. 
-              !CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED], &
-              !  & err,error,*999)
-              !CALL EquationsMatrices_JacobianTypesSet(equations_set%equations,EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED, &
-              !  & err,error,*999)
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+              !Set Jacobian matrices calculation type to default finite difference. 
+              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                & EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
