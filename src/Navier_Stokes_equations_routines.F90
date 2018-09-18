@@ -2289,9 +2289,6 @@ CONTAINS
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
@@ -2313,6 +2310,9 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
               CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
                 !Finish the creation of the equations
                 CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
@@ -2329,9 +2329,6 @@ CONTAINS
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
@@ -2353,6 +2350,9 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -2417,8 +2417,6 @@ CONTAINS
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED],err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE, &
@@ -2441,6 +2439,9 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -2495,10 +2496,7 @@ CONTAINS
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
-                SELECT CASE(equations%sparsityType)
+               SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                     & err,error,*999)
@@ -2519,7 +2517,10 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
+               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)

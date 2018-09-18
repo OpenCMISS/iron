@@ -202,7 +202,9 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EquationsMatrices_JacobianOutput
 
-  PUBLIC EquationsMatrices_JacobianTypesSet
+  PUBLIC EquationsMatrices_JacobianCalculationTypeSet
+
+  PUBLIC EquationsMatrices_JacobianFiniteDifferenceStepSizeSet
 
   PUBLIC EquationsMatrices_LinearStorageTypeSet
 
@@ -351,6 +353,7 @@ CONTAINS
     CALL EquationsMatrices_ElementMatrixInitialise(nonlinearMatrices%jacobians(matrixNumber)%ptr%elementJacobian,err,error,*999)
     CALL EquationsMatrices_NodalMatrixInitialise(nonlinearMatrices%jacobians(matrixNumber)%ptr%nodalJacobian,err,error,*999)
     nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobianCalculationType=EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobianFiniteDifferenceStepSize=1.0E-6_DP
     
     EXITS("EquationsMatrices_JacobianInitialise")
     RETURN
@@ -2953,53 +2956,142 @@ CONTAINS
   !
 
   !>Sets the Jacobian calculation types of the residual variables
-  SUBROUTINE EquationsMatrices_JacobianTypesSet(vectorMatrices,jacobianTypes,err,error,*)
+  SUBROUTINE EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,residualIndex,variableTYpe,jacobianCalculationType, &
+    & err,error,*)
 
     !Argument variables
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices to set the Jacobian type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianTypes(:) !<jacobianTypes(matrixIdx). The Jacobian calculation type for the matrixIdx'th Jacobian matrix.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the matrixIdx'th Jacobian matrix.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: matrixIdx,variableIdx
     TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    INTEGER(INTG) :: matrixIdx,numberOfjacobians,jacobianType
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMatrices_JacobianTypesSet",err,error,*999)
+    ENTERS("EquationsMatrices_JacobianCalculationTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
-    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+    IF(.NOT.vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector matrices have not been finished.",err,error,*999)
+    IF(residualIndex/=1) CALL FlagError("Multiple residual vectors are not yet implemented.",err,error,*999)
 
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
-    numberOfJacobians=SIZE(jacobianTypes,1)
-    IF(numberOfJacobians/=nonlinearMatrices%numberOfJacobians) THEN
-      localError="Invalid number of Jacobian calculation types. The number of types "// &
-        & TRIM(NumberToVString(numberOfJacobians,"*",err,error))//" should be "// &
-        & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)      
-    ENDIF
-     
-    DO matrixIdx=1,numberOfJacobians
-      jacobianType=jacobianTypes(matrixIdx)
-      NULLIFY(jacobianMatrix)
-      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
-      SELECT CASE(jacobianType)
-      CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
-        jacobianMatrix%jacobianCalculationType=jacobianType
-      CASE DEFAULT
-        localError="The Jacobian calculation type of "//TRIM(NumberToVString(jacobianType,"*",err,error))//" is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ENDDO !matrixIdx
+    NULLIFY(nonlinearMapping)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    
+    !Find Jacobian matrix index using the nonlinear equations mapping
+    matrixIdx=0
+    DO variableIdx=1,nonlinearMapping%numberOfResidualVariables
+      IF(nonlinearMapping%residualVariables(variableIdx)%ptr%VARIABLE_TYPE==variableType) THEN
+        matrixIdx=nonlinearMapping%varToJacobianMap(variableIdx)%jacobianNumber
+        EXIT
+      END IF
+    END DO
+    IF(matrixIdx==0) THEN
+      CALL FlagError("Equations do not have a Jacobian matrix for residual index "// &
+        & TRIM(NumberToVstring(residualIndex,"*",err,error))//" and variable type "// &
+        & TRIM(NumberToVstring(variableType,"*",err,error))//".",err,error,*999)
+    END IF
 
-    EXITS("EquationsMatrices_JacobianTypesSet")
+    !Now get Jacobian matrix using the matrix index
+    NULLIFY(jacobianMatrix)
+    CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+    
+    SELECT CASE(jacobianCalculationType)
+    CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
+      jacobianMatrix%jacobianCalculationType=EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
+    CASE(EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
+      jacobianMatrix%jacobianCalculationType=EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED
+    CASE DEFAULT
+      localError="The specified Jacobian calculation type of "//TRIM(NumberToVString(jacobianCalculationType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("EquationsMatrices_JacobianCalculationTypeSet")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_JacobianTypesSet",err,error)
+999 ERRORS("EquationsMatrices_JacobianCalculationTypeSet",err,error)
+    EXITS("EquationsMatrices_JacobianCalculationTypeSet")
     RETURN 1
     
-  END SUBROUTINE EquationsMatrices_JacobianTypesSet
+  END SUBROUTINE EquationsMatrices_JacobianCalculationTypeSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the finite difference step size used for calculating the Jacobian
+  SUBROUTINE EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,residualIndex,variableType, &
+    & jacobianStepSize,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices to set the Jacobian step size for.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to set the Jacobian step size for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian
+    REAL(DP), INTENT(IN) :: jacobianStepSize !<The finite difference step size for the Jacobian matrix. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx,variableIdx
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMatrices_JacobianFiniteDifferenceStepSizesSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+    IF(.NOT.vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector matrices have not been finished.",err,error,*999)
+    IF(residualIndex/=1) CALL FlagError("Multiple residual vectors are not yet implemented.",err,error,*999)
+
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    NULLIFY(nonlinearMapping)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    
+    !Find Jacobian matrix index using the nonlinear equations mapping
+    matrixIdx=0
+    DO variableIdx=1,nonlinearMapping%numberOfResidualVariables
+      IF(nonlinearMapping%residualVariables(variableIdx)%ptr%VARIABLE_TYPE==variableType) THEN
+        matrixIdx=nonlinearMapping%varToJacobianMap(variableIdx)%jacobianNumber
+        EXIT
+      END IF
+    END DO
+    IF(matrixIdx==0) THEN
+      CALL FlagError("Equations do not have a Jacobian matrix for residual index "// &
+        & TRIM(NumberToVstring(residualIndex,"*",err,error))//" and variable type "// &
+        & TRIM(NumberToVstring(variableType,"*",err,error))//".",err,error,*999)
+    END IF
+
+    !Now get Jacobian matrix using the matrix index
+    NULLIFY(jacobianMatrix)
+    CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+    
+    IF(jacobianStepSize<=ZERO_TOLERANCE) THEN
+      localError="The specified Jacobian step size of "//TRIM(NumberToVString(jacobianStepSize,"*",err,error))// &
+        & " is invalid. The step size must be >= "//TRIM(NumberToVString(ZERO_TOLERANCE,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    jacobianMatrix%jacobianFiniteDifferenceStepSize=jacobianStepSize
+
+    EXITS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet")
+    RETURN
+999 ERRORS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet",err,error)
+    EXITS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet")
+    RETURN 1
+
+  END SUBROUTINE EquationsMatrices_JacobianFiniteDifferenceStepSizeSet
 
   !
   !================================================================================================================================

@@ -650,11 +650,12 @@ CONTAINS
 
   !>Evaluates the spatial elasticity and stress tensor in Voigt form at a given Gauss point.
   SUBROUTINE FINITE_ELASTICITY_GAUSS_ELASTICITY_TENSOR(EQUATIONS_SET,DEPENDENT_INTERPOLATED_POINT, &
-      & MATERIALS_INTERPOLATED_POINT,ELASTICITY_TENSOR,HYDRO_ELASTICITY_VOIGT,STRESS_TENSOR,DZDNU, &
+      & MATERIALS_INTERPOLATED_POINT,INDEPENDENT_INTERPOLATED_POINT,ELASTICITY_TENSOR,HYDRO_ELASTICITY_VOIGT,STRESS_TENSOR,DZDNU, &
       & Jznu,ELEMENT_NUMBER,GAUSS_POINT_NUMBER,ERR,ERROR,*)
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: EQUATIONS_SET !<A pointer to the equations set
-    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: DEPENDENT_INTERPOLATED_POINT,MATERIALS_INTERPOLATED_POINT
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: DEPENDENT_INTERPOLATED_POINT,MATERIALS_INTERPOLATED_POINT, &
+      & INDEPENDENT_INTERPOLATED_POINT
     REAL(DP), INTENT(OUT) :: ELASTICITY_TENSOR(:,:) !< Rank 4 elasticity tensor in Voigt notation
     REAL(DP), INTENT(OUT) :: HYDRO_ELASTICITY_VOIGT(:) !<Rank 2 hydrostatic portion of the elasticity tensor in Voigt notation
     REAL(DP), INTENT(OUT) :: STRESS_TENSOR(:) !< Rank 2 stress tensor in Voigt notation
@@ -664,8 +665,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    INTEGER(INTG) :: PRESSURE_COMPONENT,i,j,dof_idx
-    REAL(DP) :: P, I1, I3
+    INTEGER(INTG) :: PRESSURE_COMPONENT,i,j,dof_idx,component_idx
+    REAL(DP) :: P, I1, I3, lambda(3)
     REAL(DP) :: DZDNUT(3,3),AZL(3,3),AZU(3,3),TEMP(3,3)
     REAL(DP) :: AZLv(6), AZUv(6) !<Voigt forms of the C and C^-1 tensors.
     REAL(DP) :: TEMPTERM1,TEMPTERM2,VALUE
@@ -805,15 +806,28 @@ CONTAINS
       TEMPTERM1=0.5_DP*C(1)*EXP(0.5_DP*DOT_PRODUCT(E,DQ_DE))
       !Calculate 2nd Piola tensor (in Voigt form)
       STRESS_TENSOR=TEMPTERM1*DQ_DE + P*AZUv
+      !lambda = 1.0_DP
+      !lambda(1) = SQRT(AZL(1,1))
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE) THEN
         !add active contraction stress values
         CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,ERR,ERROR,*999)
-        DO i=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-          dof_idx=FIELD_VARIABLE%COMPONENTS(i)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
-            & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
-          CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-            & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,ERR,ERROR,*999)
-          STRESS_TENSOR(i)=STRESS_TENSOR(i)+VALUE
+        DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
+          SELECT CASE(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            VALUE=0.1_DP
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
+              & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
+            CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,err,error,*999)
+          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+            VALUE=INDEPENDENT_INTERPOLATED_POINT%VALUES(component_idx,NO_PART_DERIV)
+          CASE DEFAULT
+            LOCAL_ERROR="This independent field variable interpolation type is not supported."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
+          END SELECT
+          STRESS_TENSOR(component_idx)=STRESS_TENSOR(component_idx)+VALUE
+          !STRESS_TENSOR(component_idx)=STRESS_TENSOR(component_idx)+VALUE*(1.0_DP+1.45_DP*(lambda(component_idx)-1.0_DP))
         ENDDO
       ENDIF
 
@@ -982,7 +996,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: geometricInterpPoint,fibreInterpPoint, &
-      & materialsInterpPoint,dependentInterpPoint
+      & materialsInterpPoint,dependentInterpPoint,independentInterpPoint
     TYPE(FIELD_INTERPOLATED_POINT_METRICS_TYPE), POINTER :: geometricInterpPointMetrics, &
       & dependentInterpPointMetrics
     TYPE(EquationsType), POINTER :: equations
@@ -992,7 +1006,7 @@ CONTAINS
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD,FIBRE_FIELD
+    TYPE(FIELD_TYPE), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,MATERIALS_FIELD,FIBRE_FIELD,INDEPENDENT_FIELD
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: DEPENDENT_QUADRATURE_SCHEME
     INTEGER(INTG) :: EQUATIONS_SET_SUBTYPE
@@ -1018,6 +1032,8 @@ CONTAINS
           END IF
           MATERIALS_FIELD=>equations%interpolation%materialsField
           FIBRE_FIELD=>equations%interpolation%fibreField
+          INDEPENDENT_FIELD=>equations%interpolation%independentField
+
 
           DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(DEPENDENT_FIELD%DECOMPOSITION%MESH_COMPONENT_NUMBER)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(ELEMENT_NUMBER)%BASIS
@@ -1050,6 +1066,10 @@ CONTAINS
             CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
               & fibreInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
           END IF
+          IF(ASSOCIATED(INDEPENDENT_FIELD)) THEN
+            CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,ELEMENT_NUMBER,equations%interpolation% &
+              & independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+          END IF
 
           !Point interpolation pointer
           geometricInterpPoint=>equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
@@ -1069,6 +1089,9 @@ CONTAINS
             fibreInterpPoint=>equations%interpolation%fibreInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
           END IF
           materialsInterpPoint=>equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+          IF(ASSOCIATED(INDEPENDENT_FIELD)) THEN
+            independentInterpPoint=>equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+          END IF
           
           SUM_ELEMENT_PARAMETERS=0
           !Loop over geometric dependent basis functions.
@@ -1129,7 +1152,7 @@ CONTAINS
               & geometricInterpPointMetrics,fibreInterpPoint,dZdNu,err,error,*999)
 
             CALL FINITE_ELASTICITY_GAUSS_ELASTICITY_TENSOR(EQUATIONS_SET,dependentInterpPoint, &
-              & materialsInterpPoint,ELASTICITY_TENSOR,HYDRO_ELASTICITY_VOIGT,STRESS_TENSOR, &
+              & materialsInterpPoint,independentInterpPoint,ELASTICITY_TENSOR,HYDRO_ELASTICITY_VOIGT,STRESS_TENSOR, &
               & DZDNU,Jznu,ELEMENT_NUMBER,ng,ERR,ERROR,*999)
 
             !Convert from Voigt form to tensor form.
@@ -1738,8 +1761,9 @@ CONTAINS
     ENDIF
     IF(DARCY_DEPENDENT) THEN
       DARCY_DEPENDENT_INTERPOLATED_POINT=>equations%interpolation%dependentInterpPoint(FIELD_V_VARIABLE_TYPE)%ptr
-    ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE) THEN
-      INDEPENDENT_INTERPOLATED_POINT=>equations%interpolation%independentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
+    ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE .OR. &
+      & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE) THEN
+      INDEPENDENT_INTERPOLATION_PARAMETERS=>equations%interpolation%independentInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr
     ENDIF
     IF(ASSOCIATED(SOURCE_FIELD)) THEN
       SOURCE_INTERPOLATED_POINT=>equations%interpolation%sourceInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr
@@ -1872,35 +1896,6 @@ CONTAINS
         CALL FiniteElasticity_SurfacePressureResidualEvaluate(EQUATIONS_SET,elementNumber,var1,var2,err,error,*999)
       ENDIF
       
-      !Scale factor adjustment
-      IF(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-        ! Following function is necessary, otherwise wrong face scale factors from function call to surface pressure residual are
-        ! used.
-        CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber, &
-          & DEPENDENT_INTERPOLATION_PARAMETERS,err,error,*999) 
-        mhs=0          
-        DO mh=1,numberOfDimensions
-          MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-          !Loop over residual vector
-          DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
-            mhs=mhs+1
-            nonlinearMatrices%elementResidual%vector(mhs)=nonlinearMatrices%elementResidual%vector(mhs)* &
-              & DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(ms,mh)
-          ENDDO !ms
-        ENDDO !mh
-        IF(FIELD_VARIABLE%COMPONENTS(mh)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
-          MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr% &
-            & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
-          DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
-            mhs=mhs+1 
-            nonlinearMatrices%elementResidual%vector(mhs)=nonlinearMatrices%elementResidual%vector(mhs)* &
-              & DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(ms,mh)
-          ENDDO
-        ENDIF
-      ENDIF
       
       ! ---------------------------------------------------------------
     CASE(EQUATIONS_SET_NO_SUBTYPE,EQUATIONS_SET_MEMBRANE_SUBTYPE, &
@@ -1943,11 +1938,12 @@ CONTAINS
         CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
           & MATERIALS_INTERPOLATED_POINT,err,error,*999)
         IF(DARCY_DEPENDENT) THEN
-          CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
-            & DARCY_DEPENDENT_INTERPOLATED_POINT,err,error,*999)
-        ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE) THEN
-          CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gauss_idx, &
-            & INDEPENDENT_INTERPOLATED_POINT,err,error,*999)
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber, &
+            & DARCY_DEPENDENT_INTERPOLATION_PARAMETERS,err,error,*999)
+        ELSE IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE .OR. &
+          & EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE) THEN
+          CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber, &
+            & INDEPENDENT_INTERPOLATION_PARAMETERS,err,error,*999)
         ENDIF
         
         !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
@@ -2001,7 +1997,7 @@ CONTAINS
           DARCY_MASS_INCREASE = DARCY_DEPENDENT_INTERPOLATED_POINT%VALUES(4,NO_PART_DERIV) 
           DARCY_VOL_INCREASE = DARCY_MASS_INCREASE / DARCY_RHO_0_F
         ENDIF
-        
+            
         !For membrane theory in 3D space, the final equation is multiplied by thickness. Default to unit thickness if equation set subtype is not membrane
         THICKNESS = 1.0_DP
         IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
@@ -2080,6 +2076,7 @@ CONTAINS
             nonlinearMatrices%elementResidual%vector(element_dof_idx)= &
               & nonlinearMatrices%elementResidual%vector(element_dof_idx)+TEMPTERM1              
           ENDIF
+         
         ENDIF
         
         IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
@@ -3546,33 +3543,67 @@ CONTAINS
     ELSE
       CALL FlagError("RHS vector is not associated.",err,error,*999)
     ENDIF
-
+        
     !Scale factor adjustment
     IF(DEPENDENT_FIELD%SCALINGS%SCALING_TYPE/=FIELD_NO_SCALING) THEN
-      CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,equations%interpolation% &
-        & dependentInterpParameters(FIELD_VAR_TYPE)%ptr,err,error,*999)
-      mhs=0          
-      DO mh=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-        !Loop over element rows
-        DEPENDENT_COMPONENT_INTERPOLATION_TYPE=DEPENDENT_FIELD%VARIABLES(FIELD_VAR_TYPE)%COMPONENTS(mh)%INTERPOLATION_TYPE
-        IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
-          DEPENDENT_BASIS=>DEPENDENT_FIELD%VARIABLES(FIELD_VAR_TYPE)%COMPONENTS(mh)%DOMAIN%TOPOLOGY% &
-            & ELEMENTS%ELEMENTS(elementNumber)%BASIS
-          DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
-            mhs=mhs+1
-            nonlinearMatrices%elementResidual%vector(mhs)=nonlinearMatrices%elementResidual%vector(mhs)* &
-              & EQUATIONS%INTERPOLATION%dependentInterpParameters(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ms,mh)
-            IF(ASSOCIATED(rhsVector)) THEN
-              IF(ASSOCIATED(SOURCE_FIELD)) THEN
-                IF(rhsVector%updateVector) rhsVector%elementVector%vector(mhs)=rhsVector%elementVector%vector(mhs)* &
-                  & EQUATIONS%INTERPOLATION%dependentInterpParameters(FIELD_VAR_TYPE)%PTR%SCALE_FACTORS(ms,mh)
-              ENDIF
+      ! Following function is necessary, otherwise wrong face scale factors from function call to surface pressure residual are
+      ! used.
+      CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber, &
+        & DEPENDENT_INTERPOLATION_PARAMETERS,err,error,*999) 
+      rowElementDofIdx=0          
+      DO rowComponentIdx=1,numberOfDimensions
+        MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(rowElementDofIdx)%MESH_COMPONENT_NUMBER
+        DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr% &
+          & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+        !Loop over residual vector
+        DO rowElementParameterIdx=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+          rowElementDofIdx=rowElementDofIdx+1
+          nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)=nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)* &
+            & DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(rowElementParameterIdx,rowComponentIdx)
+          IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+            & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
+            IF(massMatrix%updateMatrix) THEN
+              columnElementDofIdx=0
+              !Loop over element columns
+              DO columnComponentIdx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS-1
+                DO columnElementParameterIdx=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+                  columnElementDofIdx=columnElementDofIdx+1
+                  massMatrix%elementMatrix%matrix(rowElementDofIdx,columnElementDofIdx)= &
+                    & massMatrix%elementMatrix%matrix(rowElementDofIdx,columnElementDofIdx)* &
+                    & DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(rowElementParameterIdx,rowComponentIdx)* &
+                    & DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(columnElementParameterIdx,columnComponentIdx)
+                ENDDO !columnElementParameterIdx
+              ENDDO !columnComponentIdx              
             ENDIF
-          ENDDO !ms
-        ENDIF
-      ENDDO !mh
+          ENDIF
+          IF(ASSOCIATED(rhsVector)) THEN
+            IF(ASSOCIATED(SOURCE_FIELD)) THEN
+              IF(rhsVector%updateVector) rhsVector%elementVector%vector(rowElementDOFIdx)= &
+                & rhsVector%elementVector%vector(rowElementDOFIdx)* &
+                & DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(rowElementParameterIdx,rowComponentIdx)
+            ENDIF
+          ENDIF
+        ENDDO !rowElementParameterIdx
+      ENDDO !rowComponentIdx
+      IF(FIELD_VARIABLE%COMPONENTS(numberOfDimensions+1)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
+        MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(numberOfDimensions+1)%MESH_COMPONENT_NUMBER
+        DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr% &
+          & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
+        DO rowElementParameterIdx=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
+          rowElementDOFIdx=rowElementDOFIdx+1 
+          nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)=nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)* &
+            & DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(rowElementParameterIdx,numberOfDimensions+1)
+          IF(ASSOCIATED(rhsVector)) THEN
+            IF(ASSOCIATED(SOURCE_FIELD)) THEN
+              IF(rhsVector%updateVector) rhsVector%elementVector%vector(rowElementDOFIdx)= &
+                & rhsVector%elementVector%vector(rowElementDOFIdx)* &
+                & DEPENDENT_INTERPOLATION_PARAMETERS%SCALE_FACTORS(rowElementParameterIdx,numberOfDimensions+1)
+            ENDIF
+          ENDIF
+        ENDDO !ms
+      ENDIF
     ENDIF
-
+    
     IF(DIAGNOSTICS5) THEN
       !Output element residual vector for first element
       IF(elementNumber == 1) THEN
@@ -5444,7 +5475,7 @@ CONTAINS
     REAL(DP) :: a, B(3,3), Q !Parameters for orthotropic laws
     REAL(DP) :: ffact,dfdJfact !coupled elasticity Darcy
     INTEGER(INTG) :: DARCY_MASS_INCREASE_ENTRY !position of mass-increase entry in dependent-variable vector
-    REAL(DP) :: VALUE,VAL1,VAL2
+    REAL(DP) :: VALUE,VAL1,VAL2,lambda(3)
     REAL(DP) :: WV_PRIME,TOL,TOL1,UP,LOW
     REAL(DP) :: F_e(3,3),F_a(3,3),F_a_inv(3,3),F_a_T(3,3),C_a(3,3),C_a_inv(3,3),lambda_a,C_e(3,3),F_e_T(3,3)
     REAL(DP) :: REFERENCE_VOLUME,XB_STIFFNESS,XB_DISTORTION,V_MAX
@@ -6758,13 +6789,26 @@ CONTAINS
       !add active contraction stress value to the trace of the stress tensor - basically adding to hydrostatic pressure.
       !the active stress is stored inside the independent field that has been set up in the user program.
       !for generality we could set up 3 components in independent field for 3 different active stress components
+        lambda = 1.0_DP
+        !lambda(1) = SQRT(AZL(1,1))
         CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
         DO component_idx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS
-          dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
-            & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
-          CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-            & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,err,error,*999)
-          PIOLA_TENSOR(component_idx,component_idx)=PIOLA_TENSOR(component_idx,component_idx)+VALUE
+          SELECT CASE(FIELD_VARIABLE%COMPONENTS(component_idx)%INTERPOLATION_TYPE)
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            VALUE=0.1_DP
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            dof_idx=FIELD_VARIABLE%COMPONENTS(component_idx)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP% &
+              & GAUSS_POINTS(GAUSS_POINT_NUMBER,ELEMENT_NUMBER)
+            CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,err,error,*999)
+          CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+            VALUE=INDEPENDENT_INTERPOLATED_POINT%VALUES(component_idx,NO_PART_DERIV)
+          CASE DEFAULT
+            LOCAL_ERROR="This independent field variable interpolation type is not supported."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
+          END SELECT
+          PIOLA_TENSOR(component_idx,component_idx)=PIOLA_TENSOR(component_idx,component_idx)+ &
+            & VALUE*(1.0_DP+1.45_DP*(lambda(component_idx)-1.0_DP))/DZDNU(component_idx,component_idx)
         ENDDO
       ENDIF
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE)
@@ -8344,7 +8388,7 @@ CONTAINS
                   CALL FlagError(LOCAL_ERROR,err,error,*999)
                 END SELECT
 
-              ELSE !EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED
+              ELSE !.NOT. EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED
 
                 !Check the user specified field
                 CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
@@ -9774,31 +9818,64 @@ CONTAINS
              & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE, EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
              & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE)
              NUMBER_OF_COMPONENTS = 3 !one contractile stress value for each of the three directions
-             IF(EQUATIONS_SET%SOLUTION_METHOD /= EQUATIONS_SET_FEM_SOLUTION_METHOD .OR. &
-               &.NOT. EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
+             IF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD_AUTO_CREATED) THEN
+               CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%INDEPENDENT% &
+                 & INDEPENDENT_FIELD,err,error,*999)
+               CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+
+               CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_INDEPENDENT_TYPE, &
+                 & err,error,*999)
+               CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
+               CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
+                 & err,error,*999)
+
+               CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
+                 & GEOMETRIC_FIELD,err,error,*999)
+               CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
+                 & NUMBER_OF_COMPONENTS,err,error,*999)
+
+               !Set component to be gauss point based
+               DO component_idx=1,NUMBER_OF_COMPONENTS
+                 CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
+                   & FIELD_U_VARIABLE_TYPE,component_idx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,err,error,*999)
+               ENDDO
+             ELSE
+               !Check the user specified field
+               CALL Field_TypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_GENERAL_TYPE,err,error,*999)
+               CALL Field_DependentTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
+               CALL Field_NumberOfVariablesCheck(EQUATIONS_SET_SETUP%FIELD,1,err,error,*999)
+               CALL Field_VariableTypesCheck(EQUATIONS_SET_SETUP%FIELD,[FIELD_U_VARIABLE_TYPE],err,error,*999)
+               CALL Field_DimensionCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+                  & err,error,*999)
+               CALL Field_DataTypeCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+               CALL Field_NumberOfComponentsGet(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
+                 & numberOfDimensions,err,error,*999)
+               CALL Field_NumberOfComponentsCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
+                 & err,error,*999)
+             ENDIF!EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED
+             SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
+             CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
+               !Check field interpolation
+               !TODO: Field_ComponentInterpolationCheck only checks for a specific type of interpolation and does not check against multiple interpolation types that could be valid
+               !DO component_idx=1,NUMBER_OF_COMPONENTS
+               !  CALL Field_ComponentInterpolationCheck(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
+               !    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+               !ENDDO !component_idx
+             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                CALL FlagError("Not implemented.",err,error,*999)
-             END IF
-             CALL FIELD_CREATE_START(EQUATIONS_SET_SETUP%FIELD_USER_NUMBER,EQUATIONS_SET%REGION,EQUATIONS_SET%INDEPENDENT% &
-               & INDEPENDENT_FIELD,err,error,*999)
-             CALL FIELD_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_GENERAL_TYPE,err,error,*999)
-
-             CALL FIELD_DEPENDENT_TYPE_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_INDEPENDENT_TYPE, &
-               & err,error,*999)
-             CALL FIELD_MESH_DECOMPOSITION_GET(EQUATIONS_SET%GEOMETRY%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION,err,error,*999)
-             CALL FIELD_MESH_DECOMPOSITION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,GEOMETRIC_DECOMPOSITION, &
-               & err,error,*999)
-
-             CALL FIELD_GEOMETRIC_FIELD_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,EQUATIONS_SET%GEOMETRY% &
-               & GEOMETRIC_FIELD,err,error,*999)
-             CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-               & NUMBER_OF_COMPONENTS,err,error,*999)
-             
-             !Set component to be gauss point based 
-             DO component_idx=1,NUMBER_OF_COMPONENTS 
-               CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD, &
-                 & FIELD_U_VARIABLE_TYPE,component_idx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,err,error,*999)
-             ENDDO
-
+             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
+               CALL FlagError("Not implemented.",err,error,*999)
+             CASE(EQUATIONS_SET_FV_SOLUTION_METHOD)
+               CALL FlagError("Not implemented.",err,error,*999)
+             CASE(EQUATIONS_SET_GFEM_SOLUTION_METHOD)
+               CALL FlagError("Not implemented.",err,error,*999)
+             CASE(EQUATIONS_SET_GFV_SOLUTION_METHOD)
+               CALL FlagError("Not implemented.",err,error,*999)
+             CASE DEFAULT
+               LOCAL_ERROR="The solution method of "//TRIM(NumberToVString(EQUATIONS_SET%SOLUTION_METHOD,"*",err,error))// &
+                 & " is invalid."
+               CALL FlagError(LOCAL_ERROR,err,error,*999)
+             END SELECT
 
            ! COUPLED DARCY
            CASE(EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE, &
@@ -10854,10 +10931,10 @@ CONTAINS
                   & TRIM(NumberToVString(EQUATIONS%sparsityType,"*",err,error))//" is invalid."
                 CALL FlagError(LOCAL_ERROR,err,error,*999)
               END SELECT
-              !Set Jacobian matrices calculation type to default finite difference. 
-              CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED], &
-                & err,error,*999)
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+              !Set Jacobian matrices calculation type to default finite difference. 
+              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                & EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
