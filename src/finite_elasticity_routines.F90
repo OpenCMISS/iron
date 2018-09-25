@@ -867,20 +867,21 @@ CONTAINS
       !W = lambda/2.[tr(E)]^2+mu.tr(E^2)+p/2*(I3-1)^2
       !S = lambda.tr(E).I + 2.mu.E + p*J*C^(-1)
       
+      E=[0.5_DP*(AZL(1,1)-1.0_DP),0.5_DP*(AZL(2,2)-1.0_DP),0.5_DP*(AZL(3,3)-1.0_DP),AZL(2,1),AZL(3,1),AZL(3,2)] !(Modified) strain tensor in Voigt form.
       PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
       P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       
        !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
-      I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
+      I1=E(1)+E(2)+E(3)
       TEMPTERM1=C(2)*I1
       TEMPTERM2=2.0_DP*C(3)
-      STRESS_TENSOR(1)=TEMPTERM1+TEMPTERM2*AZL(1,1)
-      STRESS_TENSOR(2)=TEMPTERM1+TEMPTERM2*AZL(2,2)
-      STRESS_TENSOR(3)=TEMPTERM1+TEMPTERM2*AZL(3,3)
-      STRESS_TENSOR(4)=TEMPTERM2*AZL(2,1)
-      STRESS_TENSOR(5)=TEMPTERM2*AZL(3,1)
-      STRESS_TENSOR(6)=TEMPTERM2*AZL(3,2)
-      
+      STRESS_TENSOR(1)=TEMPTERM1+TEMPTERM2*E(1)+P*AZU(1,1)
+      STRESS_TENSOR(4)=TEMPTERM2*E(4)+P*AZU(1,2)
+      STRESS_TENSOR(5)=TEMPTERM2*E(5)+P*AZU(1,3)
+      STRESS_TENSOR(2)=TEMPTERM1+TEMPTERM2*E(2)+P*AZU(2,2)
+      STRESS_TENSOR(6)=TEMPTERM2*E(6)+P*AZU(2,3)
+      STRESS_TENSOR(3)=TEMPTERM1+TEMPTERM2*E(3)+P*AZU(3,3)
+           
       ELASTICITY_TENSOR(1,1)=C(2)+2.0_DP*C(3)      
       ELASTICITY_TENSOR(1,2)=C(2)
       ELASTICITY_TENSOR(1,3)=C(2)
@@ -904,11 +905,8 @@ CONTAINS
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
-      
-      !Add volumetric parts.
-      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)+P
-
-    CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+     
+     CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
       !Form of constitutive model is:
       ! W=c1*(I1-3)+c2*(I2-3)+p/2*(I3-1)
 
@@ -919,12 +917,12 @@ CONTAINS
       I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
       TEMPTERM1=-2.0_DP*C(3)
       TEMPTERM2=2.0_DP*(C(2)+I1*C(3))
-      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2
-      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2
-      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2
-      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)
-      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
-      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
+      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2+P*AZUv(1)
+      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2+P*AZUv(2)
+      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2+P*AZUv(3)
+      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)+P*AZUv(4)
+      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)+P*AZUv(5)
+      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)+P*AZUv(6)
       ! Calculate material elasticity tensor (in Voigt form) as
       ! this will be compensated for in the push-forward with the modified deformation gradient.
       TEMPTERM1=2.0_DP*C(3)
@@ -948,10 +946,7 @@ CONTAINS
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
-
-      ! Add volumetric parts.
-      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)+P
-
+ 
     CASE DEFAULT
       LOCAL_ERROR="Analytic Jacobian has not been implemented for the third equations set specification of "// &
         & TRIM(NumberToVString(EQUATIONS_SET%specification(3),"*",ERR,ERROR))
@@ -2083,7 +2078,7 @@ CONTAINS
           & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
           IF(massMatrix%updateMatrix) THEN
             !Compute mass matrix
-            density=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)
+            density=MATERIALS_INTERPOLATED_POINT%VALUES(1,1)/Jznu
             !Loop over field components
             rowElementDofIdx=0          
             DO rowComponentIdx=1,FIELD_VARIABLE%NUMBER_OF_COMPONENTS-1
@@ -3552,7 +3547,7 @@ CONTAINS
         & DEPENDENT_INTERPOLATION_PARAMETERS,err,error,*999) 
       rowElementDofIdx=0          
       DO rowComponentIdx=1,numberOfDimensions
-        MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(rowElementDofIdx)%MESH_COMPONENT_NUMBER
+        MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(rowComponentIdx)%MESH_COMPONENT_NUMBER
         DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr% &
           & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
         !Loop over residual vector
@@ -7054,86 +7049,48 @@ CONTAINS
       ! Form of constitutive model is:
       ! W = 0.5*lambda*tr(E)^2 + mu*tr(E^2) + p/2*(I3-1)^2
       ! S = dW/dE = lambda*tr(E)*I + 2*mu*E + p*J*C^(-1)
-
-!!TODO: Should we add in hydrostatic pressure?
-      
-      MOD_DZDNU=DZDNU*Jznu**(-1.0_DP/3.0_DP)
-      CALL MatrixTranspose(MOD_DZDNU,MOD_DZDNUT,err,error,*999)
-      CALL MatrixProduct(MOD_DZDNUT,MOD_DZDNU,AZL,err,error,*999)
-      
       !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
-      I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
+      
+      I1=E(1,1)+E(2,2)+E(3,3)
       TEMPTERM1=C(2)*I1
       TEMPTERM2=2.0_DP*C(3)
-      STRESS_TENSOR(1)=TEMPTERM1+TEMPTERM2*AZL(1,1)+2.0_DP*P*AZU(1,1)
-      STRESS_TENSOR(4)=TEMPTERM2*AZL(1,2)+2.0_DP*P*AZU(1,2)
-      STRESS_TENSOR(5)=TEMPTERM2*AZL(1,3)+2.0_DP*P*AZU(1,3)
-      STRESS_TENSOR(2)=TEMPTERM1+TEMPTERM2*AZL(2,2)+2.0_DP*P*AZU(2,2)
-      STRESS_TENSOR(6)=TEMPTERM2*AZL(2,3)+2.0_DP*P*AZU(2,3)
-      STRESS_TENSOR(3)=TEMPTERM1+TEMPTERM2*AZL(3,3)+2.0_DP*P*AZU(3,3)
-      !Do push-forward of 2nd Piola tensor. 
-      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,MOD_DZDNU,Jznu,err,error,*999)
-      !Calculate isochoric Cauchy tensor (the deviatoric part) and add the volumetric part (the hydrostatic pressure).
-      ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:3))/3.0_DP
-      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)-ONETHIRD_TRACE+P
+      PIOLA_TENSOR(1,1)=TEMPTERM1+TEMPTERM2*E(1,1)+P*AZU(1,1)
+      PIOLA_TENSOR(1,2)=TEMPTERM2*E(1,2)+P*AZU(1,2)
+      PIOLA_TENSOR(1,3)=TEMPTERM2*E(1,3)+P*AZU(1,3)
+      PIOLA_TENSOR(2,2)=TEMPTERM1+TEMPTERM2*E(2,2)+P*AZU(2,2)
+      PIOLA_TENSOR(2,3)=TEMPTERM2*E(2,3)+P*AZU(2,3)
+      PIOLA_TENSOR(3,3)=TEMPTERM1+TEMPTERM2*E(3,3)+P*AZU(3,3)
+      PIOLA_TENSOR(2,1)=PIOLA_TENSOR(1,2)
+      PIOLA_TENSOR(3,1)=PIOLA_TENSOR(1,3)
+      PIOLA_TENSOR(3,2)=PIOLA_TENSOR(2,3)
      
-      CAUCHY_TENSOR(1,1)=STRESS_TENSOR(1)
-      CAUCHY_TENSOR(2,2)=STRESS_TENSOR(2)
-      CAUCHY_TENSOR(3,3)=STRESS_TENSOR(3)
-      CAUCHY_TENSOR(1,2)=STRESS_TENSOR(4)
-      CAUCHY_TENSOR(1,3)=STRESS_TENSOR(5)
-      CAUCHY_TENSOR(2,3)=STRESS_TENSOR(6)
-      CAUCHY_TENSOR(2,1)=CAUCHY_TENSOR(1,2)
-      CAUCHY_TENSOR(3,1)=CAUCHY_TENSOR(1,3)
-      CAUCHY_TENSOR(3,2)=CAUCHY_TENSOR(2,3)
-      
     CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
       !Form of constitutive model is:
       ! W_hat=c1*(I1_hat-3)+c2*(I2_hat-3)+p*J*C^(-1)
 
-      MOD_DZDNU=DZDNU*Jznu**(-1.0_DP/3.0_DP)
-      CALL MatrixTranspose(MOD_DZDNU,MOD_DZDNUT,err,error,*999)
-      CALL MatrixProduct(MOD_DZDNUT,MOD_DZDNU,AZL,err,error,*999)
-      
       !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
       I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
       TEMPTERM1=-2.0_DP*C(2)
       TEMPTERM2=2.0_DP*(C(1)+I1*C(2))
-      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2
-      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2
-      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2
-      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)
-      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
-      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
-
-      !Do push-forward of 2nd Piola tensor. 
-      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,MOD_DZDNU,Jznu,err,error,*999)
-      !Calculate isochoric Cauchy tensor (the deviatoric part) and add the volumetric part (the hydrostatic pressure).
-      ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:3))/3.0_DP
-      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)-ONETHIRD_TRACE+P
+      PIOLA_TENSOR(1,1)=TEMPTERM1*AZL(1,1)+TEMPTERM2+P*AZU(1,1)
+      PIOLA_TENSOR(2,2)=TEMPTERM1*AZL(2,2)+TEMPTERM2+P*AZU(2,2)
+      PIOLA_TENSOR(3,3)=TEMPTERM1*AZL(3,3)+TEMPTERM2+P*AZU(3,3)
+      PIOLA_TENSOR(1,2)=TEMPTERM1*AZL(2,1)+P*AZU(1,2)
+      PIOLA_TENSOR(1,3)=TEMPTERM1*AZL(3,1)+P*AZU(1,3)
+      PIOLA_TENSOR(2,3)=TEMPTERM1*AZL(3,2)+P*AZU(2,3)
+      PIOLA_TENSOR(2,1)=PIOLA_TENSOR(1,2)
+      PIOLA_TENSOR(3,1)=PIOLA_TENSOR(1,3)
+      PIOLA_TENSOR(3,2)=PIOLA_TENSOR(2,3)
      
-      CAUCHY_TENSOR(1,1)=STRESS_TENSOR(1)
-      CAUCHY_TENSOR(2,2)=STRESS_TENSOR(2)
-      CAUCHY_TENSOR(3,3)=STRESS_TENSOR(3)
-      CAUCHY_TENSOR(1,2)=STRESS_TENSOR(4)
-      CAUCHY_TENSOR(1,3)=STRESS_TENSOR(5)
-      CAUCHY_TENSOR(2,3)=STRESS_TENSOR(6)
-      CAUCHY_TENSOR(2,1)=CAUCHY_TENSOR(1,2)
-      CAUCHY_TENSOR(3,1)=CAUCHY_TENSOR(1,3)
-      CAUCHY_TENSOR(3,2)=CAUCHY_TENSOR(2,3)
-      
     CASE DEFAULT
       LOCAL_ERROR="The third equations set specification of "//TRIM(NumberToVString(EQUATIONS_SET_SUBTYPE,"*",err,error))// &
         & " is not valid for a finite elasticity type of an elasticity equation set."
       CALL FlagError(LOCAL_ERROR,err,error,*999)
     END SELECT
 
-    IF(EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.AND. &
-      & EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
-      CALL MatrixProduct(DZDNU,PIOLA_TENSOR,TEMP,err,error,*999)
-      CALL MatrixProduct(TEMP,DZDNUT,CAUCHY_TENSOR,err,error,*999)      
-      CAUCHY_TENSOR=CAUCHY_TENSOR/Jznu
-    ENDIF
+    CALL MatrixProduct(DZDNU,PIOLA_TENSOR,TEMP,err,error,*999)
+    CALL MatrixProduct(TEMP,DZDNUT,CAUCHY_TENSOR,err,error,*999)      
+    CAUCHY_TENSOR=CAUCHY_TENSOR/Jznu
     IF(DIAGNOSTICS1) THEN
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  ELEMENT_NUMBER = ",ELEMENT_NUMBER,err,error,*999)
       CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  gauss_idx = ",GAUSS_POINT_NUMBER,err,error,*999)
@@ -10901,14 +10858,24 @@ CONTAINS
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
               ! set structure and storage types
-              SELECT CASE(EQUATIONS%sparsityType)
+               SELECT CASE(EQUATIONS%sparsityType)
               CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                 CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
                   & err,error,*999)
                 SELECT CASE(EQUATIONS_SET_SUBTYPE)
                 CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
-                    & err,error,*999)
+                  IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
+                    !Set up lumping
+                    CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                      & [EQUATIONS_MATRIX_LUMPED],err,error,*999)
+                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                      & [DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
+                    CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                      [EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
+                  ELSE
+                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
+                      & err,error,*999)
+                  ENDIF
                 CASE DEFAULT
                   !Do nothing
                 END SELECT
@@ -10919,10 +10886,20 @@ CONTAINS
                   & EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
                 SELECT CASE(EQUATIONS_SET_SUBTYPE)
                 CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
-                  CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, & 
-                    & [MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
-                  CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, & 
-                    & [EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                  IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
+                    !Set up lumping
+                    CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
+                      & [EQUATIONS_MATRIX_LUMPED],err,error,*999)
+                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, &
+                      & [DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
+                    CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, &
+                      [EQUATIONS_MATRIX_DIAGONAL_STRUCTURE],err,error,*999)
+                  ELSE
+                    CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices, & 
+                      & [MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+                    CALL EquationsMatrices_DynamicStructureTypeSet(vectorMatrices, & 
+                      & [EQUATIONS_MATRIX_FEM_STRUCTURE],err,error,*999)
+                  ENDIF
                 CASE DEFAULT
                   !Do nothing
                 END SELECT

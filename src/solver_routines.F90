@@ -12619,7 +12619,7 @@ CONTAINS
                         & varToEquationsMatricesMaps(variableType)% &
                         & dofToColumnsMaps(equationsMatrixIdx)% &
                         & columnDOF(variableDOF)
-                      IF(ASSOCIATED(dependentBoundaryConditions%DIRICHLET_BOUNDARY_CONDITIONS)) &
+                      IF(.NOT.ASSOCIATED(dependentBoundaryConditions%DIRICHLET_BOUNDARY_CONDITIONS)) &
                         & CALL FlagError("Dirichlet boundary conditions is not associated.",err,error,*999)  
                       IF(dependentBoundaryConditions%NUMBER_OF_DIRICHLET_CONDITIONS>0) THEN
                         DO dirichletIdx=1,dependentBoundaryConditions%NUMBER_OF_DIRICHLET_CONDITIONS
