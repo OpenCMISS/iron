@@ -1032,7 +1032,7 @@ CONTAINS
     ! hash type in type of distributedMatrix%cmiss, move in future? petsc already handles. OK
 
     ! Decide data type of values to add to the table
-      dataType = LIST_SP_TYPE 
+    dataType = LIST_SP_TYPE 
     ! dataType = LIST_INTG_TYPE
     ! Decide data size of values
     dataSize = 3
@@ -1055,12 +1055,10 @@ CONTAINS
     ! define some parameters here if needed
     CALL HashTable_CreateFinish(distributedMatrix%cmiss%columnHashTable,ERR,ERROR,*999)
 
-
     ! Create array of keys
     ALLOCATE(SKey(n),STAT=err)
     IF(ERR/=0) CALL FlagError("Could not allocate array",ERR,ERROR,*999)
     SKey = columnDomainMapping%LOCAL_TO_GLOBAL_MAP(1:n)
-
 
     ! Create initial arrays of values
     ALLOCATE(SIntVal(dataSize,n),STAT=err)
