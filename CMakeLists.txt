@@ -38,6 +38,24 @@ else()
     set(IS_DEBUG_BUILD FALSE)
 endif()
 
+set(IRON_REVISION "no-rev")
+if (GIT_FOUND)
+    git_get_revision(IRON_REVISION_LONG)
+    string(SUBSTRING ${IRON_REVISION_LONG} 0 6 IRON_REVISION)
+    git_is_dirty(_IS_DIRTY)
+    if (_IS_DIRTY)
+        set(ZINC_REVISION "${IRON_REVISION}*")
+    endif ()
+endif()
+
+set(IRON_RELEASE FALSE)
+if(IRON_RELEASE)
+    set(IRON_DEVELOPER_VERSION "")
+else()
+    set(IRON_DEVELOPER_VERSION ".dev0${IRON_REVISION}")
+endif()
+
+
 # Options for building iron
 if (DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
     set(IRON_BUILD_SHARED_LIBRARY ON CACHE BOOL "Build a shared iron library." FORCE)
