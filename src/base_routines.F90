@@ -289,7 +289,7 @@ CONTAINS
     CHARACTER(C_CHAR) :: cError(MAXSTRLEN)
     REAL(DP) :: entersCPUTime,entersSystemTime
     LOGICAL :: finished
-    LOGICAL :: need_alternate = .FALSE.
+    LOGICAL :: needAlternate = .FALSE.
     TYPE(RoutineListItemType), POINTER :: listRoutinePtr
     TYPE(RoutineStackItemType), POINTER :: newRoutinePtr,routinePtr
 
@@ -388,12 +388,12 @@ CONTAINS
 
 
    goto 200
-999 need_alternate=.TRUE.
+999 needAlternate=.TRUE.
 
 200 continue
    !$OMP END CRITICAL(ENTERS_1)
 
-    IF (need_alternate) then
+    IF (needAlternate) then
        RETURN 1
     else
        RETURN
