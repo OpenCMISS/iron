@@ -65,11 +65,19 @@ option(PRINT_CONFIG_SUMMARY "Show a summary of the configuration." TRUE)
 set(PACKAGE_CONFIG_DIR "cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 
 # Handle instrumentation choices.
-set(IRON_INSTRUMENTATION "none" CACHE STRING "Specify the instrumentation to use.")
-if (DEFINED FE_INSTRUMENTATION)
-    set(IRON_INSTRUMENTATION "${FE_INSTRUMENTATION}" CACHE STRING "Specify the instrumentation to use.")
+set(${OC_INSTRUMENTATION} ${${OC_INSTRUMENTATION}} PARENT_SCOPE)
+set(IRON_INSTRUMENTATION ${OC_INSTRUMENTATION})
+
+if(NOT DEFINED OC_INSTRUMENTATION)
+  set(IRON_INSTRUMENTATION "none" CACHE STRING "Specify the instrumentation to use.")
+  if (DEFINED FE_INSTRUMENTATION)
+      set(IRON_INSTRUMENTATION "${FE_INSTRUMENTATION}" CACHE STRING "Specify the instrumentation to use.")
+  endif ()
+  set(OC_INSTRUMENTATION ${IRON_INSTRUMENTATION})
 endif ()
-set(OPENCMISS_INSTRUMENTATION ${IRON_INSTRUMENTATION})
+
+
+message(STATUS "Iron::Instrumentation: ${OC_INSTRUMENTATION}")
 
 # Bindings options
 find_program(VIRTUALENV_EXEC virtualenv)
