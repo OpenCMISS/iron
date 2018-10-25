@@ -61,7 +61,7 @@ MODULE MESH_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE NODE_ROUTINES
+  USE NodeRoutines
   USE RegionAccessRoutines
   USE Strings
   USE Trees
@@ -6637,7 +6637,7 @@ CONTAINS
 
     !Argument variables
     TYPE(MESH_TYPE), POINTER :: mesh !<A pointer to the mesh to get the global nodes for
-    TYPE(NODES_TYPE), POINTER :: nodes !<On return, the nodes pointer corresponding to the global nodes for the mesh. Must not be associated on entry.
+    TYPE(NodesType), POINTER :: nodes !<On return, the nodes pointer corresponding to the global nodes for the mesh. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -7728,7 +7728,7 @@ CONTAINS
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
     TYPE(MESH_TYPE), POINTER :: mesh
     TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
-    TYPE(NODES_TYPE), POINTER :: NODES
+    TYPE(NodesType), POINTER :: NODES
     TYPE(REGION_TYPE), POINTER :: PARENT_REGION,REGION
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -7860,7 +7860,7 @@ CONTAINS
     TYPE(INTERFACE_TYPE), POINTER :: INTERFACE
     TYPE(MESH_TYPE), POINTER :: MESH
     TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
-    TYPE(NODES_TYPE), POINTER :: NODES
+    TYPE(NodesType), POINTER :: NODES
     TYPE(REGION_TYPE), POINTER :: PARENT_REGION,REGION
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -8934,7 +8934,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: globalNodeNumber
     TYPE(MeshNodesType), POINTER :: meshNodes
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(TREE_NODE_TYPE), POINTER :: treeNode
 
@@ -8994,7 +8994,7 @@ CONTAINS
     INTEGER(INTG) :: globalNodeNumber
     TYPE(MESH_TYPE), POINTER :: mesh
     TYPE(MeshComponentTopologyType), POINTER :: meshComponentTopology
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
     TYPE(TREE_NODE_TYPE), POINTER :: treeNode
 
@@ -9169,7 +9169,7 @@ CONTAINS
     TYPE(MESH_TYPE), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: elements
     TYPE(MeshNodesType), POINTER :: meshNodes
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(TREE_TYPE), POINTER :: globalNodesTree
     TYPE(TREE_NODE_TYPE), POINTER :: treeNode
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -9215,7 +9215,7 @@ CONTAINS
                 CALL MeshTopology_NodeInitialise(meshNodes%nodes(meshNodeIdx),err,error,*999)
                 meshNodes%nodes(meshNodeIdx)%meshNumber=meshNodeIdx
                 meshNodes%nodes(meshNodeIdx)%globalNumber=globalNodeNumbers(meshNodeIdx)
-                meshNodes%nodes(meshNodeIdx)%userNumber=nodes%nodes(globalNodeNumbers(meshNodeIdx))%USER_NUMBER
+                meshNodes%nodes(meshNodeIdx)%userNumber=nodes%nodes(globalNodeNumbers(meshNodeIdx))%userNumber
                 CALL TREE_ITEM_INSERT(meshNodes%nodesTree,globalNodeNumbers(meshNodeIdx),meshNodeIdx,insertStatus,err,error,*999)
               ENDDO !nodeIdx
               meshNodes%numberOfNodes=numberOfNodes
@@ -9234,7 +9234,7 @@ CONTAINS
                     elements%elements(elementIdx)%MESH_ELEMENT_NODES(localNodeIdx)=meshNode
                   ELSE
                     localError="Could not find global node "//TRIM(NumberToVString(globalNode,"*",err,error))//" (user node "// &
-                      & TRIM(NumberToVString(nodes%nodes(globalNode)%USER_NUMBER,"*",err,error))//") in the mesh nodes."
+                      & TRIM(NumberToVString(nodes%nodes(globalNode)%userNumber,"*",err,error))//") in the mesh nodes."
                     CALL FlagError(localError,err,error,*999)
                   ENDIF
                 ENDDO !localNodeIdx

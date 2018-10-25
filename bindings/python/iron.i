@@ -209,7 +209,7 @@
       Py_XDECREF(o);
       PyErr_SetString(PyExc_ValueError,"Expected a sequence of strings");
       return NULL;
-    }
+    } 
     if (PyString_Size(o) > max_strlen) {
       max_strlen = PyString_Size(o);
     }

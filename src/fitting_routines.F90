@@ -68,7 +68,6 @@ MODULE FittingRoutines
   USE Kinds
   USE MatrixVector
   USE Maths
-  USE NODE_ROUTINES
   USE PROBLEM_CONSTANTS
   USE Strings
   USE SOLVER_ROUTINES
