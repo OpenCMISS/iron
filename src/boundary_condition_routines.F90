@@ -2230,7 +2230,7 @@ CONTAINS
     INTEGER(INTG) :: numberOfPointDofs, numberNonZeros, numberRowEntries, neumannConditionNumber, localNeumannConditionIdx
     INTEGER(INTG) :: neumannIdx, globalDof, localDof, localDofNyy, domainIdx, numberOfDomains, domainNumber, componentNumber
     INTEGER(INTG) :: nodeIdx, derivIdx, nodeNumber, versionNumber, derivativeNumber, columnNodeNumber, lineIdx, faceIdx, columnDof
-    INTEGER(INTG), ALLOCATABLE :: rowIndices(:), columnIndices(:), localDofNumbers(:)
+    INTEGER(INTG), ALLOCATABLE :: rowIndices(:), columnIndices(:), localDofNumbers(:), tempArray(:)
     REAL(DP) :: pointValue
     INTEGER(INTG) :: dummyErr
     TYPE(VARYING_STRING) :: dummyError
@@ -2485,7 +2485,9 @@ CONTAINS
           END DO !local DOFs
 
           CALL LIST_DESTROY(rowColumnIndicesList,err,error,*999)
-          CALL LIST_DETACH_AND_DESTROY(columnIndicesList,numberNonZeros,columnIndices,err,error,*999)
+          CALL LIST_DETACH_AND_DESTROY(columnIndicesList,numberNonZeros,tempArray,err,error,*999)
+          columnIndices=tempArray(1:numberNonZeros)
+          IF(ALLOCATED(tempArray)) DEALLOCATE(tempArray)
           IF(DIAGNOSTICS1) THEN
             CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Neumann integration matrix sparsity",err,error,*999)
             CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Number non-zeros = ", numberNonZeros,err,error,*999)
@@ -2654,7 +2656,7 @@ CONTAINS
     INTEGER(INTG) :: faceNumber,lineNumber
     INTEGER(INTG) :: ms,os,nodeNumber,derivativeNumber,versionNumber
     LOGICAL :: dependentGeometry
-    REAL(DP) :: integratedValue,phim,phio
+    REAL(DP) :: integratedValue,phim,phio, integratedValueSum
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannConditions
     TYPE(BASIS_TYPE), POINTER :: basis
     TYPE(FIELD_TYPE), POINTER :: geometricField
@@ -2678,6 +2680,8 @@ CONTAINS
     NULLIFY(interpolatedPoints)
     NULLIFY(interpolatedPointMetrics)
     NULLIFY(integratedValues)
+
+    integratedValueSum = 0.0_DP
 
     neumannConditions=>rhsBoundaryConditions%neumannBoundaryConditions
     !Check that Neumann conditions are associated, otherwise do nothing
@@ -2913,9 +2917,16 @@ CONTAINS
                     ! Add integral term to N matrix
                     CALL DistributedMatrix_ValuesAdd(neumannConditions%integrationMatrix,localDof,neumannDofIdx, &
                       & integratedValue,err,error,*999)
+                    integratedValueSum = integratedValueSum+integratedValue 
                   END DO
                 END DO
               END DO facesLoop
+            WRITE(*,*) "neumannGlobalDof"
+            WRITE(*,*) neumannGlobalDof
+            WRITE(*,*) "Value"
+            WRITE(*,*) integratedValueSum
+            integratedValueSum = 0.0_DP
+
             CASE DEFAULT
               CALL FlagError("The dimension is invalid for point Neumann conditions",err,error,*999)
             END SELECT
