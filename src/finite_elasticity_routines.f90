@@ -3591,7 +3591,7 @@ CONTAINS
         & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
         & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE,EQUATIONS_SET_NO_SUBTYPE,EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE, &
         & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-	& EQUATIONS_SET_MONODOMAIN_ELASTICITY_MUSCLE_TENDON_SUBTYPE, &
+	      & EQUATIONS_SET_MONODOMAIN_ELASTICITY_MUSCLE_TENDON_SUBTYPE, &
         & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
         & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
         & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE, &
@@ -6010,8 +6010,7 @@ CONTAINS
 
     CASE(EQUATIONS_SET_MONODOMAIN_ELASTICITY_MUSCLE_TENDON_SUBTYPE)
  
-      !Odgen law - 1 term. Material Parameters C = [mu alpha]
-		   
+      ! Calculate Eigenvalues of the right Cauchy-Green Deformation Tensor 
       TEMP = AZL
       CALL DSYEV('V','U',3,TEMP,3,EVALUES,WORK,-1,ERR)
       IF(ERR.NE.0) CALL FlagError("Error in Eigenvalue computation",ERR,ERROR,*999)
@@ -6021,7 +6020,7 @@ CONTAINS
       EVECTOR_1=TEMP(:,1)
       EVECTOR_2=TEMP(:,2)
       EVECTOR_3=TEMP(:,3)
-
+      ! Construct "Eigenmatrix"
       DO i=1,3
 	      DO j=1,3
 		      EMATRIX_1(i,j)=EVECTOR_1(i)*EVECTOR_1(j)
@@ -6030,29 +6029,25 @@ CONTAINS
 	      END DO
       END DO
 
-      !PIOLA_TENSOR=0.0_DP
-      PIOLA_TENSOR= & ! PIOLA_TENSOR+ &
+      ! Odgen-type hyperelastic material (N=1), cf. Ogden 1972. -> Material Parameters C(1) = mu_0*mu_1  C(2) = alpha
+      PIOLA_TENSOR= & 
 	      & EVALUES(1)**(C(2)/2.0_DP-1.0_DP)*EMATRIX_1+ &
 	      & EVALUES(2)**(C(2)/2.0_DP-1.0_DP)*EMATRIX_2+ &
 	      & EVALUES(3)**(C(2)/2.0_DP-1.0_DP)*EMATRIX_3
       PIOLA_TENSOR=PIOLA_TENSOR*C(1)-1.0_DP*P*AZU
 
-      !bis hier neu!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-      !active stress component
+      ! add active stress component
       CALL Field_VariableGet(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
       dof_idx=FIELD_VARIABLE%COMPONENTS(1)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(GAUSS_POINT_NUMBER, &
         & ELEMENT_NUMBER)
       CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
         & FIELD_VALUES_SET_TYPE,dof_idx,VALUE,err,error,*999)
-
       IF(VALUE.LT.0.0_DP) VALUE=0.0_DP
-
       !divide by lambda and multiply by P_max
       VALUE=VALUE/SQRT(AZL(1,1))*C(3)
-
       PIOLA_TENSOR(1,1)=PIOLA_TENSOR(1,1)+VALUE
 
+      ! add titin stress (cf. Heidlauf et al 2016,2017)
       ! unbound Titin-stress
       dof_idx=FIELD_VARIABLE%COMPONENTS(2)%PARAM_TO_DOF_MAP%GAUSS_POINT_PARAM2DOF_MAP%GAUSS_POINTS(GAUSS_POINT_NUMBER, &
         & ELEMENT_NUMBER)
@@ -6068,7 +6063,6 @@ CONTAINS
         & ELEMENT_NUMBER)
       CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
         & FIELD_VALUES_SET_TYPE,dof_idx,activation,err,error,*999)
-
       IF(activation.GT.1.0_DP) activation=1.0_DP
       IF(activation.LT.0.0_DP) activation=0.0_DP
 
@@ -6077,7 +6071,6 @@ CONTAINS
 
       ! normalized Titin-stress -> weighted sum of bound and unbound titin-stress
       TITIN_VALUE=activation*TITIN_BOUND+(1.0_DP-activation)*TITIN_UNBOUND
-      !TITIN_VALUE=activation*TITIN_BOUND*0.5_DP+(1.0_DP-activation)*TITIN_UNBOUND !TK Hack
       ! divide by lambda and multiply by P_max
       TITIN_VALUE=TITIN_VALUE/SQRT(AZL(1,1))*C(4)
         
