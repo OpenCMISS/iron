@@ -1792,7 +1792,6 @@ CONTAINS
                                               & ROW_INDICES,COLUMN_INDICES,err,error,*999)
                                             !Loop over the non-ghosted rows in the equations set
                                             DO equations_row_number=1,vectorMapping%numberOfRows
-                                              ! Same as other case (BLOCK)  
                                               RHS_VALUE=0.0_DP
                                               rhs_variable_dof=rhsMapping%equationsRowToRHSDOFMap(equations_row_number)
                                               rhs_global_dof=RHS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(rhs_variable_dof)
@@ -1801,7 +1800,6 @@ CONTAINS
                                               CASE(BOUNDARY_CONDITION_DOF_FREE)
                                                 !Back substitute
                                                 !Loop over the local columns of the equations matrix
-                                                ! Different vs. BLOCK!
                                                 DO equations_column_idx=ROW_INDICES(equations_row_number), &
                                                   ROW_INDICES(equations_row_number+1)-1
                                                   equations_column_number=COLUMN_INDICES(equations_column_idx)
@@ -1810,20 +1808,6 @@ CONTAINS
                                                   DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
                                                   RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
                                                 ENDDO !equations_column_idx
-
-                                                ! CASE block storage above
-                                                !Back substitute
-                                                !Loop over the local columns of the equations matrix
-                                                !DO equations_column_idx=1,COLUMN_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-                                                !  equations_column_number=COLUMN_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP( &
-                                                !    & equations_column_idx)
-                                                !  variable_dof=equations_column_idx
-                                                !  MATRIX_VALUE=equationsMatrixData(equations_row_number+ &
-                                                !    & (equations_column_number-1)*vectorMatrices%totalNumberOfRows)
-                                                !  DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
-                                                !  RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
-                                                !ENDDO !equations_column_idx
-
                                               CASE(BOUNDARY_CONDITION_DOF_FIXED)
                                                 !Do nothing
                                               CASE(BOUNDARY_CONDITION_DOF_MIXED)
@@ -7231,3 +7215,4 @@ CONTAINS
   !
 
 END MODULE EQUATIONS_SET_ROUTINES
+
