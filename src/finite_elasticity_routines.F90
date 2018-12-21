@@ -1709,8 +1709,6 @@ CONTAINS
               & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,DZDNU,ERR,ERROR,*999)
 
             Jznu=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN/GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN
-            WRITE (*,*) "Jznu"
-            WRITE (*,*) Jznu
             JGW=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
 
            !Calculate the Cauchy stress tensor (in Voigt form) at the gauss point.
@@ -1718,9 +1716,6 @@ CONTAINS
              & MATERIALS_INTERPOLATED_POINT,GEOMETRIC_INTERPOLATED_POINT,STRESS_TENSOR,DZDNU,Jznu, &
              & elementNumber,gauss_idx,numberOfDimensions,err,error,*999)
             
-           WRITE (*,*) "Number of dimensions"
-           WRITE (*,*) numberOfDimensions
-
             ! Convert from Voigt form to tensor form and multiply with Jacobian and Gauss weight.
             DO nh=1,numberOfDimensions
               DO mh=1,numberOfDimensions
@@ -4278,9 +4273,6 @@ CONTAINS
         CALL FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(equationsSet,dependentInterpolatedPoint, &
           & materialsInterpolatedPoint,geometricInterpolatedPoint,cauchyStressVoigt,dZdNu,Jznu, &
           & elementNumber,0,numberOfDimensions,ERR,ERROR,*999)
-
-        WRITE (*,*) "Number of dimensions"
-        WRITE (*,*) numberOfDimensions
   
         !Convert from Voigt form to tensor form. \TODO needs to be generalised for 2D
         DO nh=1,numberOfDimensions
@@ -4532,9 +4524,6 @@ CONTAINS
         CALL FINITE_ELASTICITY_GAUSS_STRESS_TENSOR(equationsSet,dependentInterpolatedPoint, &
           & materialsInterpolatedPoint,geometricInterpolatedPoint,cauchyStressVoigt,dZdNu,Jznu, &
           & localElementNumber,0,numberOfDimensions,ERR,ERROR,*999)
-        
-        WRITE (*,*) "Number of dimensions"
-        WRITE (*,*) numberOfDimensions
 
         !Convert from Voigt form to tensor form. \TODO needs to be generalised for 2D
         DO nh=1,numberOfDimensions
@@ -7018,7 +7007,7 @@ CONTAINS
     REAL(DP) :: ONETHIRD_TRACE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    REAL(DP) :: MOD_DZDNU(3,3),MOD_DZDNUT(3,3),AZL(3,3), DZDNUInv(3,3), PK2Tensor(3,3)
+    REAL(DP) :: MOD_DZDNU(3,3),MOD_DZDNUT(3,3),AZL(3,3), DZDNUInv(3,3), PK2Tensor(3,3), sigmaTensor(3,3)
     REAL(DP) :: B(6),E(6),DQ_DE(6), PK2(6), Jznu_dummy
     REAL(DP), POINTER :: C(:) !Parameters for constitutive laws
 
@@ -7045,8 +7034,13 @@ CONTAINS
       !Form of constitutive model is:
       !W=c1*(I1-3)+c2*(I2-3)+p/2*(I3-1)
 
+      ! This function needs a 2D test-case for Mooney-Rivlin!!! (i.e. c2=/0)
+      ! Therefore, add a warning.
+      IF ((CEILING(C(2))/=0) .AND. numberOfDimensions==2) THEN
+        CALL FlagWarning("Mooney-Rivlin material (c1,c2\=0) not verified for 2D-case.",err,error,*999)
+      END IF
+
       !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
-      ! Needs a 2D test-case for Mooney-Rivlin!!! (i.e. c2=/0)
       I1 = 0.0_DP
       DO component_idx=1,numberOfDimensions
         I1=I1+AZL(component_idx,component_idx) 
@@ -7080,20 +7074,19 @@ CONTAINS
       ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:numberOfDimensions))/numberOfDimensions_DP 
       STRESS_TENSOR(1:numberOfDimensions)=STRESS_TENSOR(1:numberOfDimensions)-ONETHIRD_TRACE+P 
 
-      ! Compute PK2
+      ! Compute PK2 (just for comparison)
       PK2 = STRESS_TENSOR
       Jznu_dummy = Jznu
       CALL INVERT(DZDNU,DZDNUInv,Jznu_dummy,err,error,*999)
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(PK2,DZDNUInv,1.0_DP/Jznu,err,error,*999)
-      ! PK2 from Voigt to tensor
+
+      ! PK2 and sigma from Voigt to tensor
       DO component_idx =1,numberOfDimensions
         DO dof_idx =1, numberOfDimensions
           PK2Tensor(component_idx, dof_idx) = PK2(TENSOR_TO_VOIGT(component_idx,dof_idx, 3))
+          sigmaTensor(component_idx, dof_idx) = STRESS_TENSOR(TENSOR_TO_VOIGT(component_idx,dof_idx, 3))
         END DO
       END DO      
-      IF ((CEILING(C(2))/=0) .AND. numberOfDimensions==2) THEN
-        CALL FlagWarning("Mooney-Rivlin material (c1,c2\=0) not verified for 2D-case.",err,error,*999)
-      END IF
 
       ! Write out PK2
       IF(DIAGNOSTICS1) THEN
@@ -7109,9 +7102,21 @@ CONTAINS
             & '(16X,2(X,E13.6))',err,error,*999)
         END IF
       END IF
- 
-      WRITE (*,*) "Cauchy Stress Tensor"
-      WRITE (*,*) STRESS_TENSOR
+
+      ! Write out Cauchy Stress Tensor
+      IF(DIAGNOSTICS1) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Cauchy Stress Tensor (\sigma):",err,error,*999)
+        IF (numberOfDimensions == 3) THEN
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,3,1,1,3, &
+            & 3,3,sigmaTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES,         '("        \sigma','(",I1,",:)',' :",3(X,E13.6))', &
+            & '(16X,3(X,E13.6))',err,error,*999)
+        ELSE ! must be 2
+          CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,1,1,2, &
+            & 3,3,sigmaTensor(1:2,1:2),WRITE_STRING_MATRIX_NAME_AND_INDICES,'("        \sigma','(",I1,",:)',' :",2(X,E13.6))', &
+            & '(16X,2(X,E13.6))',err,error,*999)
+        END IF
+      END IF
 
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
