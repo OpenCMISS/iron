@@ -4738,8 +4738,8 @@ CONTAINS
           & localElementNumber,0,numberOfDimensions,ERR,ERROR,*999)
         
         !Convert from Voigt form to tensor form.
-        DO nh=1,3 ! numberOfDimensions??
-          DO mh=1,3 ! numberOfDimensions??
+        DO nh=1,3 
+          DO mh=1,3 
             cauchyStressTensor(mh,nh)=cauchyStressVoigt(TENSOR_TO_VOIGT3(mh,nh))
           ENDDO
         ENDDO
