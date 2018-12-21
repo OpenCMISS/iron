@@ -682,7 +682,7 @@ CONTAINS
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: geometricVariable
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_TYPE), POINTER :: fsInterface
-    TYPE(NODES_TYPE), POINTER :: interfaceNodes
+    TYPE(NodesType), POINTER :: interfaceNodes
     TYPE(PROBLEM_TYPE), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: dynamicSolver,linearSolver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
@@ -786,13 +786,13 @@ CONTAINS
         NULLIFY(domain)
         CALL FieldVariable_DomainGet(geometricVariable,componentIdx,domain,err,error,*999)
         DO nodeIdx=1,domain%topology%nodes%TOTAL_NUMBER_OF_NODES
-          solidNode=interfaceNodes%COUPLED_NODES(1,nodeIdx)
+          solidNode=interfaceNodes%coupledNodes(1,nodeIdx)
           DO derivativeIdx=1,domain%topology%nodes%nodes(nodeIdx)%NUMBER_OF_DERIVATIVES
             DO versionIdx=1,domain%topology%nodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
               CALL Field_ParameterSetGetNode(solidDependentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                 & versionIdx,derivativeIdx,solidNode,componentIdx,VALUE,err,error,*999)
-              CALL Field_ParameterSetUpdateNode(interfaceGeometricField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,&
-                & versionIdx,derivativeIdx,nodeIdx,componentIdx,VALUE,err,error,*999)
+              CALL Field_ParameterSetUpdateLocalNode(interfaceGeometricField,FIELD_U_VARIABLE_TYPE, &
+                & FIELD_VALUES_SET_TYPE,versionIdx,derivativeIdx,nodeIdx,componentIdx,VALUE,err,error,*999)
             ENDDO !versionIdx
           ENDDO !derivativeIdx
         ENDDO !nodeIdx

@@ -54,6 +54,8 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE DistributedMatrixVector
   USE DOMAIN_MAPPINGS
   USE EquationsAccessRoutines
+  USE EquationsMappingAccessRoutines
+  USE EquationsMatricesAccessRoutines
   USE EquationsSetAccessRoutines
   USE EquationsSetConstants
   USE INTERFACE_CONDITIONS_CONSTANTS
@@ -65,7 +67,6 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
 #ifndef NOMPIMOD
   USE MPI
 #endif
-  USE NODE_ROUTINES
   USE Strings
   USE Timer
   USE Types
@@ -287,13 +288,16 @@ CONTAINS
     INTEGER(INTG), POINTER :: ROW_INDICES(:), COLUMN_INDICES(:)
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITION_VARIABLE
     TYPE(DOMAIN_MAPPING_TYPE), POINTER :: VARIABLE_DOMAIN_MAPPING
-    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE,matrixVariable
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: BOUNDARY_CONDITIONS_DIRICHLET
     TYPE(BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE), POINTER :: BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
+    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
@@ -429,13 +433,20 @@ CONTAINS
                               CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
                               NULLIFY(vectorMatrices)
                               CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-                              linearMatrices=>vectorMatrices%linearMatrices
-                              IF(ASSOCIATED(linearMatrices)) THEN
+                              NULLIFY(vectorMapping)
+                              CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+                              linearMapping=>vectorMapping%linearMapping
+                              IF(ASSOCIATED(linearMapping)) THEN
+                                NULLIFY(linearMatrices)
+                                CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
                                 !Iterate through equations matrices
                                 DO equ_matrix_idx=1,linearMatrices%numberOfLinearMatrices
-                                  EQUATION_MATRIX=>linearMatrices%MATRICES(equ_matrix_idx)%PTR
-                                  CALL DistributedMatrix_StorageTypeGet(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
-                                  IF(ASSOCIATED(EQUATION_MATRIX)) THEN
+                                  NULLIFY(EQUATION_MATRIX)
+                                  CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,equ_matrix_idx,EQUATION_MATRIX, &
+                                    & err,error,*999)
+                                  matrixVariable=>linearMapping%equationsMatrixToVarMaps(equ_matrix_idx)%variable
+                                  IF(ASSOCIATED(matrixVariable,FIELD_VARIABLE)) THEN
+                                    CALL DistributedMatrix_StorageTypeGet(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
                                     SELECT CASE(STORAGE_TYPE)
                                     CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                                       !Do nothing
@@ -454,7 +465,7 @@ CONTAINS
                                       !Get the matrix stored as a linked list
                                       CALL DistributedMatrix_LinkListGet(EQUATION_MATRIX%MATRIX,LIST,ERR,ERROR,*999)
                                       NUMBER_OF_ROWS=vectorMatrices%totalNumberOfRows
-                                      !Initialise sparsity indices arrays
+                                        !Initialise sparsity indices arrays
                                       CALL BoundaryConditions_SparsityIndicesInitialise(BOUNDARY_CONDITIONS_DIRICHLET% &
                                         & LINEAR_SPARSITY_INDICES(equations_set_idx,equ_matrix_idx)%PTR, &
                                         & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS,ERR,ERROR,*999)
@@ -502,19 +513,22 @@ CONTAINS
                                         //" is invalid."
                                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                     END SELECT
-                                  ELSE
-                                    CALL FlagError("The equation matrix is not associated.",ERR,ERROR,*999)
                                   ENDIF
                                 ENDDO
                               ENDIF
 
-                              dynamicMatrices=>vectorMatrices%dynamicMatrices
-                              IF(ASSOCIATED(dynamicMatrices)) THEN
+                              dynamicMapping=>vectorMapping%dynamicMapping
+                              IF(ASSOCIATED(dynamicMapping)) THEN
+                                NULLIFY(dynamicMatrices)
+                                CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
                                 !Iterate through equations matrices
                                 DO equ_matrix_idx=1,dynamicMatrices%numberOfDynamicMatrices
-                                  EQUATION_MATRIX=>dynamicMatrices%MATRICES(equ_matrix_idx)%PTR
-                                  CALL DistributedMatrix_StorageTypeGet(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
-                                  IF(ASSOCIATED(EQUATION_MATRIX)) THEN
+                                 NULLIFY(EQUATION_MATRIX)
+                                 CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,equ_matrix_idx,EQUATION_MATRIX, &
+                                   & err,error,*999)
+                                  matrixVariable=>dynamicMapping%equationsMatrixToVarMaps(equ_matrix_idx)%variable
+                                  IF(ASSOCIATED(matrixVariable,FIELD_VARIABLE)) THEN
+                                    CALL DistributedMatrix_StorageTypeGet(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
                                     SELECT CASE(STORAGE_TYPE)
                                     CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                                       !Do nothing
@@ -583,8 +597,6 @@ CONTAINS
                                         //" is invalid."
                                       CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                                     END SELECT
-                                  ELSE
-                                    CALL FlagError("The equation matrix is not associated.",ERR,ERROR,*999)
                                   ENDIF
                                 ENDDO
                               ENDIF

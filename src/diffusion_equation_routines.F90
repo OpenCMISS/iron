@@ -2942,9 +2942,6 @@ CONTAINS
               CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
               !Create the equations matrices
               CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-              ! Use the analytic Jacobian calculation
-              CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                & err,error,*999)
               !Set up matrix storage and structure
               IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                 !Set up lumping
@@ -2996,6 +2993,9 @@ CONTAINS
                 END SELECT
               ENDIF
               CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+              !Use the analytic Jacobian calculation
+              CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)

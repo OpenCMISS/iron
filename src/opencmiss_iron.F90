@@ -106,7 +106,7 @@ MODULE OpenCMISS_Iron
   USE Kinds
   USE MESH_ROUTINES
   USE MeshAccessRoutines
-  USE NODE_ROUTINES
+  USE NodeRoutines
   USE PROBLEM_CONSTANTS
   USE PROBLEM_ROUTINES
   USE ProblemAccessRoutines
@@ -288,7 +288,7 @@ MODULE OpenCMISS_Iron
   !>Contains information on the nodes defined on a region.
   TYPE cmfe_NodesType
     PRIVATE
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
   END TYPE cmfe_NodesType
 
   !>Contains information for a problem.
@@ -2315,6 +2315,18 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_Equations_DestroyObj
   END INTERFACE cmfe_Equations_Destroy
 
+  !>Sets/changes the Jacobian matrix calculation types for equations
+  INTERFACE cmfe_Equations_JacobianCalculationTypeSet
+    MODULE PROCEDURE cmfe_Equations_JacobianCalculationTypeSetNumber
+    MODULE PROCEDURE cmfe_Equations_JacobianCalculationTypeSetObj
+  END INTERFACE cmfe_Equations_JacobianCalculationTypeSet
+
+  !>Sets/changes the Jacobian matrix finite difference step size for equations
+  INTERFACE cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
+    MODULE PROCEDURE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber
+    MODULE PROCEDURE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj
+  END INTERFACE cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
+  
   !>Gets the linearity type for equations.
   INTERFACE cmfe_Equations_LinearityTypeGet
     MODULE PROCEDURE cmfe_Equations_LinearityTypeGetNumber
@@ -2390,7 +2402,9 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_Equations_TimeDependenceTypeGet
 
-  PUBLIC cmfe_Equations_JacobianMatricesTypesSet
+  PUBLIC cmfe_Equations_JacobianCalculationTypeSet
+
+  PUBLIC cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
 
   PUBLIC cmfe_Equations_NumberOfLinearMatricesGet
 
@@ -5685,7 +5699,7 @@ MODULE OpenCMISS_Iron
 
 !!==================================================================================================================================
 !!
-!! NODE_ROUTINES
+!! NodeRoutines
 !!
 !!==================================================================================================================================
 
@@ -25170,35 +25184,168 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Setting Jacobian matrix evaluation type
-  SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet(equations,jacobianTypes,err)
-    !DLLEXPORT(cmfe_Equations_JacobianMatricesTypesSet)
+  !>Setting Jacobian matrix calculation type for a matrix specified by user numbers.
+  SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetNumber(regionUserNumber,equationsSetUserNumber,residualIndex,variableType, &
+    & jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Equations_JacobianCalculationTypeSetNumber)
     
     !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian evaluation type for. 
-    INTEGER(INTG), INTENT(IN) :: jacobianTypes !<The type of Jacobian evaluation. \see OpenCMISS_EquationsJacobianCalculated 
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations to set the Jacobian calculation type for
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the Jacobian calculation type for.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The type of Jacobian calculation. \see OpenCMISS_EquationsJacobianCalculated
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     !Local variables
-    TYPE(EquationsVectorType), POINTER :: vectorEquations 
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
 
-    ENTERS("cmfe_Equations_JacobianMatricesTypesSet",err,error,*999)
+    ENTERS("cmfe_Equations_JacobianCalculationTypeSetNumber",err,error,*999)
 
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    NULLIFY(equations)
     NULLIFY(vectorEquations)
-    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)    
     NULLIFY(vectorMatrices)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
     CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[jacobianTypes],err,error,*999)
+    CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,residualIndex,variableType, &
+      & jacobianCalculationType,err,error,*999)
 
-    EXITS("cmfe_Equations_JacobianMatricesTypesSet")
+    EXITS("cmfe_Equations_JacobianCalculationTypeSetNumber")
     RETURN
-999 ERRORS("cmfe_Equations_JacobianMatricesTypesSet",err,error)
-    EXITS("cmfe_Equations_JacobianMatricesTypesSet")
+999 ERRORS("cmfe_Equations_JacobianCalculationTypeSetNumber",err,error)
+    EXITS("cmfe_Equations_JacobianCalculationTypeSetNumber")
     CALL cmfe_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet
+  END SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetNumber
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Setting Jacobian matrix calculation type for a matrix specified by obj.
+  SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetObj(equations,residualIndex,variableType,jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Equations_JacobianCalculationTypeSetObj)
+    
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian evaluation type for. 
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The type of Jacobian calculation. \see OpenCMISS_EquationsJacobianCalculated
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+
+    ENTERS("cmfe_Equations_JacobianCalculationTypeSetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,residualIndex,variableType, &
+      & jacobianCalculationType,err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianCalculationTypeSetObj")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianCalculationTypeSetObj",err,error)
+    EXITS("cmfe_Equations_JacobianCalculationTypeSetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the Jacobian matrix finite difference step size type for a matrix specified by user numbers.
+  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber(regionUserNumber,equationsSetUserNumber,residualIndex, &
+    & variableType,jacobianFiniteDifferenceStepSize,err)
+    !DLLEXPORT(cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations to set the Jacobian calculation type for
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the Jacobian calculation type for.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    REAL(DP), INTENT(IN) :: jacobianFiniteDifferenceStepSize !<The finite difference step size to calculate the Jacobian with.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    NULLIFY(equations)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,residualIndex,variableType, &
+      & jacobianFiniteDifferenceStepSize,err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber",err,error)
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the finite difference step size used for calculating the Jacobian
+  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj(equations,residualIndex,variableTYpe, &
+    & jacobianFiniteDifferenceStepSize,err)
+    !DLLEXPORT(cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian finite difference step size for.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    REAL(DP), INTENT(IN) :: jacobianFiniteDifferenceStepSize !<The finite difference step size to calculate the Jacobian with.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+
+    ENTERS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,residualIndex,variableType, &
+      & jacobianFiniteDifferenceStepSize,err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj",err,error)
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj
 
   !
   !================================================================================================================================
@@ -46142,7 +46289,7 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
-!! NODE_ROUTINES
+!! NodeRoutines
 !!
 !!==================================================================================================================================
 
@@ -46154,7 +46301,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to finish the creation of.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_CreateFinishNumber",err,error,*999)
@@ -46163,7 +46310,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NODES_CREATE_FINISH(nodes,err,error,*999)
+    CALL Nodes_CreateFinish(nodes,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Nodes Create')
@@ -46192,7 +46339,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_CreateFinishObj",err,error,*999)
 
-    CALL NODES_CREATE_FINISH(nodes%nodes,err,error,*999)
+    CALL Nodes_CreateFinish(nodes%nodes,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('nodes Create')
@@ -46219,7 +46366,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: numberOfNodes !<The number of nodes to create.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_CreateStartNumber",err,error,*999)
@@ -46231,7 +46378,7 @@ CONTAINS
     NULLIFY(region)
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
-    CALL NODES_CREATE_START(region,numberOfNodes,nodes,err,error,*999)
+    CALL Nodes_CreateStart(region,numberOfNodes,nodes,err,error,*999)
 
     EXITS("cmfe_Nodes_CreateStartNumber")
     RETURN
@@ -46262,7 +46409,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('nodes Create')
 #endif
 
-    CALL NODES_CREATE_START(region%region,numberOfNodes,nodes%nodes,err,error,*999)
+    CALL Nodes_CreateStart(region%region,numberOfNodes,nodes%nodes,err,error,*999)
 
     EXITS("cmfe_Nodes_CreateStartObj")
     RETURN
@@ -46293,7 +46440,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('nodes Create')
 #endif
 
-    CALL NODES_CREATE_START(interface%interface,numberOfNodes,nodes%nodes,err,error,*999)
+    CALL Nodes_CreateStart(interface%interface,numberOfNodes,nodes%nodes,err,error,*999)
 
     EXITS("cmfe_Nodes_CreateStartInterfaceObj")
     RETURN
@@ -46315,7 +46462,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the nodes to destroy.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_DestroyNumber",err,error,*999)
@@ -46372,7 +46519,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On return, the number of nodes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_NumberOfNodesGetNumber",err,error,*999)
@@ -46381,7 +46528,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NODES_NUMBER_OF_NODES_GET(nodes,numberOfNodes,err,error,*999)
+    CALL Nodes_NumberOfNodesGet(nodes,numberOfNodes,err,error,*999)
 
     EXITS("cmfe_Nodes_NumberOfNodesGetNumber")
     RETURN
@@ -46407,7 +46554,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_NumberOfNodesGetObj",err,error,*999)
 
-    CALL NODES_NUMBER_OF_NODES_GET(nodes%nodes,numberOfNodes,err,error,*999)
+    CALL Nodes_NumberOfNodesGet(nodes%nodes,numberOfNodes,err,error,*999)
 
     EXITS("cmfe_Nodes_NumberOfNodesGetObj")
     RETURN
@@ -46431,7 +46578,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the label for the node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_LabelGetCNumber",err,error,*999)
@@ -46440,7 +46587,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NODES_LABEL_GET(nodes,nodeGlobalNumber,label,err,error,*999)
+    CALL Nodes_LabelGet(nodes,nodeGlobalNumber,label,err,error,*999)
 
     EXITS("cmfe_Nodes_LabelGetCNumber")
     RETURN
@@ -46467,7 +46614,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_LabelGetCObj",err,error,*999)
 
-    CALL NODES_LABEL_GET(nodes%nodes,nodeGlobalNumber,label,err,error,*999)
+    CALL Nodes_LabelGet(nodes%nodes,nodeGlobalNumber,label,err,error,*999)
 
     EXITS("cmfe_Nodes_LabelGetCObj")
     RETURN
@@ -46491,7 +46638,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the label for the node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_LabelGetVSNumber",err,error,*999)
@@ -46500,7 +46647,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NODES_LABEL_GET(nodes,nodeGlobalNumber,label,err,error,*999)
+    CALL Nodes_LabelGet(nodes,nodeGlobalNumber,label,err,error,*999)
 
     EXITS("cmfe_Nodes_LabelGetVSNumber")
     RETURN
@@ -46527,7 +46674,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_LabelGetVSObj",err,error,*999)
 
-    CALL NODES_LABEL_GET(nodes%nodes,nodeGlobalNumber,label,err,error,*999)
+    CALL Nodes_LabelGet(nodes%nodes,nodeGlobalNumber,label,err,error,*999)
 
     EXITS("cmfe_Nodes_LabelGetVSObj")
     RETURN
@@ -46551,7 +46698,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: label !<The label for the node to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_LabelSetCNumber",err,error,*999)
@@ -46560,7 +46707,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NODES_LABEL_SET(nodes,nodeGlobalNumber,label,err,error,*999)
+    CALL Nodes_LabelSet(nodes,nodeGlobalNumber,label,err,error,*999)
 
     EXITS("cmfe_Nodes_LabelSetCNumber")
     RETURN
@@ -46587,7 +46734,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_LabelSetCObj",err,error,*999)
 
-    CALL NODES_LABEL_SET(nodes%nodes,nodeGlobalNumber,label,err,error,*999)
+    CALL Nodes_LabelSet(nodes%nodes,nodeGlobalNumber,label,err,error,*999)
 
     EXITS("cmfe_Nodes_LabelSetCObj")
     RETURN
@@ -46611,7 +46758,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(IN) :: label !<The label for the node to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_LabelSetVSNumber",err,error,*999)
@@ -46620,7 +46767,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NODES_LABEL_SET(nodes,nodeGlobalNumber,label,err,error,*999)
+    CALL Nodes_LabelSet(nodes,nodeGlobalNumber,label,err,error,*999)
 
     EXITS("cmfe_Nodes_LabelSetVSNumber")
     RETURN
@@ -46647,7 +46794,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_LabelSetVSObj",err,error,*999)
 
-    CALL NODES_LABEL_SET(nodes%nodes,nodeGlobalNumber,label,err,error,*999)
+    CALL Nodes_LabelSet(nodes%nodes,nodeGlobalNumber,label,err,error,*999)
 
     EXITS("cmfe_Nodes_LabelSetVSObj")
     RETURN
@@ -46671,7 +46818,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: nodeUserNumber !<On return, the user number for the node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_UserNumberGetNumber",err,error,*999)
@@ -46680,7 +46827,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NODES_USER_NUMBER_GET(nodes,nodeGlobalNumber,nodeUserNumber,err,error,*999)
+    CALL Nodes_UserNumberGet(nodes,nodeGlobalNumber,nodeUserNumber,err,error,*999)
 
     EXITS("cmfe_Nodes_UserNumberGetNumber")
     RETURN
@@ -46707,7 +46854,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_UserNumberGetObj",err,error,*999)
 
-    CALL NODES_USER_NUMBER_GET(nodes%nodes,nodeGlobalNumber,nodeUserNumber,err,error,*999)
+    CALL Nodes_UserNumberGet(nodes%nodes,nodeGlobalNumber,nodeUserNumber,err,error,*999)
 
     EXITS("cmfe_Nodes_UserNumberGetObj")
     RETURN
@@ -46731,7 +46878,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number for the node to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_UserNumberSetNumber",err,error,*999)
@@ -46740,7 +46887,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NODES_USER_NUMBER_SET(nodes,nodeGlobalNumber,nodeUserNumber,err,error,*999)
+    CALL Nodes_UserNumberSet(nodes,nodeGlobalNumber,nodeUserNumber,err,error,*999)
 
     EXITS("cmfe_Nodes_UserNumberSetNumber")
     RETURN
@@ -46767,7 +46914,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_UserNumberSetObj",err,error,*999)
 
-    CALL NODES_USER_NUMBER_SET(nodes%nodes,nodeGlobalNumber,nodeUserNumber,err,error,*999)
+    CALL Nodes_UserNumberSet(nodes%nodes,nodeGlobalNumber,nodeUserNumber,err,error,*999)
 
     EXITS("cmfe_Nodes_UserNumberSetObj")
     RETURN
@@ -46790,7 +46937,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: nodeUserNumbers(:) !<The user numbers for the nodes to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(NODES_TYPE), POINTER :: nodes
+    TYPE(NodesType), POINTER :: nodes
     TYPE(REGION_TYPE), POINTER :: region
 
     ENTERS("cmfe_Nodes_UserNumbersAllSetNumber",err,error,*999)
@@ -46799,7 +46946,7 @@ CONTAINS
     NULLIFY(nodes)
     CALL Region_Get(regionUserNumber,region,err,error,*999)
     CALL Region_NodesGet(region,nodes,err,error,*999)
-    CALL NodesUserNumbersAllSet(nodes,nodeUserNumbers,err,error,*999)
+    CALL Nodes_UserNumbersAllSet(nodes,nodeUserNumbers,err,error,*999)
 
     EXITS("cmfe_Nodes_UserNumbersAllSetNumber")
     RETURN
@@ -46825,7 +46972,7 @@ CONTAINS
 
     ENTERS("cmfe_Nodes_UserNumbersAllSetObj",err,error,*999)
 
-    CALL NodesUserNumbersAllSet(nodes%nodes,nodeUserNumbers,err,error,*999)
+    CALL Nodes_UserNumbersAllSet(nodes%nodes,nodeUserNumbers,err,error,*999)
 
     EXITS("cmfe_Nodes_UserNumbersAllSetObj")
     RETURN
@@ -58605,7 +58752,7 @@ CONTAINS
 
 #ifdef WITH_FIELDML
 
-    CALL FIELDML_INPUT_NODES_CREATE_START( fieldml%fieldmlInfo, nodesArgumentName, region%region, nodes%nodes, err, error, *999 )
+    CALL FIELDML_INPUT_NODES_CREATE_START(fieldml%fieldmlInfo, nodesArgumentName, region%region, nodes%nodes, err, error, *999 )
 
 #else
     CALL FlagError("Must compile with WITH_FIELDML ON to use FieldML functionality.",err,error,*999)

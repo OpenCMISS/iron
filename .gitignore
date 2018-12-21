@@ -17,3 +17,7 @@ src/opencmiss_c.f90
 *.swp
 *~
 doc/notes/EquationSets/FluidMechanicsClass/ConvectiveTransport.tex
+
+# MacOS
+.DS_Store
+
