@@ -248,6 +248,8 @@ MODULE FieldAccessRoutines
 
   PUBLIC FieldVariable_FieldGet
 
+  PUBLIC FieldVariable_NumberOfComponentsGet
+
   PUBLIC FieldVariable_ParameterSetGet
 
 CONTAINS
@@ -745,7 +747,7 @@ CONTAINS
     ENTERS("FieldVariable_FieldGet",err,error,*998)
 
     IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     
     field=>fieldVariable%field
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("The field variable field is not associated.",err,error,*999)
@@ -757,6 +759,33 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FieldVariable_FieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of components in the specified field variable 
+  SUBROUTINE FieldVariable_NumberOfComponentsGet(fieldVariable,numberOfComponents,err,error,*)
+
+    !Argument variables
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable !<A pointer to the field variable to get the number of components for
+    INTEGER(INTG), INTENT(OUT) :: numberOfComponents !<On exit, the number of components in the specified field variable
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariable_NumberOfComponentsGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    
+    numberOfComponents=fieldVariable%NUMBER_OF_COMPONENTS
+
+    EXITS("FieldVariable_NumberOfComponentsGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_NumberOfComponentsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_NumberOfComponentsGet
 
   !
   !================================================================================================================================
@@ -777,7 +806,7 @@ CONTAINS
     ENTERS("FieldVariable_ParameterSetGet",err,error,*998)
 
     IF(ASSOCIATED(parameterSet)) CALL FlagError("Field parameter set is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     IF(parameterSetType<0.OR.parameterSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
       localError="The specified parameter set type of "//TRIM(NumberToVString(parameterSetType,"*",err,error))// &
         & " is invalid. The parameter set type must be between 1 and "// &
