@@ -1235,9 +1235,9 @@ CONTAINS
       & tempTranspose(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
     
     spatialElasticityTensor(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
-      & MATMUL(MATMUL(temp(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & (1.0_DP/J)*MATMUL(MATMUL(temp(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & materialElasticityTensor(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))), &
-      & tempTranspose(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)))/J
+      & tempTranspose(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)))
     
     EXITS("FiniteElasticity_PushElasticityTensorForward")    
     RETURN
@@ -1846,6 +1846,7 @@ CONTAINS
     REAL(DP) :: I3EE(6,6) !<Derivative of I3 wrt E
     REAL(DP) :: ADJCC(6,6) !<Derivative of adj(C) wrt C
     REAL(DP) :: AZUE(6,6) !<Derivative of C^-1 wrt E
+    REAL(DP) :: AZUC(6,6)
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -1897,7 +1898,9 @@ CONTAINS
     DO i=1,6
       DO j=1,6
         AZUE(i,j) = -2.0_DP*AZUv(i)*AZUv(j) + 0.5_DP*I3EE(i,j)/I3
+        AZUC(i,j) = AZUv(i)*AZUv(j)
       ENDDO
+      AZUC(i,i) = AZUC(i,i)-2.0_DP
     ENDDO
 
     C=>MATERIALS_INTERPOLATED_POINT%VALUES(:,NO_PART_DERIV)
@@ -1919,12 +1922,18 @@ CONTAINS
       I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
       TEMPTERM1=-2.0_DP*C(2)
       TEMPTERM2=2.0_DP*(C(1)+I1*C(2))
-      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2
-      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2
-      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2
-      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)
-      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
-      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
+      !STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2
+      !STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2
+      !STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2
+      !STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)
+      !STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
+      !STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
+      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2+P*AZUv(1)*Jznu
+      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2+P*AZUv(2)*Jznu
+      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2+P*AZUv(3)*Jznu
+      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)+P*AZUv(4)*Jznu
+      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)+P*AZUv(5)*Jznu
+      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)+P*AZUv(6)*Jznu
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE) THEN
         
         !add active contraction stress values
@@ -1942,8 +1951,8 @@ CONTAINS
 
       ! Calculate material elasticity tensor (in Voigt form) as
       ! this will be compensated for in the push-forward with the modified deformation gradient.
-      TEMPTERM1=2.0_DP*C(2)
-      TEMPTERM2=-2.0_DP*C(2)
+      TEMPTERM1=4.0_DP*C(2)
+      TEMPTERM2=-4.0_DP*C(2)
       ELASTICITY_TENSOR(2,1)=TEMPTERM1
       ELASTICITY_TENSOR(3,1)=TEMPTERM1
       ELASTICITY_TENSOR(1,2)=TEMPTERM1
@@ -1953,8 +1962,8 @@ CONTAINS
       ELASTICITY_TENSOR(4,4)=TEMPTERM2
       ELASTICITY_TENSOR(5,5)=TEMPTERM2
       ELASTICITY_TENSOR(6,6)=TEMPTERM2
-      !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
-      ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
+      !Add volumetric part of elasticity tensor - p*d(C^-1)/dC.
+      ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*Jznu*AZUC
 
       !Hydrostatic portion of the elasticity tensor (dS/dp)
       HYDRO_ELASTICITY_VOIGT = AZUv
@@ -1965,7 +1974,7 @@ CONTAINS
       CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
 
       ! Add volumetric parts.
-      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)+P
+      !STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)+P
 
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
@@ -2076,7 +2085,7 @@ CONTAINS
       CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(HYDRO_ELASTICITY_VOIGT,DZDNU,Jznu,ERR,ERROR,*999)
       CALL FINITE_ELASTICITY_PUSH_ELASTICITY_TENSOR(ELASTICITY_TENSOR,DZDNU,Jznu,ERR,ERROR,*999)
      
-     CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+    CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
       !Form of constitutive model is:
       ! W=c1*(I1-3)+c2*(I2-3)+p/2*(I3-1)
 
@@ -2087,16 +2096,16 @@ CONTAINS
       I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
       TEMPTERM1=-2.0_DP*C(3)
       TEMPTERM2=2.0_DP*(C(2)+I1*C(3))
-      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2+P*AZUv(1)
-      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2+P*AZUv(2)
-      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2+P*AZUv(3)
-      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)+P*AZUv(4)
-      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)+P*AZUv(5)
-      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)+P*AZUv(6)
+      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2+P*Jznu*AZUv(1)
+      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2+P*Jznu*AZUv(2)
+      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2+P*Jznu*AZUv(3)
+      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)+P*Jznu*AZUv(4)
+      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)+P*Jznu*AZUv(5)
+      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)+P*Jznu*AZUv(6)
       ! Calculate material elasticity tensor (in Voigt form) as
       ! this will be compensated for in the push-forward with the modified deformation gradient.
-      TEMPTERM1=2.0_DP*C(3)
-      TEMPTERM2=-2.0_DP*C(3)
+      TEMPTERM1=4.0_DP*C(3)
+      TEMPTERM2=-4.0_DP*C(3)
       ELASTICITY_TENSOR(2,1)=TEMPTERM1
       ELASTICITY_TENSOR(3,1)=TEMPTERM1
       ELASTICITY_TENSOR(1,2)=TEMPTERM1
@@ -2107,7 +2116,7 @@ CONTAINS
       ELASTICITY_TENSOR(5,5)=TEMPTERM2
       ELASTICITY_TENSOR(6,6)=TEMPTERM2
       !Add volumetric part of elasticity tensor - p*d(C^-1)/dE.
-      ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*AZUE
+      ELASTICITY_TENSOR=ELASTICITY_TENSOR + P*Jznu*AZUC
 
       !Hydrostatic portion of the elasticity tensor (dS/dp)
       HYDRO_ELASTICITY_VOIGT = AZUv
@@ -2855,18 +2864,20 @@ CONTAINS
             !Loop over element columns belonging to geometric dependent variables
             nhs=0
             DO nh=1,NUMBER_OF_DIMENSIONS
-              JGW_SUB_MAT=JGW*(ELASTICITY_TENSOR(TENSOR_TO_VOIGT(1:NUMBER_OF_DIMENSIONS,nh,NUMBER_OF_DIMENSIONS), &
+              JGW_SUB_MAT(1:NUMBER_OF_DIMENSIONS,1:NUMBER_OF_DIMENSIONS)=JGW* &
+                & (ELASTICITY_TENSOR(TENSOR_TO_VOIGT(1:NUMBER_OF_DIMENSIONS,nh,NUMBER_OF_DIMENSIONS), &
                 & TENSOR_TO_VOIGT(1:NUMBER_OF_DIMENSIONS,nh,NUMBER_OF_DIMENSIONS))+ &
                 & CAUCHY_TENSOR(1:NUMBER_OF_DIMENSIONS,1:NUMBER_OF_DIMENSIONS))              
               DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS(nh)
-                TEMPVEC=MATMUL(JGW_SUB_MAT,DPHIDZ(1:NUMBER_OF_DIMENSIONS,ns,nh))
+                TEMPVEC(1:NUMBER_OF_DIMENSIONS)=MATMUL(JGW_SUB_MAT(1:NUMBER_OF_DIMENSIONS,1:NUMBER_OF_DIMENSIONS), &
+                  & DPHIDZ(1:NUMBER_OF_DIMENSIONS,ns,nh))
                 nhs=nhs+1
                 mhs=nhs-1
                 !Loop over element rows belonging to geometric dependent variables
                 DO ms=ns,NUMBER_OF_ELEMENT_PARAMETERS(nh)
                   mhs=mhs+1
                   jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)+ &
-                    & DOT_PRODUCT(dPhiDZ(:,ms,nh),TEMPVEC)
+                    & DOT_PRODUCT(dPhiDZ(1:NUMBER_OF_DIMENSIONS,ms,nh),TEMPVEC(1:NUMBER_OF_DIMENSIONS))
                   DO component_idx=1,NUMBER_OF_DIMENSIONS
                     DO component_idx2=1,NUMBER_OF_DIMENSIONS
                       TEMPTERM=CAUCHY_TENSOR(component_idx,component_idx2)* &
@@ -2888,13 +2899,14 @@ CONTAINS
               
               DO ns=1,NUMBER_OF_ELEMENT_PARAMETERS(nh)
                 !Loop over element rows belonging to geometric dependent variables
-                TEMPVEC=MATMUL(JGW_SUB_MAT,DPHIDZ(1:NUMBER_OF_DIMENSIONS,ns,nh))
+                TEMPVEC(1:NUMBER_OF_DIMENSIONS)=MATMUL(JGW_SUB_MAT(1:NUMBER_OF_DIMENSIONS,1:NUMBER_OF_DIMENSIONS), &
+                  & DPHIDZ(1:NUMBER_OF_DIMENSIONS,ns,nh))
                 nhs=nhs+1
                 mhs=ELEMENT_BASE_DOF_INDEX(mh)
                 DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(mh)
                   mhs=mhs+1
                   jacobianMatrix%elementJacobian%matrix(mhs,nhs)=jacobianMatrix%elementJacobian%matrix(mhs,nhs)+ &
-                    & DOT_PRODUCT(dPhidZ(:,ms,mh),TEMPVEC)
+                    & DOT_PRODUCT(dPhidZ(1:NUMBER_OF_DIMENSIONS,ms,mh),TEMPVEC(1:NUMBER_OF_DIMENSIONS))
                   DO component_idx=1,NUMBER_OF_DIMENSIONS
                     DO component_idx2=1,NUMBER_OF_DIMENSIONS
                       TEMPTERM=CAUCHY_TENSOR(component_idx,component_idx2)* &
@@ -2945,8 +2957,9 @@ CONTAINS
               !Loop over element columns belonging to geometric dependent variables.
               DO mh=1,NUMBER_OF_DIMENSIONS
                 DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(mh)
-                  TEMPVEC=MATMUL(HYDRO_ELASTICITY_TENSOR,DPHIDZ(:,ms,mh))
-                  JGW_DPHIMS_DZ=JGW*TEMPVEC(mh)
+                  !TEMPVEC=MATMUL(HYDRO_ELASTICITY_TENSOR,DPHIDZ(:,ms,mh))
+                  !JGW_DPHIMS_DZ=JGW*TEMPVEC(mh)
+                  JGW_DPHIMS_DZ=JGW*DPHIDZ(mh,ms,mh)
                   mhs=mhs+1
                   !Loop over element columns belonging to hydrostatic pressure
                   nhs=ELEMENT_BASE_DOF_INDEX(PRESSURE_COMPONENT)
@@ -2962,8 +2975,9 @@ CONTAINS
               !Loop over element columns belonging to geometric dependent variables.
               DO mh=1,NUMBER_OF_DIMENSIONS
                 DO ms=1,NUMBER_OF_ELEMENT_PARAMETERS(mh)
-                  TEMPVEC=MATMUL(HYDRO_ELASTICITY_TENSOR,DPHIDZ(:,ms,mh))
-                  JGW_DPHIMS_DZ=JGW*TEMPVEC(mh)
+                  !TEMPVEC=MATMUL(HYDRO_ELASTICITY_TENSOR,DPHIDZ(:,ms,mh))
+                  !JGW_DPHIMS_DZ=JGW*TEMPVEC(mh)
+                  JGW_DPHIMS_DZ=JGW*DPHIDZ(mh,ms,mh)
                   mhs=mhs+1
                   !Loop over element columns belonging to hydrostatic pressure.
                   nhs=ELEMENT_BASE_DOF_INDEX(PRESSURE_COMPONENT)+1
@@ -4238,14 +4252,16 @@ CONTAINS
             ENDDO !ms
           ENDDO !mh
 
-          JGW=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
+          !JGW=GEOMETRIC_INTERPOLATED_POINT_METRICS%JACOBIAN*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
+          JGW=DEPENDENT_INTERPOLATED_POINT_METRICS%JACOBIAN*DEPENDENT_QUADRATURE_SCHEME%GAUSS_WEIGHTS(gauss_idx)
 
           !Hydrostatic pressure component
           MESH_COMPONENT_NUMBER=FIELD_VARIABLE%COMPONENTS(mh)%MESH_COMPONENT_NUMBER
           DEPENDENT_BASIS=>DEPENDENT_FIELD%DECOMPOSITION%DOMAIN(MESH_COMPONENT_NUMBER)%ptr% &
             & TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
           COMPONENT_QUADRATURE_SCHEME=>DEPENDENT_BASIS%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-          TEMPTERM1=JGW*(Jznu-1.0_DP)
+          !TEMPTERM1=JGW*(Jznu-1.0_DP)
+          TEMPTERM1=JGW*(1.0_DP-1.0_DP/Jznu)
           IF(FIELD_VARIABLE%COMPONENTS(mh)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
             DO ms=1,DEPENDENT_BASIS%NUMBER_OF_ELEMENT_PARAMETERS
               mhs=mhs+1 
@@ -4435,7 +4451,7 @@ CONTAINS
             IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
               TEMPTERM1=GAUSS_WEIGHT*(Jzxi-(Jg-DARCY_VOL_INCREASE)*Jxxi)
             ELSE
-              TEMPTERM1=GAUSS_WEIGHT*(Jzxi/Jxxi - 1.0_DP)*Jxxi
+              TEMPTERM1=GAUSS_WEIGHT*Jzxi*(1.0_DP - 1.0_DP/Jznu)
             ENDIF
             IF(DEPENDENT_COMPONENT_INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
               COMPONENT_BASIS=>DEPENDENT_FIELD%VARIABLES(var1)%COMPONENTS(HYDROSTATIC_PRESSURE_COMPONENT)%DOMAIN% &
@@ -9678,17 +9694,20 @@ CONTAINS
     CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
       !Form of constitutive model is:
       ! W_hat=c1*(I1_hat-3)+c2*(I2_hat-3)+p*J*C^(-1)
-
+      
+      CALL MatrixTransposeProduct(DZDNU,DZDNU,AZL,err,error,*999)      
+      CALL Invert(AZL,AZU,I3,ERR,ERROR,*999)
+     
       !Calculate isochoric fictitious 2nd Piola tensor (in Voigt form)
       I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
       TEMPTERM1=-2.0_DP*C(2)
       TEMPTERM2=2.0_DP*(C(1)+I1*C(2))
-      PIOLA_TENSOR(1,1)=TEMPTERM1*AZL(1,1)+TEMPTERM2+P*AZU(1,1)
-      PIOLA_TENSOR(2,2)=TEMPTERM1*AZL(2,2)+TEMPTERM2+P*AZU(2,2)
-      PIOLA_TENSOR(3,3)=TEMPTERM1*AZL(3,3)+TEMPTERM2+P*AZU(3,3)
-      PIOLA_TENSOR(1,2)=TEMPTERM1*AZL(2,1)+P*AZU(1,2)
-      PIOLA_TENSOR(1,3)=TEMPTERM1*AZL(3,1)+P*AZU(1,3)
-      PIOLA_TENSOR(2,3)=TEMPTERM1*AZL(3,2)+P*AZU(2,3)
+      PIOLA_TENSOR(1,1)=TEMPTERM1*AZL(1,1)+TEMPTERM2+P*Jznu*AZU(1,1)
+      PIOLA_TENSOR(2,2)=TEMPTERM1*AZL(2,2)+TEMPTERM2+P*Jznu*AZU(2,2)
+      PIOLA_TENSOR(3,3)=TEMPTERM1*AZL(3,3)+TEMPTERM2+P*Jznu*AZU(3,3)
+      PIOLA_TENSOR(1,2)=TEMPTERM1*AZL(2,1)+P*Jznu*AZU(1,2)
+      PIOLA_TENSOR(1,3)=TEMPTERM1*AZL(3,1)+P*Jznu*AZU(1,3)
+      PIOLA_TENSOR(2,3)=TEMPTERM1*AZL(3,2)+P*Jznu*AZU(2,3)
       PIOLA_TENSOR(2,1)=PIOLA_TENSOR(1,2)
       PIOLA_TENSOR(3,1)=PIOLA_TENSOR(1,3)
       PIOLA_TENSOR(3,2)=PIOLA_TENSOR(2,3)
@@ -9876,7 +9895,7 @@ CONTAINS
     REAL(DP) :: ONETHIRD_TRACE
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     TYPE(FIELD_VARIABLE_TYPE), POINTER :: FIELD_VARIABLE
-    REAL(DP) :: MOD_DZDNU(3,3),MOD_DZDNUT(3,3),AZL(3,3)
+    REAL(DP) :: DZDNUT(3,3),MOD_DZDNU(3,3),MOD_DZDNUT(3,3),AZL(3,3),AZU(3,3),I3
     REAL(DP) :: B(6),E(6),DQ_DE(6)
     REAL(DP), POINTER :: C(:) !Parameters for constitutive laws
 
@@ -9896,6 +9915,10 @@ CONTAINS
     CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
       & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
+      
+      CALL MatrixTransposeProduct(DZDNU,DZDNU,AZL,err,error,*999)
+      CALL Invert(AZL,AZU,I3,ERR,ERROR,*999)
+     
       PRESSURE_COMPONENT=DEPENDENT_INTERPOLATED_POINT%INTERPOLATION_PARAMETERS%FIELD_VARIABLE%NUMBER_OF_COMPONENTS
       P=DEPENDENT_INTERPOLATED_POINT%VALUES(PRESSURE_COMPONENT,NO_PART_DERIV)
       !Form of constitutive model is:
@@ -9905,12 +9928,12 @@ CONTAINS
       I1=AZL(1,1)+AZL(2,2)+AZL(3,3)
       TEMPTERM1=-2.0_DP*C(2)
       TEMPTERM2=2.0_DP*(C(1)+I1*C(2))
-      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2
-      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2
-      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2
-      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)
-      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)
-      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)
+      STRESS_TENSOR(1)=TEMPTERM1*AZL(1,1)+TEMPTERM2+P*AZU(1,1)*Jznu
+      STRESS_TENSOR(2)=TEMPTERM1*AZL(2,2)+TEMPTERM2+P*AZU(2,2)*Jznu
+      STRESS_TENSOR(3)=TEMPTERM1*AZL(3,3)+TEMPTERM2+P*AZU(3,3)*Jznu
+      STRESS_TENSOR(4)=TEMPTERM1*AZL(2,1)+P*AZU(2,1)*Jznu
+      STRESS_TENSOR(5)=TEMPTERM1*AZL(3,1)+P*AZU(3,1)*Jznu
+      STRESS_TENSOR(6)=TEMPTERM1*AZL(3,2)+P*AZU(3,2)*Jznu
 
       IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE) THEN
         !add active contraction stress values
@@ -9927,10 +9950,12 @@ CONTAINS
       ENDIF
 
       !Do push-forward of 2nd Piola tensor. 
-      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,MOD_DZDNU,Jznu,err,error,*999)
-      !Calculate isochoric Cauchy tensor (the deviatoric part) and add the volumetric part (the hydrostatic pressure).
-      ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:3))/3.0_DP
-      STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)-ONETHIRD_TRACE+P
+      !CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,MOD_DZDNU,Jznu,err,error,*999)
+      !!Calculate isochoric Cauchy tensor (the deviatoric part) and add the volumetric part (the hydrostatic pressure).
+      !ONETHIRD_TRACE=SUM(STRESS_TENSOR(1:3))/3.0_DP
+      !STRESS_TENSOR(1:3)=STRESS_TENSOR(1:3)-ONETHIRD_TRACE+P
+      
+      CALL FINITE_ELASTICITY_PUSH_STRESS_TENSOR(STRESS_TENSOR,DZDNU,Jznu,err,error,*999)
 
     CASE(EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE,EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
       & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE)
