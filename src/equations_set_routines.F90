@@ -1795,7 +1795,7 @@ CONTAINS
                                               & ROW_INDICES,COLUMN_INDICES,err,error,*999)
                                             !Loop over the non-ghosted rows in the equations set
                                             DO equations_row_number=1,vectorMapping%numberOfRows
-                                              ! Same as other case (BLOCK)  
+                                              ! This bit is the same as the BLOCK case
                                               RHS_VALUE=0.0_DP
                                               rhs_variable_dof=rhsMapping%equationsRowToRHSDOFMap(equations_row_number)
                                               rhs_global_dof=RHS_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP(rhs_variable_dof)
@@ -1808,14 +1808,14 @@ CONTAINS
                                                   ROW_INDICES(equations_row_number+1)-1
                                                   ! Get the GLOBAL column index
                                                   equations_column_number=COLUMN_INDICES(equations_column_idx)
-                                                  ! Get the LOCAL column index for all domains
+                                                  ! Get the LOCAL column index for all domains (=ranks)
                                                   DO domain_idx=1,COLUMN_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP &
                                                     & (equations_column_number)%NUMBER_OF_DOMAINS
-                                                    ! Select the current domain (=rank)
+                                                    ! Select the current domain 
                                                     IF (COLUMN_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP  &
                                                       & (equations_column_number)%DOMAIN_NUMBER(domain_idx) &
                                                       & == myComputationalNodeNumber) THEN
-                                                      ! Get the local dof on the current domain
+                                                      ! Get the local dof (column index) on the current domain
                                                       eqColLocalIdx = &
                                                         & COLUMN_DOMAIN_MAPPING%GLOBAL_TO_LOCAL_MAP &
                                                         & (equations_column_number)%LOCAL_NUMBER(domain_idx)
@@ -1823,30 +1823,15 @@ CONTAINS
                                                       IF (eqColLocalIdx <= &
                                                         & COLUMN_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL) THEN
                                                         ! Local dof on rhs
-                                                        variable_dof=eqColLocalIdx!equations_column_number
-                                                        ! original line: delete!
-                                                        ! variable_dof = equations_column_idx-ROW_INDICES(equations_row_number)+1
-                                                         ! Global dof in matrix
+                                                        variable_dof=eqColLocalIdx
+                                                        ! Global dof in compressed matrix
                                                         MATRIX_VALUE=equationsMatrixData(equations_column_idx)
                                                         DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
                                                         RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
                                                       END IF
                                                     END IF
                                                   END DO
-                                                ENDDO !equations_column_idx
-
-                                                !CASE block storage (=FULL) above
-                                                !Back substitute
-                                                !Loop over the local columns of the equations matrix
-                                                !DO equations_column_idx=1,COLUMN_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-                                                !  equations_column_number=COLUMN_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP( &
-                                                !    & equations_column_idx)
-                                                !  variable_dof=equations_column_idx
-                                                !  MATRIX_VALUE=equationsMatrixData(equations_row_number+ &
-                                                !    & (equations_column_number-1)*vectorMatrices%totalNumberOfRows)
-                                                !  DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
-                                                !  RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
-                                                !ENDDO !equations_column_idx
+                                                END DO !equations_column_idx
 
                                               CASE(BOUNDARY_CONDITION_DOF_FIXED)
                                                 !Do nothing
