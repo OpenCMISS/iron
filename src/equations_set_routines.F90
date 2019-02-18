@@ -1765,6 +1765,12 @@ CONTAINS
                                                   DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
                                                   RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
                                                 ENDDO !equations_column_idx
+                                                IF(ASSOCIATED(sourceMapping)) THEN
+                                                  SOURCE_VALUE=sourceVectorData(equations_row_number)
+                                                  RHS_VALUE=RHS_VALUE-SOURCE_VALUE
+                                                ENDIF
+                                                CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
+                                                  & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
                                               CASE(BOUNDARY_CONDITION_DOF_FIXED)
                                                 !Do nothing
                                               CASE(BOUNDARY_CONDITION_DOF_MIXED)
@@ -1777,12 +1783,6 @@ CONTAINS
                                                   & TRIM(NumberToVString(rhs_variable_dof,"*",err,error))//" is invalid."
                                                 CALL FlagError(localError,err,error,*999)
                                               END SELECT
-                                              IF(ASSOCIATED(sourceMapping)) THEN
-                                                SOURCE_VALUE=sourceVectorData(equations_row_number)
-                                                RHS_VALUE=RHS_VALUE-SOURCE_VALUE
-                                              ENDIF
-                                              CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                                                & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
                                             ENDDO !equations_row_number
                                           CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
                                             CALL FlagError("Not implemented.",err,error,*999)
@@ -1832,7 +1832,12 @@ CONTAINS
                                                     END IF
                                                   END DO
                                                 END DO !equations_column_idx
-
+                                                IF(ASSOCIATED(sourceMapping)) THEN
+                                                  SOURCE_VALUE=sourceVectorData(equations_row_number)
+                                                  RHS_VALUE=RHS_VALUE-SOURCE_VALUE
+                                                ENDIF
+                                                CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
+                                                  & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
                                               CASE(BOUNDARY_CONDITION_DOF_FIXED)
                                                 !Do nothing
                                               CASE(BOUNDARY_CONDITION_DOF_MIXED)
@@ -1845,12 +1850,6 @@ CONTAINS
                                                   & TRIM(NumberToVString(rhs_variable_dof,"*",err,error))//" is invalid."
                                                 CALL FlagError(localError,err,error,*999)
                                               END SELECT
-                                              IF(ASSOCIATED(sourceMapping)) THEN
-                                                SOURCE_VALUE=sourceVectorData(equations_row_number)
-                                                RHS_VALUE=RHS_VALUE-SOURCE_VALUE
-                                              ENDIF
-                                              CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
-                                                & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
                                             ENDDO !equations_row_number
                                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
                                             CALL FlagError("Not implemented.",err,error,*999)
