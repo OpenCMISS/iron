@@ -2147,19 +2147,6 @@ CONTAINS
                                                 CALL Field_ParameterSetUpdateLocalDOF(dependentField,rhsVariableType, &
                                                   & FIELD_VALUES_SET_TYPE,rhs_variable_dof,RHS_VALUE,err,error,*999)
 
-                                                !CASE block storage (=FULL) above
-                                                !Back substitute
-                                                !Loop over the local columns of the equations matrix
-                                                !DO equations_column_idx=1,COLUMN_DOMAIN_MAPPING%TOTAL_NUMBER_OF_LOCAL
-                                                !  equations_column_number=COLUMN_DOMAIN_MAPPING%LOCAL_TO_GLOBAL_MAP( &
-                                                !    & equations_column_idx)
-                                                !  variable_dof=equations_column_idx
-                                                !  MATRIX_VALUE=equationsMatrixData(equations_row_number+ &
-                                                !    & (equations_column_number-1)*vectorMatrices%totalNumberOfRows)
-                                                !  DEPENDENT_VALUE=DEPENDENT_PARAMETERS(variable_dof)
-                                                !  RHS_VALUE=RHS_VALUE+MATRIX_VALUE*DEPENDENT_VALUE
-                                                !ENDDO !equations_column_idx
-
                                               !CASE(BOUNDARY_CONDITION_DOF_FIXED)
                                                 !Do nothing
                                               !CASE(BOUNDARY_CONDITION_DOF_MIXED)
