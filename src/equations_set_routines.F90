@@ -109,7 +109,7 @@ MODULE EQUATIONS_SET_ROUTINES
 
   PUBLIC EQUATIONS_SET_ASSEMBLE
   
-  PUBLIC EQUATIONS_SET_BACKSUBSTITUTE,EQUATIONS_SET_NONLINEAR_RHS_UPDATE!, EQUATIONS_SET_NONLINEAR_BACKSUBSTITUTE
+  PUBLIC EQUATIONS_SET_BACKSUBSTITUTE,EQUATIONS_SET_NONLINEAR_RHS_UPDATE
   
   PUBLIC EQUATIONS_SET_BOUNDARY_CONDITIONS_ANALYTIC
 
@@ -1938,17 +1938,11 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  !>Updates the right hand side variable from the equations residual vector
 
-  !>Backsubstitutes with an equations set to calculate unknown right hand side vectors
   !>In the nonlinear case it should (re)compute the residual for Dirichlet fixed dofs!?
   !>Dofs with applied traction: here traction is nonzero, but residual is zero...?
-  !SUBROUTINE EQUATIONS_SET_NONLINEAR_BACKSUBSTITUTE(equationsSet,BOUNDARY_CONDITIONS,err,error,*)
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Updates the right hand side variable from the equations residual vector
+  !>As it is, it returns an all-zero vector.
   SUBROUTINE EQUATIONS_SET_NONLINEAR_RHS_UPDATE(equationsSet,BOUNDARY_CONDITIONS,err,error,*)
 
     !Argument variables

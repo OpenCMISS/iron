@@ -2679,9 +2679,6 @@ CONTAINS
                 CALL EQUATIONS_SET_BACKSUBSTITUTE(EQUATIONS_SET,SOLVER_EQUATIONS%BOUNDARY_CONDITIONS,err,error,*999)
               CASE(EQUATIONS_NONLINEAR)
                 CALL EQUATIONS_SET_NONLINEAR_RHS_UPDATE(EQUATIONS_SET,SOLVER_EQUATIONS%BOUNDARY_CONDITIONS,err,error,*999)
-                ! Use backsubstitute also for the nonlinear case?
-                ! Still gives a complete vector of zeros, must be revised if one needs e.g. to compute the traction.
-                !CALL EQUATIONS_SET_NONLINEAR_BACKSUBSTITUTE(EQUATIONS_SET,SOLVER_EQUATIONS%BOUNDARY_CONDITIONS,err,error,*999) 
               CASE DEFAULT
                 CALL FlagError("Invalid linearity for equations set equations",err,error,*999)
               END SELECT
