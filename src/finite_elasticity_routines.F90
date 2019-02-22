@@ -686,6 +686,7 @@ CONTAINS
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
         & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-2)+c2*(I2bar-2) where I1bar and I2bar are the first and second invariants of Cbar
@@ -694,7 +695,20 @@ CONTAINS
         materialCbar(2,1)=4.0_DP*materialParameters(2)
         materialCbar(3,3)=-4.0_DP*materialParameters(2)
         
-      CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE)
+      CASE(EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
+        !Form of constitutive model is:
+        ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
+        
+        materialCbar(1,1)=materialParameters(1)+2.0_DP*materialParameters(2)      
+        materialCbar(1,2)=materialParameters(1)
+        materialCbar(2,1)=materialParameters(1)
+        materialCbar(2,2)=materialParameters(1)+2.0_DP*materialParameters(2)
+        materialCbar(3,3)=materialParameters(2)
+            
+       
+      CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
         
@@ -704,7 +718,8 @@ CONTAINS
         materialCbar(2,2)=materialParameters(2)+2.0_DP*materialParameters(3)
         materialCbar(3,3)=materialParameters(3)
             
-      CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+      CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-2)+c2*(I2bar-2) where I1bar and I2bar are the first and second invariants of Cbar
         
@@ -725,6 +740,7 @@ CONTAINS
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
         & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
@@ -767,7 +783,26 @@ CONTAINS
           ENDDO !rowIdx
         ENDDO !columnIdx
         
-      CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE)
+      CASE(EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
+        !Form of constitutive model is:
+        ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
+        
+        materialCbar(1,1)=materialParameters(1)+2.0_DP*materialParameters(2)      
+        materialCbar(1,2)=materialParameters(1)
+        materialCbar(1,3)=materialParameters(1)
+        materialCbar(2,1)=materialParameters(1)
+        materialCbar(2,2)=materialParameters(1)+2.0_DP*materialParameters(2)
+        materialCbar(2,3)=materialParameters(1)
+        materialCbar(3,1)=materialParameters(1)
+        materialCbar(3,2)=materialParameters(1)
+        materialCbar(3,3)=materialParameters(1)+2.0_DP*materialParameters(2)
+        materialCbar(4,4)=materialParameters(2)
+        materialCbar(5,5)=materialParameters(2)
+        materialCbar(6,6)=materialParameters(2)
+            
+      CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
         
@@ -784,7 +819,8 @@ CONTAINS
         materialCbar(5,5)=materialParameters(3)
         materialCbar(6,6)=materialParameters(3)
             
-      CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+      CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
         
@@ -834,7 +870,7 @@ CONTAINS
 
   !>Evaluates the modified (psuedo) second Piola-Kirchoff stress tensor.
   SUBROUTINE FiniteElasticity_SbarStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,Fbar,Cbar,Bbar,Ebar,Sbar,err,error,*)
+    & F,J,haveHydrostaticPressure,Fbar,Cbar,Bbar,Ebar,Sbar,err,error,*)
     
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -842,6 +878,7 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: materialInterpolatedPoint !<A pointer to the materials parameters
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
     REAL(DP), INTENT(OUT) :: Fbar(:,:) !<On return, the modified deformation gradient tensor
     REAL(DP), INTENT(OUT) :: Cbar(:,:) !<On return, the modified right Cauchy-Green deformation tensor
     REAL(DP), INTENT(OUT) :: Bbar(:,:) !<On return, the modified Piola deformation tensor
@@ -859,8 +896,12 @@ CONTAINS
     Sbar=0.0_DP
     
     !Form modified deformation gradient, Fbar
-    Fbar(1:numberOfDimensions,1:numberOfDimensions)=J**(-1.0_DP/REAL(numberOfDimensions,DP))* &
-      & F(1:numberOfDimensions,1:numberOfDimensions)
+    IF(haveHydrostaticPressure) THEN
+      Fbar(1:numberOfDimensions,1:numberOfDimensions)=J**(-1.0_DP/REAL(numberOfDimensions,DP))* &
+        & F(1:numberOfDimensions,1:numberOfDimensions)
+    ELSE
+      Fbar(1:numberOfDimensions,1:numberOfDimensions)=F(1:numberOfDimensions,1:numberOfDimensions)
+    ENDIF
 
     !Evaluate the modified right Cauchy-Green strain tensor Cbar.
     CALL MatrixTranspose(Fbar(1:numberOfDimensions,1:numberOfDimensions),FbarT(1:numberOfDimensions,1:numberOfDimensions), &
@@ -890,6 +931,7 @@ CONTAINS
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
         & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
@@ -901,7 +943,22 @@ CONTAINS
         Sbar(TENSOR_TO_VOIGT2(2,2))=tempTerm1*Cbar(2,2)+tempTerm2
         Sbar(TENSOR_TO_VOIGT2(1,2))=tempTerm1*Cbar(1,2)
         
-      CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE)
+       CASE(EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
+         & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
+        !Form of constitutive model is:
+        ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
+        ! Sbar = lambda.tr(Ebar).I + 2.mu.Ebar
+        
+        I1bar=Ebar(1)+Ebar(2)
+        tempTerm1=materialParameters(1)*I1bar
+        tempTerm2=2.0_DP*materialParameters(2)
+        Sbar(TENSOR_TO_VOIGT2(1,1))=tempTerm1+tempTerm2*Ebar(1)      
+        Sbar(TENSOR_TO_VOIGT2(2,2))=tempTerm1+tempTerm2*Ebar(2)
+        Sbar(TENSOR_TO_VOIGT2(1,2))=tempTerm2*Ebar(3)
+      
+         
+      CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
         ! Sbar = lambda.tr(Ebar).I + 2.mu.Ebar
@@ -909,11 +966,12 @@ CONTAINS
         I1bar=Ebar(1)+Ebar(2)
         tempTerm1=materialParameters(2)*I1bar
         tempTerm2=2.0_DP*materialParameters(3)
-        Sbar(1)=tempTerm1+tempTerm2*Ebar(1)      
-        Sbar(2)=tempTerm1+tempTerm2*Ebar(2)
-        Sbar(3)=tempTerm2*Ebar(3)
+        Sbar(TENSOR_TO_VOIGT2(1,1))=tempTerm1+tempTerm2*Ebar(1)      
+        Sbar(TENSOR_TO_VOIGT2(2,2))=tempTerm1+tempTerm2*Ebar(2)
+        Sbar(TENSOR_TO_VOIGT2(1,2))=tempTerm2*Ebar(3)
       
-      CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+      CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
         
@@ -946,6 +1004,7 @@ CONTAINS
       SELECT CASE(equationsSet%specification(3))
       CASE(EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
         & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
@@ -960,22 +1019,40 @@ CONTAINS
         Sbar(TENSOR_TO_VOIGT3(1,3))=tempTerm1*Cbar(1,3)
         Sbar(TENSOR_TO_VOIGT3(2,3))=tempTerm1*Cbar(2,3)        
         
-      CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE)
+      CASE(EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
         ! Sbar = lambda.tr(Ebar).I + 2.mu.Ebar
         
-        I1bar=Ebar(1)+Ebar(2)+Ebar(3)
+        I1bar=Ebar(TENSOR_TO_VOIGT3(1,1))+Ebar(TENSOR_TO_VOIGT3(2,2))+Ebar(TENSOR_TO_VOIGT3(3,3))
+        tempTerm1=materialParameters(1)*I1bar
+        tempTerm2=2.0_DP*materialParameters(2)
+        Sbar(TENSOR_TO_VOIGT3(1,1))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,1))      
+        Sbar(TENSOR_TO_VOIGT3(2,2))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(2,2))
+        Sbar(TENSOR_TO_VOIGT3(3,3))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(3,3))
+        Sbar(TENSOR_TO_VOIGT3(1,2))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,2))
+        Sbar(TENSOR_TO_VOIGT3(1,3))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,3))
+        Sbar(TENSOR_TO_VOIGT3(2,3))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(2,3))
+       
+      CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
+        !Form of constitutive model is:
+        ! Wbar = lambda/2.[tr(Ebar)]^2 + mu.tr(Ebar^2)
+        ! Sbar = lambda.tr(Ebar).I + 2.mu.Ebar
+        
+        I1bar=Ebar(TENSOR_TO_VOIGT3(1,1))+Ebar(TENSOR_TO_VOIGT3(2,2))+Ebar(TENSOR_TO_VOIGT3(3,3))
         tempTerm1=materialParameters(2)*I1bar
         tempTerm2=2.0_DP*materialParameters(3)
-        Sbar(1)=tempTerm1+tempTerm2*Ebar(1)      
-        Sbar(2)=tempTerm1+tempTerm2*Ebar(2)
-        Sbar(3)=tempTerm1+tempTerm2*Ebar(3)
-        Sbar(4)=tempTerm2*Ebar(4)
-        Sbar(5)=tempTerm2*Ebar(5)
-        Sbar(6)=tempTerm2*Ebar(6)
+        Sbar(TENSOR_TO_VOIGT3(1,1))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,1))      
+        Sbar(TENSOR_TO_VOIGT3(2,2))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(2,2))
+        Sbar(TENSOR_TO_VOIGT3(3,3))=tempTerm1+tempTerm2*Ebar(TENSOR_TO_VOIGT3(3,3))
+        Sbar(TENSOR_TO_VOIGT3(1,2))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,2))
+        Sbar(TENSOR_TO_VOIGT3(1,3))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(1,3))
+        Sbar(TENSOR_TO_VOIGT3(2,3))=tempTerm2*Ebar(TENSOR_TO_VOIGT3(2,3))
       
-      CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+      CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
         !Form of constitutive model is:
         ! Wbar=c1*(I1bar-3)+c2*(I2bar-3) where I1bar and I2bar are the first and second invariants of Cbar
         
@@ -1040,7 +1117,7 @@ CONTAINS
 
   !>Evaluates the deviatoric Cauchy stress tensor.
   SUBROUTINE FiniteElasticity_SigmadevStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,Fbar,Cbar,Bbar,Ebar,sigmabar,sigmadev,err,error,*)
+    & F,J,haveHydrostaticPressure,Fbar,Cbar,Bbar,Ebar,sigmabar,sigmadev,err,error,*)
     
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1048,6 +1125,7 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: materialInterpolatedPoint !<A pointer to the materials parameters
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
     REAL(DP), INTENT(OUT) :: Fbar(:,:) !<On return, the modified deformation gradient tensor
     REAL(DP), INTENT(OUT) :: Cbar(:,:) !<On return, the modified right Cauchy-Green deformation tensor
     REAL(DP), INTENT(OUT) :: Bbar(:,:) !<On return, the modified Piola deformation tensor
@@ -1065,17 +1143,21 @@ CONTAINS
 
     !Calculate the modified (pseudo) second Piola-Kirchoff stress tensor
     CALL FiniteElasticity_SbarStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F,J,Fbar,Cbar,Bbar,Ebar,Sbar(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+      & F,J,haveHydrostaticPressure,Fbar,Cbar,Bbar,Ebar,Sbar(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
     !Push the modified (pseudo) second Piola-Kirchoff stress tensor forward to give the modified (pseudo) Cauchy stress tensor
     CALL FiniteElasticity_PushStressTensorForward(numberOfDimensions,Fbar,J,Sbar(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & sigmabar,err,error,*999)
 
     !Calculate the deviatoric Cauchy stress tensor
-    traceSigmaBar=SUM(sigmabar(1:numberOfDimensions))
-    sigmadev(1:numberOfDimensions)=-traceSigmaBar/REAL(numberOfDimensions,DP)
-    sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))=J**(-2.0_DP/REAL(numberOfDimensions,DP))* &
-      & (sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))+sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions)))
+    IF(haveHydrostaticPressure) THEN
+      traceSigmaBar=SUM(sigmabar(1:numberOfDimensions))
+      sigmadev(1:numberOfDimensions)=-traceSigmaBar/REAL(numberOfDimensions,DP)
+      sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))=J**(-2.0_DP/REAL(numberOfDimensions,DP))* &
+        & (sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))+sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions)))
+    ELSE
+      sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))=sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions))
+    ENDIF
      
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -1102,13 +1184,15 @@ CONTAINS
   !
 
   !>Evaluates the spherical Cauchy stress tensor.
-  SUBROUTINE FiniteElasticity_SigmasphStressTensorCalculate(equationsSet,numberOfDimensions,J,p,sigmasph,err,error,*)
+  SUBROUTINE FiniteElasticity_SigmasphStressTensorCalculate(equationsSet,numberOfDimensions,J,p,haveHydrostaticPressure,&
+    & sigmasph,err,error,*)
     
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
     REAL(DP), INTENT(IN) :: J !<The Jacobian of the deformation
     REAL(DP), INTENT(IN) :: p !<The value of hydrostatic pressure
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
     REAL(DP), INTENT(OUT) :: sigmasph(:) !<On return, the spherical Cauchy stress tensor in Voigt form
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1117,13 +1201,17 @@ CONTAINS
     ENTERS("FiniteElasticity_SigmasphStressTensorCalculate",err,error,*999)
 
     !Calculate the spherical part of the Cauchy stress tensor
-    sigmasph(1:numberOfDimensions)=-p
-    sigmasph(numberOfDimensions+1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
+    IF(haveHydrostaticPressure) THEN
+      sigmasph(1:numberOfDimensions)=-p
+      sigmasph(numberOfDimensions+1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
+    ELSE
+      sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
+    ENDIF
    
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial pressure tensor:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          p = ",p,err,error,*999)
+      IF(haveHydrostaticPressure) CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"          p = ",p,err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),8,8, &
         & sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),'("  sigmasphV :",8(X,E13.6))','(13X,8(X,E13.6))', &
         & err,error,*999)
@@ -1143,7 +1231,7 @@ CONTAINS
 
   !>Evaluates the Cauchy stress tensor.
   SUBROUTINE FiniteElasticity_SigmaStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,p,sigma,err,error,*)
+    & F,J,p,haveHydrostaticPressure,sigma,err,error,*)
     
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1152,6 +1240,7 @@ CONTAINS
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     REAL(DP), INTENT(IN) :: p !<The hydrostatic pressure
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
     REAL(DP), INTENT(OUT) :: sigma(:) !<On return, the Cauchy stress tensor in Voight form
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1162,14 +1251,14 @@ CONTAINS
 
     !Calculate the deviatoric Cauchy stress tensor
     CALL FiniteElasticity_SigmadevStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F(1:numberOfDimensions,1:numberOfDimensions),J,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
       & Cbar(1:numberOfDimensions,1:numberOfDimensions),Bbar(1:numberOfDimensions,1:numberOfDimensions), &
       & Ebar(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
     
     !Calculate the spherical Cauchy stress tensor
     CALL FiniteElasticity_SigmasphStressTensorCalculate(equationsSet,numberOfDimensions,J,p, &
-      & sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+      & haveHydrostaticPressure,sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
     !Calculate the Cauchy stress tensor
     sigma(1:NUMBER_OF_VOIGT(numberOfDimensions))=sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions))+ &
@@ -1303,7 +1392,7 @@ CONTAINS
 
   !>Evaluates the spatial elasticity and stress tensor in Voigt form at a given Gauss point.
   SUBROUTINE FiniteElasticity_SpatialElasticityDevTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,sigmadev,spatialCdev,err,error,*)
+    & F,J,haveHydrostaticPressure,sigmadev,spatialCdev,err,error,*)
     
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1311,6 +1400,7 @@ CONTAINS
     TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: materialInterpolatedPoint !<A pointer to the materials parameters
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
     REAL(DP), INTENT(OUT) :: sigmadev(:) !<On return, the devaiatoric Cauchy stress tensor
     REAL(DP), INTENT(OUT) :: spatialCdev(:,:) !<On return, the deviatoric part of the spatial elasticity tensor in Voigt form.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -1331,7 +1421,7 @@ CONTAINS
     materialParameters=>materialInterpolatedPoint%values(:,NO_PART_DERIV)
 
     CALL FiniteElasticity_SigmadevStressTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F(1:numberOfDimensions,1:numberOfDimensions),J,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
       & Cbar(1:numberOfDimensions,1:numberOfDimensions),Bbar(1:numberOfDimensions,1:numberOfDimensions), &
       & Ebar(1:NUMBER_OF_VOIGT(numberOfDimensions)),sigmabar(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
@@ -1347,304 +1437,309 @@ CONTAINS
     CALL FiniteElasticity_PushElasticityTensorForward(numberOfDimensions,Fbar(1:numberOfDimensions,1:numberOfDimensions), &
       & J,materialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & spatialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
+
+    IF(haveHydrostaticPressure) THEN
+      SELECT CASE(numberOfDimensions)
+      CASE(1)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(2)
+        
+        ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))= &
+          &  0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
+          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
+        ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))= &
+          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
+          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
+        ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))= &
+          & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2)) &
+          & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+        
+        ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))= &
+          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
+          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
+        ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))= &
+          &  0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
+          & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
+        ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))= &
+          & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2)) &
+          & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
+        
+        ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))= &
+          &  0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1)) &
+          & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))
+        ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))= &
+          & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1)) &
+          & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))
+        ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))= &
+          & 0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2)) 
+        
+        ce1(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))=J**(-2.0_DP)*ce1(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))
+        
+        ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))=-2.0_DP*sigmabar(TENSOR_TO_VOIGT2(1,1))+1.5_DP*traceSigmaBar
+        ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))=-0.5_DP*traceSigmaBar
+        ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
+        ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))=-0.5_DP*traceSigmaBar
+        ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))=-2.0_DP*sigmabar(TENSOR_TO_VOIGT2(2,2))+1.5_DP*traceSigmaBar
+        ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
+        ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
+        ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
+        ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))=0.5_DP*traceSigmaBar
+        
+        ce2(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))=(1.0_DP/2.0_DP)*J**(-1.0_DP)* &
+          & ce2(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))
+        
+      CASE(3)
+        
+        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))= &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))= &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))= &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))= &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
+        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))= &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3)) 
+        ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))= &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
+        
+        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))= &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))= &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))= &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
+        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3)) 
+        ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
+        
+        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))= &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))= &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))= &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
+          & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
+          & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
+          & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
+        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3)) 
+        ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
+        
+        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))= &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
+        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
+        ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
+        
+        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))= &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
+        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
+        ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
+        
+        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))= &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))= &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
+          & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
+          & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
+        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
+        ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))= &
+          & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))              
+        
+        ce1(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))=J**(-4.0_DP/3.0_DP)*ce1(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))
+        
+        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(1,1))
+        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(2,2))
+        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(3,3))
+        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
+        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
+        ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
+        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(2,2))
+        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(2,2))
+        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmadev(TENSOR_TO_VOIGT3(2,2))-sigmabar(TENSOR_TO_VOIGT3(3,3))
+        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
+        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
+        ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
+        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(3,3))
+        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))=(1.0_DP/3.0_DP)*traceSigmaBar- &
+          & sigmabar(TENSOR_TO_VOIGT3(2,2))-sigmabar(TENSOR_TO_VOIGT3(3,3))
+        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(3,3))
+        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
+        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
+        ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
+        ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
+        ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
+        ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
+        ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))=0.5_DP*traceSigmaBar
+        ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
+        ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
+        ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
+        ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))=0.5_DP*traceSigmaBar
+        ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
+        ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
+        ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
+        ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))=0.5_DP*traceSigmaBar
+        
+        ce2(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))=(2.0_DP/3.0_DP)*J**(-2.0_DP/3.0_DP)* &
+          & ce2(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))      
+        
+      CASE DEFAULT
+        localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      
+      spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
+        & ce1(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)) + &
+        & ce2(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
+    ELSE
+      spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
+        & spatialCbar(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
+    ENDIF
     
-    SELECT CASE(numberOfDimensions)
-    CASE(1)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(2)
-
-      ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))= &
-        &  0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
-        & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
-        & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
-        & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
-      ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))= &
-        & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
-        & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
-        & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
-        & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
-      ce1(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))= &
-        & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2)) &
-        & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
-     
-      ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))= &
-        & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
-        & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
-        & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
-        & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
-      ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))= &
-        &  0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) &
-        & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) &
-        & -0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) &
-        & +0.25_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))      
-      ce1(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))= &
-        & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2)) &
-        & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))
-      
-      ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))= &
-        &  0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1)) &
-        & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))
-      ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))= &
-        & -0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1)) &
-        & +0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))
-      ce1(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))= &
-        & 0.50_DP*spatialCbar(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2)) 
-      
-      ce1(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))=J**(-2.0_DP)*ce1(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))
-      
-      ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))=-2.0_DP*sigmabar(TENSOR_TO_VOIGT2(1,1))+1.5_DP*traceSigmaBar
-      ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))=-0.5_DP*traceSigmaBar
-      ce2(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
-      ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))=-0.5_DP*traceSigmaBar
-      ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))=-2.0_DP*sigmabar(TENSOR_TO_VOIGT2(2,2))+1.5_DP*traceSigmaBar
-      ce2(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
-      ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,1))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
-      ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(2,2))=-sigmabar(TENSOR_TO_VOIGT2(1,2))
-      ce2(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))=0.5_DP*traceSigmaBar
-      
-      ce2(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))=(1.0_DP/2.0_DP)*J**(-1.0_DP)* &
-        & ce2(1:NUMBER_OF_VOIGT(2),1:NUMBER_OF_VOIGT(2))
-
-    CASE(3)
-
-      ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))= &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))= &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))= &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))= &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
-      ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))= &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3)) 
-      ce1(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))= &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
-               
-      ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))= &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))= &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))= &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
-      ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3)) 
-      ce1(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
-               
-      ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))= &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))= &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))= &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) &
-        & +(1.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) &
-        & -(2.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) &
-        & +(4.0_DP/9.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3)) 
-      ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3)) 
-      ce1(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2)) 
-               
-      ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))= &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))
-      ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,3))
-      ce1(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,2))
-      
-      ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))= &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,3))
-      ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))
-      ce1(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,2))
-               
-      ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))= &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))= &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) &
-        & -(1.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2)) &
-        & +(2.0_DP/3.0_DP)*spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))
-      ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
-      ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,3))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))
-      ce1(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))= &
-        & spatialCbar(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,3))              
-      
-      ce1(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))=J**(-4.0_DP/3.0_DP)*ce1(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))
-      
-      ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(1,1))
-      ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-        & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(2,2))
-      ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-        & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(3,3))
-      ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-      ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-      ce2(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-      ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-        & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(2,2))
-      ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(2,2))
-      ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-        & sigmadev(TENSOR_TO_VOIGT3(2,2))-sigmabar(TENSOR_TO_VOIGT3(3,3))
-      ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-      ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-      ce2(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-      ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-        & sigmabar(TENSOR_TO_VOIGT3(1,1))-sigmabar(TENSOR_TO_VOIGT3(3,3))
-      ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))=(1.0_DP/3.0_DP)*traceSigmaBar- &
-        & sigmabar(TENSOR_TO_VOIGT3(2,2))-sigmabar(TENSOR_TO_VOIGT3(3,3))
-      ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))=(4.0_DP/3.0_DP)*traceSigmaBar-2.0_DP*sigmabar(TENSOR_TO_VOIGT3(3,3))
-      ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-      ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-      ce2(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-      ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-      ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-      ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(2,3))
-      ce2(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))=0.5_DP*traceSigmaBar
-      ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-      ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-      ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(1,3))
-      ce2(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))=0.5_DP*traceSigmaBar
-      ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,1))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-      ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(2,2))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-      ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(3,3))=-sigmabar(TENSOR_TO_VOIGT3(1,2))
-      ce2(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))=0.5_DP*traceSigmaBar
- 
-      ce2(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))=(2.0_DP/3.0_DP)*J**(-2.0_DP/3.0_DP)* &
-        & ce2(1:NUMBER_OF_VOIGT(3),1:NUMBER_OF_VOIGT(3))      
-
-    CASE DEFAULT
-      localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))// &
-        & " is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-    
-    spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))= &
-      & ce1(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions)) + &
-      & ce2(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))
-
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Spatial deviatoric elasticity tensors:",err,error,*999)
@@ -1680,14 +1775,15 @@ CONTAINS
   !
 
   !>Evaluates the spherical part of the spatial elasticity and stress tensor in Voigt form.
-  SUBROUTINE FiniteElasticity_SpatialElasticitySphTensorCalculate(equationsSet,numberOfDimensions,J,p,sigmasph,spatialCsph, &
-    & err,error,*)
+  SUBROUTINE FiniteElasticity_SpatialElasticitySphTensorCalculate(equationsSet,numberOfDimensions,J,p,haveHydrostaticPressure, &
+    & sigmasph,spatialCsph,err,error,*)
     
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     REAL(DP), INTENT(IN) :: p !<The hydrostatic pressure
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
     REAL(DP), INTENT(OUT) :: sigmasph(:) !<On return, the spherical Cauchy stress tensor in Voigt form
     REAL(DP), INTENT(OUT) :: spatialCsph(:,:) !<On return, the spherical part of the spatial elasticity tensor in Voigt form.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -1697,44 +1793,49 @@ CONTAINS
     
     ENTERS("FiniteElasticity_SpatialElasticitySphTensorCalculate",err,error,*999)
 
+    sigmasph=0.0_DP
     spatialCsph=0.0_DP
-    
-    CALL FiniteElasticity_SigmasphStressTensorCalculate(equationsSet,numberOfDimensions,J,p, &
-      & sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
-    SELECT CASE(numberOfDimensions)
-    CASE(1)
+    IF(haveHydrostaticPressure) THEN
+    
+      CALL FiniteElasticity_SigmasphStressTensorCalculate(equationsSet,numberOfDimensions,J,p, &
+        & haveHydrostaticPressure,sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
       
-      spatialCsph(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1))=p
+      SELECT CASE(numberOfDimensions)
+      CASE(1)
+        
+        spatialCsph(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1))=p
+        
+      CASE(2)
+        
+        spatialCsph(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))=p
+        spatialCsph(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))=-p
+        spatialCsph(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))=-p
+        spatialCsph(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))=p
+        spatialCsph(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))=p
+        
+      CASE(3)
+        
+        spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))=p
+        spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))=-p
+        spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))=-p
+        spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))=-p
+        spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))=p
+        spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))=-p
+        spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))=-p
+        spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))=-p
+        spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))=p
+        spatialCsph(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))=p
+        spatialCsph(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))=p
+        spatialCsph(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))=p
       
-    CASE(2)
-            
-      spatialCsph(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1))=p
-      spatialCsph(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2))=-p
-      spatialCsph(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1))=-p
-      spatialCsph(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(2,2))=p
-      spatialCsph(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2))=p
-      
-    CASE(3)
-      
-      spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1))=p
-      spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2))=-p
-      spatialCsph(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3))=-p
-      spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1))=-p
-      spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2))=p
-      spatialCsph(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3))=-p
-      spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1))=-p
-      spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2))=-p
-      spatialCsph(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3))=p
-      spatialCsph(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2))=p
-      spatialCsph(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3))=p
-      spatialCsph(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3))=p
-      
-    CASE DEFAULT
-      localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))// &
-        & " is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
+      CASE DEFAULT
+        localError="The number of dimensions of "//TRIM(NumberToVstring(numberOfDimensions,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+
+    ENDIF
 
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
@@ -1759,7 +1860,7 @@ CONTAINS
 
   !>Evaluates the spatial elasticity and stress tensor in Voigt form.
   SUBROUTINE FiniteElasticity_SpatialElasticityTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-    & F,J,p,sigma,spatialC,err,error,*)
+    & F,J,p,haveHydrostaticPressure,sigma,spatialC,err,error,*)
     
     !Argument variables
     TYPE(EQUATIONS_SET_TYPE), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set
@@ -1768,6 +1869,7 @@ CONTAINS
     REAL(DP), INTENT(IN) :: F(:,:) !<The deformation gradient tensor
     REAL(DP), INTENT(IN) :: J !<The jacobian of deformation
     REAL(DP), INTENT(IN) :: p !<The hydrostatic pressure
+    LOGICAL, INTENT(IN) :: haveHydrostaticPressure !<.TRUE. if hydrostatic pressure is used, .FALSE. if not. 
     REAL(DP), INTENT(OUT) :: sigma(:) !<On return, the Cauchy stress tensor in Voigt form
     REAL(DP), INTENT(OUT) :: spatialC(:,:) !<On return, the spatial elasticity tensor in Voigt form.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -1781,10 +1883,10 @@ CONTAINS
     spatialC=0.0_DP
     
     CALL FiniteElasticity_SpatialElasticityDevTensorCalculate(equationsSet,numberOfDimensions,materialInterpolatedPoint, &
-      & F(1:numberOfDimensions,1:numberOfDimensions),J,sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
+      & F(1:numberOfDimensions,1:numberOfDimensions),J,haveHydrostaticPressure,sigmadev(1:NUMBER_OF_VOIGT(numberOfDimensions)), &
       & spatialCdev(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDImensions)),err,error,*999)
     
-    CALL FiniteElasticity_SpatialElasticitySphTensorCalculate(equationsSet,numberOfDimensions,J,p, &
+    CALL FiniteElasticity_SpatialElasticitySphTensorCalculate(equationsSet,numberOfDimensions,J,p,haveHydrostaticPressure, &
       & sigmasph(1:NUMBER_OF_VOIGT(numberOfDimensions)),spatialCsph(1:NUMBER_OF_VOIGT(numberOfDimensions), &
       & 1:NUMBER_OF_VOIGT(numberOfDimensions)),err,error,*999)
 
@@ -2203,7 +2305,10 @@ CONTAINS
 
     haveDensity=.FALSE.
 
-    haveHydrostaticPressure=.TRUE.
+    haveHydrostaticPressure=equationsSetSubtype/=EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.AND. &
+      & equationsSetSubtype/=EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE.AND. &
+      & equationsSetSubtype/=EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.AND. &
+      & equationsSetSubtype/=EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE
     
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
@@ -2271,7 +2376,7 @@ CONTAINS
       CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
       CALL Basis_NumberOfXiGet(dependentBasis,numberOfXi,err,error,*999)
       
-      pressureComponent=numberOfComponents
+      IF(haveHydrostaticPressure) pressureComponent=numberOfComponents
       
       boundaryConditions=>equationsSet%BOUNDARY_CONDITIONS
       CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions,rhsVariable,boundaryConditionsVariable,err,error,*999)
@@ -2428,7 +2533,7 @@ CONTAINS
         
         Jgw=dependentInterpPointMetrics%jacobian*gaussWeight
         
-        p=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
+        IF(haveHydrostaticPressure) p=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
         
         !Loop over dependent basis functions for the displacement variables
         DO columnComponentIdx=1,numberOfDimensions
@@ -2455,7 +2560,7 @@ CONTAINS
 
         !Calculate the Cauchy stress tensor and the spatial elasticity tensor
         CALL FiniteElasticity_SpatialElasticityTensorCalculate(equationsSet,numberOfDimensions,materialsInterpPoint, &
-          & Fe,Je,p,sigma,spatialC,err,error,*999)
+          & Fe,Je,p,haveHydrostaticPressure,sigma,spatialC,err,error,*999)
 
         !Convert the Cauchy tensor from Voigt form to tensor form.
         DO columnComponentIdx=1,numberOfDimensions
@@ -2513,45 +2618,49 @@ CONTAINS
           ENDDO !columnElementParameterIdx
         ENDDO !offDiagonalComponentIdx
         
-        !3) loop over all nh and pressure component
-        columnElementDOFIdx=0
-        IF(residualVariable%components(pressureComponent)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN 
-          !node based
-          !Loop over element rows belonging to geometric dependent variables
-          DO columnComponentIdx=1,numberOfDimensions
-            DO columnElementParameterIdx=1,numberOfElementParameters(columnComponentIdx)
-              jgwdPhiColdZ=Jgw*dPhidZ(columnComponentIdx,columnElementParameterIdx,columnComponentIdx)
-              columnElementDOFIdx=columnElementDOFIdx+1
-              !Loop over element rows belonging to hydrostatic pressure
-              rowElementDOFIdx=elementBaseDOFIndex(pressureComponent)
-              DO rowElementParameterIdx=1,numberOfElementParameters(pressureComponent)
-                rowElementDOFIdx=rowElementDOFIdx+1
-                phiRow=quadratureSchemes(pressureComponent)%ptr%GAUSS_BASIS_FNS(rowElementParameterIdx,NO_PART_DERIV,gaussIdx)
-                jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
-                  &  jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)-jgwdPhiColdZ*phiRow
-              ENDDO !rowElementParameterIdx
-            ENDDO !columnElementParameterIdx
-          ENDDO !columnComponentIdx
-        ELSE IF(residualVariable%components(pressureComponent)%INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
-          !element based
-          !Loop over element rows belonging to geometric dependent variables
-          DO columnComponentIdx=1,numberOfDimensions
-            DO columnElementParameterIdx=1,numberOfElementParameters(columnComponentIdx)
-              jgwdPhiColdZ=Jgw*dPhidZ(columnComponentIdx,columnElementParameterIdx,columnComponentIdx)
-              columnElementDOFIdx=columnElementDOFIdx+1
-              !Loop over element rows belonging to hydrostatic pressure
-              rowElementDOFIdx=elementBaseDOFIndex(pressureComponent)+1
-              jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
-                & jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)-jgwdPhiColdZ
-            ENDDO !columnElementParameterIdx
-          ENDDO !columnComponentIdx
-        ELSE
-          localError="The interpolation type for component "//TRIM(NumberToVString(pressureComponent,"*",err,error))// &
-            & " is not implemented."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF        
+        IF(haveHydrostaticPressure) THEN
+          !3) loop over all nh and pressure component
         
-        !No loop over element columns and rows belonging both to hydrostatic pressure because it is zero.
+          columnElementDOFIdx=0
+          IF(residualVariable%components(pressureComponent)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN 
+            !node based
+            !Loop over element rows belonging to geometric dependent variables
+            DO columnComponentIdx=1,numberOfDimensions
+              DO columnElementParameterIdx=1,numberOfElementParameters(columnComponentIdx)
+                jgwdPhiColdZ=Jgw*dPhidZ(columnComponentIdx,columnElementParameterIdx,columnComponentIdx)
+                columnElementDOFIdx=columnElementDOFIdx+1
+                !Loop over element rows belonging to hydrostatic pressure
+                rowElementDOFIdx=elementBaseDOFIndex(pressureComponent)
+                DO rowElementParameterIdx=1,numberOfElementParameters(pressureComponent)
+                  rowElementDOFIdx=rowElementDOFIdx+1
+                  phiRow=quadratureSchemes(pressureComponent)%ptr%GAUSS_BASIS_FNS(rowElementParameterIdx,NO_PART_DERIV,gaussIdx)
+                  jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                    &  jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)-jgwdPhiColdZ*phiRow
+                ENDDO !rowElementParameterIdx
+              ENDDO !columnElementParameterIdx
+            ENDDO !columnComponentIdx
+          ELSE IF(residualVariable%components(pressureComponent)%INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
+            !element based
+            !Loop over element rows belonging to geometric dependent variables
+            DO columnComponentIdx=1,numberOfDimensions
+              DO columnElementParameterIdx=1,numberOfElementParameters(columnComponentIdx)
+                jgwdPhiColdZ=Jgw*dPhidZ(columnComponentIdx,columnElementParameterIdx,columnComponentIdx)
+                columnElementDOFIdx=columnElementDOFIdx+1
+                !Loop over element rows belonging to hydrostatic pressure
+                rowElementDOFIdx=elementBaseDOFIndex(pressureComponent)+1
+                jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                  & jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)-jgwdPhiColdZ
+              ENDDO !columnElementParameterIdx
+            ENDDO !columnComponentIdx
+          ELSE
+            localError="The interpolation type for component "//TRIM(NumberToVString(pressureComponent,"*",err,error))// &
+              & " is not implemented."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+          
+          !No loop over element columns and rows belonging both to hydrostatic pressure because it is zero.
+
+        ENDIF
         
       ENDDO !gaussIdx
       
@@ -2593,45 +2702,48 @@ CONTAINS
             ENDDO !rowElementParameterIdx
           ENDDO !columnElementParameterIdx
         ENDDO !offDiagonalComponentIdx
-        
-        columnElementDOFIdx=0
-        IF(residualVariable%components(pressureComponent)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN 
-          !node based
-          !Loop over element rows belonging to geometric dependent variables
-          DO columnComponentIdx=1,numberOfDimensions
-            DO columnElementParameterIdx=1,numberOfElementParameters(columnComponentIdx)
-              columnElementDOFIdx=columnElementDOFIdx+1
-              !Loop over element rows belonging to hydrostatic pressure
-              rowElementDOFIdx=elementBaseDOFIndex(pressureComponent)
-              DO rowElementParameterIdx=1,numberOfElementParameters(pressureComponent)
-                rowElementDOFIdx=rowElementDOFIdx+1                  
+
+        IF(haveHydrostaticPressure) THEN
+       
+          columnElementDOFIdx=0
+          IF(residualVariable%components(pressureComponent)%INTERPOLATION_TYPE==FIELD_NODE_BASED_INTERPOLATION) THEN 
+            !node based
+            !Loop over element rows belonging to geometric dependent variables
+            DO columnComponentIdx=1,numberOfDimensions
+              DO columnElementParameterIdx=1,numberOfElementParameters(columnComponentIdx)
+                columnElementDOFIdx=columnElementDOFIdx+1
+                !Loop over element rows belonging to hydrostatic pressure
+                rowElementDOFIdx=elementBaseDOFIndex(pressureComponent)
+                DO rowElementParameterIdx=1,numberOfElementParameters(pressureComponent)
+                  rowElementDOFIdx=rowElementDOFIdx+1                  
+                  jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+                    & jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
+                    & dependentInterpParameters%SCALE_FACTORS(rowElementParameterIdx,pressureComponent)* &
+                    & dependentInterpParameters%SCALE_FACTORS(columnElementParameterIdx,columnComponentIdx)
+                ENDDO !rowElementParameterIdx
+              ENDDO !columnElementParameterIdx
+            ENDDO !columnComponentIdx
+          ELSE IF(residualVariable%components(pressureComponent)%INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
+            !element based
+            !Loop over element rows belonging to geometric dependent variables
+            DO columnComponentIdx=1,numberOfDimensions
+              DO columnElementParameteridx=1,numberOfElementParameters(columnComponentIdx)
+                columnElementDOFIdx=columnElementDOFIdx+1
+                !Loop over element rows belonging to hydrostatic pressure
+                rowElementDOFIdx=elementBaseDOFIndex(pressureComponent)+1
                 jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                   & jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
-                  & dependentInterpParameters%SCALE_FACTORS(rowElementParameterIdx,pressureComponent)* &
                   & dependentInterpParameters%SCALE_FACTORS(columnElementParameterIdx,columnComponentIdx)
-              ENDDO !rowElementParameterIdx
-            ENDDO !columnElementParameterIdx
-          ENDDO !columnComponentIdx
-        ELSE IF(residualVariable%components(pressureComponent)%INTERPOLATION_TYPE==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
-          !element based
-          !Loop over element rows belonging to geometric dependent variables
-          DO columnComponentIdx=1,numberOfDimensions
-            DO columnElementParameteridx=1,numberOfElementParameters(columnComponentIdx)
-              columnElementDOFIdx=columnElementDOFIdx+1
-              !Loop over element rows belonging to hydrostatic pressure
-              rowElementDOFIdx=elementBaseDOFIndex(pressureComponent)+1
-              jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
-                & jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
-                & dependentInterpParameters%SCALE_FACTORS(columnElementParameterIdx,columnComponentIdx)
-            ENDDO !columnElementParameterIdx
-          ENDDO !columnComponentIdx
-        ELSE
-          localError="The interpolation type for component "//TRIM(NumberToVString(pressureComponent,"*",err,error))// &
-            & " is not implemented."
-          CALL FlagError(localError,err,error,*999)
+              ENDDO !columnElementParameterIdx
+            ENDDO !columnComponentIdx
+          ELSE
+            localError="The interpolation type for component "//TRIM(NumberToVString(pressureComponent,"*",err,error))// &
+              & " is not implemented."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
         ENDIF
       ENDIF
-
+      
       !Mirror the Jacobian matrix.
       DO columnElementDOFIdx=2,totalNumberOfElementDOFs
         DO rowElementDOFIdx=1,columnElementDOFIdx-1
@@ -2707,7 +2819,12 @@ CONTAINS
     
     IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
       & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE.OR. &
-      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE) THEN
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE) THEN
       
       CALL FiniteElasticity_FiniteElementJacobianEvaluateNew(EQUATIONS_SET,ELEMENT_NUMBER,err,error,*999)
       
@@ -3188,8 +3305,8 @@ CONTAINS
     REAL(DP) :: bfact,cauchyTensor(3,3),darcyMassIncrease,darcyRho0F,darcyVolIncrease,density,dFdZ(3,64,3),dPhidZ(3,64,3), &
       & F(3,3),Fe(3,3),Fg(3,3),gaussWeight,growthValues(3),J,Je,Jg,Jgw,Jxxi,Jzxi,Mfact,p,p0fact,sigma(6),spatialDensity, &
       & sum1,tempTerm1,thickness
-    LOGICAL :: darcyDependent,darcyDensity,haveDensity,haveHydrostaticPressure,haveSurfacePressure,updateResidual, &
-      & updateMass,updateRHS
+    LOGICAL :: incompressible,darcyDependent,darcyDensity,haveDensity,haveHydrostaticPressure,haveSurfacePressure, &
+      & updateResidual,updateMass,updateRHS
     TYPE(BASIS_TYPE), POINTER :: columnComponentBasis,dependentBasis,rowComponentBasis
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
@@ -3261,7 +3378,9 @@ CONTAINS
     NULLIFY(dynamicMapping)
     NULLIFY(massMatrix)
     IF(equationsSetSubtype == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
-      & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
+      & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE.OR. &
+      & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+      & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE) THEN
       CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
       CALL EquationsMappingVector_DynamicMappingGet(vectorMapping,dynamicMapping,err,error,*999)
       CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%massMatrixNumber,massMatrix,err,error,*999)
@@ -3311,7 +3430,10 @@ CONTAINS
     CALL CoordinateSystem_DimensionGet(coordinateSystem,numberOfDimensions,err,error,*999)
     CALL Basis_NumberOfXiGet(dependentBasis,numberOfXi,err,error,*999)
 
-    haveHydrostaticPressure=.TRUE.
+    haveHydrostaticPressure=equationsSetSubtype/=EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.AND. &
+      & equationsSetSubtype/=EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE.AND. &
+      & equationsSetSubtype/=EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.AND. &
+      & equationsSetSubtype/=EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE
     
     boundaryConditions=>equationsSet%BOUNDARY_CONDITIONS
     CALL BOUNDARY_CONDITIONS_VARIABLE_GET(boundaryConditions,rhsVariable,boundaryConditionsVariable,err,error,*999)
@@ -3480,7 +3602,9 @@ CONTAINS
     updateResidual=nonlinearMatrices%updateResidual
     updateMass=.FALSE.
     IF(equationsSetSubtype == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
-      & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
+      & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE.OR. &
+      & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+      & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE) THEN
       IF(massMatrix%updateMatrix) updateMass=.TRUE.
     ENDIF
     updateRHS=rhsVector%updateVector.AND.haveDensity.AND.ASSOCIATED(sourceField)
@@ -3490,8 +3614,13 @@ CONTAINS
       SELECT CASE(equationsSetSubtype)
       CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
         & EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
-        & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE)
-        
+        & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
+        & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
+       
         !Loop over gauss points and add residuals
         DO gaussIdx=1,numberOfGauss
           
@@ -3519,8 +3648,8 @@ CONTAINS
           Jxxi=geometricInterpPointMetrics%jacobian
           
           Jgw=dependentInterpPointMetrics%jacobian*gaussWeight
-          
-          p=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
+
+          IF(haveHydrostaticPressure) p=dependentInterpPoint%values(pressureComponent,NO_PART_DERIV)
           
           !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
           CALL FiniteElasticity_GaussDeformationGradientTensor(dependentInterpPointMetrics,geometricInterpPointMetrics, &
@@ -3552,7 +3681,7 @@ CONTAINS
           IF(updateResidual) THEN
             !Calculate Cauchy stress
             CALL FiniteElasticity_SigmaStressTensorCalculate(equationsSet,numberOfDimensions,materialsInterpPoint, &
-              & Fe,Je,p,sigma,err,error,*999)
+              & Fe,Je,p,haveHydrostaticPressure,sigma,err,error,*999)
           
             IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
               !Parameters settings for coupled elasticity Darcy INRIA model:
@@ -3632,40 +3761,43 @@ CONTAINS
               ENDIF
             ENDDO !rowComponentIdx
             
-            !Hydrostatic pressure component (skip for membrane problems)
-            IF (equationsSetSubtype /= EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
-              IF(equationsSetSubtype == EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
-                tempTerm1=gaussWeight*(Jzxi-(Jg-darcyVolIncrease)*Jxxi)
-              ELSE
-                tempTerm1=-gaussWeight*(1.0_DP - 1.0_DP/Je)*Jzxi
-              ENDIF
-              IF(pressureInterpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
-                !node based
-                meshComponentNumber=residualVariable%components(pressureComponent)%MESH_COMPONENT_NUMBER
-                NULLIFY(rowComponentDomain)
-                CALL Decomposition_DomainGet(decomposition,meshComponentNumber,rowComponentDomain,err,error,*999)
-                NULLIFY(rowComponentTopology)
-                CALL Domain_TopologyGet(rowComponentDomain,rowComponentTopology,err,error,*999)
-                NULLIFY(rowComponentElements)
-                CALL DomainTopology_ElementsGet(rowComponentTopology,rowComponentElements,err,error,*999)
-                NULLIFY(rowComponentBasis)
-                CALL DomainElements_BasisGet(rowComponentElements,elementNumber,rowComponentBasis,err,error,*999)
-                NULLIFY(rowComponentQuadratureScheme)
-                CALL Basis_QuadratureSchemeGet(rowComponentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowComponentQuadratureScheme, &
-                  & err,error,*999)
-                DO rowElementParameterIdx=1,rowComponentBasis%NUMBER_OF_ELEMENT_PARAMETERS
-                  rowElementDOFIdx=rowElementDOFIdx+1 
+            !Hydrostatic pressure component
+            IF(haveHydrostaticPressure) THEN
+              !skip for membrane problems
+              IF(equationsSetSubtype /= EQUATIONS_SET_MEMBRANE_SUBTYPE) THEN
+                IF(equationsSetSubtype == EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
+                  tempTerm1=gaussWeight*(Jzxi-(Jg-darcyVolIncrease)*Jxxi)
+                ELSE
+                  tempTerm1=-gaussWeight*(1.0_DP - 1.0_DP/Je)*Jzxi
+                ENDIF
+                IF(pressureInterpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN
+                  !node based
+                  meshComponentNumber=residualVariable%components(pressureComponent)%MESH_COMPONENT_NUMBER
+                  NULLIFY(rowComponentDomain)
+                  CALL Decomposition_DomainGet(decomposition,meshComponentNumber,rowComponentDomain,err,error,*999)
+                  NULLIFY(rowComponentTopology)
+                  CALL Domain_TopologyGet(rowComponentDomain,rowComponentTopology,err,error,*999)
+                  NULLIFY(rowComponentElements)
+                  CALL DomainTopology_ElementsGet(rowComponentTopology,rowComponentElements,err,error,*999)
+                  NULLIFY(rowComponentBasis)
+                  CALL DomainElements_BasisGet(rowComponentElements,elementNumber,rowComponentBasis,err,error,*999)
+                  NULLIFY(rowComponentQuadratureScheme)
+                  CALL Basis_QuadratureSchemeGet(rowComponentBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowComponentQuadratureScheme, &
+                    & err,error,*999)
+                  DO rowElementParameterIdx=1,rowComponentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+                    rowElementDOFIdx=rowElementDOFIdx+1 
+                    nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)= &
+                      & nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)+ &
+                      & rowComponentQuadratureScheme%GAUSS_BASIS_FNS(rowElementParameterIdx,NO_PART_DERIV,gaussIdx)*tempTerm1
+                  ENDDO
+                ELSE IF(pressureInterpolationType==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
+                  !element based
+                  rowElementDOFIdx=rowElementDOFIdx+1                
                   nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)= &
-                    & nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)+ &
-                    & rowComponentQuadratureScheme%GAUSS_BASIS_FNS(rowElementParameterIdx,NO_PART_DERIV,gaussIdx)*tempTerm1
-                ENDDO
-              ELSE IF(pressureInterpolationType==FIELD_ELEMENT_BASED_INTERPOLATION) THEN
-                !element based
-                rowElementDOFIdx=rowElementDOFIdx+1                
-                nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)= &
-                  & nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)+tempTerm1
-              ENDIF              
-            ENDIF        
+                    & nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)+tempTerm1
+                ENDIF
+              ENDIF
+            ENDIF
           ENDIF !update residual
           
           IF(updateMass) THEN
@@ -3813,7 +3945,9 @@ CONTAINS
             & nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)* &
             & dependentInterpParameters%SCALE_FACTORS(rowElementParameterIdx,rowComponentIdx)
           IF(equationsSetSubtype == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
-            & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
+            & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE.OR. &
+            & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+            & equationsSetSubtype == EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE) THEN
             IF(massMatrix%updateMatrix) THEN
               columnElementDofIdx=0
               !Loop over element columns
@@ -3846,21 +3980,23 @@ CONTAINS
           ENDIF
         ENDDO !rowElementParameterIdx
       ENDDO !rowComponentIdx
-      IF(pressureInterpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
-        meshComponentNumber=residualVariable%components(pressureComponent)%MESH_COMPONENT_NUMBER
-        NULLIFY(rowComponentDomain)
-        CALL Decomposition_DomainGet(decomposition,meshComponentNumber,rowComponentDomain,err,error,*999)
-        NULLIFY(rowComponentTopology)
-        CALL Domain_TopologyGet(rowComponentDomain,rowComponentTopology,err,error,*999)
-        NULLIFY(rowComponentElements)
-        CALL DomainTopology_ElementsGet(rowComponentTopology,rowComponentElements,err,error,*999)
-        NULLIFY(rowComponentBasis)
-        CALL DomainElements_BasisGet(rowComponentElements,elementNumber,rowComponentBasis,err,error,*999)
-        DO rowElementParameterIdx=1,rowComponentBasis%NUMBER_OF_ELEMENT_PARAMETERS
-          rowElementDOFIdx=rowElementDOFIdx+1 
-          nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)=nonlinearMatrices%elementResidual% &
-            & vector(rowElementDOFIdx)*dependentInterpParameters%SCALE_FACTORS(rowElementParameterIdx,pressureComponent)
-        ENDDO !rowElementParameterIdx
+      IF(haveHydrostaticPressure) THEN
+        IF(pressureInterpolationType==FIELD_NODE_BASED_INTERPOLATION) THEN !node based
+          meshComponentNumber=residualVariable%components(pressureComponent)%MESH_COMPONENT_NUMBER
+          NULLIFY(rowComponentDomain)
+          CALL Decomposition_DomainGet(decomposition,meshComponentNumber,rowComponentDomain,err,error,*999)
+          NULLIFY(rowComponentTopology)
+          CALL Domain_TopologyGet(rowComponentDomain,rowComponentTopology,err,error,*999)
+          NULLIFY(rowComponentElements)
+          CALL DomainTopology_ElementsGet(rowComponentTopology,rowComponentElements,err,error,*999)
+          NULLIFY(rowComponentBasis)
+          CALL DomainElements_BasisGet(rowComponentElements,elementNumber,rowComponentBasis,err,error,*999)
+          DO rowElementParameterIdx=1,rowComponentBasis%NUMBER_OF_ELEMENT_PARAMETERS
+            rowElementDOFIdx=rowElementDOFIdx+1 
+            nonlinearMatrices%elementResidual%vector(rowElementDOFIdx)=nonlinearMatrices%elementResidual% &
+              & vector(rowElementDOFIdx)*dependentInterpParameters%SCALE_FACTORS(rowElementParameterIdx,pressureComponent)
+          ENDDO !rowElementParameterIdx
+        ENDIF
       ENDIF
     ENDIF
       
@@ -3992,7 +4128,12 @@ CONTAINS
 
     IF(EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
       & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE.OR. &
-      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE) THEN
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+      & EQUATIONS_SET_SUBTYPE == EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE) THEN
       CALL FiniteElasticity_FiniteElementResidualEvaluateNew(EQUATIONS_SET,elementNumber,err,error,*999)
     ELSE
       NULLIFY(equations)
@@ -6323,7 +6464,10 @@ CONTAINS
       & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
       & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
       & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
-      & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+      & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+      & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+      & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+      & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
       !Do nothing ???
     CASE DEFAULT
       localError="The third equations set specification of "// &
@@ -6392,8 +6536,11 @@ CONTAINS
         & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
         & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
         & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
-        & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
-         !Do nothing ???
+        & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
+        !Do nothing ???
       CASE DEFAULT
         LOCAL_ERROR="The third equations set specification of "// &
           & TRIM(NumberToVString(EQUATIONS_SET%SPECIFICATION(3),"*",err,error))// &
@@ -10264,7 +10411,11 @@ CONTAINS
         & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE &
         & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE &
         & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE &
-        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE
+        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE &
+        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE &
+        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE &
+        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE &
+        & .AND. EQUATIONS_SET_SUBTYPE/=EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE
 
     NULLIFY(coordinateSystem)
     CALL EquationsSet_CoordinateSystemGet(EQUATIONS_SET,coordinateSystem,err,error,*999)
@@ -10286,7 +10437,7 @@ CONTAINS
         & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE, &
         & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
         & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE, &
-        & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,&
+        & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE, &
         & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE, EQUATIONS_SET_NO_SUBTYPE, &
         & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE,EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE, &
         & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
@@ -10306,7 +10457,10 @@ CONTAINS
         & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
         & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
         & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
-        & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+        & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+        & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         SELECT CASE(EQUATIONS_SET_SETUP%SETUP_TYPE)
         CASE(EQUATIONS_SET_SETUP_INITIAL_TYPE)
           SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
@@ -10391,7 +10545,12 @@ CONTAINS
               & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, & 
               & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
               & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE, &
-              & EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+              & EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+              & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE, &
+              & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+              & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+              & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
+              & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
               ! pass, fibre field isn't required as the constitutive relation is isotropic
             CASE(EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, &
               & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
@@ -10497,7 +10656,10 @@ CONTAINS
             & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
             & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
             & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
-            & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+            & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+            & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+            & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+            & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
             SELECT CASE(EQUATIONS_SET_SETUP%ACTION_TYPE)
             CASE(EQUATIONS_SET_SETUP_START_ACTION)
               IF(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD_AUTO_CREATED) THEN
@@ -10595,7 +10757,7 @@ CONTAINS
                     & NUMBER_OF_COMPONENTS,GEOMETRIC_MESH_COMPONENT,err,error,*999)
                   CALL FIELD_COMPONENT_MESH_COMPONENT_SET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                     & NUMBER_OF_COMPONENTS,GEOMETRIC_MESH_COMPONENT,err,error,*999)
-               ENDIF
+                ENDIF
                 SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   !Set the displacement components to node based interpolation
@@ -10666,8 +10828,8 @@ CONTAINS
                   & numberOfDimensions,err,error,*999)
                 CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
                   & err,error,*999)
-                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,NUMBER_OF_COMPONENTS, &
-                  & err,error,*999)
+                CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                  & NUMBER_OF_COMPONENTS,err,error,*999)
                 IF(EQUATIONS_SET_SUBTYPE==EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE) THEN
                   CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_V_VARIABLE_TYPE, &
                     & numberOfDimensions,err,error,*999)
@@ -10689,8 +10851,8 @@ CONTAINS
                   DO component_idx=1,numberOfDimensions
                     CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_U_VARIABLE_TYPE,component_idx, &
                       & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                    CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE,component_idx, &
-                      & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                    CALL FIELD_COMPONENT_INTERPOLATION_CHECK(EQUATIONS_SET_SETUP%FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
+                      & component_idx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                   ENDDO !component_idx
                 CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                   CALL FlagError("Not implemented.",err,error,*999)
@@ -10718,7 +10880,9 @@ CONTAINS
                 CALL FIELD_PARAMETER_SET_CREATE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,err,error,*999)
               ELSE IF(EQUATIONS_SET%specification(3)==EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
-                & EQUATIONS_SET%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) THEN
+                & EQUATIONS_SET%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE.OR. &
+                & EQUATIONS_SET%specification(3)==EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+                & EQUATIONS_SET%specification(3)==EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE) THEN
                 CALL FIELD_PARAMETER_SET_CREATE(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_DELUDELN_VARIABLE_TYPE, &
                   & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,err,error,*999)                
               ENDIF
@@ -10781,8 +10945,8 @@ CONTAINS
                 CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                   !Set the displacement components to node based interpolation
                   DO component_idx=1,numberOfDimensions
-                    CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
+                    CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
+                      & FIELD_U_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
                     CALL FIELD_COMPONENT_INTERPOLATION_SET_AND_LOCK(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD, &
                       & FIELD_DELUDELN_VARIABLE_TYPE,component_idx,FIELD_NODE_BASED_INTERPOLATION,ERR,ERROR,*999)
                   ENDDO !component_idx
@@ -13065,7 +13229,7 @@ CONTAINS
             IF(ASSOCIATED(EQUATIONS_MATERIALS)) THEN
               NUMBER_OF_FLUID_COMPONENTS=0
               SELECT CASE(EQUATIONS_SET_SUBTYPE)
-              CASE(EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_NO_SUBTYPE, &
+              CASE(EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_NO_SUBTYPE, &
                 & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
                 & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE, &
                 & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
@@ -13094,7 +13258,9 @@ CONTAINS
                 ELSE
                   NUMBER_OF_COMPONENTS=2
                 ENDIF
-              CASE(EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE)
+              CASE(EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, &
+                & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE, &
+                & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE)
                 NUMBER_OF_COMPONENTS=2;
               CASE(EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE)
                 NUMBER_OF_COMPONENTS=2;
@@ -13150,9 +13316,9 @@ CONTAINS
                 NUMBER_OF_COMPONENTS=9+3+NUMBER_OF_VOIGT(numberOfDimensions)
               CASE(EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
                 NUMBER_OF_COMPONENTS=9+3+NUMBER_OF_VOIGT(numberOfDimensions)
-              CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE)
+              CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
                 NUMBER_OF_COMPONENTS=3 !Density, lambda and mu
-              CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+              CASE(EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
                 NUMBER_OF_COMPONENTS=3 !Density, c01 and c10.
               CASE DEFAULT
                 LOCAL_ERROR="The third equations set specification of "// &
@@ -13452,7 +13618,8 @@ CONTAINS
                 & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, & 
                 & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
                 CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_QUASISTATIC,err,error,*999)
-              CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+              CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+                & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
                 CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_SECOND_ORDER_DYNAMIC,err,error,*999)                
               CASE DEFAULT
                 CALL Equations_TimeDependenceTypeSet(EQUATIONS,EQUATIONS_STATIC,err,error,*999)
@@ -13478,7 +13645,8 @@ CONTAINS
                 CALL EquationsMapping_ResidualVariablesNumberSet(vectorMapping,2,err,error,*999)
                 CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping, &
                   & [FIELD_U_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE],err,error,*999)
-              CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+              CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+                & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
                 !Single residual variable
                 CALL EquationsMapping_ResidualVariableTypesSet(vectorMapping,[FIELD_U_VARIABLE_TYPE],err,error,*999)
                 !Set dynamic for mass matrix
@@ -13499,7 +13667,8 @@ CONTAINS
                 CALL EquationsMatrices_NonlinearStorageTypeSet(vectorMatrices,MATRIX_BLOCK_STORAGE_TYPE, &
                   & err,error,*999)
                 SELECT CASE(EQUATIONS_SET_SUBTYPE)
-                CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+                CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+                  & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
                   IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                     !Set up lumping
                     CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
@@ -13521,7 +13690,8 @@ CONTAINS
                 CALL EquationsMatrices_NonlinearStructureTypeSet(vectorMatrices, & 
                   & EQUATIONS_MATRIX_FEM_STRUCTURE,err,error,*999)
                 SELECT CASE(EQUATIONS_SET_SUBTYPE)
-                CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+                CASE(EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+                  & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE)
                   IF(EQUATIONS%lumpingType==EQUATIONS_LUMPED_MATRICES) THEN
                     !Set up lumping
                     CALL EquationsMatrices_DynamicLumpingTypeSet(vectorMatrices, &
@@ -13786,7 +13956,10 @@ CONTAINS
           & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
           & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
           & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
-          & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)        
+          & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+          & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+          & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+          & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         SELECT CASE(SOLUTION_METHOD)
         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
           EQUATIONS_SET%SOLUTION_METHOD=EQUATIONS_SET_FEM_SOLUTION_METHOD
@@ -13877,7 +14050,10 @@ CONTAINS
           & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE, &
           & EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
           & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
-          & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)
+          & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+          & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+          & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+          & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE,EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE)
         !Set full specification
         IF(ALLOCATED(equationsSet%specification)) THEN
           CALL FlagError("Equations set specification is already allocated.",err,error,*999)

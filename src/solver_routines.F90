@@ -5963,12 +5963,15 @@ CONTAINS
                           IF(ASSOCIATED(dynamicMapping)) THEN
                             DYNAMIC_VARIABLE_TYPE=dynamicMapping%dynamicVariableType
                             IF(DYNAMIC_SOLVER%SOLVER_INITIALISED) THEN
-                              !As the dynamic solver may be part of a workflow of solvers within a control loop it is possible
-                              !that the current dependent field values are not equal to the current previous values that were set
-                              !at the beginning of the control loop. 
-                              !Copy the current field values to the previous values
-                              CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                                & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+                              !CPB: THIS MESSES UP DYNANIC BC'S. HOWEVER, IT CLEARLY WAS ADDED FOR A REASON (I THINK TO DO
+                              !     WITH MONODOMAIN AND SPLITTING. COMMENT FOR NOW.
+                              !
+                              !!As the dynamic solver may be part of a workflow of solvers within a control loop it is possible
+                              !!that the current dependent field values are not equal to the current previous values that were set
+                              !!at the beginning of the control loop. 
+                              !!Copy the current field values to the previous values
+                              !CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                              !  & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
                               IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                                 CALL FIELD_PARAMETER_SETS_COPY(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
                                   & FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP, &
@@ -11969,10 +11972,10 @@ CONTAINS
       & currentFunctionFactor,previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor
     REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
     REAL(DP) :: matrixCoefficients(2)=[0.0_DP,0.0_DP]
-    REAL(DP), POINTER :: checkData(:),checkData2(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
+    REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
       & previousAccelerationVector(:),previousResidualParameters(:),previous2ResidualParameters(:), &
       & previous3ResidualParameters(:), previousRHSParameters(:),previous2RHSParameters(:),previous3RHSParameters(:), &
-      & rhsIntegratedParameters(:),rhsParameters(:),solverRHSData(:),solverResidualData(:)
+      & rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
     LOGICAL :: hasIntegratedValues
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: sparsityIndices
@@ -12117,6 +12120,9 @@ CONTAINS
 
           !Initialise matrix to zero
           CALL DistributedMatrix_AllValuesSet(solverDistributedMatrix,0.0_DP,err,error,*999)
+          !Get the check data
+          NULLIFY(matrixCheckData)
+          CALL DistributedMatrix_DataGet(solverDistributedMatrix,matrixCheckData,err,error,*999)
           !Loop over the equations sets
           DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
             NULLIFY(equationsSet)
@@ -12259,6 +12265,8 @@ CONTAINS
           ELSE
             CALL FlagError("Dynamic solver solve type is not associated.",err,error,*999)
           END IF
+          !Restore check data
+          CALL DistributedMatrix_DataRestore(solverDistributedMatrix,matrixCheckData,err,error,*999)
         ENDIF !Update matrix
         IF(ASSOCIATED(previousSolverDistributedMatrix)) &
           & CALL DistributedMatrix_UpdateFinish(previousSolverDistributedMatrix,err,error,*999)
@@ -12288,13 +12296,11 @@ CONTAINS
       ENDIF
       IF(solverMatrices%UPDATE_RHS_VECTOR) THEN
         CALL SolverMatrices_RHSVectorGet(solverMatrices,solverRHSVector,err,error,*999)
-        NULLIFY(solverRHSData)
-        CALL DistributedVector_DataGet(solverRHSVector,solverRHSData,err,error,*999)
         !Initialise the RHS to zero
         CALL DistributedVector_AllValuesSet(solverRHSVector,0.0_DP,err,error,*999)          
-        !Get the solver variables data                  
-        NULLIFY(checkData)
-        CALL DistributedVector_DataGet(solverRHSVector,checkData,err,error,*999)             
+        !Get the solver RHS check data                  
+        NULLIFY(solverRHSCheckData)
+        CALL DistributedVector_DataGet(solverRHSVector,solverRHSCheckData,err,error,*999)             
         !Loop over the equations sets
         DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
           NULLIFY(equationsSet)
@@ -12539,8 +12545,9 @@ CONTAINS
               SELECT CASE(rhsBoundaryCondition)
               CASE(BOUNDARY_CONDITION_DOF_FREE)
                 !Get the equations RHS values
-                CALL DistributedVector_ValuesGet(equationsRHSVector,equationsRowNumber,rhsValue,err,error,*999)
-                rhsValue=rhsValue+rhsParameters(rhsVariableDOF)*currentFunctionFactor
+                !CALL DistributedVector_ValuesGet(equationsRHSVector,equationsRowNumber,rhsValue,err,error,*999)
+                !rhsValue=rhsValue+rhsParameters(rhsVariableDOF)*currentFunctionFactor
+                rhsValue=rhsParameters(rhsVariableDOF)*currentFunctionFactor
                 rhsValue=rhsValue+previousRHSParameters(rhsVariableDOF)*previousFunctionFactor
                 IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
                   rhsValue=rhsValue+previous2RHSParameters(rhsVariableDOF)*previous2FunctionFactor
@@ -12557,8 +12564,7 @@ CONTAINS
                     & equationsSetIdx)%EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(equationsRowNumber)% &
                     & COUPLING_COEFFICIENTS(solverRowIdx)
                   VALUE=rhsValue*rowCouplingCoefficient
-                  CALL DistributedVector_ValuesAdd(solverRHSVector,solverRowNumber,VALUE, &
-                    & err,error,*999)
+                  CALL DistributedVector_ValuesAdd(solverRHSVector,solverRowNumber,VALUE,err,error,*999)
                 ENDDO !solverRowIdx
                 !Note: for cases in which the boundary condition does not change with time then alpha will be
                 !      implicitly zero and the contribution to the RHS will have been included above with the dynamic value.
@@ -12857,11 +12863,9 @@ CONTAINS
         !Start the update the solver RHS vector values
         CALL DistributedVector_UpdateStart(solverRHSVector,err,error,*999)
         CALL DistributedVector_UpdateFinish(solverRHSVector,err,error,*999)
-
-        NULLIFY(checkData)
-        CALL DistributedVector_DataGet(solverRHSVector,checkData,err,error,*999)
-
-      ENDIF
+        !Restore the solver RHS check data                 
+        CALL DistributedVector_DataRestore(solverRHSVector,solverRHSCheckData,err,error,*999)            
+      ENDIF !Update RHS
       IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
         CALL CPUTimer(USER_CPU,userTime2,err,error,*999)
         CALL CPUTimer(SYSTEM_CPU,systemTime2,err,error,*999)
@@ -12890,11 +12894,9 @@ CONTAINS
         IF(ASSOCIATED(solverResidualVector)) THEN
           !Initialise the residual to zero
           CALL DistributedVector_AllValuesSet(solverResidualVector,0.0_DP,err,error,*999)
-          !Get the solver variables data
-          NULLIFY(solverResidualData)
-          CALL DistributedVector_DataGet(solverResidualVector,solverResidualData,err,error,*999)
-          NULLIFY(checkData)
-          CALL DistributedVector_DataGet(solverResidualVector,checkData,err,error,*999)
+          !Get the solver residual check data
+          NULLIFY(solverResidualCheckData)
+          CALL DistributedVector_DataGet(solverResidualVector,solverResidualCheckData,err,error,*999)
           !Loop over the equations sets
           DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
             NULLIFY(equationsSet)
@@ -13229,14 +13231,13 @@ CONTAINS
           !
           !Start the update the solver residual vector values
           CALL DistributedVector_UpdateStart(solverResidualVector,err,error,*999)
-
-          NULLIFY(checkData2)
-          CALL DistributedVector_DataGet(solverResidualVector,checkData2,err,error,*999)
+          !Restore the solver residual check data
+          CALL DistributedVector_DataRestore(solverResidualVector,solverResidualCheckData,err,error,*999)
 
         ELSE
           CALL FlagError("The solver residual vector is not associated.",err,error,*999)
         ENDIF
-      ENDIF
+      ENDIF !Update residual
       IF(ASSOCIATED(solverResidualVector)) &
         & CALL DistributedVector_UpdateFinish(solverResidualVector,err,error,*999)
       IF(solver%outputType>=SOLVER_TIMING_OUTPUT) THEN
