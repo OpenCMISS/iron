@@ -7,13 +7,19 @@ for($i=0;$i<=9;$i++) {
 }
 open(INFILE,"<$filename");
 while($inline = <INFILE> ) {
-  if(substr($inline,1,1) eq ":") {
-    $ranknum=substr($inline,0,1);
+#Detect rank number in a line such as
+#[1,1]<stdout>: Basis set start!
+#  if(substr($inline,1,1) eq ":") {
+   if(substr($inline,0,3) eq "[1,") {
+    $ranknum=substr($inline,3,1);
     if($ranknum>$maxrank){
       $maxrank=$ranknum;
     }
     $numlines[$ranknum]++;
-    $lines[$ranknum][$numlines[$ranknum]]=$inline;
+#Substring corresponding to e.g.
+#Basis set start!
+#   $lines[$ranknum][$numlines[$ranknum]]=$inline;
+    $lines[$ranknum][$numlines[$ranknum]]=substr($inline,14)
   }
 }
 close(INFILE);
