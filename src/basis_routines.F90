@@ -6993,7 +6993,7 @@ CONTAINS
         ENDIF
         !Gauss point 1
         x(1,1)=(1.0_DP-SQRT(0.6_DP))/2.0_DP
-        x(2,1)=1-x(1,1)
+        x(2,1)=1.0_DP-x(1,1)
         w(1)=5.0_DP/18.0_DP
         !Gauss point 2
         x(1,2)=1.0_DP/2.0_DP
