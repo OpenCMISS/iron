@@ -529,16 +529,16 @@ CONTAINS
 
     ENTERS("Interface_DecompositionConnectivityInitialise",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*998)
-    IF(ASSOCIATED(INTERFACE%decompositionConnectivity)) &
+    IF(ASSOCIATED(interface%decompositionConnectivity)) &
       & CALL FlagError("Interface decomposition connectivity is already associated.",err,error,*998)
     
     ALLOCATE(interface%decompositionConnectivity,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate interface decomposition connectivity.",err,error,*999)
     interface%decompositionConnectivity%interface=>interface
     interface%decompositionConnectivity%interfaceDecomposition=>decomposition
-    NULLIFY(INTERFACE%decompositionConnectivity%basis)
+    NULLIFY(interface%decompositionConnectivity%basis)
     INTERFACE%decompositionConnectivity%numberOfInterfaceElements=0
     INTERFACE%decompositionConnectivity%totalNumberOfInterfaceElements=0
     INTERFACE%decompositionConnectivity%numberOfGlobalInterfaceElements=0
@@ -546,7 +546,7 @@ CONTAINS
      
     EXITS("Interface_DecompositionConnectivityInitialise")
     RETURN
-999 CALL Interface_DecompositionConnectivityFinalise(INTERFACE%decompositionConnectivity,dummyErr,dummyError,*998)
+999 CALL Interface_DecompositionConnectivityFinalise(interface%decompositionConnectivity,dummyErr,dummyError,*998)
 998 ERRORS("Interface_DecompositionConnectivityInitialise",err,error)
     EXITS("Interface_DecompositionConnectivityInitialise")
     RETURN 1
@@ -558,10 +558,10 @@ CONTAINS
   !
 
   !>Returns the label of an interface for a character label. \see OPENCMISS::Iron::cmfe_InterfaceLabelGet
-  SUBROUTINE Interface_LabelGetC(INTERFACE,label,err,error,*)
+  SUBROUTINE Interface_LabelGetC(interface,label,err,error,*)
 
     !Argument variables
-    TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface to get the label for
+    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the label for
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return the interface label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -570,14 +570,14 @@ CONTAINS
 
     ENTERS("Interface_LabelGetC",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interface)) CALL FlagError("Interface is not associated.",err,error,*999)
     
     cLength=LEN(label)
-    vsLength=LEN_TRIM(INTERFACE%label)
+    vsLength=LEN_TRIM(interface%label)
     IF(cLength>vsLength) THEN
-      label=CHAR(INTERFACE%label,vsLength)
+      label=CHAR(interface%label,vsLength)
     ELSE
-      label=CHAR(INTERFACE%label,cLength)
+      label=CHAR(interface%label,cLength)
     ENDIF
     
     EXITS("Interface_LabelGetC")
@@ -1331,36 +1331,36 @@ CONTAINS
       & (interfaceMeshElementNumber>interfaceMeshConnectivity%numberOfInterfaceElements)) THEN
       localError="The specified interface mesh element number of "// &
         & TRIM(NumberToVString(interfaceMeshElementNumber,"*",err,error))// &
-        & " is invalid. The element number should be >=1 and <= "// &
+        & " is invalid. The element number should be >= 1 and <= "// &
         & TRIM(NumberToVString(interfaceMeshConnectivity%numberOfInterfaceElements,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF    
     NULLIFY(INTERFACE)
-    CALL InterfaceMeshConnectivity_InterfaceGet(interfaceMeshConnectivity,INTERFACE,err,error,*999)
+    CALL InterfaceMeshConnectivity_InterfaceGet(interfaceMeshConnectivity,interface,err,error,*999)
     NULLIFY(coupledMesh)
-    CALL Interface_CoupledMeshGet(INTERFACE,coupledMeshIndex,coupledMesh,err,error,*999)
+    CALL Interface_CoupledMeshGet(interface,coupledMeshIndex,coupledMesh,err,error,*999)
     IF((coupledElementNumber<=0).OR.(coupledElementNumber>coupledMesh%numberOfElements)) THEN
       localError="The specified coupled element number of "// &
         & TRIM(NumberToVString(coupledElementNumber,"*",err,error))// &
-        & " is invalid. The element number should be >=1 and <= "// &
+        & " is invalid. The element number should be >= 1 and <= "// &
         & TRIM(NumberToVString(coupledMesh%numberOfElements,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     NULLIFY(interfaceMesh)
     CALL InterfaceMeshConnectivity_InterfaceMeshGet(interfaceMeshConnectivity,interfaceMesh,err,error,*999)
-    IF((interfaceMeshComponentNumber<=0).OR.(interfaceMeshComponentNumber<=interfaceMesh%numberOfComponents)) THEN
+    IF((interfaceMeshComponentNumber<=0).OR.(interfaceMeshComponentNumber>interfaceMesh%numberOfComponents)) THEN
       localError="The specified interface mesh component number of "// &
         & TRIM(NumberToVString(interfaceMeshComponentNumber,"*",err,error))// &
-        & " is invalid. The component number should be >=1 and <= "// &
+        & " is invalid. The component number should be >= 1 and <= "// &
         & TRIM(NumberToVString(interfaceMesh%numberOfComponents,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)      
     ENDIF
     NULLIFY(basis)
     CALL InterfaceMeshConnectivity_BasisGet(interfaceMeshConnectivity,basis,err,error,*999)
-    IF((interfaceMeshLocalNodeNumber<=0).OR.(interfaceMeshLocalNodeNumber<=basis%numberOfNodes))THEN
+    IF((interfaceMeshLocalNodeNumber<=0).OR.(interfaceMeshLocalNodeNumber>basis%numberOfNodes))THEN
       localError="The specified interface mesh local node number of "// &
         & TRIM(NumberToVString(interfaceMeshLocalNodeNumber,"*",err,error))// &
-        & " is invalid. The local node number should be >=1 and <= "// &
+        & " is invalid. The local node number should be >= 1 and <= "// &
         & TRIM(NumberToVString(basis%numberOfNodes,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)      
     ENDIF

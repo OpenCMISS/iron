@@ -111,6 +111,8 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_UserNumberGet
 
+  PUBLIC BasisQuadratureScheme_NumberOfGaussGet
+
 CONTAINS
 
   !
@@ -543,6 +545,33 @@ CONTAINS
     
   END SUBROUTINE Basis_UserNumberGet
 
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns the number of Gauss for a basis quadrature scheme.  
+  SUBROUTINE BasisQuadratureScheme_NumberOfGaussGet(quadratureScheme,numberOfGauss,err,error,*)
+
+    !Argument variables
+    TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme !<The basis quadrature scheme to get the number of Gauss points for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfGauss !<On exit, the number of Gauss points in the quadrature scheme.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("BasisQuadratureScheme_NumberOfGaussGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(quadratureScheme)) CALL FlagError("Quadrature scheme is not associated.",err,error,*999)
+
+    numberOfGauss=quadratureScheme%NUMBER_OF_GAUSS
+    
+    EXITS("BasisQuadratureScheme_NumberOfGaussGet")
+    RETURN
+999 ERRORSEXITS("BasisQuadratureScheme_NumberOfGaussGet",err,error)    
+    RETURN 1
+    
+  END SUBROUTINE BasisQuadratureScheme_NumberOfGaussGet
+  
   !
   !================================================================================================================================
   !

@@ -265,6 +265,8 @@ CONTAINS
 
     IF(ASSOCIATED(dependentParameters)) CALL FlagError("Dependent parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%dependentInterpParameters)) &
+      & CALL FlagError("Equations interpolation dependent interpolation parameters is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -308,6 +310,8 @@ CONTAINS
 
     IF(ASSOCIATED(dependentPoint)) CALL FlagError("Dependent point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%dependentInterpPoint)) &
+      & CALL FlagError("Equations interpolation dependent interpolated point is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -351,6 +355,8 @@ CONTAINS
 
     IF(ASSOCIATED(dependentPointMetrics)) CALL FlagError("Dependent point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%dependentInterpPointMetrics)) &
+      & CALL FlagError("Equations interpolation dependent interpolated point metrics is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -394,6 +400,8 @@ CONTAINS
 
     IF(ASSOCIATED(fibreParameters)) CALL FlagError("Fibre parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%fibreInterpParameters)) &
+      & CALL FlagError("Equations interpolation fibre interpolation parameters is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -437,6 +445,8 @@ CONTAINS
 
     IF(ASSOCIATED(fibrePoint)) CALL FlagError("Fibre point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%fibreInterpPoint)) &
+      & CALL FlagError("Equations interpolation fibre interpolated point is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -480,6 +490,8 @@ CONTAINS
 
     IF(ASSOCIATED(fibrePointMetrics)) CALL FlagError("Fibre point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%fibreInterpPointMetrics)) &
+      & CALL FlagError("Equations interpolation fibre interpolated point metrics is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -523,6 +535,8 @@ CONTAINS
 
     IF(ASSOCIATED(geometricParameters)) CALL FlagError("Geometric parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%geometricInterpParameters)) &
+      & CALL FlagError("Equations interpolation geometric interpolation parameters is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -566,6 +580,8 @@ CONTAINS
 
     IF(ASSOCIATED(geometricPoint)) CALL FlagError("Geometric point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%geometricInterpPoint)) &
+      & CALL FlagError("Equations interpolation geometric interpolated point is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -609,6 +625,8 @@ CONTAINS
 
     IF(ASSOCIATED(geometricPointMetrics)) CALL FlagError("Geometric point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%geometricInterpPointMetrics)) &
+      & CALL FlagError("Equations interpolation geometric interpolated point metrics is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -652,6 +670,8 @@ CONTAINS
 
     IF(ASSOCIATED(independentParameters)) CALL FlagError("Independent parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%independentInterpParameters)) &
+      & CALL FlagError("Equations interpolation independent interpolation parameters is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -695,6 +715,8 @@ CONTAINS
 
     IF(ASSOCIATED(independentPoint)) CALL FlagError("Independent point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%independentInterpPoint)) &
+      & CALL FlagError("Equations interpolation independent interpolated point is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -739,6 +761,8 @@ CONTAINS
 
     IF(ASSOCIATED(independentPointMetrics)) CALL FlagError("Independent point metrics is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%independentInterpPointMetrics)) &
+      & CALL FlagError("Equations interpolation independent interpolated point metrics is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -782,6 +806,8 @@ CONTAINS
 
     IF(ASSOCIATED(materialsParameters)) CALL FlagError("Materials parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%materialsInterpParameters)) &
+      & CALL FlagError("Equations interpolation materials interpolation parameters is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -825,6 +851,8 @@ CONTAINS
 
     IF(ASSOCIATED(materialsPoint)) CALL FlagError("Materials point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%materialsInterpPoint)) &
+      & CALL FlagError("Equations interpolation materials interpolated point is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -869,6 +897,8 @@ CONTAINS
 
     IF(ASSOCIATED(prevDependentParameters)) CALL FlagError("Previous dependent parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%prevDependentInterpParameters)) &
+      & CALL FlagError("Equations interpolation previous dependent interpolation parameters is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -912,6 +942,8 @@ CONTAINS
 
     IF(ASSOCIATED(prevDependentPoint)) CALL FlagError("Previous dependent point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%prevDependentInterpPoint)) &
+      & CALL FlagError("Equations interpolation previous dependent interpolated point is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -957,6 +989,8 @@ CONTAINS
     IF(ASSOCIATED(prevDependentPointMetrics)) CALL FlagError("Previous dependent point metrics is already associated.", &
       & err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%prevDependentInterpPointMetrics)) &
+      & CALL FlagError("Equations interpolation previous dependent interpolated point metrics is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -1000,6 +1034,8 @@ CONTAINS
 
     IF(ASSOCIATED(sourceParameters)) CALL FlagError("Source parameters is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%sourceInterpParameters)) &
+      & CALL FlagError("Equations interpolation source interpolation parameters is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &
@@ -1043,6 +1079,8 @@ CONTAINS
 
     IF(ASSOCIATED(sourcePoint)) CALL FlagError("Source point is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(equationsInterpolation)) CALL FlagError("Equations interpolation is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsInterpolation%sourceInterpPoint)) &
+      & CALL FlagError("Equations interpolation source interpolated point is not associated.",err,error,*999)
     IF(variableType<1.OR.variableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
       localError="The specified field variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
         & " is invalid. The variable type needs to be >= 1 and <= "// &

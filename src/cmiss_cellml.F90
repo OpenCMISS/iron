@@ -676,6 +676,7 @@ CONTAINS
             !write(*,*) 'model_idx = ',model_idx
             CELLML_MODEL => CELLML%MODELS(model_idx)%PTR
             !CALL CELLML_MODEL_DEFINITION_SET_SAVE_TEMP_FILES(CELLML_MODEL%PTR,1)
+#ifdef WITH_CELLML
             ERROR_CODE = CELLML_MODEL_DEFINITION_INSTANTIATE(CELLML_MODEL%PTR)
             IF(ERROR_CODE /= 0) THEN
               LOCAL_ERROR="Error instantiating CellML model index "//TRIM(NUMBER_TO_VSTRING(model_idx,"*",ERR,ERROR))//"."
@@ -690,6 +691,9 @@ CONTAINS
             CELLML_MODEL%NUMBER_OF_INTERMEDIATE = CELLML_MODEL_DEFINITION_GET_N_ALGEBRAIC(CELLML_MODEL%PTR)
             IF(CELLML_MODEL%NUMBER_OF_INTERMEDIATE>CELLML%MAXIMUM_NUMBER_OF_INTERMEDIATE)  &
               & CELLML%MAXIMUM_NUMBER_OF_INTERMEDIATE=CELLML_MODEL%NUMBER_OF_INTERMEDIATE
+#else
+            CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",err,error,*999)
+#endif
           ENDDO !model_idx
           CELLML%CELLML_FINISHED = .TRUE.
         ELSE

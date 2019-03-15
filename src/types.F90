@@ -1199,14 +1199,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
   END TYPE DecompositionConnectivityType
   
-  !>Contains information on coupling decompositions (across interfaces)
-  TYPE DecompositionCouplingType
-    TYPE(DecompositionType), POINTER :: decomposition !<A pointer back to the decomposition
-    INTEGER(INTG) :: numberOfCoupledDecompositions !<The number of decompositions coupled to this decomposition
-    TYPE(DecompositionPtrType), ALLOCATABLE :: coupledDecompositions(:) !<coupledDecompositions(coupledDecompositionIdx). The array of pointers to the coupled decompositions
-    TYPE(DecompositionConnectivityType), POINTER :: decompositionConnectivity !<A pointer to information on the decompositon node element connectivity
-  END TYPE DecompositionCouplingType
-
   !>Contains information on the mesh decomposition. \see OpenCMISS::Iron::cmfe_DecompositionType
   TYPE DecompositionType
     INTEGER(INTG) :: userNumber!<The user defined identifier for the domain decomposition. The user number must be unique.
@@ -1235,6 +1227,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE DecompositionPtrType
     TYPE(DecompositionType), POINTER :: ptr !<The pointer to the domain decomposition. 
   END TYPE DecompositionPtrType
+
+  !>Contains information on coupling decompositions (across interfaces)
+  TYPE DecompositionCouplingType
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer back to the decomposition
+    INTEGER(INTG) :: numberOfCoupledDecompositions !<The number of decompositions coupled to this decomposition
+    TYPE(DecompositionPtrType), ALLOCATABLE :: coupledDecompositions(:) !<coupledDecompositions(coupledDecompositionIdx). The array of pointers to the coupled decompositions
+    TYPE(DecompositionConnectivityType), POINTER :: decompositionConnectivity !<A pointer to information on the decompositon node element connectivity
+  END TYPE DecompositionCouplingType
 
   !>Contains information on the domain decompositions defined on a mesh.
   TYPE DecompositionsType
@@ -1738,7 +1738,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: firstAssembly !<Is .TRUE. if this Jacobian matrix has not been assembled
     TYPE(ElementMatrixType) :: elementJacobian !<The element matrix for this Jacobian matrix. This is not used if the Jacobian is not supplied.
     TYPE(NodalMatrixType) :: nodalJacobian !<The nodal matrix for this Jacobian matrix. This is not used if the Jacobian is not supplied.
-    INTEGER(INTG) :: jacobianCalculationType !<The calculation type (analytic of finite difference) of the Jacobian.
+    INTEGER(INTG) :: jacobianCalculationType !<The calculation type (analytic of finite difference) of the Jacobian. \see EquationsMatricesRoutines_JacobianCalculationTypes
+    REAL(DP) :: jacobianFiniteDifferenceStepSize !<The finite difference step size used for calculating the Jacobian.
   END TYPE EquationsJacobianType
 
   !>A buffer type to allow for an array of pointers to a EquationsJacobianType \see Types::EquationsJacobianType.
@@ -2775,6 +2776,20 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
   END TYPE InterfaceMeshConnectivityType
 
+  !>Contains information on the coupling between decompositions in an interface
+  TYPE InterfaceDecompositionConnectivityType
+    TYPE(InterfaceType), POINTER :: interface !<A pointer back to the interface for the coupled mesh connectivity
+    TYPE(DecompositionType), POINTER :: interfaceDecomposition !<A pointer to the inteface decomposition
+    TYPE(BasisType), POINTER :: basis !<A pointer to the inteface mesh basis
+    LOGICAL :: decompositionConnectivityFinished !<Is .TRUE. if the coupled decomposition connectivity has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: numberOfInterfaceElements !<The number of elements in the interface
+    INTEGER(INTG) :: totalNumberOfInterfaceElements !<The total number (including ghosts) of elements in the interface
+    INTEGER(INTG) :: numberOfGlobalInterfaceElements !<The number of global interface elements in the interface
+    INTEGER(INTG) :: numberOfCoupledDecompositions !<The number of coupled decompositions in the interface
+    TYPE(InterfaceElementConnectivityType), ALLOCATABLE :: elementConnectivity(:,:) !<elementConnectivity(elementIdx,coupledMeshIdx) !<The mesh connectivity for a given interface mesh element
+    INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
+  END TYPE InterfaceDecompositionConnectivityType
+
   !>Contains information on a data connectivity point 
   TYPE InterfacePointConnectivityType
     INTEGER(INTG) :: coupledElementNumber !<The element number this point is connected to in the coupled mesh
@@ -3149,13 +3164,16 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the dynamic solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
     LOGICAL :: SOLVER_INITIALISED !<Is .TRUE. if the solver has been initialised, .FALSE. if not.
+    INTEGER(INTG) :: numberOfSolves !<The number of dynamic solves for this solver. 
     INTEGER(INTG) :: LINEARITY !<The linearity type of the dynamic solver \see SOLVER_ROUTINES_DynamicLinearityTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: ORDER !<The order of the dynamic solve \see SOLVER_ROUTINES_DynamicOrderTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: DEGREE !<The degree of the time interpolation polynomial \see SOLVER_ROUTINES_DynamicDegreeTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: SCHEME !<The dyanamic solver scheme \see SOLVER_ROUTINES_DynamicSchemeTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: startupType !<The previous values startup type i.e., what prevous values to use during startup \see SOLVER_ROUTINES_DynamicStartupTypes,SOLVER_ROUTINES
     REAL(DP), ALLOCATABLE :: THETA(:) !<THETA(degree_idx). The theta value for the degree_idx'th polynomial in the dynamic solver
     LOGICAL :: EXPLICIT !<Is .TRUE. if the dynamic scheme is an explicit scheme, .FALSE. if not.
     LOGICAL :: RESTART !<Is .TRUE. if the dynamic scheme is to be restarted (i.e., recalculate values at the current time step), .FALSE. if not.
+    
     LOGICAL :: ALE !<Is .TRUE. if the dynamic scheme is an ALE scheme, .FALSE. if not.
     LOGICAL :: FSI !<Is .TRUE. if the dynamic scheme is an FSI scheme and updates geometric fields, .FALSE. if not
     LOGICAL :: UPDATE_BC !<Is .TRUE. if the dynamic scheme has changing bc, .FALSE. if not.

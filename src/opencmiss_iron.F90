@@ -2509,6 +2509,18 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_Equations_DestroyObj
  END INTERFACE cmfe_Equations_Destroy
 
+ !>Sets/changes the Jacobian matrix calculation types for equations
+ INTERFACE cmfe_Equations_JacobianCalculationTypeSet
+   MODULE PROCEDURE cmfe_Equations_JacobianCalculationTypeSetNumber
+   MODULE PROCEDURE cmfe_Equations_JacobianCalculationTypeSetObj
+ END INTERFACE cmfe_Equations_JacobianCalculationTypeSet
+ 
+ !>Sets/changes the Jacobian matrix finite difference step size for equations
+ INTERFACE cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
+   MODULE PROCEDURE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber
+   MODULE PROCEDURE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj
+ END INTERFACE cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
+  
  !>Gets the linearity type for equations.
  INTERFACE cmfe_Equations_LinearityTypeGet
    MODULE PROCEDURE cmfe_Equations_LinearityTypeGetNumber
@@ -2574,17 +2586,13 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_Equations_Destroy
 
+ PUBLIC cmfe_Equations_JacobianCalculationTypeSet
+
+ PUBLIC cmfe_Equations_JacobianFiniteDifferenceStepSizeSet
+
  PUBLIC cmfe_Equations_LinearityTypeGet
 
  PUBLIC cmfe_Equations_LumpingTypeGet,cmfe_Equations_LumpingTypeSet
-
- PUBLIC cmfe_Equations_OutputTypeGet,cmfe_Equations_OutputTypeSet
-
- PUBLIC cmfe_Equations_SparsityTypeGet,cmfe_Equations_SparsityTypeSet
-
- PUBLIC cmfe_Equations_TimeDependenceTypeGet
-
- PUBLIC cmfe_Equations_JacobianMatricesTypesSet
 
  PUBLIC cmfe_Equations_NumberOfLinearMatricesGet
 
@@ -2611,6 +2619,13 @@ MODULE OpenCMISS_Iron
  PUBLIC cmfe_Equations_ResidualVariablesGet
 
  PUBLIC cmfe_Equations_SourceVectorGet
+ 
+ PUBLIC cmfe_Equations_OutputTypeGet,cmfe_Equations_OutputTypeSet
+
+ PUBLIC cmfe_Equations_SparsityTypeGet,cmfe_Equations_SparsityTypeSet
+
+ PUBLIC cmfe_Equations_TimeDependenceTypeGet
+
 
 !==================================================================================================================================
 !
@@ -2618,8 +2633,9 @@ MODULE OpenCMISS_Iron
 !
 !==================================================================================================================================
 
+ 
  !Module parameters
-
+ 
  !> \addtogroup OpenCMISS_EquationsSetConstants OpenCMISS::Iron::EquationsSet::Constants
  !> \brief Equations set constants.
  !>@{
@@ -2632,820 +2648,838 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FLUID_MECHANICS_CLASS = EQUATIONS_SET_FLUID_MECHANICS_CLASS !<Fluid Mechanics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELECTROMAGNETICS_CLASS = EQUATIONS_SET_ELECTROMAGNETICS_CLASS !<Electromagnetics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS = EQUATIONS_SET_CLASSICAL_FIELD_CLASS !<Classical Field equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIOELECTRICS_CLASS = EQUATIONS_SET_BIOELECTRICS_CLASS !<Bioelectrics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MODAL_CLASS = EQUATIONS_SET_MODAL_CLASS !<Modal equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_CLASS = EQUATIONS_SET_FITTING_CLASS !<Fitting equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISATION_CLASS = EQUATIONS_SET_OPTIMISATION_CLASS !<Optimisation equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_PHYSICS_CLASS = EQUATIONS_SET_MULTI_PHYSICS_CLASS !<Multi Physics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
- !>@}
- !> \addtogroup OpenCMISS_EquationsSetTypes OpenCMISS::Iron::EquationsSet::Types
- !> \brief Equations set Types.
- !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_TYPE = EQUATIONS_SET_NO_TYPE !<No equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TYPE = EQUATIONS_SET_LINEAR_ELASTICITY_TYPE !<Linear elasticity equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_TYPE !<Finite elasticity equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TYPE = EQUATIONS_SET_STOKES_EQUATION_TYPE !<Stokes equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE !<Navier-Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TYPE = EQUATIONS_SET_DARCY_EQUATION_TYPE !<Darcy equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE = EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE !<Darcy pressure equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TYPE = EQUATIONS_SET_POISEUILLE_EQUATION_TYPE !<Poiseuille equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_EQUATION_TYPE = EQUATIONS_SET_BURGERS_EQUATION_TYPE !<Burgers equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE = EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE !<Characteristic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE_EQUATION_TYPE = EQUATIONS_SET_STREE_EQUATION_TYPE !<Characteristic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELECTROSTATIC_TYPE = EQUATIONS_SET_ELECTROSTATIC_TYPE !<Electrostatic equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAGNETOSTATIC_TYPE = EQUATIONS_SET_MAGNETOSTATIC_TYPE !<Magnetostatic equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE = EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE !<Maxwells equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TYPE = EQUATIONS_SET_LAPLACE_EQUATION_TYPE !<Laplace equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TYPE = EQUATIONS_SET_POISSON_EQUATION_TYPE !<Poisson equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE = EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE !<Helmholtz equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_WAVE_EQUATION_TYPE = EQUATIONS_SET_WAVE_EQUATION_TYPE !<Wave equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE = EQUATIONS_SET_DIFFUSION_EQUATION_TYPE !<Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_EQUATION_TYPE = EQUATIONS_SET_ADVECTION_EQUATION_TYPE !<Advection-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE = &
-   & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE !<Advection-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE = EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE !<Reaction-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE = EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE !<Biharmonic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE = EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE !<Monodomain equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE = EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE !<Bidomain equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE = EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE !<Linear elasticity modal equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE = EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE !<Data point fitting equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE = EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE !<Gauss point fitting equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE !<Finite Elasticity Darcy equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE !<Finite Elasticity Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE = &
-   & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE !<Finite Elasticity Navier Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE = EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE !<Diffusion Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE = &
-   & EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE !<Diffusion Advection Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE = &
-   & EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE !<Monodomain equation equations Strang Splitting set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIOELECTRICS_CLASS = EQUATIONS_SET_BIOELECTRICS_CLASS !<Bioelectrics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MODAL_CLASS = EQUATIONS_SET_MODAL_CLASS !<Modal equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_CLASS = EQUATIONS_SET_FITTING_CLASS !<Fitting equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISATION_CLASS = EQUATIONS_SET_OPTIMISATION_CLASS !<Optimisation equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_PHYSICS_CLASS = EQUATIONS_SET_MULTI_PHYSICS_CLASS !<Multi Physics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_EquationsSetTypes OpenCMISS::Iron::EquationsSet::Types
+  !> \brief Equations set Types.
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_TYPE = EQUATIONS_SET_NO_TYPE !<No equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TYPE = EQUATIONS_SET_LINEAR_ELASTICITY_TYPE !<Linear elasticity equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_TYPE !<Finite elasticity equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TYPE = EQUATIONS_SET_STOKES_EQUATION_TYPE !<Stokes equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE !<Navier-Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TYPE = EQUATIONS_SET_DARCY_EQUATION_TYPE !<Darcy equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE = EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE !<Darcy pressure equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TYPE = EQUATIONS_SET_POISEUILLE_EQUATION_TYPE !<Poiseuille equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_EQUATION_TYPE = EQUATIONS_SET_BURGERS_EQUATION_TYPE !<Burgers equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE = EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE !<Characteristic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE_EQUATION_TYPE = EQUATIONS_SET_STREE_EQUATION_TYPE !<Characteristic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELECTROSTATIC_TYPE = EQUATIONS_SET_ELECTROSTATIC_TYPE !<Electrostatic equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAGNETOSTATIC_TYPE = EQUATIONS_SET_MAGNETOSTATIC_TYPE !<Magnetostatic equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE = EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE !<Maxwells equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TYPE = EQUATIONS_SET_LAPLACE_EQUATION_TYPE !<Laplace equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TYPE = EQUATIONS_SET_POISSON_EQUATION_TYPE !<Poisson equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE = EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE !<Helmholtz equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_WAVE_EQUATION_TYPE = EQUATIONS_SET_WAVE_EQUATION_TYPE !<Wave equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE = EQUATIONS_SET_DIFFUSION_EQUATION_TYPE !<Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_EQUATION_TYPE = EQUATIONS_SET_ADVECTION_EQUATION_TYPE !<Advection-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE = &
+    & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE !<Advection-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE = EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE !<Reaction-Diffusion equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE = EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE !<Biharmonic equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE = EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE !<Monodomain equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE = EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE !<Bidomain equation equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE = EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE !<Linear elasticity modal equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE = EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE !<Data point fitting equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE = EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE !<Gauss point fitting equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE !<Finite Elasticity Darcy equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE = EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE !<Finite Elasticity Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE = &
+    & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE !<Finite Elasticity Navier Stokes equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE = EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE !<Diffusion Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE = &
+    & EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE !<Diffusion Advection Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE = &
+    & EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE !<Monodomain equation equations Strang Splitting set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
 
- !>@}
- !> \addtogroup OpenCMISS_EquationsSetSubtypes OpenCMISS::Iron::EquationsSet::Subtypes
- !> \brief Equations set subtypes.
- !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SUBTYPE = EQUATIONS_SET_NO_SUBTYPE !<No equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE = EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE !<Three dimensional linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE = &
-   & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE !<Plane stress linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE = &
-   & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE !<Plane strain linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE = EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE !<One dimensional linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PLATE_SUBTYPE = EQUATIONS_SET_PLATE_SUBTYPE !<Plate linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SHELL_SUBTYPE = EQUATIONS_SET_SHELL_SUBTYPE !<Shell linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE = EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE !< Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
- & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
- & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Nearly Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE = &
-   & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE !< Mooney-Rivlin constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE = &
-   & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE !< St Venant Kirchoff constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE =&
-   & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE !< Active contraction/costa-based law with quasistatic time loop for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE = EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE = &
-   & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Transverse isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE = &
-   & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE !< Transverse isotropic, active-contraction constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE = &
-   & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE !< Transverse isotropic, active-contraction material-transition constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE = &
-   & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE !< Orthotropic Costa constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE= &
-   & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE= &
-   & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE !<Compressible version for finite elasticity equations set with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE = &
-   & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE = &
-   & EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE = &
-   & EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient and the cellular model of Razumova et al. (2000) subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE = &
-   & EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE !< Determine the reference configuration using Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE = &
-   & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equstions set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE = &
-   & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_FINITE_ELASTICITY_DARCY_SUBTYPE= &
-   & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE !<Incompressible version for finite elasticity coupled with Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE= &
-   & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE !<INRIA Model for finite elasticity coupled with Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_MULTI_COMP_DARCY_INRIA_SUBTYPE= &
-   & EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE !<Multi Compartment Darcy INRIA Model coupled with finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_ELASTICITY_DRIVEN_DARCY_SUBTYPE= &
-   & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE !< Incompressible finite elasticity with Darcy flow driven by solid hydrostatic pressure \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE= &
-   & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE !< Incompressible finite elasticity with Darcy flow driven by solid hydrostatic pressure, formulated in terms of modified invariants. \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_ELAST_MULTI_COMP_DARCY_SUBTYPE= &
-   & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MEMBRANE_SUBTYPE = EQUATIONS_SET_MEMBRANE_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ORTHOTROPIC_HOLZAPFEL_OGDEN_SUBTYPE = &
-   & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE !< Orthotropic Holzapfel-Ogden constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE = &
-   & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE &
-   & !< Orthotropic Holzapfel-Ogden constitutive law with active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_STATIC_INRIA_SUBTYPE = &
-   & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE !< Static finite elasticity coupled with fluid pressure set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_SUBTYPE= &
-   & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTI_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE= &
-   & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype with active contraction \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE = &
-   & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE !<Transverse isotropic constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE = &
-   & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE !<Anisotropic polynomial constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE = &
-   & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE !<Anisotropic polynomial active constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE= &
-   & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE !<Humphrey and Yin transversely isotropic constitutive relation subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_STOKES_SUBTYPE !<Static Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE !<Laplace type Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE !<Transient Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_STOKES_SUBTYPE = EQUATIONS_SET_ALE_STOKES_SUBTYPE !<ALE Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PGM_STOKES_SUBTYPE = EQUATIONS_SET_PGM_STOKES_SUBTYPE !<PGM Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE = EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE !<Optimised Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE !<Static Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE !<Laplace type Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE !<Transient Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE = &
-   & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE =  &
-   & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE = &
-   & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled multiscale boundaries subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE = &
-   & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled constitutive model for non-Newtonian viscosity \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE = &
-   & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE = &
-   & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype with coupled Advection \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CHARACTERISTIC_SUBTYPE = &
-   & EQUATIONS_SET_CHARACTERISTIC_SUBTYPE !<Static Characteristics equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE = &
-   & EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE = &
-   & EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE1D0D_SUBTYPE = &
-   & EQUATIONS_SET_STREE1D0D_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE = &
-   & EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE !<ALE Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE !<ALE with RBS Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE !<PGM Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE !<Optimised Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_DARCY_SUBTYPE = EQUATIONS_SET_STANDARD_DARCY_SUBTYPE !<Standard Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE = EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE !<Quasistatic Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_DARCY_SUBTYPE = EQUATIONS_SET_ALE_DARCY_SUBTYPE !<ALE Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE = EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE !<Transient Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE = EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE !<Transient ALE Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE = EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE !<Multi Compartment Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_SUBTYPE = EQUATIONS_SET_BURGERS_SUBTYPE !<Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE = EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE !<Generalised Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_BURGERS_SUBTYPE = EQUATIONS_SET_STATIC_BURGERS_SUBTYPE !<Static Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE = EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE !<Inviscid Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_EquationsSetSubtypes OpenCMISS::Iron::EquationsSet::Subtypes
+  !> \brief Equations set subtypes.
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SUBTYPE = EQUATIONS_SET_NO_SUBTYPE !<No equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE = EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE !<Three dimensional linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE = &
+    & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE !<Plane stress linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE = &
+    & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE !<Plane strain linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE = EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE !<One dimensional linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PLATE_SUBTYPE = EQUATIONS_SET_PLATE_SUBTYPE !<Plate linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SHELL_SUBTYPE = EQUATIONS_SET_SHELL_SUBTYPE !<Shell linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE = EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE !< Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
+  & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
+  & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Nearly Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE = &
+    & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE !< Mooney-Rivlin constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE = &
+    & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE !< St Venant Kirchoff constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE =&
+    & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE !< Active contraction/costa-based law with quasistatic time loop for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE = EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE = &
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Transverse isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE = &
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE !< Transverse isotropic, active-contraction constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE = &
+    & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE !< Transverse isotropic, active-contraction material-transition constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE = &
+    & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE !< Orthotropic Costa constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE= &
+    & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE= &
+    & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE !<Compressible version for finite elasticity equations set with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE = &
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE = &
+    & EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE = &
+    & EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient and the cellular model of Razumova et al. (2000) subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE !< Determine the reference configuration using Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE = &
+    & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equstions set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE = &
+    & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_FINITE_ELASTICITY_DARCY_SUBTYPE= &
+    & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE !<Incompressible version for finite elasticity coupled with Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE= &
+    & EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE !<INRIA Model for finite elasticity coupled with Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_MULTI_COMP_DARCY_INRIA_SUBTYPE= &
+    & EQUATIONS_SET_ELASTICITY_MULTI_COMPARTMENT_DARCY_INRIA_SUBTYPE !<Multi Compartment Darcy INRIA Model coupled with finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_ELASTICITY_DRIVEN_DARCY_SUBTYPE= &
+    & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE !< Incompressible finite elasticity with Darcy flow driven by solid hydrostatic pressure \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE= &
+    & EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE !< Incompressible finite elasticity with Darcy flow driven by solid hydrostatic pressure, formulated in terms of modified invariants. \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMPRESS_ELAST_MULTI_COMP_DARCY_SUBTYPE= &
+    & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MEMBRANE_SUBTYPE = EQUATIONS_SET_MEMBRANE_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ORTHOTROPIC_HOLZAPFEL_OGDEN_SUBTYPE = &
+    & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE !< Orthotropic Holzapfel-Ogden constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE = &
+    & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE &
+    & !< Orthotropic Holzapfel-Ogden constitutive law with active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_STATIC_INRIA_SUBTYPE = &
+    & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE !< Static finite elasticity coupled with fluid pressure set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_SUBTYPE= &
+    & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_HOLMES_MOW_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ELASTI_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE= &
+    & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype with active contraction \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE = &
+    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE !<Transverse isotropic constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE = &
+    & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE !<Anisotropic polynomial constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE = &
+    & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE !<Anisotropic polynomial active constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE= &
+       & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE !<Humphrey and Yin transversely isotropic constitutive relation subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE = &
+    & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE !<Dynamic St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE !<Dynamic Mooney-Rivlin constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE = &
+    & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE !<Dynamic compressible St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE !<Dynamic compressible Mooney-Rivlin constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE !<Compressible Mooney-Rivlin constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE = &
+    & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE !<St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE = &
+    & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE !<Compressible St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_STOKES_SUBTYPE !<Static Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE !<Laplace type Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE !<Transient Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_STOKES_SUBTYPE = EQUATIONS_SET_ALE_STOKES_SUBTYPE !<ALE Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PGM_STOKES_SUBTYPE = EQUATIONS_SET_PGM_STOKES_SUBTYPE !<PGM Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE = EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE !<Optimised Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE !<Static Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE !<Laplace type Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE !<Transient Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE = &
+    & EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE =  &
+    & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE !<Transient residual-based stabilisation Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE = &
+    & EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled multiscale boundaries subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE = &
+    & EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE !<Transient stabilised 3D Navier-Stokes equations set with coupled constitutive model for non-Newtonian viscosity \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE = &
+    & EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE = &
+    & EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE !<TRANSIENT1D Navier-Stokes equations set subtype with coupled Advection \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CHARACTERISTIC_SUBTYPE = &
+    & EQUATIONS_SET_CHARACTERISTIC_SUBTYPE !<Static Characteristics equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE = &
+    & EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE = &
+    & EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE1D0D_SUBTYPE = &
+    & EQUATIONS_SET_STREE1D0D_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE = &
+    & EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE !<Coupled 1D-0D Navier-Stokes equations set subtype with coupled Advection \see
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE !<ALE Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE !<ALE with RBS Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE !<PGM Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE = EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE !<Optimised Navier-Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_DARCY_SUBTYPE = EQUATIONS_SET_STANDARD_DARCY_SUBTYPE !<Standard Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE = EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE !<Quasistatic Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_DARCY_SUBTYPE = EQUATIONS_SET_ALE_DARCY_SUBTYPE !<ALE Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE = EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE !<Transient Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE = EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE !<Transient ALE Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE = EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE !<Multi Compartment Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_SUBTYPE = EQUATIONS_SET_BURGERS_SUBTYPE !<Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE = EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE !<Generalised Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_BURGERS_SUBTYPE = EQUATIONS_SET_STATIC_BURGERS_SUBTYPE !<Static Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE = EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE !<Inviscid Burgers equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE = EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE !<Standard Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE = EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE !<Generalised Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE = EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE !<Moving mesh Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE = EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE !<Static Poiseuille equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE = EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE !<Dynamic Poiseuille equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE = &
-   & EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE !<Constant source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = &
-   & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE !<Quadratic source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE = &
-   & EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE !<Exponential source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE !<Multi-compartment transport diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE = EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE !<Standard Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE = EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE !<Generalised Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE = EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE !<Moving mesh Laplace equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE = EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE !<Static Poiseuille equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE = EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE !<Dynamic Poiseuille equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE = &
+    & EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE = EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE !<Vector source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE !<Constant source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE = &
+    & EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE !<Poisson equations set subtype, that is the extracellular bidomain equation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE !<Linear source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE = EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE !<Quadratic source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE = &
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE !<Exponential source Poisson equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE = EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE !<No source Helmholtz equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE = EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE = EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE !<No source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE !<Constant source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE !<Linear source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE !<Quadratic source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE !<Exponential source diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE !<Multi-compartment transport diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_SUBTYPE = &
-   & EQUATIONS_SET_ADVECTION_SUBTYPE !<advection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_QUADRATIC_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE = &
-   & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE !<In CellML evaluated incompressible material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE = EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin rate based smooth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE =  &
-   & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin compressible rate based smooth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE = &
-   & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin rate based growth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE = &
-   & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin compressible rate based growth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
-   & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and constituative material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
-   & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and Mooney-Rivlin constituative material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_SUBTYPE = &
+    & EQUATIONS_SET_ADVECTION_SUBTYPE !<advection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_QUADRATIC_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVECTION_DIFFUSION_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE = &
+    & EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE !<In CellML evaluated incompressible material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE = EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin rate based smooth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE =  &
+    & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE !<Rubin compressible rate based smooth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE = &
+    & EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin rate based growth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE = &
+    & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin compressible rate based growth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
+    & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and constituative material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
+    & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and Mooney-Rivlin constituative material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE = EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth or finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE = EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth or finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Quadratic source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE !<Exponential source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONST_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LIN_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled source diffusion & advection-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE !<Multi-component transport advection-diffusion equations set \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULT_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE = &
-   & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE !<Multi-component transport advection-diffusion equations set using SUPG scheme \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<No source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONST_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Constant source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LIN_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE !<Linear source advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE !<Coupled source diffusion & advection-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE !<Multi-component transport advection-diffusion equations set \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULT_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE = &
+    & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE !<Multi-component transport advection-diffusion equations set using SUPG scheme \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE !CellML Reaction Diffusion with order splitting \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE !CellML Reaction Diffusion without order splitting \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE !CellML Reaction Diffusion with order splitting \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE !CellML Reaction Diffusion without order splitting \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE = &
-   & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE !Standard Reaction Diffusion without order splitting, and constant source \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE = &
+    & EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE !Standard Reaction Diffusion without order splitting, and constant source \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE= EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE !<First monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE= EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<First monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE= EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE !<First monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE= EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE !<First monodomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE = EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE !<First bidomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE = EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE !<Second bidomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE !<Data point fitting equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE !<Generalised Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE !<Material Properties Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAT_PROP_INRIA_MODEL_DATA_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_MAT_PROPERTIES_INRIA_MODEL_DATA_FITTING_SUBTYPE !<Material Properties INRIA Model Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE !<Standard static Galerkin Projection using data points subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_PT_VECTOR_QUASISTATIC_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE !<Standard quasistatic Galerkin Projection using data points subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE = EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE !<First bidomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE = EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE !<Second bidomain equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE !<Data point fitting equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE !<Generalised Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE !<Material Properties Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MAT_PROP_INRIA_MODEL_DATA_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_MAT_PROPERTIES_INRIA_MODEL_DATA_FITTING_SUBTYPE !<Material Properties INRIA Model Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE !<Standard static Galerkin Projection using data points subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DATA_PT_VECTOR_QUASISTATIC_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE !<Standard quasistatic Galerkin Projection using data points subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE !<Standard Galerkin Projection equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE = &
-   & EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE !<Gauss point fitting equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE = &
+    & EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE !<Gauss point fitting equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE = &
-   & EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE = &
-   & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE =  &
-   & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE !<Standard Monodomain Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE =  &
-   & EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE =  &
-   & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype with titin \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE =  &
-   & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype with force-velocity relation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE =  &
-   & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE = &
-   & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Finite Elasticity Navier Stokes ALE equations set subtype \see OpenCMISS_EquationsSetSubtype,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE = &
+    & EQUATIONS_SET_STANDARD_ELASTICITY_DARCY_SUBTYPE !<Standard Elasticity Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE = &
+    & EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE !<Coupled source diffusion-diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE =  &
+    & EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE !<Standard Monodomain Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE =  &
+    & EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE =  &
+    & EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype with titin \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE =  &
+    & EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype with force-velocity relation \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE =  &
+    & EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE !<Coupled 1D Monodomain 3D Elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE = &
+    & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Finite Elasticity Navier Stokes ALE equations set subtype \see OpenCMISS_EquationsSetSubtype,OpenCMISS
 
- !>@}
- !> \addtogroup OpenCMISS_EquationsSetFittingSmoothingTypes OpenCMISS::Iron::EquationsSet::Fitting::SmoothingTypes
- !> \brief The smoothing types for fitting equations sets.
- !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_NO_SMOOTHING = &
-   & EQUATIONS_SET_FITTING_NO_SMOOTHING !<No smoothing \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING = &
-   & EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING !<Sobolev smoothing on the value of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING = &
-   & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING !<Sobolev smoothing on the difference between the current and initial value of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING = &
-   & EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING !<Sobolev smoothing on the strain energy of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
- !>@}
+  !>@}
+  !> \addtogroup OpenCMISS_EquationsSetFittingSmoothingTypes OpenCMISS::Iron::EquationsSet::Fitting::SmoothingTypes
+  !> \brief The smoothing types for fitting equations sets.
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_NO_SMOOTHING = &
+    & EQUATIONS_SET_FITTING_NO_SMOOTHING !<No smoothing \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING = &
+    & EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING !<Sobolev smoothing on the value of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING = &
+    & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING !<Sobolev smoothing on the difference between the current and initial value of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING = &
+    & EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING !<Sobolev smoothing on the strain energy of the dependent field \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
+  !>@}
 
- !>@}
- !> \addtogroup OpenCMISS_EquationsSetSolutionMethods OpenCMISS::Iron::EquationsSet::SolutionMethods
- !> \brief The solution method parameters
- !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FEM_SOLUTION_METHOD = EQUATIONS_SET_FEM_SOLUTION_METHOD !<Finite Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BEM_SOLUTION_METHOD = EQUATIONS_SET_BEM_SOLUTION_METHOD !<Boundary Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FD_SOLUTION_METHOD = EQUATIONS_SET_FD_SOLUTION_METHOD !<Finite Difference solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FV_SOLUTION_METHOD = EQUATIONS_SET_FV_SOLUTION_METHOD !<Finite Volume solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFEM_SOLUTION_METHOD = EQUATIONS_SET_GFEM_SOLUTION_METHOD !<Grid-based Finite Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFD_SOLUTION_METHOD = EQUATIONS_SET_GFD_SOLUTION_METHOD !<Grid-based Finite Difference solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD = EQUATIONS_SET_GFV_SOLUTION_METHOD !<Grid-based Finite Volume solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
- !>@}
+  !>@}
+  !> \addtogroup OpenCMISS_EquationsSetSolutionMethods OpenCMISS::Iron::EquationsSet::SolutionMethods
+  !> \brief The solution method parameters
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FEM_SOLUTION_METHOD = EQUATIONS_SET_FEM_SOLUTION_METHOD !<Finite Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BEM_SOLUTION_METHOD = EQUATIONS_SET_BEM_SOLUTION_METHOD !<Boundary Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FD_SOLUTION_METHOD = EQUATIONS_SET_FD_SOLUTION_METHOD !<Finite Difference solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FV_SOLUTION_METHOD = EQUATIONS_SET_FV_SOLUTION_METHOD !<Finite Volume solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFEM_SOLUTION_METHOD = EQUATIONS_SET_GFEM_SOLUTION_METHOD !<Grid-based Finite Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFD_SOLUTION_METHOD = EQUATIONS_SET_GFD_SOLUTION_METHOD !<Grid-based Finite Difference solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD = EQUATIONS_SET_GFV_SOLUTION_METHOD !<Grid-based Finite Volume solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
+  !>@}
 
- !> \addtogroup OpenCMISS_EquationsSetDerivedTensorTypes OpenCMISS::Iron::EquationsSet::DerivedTensorTypes
- !> \brief EquationsSet derived tensor type parameters
- !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT = EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION = &
-   & EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION = &
-   & EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR !<Left Cauchy-Green deformation field \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_GREEN_LAGRANGE_STRAIN = EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS = EQUATIONS_SET_CAUCHY_STRESS_TENSOR !<Cauchy stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_FIRST_PK_STRESS = EQUATIONS_SET_FIRST_PK_STRESS_TENSOR !<1st Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_SECOND_PK_STRESS = EQUATIONS_SET_SECOND_PK_STRESS_TENSOR !<2nd Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
- !>@}
+  !> \addtogroup OpenCMISS_EquationsSetDerivedTensorTypes OpenCMISS::Iron::EquationsSet::DerivedTensorTypes
+  !> \brief EquationsSet derived tensor type parameters
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT = EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION = &
+    & EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION = &
+    & EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR !<Left Cauchy-Green deformation field \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_GREEN_LAGRANGE_STRAIN = EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS = EQUATIONS_SET_CAUCHY_STRESS_TENSOR !<Cauchy stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_FIRST_PK_STRESS = EQUATIONS_SET_FIRST_PK_STRESS_TENSOR !<1st Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DERIVED_SECOND_PK_STRESS = EQUATIONS_SET_SECOND_PK_STRESS_TENSOR !<2nd Piola-Kirchoff stress tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  !>@}
 
- !> \addtogroup OpenCMISS_EquationsSetDynamicMatrixTypes OpenCMISS::Iron::EquationsSet::DynamicMatrixTypes
- !> \brief Type of matrix in a dynamic equations set
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_STIFFNESS=EQUATIONS_MATRIX_STIFFNESS !<A stiffness matrix (multiplies displacement values)
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_DAMPING=EQUATIONS_MATRIX_DAMPING !<A damping matrix (multiplies velocity values)
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_MASS=EQUATIONS_MATRIX_MASS !<A mass matrix (multiplies acceleration values)
- !>@}
- !> \addtogroup OpenCMISS_EquationsSetOutputTypes OpenCMISS::Iron::EquationsSet::OutputTypes
- !> \brief Equations set output types
- !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_OUTPUT = EQUATIONS_SET_NO_OUTPUT!<No output from the equations set \see OpenCMISS_EquationsSetOutputTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PROGRESS_OUTPUT = EQUATIONS_SET_PROGRESS_OUTPUT !<Progress information output for the equations set. \see OpenCMISS_EquationsSetOutputTypes,OpenCMISS
- !>@}
+  !> \addtogroup OpenCMISS_EquationsSetDynamicMatrixTypes OpenCMISS::Iron::EquationsSet::DynamicMatrixTypes
+  !> \brief Type of matrix in a dynamic equations set
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_STIFFNESS=EQUATIONS_MATRIX_STIFFNESS !<A stiffness matrix (multiplies displacement values)
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_DAMPING=EQUATIONS_MATRIX_DAMPING !<A damping matrix (multiplies velocity values)
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_MATRIX_MASS=EQUATIONS_MATRIX_MASS !<A mass matrix (multiplies acceleration values)
+  !>@}
+  !> \addtogroup OpenCMISS_EquationsSetOutputTypes OpenCMISS::Iron::EquationsSet::OutputTypes
+  !> \brief Equations set output types
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NO_OUTPUT = EQUATIONS_SET_NO_OUTPUT!<No output from the equations set \see OpenCMISS_EquationsSetOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PROGRESS_OUTPUT = EQUATIONS_SET_PROGRESS_OUTPUT !<Progress information output for the equations set. \see OpenCMISS_EquationsSetOutputTypes,OpenCMISS
+  !>@}
 
- !> \addtogroup OpenCMISS_EquationsSetAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes
- !> \brief The analytic function types.
- !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
- !>@{
- !> \addtogroup OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Laplace
- !> \brief The analytic function types for a Laplace equation
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 !<u=x**2+2*x*y-y**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 !<u=cos(x)cosh(y) \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 !<u=x**2-2*y**2+z**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 !<u=cos(x)*cosh(y)*z \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
- !>@}
- !> \addtogroup OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Helmholtz
- !> \brief The analytic function types for a Helmholtz equation
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 = EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 !<u=cos(sqrt(2)*k*x)*sin(sqrt(2)*k*y) \see OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes,OpenCMISS
- !>@}
- !> \addtogroup OpenCMISS_PoiseuilleAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Poiseuille
- !> \brief The analytic function types for a Poiseuille equation.
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OpenCMISS_EquationsSetPoiseuilleAnalyticFunctionTypes,OpenCMISS
- !>@}
- !> \addtogroup OpenCMISS_PoissonAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Poisson
- !> \brief The analytic function types for a Poisson equation.
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1 !<u=ln(6/(x+y+z+1^2)) \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
- !>@}
- !> \addtogroup OpenCMISS_DiffusionAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Diffusion
- !> \brief The analytic function types for a diffusion equation.
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OpenCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1 !<
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_THREE_DIM_1 = &
-   & EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_EQUATION_THREE_DIM_1
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_ONE_DIM_1 = &
-   & EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_EQUATION_ONE_DIM_1
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_ONE_DIM_1 = &
-   & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_EQUATION_ONE_DIM_1
+  !> \addtogroup OpenCMISS_EquationsSetAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes
+  !> \brief The analytic function types.
+  !> \see OpenCMISS::Iron::EquationsSet,OpenCMISS
+  !>@{
+  !> \addtogroup OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Laplace
+  !> \brief The analytic function types for a Laplace equation
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1 !<u=x**2+2*x*y-y**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2 !<u=cos(x)cosh(y) \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1 !<u=x**2-2*y**2+z**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 = EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2 !<u=cos(x)*cosh(y)*z \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Helmholtz
+  !> \brief The analytic function types for a Helmholtz equation
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 = EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 !<u=cos(sqrt(2)*k*x)*sin(sqrt(2)*k*y) \see OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_PoiseuilleAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Poiseuille
+  !> \brief The analytic function types for a Poiseuille equation.
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OpenCMISS_EquationsSetPoiseuilleAnalyticFunctionTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_PoissonAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Poisson
+  !> \brief The analytic function types for a Poisson equation.
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3 = EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1 !<u=ln(6/(x+y+z+1^2)) \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3 = EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_DiffusionAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Diffusion
+  !> \brief The analytic function types for a diffusion equation.
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OpenCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1 = EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1 !<
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_THREE_DIM_1 = &
+    & EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_EQUATION_THREE_DIM_1
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_ONE_DIM_1 = &
+    & EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_EQUATION_ONE_DIM_1
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_ONE_DIM_1 = &
+    & EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_EQUATION_ONE_DIM_1
 
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM = &
-   & EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM !<Prescribed solution, using a source term to correct for error - 2D with 2 compartments
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_THREE_DIM = &
-   & EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_THREE_DIM !<Prescribed solution, using a source term to correct for error - 3D with 2 compartments
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM = &
-   & EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM !<Prescribed solution, using a source term to correct for error - 3D with 3 compartments
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM = &
-   & EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM !<Prescribed solution, using a source term to correct for error - 3D with 3 compartments
- !>@}
- !> \addtogroup OpenCMISS_AdvectionDiffusionAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::AdvectionDiffusion
- !> \brief The analytic function types for an advection-diffusion equation.
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 = &
-   & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OpenCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OpenCMISS
- !> \addtogroup OpenCMISS_StokesAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Stokes
- !> \brief The analytic function types for a Stokes equation.
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
- !>@}
- !> \addtogroup OpenCMISS_NavierStokesAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::NavierStokes
- !> \brief The analytic function types for a Navier-Stokes equation.
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE= &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE !< fully developed 2D channel flow (parabolic) \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN= &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN !< 2D dynamic nonlinear Taylor-Green vortex decay \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA= &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA !< A fourier decomposed flow waveform for boundary conditions
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID= &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID !< A sinusoidal flow waveform
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE= &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE !< Spline integration of dependent values specified in a file
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1 = &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2 = &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3 = &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4 = &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 = &
-   & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
- !>@}
- !> \addtogroup OpenCMISS_DarcyAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Darcy
- !> \brief The analytic function types for a Darcy equation.
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY = &
-   & EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY !<this is a solution where the finite elasticity solve is skipped to allow easy analytic testing of the mass increase & velocity solve step of incompressible poromechanical model
- !>@}
- !> \addtogroup OpenCMISS_BurgersAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Burgers
- !> \brief The analytic function types for a Burgers equation.
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1 = EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1 = &
-   & EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2 = &
-   & EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_BURGERS_EQUATION_ONE_DIM_1 = &
-   & EQUATIONS_SET_STATIC_BURGERS_EQUATION_ONE_DIM_1
- !>@}
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM = &
+    & EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM !<Prescribed solution, using a source term to correct for error - 2D with 2 compartments
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_THREE_DIM = &
+    & EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_THREE_DIM !<Prescribed solution, using a source term to correct for error - 3D with 2 compartments
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM = &
+    & EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM !<Prescribed solution, using a source term to correct for error - 3D with 3 compartments
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM = &
+    & EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM !<Prescribed solution, using a source term to correct for error - 3D with 3 compartments
+  !>@}
+  !> \addtogroup OpenCMISS_AdvectionDiffusionAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::AdvectionDiffusion
+  !> \brief The analytic function types for an advection-diffusion equation.
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 = &
+    & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OpenCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OpenCMISS
+  !> \addtogroup OpenCMISS_StokesAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Stokes
+  !> \brief The analytic function types for a Stokes equation.
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_NavierStokesAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::NavierStokes
+  !> \brief The analytic function types for a Navier-Stokes equation.
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE= &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE !< fully developed 2D channel flow (parabolic) \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN= &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN !< 2D dynamic nonlinear Taylor-Green vortex decay \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA= &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA !< A fourier decomposed flow waveform for boundary conditions
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID= &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID !< A sinusoidal flow waveform
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE= &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE !< Spline integration of dependent values specified in a file
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5 = EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1 = &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2 = &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3 = &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4 = &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 = &
+    & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_DarcyAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Darcy
+  !> \brief The analytic function types for a Darcy equation.
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3 = EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3 = EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3 !<u=tbd \see OpenCMISS_EquationsSetDarcyAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY = &
+    & EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY !<this is a solution where the finite elasticity solve is skipped to allow easy analytic testing of the mass increase & velocity solve step of incompressible poromechanical model
+  !>@}
+  !> \addtogroup OpenCMISS_BurgersAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::Burgers
+  !> \brief The analytic function types for a Burgers equation.
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1 = EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1 = &
+    & EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2 = &
+    & EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_STATIC_BURGERS_EQUATION_ONE_DIM_1 = &
+    & EQUATIONS_SET_STATIC_BURGERS_EQUATION_ONE_DIM_1
+  !>@}
 
- !> \addtogroup OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::LinearElasticity
- !> \brief The analytic function types for a LinearElasticity equation
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
- !>@}
- !> \addtogroup OpenCMISS_EquationsSetFiniteElasticityAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::FiniteElasticity
- !> \brief The analytic function types for a FiniteElasticity equation
- !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER = EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
- !>@}
- !>@}
- !>@}
+  !> \addtogroup OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::LinearElasticity
+  !> \brief The analytic function types for a LinearElasticity equation
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_EquationsSetFiniteElasticityAnalyticFunctionTypes OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes::FiniteElasticity
+  !> \brief The analytic function types for a FiniteElasticity equation
+  !> \see OpenCMISS::Iron::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER = EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  !>@}
+  !>@}
+  !>@}
 
- !> \addtogroup OpenCMISS_AnalyticParamIndices OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices
- !> \brief Indices for EQUATIONS_SET_ANALYTIC_TYPE%ANALYTIC_USER_PARAMS
- !> \see OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX = &
-   & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX !<Inner pressure parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX = &
-   & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX !<Outer pressure parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX = &
-   & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX !<Lambda parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX = &
-   & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX !<Tsi parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX = &
-   & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX !<Inner radius parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX = &
-   & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX !<Outer radius parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX = &
-   & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX !<c1 parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX = &
-   & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX !<c2 parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
- !>@}
+  !> \addtogroup OpenCMISS_AnalyticParamIndices OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices
+  !> \brief Indices for EQUATIONS_SET_ANALYTIC_TYPE%ANALYTIC_USER_PARAMS
+  !> \see OpenCMISS::Iron::FiniteElasticity::AnalyticParamIndices,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX = &
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX !<Inner pressure parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX = &
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX !<Outer pressure parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX = &
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX !<Lambda parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX = &
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX !<Tsi parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX = &
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX !<Inner radius parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX = &
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX !<Outer radius parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX = &
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX !<c1 parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX = &
+    & FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX !<c2 parameter index \see OpenCMISS_AnalyticParamIndices,OpenCMISS
+  !>@}
 
- !Module types
+  !Module types
 
- !Module variables
+  !Module variables
 
- !Interfaces
+  !Interfaces
 
- PUBLIC CMFE_EQUATIONS_SET_NO_CLASS,CMFE_EQUATIONS_SET_ELASTICITY_CLASS,CMFE_EQUATIONS_SET_FLUID_MECHANICS_CLASS, &
-   & CMFE_EQUATIONS_SET_ELECTROMAGNETICS_CLASS,CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS,CMFE_EQUATIONS_SET_BIOELECTRICS_CLASS, &
-   & CMFE_EQUATIONS_SET_MODAL_CLASS,CMFE_EQUATIONS_SET_FITTING_CLASS,CMFE_EQUATIONS_SET_OPTIMISATION_CLASS, &
-   & CMFE_EQUATIONS_SET_MULTI_PHYSICS_CLASS
+  PUBLIC CMFE_EQUATIONS_SET_NO_CLASS,CMFE_EQUATIONS_SET_ELASTICITY_CLASS,CMFE_EQUATIONS_SET_FLUID_MECHANICS_CLASS, &
+    & CMFE_EQUATIONS_SET_ELECTROMAGNETICS_CLASS,CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS,CMFE_EQUATIONS_SET_BIOELECTRICS_CLASS, &
+    & CMFE_EQUATIONS_SET_MODAL_CLASS,CMFE_EQUATIONS_SET_FITTING_CLASS,CMFE_EQUATIONS_SET_OPTIMISATION_CLASS, &
+    & CMFE_EQUATIONS_SET_MULTI_PHYSICS_CLASS
 
- PUBLIC CMFE_EQUATIONS_SET_NO_TYPE,CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TYPE,CMFE_EQUATIONS_SET_FINITE_ELASTICITY_TYPE, &
-   & CMFE_EQUATIONS_SET_STOKES_EQUATION_TYPE,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_DARCY_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE,CMFE_EQUATIONS_SET_BURGERS_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_STREE_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_ELECTROSTATIC_TYPE,CMFE_EQUATIONS_SET_MAGNETOSTATIC_TYPE,CMFE_EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE, &
-   & CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TYPE,CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_POISSON_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE,CMFE_EQUATIONS_SET_WAVE_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_ADVECTION_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE,CMFE_EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE, &
-   & CMFE_EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE,CMFE_EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE, &
-   & CMFE_EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE
+  PUBLIC CMFE_EQUATIONS_SET_NO_TYPE,CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TYPE,CMFE_EQUATIONS_SET_FINITE_ELASTICITY_TYPE, &
+    & CMFE_EQUATIONS_SET_STOKES_EQUATION_TYPE,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_DARCY_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE,CMFE_EQUATIONS_SET_BURGERS_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_STREE_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_ELECTROSTATIC_TYPE,CMFE_EQUATIONS_SET_MAGNETOSTATIC_TYPE,CMFE_EQUATIONS_SET_MAXWELLS_EQUATIONS_TYPE, &
+    & CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TYPE,CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_POISSON_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE,CMFE_EQUATIONS_SET_WAVE_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_ADVECTION_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE,CMFE_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE,CMFE_EQUATIONS_SET_MONODOMAIN_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_BIDOMAIN_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_LINEAR_ELASTIC_MODAL_TYPE, &
+    & CMFE_EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE,CMFE_EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE, &
+    & CMFE_EQUATIONS_SET_MONODOMAIN_STRANG_SPLITTING_EQUATION_TYPE
 
- PUBLIC CMFE_EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE, &
-   & CMFE_EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE, CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE, &
-   & CMFE_EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE, CMFE_EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE
+  PUBLIC CMFE_EQUATIONS_SET_FINITE_ELASTICITY_DARCY_TYPE, &
+    & CMFE_EQUATIONS_SET_FINITE_ELASTICITY_STOKES_TYPE, CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_TYPE, &
+    & CMFE_EQUATIONS_SET_DIFFUSION_DIFFUSION_TYPE, CMFE_EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE
 
- PUBLIC CMFE_EQUATIONS_SET_NO_SUBTYPE,CMFE_EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE,CMFE_EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_PLATE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_SHELL_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,CMFE_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE, CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE,CMFE_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE,CMFE_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,CMFE_EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE,CMFE_EQUATIONS_SET_INCOMPRESS_FINITE_ELASTICITY_DARCY_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_ELASTICITY_MULTI_COMP_DARCY_INRIA_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_INCOMPRESS_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_INCOMPRESS_ELAST_MULTI_COMP_DARCY_SUBTYPE,CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MEMBRANE_SUBTYPE, CMFE_EQUATIONS_SET_ORTHOTROPIC_HOLZAPFEL_OGDEN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE,  &
-   & CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_STATIC_INRIA_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ELASTI_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_STATIC_STOKES_SUBTYPE, CMFE_EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE,CMFE_EQUATIONS_SET_ALE_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, CMFE_EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE,CMFE_EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE,CMFE_EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, CMFE_EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CHARACTERISTIC_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, CMFE_EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_STREE1D0D_SUBTYPE, CMFE_EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE,CMFE_EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE,CMFE_EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,CMFE_EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE,CMFE_EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE, CMFE_EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE, CMFE_EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE,&
-   & CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE,CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_ADVECTION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVEC_DIFF_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE, CMFE_EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, CMFE_EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CONST_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_LIN_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_MULT_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_PGM_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE,CMFE_EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE,&
-   & CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE  ,&
-   & CMFE_EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_MAT_PROP_INRIA_MODEL_DATA_FITTING_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_DATA_PT_VECTOR_QUASISTATIC_FITTING_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_BURGERS_SUBTYPE,CMFE_EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_STATIC_BURGERS_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE,CMFE_EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE,CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE
+  PUBLIC CMFE_EQUATIONS_SET_NO_SUBTYPE,CMFE_EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE,CMFE_EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_PLATE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_SHELL_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,CMFE_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE, CMFE_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE,CMFE_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE,CMFE_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,CMFE_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,CMFE_EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE,CMFE_EQUATIONS_SET_INCOMPRESS_FINITE_ELASTICITY_DARCY_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_ELASTICITY_MULTI_COMP_DARCY_INRIA_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_INCOMPRESS_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_INCOMPRESS_ELAST_MULTI_COMP_DARCY_SUBTYPE,CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MEMBRANE_SUBTYPE, CMFE_EQUATIONS_SET_ORTHOTROPIC_HOLZAPFEL_OGDEN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE,  &
+    & CMFE_EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,CMFE_EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,CMFE_EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE, CMFE_EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_STATIC_INRIA_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ELASTI_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_STATIC_STOKES_SUBTYPE, CMFE_EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE,CMFE_EQUATIONS_SET_ALE_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ALE_NAVIER_STOKES_SUBTYPE, CMFE_EQUATIONS_SET_ALE_RBS_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_OPTIMISED_STOKES_SUBTYPE,CMFE_EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LAPLACE_NAVIER_STOKES_SUBTYPE,CMFE_EQUATIONS_SET_TRANSIENT_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANSIENT1D_NAVIER_STOKES_SUBTYPE, CMFE_EQUATIONS_SET_TRANSIENT_RBS_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CHARACTERISTIC_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANSIENT1D_ADV_NAVIER_STOKES_SUBTYPE, CMFE_EQUATIONS_SET_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_STREE1D0D_SUBTYPE, CMFE_EQUATIONS_SET_STREE1D0D_ADV_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MULTISCALE3D_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_COUPLED1D0D_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_OPTIMISED_NAVIER_STOKES_SUBTYPE,CMFE_EQUATIONS_SET_STANDARD_DARCY_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE,CMFE_EQUATIONS_SET_ALE_DARCY_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANSIENT_DARCY_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_TRANSIENT_ALE_DARCY_SUBTYPE,CMFE_EQUATIONS_SET_MULTI_COMPARTMENT_DARCY_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE,CMFE_EQUATIONS_SET_MOVING_MESH_LAPLACE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_POISSON_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE, CMFE_EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE, CMFE_EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE,&
+    & CMFE_EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE,CMFE_EQUATIONS_SET_STANDARD_HELMHOLTZ_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_GENERALISED_HELMHOLTZ_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_NO_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_NO_SOURCE_ALE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_ADVECTION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_ADVEC_DIFF_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_ALE_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE, CMFE_EQUATIONS_SET_CONSTANT_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_NO_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, CMFE_EQUATIONS_SET_QUAD_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_EXP_SOURCE_ADVECTION_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_NO_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CONSTANT_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_QUAD_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_EXP_SOURCE_ALE_ADVECTION_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_NO_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CONST_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_LIN_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE,CMFE_EQUATIONS_SET_MULT_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_PGM_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_FIRST_BIDOMAIN_SUBTYPE,CMFE_EQUATIONS_SET_SECOND_BIDOMAIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MONODOMAIN_BUENOOROVIO_SUBTYPE,&
+    & CMFE_EQUATIONS_SET_MONODOMAIN_TENTUSSCHER06_SUBTYPE  ,&
+    & CMFE_EQUATIONS_SET_DATA_POINT_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_VECTOR_DATA_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_FITTING_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_VECTOR_DATA_PRE_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_DIVFREE_VECTOR_DATA_PRE_FITTING_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MAT_PROPERTIES_DATA_FITTING_SUBTYPE,CMFE_EQUATIONS_SET_MAT_PROP_INRIA_MODEL_DATA_FITTING_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_DATA_PT_VECTOR_QUASISTATIC_FITTING_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_GAUSS_POINT_FITTING_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_PGM_NAVIER_STOKES_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CONSTITUTIVE_LAW_IN_CELLML_EVALUATE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_BURGERS_SUBTYPE,CMFE_EQUATIONS_SET_GENERALISED_BURGERS_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_STATIC_BURGERS_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_INVISCID_BURGERS_SUBTYPE,CMFE_EQUATIONS_SET_STANDARD_MONODOMAIN_ELASTICITY_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE,CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE,CMFE_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE
 
- PUBLIC CMFE_EQUATIONS_SET_FITTING_NO_SMOOTHING,CMFE_EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
-   & CMFE_EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING,CMFE_EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING
+  PUBLIC CMFE_EQUATIONS_SET_FITTING_NO_SMOOTHING,CMFE_EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
+    & CMFE_EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING,CMFE_EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING
 
- PUBLIC CMFE_EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE, CMFE_EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE, &
-   & CMFE_EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE
+  PUBLIC CMFE_EQUATIONS_SET_CELLML_REAC_SPLIT_REAC_DIFF_SUBTYPE, CMFE_EQUATIONS_SET_CELLML_REAC_NO_SPLIT_REAC_DIFF_SUBTYPE, &
+    & CMFE_EQUATIONS_SET_CONSTANT_REAC_DIFF_SUBTYPE
 
- PUBLIC CMFE_EQUATIONS_SET_FEM_SOLUTION_METHOD,CMFE_EQUATIONS_SET_BEM_SOLUTION_METHOD,CMFE_EQUATIONS_SET_FD_SOLUTION_METHOD, &
-   & CMFE_EQUATIONS_SET_FV_SOLUTION_METHOD,CMFE_EQUATIONS_SET_GFEM_SOLUTION_METHOD,CMFE_EQUATIONS_SET_GFD_SOLUTION_METHOD, &
-   & CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD
+  PUBLIC CMFE_EQUATIONS_SET_FEM_SOLUTION_METHOD,CMFE_EQUATIONS_SET_BEM_SOLUTION_METHOD,CMFE_EQUATIONS_SET_FD_SOLUTION_METHOD, &
+    & CMFE_EQUATIONS_SET_FV_SOLUTION_METHOD,CMFE_EQUATIONS_SET_GFEM_SOLUTION_METHOD,CMFE_EQUATIONS_SET_GFD_SOLUTION_METHOD, &
+    & CMFE_EQUATIONS_SET_GFV_SOLUTION_METHOD
 
- PUBLIC CMFE_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT,CMFE_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION, &
-   & CMFE_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION,CMFE_EQUATIONS_SET_DERIVED_GREEN_LAGRANGE_STRAIN, &
-   & CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS,CMFE_EQUATIONS_SET_DERIVED_FIRST_PK_STRESS, &
-   & CMFE_EQUATIONS_SET_DERIVED_SECOND_PK_STRESS
+  PUBLIC CMFE_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT,CMFE_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION, &
+    & CMFE_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION,CMFE_EQUATIONS_SET_DERIVED_GREEN_LAGRANGE_STRAIN, &
+    & CMFE_EQUATIONS_SET_DERIVED_CAUCHY_STRESS,CMFE_EQUATIONS_SET_DERIVED_FIRST_PK_STRESS, &
+    & CMFE_EQUATIONS_SET_DERIVED_SECOND_PK_STRESS
+ 
+  PUBLIC CMFE_EQUATIONS_MATRIX_STIFFNESS,CMFE_EQUATIONS_MATRIX_DAMPING,CMFE_EQUATIONS_MATRIX_MASS
 
- PUBLIC CMFE_EQUATIONS_MATRIX_STIFFNESS,CMFE_EQUATIONS_MATRIX_DAMPING,CMFE_EQUATIONS_MATRIX_MASS
+  PUBLIC CMFE_EQUATIONS_SET_NO_OUTPUT,CMFE_EQUATIONS_SET_PROGRESS_OUTPUT
 
- PUBLIC CMFE_EQUATIONS_SET_NO_OUTPUT,CMFE_EQUATIONS_SET_PROGRESS_OUTPUT
+  PUBLIC CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2, &
+    & CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2
 
- PUBLIC CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TWO_DIM_2, &
-   & CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_LAPLACE_EQUATION_THREE_DIM_2
+  PUBLIC CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1
 
- PUBLIC CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1
+  PUBLIC CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1,CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1, &
+    & CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2,CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1, &
+    & CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2
 
- PUBLIC CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1,CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1, &
-   & CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_2,CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1, &
-   & CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2
+  PUBLIC CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1,CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1, &
+    & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1, &
+    & CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_THREE_DIM_1,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_ONE_DIM_1, &
+    & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_ONE_DIM_1,CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM, &
+    & CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_THREE_DIM,CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM, &
+    & CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM
 
- PUBLIC CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1,CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1, &
-   & CMFE_EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1, &
-   & CMFE_EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_THREE_DIM_1,CMFE_EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_ONE_DIM_1, &
-   & CMFE_EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_ONE_DIM_1,CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM, &
-   & CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_THREE_DIM,CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM, &
-   & CMFE_EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM
+  PUBLIC CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1
 
- PUBLIC CMFE_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1
+  PUBLIC CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1
 
- PUBLIC CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1
+  PUBLIC CMFE_EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1,CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1, &
+    & CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2, &
+    & CMFE_EQUATIONS_SET_STATIC_BURGERS_EQUATION_ONE_DIM_1
 
- PUBLIC CMFE_EQUATIONS_SET_BURGERS_EQUATION_ONE_DIM_1,CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_1, &
-   & CMFE_EQUATIONS_SET_GENERALISED_BURGERS_EQUATION_ONE_DIM_2, &
-   & CMFE_EQUATIONS_SET_STATIC_BURGERS_EQUATION_ONE_DIM_1
+  PUBLIC CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2, &
+    & CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2, &
+    & CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1, &
+    & CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2
 
- PUBLIC CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_2, &
-   & CMFE_EQUATIONS_SET_POISSON_EQUATION_TWO_DIM_3
- PUBLIC CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_2, &
-   & CMFE_EQUATIONS_SET_POISSON_EQUATION_THREE_DIM_3
- PUBLIC CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1, &
-   & CMFE_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2
+  PUBLIC CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2, &
+    & CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4,CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5
+  PUBLIC CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2, &
+    & CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4,CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5
 
- PUBLIC CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_2, &
-   & CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_3
- PUBLIC CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_4,CMFE_EQUATIONS_SET_STOKES_EQUATION_TWO_DIM_5
- PUBLIC CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_2, &
-   & CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_3
- PUBLIC CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4,CMFE_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5
+  PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE, &
+    & CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN
+  PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA, &
+    &    CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID, &
+    &    CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE
+  PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2, &
+    & CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5
+  PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2, &
+    & CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5
 
- PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_POISEUILLE, &
-   & CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_TAYLOR_GREEN
- PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_FLOWRATE_AORTA, &
-   &    CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SINUSOID, &
-   &    CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_SPLINT_FROM_FILE
- PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_2, &
-   & CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_3
- PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_4,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_TWO_DIM_5
- PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_2, &
-   & CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_3
- PUBLIC CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_4,CMFE_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5
+  PUBLIC CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2, &
+    & CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2, &
+    & CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3
+  PUBLIC CMFE_EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY
 
- PUBLIC CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_1,CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_2, &
-   & CMFE_EQUATIONS_SET_DARCY_EQUATION_TWO_DIM_3
- PUBLIC CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_1,CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_2, &
-   & CMFE_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3
- PUBLIC CMFE_EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY
-
- PUBLIC CMFE_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER
- PUBLIC CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX,CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX
- PUBLIC CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX,CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX
- PUBLIC CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX,CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX
- PUBLIC CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX,CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX
+  PUBLIC CMFE_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER
+  PUBLIC CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX,CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX
+  PUBLIC CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX,CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX
+  PUBLIC CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX,CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX
+  PUBLIC CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C1_IDX,CMFE_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_C2_IDX
 
 !==================================================================================================================================
 !
@@ -4596,7 +4630,7 @@ MODULE OpenCMISS_Iron
  PUBLIC cmfe_Field_ParameterSetNodeScaleFactorsGet,cmfe_Field_ParameterSetNodeScaleFactorsSet
 
  PUBLIC cmfe_Field_ParameterSetNodeNumberOfScaleFactorDofsGet
-
+ 
  PUBLIC cmfe_Field_ParameterSetUpdateLocalDofs
 
  PUBLIC cmfe_Field_ParameterSetUpdateGaussPoint,cmfe_Field_ParameterSetGetGaussPoint
@@ -4808,38 +4842,36 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_GeneratedMesh_SurfaceGetNumber1
    MODULE PROCEDURE cmfe_GeneratedMesh_SurfaceGetObj0
    MODULE PROCEDURE cmfe_GeneratedMesh_SurfaceGetObj1
- END INTERFACE
-
+ END INTERFACE cmfe_GeneratedMesh_SurfaceGet
 
  !>Creates an embedding of one mesh in another
  INTERFACE cmfe_MeshEmbedding_Create
    MODULE PROCEDURE cmfe_MeshEmbedding_CreateNumber
    MODULE PROCEDURE cmfe_MeshEmbedding_CreateObj
- END INTERFACE
+ END INTERFACE cmfe_MeshEmbedding_Create
 
  !>Sets the embedded nodes for one parent element
  INTERFACE cmfe_MeshEmbedding_SetChildNodePosition
    MODULE PROCEDURE cmfe_MeshEmbedding_SetChildNodePositionObj
- END INTERFACE
-
+ END INTERFACE cmfe_MeshEmbedding_SetChildNodePosition
 
  !>Pushes data from the parent field to the child field
  INTERFACE cmfe_MeshEmbedding_PushData
    MODULE PROCEDURE cmfe_MeshEmbedding_PushDataObj
- END INTERFACE
+ END INTERFACE cmfe_MeshEmbedding_PushData
 
  INTERFACE cmfe_MeshEmbedding_SetGaussPointData
-  MODULE PROCEDURE cmfe_MeshEmbedding_SetGaussPointDataObj
- END INTERFACE
+   MODULE PROCEDURE cmfe_MeshEmbedding_SetGaussPointDataObj
+ END INTERFACE cmfe_MeshEmbedding_SetGaussPointData
 
  INTERFACE cmfe_MeshEmbedding_PullGaussPointData
-  MODULE PROCEDURE cmfe_MeshEmbedding_PullGaussPointDataObj
- END INTERFACE
+   MODULE PROCEDURE cmfe_MeshEmbedding_PullGaussPointDataObj
+ END INTERFACE cmfe_MeshEmbedding_PullGaussPointData
 
-  INTERFACE cmfe_MeshEmbedding_GetGaussPointCoord
+ INTERFACE cmfe_MeshEmbedding_GetGaussPointCoord
    MODULE PROCEDURE cmfe_Field_ParameterSetGetGaussPointCoordObj
-  END INTERFACE
-
+ END INTERFACE cmfe_MeshEmbedding_GetGaussPointCoord
+ 
  PUBLIC cmfe_MeshEmbedding_Create,cmfe_MeshEmbedding_SetChildNodePosition, cmfe_MeshEmbeddingType
 
  PUBLIC cmfe_MeshEmbedding_Initialise,cmfe_MeshEmbedding_SetGaussPointData
@@ -4875,7 +4907,6 @@ MODULE OpenCMISS_Iron
  PUBLIC cmfe_GeneratedMesh_Destroy
 
  PUBLIC cmfe_GeneratedMesh_ExtentGet,cmfe_GeneratedMesh_ExtentSet
-
  PUBLIC cmfe_GeneratedMesh_NumberOfElementsGet,cmfe_GeneratedMesh_NumberOfElementsSet
 
  PUBLIC cmfe_GeneratedMesh_OriginGet,cmfe_GeneratedMesh_OriginSet
@@ -6233,6 +6264,11 @@ MODULE OpenCMISS_Iron
    & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity with growth Navier Stokes moving mesh subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_GROWTH_FINITE_ELAST_RBS_NAVIER_STOKES_ALE_SUBTYPE = &
    & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE !<Coupled Finite Elasticity with growth RBS Navier Stokes moving mesh subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_FINITE_ELAST_NAV_STOKES_ALE_SUBTYPE = &
+    & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Coupled dynamic Finite Elasticity Navier Stokes moving mesh subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_DYNAMIC_FINITE_ELAST_RBS_NAV_STOKES_ALE_SUBTYPE = &
+    & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE !<Coupled dynamic Finite Elasticity RBS Navier Stokes moving mesh subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
+
 
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE !<Static finite elasticity subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE = PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE !<Quasistatic finite elasticity subtype \see OpenCMISS_ProblemSubtypes,OpenCMISS
@@ -6379,18 +6415,20 @@ MODULE OpenCMISS_Iron
 
  PUBLIC CMFE_PROBLEM_CONTROL_SIMPLE_TYPE,CMFE_PROBLEM_CONTROL_FIXED_LOOP_TYPE,CMFE_PROBLEM_CONTROL_TIME_LOOP_TYPE, &
    & CMFE_PROBLEM_CONTROL_WHILE_LOOP_TYPE,CMFE_PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE
-
+ 
  PUBLIC CMFE_PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, CMFE_PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
-  & CMFE_PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,CMFE_PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE, &
-  & CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE, CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE, &
-  & CMFE_PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE,CMFE_PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE, &
-  & CMFE_PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,CMFE_PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
-  & CMFE_PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,CMFE_PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
-  & CMFE_PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE, &
-  & CMFE_PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-  & CMFE_PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE,&
-  & CMFE_PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-  & CMFE_PROBLEM_GROWTH_FINITE_ELAST_RBS_NAVIER_STOKES_ALE_SUBTYPE
+   & CMFE_PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,CMFE_PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE, &
+   & CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE, CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE, &
+   & CMFE_PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE,CMFE_PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE, &
+   & CMFE_PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,CMFE_PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
+   & CMFE_PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,CMFE_PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
+   & CMFE_PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE, &
+   & CMFE_PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+   & CMFE_PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE,&
+   & CMFE_PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+   & CMFE_PROBLEM_GROWTH_FINITE_ELAST_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
+   & CMFE_PROBLEM_DYNAMIC_FINITE_ELAST_NAV_STOKES_ALE_SUBTYPE, &
+   & CMFE_PROBLEM_DYNAMIC_FINITE_ELAST_RBS_NAV_STOKES_ALE_SUBTYPE
 
  PUBLIC CMFE_PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE, &
    & CMFE_PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE,CMFE_PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE
@@ -27562,6 +27600,293 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Get a dynamic equations matrix from equations using the dynamic matrix index
+  SUBROUTINE cmfe_Equations_DynamicMatrixGet(equations,matrixIndex,matrix,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixGet)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
+    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the dynamic matrix to get
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_DynamicMatrixGet",err,error,*999)
+
+    CALL Equations_DynamicMatrixGet(equations%equations,matrixIndex,matrix%distributedMatrix,err,error,*999)
+
+    EXITS("cmfe_Equations_DynamicMatrixGet")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_DynamicMatrixGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_DynamicMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get a dynamic equations matrix from equations using the dynamic matrix type
+  SUBROUTINE cmfe_Equations_DynamicMatrixGetByType(equations,matrixType,matrix,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixGetByType)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
+    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see OpenCMISS_EquationsSetDynamicMatrixTypes
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_DynamicMatrixGetByType",err,error,*999)
+
+    CALL Equations_DynamicMatrixGetByType(equations%equations,matrixType,matrix%distributedMatrix,err,error,*999)
+
+    EXITS("cmfe_Equations_DynamicMatrixGetByType")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_DynamicMatrixGetByType",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_DynamicMatrixGetByType
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the type of a dynamic matrix from equations set equations
+  SUBROUTINE cmfe_Equations_DynamicMatrixTypeGet(equations,matrixIndex,matrixType,err)
+    !DLLEXPORT(cmfe_Equations_DynamicMatrixTypeGet)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix type from
+    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the dynamic matrix to get the type of
+    INTEGER(INTG), INTENT(OUT) :: matrixType !<On return, the dynamic matrix type. \see OpenCMISS_EquationsSetDynamicMatrixTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_DynamicMatrixTypeGet",err,error,*999)
+
+    CALL Equations_DynamicMatrixTypeGet(equations%equations,matrixIndex,matrixType,err,error,*999)
+
+    EXITS("cmfe_Equations_DynamicMatrixTypeGet")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_DynamicMatrixTypeGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_DynamicMatrixTypeGet 
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Get a Jacobian matrix from the equations
+  SUBROUTINE cmfe_Equations_JacobianMatrixGet(equations,residualIndex,variableType,matrix,err)
+    !DLLEXPORT(cmfe_Equations_JacobianMatrixGet)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the Jacobian matrix for
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested Jacobian matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_JacobianMatrixGet",err,error,*999)
+
+    CALL Equations_JacobianMatrixGet(equations%equations, &
+      & residualIndex,variableType,matrix%distributedMatrix,err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianMatrixGet")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_JacobianMatrixGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Setting Jacobian matrix calculation type for a matrix specified by user numbers.
+  SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber, &
+    & residualIndex,variableType,jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Equations_JacobianCalculationTypeSetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations to set the Jacobian calculation type for
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the Jacobian calculation type for.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The type of Jacobian calculation. \see OpenCMISS_EquationsJacobianCalculated
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Equations_JacobianCalculationTypeSetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    NULLIFY(equations)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,residualIndex,variableType, &
+      & jacobianCalculationType,err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianCalculationTypeSetNumber")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianCalculationTypeSetNumber",err,error)
+    EXITS("cmfe_Equations_JacobianCalculationTypeSetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Setting Jacobian matrix calculation type for a matrix specified by obj.
+  SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetObj(equations,residualIndex,variableType,jacobianCalculationType,err)
+    !DLLEXPORT(cmfe_Equations_JacobianCalculationTypeSetObj)
+    
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian evaluation type for. 
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The type of Jacobian calculation. \see OpenCMISS_EquationsJacobianCalculated
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+
+    ENTERS("cmfe_Equations_JacobianCalculationTypeSetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,residualIndex,variableType, &
+      & jacobianCalculationType,err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianCalculationTypeSetObj")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianCalculationTypeSetObj",err,error)
+    EXITS("cmfe_Equations_JacobianCalculationTypeSetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianCalculationTypeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the Jacobian matrix finite difference step size type for a matrix specified by user numbers.
+  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber, &
+    & residualIndex,variableType,jacobianFiniteDifferenceStepSize,err)
+    !DLLEXPORT(cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the equations to set the Jacobian calculation type for
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to set the Jacobian calculation type for.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    REAL(DP), INTENT(IN) :: jacobianFiniteDifferenceStepSize !<The finite difference step size to calculate the Jacobian with.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    NULLIFY(equations)
+    NULLIFY(vectorEquations)
+    NULLIFY(vectorMatrices)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,residualIndex,variableType, &
+      & jacobianFiniteDifferenceStepSize,err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber",err,error)
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the finite difference step size used for calculating the Jacobian
+  SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj(equations,residualIndex,variableTYpe, &
+    & jacobianFiniteDifferenceStepSize,err)
+    !DLLEXPORT(cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian finite difference step size for.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector of the Jacobian
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
+    REAL(DP), INTENT(IN) :: jacobianFiniteDifferenceStepSize !<The finite difference step size to calculate the Jacobian with.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(EquationsVectorType), POINTER :: vectorEquations
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
+
+    ENTERS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj",err,error,*999)
+
+    NULLIFY(vectorEquations)
+    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)
+    NULLIFY(vectorMatrices)
+    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+    CALL EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,residualIndex,variableType, &
+      & jacobianFiniteDifferenceStepSize,err,error,*999)
+
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj")
+    RETURN
+999 ERRORS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj",err,error)
+    EXITS("cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_JacobianFiniteDifferenceStepSizeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the linearity type for equations identified by a user number.
   SUBROUTINE cmfe_Equations_LinearityTypeGetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber,linearityType,err)
     !DLLEXPORT(cmfe_Equations_LinearityTypeGetNumber)
@@ -27764,6 +28089,108 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Equations_LumpingTypeSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the number of linear matrices in the equations
+  SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGet(equations,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfLinearMatricesGet)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of linear matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of linear matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_NumberOfLinearMatricesGet",err,error,*999)
+
+    CALL Equations_NumberOfLinearMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
+
+    EXITS("cmfe_Equations_NumberOfLinearMatricesGet")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_NumberOfLinearMatricesGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the number of Jacobian matrices in the equations
+  SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGet(equations,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfJacobianMatricesGet)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of Jacobian matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of Jacobian matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_NumberOfJacobianMatricesGet",err,error,*999)
+
+    CALL Equations_NumberOfJacobianMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
+
+    EXITS("cmfe_Equations_NumberOfJacobianMatricesGet")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_NumberOfJacobianMatricesGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Get the number of dynamic matrices in the equations
+  SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGet(equations,numberOfMatrices,err)
+    !DLLEXPORT(cmfe_Equations_NumberOfDynamicMatricesGet)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of dynamic matrices for
+    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of dynamic matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_NumberOfDynamicMatricesGet",err,error,*999)
+
+    CALL Equations_NumberOfDynamicMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
+
+    EXITS("cmfe_Equations_NumberOfDynamicMatricesGet")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_NumberOfDynamicMatricesGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGet
+
+  !
+  !================================================================================================================================
+  !
+  !
+
+  !>Get a linear equations matrix from the equations
+  SUBROUTINE cmfe_Equations_LinearMatrixGet(equations,matrixIndex,matrix,err)
+    !DLLEXPORT(cmfe_Equations_LinearMatrixGet)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the linear matrix for
+    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the linear matrix to get
+    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested linear matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+
+    ENTERS("cmfe_Equations_LinearMatrixGet",err,error,*999)
+
+    CALL Equations_LinearMatrixGet(equations%equations,matrixIndex,matrix%distributedMatrix,err,error,*999)
+
+    EXITS("cmfe_Equations_LinearMatrixGet")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_LinearMatrixGet",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_LinearMatrixGet
 
   !
   !================================================================================================================================
@@ -28040,317 +28467,7 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Equations_SparsityTypeSetObj
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the time dependence type for equations identified by a user number.
-  SUBROUTINE cmfe_Equations_TimeDependenceTypeGetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber, &
-    & timeDependenceType,err)
-    !DLLEXPORT(cmfe_Equations_TimeDependenceTypeGetNumber)
-
-    !Argument variables
-    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
-    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the time dependence type for.
-    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the time dependence type for.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OpenCMISS_EquationsTimeDependenceTypes
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-    TYPE(ContextType), POINTER :: context
-    TYPE(EquationsType), POINTER :: equations
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(RegionType), POINTER :: region
-    TYPE(RegionsType), POINTER :: regions
- 
-    ENTERS("cmfe_Equations_TimeDependenceTypeGetNumber",err,error,*999)
-
-    NULLIFY(context)
-    NULLIFY(regions)
-    NULLIFY(region)
-    NULLIFY(equationsSet)
-    NULLIFY(equations)
-    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
-    CALL Context_RegionsGet(context,regions,err,error,*999)
-    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
-    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
-    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-    CALL Equations_TimeDependenceTypeGet(equations,timeDependenceType,err,error,*999)
-
-    EXITS("cmfe_Equations_TimeDependenceTypeGetNumber")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_TimeDependenceTypeGetNumber",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_TimeDependenceTypeGetNumber
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the time dependence type for equations identified by an object.
-  SUBROUTINE cmfe_Equations_TimeDependenceTypeGetObj(equations,timeDependenceType,err)
-    !DLLEXPORT(cmfe_Equations_TimeDependenceTypeGetObj)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the time dependence type for.
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OpenCMISS_EquationsTimeDependenceTypes
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("cmfe_Equations_TimeDependenceTypeGetObj",err,error,*999)
-
-    CALL Equations_TimeDependenceTypeGet(equations%equations,timeDependenceType,err,error,*999)
-
-    EXITS("cmfe_Equations_TimeDependenceTypeGetObj")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_TimeDependenceTypeGetObj",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_TimeDependenceTypeGetObj
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get the number of linear matrices in the equations
-  SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGet(equations,numberOfMatrices,err)
-    !DLLEXPORT(cmfe_Equations_NumberOfLinearMatricesGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of linear matrices for
-    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of linear matrices
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_NumberOfLinearMatricesGet",err,error,*999)
-
-    CALL Equations_NumberOfLinearMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
-
-    EXITS("cmfe_Equations_NumberOfLinearMatricesGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_NumberOfLinearMatricesGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_NumberOfLinearMatricesGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get the number of Jacobian matrices in the equations
-  SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGet(equations,numberOfMatrices,err)
-    !DLLEXPORT(cmfe_Equations_NumberOfJacobianMatricesGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of Jacobian matrices for
-    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of Jacobian matrices
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_NumberOfJacobianMatricesGet",err,error,*999)
-
-    CALL Equations_NumberOfJacobianMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
-
-    EXITS("cmfe_Equations_NumberOfJacobianMatricesGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_NumberOfJacobianMatricesGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_NumberOfJacobianMatricesGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get the number of dynamic matrices in the equations
-  SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGet(equations,numberOfMatrices,err)
-    !DLLEXPORT(cmfe_Equations_NumberOfDynamicMatricesGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the number of dynamic matrices for
-    INTEGER(INTG), INTENT(OUT) :: numberOfMatrices !<On return, the number of dynamic matrices
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_NumberOfDynamicMatricesGet",err,error,*999)
-
-    CALL Equations_NumberOfDynamicMatricesGet(equations%equations,numberOfMatrices,err,error,*999)
-
-    EXITS("cmfe_Equations_NumberOfDynamicMatricesGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_NumberOfDynamicMatricesGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_NumberOfDynamicMatricesGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get a linear equations matrix from the equations
-  SUBROUTINE cmfe_Equations_LinearMatrixGet(equations,matrixIndex,matrix,err)
-    !DLLEXPORT(cmfe_Equations_LinearMatrixGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the linear matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the linear matrix to get
-    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested linear matrix
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_LinearMatrixGet",err,error,*999)
-
-    CALL Equations_LinearMatrixGet(equations%equations,matrixIndex,matrix%distributedMatrix,err,error,*999)
-
-    EXITS("cmfe_Equations_LinearMatrixGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_LinearMatrixGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_LinearMatrixGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Setting Jacobian matrix evaluation type
-  SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet(equations,jacobianTypes,err)
-    !DLLEXPORT(cmfe_Equations_JacobianMatricesTypesSet)
-    
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to set the Jacobian evaluation type for. 
-    INTEGER(INTG), INTENT(IN) :: jacobianTypes !<The type of Jacobian evaluation. \see OpenCMISS_EquationsJacobianCalculated 
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    !Local variables
-    TYPE(EquationsVectorType), POINTER :: vectorEquations 
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-
-    ENTERS("cmfe_Equations_JacobianMatricesTypesSet",err,error,*999)
-
-    NULLIFY(vectorEquations)
-    CALL Equations_VectorEquationsGet(equations%equations,vectorEquations,err,error,*999)    
-    NULLIFY(vectorMatrices)
-    CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
-    CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[jacobianTypes],err,error,*999)
-
-    EXITS("cmfe_Equations_JacobianMatricesTypesSet")
-    RETURN
-999 ERRORS("cmfe_Equations_JacobianMatricesTypesSet",err,error)
-    EXITS("cmfe_Equations_JacobianMatricesTypesSet")
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_JacobianMatricesTypesSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get a Jacobian matrix from the equations
-  SUBROUTINE cmfe_Equations_JacobianMatrixGet(equations,residualIndex,variableType,matrix,err)
-    !DLLEXPORT(cmfe_Equations_JacobianMatrixGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the Jacobian matrix for
-    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian. \see OpenCMISS_FieldVariableTypes
-    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested Jacobian matrix
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_JacobianMatrixGet",err,error,*999)
-
-    CALL Equations_JacobianMatrixGet(equations%equations, &
-      & residualIndex,variableType,matrix%distributedMatrix,err,error,*999)
-
-    EXITS("cmfe_Equations_JacobianMatrixGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_JacobianMatrixGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_JacobianMatrixGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get a dynamic equations matrix from equations using the dynamic matrix index
-  SUBROUTINE cmfe_Equations_DynamicMatrixGet(equations,matrixIndex,matrix,err)
-    !DLLEXPORT(cmfe_Equations_DynamicMatrixGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the dynamic matrix to get
-    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_DynamicMatrixGet",err,error,*999)
-
-    CALL Equations_DynamicMatrixGet(equations%equations,matrixIndex,matrix%distributedMatrix,err,error,*999)
-
-    EXITS("cmfe_Equations_DynamicMatrixGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_DynamicMatrixGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_DynamicMatrixGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get a dynamic equations matrix from equations using the dynamic matrix type
-  SUBROUTINE cmfe_Equations_DynamicMatrixGetByType(equations,matrixType,matrix,err)
-    !DLLEXPORT(cmfe_Equations_DynamicMatrixGetByType)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix for
-    INTEGER(INTG), INTENT(IN) :: matrixType !<The type of the dynamic matrix to get. \see OpenCMISS_EquationsSetDynamicMatrixTypes
-    TYPE(cmfe_DistributedMatrixType), INTENT(INOUT) :: matrix !<On return, the requested dynamic matrix
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_DynamicMatrixGetByType",err,error,*999)
-
-    CALL Equations_DynamicMatrixGetByType(equations%equations,matrixType,matrix%distributedMatrix,err,error,*999)
-
-    EXITS("cmfe_Equations_DynamicMatrixGetByType")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_DynamicMatrixGetByType",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_DynamicMatrixGetByType
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Get the type of a dynamic matrix from equations set equations
-  SUBROUTINE cmfe_Equations_DynamicMatrixTypeGet(equations,matrixIndex,matrixType,err)
-    !DLLEXPORT(cmfe_Equations_DynamicMatrixTypeGet)
-
-    !Argument variables
-    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the dynamic matrix type from
-    INTEGER(INTG), INTENT(IN) :: matrixIndex !<The number of the dynamic matrix to get the type of
-    INTEGER(INTG), INTENT(OUT) :: matrixType !<On return, the dynamic matrix type. \see OpenCMISS_EquationsSetDynamicMatrixTypes
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-    ENTERS("cmfe_Equations_DynamicMatrixTypeGet",err,error,*999)
-
-    CALL Equations_DynamicMatrixTypeGet(equations%equations,matrixIndex,matrixType,err,error,*999)
-
-    EXITS("cmfe_Equations_DynamicMatrixTypeGet")
-    RETURN
-999 ERRORSEXITS("cmfe_Equations_DynamicMatrixTypeGet",err,error)
-    CALL cmfe_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE cmfe_Equations_DynamicMatrixTypeGet
-
+  
   !
   !================================================================================================================================
   !
@@ -28478,6 +28595,76 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Equations_ResidualVariablesGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the time dependence type for equations identified by a user number.
+  SUBROUTINE cmfe_Equations_TimeDependenceTypeGetNumber(contextUserNumber,regionUserNumber,equationsSetUserNumber, &
+    & timeDependenceType,err)
+    !DLLEXPORT(cmfe_Equations_TimeDependenceTypeGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the Region containing the equations to get the time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: equationsSetUserNumber !<The user number of the equations set to get the time dependence type for.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OpenCMISS_EquationsTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(EquationsType), POINTER :: equations
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+ 
+    ENTERS("cmfe_Equations_TimeDependenceTypeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(equationsSet)
+    NULLIFY(equations)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_EquationsSetGet(region,equationsSetUserNumber,equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+    CALL Equations_TimeDependenceTypeGet(equations,timeDependenceType,err,error,*999)
+
+    EXITS("cmfe_Equations_TimeDependenceTypeGetNumber")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_TimeDependenceTypeGetNumber",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_TimeDependenceTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the time dependence type for equations identified by an object.
+  SUBROUTINE cmfe_Equations_TimeDependenceTypeGetObj(equations,timeDependenceType,err)
+    !DLLEXPORT(cmfe_Equations_TimeDependenceTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_EquationsType), INTENT(IN) :: equations !<The equations to get the time dependence type for.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the time dependence type of the equations \see OpenCMISS_EquationsTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Equations_TimeDependenceTypeGetObj",err,error,*999)
+
+    CALL Equations_TimeDependenceTypeGet(equations%equations,timeDependenceType,err,error,*999)
+
+    EXITS("cmfe_Equations_TimeDependenceTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_Equations_TimeDependenceTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Equations_TimeDependenceTypeGetObj
 
 !!==================================================================================================================================
 !!

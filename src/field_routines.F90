@@ -15159,7 +15159,7 @@ CONTAINS
     CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    CALL FieldVariable_AssertIsINTGData(fieldVariable,err,error,*999)
+    CALL FieldVariable_AssertIsDPData(fieldVariable,err,error,*999)
     NULLIFY(parameterSet)
     CALL FieldVariable_ParameterSetGet(fieldVariable,fieldSetType,parameterSet,err,error,*999)
     CALL FieldVariable_LocalGaussDOFGet(fieldVariable,gaussPointNumber,localElementNumber,componentNumber,localDof,err,error,*999)
@@ -15202,7 +15202,7 @@ CONTAINS
     CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    CALL FieldVariable_AssertIsINTGData(fieldVariable,err,error,*999)
+    CALL FieldVariable_AssertIsDPData(fieldVariable,err,error,*999)
     NULLIFY(parameterSet)
     CALL FieldVariable_ParameterSetGet(fieldVariable,fieldSetType,parameterSet,err,error,*999)
     CALL FieldVariable_UserElementDataDOFGet(fieldVariable,userElementNumber,dataPointIndex,componentNumber, &
@@ -15272,7 +15272,6 @@ CONTAINS
     CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,VARIABLE_TYPE,fieldVariable,err,error,*999)
-    CALL FieldVariable_AssertIsINTGData(fieldVariable,err,error,*999)
     NULLIFY(parameterSet)
     CALL FieldVariable_ParameterSetGet(fieldVariable,FIELD_SET_TYPE,parameterSet,err,error,*999)
 
@@ -17461,21 +17460,33 @@ CONTAINS
   !
 
   !>Finalises the scaling for a field scaling index and deallocates all memory.
-  SUBROUTINE FIELD_SCALING_FINALISE(FIELD,scalingIndex,err,error,*)
+  SUBROUTINE FIELD_SCALING_FINALISE(field,scalingIndex,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to finalise the scalings for
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to finalise the scalings for
     INTEGER(INTG), INTENT(IN) :: scalingIndex !<The scaling index to finalise
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(DistributedVectorType), POINTER :: scaleFactors
+    TYPE(VARYING_STRING) :: localError
  
     ENTERS("FIELD_SCALING_FINALISE",err,error,*999)
 
-    NULLIFY(scaleFactors)
-    CALL Field_ScaleFactorsVectorGet(field,scalingIndex,scaleFactors,err,error,*999)
-    CALL DistributedVector_Destroy(scaleFactors,err,error,*999)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(scalingIndex<1.OR.scalingIndex>field%scalings%numberOfScalingIndices) THEN
+      localError="The specified scaling index of "//TRIM(NumberToVString(scalingIndex,"*",err,error))// &
+        & " is invalid for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+        & ". The scaling index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(field%scalings%numberOfScalingIndices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+    IF(.NOT.ALLOCATED(field%scalings%scalings)) THEN
+      localError="The field scalings is not allocated for field number "// &
+        & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(ASSOCIATED(field%scalings%scalings(scalingIndex)%scaleFactors)) &
+      & CALL DistributedVector_Destroy(field%scalings%scalings(scalingIndex)%scaleFactors,err,error,*999)
 
     EXITS("FIELD_SCALING_FINALISE")
     RETURN

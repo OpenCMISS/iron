@@ -264,6 +264,8 @@ MODULE PROBLEM_CONSTANTS
   INTEGER(INTG), PARAMETER :: PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE=152
   INTEGER(INTG), PARAMETER :: PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE=153
   INTEGER(INTG), PARAMETER :: PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE=154
+  INTEGER(INTG), PARAMETER :: PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE=155
+  INTEGER(INTG), PARAMETER :: PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE=156
 
   !> \addtogroup PROBLEM_CONSTANTS_SetupTypes PROBLEM_CONSTANTS::SetupTypes
   !> \brief Setup type parameters
@@ -303,42 +305,6 @@ MODULE PROBLEM_CONSTANTS
   INTEGER(INTG), PARAMETER :: PROBLEM_SOLVER_NONLINEAR=2 !<Nonlinear problem. \see PROBLEM_CONSTANTS_LinearityTypes,PROBLEM_CONSTANTS
   !>@}
   
-  
-  !> \addtogroup PROBLEM_CONSTANTS_EquationsLinearityTypes PROBLEM_CONSTANTS::EquationsLinearityTypes
-  !> \brief The solver equations linearity types 
-  !> \see PROBLEM_CONSTANTS
-  !>@{
-  INTEGER(INTG), PARAMETER :: SOLVER_EQUATIONS_LINEAR=1 !<Solver equations are linear \see PROBLEM_CONSTANTS_EquationLinearityTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: SOLVER_EQUATIONS_NONLINEAR=2 !<Solver equations are nonlinear \see PROBLEM_CONSTANTS_EquationLinearityTypes,PROBLEM_CONSTANTS
-  !>@}
-
-  !> \addtogroup PROBLEM_CONSTANTS_EquationsTimeDependenceTypes PROBLEM_CONSTANTS::EquationsTimeDependenceTypes
-  !> \brief The solver equations time dependence types 
-  !> \see PROBLEM_CONSTANTS
-  !>@{
-  INTEGER(INTG), PARAMETER :: SOLVER_EQUATIONS_STATIC=1 !<Solver equations are static \see PROBLEM_CONSTANTS_EquationTimeDependenceTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: SOLVER_EQUATIONS_QUASISTATIC=2 !<Solver equations are quasistatic \see PROBLEM_CONSTANTS_EquationTimeDependenceTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: SOLVER_EQUATIONS_FIRST_ORDER_DYNAMIC=3 !<Solver equations are first order dynamic \see PROBLEM_CONSTANTS_EquationTimeDependenceTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: SOLVER_EQUATIONS_SECOND_ORDER_DYNAMIC=4 !<Solver equations are second order dynamic \see PROBLEM_CONSTANTS_EquationTimeDependenceTypes,PROBLEM_CONSTANTS
-  !>@}
-
-  
-  !> \addtogroup PROBLEM_CONSTANTS_CellMLEquationsLinearityTypes OpenCMISS::Iron::CellMLEquationsLinearityTypes
-  !> \brief The CellML equations linearity types 
-  !> \see PROBLEM_CONSTANTS
-  !>@{
-  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_LINEAR=1 !<CellML equations are linear \see PROBLEM_CONSTANTS_CellMLEquationLinearityTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_NONLINEAR=2 !<CellML equations are nonlinear \see PROBLEM_CONSTANTS_CellMLEquationLinearityTypes,PROBLEM_CONSTANTS
-  !>@}
-
-  !> \addtogroup PROBLEM_CONSTANTS_CellMLEquationsTimeDependenceTypes OpenCMISS:Iron::CellMLEquationsTimeDependenceTypes
-  !> \brief The CellML equations time dependence types 
-  !> \see PROBLEM_CONSTANTS
-  !>@{
-  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_STATIC=1 !<CellML equations are static \see PROBLEM_CONSTANTS_CellMLEquationTimeDependenceTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_QUASISTATIC=2 !<CellML equations are quasistatic \see PROBLEM_CONSTANTS_CellMLEquationTimeDependenceTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_DYNAMIC=3 !<CellML equations are dynamic \see PROBLEM_CONSTANTS_CellMLEquationTimeDependenceTypes,PROBLEM_CONSTANTS
-  !>@}
-
+ 
    
 END MODULE PROBLEM_CONSTANTS

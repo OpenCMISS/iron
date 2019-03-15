@@ -47,6 +47,7 @@ MODULE ControlLoopAccessRoutines
   USE BaseRoutines
   USE ISO_VARYING_STRING
   USE Kinds
+  USE PROBLEM_CONSTANTS
   USE Strings
   USE Types
   
@@ -82,6 +83,10 @@ MODULE ControlLoopAccessRoutines
     MODULE PROCEDURE ControlLoop_Get1
   END INTERFACE ControlLoop_Get
   
+  INTERFACE CONTROL_LOOP_CURRENT_TIMES_GET
+    MODULE PROCEDURE ControlLoop_CurrentTimesGet
+  END INTERFACE CONTROL_LOOP_CURRENT_TIMES_GET
+
   INTERFACE CONTROL_LOOP_SOLVERS_GET
     MODULE PROCEDURE ControlLoop_SolversGet
   END INTERFACE CONTROL_LOOP_SOLVERS_GET
@@ -91,6 +96,12 @@ MODULE ControlLoopAccessRoutines
   PUBLIC ControlLoop_Get
 
   PUBLIC CONTROL_LOOP_GET
+
+  PUBLIC CONTROL_LOOP_CURRENT_TIMES_GET
+
+  PUBLIC ControlLoop_CurrentTimesGet
+
+  PUBLIC ControlLoop_CurrentTimeInformationGet
 
   PUBLIC ControlLoop_ProblemGet
 
@@ -190,6 +201,96 @@ CONTAINS
     
   END SUBROUTINE ControlLoop_Get1
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::cmfe_ControlLoop_CurrentTimesGet
+  SUBROUTINE ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*)
+
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the current times for
+    REAL(DP), INTENT(OUT) :: currentTime !<On exit, the current time.
+    REAL(DP), INTENT(OUT) :: timeIncrement !<On exit, the current time increment.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: currentIteration,outputIteration
+    REAL(DP) :: startTime,stopTime
+
+    ENTERS("ControlLoop_CurrentTimesGet",err,error,*999)
+
+    CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
+      & outputIteration,err,error,*999)
+       
+    EXITS("ControlLoop_CurrentTimesGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_CurrentTimesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_CurrentTimesGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the current loop information for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used.
+  SUBROUTINE ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
+    & outputIteration,err,error,*)
+    
+    !Argument variables
+    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the time information for
+    REAL(DP), INTENT(OUT) :: currentTime !<On exit, the current time.
+    REAL(DP), INTENT(OUT) :: timeIncrement !<On exit, the current time increment.
+    REAL(DP), INTENT(OUT) :: startTime !<On exit, the start time for the loop
+    REAL(DP), INTENT(OUT) :: stopTime !<On exit, the stop time for the loop
+    INTEGER(INTG), INTENT(OUT) :: currentIteration !<On exit, the current iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: outputIteration !<On exit, the output iteration number for the loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables    
+    INTEGER(INTG) :: controlLoopLevel,levelIdx
+    TYPE(CONTROL_LOOP_TYPE), POINTER :: parentLoop
+    TYPE(CONTROL_LOOP_TIME_TYPE), POINTER :: timeLoop
+
+    ENTERS("ControlLoop_CurrentTimeInformationGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+    IF(.NOT.controlLoop%CONTROL_LOOP_FINISHED) CALL FlagError("Control loop has not been finished.",err,error,*999)
+
+    !Find a time loop from either the specified control loop or the next time loop up the chain.
+    controlLoopLevel=controlLoop%CONTROL_LOOP_LEVEL
+    parentLoop=>controlLoop
+    DO levelIdx=controlLoopLevel,1,-1
+      IF(controlLoopLevel==0) THEN
+        CALL FlagError("Could not find a time loop for the specified control loop.",err,error,*999)
+      ELSE
+        IF(parentLoop%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+          timeLoop=>parentLoop%TIME_LOOP
+          IF(ASSOCIATED(timeLoop)) THEN
+            currentTime=timeLoop%CURRENT_TIME
+            timeIncrement=timeLoop%TIME_INCREMENT
+            startTime=timeLoop%START_TIME
+            stopTime=timeLoop%STOP_TIME
+            currentIteration=timeLoop%ITERATION_NUMBER
+            outputIteration=timeLoop%OUTPUT_NUMBER
+          ELSE
+            CALL FlagError("Control loop time loop is not associated.",err,error,*999)
+          ENDIF
+          EXIT
+        ELSE
+          parentLoop=>parentLoop%PARENT_LOOP
+        ENDIF
+      ENDIF
+    ENDDO !levelIdx
+       
+    EXITS("ControlLoop_CurrentTimeInformationGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_CurrentTimeInformationGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_CurrentTimeInformationGet
+  
   !
   !================================================================================================================================
   !

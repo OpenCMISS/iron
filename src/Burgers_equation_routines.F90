@@ -1241,11 +1241,11 @@ CONTAINS
                     CALL FlagError(localError,err,error,*999)
                   END SELECT
                 ENDIF
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
+               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
@@ -1312,10 +1312,10 @@ CONTAINS
                     & TRIM(NUMBER_TO_VSTRING(equations%sparsityType,"*",err,error))//" is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)

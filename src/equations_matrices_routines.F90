@@ -203,7 +203,9 @@ MODULE EquationsMatricesRoutines
 
   PUBLIC EquationsMatrices_JacobianOutput
 
-  PUBLIC EquationsMatrices_JacobianTypesSet
+  PUBLIC EquationsMatrices_JacobianCalculationTypeSet
+
+  PUBLIC EquationsMatrices_JacobianFiniteDifferenceStepSizeSet
 
   PUBLIC EquationsMatrices_LinearStorageTypeSet
 
@@ -352,6 +354,7 @@ CONTAINS
     CALL EquationsMatrices_ElementMatrixInitialise(nonlinearMatrices%jacobians(matrixNumber)%ptr%elementJacobian,err,error,*999)
     CALL EquationsMatrices_NodalMatrixInitialise(nonlinearMatrices%jacobians(matrixNumber)%ptr%nodalJacobian,err,error,*999)
     nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobianCalculationType=EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
+    nonlinearMatrices%jacobians(matrixNumber)%ptr%jacobianFiniteDifferenceStepSize=1.0E-6_DP
     
     EXITS("EquationsMatrices_JacobianInitialise")
     RETURN
@@ -2954,53 +2957,142 @@ CONTAINS
   !
 
   !>Sets the Jacobian calculation types of the residual variables
-  SUBROUTINE EquationsMatrices_JacobianTypesSet(vectorMatrices,jacobianTypes,err,error,*)
+  SUBROUTINE EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,residualIndex,variableTYpe,jacobianCalculationType, &
+    & err,error,*)
 
     !Argument variables
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices to set the Jacobian type for.
-    INTEGER(INTG), INTENT(IN) :: jacobianTypes(:) !<jacobianTypes(matrixIdx). The Jacobian calculation type for the matrixIdx'th Jacobian matrix.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to get the Jacobian matrix for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian
+    INTEGER(INTG), INTENT(IN) :: jacobianCalculationType !<The Jacobian calculation type for the matrixIdx'th Jacobian matrix.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: matrixIdx,variableIdx
     TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    INTEGER(INTG) :: matrixIdx,numberOfjacobians,jacobianType
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMatrices_JacobianTypesSet",err,error,*999)
+    ENTERS("EquationsMatrices_JacobianCalculationTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector equations matrices is not associated.",err,error,*999)
-    IF(vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector equations matrices have been finished.",err,error,*999)
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+    IF(.NOT.vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector matrices have not been finished.",err,error,*999)
+    IF(residualIndex/=1) CALL FlagError("Multiple residual vectors are not yet implemented.",err,error,*999)
 
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
     NULLIFY(nonlinearMatrices)
     CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
-    numberOfJacobians=SIZE(jacobianTypes,1)
-    IF(numberOfJacobians/=nonlinearMatrices%numberOfJacobians) THEN
-      localError="Invalid number of Jacobian calculation types. The number of types "// &
-        & TRIM(NumberToVString(numberOfJacobians,"*",err,error))//" should be "// &
-        & TRIM(NumberToVString(nonlinearMatrices%numberOfJacobians,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)      
-    ENDIF
-     
-    DO matrixIdx=1,numberOfJacobians
-      jacobianType=jacobianTypes(matrixIdx)
-      NULLIFY(jacobianMatrix)
-      CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
-      SELECT CASE(jacobianType)
-      CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED,EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
-        jacobianMatrix%jacobianCalculationType=jacobianType
-      CASE DEFAULT
-        localError="The Jacobian calculation type of "//TRIM(NumberToVString(jacobianType,"*",err,error))//" is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-    ENDDO !matrixIdx
+    NULLIFY(nonlinearMapping)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    
+    !Find Jacobian matrix index using the nonlinear equations mapping
+    matrixIdx=0
+    DO variableIdx=1,nonlinearMapping%numberOfResidualVariables
+      IF(nonlinearMapping%residualVariables(variableIdx)%ptr%variableType==variableType) THEN
+        matrixIdx=nonlinearMapping%varToJacobianMap(variableIdx)%jacobianNumber
+        EXIT
+      END IF
+    END DO
+    IF(matrixIdx==0) THEN
+      CALL FlagError("Equations do not have a Jacobian matrix for residual index "// &
+        & TRIM(NumberToVstring(residualIndex,"*",err,error))//" and variable type "// &
+        & TRIM(NumberToVstring(variableType,"*",err,error))//".",err,error,*999)
+    END IF
 
-    EXITS("EquationsMatrices_JacobianTypesSet")
+    !Now get Jacobian matrix using the matrix index
+    NULLIFY(jacobianMatrix)
+    CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+    
+    SELECT CASE(jacobianCalculationType)
+    CASE(EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED)
+      jacobianMatrix%jacobianCalculationType=EQUATIONS_JACOBIAN_FINITE_DIFFERENCE_CALCULATED
+    CASE(EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED)
+      jacobianMatrix%jacobianCalculationType=EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED
+    CASE DEFAULT
+      localError="The specified Jacobian calculation type of "//TRIM(NumberToVString(jacobianCalculationType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("EquationsMatrices_JacobianCalculationTypeSet")
     RETURN
-999 ERRORSEXITS("EquationsMatrices_JacobianTypesSet",err,error)
+999 ERRORS("EquationsMatrices_JacobianCalculationTypeSet",err,error)
+    EXITS("EquationsMatrices_JacobianCalculationTypeSet")
     RETURN 1
     
-  END SUBROUTINE EquationsMatrices_JacobianTypesSet
+  END SUBROUTINE EquationsMatrices_JacobianCalculationTypeSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the finite difference step size used for calculating the Jacobian
+  SUBROUTINE EquationsMatrices_JacobianFiniteDifferenceStepSizeSet(vectorMatrices,residualIndex,variableType, &
+    & jacobianStepSize,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the vector equations matrices to set the Jacobian step size for.
+    INTEGER(INTG), INTENT(IN) :: residualIndex !<The index of the residual vector to set the Jacobian step size for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type that the residual is differentiated with respect to for this Jacobian
+    REAL(DP), INTENT(IN) :: jacobianStepSize !<The finite difference step size for the Jacobian matrix. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: matrixIdx,variableIdx
+    TYPE(EquationsJacobianType), POINTER :: jacobianMatrix
+    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
+    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
+    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsMatrices_JacobianFiniteDifferenceStepSizesSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(vectorMatrices)) CALL FlagError("Vector matrices is not associated.",err,error,*999)
+    IF(.NOT.vectorMatrices%vectorMatricesFinished) CALL FlagError("Vector matrices have not been finished.",err,error,*999)
+    IF(residualIndex/=1) CALL FlagError("Multiple residual vectors are not yet implemented.",err,error,*999)
+
+    NULLIFY(vectorMapping)
+    CALL EquationsMatricesVector_VectorMappingGet(vectorMatrices,vectorMapping,err,error,*999)
+    NULLIFY(nonlinearMatrices)
+    CALL EquationsMatricesVector_NonlinearMatricesGet(vectorMatrices,nonlinearMatrices,err,error,*999)
+    NULLIFY(nonlinearMapping)
+    CALL EquationsMappingVector_NonlinearMappingGet(vectorMapping,nonlinearMapping,err,error,*999)
+    
+    !Find Jacobian matrix index using the nonlinear equations mapping
+    matrixIdx=0
+    DO variableIdx=1,nonlinearMapping%numberOfResidualVariables
+      IF(nonlinearMapping%residualVariables(variableIdx)%ptr%variableType==variableType) THEN
+        matrixIdx=nonlinearMapping%varToJacobianMap(variableIdx)%jacobianNumber
+        EXIT
+      END IF
+    END DO
+    IF(matrixIdx==0) THEN
+      CALL FlagError("Equations do not have a Jacobian matrix for residual index "// &
+        & TRIM(NumberToVstring(residualIndex,"*",err,error))//" and variable type "// &
+        & TRIM(NumberToVstring(variableType,"*",err,error))//".",err,error,*999)
+    END IF
+
+    !Now get Jacobian matrix using the matrix index
+    NULLIFY(jacobianMatrix)
+    CALL EquationsMatricesNonlinear_JacobianMatrixGet(nonlinearMatrices,matrixIdx,jacobianMatrix,err,error,*999)
+    
+    IF(jacobianStepSize<=ZERO_TOLERANCE) THEN
+      localError="The specified Jacobian step size of "//TRIM(NumberToVString(jacobianStepSize,"*",err,error))// &
+        & " is invalid. The step size must be >= "//TRIM(NumberToVString(ZERO_TOLERANCE,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    jacobianMatrix%jacobianFiniteDifferenceStepSize=jacobianStepSize
+
+    EXITS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet")
+    RETURN
+999 ERRORS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet",err,error)
+    EXITS("EquationsMatrices_JacobianFiniteDifferenceStepSizeSet")
+    RETURN 1
+
+  END SUBROUTINE EquationsMatrices_JacobianFiniteDifferenceStepSizeSet
 
   !
   !================================================================================================================================
@@ -4238,9 +4330,9 @@ CONTAINS
       & numberOfDerivatives,numberOfVersions,version,versionIdx
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
-    TYPE(BasisType), POINTER :: basis
+    TYPE(BasisType), POINTER :: basis,basis2
     TYPE(DomainMappingType), POINTER :: dependentDofsDomainMapping
-    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainElementsType), POINTER :: domainElements,domainElements2
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
@@ -4320,48 +4412,131 @@ CONTAINS
         !First, loop over the rows and calculate the number of non-zeros
         numberOfNonZeros=0
         DO localDOFIdx=1,dependentDofsDomainMapping%totalNumberOfLocal
-          IF(dependentDofsParamMapping%DOFType(1,localDOFIdx)/=FIELD_NODE_DOF_TYPE) THEN
-            localError="Local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" is not a node based DOF."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
-          dofIdx=dependentDofsParamMapping%DOFType(2,localDOFIdx) !value for a particular field dof (localDOFIdx)
-          node=dependentDofsParamMapping%nodeDOF2ParamMap(3,dofIdx) !node number of the field parameter
-          component=dependentDofsParamMapping%nodeDOF2ParamMap(4,dofIdx) !component number of the field parameter
-          domainNodes=>fieldVariable%components(component)%domain%topology%nodes          
-          !Set up list
-          NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
-          CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
-          CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
-          CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,domainNodes%nodes(node)% &
-            & numberOfSurroundingElements*fieldVariable%components(component)% &
-            & maxNumberElementInterpolationParameters,err,error,*999)
-          CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
-          !Loop over all elements containing the dof
-          DO elementIdx=1,domainNodes%nodes(node)%numberOfSurroundingElements
-            element=domainNodes%nodes(node)%surroundingElements(elementIdx)
-            DO componentIdx=1,fieldVariable%numberOfComponents
-              domainElements=>fieldVariable%components(componentIdx)%domain%topology%elements
-              basis=>domainElements%elements(element)%basis
-              DO localNodeIdx=1,basis%numberOfNodes
-                node2=domainElements%elements(element)%elementNodes(localNodeIdx)
-                DO derivativeIdx=1,basis%numberOfDerivatives(localNodeIdx)
-                  derivative=domainElements%elements(element)%elementDerivatives(derivativeIdx,localNodeIdx)
-                  version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
-                  !Find the local and global column and add the global column to the indices list
-                  localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% &
-                    & nodes(node2)%derivatives(derivative)%versions(version)
+          SELECT CASE(dependentDofsParamMapping%DOFType(1,localDOFIdx))
+          CASE(FIELD_CONSTANT_INTERPOLATION)
+            CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_NODE_DOF_TYPE)
+            dofIdx=dependentDofsParamMapping%DOFType(2,localDOFIdx) !value for a particular field dof (localDOFIdx)
+            node=dependentDofsParamMapping%nodeDOF2ParamMap(3,dofIdx) !node number of the field parameter
+            component=dependentDofsParamMapping%nodeDOF2ParamMap(4,dofIdx) !component number of the field parameter
+            domainNodes=>fieldVariable%components(component)%domain%topology%nodes
+            !Set up list
+            NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
+            CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr,domainNodes%nodes(node)% &
+              & numberOfSurroundingElements*fieldVariable%components(component)% &
+              & maxNumberElementInterpolationParameters,err,error,*999)
+            CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            !Loop over all elements containing the dof
+            DO elementIdx=1,domainNodes%nodes(node)%numberOfSurroundingElements
+              element=domainNodes%nodes(node)%surroundingElements(elementIdx)
+              DO componentIdx=1,fieldVariable%numberOfComponents
+                SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
+                CASE(FIELD_CONSTANT_INTERPOLATION)
+                  ! do nothing? this will probably never be encountered...?
+                  CALL FlagError("Not implemented?",err,error,*999)
+                CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                  localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(element)
                   globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
-                  
                   CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
-                  
-                ENDDO !derivative
-              ENDDO !localNodeIdx
+                CASE(FIELD_NODE_BASED_INTERPOLATION)
+                  domainElements=>fieldVariable%components(componentIdx)%domain%topology%elements
+                  basis=>domainElements%elements(element)%basis
+                  DO localNodeIdx=1,basis%numberOfNodes
+                    node2=domainElements%elements(element)%elementNodes(localNodeIdx)
+                    DO derivativeIdx=1,basis%numberOfDerivatives(localNodeIdx)
+                      derivative=domainElements%elements(element)%elementDerivatives(derivativeIdx,localNodeIdx)
+                      version=domainElements%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
+                      !Find the local and global column and add the global column to the indices list
+                      localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% &
+                        & nodes(node2)%derivatives(derivative)%versions(version)
+                      globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
+                      
+                      CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+                      
+                    ENDDO !derivative
+                  ENDDO !localNodeIdx
+                CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                  CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+                CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                  CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+                CASE DEFAULT
+                  localError="The interpolation type of "// &
+                    & TRIM(NumberToVString(fieldVariable%components(componentIdx)%interpolationType,"*",err,error))// &
+                    & " for local DOF number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+                    & " is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+              ENDDO !componentIdx
+            ENDDO !elementIdx
+            CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,err,error,*999)
+            numberOfNonZeros=numberOfNonZeros+numberOfColumns
+            rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+          CASE(FIELD_ELEMENT_DOF_TYPE)
+            ! row corresponds to a variable that's element-wisely interpolated
+            dofIdx=dependentDofsParamMapping%DOFType(2,localDOFIdx)          ! dofIdx = index in ELEMENT_DOF2PARAM_MAP
+            element=dependentDofsParamMapping%elementDOF2ParamMap(1,dofIdx)   ! current element (i.e. corresponds to current dof)
+            component=dependentDofsParamMapping%elementDOF2ParamMap(2,dofIdx)   ! current variable component
+            domainElements=>fieldVariable%components(component)%domain%topology%ELEMENTS
+            basis=>domainElements%elements(element)%BASIS
+            !Set up list
+            NULLIFY(columnIndicesLists(localDOFIdx)%ptr)
+            CALL List_CreateStart(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_DataTypeSet(columnIndicesLists(localDOFIdx)%ptr,LIST_INTG_TYPE,err,error,*999)
+            CALL List_InitialSizeSet(columnIndicesLists(localDOFIdx)%ptr, &
+              & fieldVariable%components(component)%maxNumberElementInterpolationParameters+1,err,error,*999) ! size = all nodal dofs + itself
+            CALL List_CreateFinish(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            DO componentIdx=1,fieldVariable%numberOfComponents
+              domainElements2=>fieldVariable%components(componentIdx)%domain%topology%elements
+              basis2=>domainElements2%elements(element)%basis
+              SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
+              CASE(FIELD_CONSTANT_INTERPOLATION)
+                CALL FlagError("Constant interpolation is not implemented yet.",err,error,*999)
+              CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                ! it's assumed that element-based variables arne't directly coupled
+                ! put a diagonal entry
+                localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%elementParam2DOFMap%elements(element)
+                globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
+                CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+              CASE(FIELD_NODE_BASED_INTERPOLATION)
+                ! loop over all nodes in the element (and dofs belonging to them)
+                DO localNodeIdx=1,basis2%numberOfNodes
+                  node2=domainElements2%elements(element)%elementNodes(localNodeIdx)
+                  DO derivativeIdx=1,basis2%numberOfDerivatives(localNodeIdx)
+                    derivative=domainElements2%elements(element)%elementDerivatives(derivativeIdx,localNodeIdx)
+                    version=domainElements2%elements(element)%elementVersions(derivativeIdx,localNodeIdx)
+                    !Find the local and global column and add the global column to the indices list
+                    localColumn=fieldVariable%components(componentIdx)%paramToDOFMap%nodeParam2DOFMap% &
+                      & nodes(node2)%derivatives(derivative)%versions(version)
+                    globalColumn=fieldVariable%domainMapping%localToGlobalMap(localColumn)
+                    CALL List_ItemAdd(columnIndicesLists(localDOFIdx)%ptr,globalColumn,err,error,*999)
+                  ENDDO !derivativeIdx
+                ENDDO !localNodeIdx
+              CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+              CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+              CASE DEFAULT
+                localError="Local dof number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))// &
+                  & " has invalid interpolation type."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
             ENDDO !componentIdx
-          ENDDO !elementIdx
-          CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
-          CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,err,error,*999)
-          numberOfNonZeros=numberOfNonZeros+numberOfColumns
-          rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+            !Clean up the list
+            CALL List_RemoveDuplicates(columnIndicesLists(localDOFIdx)%ptr,err,error,*999)
+            CALL List_NumberOfItemsGet(columnIndicesLists(localDOFIdx)%ptr,numberOfColumns,err,error,*999)
+            numberOfNonZeros=numberOfNonZeros+numberOfColumns
+            rowIndices(localDOFIdx+1)=numberOfNonZeros+1
+          CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Grid point based interpolation is not implemented yet.",err,error,*999)
+          CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+            CALL FlagError("Gauss point based interpolation is not implemented yet.",err,error,*999)
+          CASE DEFAULT
+            localError="Local dof number "//TRIM(NumberToVString(localDOFIdx,"*",err,error))//" has an invalid type."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
         ENDDO !localDOFIdx
         
       CASE DEFAULT

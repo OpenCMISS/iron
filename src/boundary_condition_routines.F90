@@ -2285,6 +2285,7 @@ CONTAINS
         CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupNodes,err,error,*999)
 
         ! Create a domain mapping for the Neumann point DOFs, required for the distributed matrix columns
+        NULLIFY(pointDOFMapping)
         CALL DomainMapping_Initialise(pointDofMapping,err,error,*999)
         CALL DomainMapping_WorkGroupSet(pointDofMapping,workGroup,err,error,*999)
         boundaryConditionsNeumann%pointDofMapping=>pointDofMapping

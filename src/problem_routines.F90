@@ -1203,7 +1203,7 @@ CONTAINS
               IF(ASSOCIATED(LINKING_SOLVER)) THEN
                 IF(LINKING_SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
                   !Update the field values from the dynamic factor * current solver values AND add in mean predicted displacements/
-                  CALL SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE(SOLVER,err,error,*999)
+                  CALL Solver_VariablesDynamicNonlinearUpdate(SOLVER,err,error,*999)
                 !check for a linked CellML solver 
 !!TODO: This should be generalised for nonlinear solvers in general and not just Newton solvers.
                   NEWTON_SOLVER=>SOLVER%NONLINEAR_SOLVER%NEWTON_SOLVER
@@ -1222,7 +1222,7 @@ CONTAINS
                     CALL EquationsSet_JacobianEvaluate(EQUATIONS_SET,err,error,*999)
                   ENDDO !equations_set_idx
                   !Assemble the dynamic nonlinear solver matrices
-                  CALL SOLVER_MATRICES_DYNAMIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
+                  CALL Solver_DynamicAssemble(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
                 ELSE
                   CALL FlagError("Solver equations linking solver mapping is not dynamic.",err,error,*999)
                 END IF
@@ -1255,7 +1255,7 @@ CONTAINS
 !                  CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
 !                ENDDO
                 !Assemble the static nonlinear solver matrices
-                CALL SOLVER_MATRICES_STATIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
+                CALL Solver_StaticAssemble(SOLVER,SOLVER_MATRICES_JACOBIAN_ONLY,err,error,*999)
               END IF       
             ELSE
               CALL FlagError("Solver equations solver type is not associated.",err,error,*999)
@@ -1338,7 +1338,7 @@ CONTAINS
               IF(ASSOCIATED(LINKING_SOLVER)) THEN
                 IF(LINKING_SOLVER%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
                   !Update the field values from the dynamic factor*current solver values AND add in predicted displacements
-                  CALL SOLVER_VARIABLES_DYNAMIC_NONLINEAR_UPDATE(SOLVER,err,error,*999)
+                  CALL Solver_VariablesDynamicNonlinearUpdate(SOLVER,err,error,*999)
                   !Caculate the strain field for an CellML evaluator solver
                   CALL PROBLEM_PRE_RESIDUAL_EVALUATE(SOLVER,err,error,*999)
                   !check for a linked CellML solver
@@ -1368,7 +1368,7 @@ CONTAINS
                     END SELECT
                   ENDDO !equations_set_idx
                   !Assemble the final solver residual.
-                  CALL SOLVER_MATRICES_DYNAMIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
+                  CALL Solver_DynamicAssemble(SOLVER,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
                 ELSE
                   CALL FlagError("Solver equations linking solver mapping is not dynamic.",err,error,*999)
                 END IF
@@ -1412,7 +1412,7 @@ CONTAINS
 !                  CALL INTERFACE_CONDITION_ASSEMBLE(interfaceCondition,err,error,*999)
 !                ENDDO
                 !Assemble the solver matrices
-                CALL SOLVER_MATRICES_STATIC_ASSEMBLE(SOLVER,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
+                CALL Solver_StaticAssemble(SOLVER,SOLVER_MATRICES_RHS_RESIDUAL_ONLY,err,error,*999)
               END IF
             ELSE
                CALL FlagError("Solver equations solver type is not associated.",err,error,*999)
@@ -1480,7 +1480,10 @@ CONTAINS
                       CALL FlagError("Can not pre-evaluate a residual for linear equations.",err,error,*999)
                     CASE(EQUATIONS_NONLINEAR)
                       SELECT CASE(EQUATIONS%timeDependence)
-                      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC) ! quasistatic handled like static
+                      CASE(EQUATIONS_STATIC, &
+                        & EQUATIONS_QUASISTATIC, &
+                        & EQUATIONS_FIRST_ORDER_DYNAMIC, &
+                        & EQUATIONS_SECOND_ORDER_DYNAMIC)                        
                         SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                           IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -1533,8 +1536,6 @@ CONTAINS
                             & " is invalid."
                           CALL FlagError(localError,err,error,*999)
                         END SELECT !EQUATIONS_SET%SOLUTION_METHOD
-                      CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
-                        CALL FlagError("Not implemented.",err,error,*999)
                       CASE(EQUATIONS_TIME_STEPPING)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
@@ -1621,7 +1622,7 @@ CONTAINS
                       CALL FlagError("Can not post-evaluate a residual for linear equations.",err,error,*999)
                     CASE(EQUATIONS_NONLINEAR)
                       SELECT CASE(EQUATIONS%timeDependence)
-                      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC) ! quasistatic handled like static
+                      CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC,EQUATIONS_FIRST_ORDER_DYNAMIC,EQUATIONS_SECOND_ORDER_DYNAMIC)
                         SELECT CASE(EQUATIONS_SET%SOLUTION_METHOD)
                         CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
                           IF(.NOT.ALLOCATED(EQUATIONS_SET%SPECIFICATION)) THEN
@@ -1675,8 +1676,6 @@ CONTAINS
                             & " is invalid."
                           CALL FlagError(localError,err,error,*999)
                         END SELECT !EQUATIONS_SET%SOLUTION_METHOD
-                      CASE(EQUATIONS_SECOND_ORDER_DYNAMIC)
-                        CALL FlagError("Not implemented.",err,error,*999)
                       CASE(EQUATIONS_TIME_STEPPING)
                         CALL FlagError("Not implemented.",err,error,*999)
                       CASE DEFAULT
@@ -3883,6 +3882,7 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   USE KINDS
   USE PROBLEM_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE SOLVER_MATRICES_ROUTINES
   USE STRINGS
   USE TYPES
@@ -3992,6 +3992,7 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   USE PROBLEM_ROUTINES
   USE SOLVER_MATRICES_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE STRINGS
   USE TYPES
   
@@ -4191,6 +4192,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   USE KINDS
   USE PROBLEM_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE STRINGS
   USE TYPES
 
@@ -4317,6 +4319,7 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
   USE KINDS
   USE PROBLEM_ROUTINES
   USE SOLVER_ROUTINES
+  USE SolverAccessRoutines
   USE STRINGS
   USE TYPES
  

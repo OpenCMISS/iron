@@ -1587,7 +1587,31 @@ CONTAINS
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           END SELECT
         CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
+          DO i=1,MATRIX%M
+            ROW_STRING=NUMBER_TO_CHARACTER(i,"I9",ERR,ERROR)
+            INITIAL_STRING='Matrix('//ROW_STRING//','//ROW_STRING//'):'
+            SELECT CASE(MATRIX%dataType)              
+            CASE(MATRIX_VECTOR_INTG_TYPE)
+              CALL WRITE_STRING_FMT_VALUE(ID,INITIAL_STRING(1:LEN_TRIM(INITIAL_STRING)),MATRIX%DATA_INTG(i),'(7X,I13)', &
+                & ERR,ERROR,*999)
+            CASE(MATRIX_VECTOR_SP_TYPE)
+              CALL WRITE_STRING_FMT_VALUE(ID,INITIAL_STRING(1:LEN_TRIM(INITIAL_STRING)),MATRIX%DATA_SP(i),'(7X,E13.6)', &
+                & ERR,ERROR,*999)
+            CASE(MATRIX_VECTOR_DP_TYPE)
+              CALL WRITE_STRING_FMT_VALUE(ID,INITIAL_STRING(1:LEN_TRIM(INITIAL_STRING)),MATRIX%DATA_DP(i),'(7X,E13.6)', &
+                & ERR,ERROR,*999)
+            CASE(MATRIX_VECTOR_L_TYPE)            
+              CALL WRITE_STRING_FMT_VALUE(ID,INITIAL_STRING(1:LEN_TRIM(INITIAL_STRING)),MATRIX%DATA_L(i),'(7X,L13)', &
+                & ERR,ERROR,*999)
+            CASE(MATRIX_VECTOR_SPC_TYPE)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE(MATRIX_VECTOR_DPC_TYPE)
+              CALL FlagError("Not implemented.",err,error,*999)
+            CASE DEFAULT
+              LOCAL_ERROR="The matrix data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))//" is invalid."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            END SELECT
+          ENDDO !i
         CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
           CALL FlagError("Not implemented.",ERR,ERROR,*999)
         CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)

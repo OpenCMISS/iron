@@ -57,6 +57,7 @@ MODULE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE ComputationAccessRoutines
   USE Constants
   USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
@@ -2332,9 +2333,6 @@ CONTAINS
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
@@ -2356,6 +2354,9 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
               CASE(EQUATIONS_SET_NODAL_SOLUTION_METHOD)
                 !Finish the creation of the equations
                 CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
@@ -2372,9 +2373,6 @@ CONTAINS
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
@@ -2396,6 +2394,9 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -2460,8 +2461,6 @@ CONTAINS
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED],err,error,*999)
                 SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_DynamicStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE, &
@@ -2484,6 +2483,9 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
@@ -2538,10 +2540,7 @@ CONTAINS
                 CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
                 !Create the equations matrices
                 CALL EquationsMatrices_VectorCreateStart(vectorEquations,vectorMatrices,err,error,*999)
-                ! Use the analytic Jacobian calculation
-                CALL EquationsMatrices_JacobianTypesSet(vectorMatrices,[EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED], &
-                  & err,error,*999)
-                SELECT CASE(equations%sparsityType)
+               SELECT CASE(equations%sparsityType)
                 CASE(EQUATIONS_MATRICES_FULL_MATRICES)
                   CALL EquationsMatrices_LinearStorageTypeSet(vectorMatrices,[MATRIX_BLOCK_STORAGE_TYPE], &
                     & err,error,*999)
@@ -2562,7 +2561,10 @@ CONTAINS
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
                 CALL EquationsMatrices_VectorCreateFinish(vectorMatrices,err,error,*999)
-              CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
+                !Use the analytic Jacobian calculation
+                CALL EquationsMatrices_JacobianCalculationTypeSet(vectorMatrices,1,FIELD_U_VARIABLE_TYPE, &
+                  & EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,err,error,*999)
+               CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FD_SOLUTION_METHOD)
                 CALL FlagError("Not implemented.",err,error,*999)
@@ -2999,14 +3001,18 @@ CONTAINS
               CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
                 & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
                 & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
                 !Pre solve for the linear solver
                 IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
                   !TODO if first time step smooth imported mesh with respect to absolute nodal position?
                   !Update boundary conditions for mesh-movement
                   CALL NavierStokes_PreSolveUpdateBoundaryConditions(SOLVER,err,error,*999)
                   IF(CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-                    & CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+                    & CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                    & CONTROL_LOOP%problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                    & CONTROL_LOOP%problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
                     CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,SOLVER2,err,error,*999)
                   ELSE
                     CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,4,SOLVER2,err,error,*999)
@@ -8410,7 +8416,9 @@ CONTAINS
               CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
                 & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
                 & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
                 NULLIFY(Solver2)
                 !Pre solve for the linear solver
                 IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
@@ -8437,8 +8445,14 @@ CONTAINS
                               & numberOfDimensions,err,error,*999)
                             !Update moving wall nodes from solid/fluid gap (as we solve for displacements of the mesh
                             !in Laplacian smoothing step).
-                            IF(CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-                              & CONTROL_LOOP%problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+                            IF(CONTROL_LOOP%problem%specification(3)== &
+                              & PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                              & CONTROL_LOOP%problem%specification(3)== &
+                              & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                              & CONTROL_LOOP%problem%specification(3)== &
+                              & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                              & CONTROL_LOOP%problem%specification(3)== &
+                              & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
                               CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,2,Solver2,err,error,*999)
                             ELSE
                               CALL SOLVERS_SOLVER_GET(SOLVER%SOLVERS,4,Solver2,err,error,*999)
@@ -8459,11 +8473,16 @@ CONTAINS
                                     IF(ASSOCIATED(SOLID_EQUATIONS_SET)) THEN
                                       IF(SOLID_EQUATIONS_SET%SPECIFICATION(1)==EQUATIONS_SET_ELASTICITY_CLASS &
                                         & .AND.SOLID_EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE &
-                                        & .AND.((SOLID_EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE) &
+                                        & .AND.((SOLID_EQUATIONS_SET%SPECIFICATION(3)== &
+                                        & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE) &
                                         & .OR.(SOLID_EQUATIONS_SET%SPECIFICATION(3)== &
                                         & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
                                         & .OR.(SOLID_EQUATIONS_SET%SPECIFICATION(3)== &
-                                        & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE))) THEN
+                                        & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) &
+                                        & .OR.(SOLID_EQUATIONS_SET%SPECIFICATION(3)== &
+                                        & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE) &
+                                        & .OR.(SOLID_EQUATIONS_SET%SPECIFICATION(3)== &
+                                        & EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE))) THEN
                                         SolidEquationsSetFound=.TRUE.
                                       ELSE
                                         EquationsSetIndex=EquationsSetIndex+1
@@ -8989,13 +9008,17 @@ CONTAINS
         CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
           & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-          & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+          & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+          & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
           !Update mesh within the dynamic solver
           IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
             IF(solver%DYNAMIC_SOLVER%ALE) THEN
               !Get the dependent field for the Laplace problem
               IF(problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-                & problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+                & problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                & problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                & problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
                 CALL Solvers_SolverGet(solvers,3,laplaceSolver,err,error,*999)
               ELSE IF(problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
                 & problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
@@ -9013,7 +9036,9 @@ CONTAINS
               !Get the independent field for the ALE Navier-Stokes problem
               !Get the dynamic solver
               IF(problem%specification(3)==PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
-                & problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
+                & problem%specification(3)==PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                & problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
+                & problem%specification(3)==PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
                 CALL Solvers_SolverGet(solvers,2,dynamicSolver,err,error,*999)
               ELSE IF(problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE.OR. &
                 & problem%specification(3)==PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE) THEN
@@ -9062,7 +9087,9 @@ CONTAINS
                   & solidEquationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE.AND. &
                   & (solidEquationsSet%specification(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE.OR. &
                   & solidEquationsSet%specification(3)==EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE.OR. &
-                  & solidEquationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE)) THEN
+                  & solidEquationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE.OR. &
+                  & solidEquationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
+                  & solidEquationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)) THEN
                   solidEquationsSetFound=.TRUE.
                 ELSE
                   equationsSetIdx=equationsSetIdx+1
@@ -9296,7 +9323,9 @@ CONTAINS
               CASE(PROBLEM_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
                 & PROBLEM_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
                 & PROBLEM_GROWTH_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
-                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
+                & PROBLEM_GROWTH_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_DYNAMIC_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
+                & PROBLEM_DYNAMIC_FINITE_ELASTICITY_RBS_NAVIER_STOKES_ALE_SUBTYPE)
                 IF(SOLVER%SOLVE_TYPE==SOLVER_LINEAR_TYPE) THEN
                   !Get the independent field for the ALE Navier-Stokes problem
                   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -13497,7 +13526,7 @@ CONTAINS
 
       ! If the solution hasn't converged, need to revert field values to pre-solve state
       ! before continued iteration. This will counteract the field updates that occur
-      ! in SOLVER_DYNAMIC_MEAN_PREDICTED_CALCULATE. Ignore for initialisation
+      ! in Solver_DynamicMeanPredictedCalculate. Ignore for initialisation
       IF(timestep == 0) THEN
         iterativeLoop%CONTINUE_LOOP=.FALSE.
       END IF
@@ -13800,7 +13829,7 @@ CONTAINS
 
     ! If the solution hasn't converged, need to revert field values to pre-solve state
     ! before continued iteration. This will counteract the field updates that occur
-    ! in SOLVER_DYNAMIC_MEAN_PREDICTED_CALCULATE. Ignore for initialisation
+    ! in Solver_DynamicMeanPredictedCalculate. Ignore for initialisation
     IF(timestep == 0) THEN
       iterativeLoop%CONTINUE_LOOP=.FALSE.
     END IF

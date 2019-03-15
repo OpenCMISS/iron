@@ -1300,7 +1300,8 @@ CONTAINS
 999 CALL FlagError("Error converting a long integer to a varying string",ERR,ERROR,*998)
 998 ERRORS("NUMBER_TO_VSTRING_LINTG",ERR,ERROR)
     !EXITS("NUMBER_TO_VSTRING_LINTG")
-    RETURN    
+    RETURN
+    
   END FUNCTION NUMBER_TO_VSTRING_LINTG
   
   !
@@ -1409,7 +1410,8 @@ CONTAINS
 999 CALL FlagError("Error converting a single precision number to a varying string",ERR,ERROR,*998)
 998 ERRORS("NUMBER_TO_VSTRING_SP",ERR,ERROR)
     !EXITS("NUMBER_TO_VSTRING_SP")
-    RETURN    
+    RETURN
+    
   END FUNCTION NUMBER_TO_VSTRING_SP
   
   !
@@ -1431,8 +1433,8 @@ CONTAINS
     INTEGER(INTG) :: ASTERISK_POS,i0,i1,LENGTH
     CHARACTER(LEN=2) :: CI0,CI1
     CHARACTER(LEN=MAXSTRLEN) :: LOCAL_FORMAT,LOCAL_STRING
-    LOGICAL :: ADJUST_LEFT     
-
+    LOGICAL :: ADJUST_LEFT
+     
     !ENTERS("NUMBER_TO_VSTRING_DP",ERR,ERROR,*999)
 
 !!TODO: remove dependance on LOCAL_STRING
@@ -1519,7 +1521,8 @@ CONTAINS
 999 CALL FlagError("Error converting double precision number to a varying string",ERR,ERROR,*998)
 998 ERRORS("NUMBER_TO_VSTRING_DP",ERR,ERROR)
     !EXITS("NUMBER_TO_VSTRING_DP")
-    RETURN    
+    RETURN
+    
   END FUNCTION NUMBER_TO_VSTRING_DP
   
   !

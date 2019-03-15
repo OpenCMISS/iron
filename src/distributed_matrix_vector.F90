@@ -132,7 +132,9 @@ MODULE DistributedMatrixVector
 
   !Module variables
 
-  INTEGER(INTG), SAVE :: distributedDataId=100000000
+  !CPB 13/3/19 TEMPORARY TO GET AROUND INTEL MPI BUG
+  !INTEGER(INTG), SAVE :: distributedDataId=100000000
+  INTEGER(INTG), SAVE :: distributedDataId=1000
 
   !Interfaces
 
@@ -1217,12 +1219,13 @@ CONTAINS
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated",err,error,*999)
     IF(ASSOCIATED(data)) CALL FlagError("Data is already associated",err,error,*999)    
     IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+
+    NULLIFY(petscData)
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
       CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
-      CALL Matrix_DataGet(distributedMatrix%cmiss%matrix,DATA,err,error,*999)
+      CALL Matrix_DataGet(distributedMatrix%cmiss%matrix,data,err,error,*999)
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       NULLIFY(petscMatrix)
       CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
@@ -1237,7 +1240,11 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          CALL Petsc_MatSeqAIJGetArrayF90(distributedMatrix%petsc%overrideMatrix,petscData,err,error,*999)
+          IF(petscMatrix%m==petscMatrix%globalM) THEN
+            CALL Petsc_MatSeqAIJGetArrayF90(distributedMatrix%petsc%overrideMatrix,petscData,err,error,*999)
+          ELSE
+            !Do nothing, PETSc doesn't yet have the facility to get a pointer to the matrix data for MPI matrices
+          ENDIF
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
@@ -1258,7 +1265,11 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          CALL Petsc_MatSeqAIJGetArrayF90(petscMatrix%matrix,petscData,err,error,*999)
+          IF(petscMatrix%m==petscMatrix%globalM) THEN
+            CALL Petsc_MatSeqAIJGetArrayF90(petscMatrix%matrix,petscData,err,error,*999)
+          ELSE
+            !Do nothing, PETSc doesn't yet have the facility to get a pointer to the matrix data for MPI matrices
+          ENDIF
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
@@ -1269,33 +1280,36 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT
       ENDIF
-      ! Convert 2D array from PETSc to 1D array
-      ! Using C_F_POINTER(C_LOC(... is a bit ugly but transfer doesn't work with pointers
-      SELECT CASE(petscMatrix%storageType)
-      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-        tempMe = C_LOC(petscData(1,1))
-        CALL C_F_POINTER(tempMe,DATA,[petscMatrix%m*petscMatrix%n])
-      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-        CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-        CALL FlagError("Column major storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-        CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-        !PETSc returns an m * n matrix rather than number non-zeros by 1, so the returned
-        !2D array actually contains junk data outside of the actual matrix.
-        !This is a bug in PETSc but we can get the correct 1D data here
-        tempMe = C_LOC(petscData(1,1))
-        CALL C_F_POINTER(tempMe,DATA,[petscMatrix%numberOfNonZeros])
-      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-        CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-        CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE DEFAULT
-        localError="The PETSc matrix storage type of "//TRIM(NumberToVString( &
-          & petscMatrix%storageType,"*",err,error))//" is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
+      !If we have any data convert it to a 1D array. 
+      IF(ASSOCIATED(petscData)) THEN
+        ! Convert 2D array from PETSc to 1D array
+        ! Using C_F_POINTER(C_LOC(... is a bit ugly but transfer doesn't work with pointers
+        SELECT CASE(petscMatrix%storageType)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+          tempMe = C_LOC(petscData(1,1))
+          CALL C_F_POINTER(tempMe,DATA,[petscMatrix%m*petscMatrix%n])
+        CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+          CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+          CALL FlagError("Column major storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+          CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+          !PETSc returns an m * n matrix rather than number non-zeros by 1, so the returned
+          !2D array actually contains junk data outside of the actual matrix.
+          !This is a bug in PETSc but we can get the correct 1D data here
+          tempMe = C_LOC(petscData(1,1))
+          CALL C_F_POINTER(tempMe,DATA,[petscMatrix%numberOfNonZeros])
+        CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+          CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+          CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE DEFAULT
+          localError="The PETSc matrix storage type of "//TRIM(NumberToVString( &
+            & petscMatrix%storageType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDIF
     CASE DEFAULT
       localError="The distributed matrix library type of "// &
         & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
@@ -1434,7 +1448,7 @@ CONTAINS
   !
 
   !>Restores the double precision data pointer returned from DistributedMatrix_DataGet once the data has finished being used.
-  SUBROUTINE DistributedMatrix_DataRestoreDP(distributedMatrix,DATA,err,error,*)
+  SUBROUTINE DistributedMatrix_DataRestoreDP(distributedMatrix,data,err,error,*)
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
@@ -1450,40 +1464,44 @@ CONTAINS
     ENTERS("DistributedMatrix_DataRestoreDP",err,error,*999)
 
     IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)
     IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)
       NULLIFY(data)
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       NULLIFY(petscMatrix)
       CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      SELECT CASE(petscMatrix%storageType)
-      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-        !Convert 1D array to 2D
-        tempMe = C_LOC(data(1))
-        CALL C_F_POINTER(tempMe,petscData,[petscMatrix%m,petscMatrix%n])
-      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-        CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-        CALL FlagError("Column major storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-        CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-        !PETSc expects an m * n 2D matrix rather than a 1D array with length equal to number of non-zeros
-        !This is a bug in PETSc so we have to give it a 2D matrix with junk at the end
-        tempMe = C_LOC(data(1))
-        CALL C_F_POINTER(tempMe,petscData,[petscMatrix%m,petscMatrix%n])
-      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-        CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-        CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
-      CASE DEFAULT
-        localError="The PETSc matrix storage type of "//TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))// &
-          & " is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
+      !Only do this for Sequential PETSc matrices until PETSc handles data from MPI matrices better.
+      IF(petscMatrix%m==petscMatrix%globalM) THEN
+        IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)
+        SELECT CASE(petscMatrix%storageType)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+          !Convert 1D array to 2D
+          tempMe = C_LOC(DATA(1))
+          CALL C_F_POINTER(tempMe,petscData,[petscMatrix%m,petscMatrix%n])
+        CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+          CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+          CALL FlagError("Column major storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+          CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+          !PETSc expects an m * n 2D matrix rather than a 1D array with length equal to number of non-zeros
+          !This is a bug in PETSc so we have to give it a 2D matrix with junk at the end
+          tempMe = C_LOC(DATA(1))
+          CALL C_F_POINTER(tempMe,petscData,[petscMatrix%m,petscMatrix%n])
+        CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+          CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+          CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE DEFAULT
+          localError="The PETSc matrix storage type of "//TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDIF
       IF(petscMatrix%useOverrideMatrix) THEN
         SELECT CASE(petscMatrix%storageType)
         CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -1495,8 +1513,12 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          CALL Petsc_MatSeqAIJRestoreArrayF90(petscMatrix%overrideMatrix,petscData,err,error,*999)
-        CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+          IF(petscMatrix%m==petscMatrix%globalM) THEN
+            CALL Petsc_MatSeqAIJRestoreArrayF90(petscMatrix%overrideMatrix,petscData,err,error,*999)
+          ELSE
+            !Do nothing, PETSc doesn't yet have the facility to restore a pointer to the matrix data for MPI matrices
+          ENDIF
+       CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
           CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
@@ -1516,7 +1538,11 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          CALL Petsc_MatSeqAIJRestoreArrayF90(petscMatrix%matrix,petscData,err,error,*999)
+          IF(petscMatrix%m==petscMatrix%globalM) THEN
+            CALL Petsc_MatSeqAIJRestoreArrayF90(petscMatrix%matrix,petscData,err,error,*999)
+          ELSE
+            !Do nothing, PETSc doesn't yet have the facility to restore a pointer to the matrix data for MPI matrices
+          ENDIF
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
@@ -2405,7 +2431,7 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       NULLIFY(petscMatrix)
       CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      IF(.NOT.petscMatrix%useOverrideMatrix) CALL FlagError("PETSc override matrix is already set.",err,error,*999)
+      IF(petscMatrix%useOverrideMatrix) CALL FlagError("PETSc override matrix is already set.",err,error,*999)
       petscMatrix%useOverrideMatrix=.TRUE.
       petscMatrix%overrideMatrix=overrideMatrix
     CASE DEFAULT
@@ -2447,7 +2473,7 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       NULLIFY(petscMatrix)
       CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      IF(petscMatrix%useOverrideMatrix) CALL FlagError("PETSc override matrix is not set.",err,error,*999)
+      IF(.NOT.petscMatrix%useOverrideMatrix) CALL FlagError("PETSc override matrix is not set.",err,error,*999)
       distributedMatrix%petsc%useOverrideMatrix=.FALSE.
       CALL Petsc_MatInitialise(distributedMatrix%petsc%overrideMatrix,err,error,*999)
     CASE DEFAULT

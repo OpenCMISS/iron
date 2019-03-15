@@ -459,7 +459,7 @@ CONTAINS
         & " is invalid. The number must be >= 1 and <= 3."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    
+
     EXITS("Basis_AreaToXiCoordinates")
     RETURN
 999 ERRORSEXITS("Basis_AreaToXiCoordinates",err,error)
@@ -717,10 +717,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: basisIdx
+    INTEGER(INTG) :: basisIdx,dummyErr
     TYPE(BasisType), POINTER :: newBasis
     TYPE(BasisPtrType), ALLOCATABLE :: newBases(:)
-    TYPE(VARYING_STRING) :: localError
+    TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("Basis_CreateStart",err,error,*999)
 
@@ -768,7 +768,7 @@ CONTAINS
     
     EXITS("Basis_CreateStart")
     RETURN
-999 IF(ASSOCIATED(newBasis)) CALL Basis_Destroy(newBasis,err,error,*998)
+999 IF(ASSOCIATED(newBasis)) CALL BASIS_DESTROY(newBasis,dummyErr,dummyError,*998)
 998 IF(ALLOCATED(newBases)) DEALLOCATE(newBases)
     ERRORSEXITS("Basis_CreateStart",err,error)
     RETURN 1
@@ -6617,7 +6617,7 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         ENDIF
         !Gauss point 1
-        x(1,1)=1.0_DP/2.0
+        x(1,1)=1.0_DP/2.0_DP
         x(2,1)=1.0_DP/2.0_DP
         w(1)=1.0_DP
       CASE(2)
@@ -6698,7 +6698,7 @@ CONTAINS
         ENDIF
         !Gauss point 1
         x(1,1)=(1.0_DP-SQRT(0.6_DP))/2.0_DP
-        x(2,1)=1-x(1,1)
+        x(2,1)=1.0_DP-x(1,1)
         w(1)=5.0_DP/18.0_DP
         !Gauss point 2
         x(1,2)=1.0_DP/2.0_DP
@@ -6780,8 +6780,8 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         ENDIF
         lC=1.0_DP/3.0_DP
-        wC=-9.0_DP/16.0
-        alpha1=25.0_DP
+        wC=-3.0_DP/4.0_DP
+        alpha1=2.0_DP/5.0_DP
         wAlpha1=25.0_DP/48.0_DP
         l1Alpha1=(1.0_DP+2.0_DP*alpha1)/3.0_DP
         l2Alpha1=(1.0_DP-alpha1)/3.0_DP

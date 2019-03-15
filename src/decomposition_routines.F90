@@ -1549,9 +1549,12 @@ CONTAINS
     ENTERS("Decomposers_Finalise",err,error,*999)
 
     IF(ASSOCIATED(decomposers)) THEN
-      DO decomposerIdx=1,SIZE(decomposers%decomposers,1)
-        CALL Decomposer_Finalise(decomposers%decomposers(decomposeridx)%ptr,err,error,*999)
-      ENDDO !decomposerIdx
+      IF(ALLOCATED(decomposers%decomposers)) THEN
+        DO decomposerIdx=1,SIZE(decomposers%decomposers,1)
+          CALL Decomposer_Finalise(decomposers%decomposers(decomposeridx)%ptr,err,error,*999)
+        ENDDO !decomposerIdx
+        DEALLOCATE(decomposers%decomposers)
+      ENDIF
       DEALLOCATE(decomposers)
     ENDIF
        
@@ -1670,7 +1673,7 @@ CONTAINS
         ENDDO !coupledDecompositionIdx
         DEALLOCATE(decompositionConnectivity%elementConnectivity)
       ENDIF
-      IF(ALLOCATED(decompositionCoupling%coupledNodes)) DEALLOCATE(decompositionCoupling%coupledNodes
+      IF(ALLOCATED(decompositionConnectivity%coupledNodes)) DEALLOCATE(decompositionConnectivity%coupledNodes)
       DEALLOCATE(decompositionConnectivity)
     ENDIF
        
@@ -1705,11 +1708,11 @@ CONTAINS
     ALLOCATE(decompositionCoupling%decompositionConnectivity,STAT=ERR)
     IF(err/=0) CALL FlagError("Could not allocate decomposition connectivity.",err,error,*999)
     decompositionCoupling%decompositionConnectivity%decompositionCoupling=>decompositionCoupling
-    NULLIFY(decompositionCoupling%basis)
-    decompositionCoupling%numberOfInterfaceElements=0
-    decompositionCoupling%totalNumberOfInterfaceElements=0
-    decompositionCoupling%numberOfGlobalInterfaceElements=0
-    decompositionCoupling%numberOfCoupledDecompositions=0
+    NULLIFY(decompositionCoupling%decompositionConnectivity%basis)
+    decompositionCoupling%decompositionConnectivity%numberOfInterfaceElements=0
+    decompositionCoupling%decompositionConnectivity%totalNumberOfInterfaceElements=0
+    decompositionCoupling%decompositionConnectivity%numberOfGlobalInterfaceElements=0
+    decompositionCoupling%decompositionConnectivity%numberOfCoupledDecompositions=0
     
     EXITS("DecompositionConnectivity_Initialise")
     RETURN
@@ -1735,8 +1738,8 @@ CONTAINS
     ENTERS("DecompositionCoupling_Finalise",err,error,*999)
 
     IF(ASSOCIATED(decompositionCoupling)) THEN
-      IF(ALLOCATED(decompositionCoupling%coupledDecompositions)) DEALLOCATE(decompositionCoupling%coupledDecompositions
-      CALL Decomposition_ConnectivityFinalise(decompositionCoupling%decompositionConnectivity,err,error,*999)
+      IF(ALLOCATED(decompositionCoupling%coupledDecompositions)) DEALLOCATE(decompositionCoupling%coupledDecompositions)
+      CALL DecompositionConnectivity_Finalise(decompositionCoupling%decompositionConnectivity,err,error,*999)
       DEALLOCATE(decompositionCoupling)
     ENDIF
        
@@ -1780,6 +1783,30 @@ CONTAINS
     RETURN 1
    
   END SUBROUTINE DecompositionCoupling_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the decomposition coupling. 
+  SUBROUTINE Decomposition_CouplingCalculate(decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition to calculate the coupling for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Decomposition_CouplingCalculate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(decomposition)) CALL FlagError("Decomposition is not associated.",err,error,*999)    
+    
+    EXITS("Decomposition_CouplingCalculate")
+    RETURN
+999 ERRORSEXITS("Decomposition_CouplingCalculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Decomposition_CouplingCalculate
 
   !
   !================================================================================================================================
@@ -2063,7 +2090,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("DecompositionElementConnectivity_Initialise",err,error,*998)
+    ENTERS("DecompositionElementConnectivity_Initialise",err,error,*999)
 
     elementConnectivity%coupledElementNumber=0
     elementConnectivity%connectedLineFace=0
@@ -2723,6 +2750,7 @@ CONTAINS
     CALL DecompositionTopology_DecompositionDataPointsGet(decompositionTopology,decompositionData,err,error,*999)
     NULLIFY(decomposition)
     CALL DecompositionTopology_DecompositionGet(decompositionTopology,decomposition,err,error,*999)
+    meshComponentNumber=decomposition%meshComponentNumber
     CALL WorkGroup_GroupCommunicatorGet(decomposition%workGroup,groupCommunicator,err,error,*999)
     NULLIFY(decompositionElements)
     CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
@@ -2732,7 +2760,6 @@ CONTAINS
     CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
     NULLIFY(elementsMapping)
     CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
-    meshComponentNumber=decomposition%meshComponentNumber
     NULLIFY(mesh)
     CALL Decomposition_MeshGet(decomposition,mesh,err,error,*999)
     NULLIFY(meshTopology)
@@ -6471,10 +6498,12 @@ CONTAINS
     ENTERS("DomainTopology_ElementsFinalise",err,error,*999)
 
     IF(ASSOCIATED(domainElements)) THEN
-      DO elementIdx=1,domainElements%totalNumberOfElements
-        CALL DomainElement_Finalise(domainElements%elements(elementIdx),err,error,*999)
-      ENDDO !elementIdx
-      IF(ALLOCATED(domainElements%elements)) DEALLOCATE(domainElements%elements)
+      IF(ALLOCATED(domainElements%elements)) THEN
+        DO elementIdx=1,domainElements%totalNumberOfElements
+          CALL DomainElement_Finalise(domainElements%elements(elementIdx),err,error,*999)
+        ENDDO !elementIdx
+        DEALLOCATE(domainElements%elements)
+      ENDIF
       DEALLOCATE(domainElements)
     ENDIF
     
@@ -6666,10 +6695,12 @@ CONTAINS
     ENTERS("DomainTopology_LinesFinalise",err,error,*999)
 
     IF(ASSOCIATED(domainLines)) THEN
-      DO lineIdx=1,SIZE(domainLines%lines,1)
-        CALL DomainLine_Finalise(domainLines%lines(lineIdx),err,error,*999)
-      ENDDO !lineIdx
-      IF(ALLOCATED(domainLines%lines)) DEALLOCATE(domainLines%lines)
+      IF(ALLOCATED(domainLines%lines)) THEN
+        DO lineIdx=1,SIZE(domainLines%lines,1)
+          CALL DomainLine_Finalise(domainLines%lines(lineIdx),err,error,*999)
+        ENDDO !lineIdx
+        DEALLOCATE(domainLines%lines)
+      ENDIF
       DEALLOCATE(domainLines)
     ENDIF
 
@@ -6782,10 +6813,12 @@ CONTAINS
     ENTERS("DomainTopology_FacesFinalise",err,error,*999)
 
     IF(ASSOCIATED(domainFaces)) THEN
-      DO faceIdx=1,SIZE(domainFaces%faces,1)
-        CALL DomainFace_Finalise(domainFaces%faces(faceIdx),err,error,*999)
-      ENDDO !faceIdx
-      IF(ALLOCATED(domainFaces%faces)) DEALLOCATE(domainFaces%faces)
+      IF(ALLOCATED(domainFaces%faces)) THEN
+        DO faceIdx=1,SIZE(domainFaces%faces,1)
+          CALL DomainFace_Finalise(domainFaces%faces(faceIdx),err,error,*999)
+        ENDDO !faceIdx
+        DEALLOCATE(domainFaces%faces)
+      ENDIF
       DEALLOCATE(domainFaces)
     ENDIF
   
@@ -6959,10 +6992,12 @@ CONTAINS
     ENTERS("DomainTopology_NodesFinalise",err,error,*999)
 
     IF(ASSOCIATED(domainNodes)) THEN
-      DO nodeIdx=1,SIZE(domainNodes%nodes,1)
-        CALL DomainNode_Finalise(domainNodes%nodes(nodeIdx),err,error,*999)
-      ENDDO !nodeIdx
-      IF(ALLOCATED(domainNodes%nodes)) DEALLOCATE(domainNodes%nodes)
+      IF(ALLOCATED(domainNodes%nodes)) THEN
+        DO nodeIdx=1,SIZE(domainNodes%nodes,1)
+          CALL DomainNode_Finalise(domainNodes%nodes(nodeIdx),err,error,*999)
+        ENDDO !nodeIdx
+        DEALLOCATE(domainNodes%nodes)
+      ENDIF
       IF(ASSOCIATED(domainNodes%nodesTree)) CALL Tree_Destroy(domainNodes%nodesTree,err,error,*999)
       DEALLOCATE(domainNodes)
     ENDIF

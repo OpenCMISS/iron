@@ -243,7 +243,7 @@ CONTAINS
 
             !Calculate F=dZ/dNU, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_GaussDeformationGradientTensor(SOLID_DEPENDENT_INTERPOLATED_POINT_METRICS, &
-              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,DZDNU,ERR,ERROR,*999)
+              & GEOMETRIC_INTERPOLATED_POINT_METRICS,FIBRE_INTERPOLATED_POINT,DZDNU,Jznu,ERR,ERROR,*999)
 
             CALL Invert(DZDNU,DNUDZ,Jznu,err,error,*999)
             CALL MatrixTranspose(DNUDZ,DNUDZT,err,error,*999)

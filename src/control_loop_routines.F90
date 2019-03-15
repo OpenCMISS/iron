@@ -107,12 +107,8 @@ MODULE CONTROL_LOOP_ROUTINES
   INTERFACE ControlLoop_CreateFinish
     MODULE PROCEDURE CONTROL_LOOP_CREATE_FINISH
   END INTERFACE ControlLoop_CreateFinish
-
-  INTERFACE CONTROL_LOOP_CURRENT_TIMES_GET
-    MODULE PROCEDURE ControlLoop_CurrentTimesGet
-  END INTERFACE CONTROL_LOOP_CURRENT_TIMES_GET
-
-  INTERFACE ControlLoop_IterationsSet
+  
+  INTERFACE ControlLoop_IterationsSet    
     MODULE PROCEDURE CONTROL_LOOP_ITERATIONS_SET
   END INTERFACE ControlLoop_IterationsSet
 
@@ -198,12 +194,6 @@ MODULE CONTROL_LOOP_ROUTINES
 
   PUBLIC ControlLoop_CreateFinish,ControlLoop_CreateStart
 
-  PUBLIC CONTROL_LOOP_CURRENT_TIMES_GET
-
-  PUBLIC ControlLoop_CurrentTimesGet
-
-  PUBLIC ControlLoop_CurrentTimeInformationGet
-  
   PUBLIC ControlLoop_Destroy
 
   PUBLIC ControlLoop_FieldVariablesCalculate
@@ -348,96 +338,6 @@ CONTAINS
     
   END SUBROUTINE CONTROL_LOOP_CREATE_START
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::cmfe_ControlLoop_CurrentTimesGet
-  SUBROUTINE ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*)
-
-    !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the current times for
-    REAL(DP), INTENT(OUT) :: currentTime !<On exit, the current time.
-    REAL(DP), INTENT(OUT) :: timeIncrement !<On exit, the current time increment.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: currentIteration,outputIteration
-    REAL(DP) :: startTime,stopTime
-
-    ENTERS("ControlLoop_CurrentTimesGet",err,error,*999)
-
-    CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-      & outputIteration,err,error,*999)
-       
-    EXITS("ControlLoop_CurrentTimesGet")
-    RETURN
-999 ERRORSEXITS("ControlLoop_CurrentTimesGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE ControlLoop_CurrentTimesGet
-  
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the current loop information for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used.
-  SUBROUTINE ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
-    & outputIteration,err,error,*)
-    
-    !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the time information for
-    REAL(DP), INTENT(OUT) :: currentTime !<On exit, the current time.
-    REAL(DP), INTENT(OUT) :: timeIncrement !<On exit, the current time increment.
-    REAL(DP), INTENT(OUT) :: startTime !<On exit, the start time for the loop
-    REAL(DP), INTENT(OUT) :: stopTime !<On exit, the stop time for the loop
-    INTEGER(INTG), INTENT(OUT) :: currentIteration !<On exit, the current iteration number for the loop
-    INTEGER(INTG), INTENT(OUT) :: outputIteration !<On exit, the output iteration number for the loop
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables    
-    INTEGER(INTG) :: controlLoopLevel,levelIdx
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: parentLoop
-    TYPE(CONTROL_LOOP_TIME_TYPE), POINTER :: timeLoop
-
-    ENTERS("ControlLoop_CurrentTimeInformationGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
-    IF(.NOT.controlLoop%CONTROL_LOOP_FINISHED) CALL FlagError("Control loop has not been finished.",err,error,*999)
-
-    !Find a time loop from either the specified control loop or the next time loop up the chain.
-    controlLoopLevel=controlLoop%CONTROL_LOOP_LEVEL
-    parentLoop=>controlLoop
-    DO levelIdx=controlLoopLevel,1,-1
-      IF(controlLoopLevel==0) THEN
-        CALL FlagError("Could not find a time loop for the specified control loop.",err,error,*999)
-      ELSE
-        IF(parentLoop%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
-          timeLoop=>parentLoop%TIME_LOOP
-          IF(ASSOCIATED(timeLoop)) THEN
-            currentTime=timeLoop%CURRENT_TIME
-            timeIncrement=timeLoop%TIME_INCREMENT
-            startTime=timeLoop%START_TIME
-            stopTime=timeLoop%STOP_TIME
-            currentIteration=timeLoop%ITERATION_NUMBER
-            outputIteration=timeLoop%OUTPUT_NUMBER
-          ELSE
-            CALL FlagError("Control loop time loop is not associated.",err,error,*999)
-          ENDIF
-          EXIT
-        ELSE
-          parentLoop=>parentLoop%PARENT_LOOP
-        ENDIF
-      ENDIF
-    ENDDO !levelIdx
-       
-    EXITS("ControlLoop_CurrentTimeInformationGet")
-    RETURN
-999 ERRORSEXITS("ControlLoop_CurrentTimeInformationGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE ControlLoop_CurrentTimeInformationGet
-  
   !
   !================================================================================================================================
   !
@@ -1737,8 +1637,12 @@ CONTAINS
           END SELECT
         CASE(CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC)
           !Copy field variable values to the previous values
-          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-            & 1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS3_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS2_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
           !Copy velocity values to the previous velocity
           CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VELOCITY_VALUES_SET_TYPE, &
             & FIELD_PREVIOUS_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
@@ -1746,9 +1650,13 @@ CONTAINS
           CASE(CONTROL_LOOP_FIELD_VARIABLE_LINEAR)
             !Do nothing additional
           CASE(CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR)
-            !Copy residual to the previous residual
-            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
-              & 1.0_DP,err,error,*999)
+            !Copy residuals to the previous residuals
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS2_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
           CASE DEFAULT
             localError="The control loop variable linearity of "//TRIM(NumberToVString(linearity,"*",err,error))// &
               & " is invalid."
@@ -1756,8 +1664,12 @@ CONTAINS
           END SELECT
         CASE(CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC)
           !Copy field variable values to the previous values
-          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE, &
-            & 1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS3_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS2_VALUES_SET_TYPE,1.0_DP,err,error,*999)
+          CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VALUES_SET_TYPE, &
+            & FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,err,error,*999)
           !Copy velocity values to the previous velocity
           CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_VELOCITY_VALUES_SET_TYPE, &
             & FIELD_PREVIOUS_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
@@ -1768,9 +1680,13 @@ CONTAINS
           CASE(CONTROL_LOOP_FIELD_VARIABLE_LINEAR)
             !Do nothing additional
           CASE(CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR)
-            !Copy residual to the previous residual
-            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
-              & 1.0_DP,err,error,*999)
+            !Copy residuals to the previous residuals
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS2_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_PREVIOUS_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
+            CALL FieldVariable_ParameterSetsCopyIfExists(fieldVariable,FIELD_RESIDUAL_SET_TYPE, &
+              & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,1.0_DP,err,error,*999)
           CASE DEFAULT
             localError="The control loop variable linearity of "//TRIM(NumberToVString(linearity,"*",err,error))// &
               & " is invalid."
