@@ -578,13 +578,13 @@ MODULE FIELD_ROUTINES
     MODULE PROCEDURE FIELD_PARAMETER_SET_ADD_LOCAL_NODE_L
   END INTERFACE Field_ParameterSetAddLocalNode
 
-  INTERFACE Field_ParameterSetCreate
-    MODULE PROCEDURE FIELD_PARAMETER_SET_CREATE
-  END INTERFACE Field_ParameterSetCreate
+  INTERFACE FIELD_PARAMETER_SET_CREATE
+    MODULE PROCEDURE Field_ParameterSetCreate
+  END INTERFACE FIELD_PARAMETER_SET_CREATE
 
-  INTERFACE Field_ParameterSetCreated
-    MODULE PROCEDURE FIELD_PARAMETER_SET_CREATED
-  END INTERFACE Field_ParameterSetCreated
+  INTERFACE FIELD_PARAMETER_SET_CREATED
+    MODULE PROCEDURE Field_ParameterSetCreated
+  END INTERFACE FIELD_PARAMETER_SET_CREATED
 
   !>Returns a pointer to the specified field parameter set array. The pointer must be restored with a call to FIELD_ROUTINES::FIELD_PARAMETER_SET_DATA_RESTORE call. Note: the values can be used for read operations but a FIELD_PARAMETER_SET_UPDATE call must be used to change any values.
   INTERFACE FIELD_PARAMETER_SET_DATA_GET
@@ -1211,11 +1211,15 @@ MODULE FIELD_ROUTINES
 
   PUBLIC Field_VariableTypesCheck,Field_VariableTypesGet,Field_VariableTypesSet,Field_VariableTypesSetAndLock
 
+  PUBLIC FieldVariable_ParameterSetCreate
+
+  PUBLIC FieldVariable_ParameterSetEnsureCreated,FieldVariable_ParameterSetCreated
+
+  PUBLIC FieldVariable_ParameterSetGet
+
   PUBLIC FieldVariable_ParameterSetsCopy
 
   PUBLIC FieldVariable_ParameterSetsCopyIfExists
-
-  PUBLIC FieldVariable_ParameterSetGet
 
   PUBLIC Fields_Finalise,Fields_Initialise
 
@@ -13328,151 +13332,59 @@ CONTAINS
 
   !>Creates a new parameter set of type set type for a field variable. If the field parameter set has already been
   !>created then an error will be raised. \see OpenCMISS::Iron::cmfe_FieldParameterSetCreate
-  SUBROUTINE FIELD_PARAMETER_SET_CREATE(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,err,error,*)
+  SUBROUTINE Field_ParameterSetCreate(field,variableType,fieldSetType,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field to create the parameter set for
-    INTEGER(INTG),  INTENT(IN) :: VARIABLE_TYPE !<The variable type to create the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-    INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to create the parameter set for
+    INTEGER(INTG),  INTENT(IN) :: variableType !<The variable type to create the parameter set for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,parameter_set_idx
-    TYPE(FieldParameterSetType), POINTER :: NEW_PARAMETER_SET
-    TYPE(FieldParameterSetPtrType), POINTER :: NEW_PARAMETER_SETS(:)
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: localError,DUMMY_ERROR
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+ 
+    ENTERS("Field_ParameterSetCreate",err,error,*999)
 
-    NULLIFY(NEW_PARAMETER_SET)
-    NULLIFY(NEW_PARAMETER_SETS)
-
-    ENTERS("FIELD_PARAMETER_SET_CREATE",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(FIELD)) CALL FlagError("Field is not associated.",err,error,*999)
-    NULLIFY(FIELD_VARIABLE)
-    CALL Field_VariableGet(field,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
-    !Check the set type input
-    IF(FIELD_SET_TYPE>0.AND.FIELD_SET_TYPE<FIELD_NUMBER_OF_SET_TYPES) THEN
-      !Check if this set type has already been created
-      IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%setType)) THEN
-        IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%setType(FIELD_SET_TYPE)%ptr)) THEN
-          localError="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",err,error))// &
-            & " has already been created for variable type of "// &
-            & TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))//" of field number "// &
-            & TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
-          CALL FlagError(localError,err,error,*999)
-        ENDIF
-      ENDIF
-      ALLOCATE(NEW_PARAMETER_SET,STAT=err)
-      IF(err/=0) CALL FlagError("Could not allocate new parameter set.",err,error,*999)
-      CALL FIELD_PARAMETER_SET_INITIALISE(NEW_PARAMETER_SET,err,error,*999)
-      NEW_PARAMETER_SET%setIndex=FIELD_VARIABLE%parameterSets%numberOfParameterSets+1
-      NEW_PARAMETER_SET%setType=FIELD_SET_TYPE
-      NULLIFY(NEW_PARAMETER_SET%PARAMETERS)
-      CALL DistributedVector_CreateStart(FIELD_VARIABLE%domainMapping,NEW_PARAMETER_SET%PARAMETERS,err,error,*999)
-      SELECT CASE(FIELD_VARIABLE%dataType)
-      CASE(FIELD_INTG_TYPE)
-        CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE,err,error,*999)
-      CASE(FIELD_SP_TYPE)
-        CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_SP_TYPE,err,error,*999)
-      CASE(FIELD_DP_TYPE)
-        CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
-      CASE(FIELD_L_TYPE)
-        CALL DistributedVector_DataTypeSet(NEW_PARAMETER_SET%PARAMETERS,DISTRIBUTED_MATRIX_VECTOR_L_TYPE,err,error,*999)
-      CASE DEFAULT
-        localError="The field data type of "//TRIM(NumberToVString(FIELD_VARIABLE%dataType,"*",err,error))// &
-          & " is invalid for variable type of "//TRIM(NumberToVString(VARIABLE_TYPE,"*",err,error))// &
-          & " of field number "//TRIM(NumberToVString(FIELD%userNumber,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      CALL DistributedVector_CreateFinish(NEW_PARAMETER_SET%PARAMETERS,err,error,*999)
-      SELECT CASE(FIELD_VARIABLE%dataType)
-      CASE(FIELD_INTG_TYPE)
-        CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,0_INTG,err,error,*999)
-      CASE(FIELD_SP_TYPE)
-        CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,0.0_SP,err,error,*999)
-      CASE(FIELD_DP_TYPE)
-        CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,0.0_DP,err,error,*999)
-      CASE(FIELD_L_TYPE)
-        CALL DistributedVector_AllValuesSet(NEW_PARAMETER_SET%PARAMETERS,.FALSE.,err,error,*999)
-      END SELECT
-      !Add the new parameter set to the list of parameter sets
-      ALLOCATE(NEW_PARAMETER_SETS(FIELD_VARIABLE%parameterSets%numberOfParameterSets+1),STAT=err)
-      IF(err/=0) CALL FlagError("Could not allocate new parameter sets.",err,error,*999)
-      IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%parameterSets)) THEN
-        DO parameter_set_idx=1,FIELD_VARIABLE%parameterSets%numberOfParameterSets
-          NEW_PARAMETER_SETS(parameter_set_idx)%ptr=>FIELD_VARIABLE%parameterSets%parameterSets(parameter_set_idx)%ptr
-        ENDDO !parameter_set_idx
-        DEALLOCATE(FIELD_VARIABLE%parameterSets%parameterSets)
-      ENDIF
-      NEW_PARAMETER_SETS(FIELD_VARIABLE%parameterSets%numberOfParameterSets+1)%ptr=>NEW_PARAMETER_SET
-      ALLOCATE(FIELD_VARIABLE%parameterSets%parameterSets(FIELD_VARIABLE%parameterSets%numberOfParameterSets+1),STAT=err)
-      IF(err/=0) CALL FlagError("Could not allocate field parameter sets parameter sets.",err,error,*999)
-      DO parameter_set_idx=1,FIELD_VARIABLE%parameterSets%numberOfParameterSets+1
-        FIELD_VARIABLE%parameterSets%parameterSets(parameter_set_idx)%ptr=>NEW_PARAMETER_SETS(parameter_set_idx)%ptr
-      ENDDO !parameter_set_idx
-      DEALLOCATE(NEW_PARAMETER_SETS)
-      FIELD_VARIABLE%parameterSets%numberOfParameterSets=FIELD_VARIABLE%parameterSets%numberOfParameterSets+1
-      FIELD_VARIABLE%parameterSets%setType(FIELD_SET_TYPE)%ptr=>NEW_PARAMETER_SET
-    ELSE
-      localError="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",err,error))// &
-        & " is invalid. The field parameter set type must be between 1 and "// &
-        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-
-    EXITS("FIELD_PARAMETER_SET_CREATE")
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetCreate(fieldVariable,fieldSetType,err,error,*999)
+ 
+    EXITS("Field_ParameterSetCreate")
     RETURN
-999 CALL FIELD_PARAMETER_SET_FINALISE(NEW_PARAMETER_SET,DUMMY_ERR,DUMMY_ERROR,*998)
-998 IF(ASSOCIATED(NEW_PARAMETER_SETS)) DEALLOCATE(NEW_PARAMETER_SETS)
-    ERRORSEXITS("FIELD_PARAMETER_SET_CREATE",err,error)
+999 ERRORSEXITS("Field_ParameterSetCreate",err,error)
     RETURN 1
 
-  END SUBROUTINE FIELD_PARAMETER_SET_CREATE
+  END SUBROUTINE Field_ParameterSetCreate
 
   !
   !================================================================================================================================
   !
 
   !>Checks whether a field parameter set has been created
-  SUBROUTINE FIELD_PARAMETER_SET_CREATED(FIELD,VARIABLE_TYPE,FIELD_SET_TYPE,PARAMETER_SET_CREATED,err,error,*)
+  SUBROUTINE Field_ParameterSetCreated(field,variableType,fieldSetType,parameterSetCreated,err,error,*)
 
     !Argument variables
-    TYPE(FieldType), POINTER :: FIELD !<A pointer to the field
-    INTEGER(INTG),  INTENT(IN) :: VARIABLE_TYPE !<The field variable type to check the parameter set creation for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
-    INTEGER(INTG), INTENT(IN) :: FIELD_SET_TYPE !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
-    LOGICAL, INTENT(OUT) :: PARAMETER_SET_CREATED
+    TYPE(FieldType), POINTER :: field !<A pointer to the field
+    INTEGER(INTG),  INTENT(IN) :: variableType !<The field variable type to check the parameter set creation for \see FIELD_ROUTINES_VariableTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    LOGICAL, INTENT(OUT) :: parameterSetCreated !<On return, .TRUE. if the parameter set has been created, .FALSE, if not.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(FieldVariableType), POINTER :: FIELD_VARIABLE
-    TYPE(VARYING_STRING) :: localError
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+ 
+    ENTERS("Field_ParameterSetCreated",err,error,*999)
 
-    ENTERS("FIELD_PARAMETER_SET_CREATED",err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetCreated(fieldVariable,fieldSetType,parameterSetCreated,err,error,*999)
 
-    IF(.NOT.ASSOCIATED(FIELD)) CALL FlagError("Field is not associated.",err,error,*999)
-    NULLIFY(FIELD_VARIABLE)
-    CALL Field_VariableGet(FIELD,VARIABLE_TYPE,FIELD_VARIABLE,err,error,*999)
-    !Check the set type input
-    IF(FIELD_SET_TYPE<1.OR.FIELD_SET_TYPE>FIELD_NUMBER_OF_SET_TYPES) THEN
-      localError="The field parameter set type of "//TRIM(NumberToVString(FIELD_SET_TYPE,"*",err,error))// &
-        & " is invalid. The field parameter set type must be between 1 and "// &
-        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    !Check if this set type has been created
-    IF(ASSOCIATED(FIELD_VARIABLE%parameterSets%setType(FIELD_SET_TYPE)%ptr)) THEN
-      PARAMETER_SET_CREATED=.TRUE.
-    ELSE
-      PARAMETER_SET_CREATED=.FALSE.
-    END IF
-
-    EXITS("FIELD_PARAMETER_SET_CREATED")
+    EXITS("Field_ParameterSetCreated")
     RETURN
-999 ERRORSEXITS("FIELD_PARAMETER_SET_CREATED",err,error)
+999 ERRORSEXITS("Field_ParameterSetCreated",err,error)
     RETURN 1
 
-  END SUBROUTINE FIELD_PARAMETER_SET_CREATED
+  END SUBROUTINE Field_ParameterSetCreated
 
   !
   !================================================================================================================================
@@ -13489,19 +13401,19 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    LOGICAL :: parameterSetCreated
+    TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ParameterSetEnsureCreated",err,error,*999)
 
-    CALL FIELD_PARAMETER_SET_CREATED(field,variableType,fieldSetType,parameterSetCreated,err,error,*999)
-    IF(.NOT.parameterSetCreated) THEN
-      CALL FIELD_PARAMETER_SET_CREATE(field,variableType,fieldSetType,err,error,*999)
-    END IF
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetEnsureCreated(fieldVariable,fieldSetType,err,error,*999)
 
     EXITS("Field_ParameterSetEnsureCreated")
     RETURN
 999 ERRORSEXITS("Field_ParameterSetEnsureCreated",err,error)
     RETURN 1
+    
   END SUBROUTINE Field_ParameterSetEnsureCreated
 
   !
@@ -19300,6 +19212,165 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Creates a new parameter set of type set type for a field variable. If the field parameter set has already been
+  !>created then an error will be raised.
+  SUBROUTINE FieldVariable_ParameterSetCreate(fieldVariable,fieldSetType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to create the parameter set for
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr,parameterSetIdx
+    TYPE(FieldParameterSetType), POINTER :: newParameterSet
+    TYPE(FieldParameterSetPtrType), POINTER :: newParameterSets(:)
+    TYPE(VARYING_STRING) :: localError,dummyError
+
+    NULLIFY(newParameterSet)
+    NULLIFY(newParameterSets)
+
+    ENTERS("FieldVariable_ParameterSetCreate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable%parameterSets%setType)) THEN
+      localError="The parameter sets set types is not associated for the field variable type "// &
+        & NumberToVString(fieldVariable%variableType,"*",err,error)
+      IF(ASSOCIATED(fieldVariable%field)) THEN
+        localError=localError//" of field number "//NumberToVString(fieldVariable%field%userNumber,"*",err,error)
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(fieldSetType<1.OR.fieldSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
+       localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+        & " is invalid. The field parameter set type must be between 1 and "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(ASSOCIATED(fieldVariable%parameterSets%setType(fieldSetType)%ptr)) THEN
+      localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+        & " has already been created for variable type of "// &
+        & NumberToVString(fieldVariable%variableType,"*",err,error)
+      IF(ASSOCIATED(fieldVariable%field)) &
+        & localError=localError//" of field number "//NumberToVString(fieldVariable%field%userNumber,"*",err,error)
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    ALLOCATE(newParameterSet,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new parameter set.",err,error,*999)
+    CALL FIELD_PARAMETER_SET_INITIALISE(newParameterSet,err,error,*999)
+    
+    newParameterSet%setIndex=fieldVariable%parameterSets%numberOfParameterSets+1
+    newParameterSet%setType=fieldSetType
+    NULLIFY(newParameterSet%parameters)
+    CALL DistributedVector_CreateStart(fieldVariable%domainMapping,newParameterSet%parameters,err,error,*999)
+    SELECT CASE(fieldVariable%dataType)
+    CASE(FIELD_INTG_TYPE)
+      CALL DistributedVector_DataTypeSet(newParameterSet%parameters,DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE,err,error,*999)
+    CASE(FIELD_SP_TYPE)
+      CALL DistributedVector_DataTypeSet(newParameterSet%parameters,DISTRIBUTED_MATRIX_VECTOR_SP_TYPE,err,error,*999)
+    CASE(FIELD_DP_TYPE)
+      CALL DistributedVector_DataTypeSet(newParameterSet%parameters,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+    CASE(FIELD_L_TYPE)
+      CALL DistributedVector_DataTypeSet(newParameterSet%parameters,DISTRIBUTED_MATRIX_VECTOR_L_TYPE,err,error,*999)
+    CASE DEFAULT
+      localError="The field data type of "//TRIM(NumberToVString(fieldVariable%dataType,"*",err,error))// &
+        & " is invalid for variable type of "//NumberToVString(fieldVariable%variableType,"*",err,error)
+      IF(ASSOCIATED(fieldVariable%field)) &
+        & localError=localError//" of field number "//NumberToVString(fieldVariable%field%userNumber,"*",err,error)
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    CALL DistributedVector_CreateFinish(newParameterSet%parameters,err,error,*999)
+    SELECT CASE(fieldVariable%dataType)
+    CASE(FIELD_INTG_TYPE)
+      CALL DistributedVector_AllValuesSet(newParameterSet%parameters,0_INTG,err,error,*999)
+    CASE(FIELD_SP_TYPE)
+      CALL DistributedVector_AllValuesSet(newParameterSet%parameters,0.0_SP,err,error,*999)
+    CASE(FIELD_DP_TYPE)
+      CALL DistributedVector_AllValuesSet(newParameterSet%parameters,0.0_DP,err,error,*999)
+    CASE(FIELD_L_TYPE)
+      CALL DistributedVector_AllValuesSet(newParameterSet%parameters,.FALSE.,err,error,*999)
+    END SELECT
+    !Add the new parameter set to the list of parameter sets
+    ALLOCATE(newParameterSets(fieldVariable%parameterSets%numberOfParameterSets+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new parameter sets.",err,error,*999)
+    IF(ASSOCIATED(fieldVariable%parameterSets%parameterSets)) THEN
+      DO parameterSetIdx=1,fieldVariable%parameterSets%numberOfParameterSets
+        newParameterSets(parameterSetIdx)%ptr=>fieldVariable%parameterSets%parameterSets(parameterSetIdx)%ptr
+      ENDDO !parameterSetIdx
+      DEALLOCATE(fieldVariable%parameterSets%parameterSets)
+    ENDIF
+    newParameterSets(fieldVariable%parameterSets%numberOfParameterSets+1)%ptr=>newParameterSet
+    ALLOCATE(fieldVariable%parameterSets%parameterSets(fieldVariable%parameterSets%numberOfParameterSets+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate field parameter sets parameter sets.",err,error,*999)
+    DO parameterSetIdx=1,fieldVariable%parameterSets%numberOfParameterSets+1
+      fieldVariable%parameterSets%parameterSets(parameterSetIdx)%ptr=>newParameterSets(parameterSetIdx)%ptr
+    ENDDO !parameterSetIdx
+    DEALLOCATE(newParameterSets)
+    fieldVariable%parameterSets%numberOfParameterSets=fieldVariable%parameterSets%numberOfParameterSets+1
+    fieldVariable%parameterSets%setType(fieldSetType)%ptr=>newParameterSet
+    
+    EXITS("FieldVariable_ParameterSetCreate")
+    RETURN
+999 CALL FIELD_PARAMETER_SET_FINALISE(newParameterSet,dummyErr,dummyError,*998)
+998 IF(ASSOCIATED(newParameterSets)) DEALLOCATE(newParameterSets)
+    ERRORSEXITS("FieldVariable_ParameterSetCreate",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ParameterSetCreate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks whether a field variable parameter set has been created
+  SUBROUTINE FieldVariable_ParameterSetCreated(fieldVariable,fieldSetType,parameterSetCreated,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    LOGICAL, INTENT(OUT) :: parameterSetCreated
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ParameterSetCreated",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    !Check the set type input
+    IF(fieldSetType<1.OR.fieldSetType>FIELD_NUMBER_OF_SET_TYPES) THEN
+      localError="The field parameter set type of "//TRIM(NumberToVString(fieldSetType,"*",err,error))// &
+        & " is invalid. The field parameter set type must be between 1 and "// &
+        & TRIM(NumberToVString(FIELD_NUMBER_OF_SET_TYPES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ASSOCIATED(fieldVariable%parameterSets%setType)) THEN
+      localError="The parameter sets set types is not associated for the field variable type "// &
+        & NumberToVString(fieldVariable%variableType,"*",err,error)
+      IF(ASSOCIATED(fieldVariable%field)) &
+        & localError=localError//" of field number "//NumberToVString(fieldVariable%field%userNumber,"*",err,error)
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    !Check if this set type has been created
+    parameterSetCreated=ASSOCIATED(fieldVariable%parameterSets%setType(fieldSetType)%ptr)
+
+    EXITS("FieldVariable_ParameterSetCreated")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ParameterSetCreated",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ParameterSetCreated
+
+  !
+  !================================================================================================================================
+  !
+
   !>Copys the parameter set from one parameter set type to another parameter set type for a field variable 
   SUBROUTINE FieldVariable_ParameterSetsCopy(fieldVariable,parameterFromSetType,parameterToSetType,alpha,err,error,*)
 
@@ -19418,6 +19489,34 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE FieldVariable_ParameterSetsCopyIfExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Creates a new parameter set of type fieldSetType for a field variable if it does not already exist,
+  !>otherwise it will do nothing.
+  SUBROUTINE FieldVariable_ParameterSetEnsureCreated(fieldVariable,fieldSetType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field to create the parameter set for
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FIELD_ROUTINES_ParameterSetTypes,FIELD_ROUTINES
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    LOGICAL :: parameterSetCreated
+
+    ENTERS("FieldVariable_ParameterSetEnsureCreated",err,error,*999)
+
+    CALL FieldVariable_ParameterSetCreated(fieldVariable,fieldSetType,parameterSetCreated,err,error,*999)
+    IF(.NOT.parameterSetCreated) CALL FieldVariable_ParameterSetCreate(fieldVariable,fieldSetType,err,error,*999)
+
+    EXITS("FieldVariable_ParameterSetEnsureCreated")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ParameterSetEnsureCreated",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ParameterSetEnsureCreated
 
   !
   !================================================================================================================================

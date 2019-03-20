@@ -3161,18 +3161,18 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information for a dynamic solver
   TYPE DYNAMIC_SOLVER_TYPE
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver
     INTEGER(INTG) :: SOLVER_LIBRARY !<The library type for the dynamic solver \see SOLVER_ROUTINES_SolverLibraries,SOLVER_ROUTINES
     LOGICAL :: SOLVER_INITIALISED !<Is .TRUE. if the solver has been initialised, .FALSE. if not.
     INTEGER(INTG) :: numberOfSolves !<The number of dynamic solves for this solver. 
-    INTEGER(INTG) :: LINEARITY !<The linearity type of the dynamic solver \see SOLVER_ROUTINES_DynamicLinearityTypes,SOLVER_ROUTINES
-    INTEGER(INTG) :: ORDER !<The order of the dynamic solve \see SOLVER_ROUTINES_DynamicOrderTypes,SOLVER_ROUTINES
-    INTEGER(INTG) :: DEGREE !<The degree of the time interpolation polynomial \see SOLVER_ROUTINES_DynamicDegreeTypes,SOLVER_ROUTINES
-    INTEGER(INTG) :: SCHEME !<The dyanamic solver scheme \see SOLVER_ROUTINES_DynamicSchemeTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: linearity !<The linearity type of the dynamic solver \see SOLVER_ROUTINES_DynamicLinearityTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: order !<The order of the dynamic solve \see SOLVER_ROUTINES_DynamicOrderTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: degree !<The degree of the time interpolation polynomial \see SOLVER_ROUTINES_DynamicDegreeTypes,SOLVER_ROUTINES
+    INTEGER(INTG) :: scheme !<The dyanamic solver scheme \see SOLVER_ROUTINES_DynamicSchemeTypes,SOLVER_ROUTINES
     INTEGER(INTG) :: startupType !<The previous values startup type i.e., what prevous values to use during startup \see SOLVER_ROUTINES_DynamicStartupTypes,SOLVER_ROUTINES
-    REAL(DP), ALLOCATABLE :: THETA(:) !<THETA(degree_idx). The theta value for the degree_idx'th polynomial in the dynamic solver
-    LOGICAL :: EXPLICIT !<Is .TRUE. if the dynamic scheme is an explicit scheme, .FALSE. if not.
-    LOGICAL :: RESTART !<Is .TRUE. if the dynamic scheme is to be restarted (i.e., recalculate values at the current time step), .FALSE. if not.
+    REAL(DP), ALLOCATABLE :: theta(:) !<theta(degree_idx). The theta value for the degree_idx'th polynomial in the dynamic solver
+    LOGICAL :: explicit !<Is .TRUE. if the dynamic scheme is an explicit scheme, .FALSE. if not.
+    LOGICAL :: restart !<Is .TRUE. if the dynamic scheme is to be restarted (i.e., recalculate values at the current time step), .FALSE. if not.
     
     LOGICAL :: ALE !<Is .TRUE. if the dynamic scheme is an ALE scheme, .FALSE. if not.
     LOGICAL :: FSI !<Is .TRUE. if the dynamic scheme is an FSI scheme and updates geometric fields, .FALSE. if not

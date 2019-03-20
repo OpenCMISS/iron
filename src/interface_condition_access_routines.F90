@@ -65,7 +65,7 @@ MODULE InterfaceConditionAccessRoutines
   !Interfaces
 
   INTERFACE INTERFACE_CONDITION_EQUATIONS_GET
-    MODULE PROCEDURE InterfaceCondition_EquationsGet
+    MODULE PROCEDURE InterfaceCondition_InterfaceEquationsGet
   END INTERFACE INTERFACE_CONDITION_EQUATIONS_GET
 
   INTERFACE InterfaceCondition_LabelGet
@@ -82,7 +82,7 @@ MODULE InterfaceConditionAccessRoutines
     MODULE PROCEDURE InterfaceCondition_UserNumberFind
   END INTERFACE INTERFACE_CONDITION_USER_NUMBER_FIND
 
-  PUBLIC InterfaceCondition_EquationsGet
+  PUBLIC InterfaceCondition_InterfaceEquationsGet
 
   PUBLIC INTERFACE_CONDITION_EQUATIONS_GET
 
@@ -105,7 +105,7 @@ CONTAINS
   !
 
   !>Gets the interface equations for an interface conditions.
-  SUBROUTINE InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*)
+  SUBROUTINE InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*)
 
     !Argument variables
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface conditions to get the interface equations for
@@ -114,7 +114,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceCondition_EquationsGet",err,error,*999)
+    ENTERS("InterfaceCondition_InterfaceEquationsGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
     IF(.NOT.interfaceCondition%INTERFACE_CONDITION_FINISHED) &
@@ -125,12 +125,12 @@ CONTAINS
     IF(.NOT.ASSOCIATED(interfaceEquations)) &
       & CALL FlagError("Interface condition equations is not associated.",err,error,*999)
        
-    EXITS("InterfaceCondition_EquationsGet")
+    EXITS("InterfaceCondition_InterfaceEquationsGet")
     RETURN
-999 ERRORSEXITS("InterfaceCondition_EquationsGet",err,error)
+999 ERRORSEXITS("InterfaceCondition_InterfaceEquationsGet",err,error)
     RETURN 1
     
-  END SUBROUTINE InterfaceCondition_EquationsGet
+  END SUBROUTINE InterfaceCondition_InterfaceEquationsGet
 
   !
   !================================================================================================================================

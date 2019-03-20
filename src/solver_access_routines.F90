@@ -613,6 +613,12 @@ MODULE SolverAccessRoutines
 
   PUBLIC SOLVERS_SOLVER_GET
 
+  PUBLIC SolverDynamic_LinearSolverGet
+
+  PUBLIC SolverDynamic_NonlinearSolverGet
+
+  PUBLIC SolverDynamic_SolverGet
+
   PUBLIC SolverEquations_BoundaryConditionsGet
 
   PUBLIC SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET
@@ -623,7 +629,11 @@ MODULE SolverAccessRoutines
 
   PUBLIC SolverEquations_SolverMatricesGet
 
-  PUBLIC Solver_NonlinearSolverLinearSolverGet
+  PUBLIC SolverLinear_SolverGet
+  
+  PUBLIC SolverNonlinear_LinearSolverGet
+  
+  PUBLIC SolverNonlinear_SolverGet
 
 CONTAINS
 
@@ -971,6 +981,96 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the linear solver for a dynamic solver. 
+  SUBROUTINE SolverDynamic_LinearSolverGet(dynamicSolver,linearSolver,err,error,*)
+
+    !Argument variables
+    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the linear solver for
+    TYPE(SOLVER_TYPE), POINTER :: linearSolver !<On exit, a pointer to the linear solver for the specified dynamic solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverDynamic_LinearSolverGet",err,error,*998)
+
+    IF(ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+
+    linearSolver=>dynamicSolver%LINEAR_SOLVER
+    IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Dynamic solver linear solver is not associated.",err,error,*999)
+ 
+    EXITS("SolverDynamic_LinearSolverGet")
+    RETURN
+998 NULLIFY(linearSolver)
+999 ERRORSEXITS("SolverDynamic_LinearSolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverDynamic_LinearSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the nonlinear solver for a dynamic solver. 
+  SUBROUTINE SolverDynamic_NonlinearSolverGet(dynamicSolver,nonlinearSolver,err,error,*)
+
+    !Argument variables
+    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the nonlinear solver for
+    TYPE(SOLVER_TYPE), POINTER :: nonlinearSolver !<On exit, a pointer to the nonlinear solver for the specified dynamic solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverDynamic_NonlinearSolverGet",err,error,*998)
+
+    IF(ASSOCIATED(nonlinearSolver)) CALL FlagError("Nonlinear solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+
+    nonlinearSolver=>dynamicSolver%NONLINEAR_SOLVER
+    IF(.NOT.ASSOCIATED(nonlinearSolver)) CALL FlagError("Dynamic solver nonlinear solver is not associated.",err,error,*999)
+ 
+    EXITS("SolverDynamic_NonlinearSolverGet")
+    RETURN
+998 NULLIFY(nonlinearSolver)
+999 ERRORSEXITS("SolverDynamic_NonlinearSolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverDynamic_NonlinearSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the solver for a dynamic solver. 
+  SUBROUTINE SolverDynamic_SolverGet(dynamicSolver,solver,err,error,*)
+
+    !Argument variables
+    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver !<A pointer to the dynamic solver to get the solver for
+    TYPE(SOLVER_TYPE), POINTER :: solver !<On exit, a pointer to the solver for the specified dynamic solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverDynamic_SolverGet",err,error,*998)
+
+    IF(ASSOCIATED(solver)) CALL FlagError("Solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(dynamicSOlver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+
+    solver=>dynamicSolver%solver
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Dynamic solver solver is not associated.",err,error,*999)
+ 
+    EXITS("SolverDynamic_SolverGet")
+    RETURN
+998 NULLIFY(solver)
+999 ERRORSEXITS("SolverDynamic_SolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverDynamic_SolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the boundary conditions for solver equations. \see OpenCMISS::Iron::cmfe_SolverEquations_BoundaryConditionsGet
   SUBROUTINE SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*)
 
@@ -1094,8 +1194,38 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the solver for a linear solver. 
+  SUBROUTINE SolverLinear_SolverGet(linearSolver,solver,err,error,*)
+
+    !Argument variables
+    TYPE(LINEAR_SOLVER_TYPE), POINTER :: linearSolver !<A pointer to the linear solver to get the solver for
+    TYPE(SOLVER_TYPE), POINTER :: solver !<On exit, a pointer to the solver for the specified linear solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverLinear_SolverGet",err,error,*998)
+
+    IF(ASSOCIATED(solver)) CALL FlagError("Solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is not associated.",err,error,*999)
+
+    solver=>linearSolver%solver
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Linear solver solver is not associated.",err,error,*999)
+ 
+    EXITS("SolverLinear_SolverGet")
+    RETURN
+998 NULLIFY(solver)
+999 ERRORSEXITS("SolverLinear_SolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverLinear_SolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the linear solver for a nonlinear solver. 
-  SUBROUTINE Solver_NonlinearSolverLinearSolverGet(nonlinearSolver,linearSolver,err,error,*)
+  SUBROUTINE SolverNonlinear_LinearSolverGet(nonlinearSolver,linearSolver,err,error,*)
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: nonlinearSolver !<A pointer to the nonlinear solver to get the linear solver for
@@ -1108,7 +1238,7 @@ CONTAINS
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Solver_NonlinearSolverLinearSolverGet",err,error,*998)
+    ENTERS("SolverNonlinear_SolverLinearSolverGet",err,error,*998)
 
     IF(ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(nonlinearSolver)) CALL FlagError("Nonlinear solver is not associated.",err,error,*999)
@@ -1136,13 +1266,43 @@ CONTAINS
     END SELECT
     IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Nonlinear solver linear solver is not associated.",err,error,*999)
  
-    EXITS("Solver_NonlinearSolverLinearSolverGet")
+    EXITS("SolverNonlinear_LinearSolverGet")
     RETURN
 998 NULLIFY(linearSolver)
-999 ERRORSEXITS("Solver_NonlinearSolverLinearSolverGet",err,error)
+999 ERRORSEXITS("SolverNonlinear_LinearSolverGet",err,error)
     RETURN 1
 
-  END SUBROUTINE Solver_NonlinearSolverLinearSolverGet
+  END SUBROUTINE SolverNonlinear_LinearSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the solver for a non-linear solver. 
+  SUBROUTINE SolverNonlinear_SolverGet(nonlinearSolver,solver,err,error,*)
+
+    !Argument variables
+    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver !<A pointer to the nonlinear solver to get the solver for
+    TYPE(SOLVER_TYPE), POINTER :: solver !<On exit, a pointer to the solver for the specified nonlinear solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverNonlinear_SolverGet",err,error,*998)
+
+    IF(ASSOCIATED(solver)) CALL FlagError("Solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(nonlinearSolver)) CALL FlagError("Nonlinear solver is not associated.",err,error,*999)
+
+    solver=>nonlinearSolver%solver
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Nonlinear solver solver is not associated.",err,error,*999)
+ 
+    EXITS("SolverNonlinear_SolverGet")
+    RETURN
+998 NULLIFY(solver)
+999 ERRORSEXITS("SolverNonlinear_SolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverNonlinear_SolverGet
      
   !
   !================================================================================================================================

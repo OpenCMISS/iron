@@ -70,6 +70,7 @@ MODULE SOLVER_ROUTINES
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsAccessRoutines
+  USE InterfaceMappingAccessRoutines
   USE INTERFACE_MATRICES_CONSTANTS
   USE ISO_VARYING_STRING
   USE Maths
@@ -5028,16 +5029,15 @@ CONTAINS
   !
 
   !>Finishes the process of creating a dynamic solver 
-  SUBROUTINE SOLVER_DYNAMIC_CREATE_FINISH(DYNAMIC_SOLVER,err,error,*)
+  SUBROUTINE SolverDynamic_CreateFinish(dynamicSolver,err,error,*)
 
     !Argument variables
-    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: DYNAMIC_SOLVER !<A pointer to the dynamic solver to finish the creation of.
+    TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver !<A pointer to the dynamic solver to finish the creation of.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DYNAMIC_VARIABLE_TYPE,equations_matrix_idx,equations_set_idx,LINEAR_LIBRARY_TYPE,NONLINEAR_LIBRARY_TYPE, &
-      & rhsVariableType
-    INTEGER(INTG) :: VariableType=0
+    INTEGER(INTG) :: dependentVariableType,dynamicVariableType,equationsSetIdx,interfaceConditionIdx, &
+      & lagrangeVariableType,linearLibraryType,linearMatrixIdx,nonlinearLibraryTYpe,rhsVariableType,variableType
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -5048,346 +5048,293 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
-    TYPE(EquationsMatrixType), POINTER :: DAMPING_MATRIX,equationsMatrix,MASS_MATRIX
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD !, INDEPENDENT_FIELD
-    TYPE(FieldVariableType), POINTER :: DYNAMIC_VARIABLE,LINEAR_VARIABLE,ResidualVariable
-    TYPE(SOLVER_TYPE), POINTER :: SOLVER,LINEAR_SOLVER,NONLINEAR_SOLVER
-    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
-    TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
+    TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
+    TYPE(FieldType), POINTER :: dependentField,lagrangeField
+    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lagrangeVariable,linearVariable,residualVariable, &
+      & rhsVariable
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping
+    TYPE(SOLVER_TYPE), POINTER :: linearSolver,nonlinearSolver,solver
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("SOLVER_DYNAMIC_CREATE_FINISH",err,error,*999)
+    ENTERS("SolverDynamic_CreateFinish",err,error,*999)
 
-    IF(ASSOCIATED(DYNAMIC_SOLVER)) THEN
-      SOLVER=>DYNAMIC_SOLVER%SOLVER
-      IF(ASSOCIATED(SOLVER)) THEN
-        SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-        IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-          SELECT CASE(DYNAMIC_SOLVER%SOLVER_LIBRARY)
-          CASE(SOLVER_CMISS_LIBRARY)
-            !Create the parameter sets required for the solver
-            SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-            IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
-              IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                !Initialise for explicit solve
-                DYNAMIC_SOLVER%EXPLICIT=ABS(DYNAMIC_SOLVER%THETA(DYNAMIC_SOLVER%DEGREE))<ZERO_TOLERANCE
-                !Loop over the equations set in the solver equations
-                DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                  EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)%EQUATIONS
-                  IF(ASSOCIATED(EQUATIONS)) THEN
-                    EQUATIONS_SET=>equations%equationsSet
-                    IF(ASSOCIATED(EQUATIONS_SET)) THEN
-                      DEPENDENT_FIELD=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
-                      IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                        NULLIFY(vectorEquations)
-                        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-                        NULLIFY(vectorMapping)
-                        CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-                        dynamicMapping=>vectorMapping%dynamicMapping
-                        IF(ASSOCIATED(dynamicMapping)) THEN
-                          DYNAMIC_VARIABLE=>dynamicMapping%dynamicVariable
-                          DYNAMIC_VARIABLE_TYPE=dynamicMapping%dynamicVariableType
-                          IF(ASSOCIATED(DYNAMIC_VARIABLE)) THEN
-                            !Set up the parameter sets to hold the required solver parameters
-                            !1st degree or higher so set up displacement parameter sets
-                                                                                    
-                            IF(DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                              !2nd degree or higher so set up velocity parameter sets
-                              CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
-                                & FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
-                              CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
-                                & FIELD_PREVIOUS_VELOCITY_SET_TYPE,err,error,*999)
-                              CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD, &
-                                & DYNAMIC_VARIABLE_TYPE,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
-                              IF(DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                                !3rd degree or higher so set up acceleration parameter sets
-                                CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
-                                  & FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
-                                CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE, &
-                                  & FIELD_PREVIOUS_ACCELERATION_SET_TYPE,err,error,*999)
-                                CALL Field_ParameterSetEnsureCreated( &
-                                  & DEPENDENT_FIELD,DYNAMIC_VARIABLE_TYPE,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
-                                  & err,error,*999)
-                              ENDIF
-                            ENDIF
-                            
-                            !Create the dynamic matrices temporary vector for matrix-vector products                           
-                            vectorMatrices=>vectorEquations%vectorMatrices
-                            IF(ASSOCIATED(vectorMatrices)) THEN
-                              dynamicMatrices=>vectorMatrices%dynamicMatrices
-                              IF(ASSOCIATED(dynamicMatrices)) THEN
-                                IF(.NOT.ASSOCIATED(dynamicMatrices%tempVector)) THEN
-                                  CALL DistributedVector_CreateStart(DYNAMIC_VARIABLE%domainMapping, &
-                                    & dynamicMatrices%tempVector,ERR,ERROR,*999)
-                                  CALL DistributedVector_DataTypeSet(dynamicMatrices%tempVector, &
-                                    & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
-                                  CALL DistributedVector_CreateFinish(dynamicMatrices%tempVector,err,error,*999)
-                                ENDIF
-                                !Check to see if we have an explicit solve
-                                IF(ABS(DYNAMIC_SOLVER%THETA(DYNAMIC_SOLVER%DEGREE))<ZERO_TOLERANCE) THEN
-                                  IF(dynamicMapping%dampingMatrixNumber/=0) THEN
-                                    DAMPING_MATRIX=>dynamicMatrices%matrices(dynamicMapping%dampingMatrixNumber)%ptr
-                                    IF(ASSOCIATED(DAMPING_MATRIX)) THEN
-                                      DYNAMIC_SOLVER%EXPLICIT=DYNAMIC_SOLVER%EXPLICIT.AND.DAMPING_MATRIX%LUMPED
-                                    ELSE
-                                      CALL FlagError("Damping matrix is not associated.",err,error,*999)
-                                    ENDIF
-                                  ENDIF
-                                  IF(dynamicMapping%massMatrixNumber/=0) THEN
-                                    MASS_MATRIX=>dynamicMatrices%matrices(dynamicMapping%massMatrixNumber)%ptr
-                                    IF(ASSOCIATED(MASS_MATRIX)) THEN
-                                      DYNAMIC_SOLVER%EXPLICIT=DYNAMIC_SOLVER%EXPLICIT.AND.MASS_MATRIX%LUMPED
-                                    ELSE
-                                      CALL FlagError("Mass matrix is not associated.",err,error,*999)
-                                    ENDIF
-                                  ENDIF
-                                ENDIF
-                              ELSE
-                                CALL FlagError("Equations matrices dynamic matrices are not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Equations equations matrices is not associated.",err,error,*999)
-                            ENDIF
-                            VariableType=DYNAMIC_VARIABLE_TYPE
-                          ELSE
-                            CALL FlagError("Dynamic mapping dynamic variable is not associated.",err,error,*999)
-                          ENDIF
-                        ENDIF
-                        
-                        IF(VariableType==0) THEN
-                          !We now allow for static equation sets for dynamic solvers to be able to couple static eqs - dynamic eqs
-                          NonlinearMapping=>vectorMapping%nonlinearMapping
-                          IF(ASSOCIATED(NonlinearMapping)) THEN
-                            IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                              !Default to first variable type for now
-                              ResidualVariable=>NonlinearMapping%residualVariables(1)%ptr
-                              IF(ASSOCIATED(ResidualVariable)) THEN
-                                VariableType=ResidualVariable%variableType
-                              ELSE
-                                CALL FlagError("Residual variable is not associated.",err,error,*999)
-                              ENDIF
-                            ELSE
-                              localError="The specified dynamic solver linearity type of "// &
-                                & TRIM(NumberToVString(DYNAMIC_SOLVER%linearity,"*",err,error))// &
-                                & " is invalid for a nonlinear equations mapping."
-                              CALL FlagError(localError,err,error,*999)
-                            ENDIF
-                          ENDIF
-                        ENDIF
-                        
-                        CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,VariableType, &
-                          & FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
-                        CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,VariableType, &
-                          & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
-                        CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,VariableType, &
-                          & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)                       
-                        CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,VariableType, &
-                          & FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
-                        
-                        rhsMapping=>vectorMapping%rhsMapping
-                        IF(ASSOCIATED(rhsMapping)) THEN
-                          rhsVariableType=rhsMapping%rhsVariableType
-                          CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,rhsVariableType, &
-                            & FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
-                          IF(DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                            CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,rhsVariableType, &
-                              & FIELD_PREVIOUS2_VALUES_SET_TYPE,err,error,*999)
-                            IF(DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                              CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,rhsVariableType, &
-                                & FIELD_PREVIOUS3_VALUES_SET_TYPE,err,error,*999)
-                            ENDIF
-                          ENDIF
-                        ENDIF
-                        
-                        nonlinearMapping=>vectorMapping%nonlinearMapping
-                        IF(ASSOCIATED(nonlinearMapping)) THEN
-                          CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,variableType, &
-                            & FIELD_RESIDUAL_SET_TYPE,err,error,*999)
-                          CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,variableType, &
-                            & FIELD_PREVIOUS_RESIDUAL_SET_TYPE,err,error,*999)
-                          IF(DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                            CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,variableType, &
-                              & FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,err,error,*999)
-                            IF(DYNAMIC_SOLVER%DEGREE>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                              CALL Field_ParameterSetEnsureCreated(DEPENDENT_FIELD,variableType, &
-                                & FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,err,error,*999)
-                            ENDIF
-                          ENDIF
-                        ENDIF
-                        
-                        !Check if there are any linear mappings
-                        linearMapping=>vectorMapping%linearMapping
-                        IF(ASSOCIATED(linearMapping)) THEN
-                          !If there are any linear matrices create temporary vector for matrix-vector products
-                          vectorMatrices=>vectorEquations%vectorMatrices
-                          IF(ASSOCIATED(vectorMatrices)) THEN
-                            linearMatrices=>vectorMatrices%linearMatrices
-                            IF(ASSOCIATED(linearMatrices)) THEN
-                              DO equations_matrix_idx=1,linearMatrices%numberOfLinearMatrices
-                                equationsMatrix=>linearMatrices%matrices(equations_matrix_idx)%ptr
-                                IF(ASSOCIATED(equationsMatrix)) THEN
-                                  IF(.NOT.ASSOCIATED(equationsMatrix%tempVector)) THEN
-                                    LINEAR_VARIABLE=>linearMapping%equationsMatrixToVarMaps(equations_matrix_idx)%VARIABLE
-                                    IF(ASSOCIATED(LINEAR_VARIABLE)) THEN
-                                      CALL DistributedVector_CreateStart(LINEAR_VARIABLE%domainMapping, &
-                                        & equationsMatrix%tempVector,ERR,ERROR,*999)
-                                      CALL DistributedVector_DataTypeSet(equationsMatrix%tempVector, &
-                                        & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
-                                      CALL DistributedVector_CreateFinish(equationsMatrix%tempVector,err,error,*999)
-                                    ELSE
-                                      CALL FlagError("Linear mapping linear variable is not associated.",err,error,*999)
-                                    ENDIF
-                                  ENDIF
-                                ELSE
-                                  CALL FlagError("Equations matrix is not associated.",err,error,*999)
-                                ENDIF
-                              ENDDO !equations_matrix_idx
-                            ELSE
-                              CALL FlagError("Equations matrices linear matrices is not associated.",err,error,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Equations equations matrices is not associated.",err,error,*999)
-                          ENDIF
-                        ENDIF
-                      ELSE
-                        localError="Equations set dependent field is not associated for equations set index "// &
-                          & TRIM(NumberToVString(equations_set_idx,"*",err,error))//"."
-                        CALL FlagError(localError,err,error,*999)
-                      ENDIF
-                    ELSE
-                      localError="Equations equations set is not associated for equations set index "// &
-                        & TRIM(NumberToVString(equations_set_idx,"*",err,error))//"."
-                      CALL FlagError(localError,err,error,*999)
-                    ENDIF
-                  ELSE
-                    localError="Equations is not associated for equations set index "// &
-                      & TRIM(NumberToVString(equations_set_idx,"*",err,error))//"."
-                    CALL FlagError(localError,err,error,*999)
-                  ENDIF
-                ENDDO !equations_set_idx
-                
-                !Create the solver matrices and vectors
-                IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_LINEAR) THEN
-                  LINEAR_SOLVER=>DYNAMIC_SOLVER%LINEAR_SOLVER
-                  IF(ASSOCIATED(LINEAR_SOLVER)) THEN
-                    CALL Solver_LibraryTypeGet(LINEAR_SOLVER,LINEAR_LIBRARY_TYPE,err,error,*999)
-                    NULLIFY(SOLVER_MATRICES)
-                    CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,err,error,*999)
-                    CALL SolverMatrices_LibraryTypeSet(SOLVER_MATRICES,LINEAR_LIBRARY_TYPE,err,error,*999)
-                    IF(DYNAMIC_SOLVER%EXPLICIT) THEN
-                      CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
-                        & err,error,*999)
-                    ELSE
-                      SELECT CASE(SOLVER_EQUATIONS%sparsityType)
-                      CASE(SOLVER_SPARSE_MATRICES)
-                        CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-                          & err,error,*999)
-                      CASE(SOLVER_FULL_MATRICES)
-                        CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE], &
-                          & err,error,*999)
-                      CASE DEFAULT
-                        localError="The specified solver equations sparsity type of "// &
-                          & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",err,error))// &
-                          & " is invalid."
-                        CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                      SELECT CASE(SOLVER_EQUATIONS%symmetryType)
-                      CASE(SOLVER_SYMMETRIC_MATRICES)
-                        CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
-                      CASE(SOLVER_UNSYMMETRIC_MATRICES)
-                        CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
-                      CASE DEFAULT
-                        localError="The specified solver equations symmetry type of "// &
-                          & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",err,error))// &
-                          & " is invalid."
-                        CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    ENDIF
-                    CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,err,error,*999)
-                    !Link linear solver
-                    LINEAR_SOLVER%SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                    !Finish the creation of the linear solver
-                    CALL SOLVER_LINEAR_CREATE_FINISH(LINEAR_SOLVER%LINEAR_SOLVER,err,error,*999)
-                  ELSE
-                    CALL FlagError("Dynamic solver linear solver is not associated.",err,error,*999)
-                  ENDIF
-                ELSE IF(DYNAMIC_SOLVER%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
-                  NONLINEAR_SOLVER=>DYNAMIC_SOLVER%NONLINEAR_SOLVER
-                  IF(ASSOCIATED(NONLINEAR_SOLVER)) THEN
-                    CALL Solver_LibraryTypeGet(NONLINEAR_SOLVER,NONLINEAR_LIBRARY_TYPE,err,error,*999)
-                    NULLIFY(SOLVER_MATRICES)
-                    CALL SOLVER_MATRICES_CREATE_START(SOLVER_EQUATIONS,SOLVER_MATRICES,err,error,*999)
-                    CALL SolverMatrices_LibraryTypeSet(SOLVER_MATRICES,NONLINEAR_LIBRARY_TYPE,err,error,*999)
-                    IF(DYNAMIC_SOLVER%EXPLICIT) THEN
-                      CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE], &
-                        & err,error,*999)
-                    ELSE
-                      SELECT CASE(SOLVER_EQUATIONS%sparsityType)
-                      CASE(SOLVER_SPARSE_MATRICES)
-                        CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE], &
-                          & err,error,*999)
-                      CASE(SOLVER_FULL_MATRICES)
-                        CALL SOLVER_MATRICES_STORAGE_TYPE_SET(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE], &
-                          & err,error,*999)
-                      CASE DEFAULT
-                        localError="The specified solver equations sparsity type of "// &
-                          & TRIM(NumberToVString(SOLVER_EQUATIONS%sparsityType,"*",err,error))// &
-                          & " is invalid."
-                        CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                      SELECT CASE(SOLVER_EQUATIONS%symmetryType)
-                      CASE(SOLVER_SYMMETRIC_MATRICES)
-                        CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
-                      CASE(SOLVER_UNSYMMETRIC_MATRICES)
-                        CALL SolverMatrices_SymmetryTypeSet(SOLVER_MATRICES,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
-                      CASE DEFAULT
-                        localError="The specified solver equations symmetry type of "// &
-                          & TRIM(NumberToVString(SOLVER_EQUATIONS%symmetryType,"*",err,error))// &
-                          & " is invalid."
-                        CALL FlagError(localError,err,error,*999)
-                      END SELECT
-                    ENDIF
-                    CALL SOLVER_MATRICES_CREATE_FINISH(SOLVER_MATRICES,err,error,*999)
-                    !Link nonlinear solver
-                    NONLINEAR_SOLVER%SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
-                    !Finish the creation of the nonlinear solver
-                    CALL SOLVER_NONLINEAR_CREATE_FINISH(NONLINEAR_SOLVER%NONLINEAR_SOLVER,err,error,*999)
-                  ELSE
-                    CALL FlagError("Dynamic solver linear solver is not associated.",err,error,*999)
-                  ENDIF
-                ENDIF
-              ELSE
-                CALL FlagError("Solver equations solver mapping is not associated.",err,error,*999)
-              ENDIF
-            ELSE
-              CALL FlagError("Solver solver equations is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(dynamicSolver)) CALL FlagError("Dynamic solver is not associated.",err,error,*999)
+    NULLIFY(solver)
+    CALL SolverDynamic_SolverGet(dynamicSolver,solver,err,error,*999)
+    SELECT CASE(dynamicSolver%SOLVER_LIBRARY)
+    CASE(SOLVER_CMISS_LIBRARY)
+      !Create the parameter sets required for the solver
+      NULLIFY(solverEquations)
+      CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
+      NULLIFY(solverMapping)
+      CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+      !Initialise for explicit solve
+      dynamicSolver%explicit=ABS(dynamicSolver%theta(dynamicSolver%degree))<ZERO_TOLERANCE
+      !Loop over the equations set in the solver equations
+      DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
+        NULLIFY(dependentVariable)
+        dependentVariableType=0
+        NULLIFY(equationsSet)
+        CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+        NULLIFY(equations)
+        CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
+        NULLIFY(dependentField)
+        CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+        NULLIFY(vectorEquations)
+        CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
+        NULLIFY(vectorMapping)
+        CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
+        dynamicMapping=>vectorMapping%dynamicMapping
+        IF(ASSOCIATED(dynamicMapping)) THEN
+          NULLIFY(dynamicVariable)
+          CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
+          dependentVariable=>dynamicVariable
+          dependentVariableType=dynamicVariable%variableType
+          !Set up the parameter sets to hold the required solver parameters
+          !1st degree or higher so set up displacement parameter sets        
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN                   
+            !2nd degree or higher so set up velocity parameter sets
+            CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              !3rd degree or higher so set up acceleration parameter sets
+              CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,err,error,*999)
+              CALL FieldVariable_ParameterSetEnsureCreated(dynamicVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
+                & err,error,*999)
             ENDIF
-          CASE(SOLVER_PETSC_LIBRARY)
-            CALL FlagError("Not implemented.",err,error,*999)
+          ENDIF
+                            
+          !Create the dynamic matrices temporary vector for matrix-vector products
+          NULLIFY(vectorMatrices)
+          CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+          NULLIFY(dynamicMatrices)
+          CALL EquationsMatricesVector_DynamicMatricesGet(vectorMatrices,dynamicMatrices,err,error,*999)
+          IF(.NOT.ASSOCIATED(dynamicMatrices%tempVector)) THEN
+            CALL DistributedVector_CreateStart(dynamicVariable%domainMapping,dynamicMatrices%tempVector,err,error,*999)
+            CALL DistributedVector_DataTypeSet(dynamicMatrices%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+            CALL DistributedVector_CreateFinish(dynamicMatrices%tempVector,err,error,*999)
+          ENDIF
+          !Check to see if we have an explicit solve
+          IF(dynamicSolver%explicit) THEN
+            IF(dynamicMapping%dampingMatrixNumber/=0) THEN
+              NULLIFY(dampingMatrix)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%dampingMatrixNumber, &
+                & dampingMatrix,err,error,*999)
+              dynamicSolver%explicit=dynamicSolver%explicit.AND.dampingMatrix%lumped
+            ENDIF
+            IF(dynamicMapping%massMatrixNumber/=0) THEN
+             NULLIFY(massMatrix)
+              CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,dynamicMapping%massMatrixNumber, &
+                & dampingMatrix,err,error,*999)
+              dynamicSolver%explicit=dynamicSolver%explicit.AND.massMatrix%lumped
+            ENDIF
+          ENDIF
+        ENDIF
+          
+        IF(dependentVariableType==0) THEN
+          !We now allow for static equation sets for dynamic solvers to be able to couple static eqs - dynamic eqs
+          nonlinearMapping=>vectorMapping%nonlinearMapping
+          IF(ASSOCIATED(nonlinearMapping)) THEN
+            IF(dynamicSolver%linearity/=SOLVER_DYNAMIC_NONLINEAR) THEN
+              localError="The specified dynamic solver linearity type of "// &
+                & TRIM(NumberToVString(dynamicSolver%linearity,"*",err,error))// &
+                & " is invalid for a nonlinear equations mapping."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            !Default to first variable type for now
+            NULLIFY(residualVariable)
+            CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,FIELD_U_VARIABLE_TYPE,residualVariable, &
+              & err,error,*999)
+            dependentVariable=>residualVariable
+            dependentVariableType=residualVariable%variableType
+          ENDIF
+        ENDIF
+                        
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
+                        
+        rhsMapping=>vectorMapping%rhsMapping
+        IF(ASSOCIATED(rhsMapping)) THEN
+          NULLIFY(rhsVariable)
+          CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
+          rhsVariableType=rhsMapping%rhsVariableType
+          CALL FieldVariable_ParameterSetEnsureCreated(rhsVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            CALL FieldVariable_ParameterSetEnsureCreated(rhsVariable,FIELD_PREVIOUS2_VALUES_SET_TYPE,err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL FieldVariable_ParameterSetEnsureCreated(rhsVariable,FIELD_PREVIOUS3_VALUES_SET_TYPE,err,error,*999)
+            ENDIF
+          ENDIF
+        ENDIF
+                        
+        nonlinearMapping=>vectorMapping%nonlinearMapping
+        IF(ASSOCIATED(nonlinearMapping)) THEN
+          NULLIFY(residualVariable)
+          CALL EquationsMappingNonlinear_ResidualVariableGet(nonlinearMapping,1,FIELD_U_VARIABLE_TYPE,residualVariable, &
+            & err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_RESIDUAL_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREVIOUS_RESIDUAL_SET_TYPE,err,error,*999)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREVIOUS2_RESIDUAL_SET_TYPE,err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL FieldVariable_ParameterSetEnsureCreated(residualVariable,FIELD_PREVIOUS3_RESIDUAL_SET_TYPE,err,error,*999)
+            ENDIF
+          ENDIF
+        ENDIF
+                        
+        !Check if there are any linear mappings
+        linearMapping=>vectorMapping%linearMapping
+        IF(ASSOCIATED(linearMapping)) THEN
+          !If there are any linear matrices create temporary vector for matrix-vector products
+          NULLIFY(vectorMatrices)
+          CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+          NULLIFY(dynamicMatrices)
+          CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+          DO linearMatrixIdx=1,linearMatrices%numberOfLinearMatrices
+            NULLIFY(linearMatrix)
+            CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,linearMatrixIdx,linearMatrix,err,error,*999)
+            IF(.NOT.ASSOCIATED(linearMatrix%tempVector)) THEN
+              NULLIFY(linearVariable)
+              CALL EquationsMappingLinear_LinearVariableGet(linearMapping,linearMatrixIdx,linearVariable,err,error,*999)
+              CALL DistributedVector_CreateStart(linearVariable%domainMapping,linearMatrix%tempVector,err,error,*999)
+              CALL DistributedVector_DataTypeSet(linearMatrix%tempVector,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+              CALL DistributedVector_CreateFinish(linearMatrix%tempVector,err,error,*999)
+            ENDIF
+          ENDDO !linearMatrixIdx
+        ENDIF
+        
+      ENDDO !equationsSetIdx
+      !Loop over any interface conditions
+      DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
+        NULLIFY(interfaceCondition)
+        CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
+        NULLIFY(interfaceEquations)
+        CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+        NULLIFY(lagrangeField)
+        CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
+        NULLIFY(interfaceMapping)
+        CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
+        NULLIFY(lagrangeVariable)
+        CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,lagrangeVariable,err,error,*999)
+        lagrangeVariableType=lagrangeVariable%variableType
+        CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_INCREMENTAL_VALUES_SET_TYPE,err,error,*999)
+        IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+          !2nd degree or higher so set up velocity parameter sets
+          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE,err,error,*999)
+          CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE, &
+            & err,error,*999)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+            !3rd degree or higher so set up acceleration parameter sets
+            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE,err,error,*999)
+            CALL FieldVariable_ParameterSetEnsureCreated(lagrangeVariable,FIELD_MEAN_PREDICTED_ACCELERATION_SET_TYPE, &
+              & err,error,*999)
+          ENDIF
+        ENDIF
+      ENDDO !interfaceConditionIdx
+                          
+      !Create the solver matrices and vectors
+      IF(dynamicSolver%linearity==SOLVER_DYNAMIC_LINEAR) THEN
+        NULLIFY(linearSolver)
+        CALL SolverDynamic_LinearSolverGet(dynamicSolver,linearSolver,err,error,*999)
+        CALL Solver_LibraryTypeGet(linearSolver,linearLibraryType,err,error,*999)
+        NULLIFY(solverMatrices)
+        CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_LibraryTypeSet(solverMatrices,linearLibraryType,err,error,*999)
+        IF(dynamicSolver%explicit) THEN
+          CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
+        ELSE
+          SELECT CASE(solverEquations%sparsityType)
+          CASE(SOLVER_SPARSE_MATRICES)
+            CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+          CASE(SOLVER_FULL_MATRICES)
+            CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
           CASE DEFAULT
-            localError="The solver library type of "// &
-              & TRIM(NumberToVString(DYNAMIC_SOLVER%SOLVER_LIBRARY,"*",err,error))//" is invalid."
+            localError="The specified solver equations sparsity type of "// &
+              & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
-        ELSE
-          CALL FlagError("Solver solver equations is not associated.",err,error,*999)
+          SELECT CASE(solverEquations%symmetryType)
+          CASE(SOLVER_SYMMETRIC_MATRICES)
+            CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
+          CASE(SOLVER_UNSYMMETRIC_MATRICES)
+            CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
+          CASE DEFAULT
+            localError="The specified solver equations symmetry type of "// &
+              & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
         ENDIF
-      ELSE
-        CALL FlagError("Dynamic solver solver is not associated.",err,error,*999)
+        CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+        !Link linear solver
+        linearSolver%SOLVER_EQUATIONS=>solver%SOLVER_EQUATIONS
+        !Finish the creation of the linear solver
+        CALL SOLVER_LINEAR_CREATE_FINISH(linearSolver%LINEAR_SOLVER,err,error,*999)
+      ELSE IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
+        NULLIFY(nonlinearSolver)
+        CALL SolverDynamic_NonlinearSolverGet(dynamicSolver,nonlinearSolver,err,error,*999)
+        CALL Solver_LibraryTypeGet(nonlinearSolver,nonlinearLibraryType,err,error,*999)
+        NULLIFY(solverMatrices)
+        CALL SOLVER_MATRICES_CREATE_START(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_LibraryTypeSet(solverMatrices,nonlinearLibraryType,err,error,*999)
+        IF(dynamicSolver%explicit) THEN
+          CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE],err,error,*999)
+        ELSE
+          SELECT CASE(solverEquations%sparsityType)
+          CASE(SOLVER_SPARSE_MATRICES)
+            CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE],err,error,*999)
+          CASE(SOLVER_FULL_MATRICES)
+            CALL SOLVER_MATRICES_STORAGE_TYPE_SET(solverMatrices,[DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
+          CASE DEFAULT
+            localError="The specified solver equations sparsity type of "// &
+              & TRIM(NumberToVString(solverEquations%sparsityType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+          SELECT CASE(solverEquations%symmetryType)
+          CASE(SOLVER_SYMMETRIC_MATRICES)
+            CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_SYMMETRIC_TYPE],err,error,*999)
+          CASE(SOLVER_UNSYMMETRIC_MATRICES)
+            CALL SolverMatrices_SymmetryTypeSet(solverMatrices,[DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE],err,error,*999)
+          CASE DEFAULT
+            localError="The specified solver equations symmetry type of "// &
+              & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))// &
+              & " is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        ENDIF
+        CALL SOLVER_MATRICES_CREATE_FINISH(solverMatrices,err,error,*999)
+        !Link nonlinear solver
+        nonlinearSolver%SOLVER_EQUATIONS=>solver%SOLVER_EQUATIONS
+        !Finish the creation of the nonlinear solver
+        CALL SOLVER_NONLINEAR_CREATE_FINISH(nonlinearSolver%NONLINEAR_SOLVER,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Dynamic solver is not associated.",err,error,*999)
-    ENDIF
+    CASE(SOLVER_PETSC_LIBRARY)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The solver library type of "//TRIM(NumberToVString(dynamicSolver%SOLVER_LIBRARY,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
         
-    EXITS("SOLVER_DYNAMIC_CREATE_FINISH")
+    EXITS("SolverDynamic_CreateFinish")
     RETURN
-999 ERRORSEXITS("SOLVER_DYNAMIC_CREATE_FINISH",err,error)
+999 ERRORSEXITS("SolverDynamic_CreateFinish",err,error)
     RETURN 1
    
-  END SUBROUTINE SOLVER_DYNAMIC_CREATE_FINISH
+  END SUBROUTINE SolverDynamic_CreateFinish
         
   !
   !================================================================================================================================
@@ -6584,7 +6531,7 @@ CONTAINS
                   !No nonlinear solver for the first (starting) time step.
                   !Use the nonlinear solvers linear solver to find starting velocities and accelerations etc.
                   NULLIFY(linearSolver)
-                  CALL Solver_NonlinearSolverLinearSolverGet(nonlinearSolver,linearSolver,err,error,*999)
+                  CALL SolverNonlinear_LinearSolverGet(nonlinearSolver,linearSolver,err,error,*999)
                   !Assemble the solver equations
                   CALL Solver_DynamicMeanPredictedCalculate(solver,err,error,*999)
                   CALL Solver_DynamicAssemble(solver,SOLVER_MATRICES_LINEAR_RESIDUAL_ONLY,err,error,*999)
@@ -7570,7 +7517,7 @@ CONTAINS
               CASE(SOLVER_NONLINEAR_TYPE)
                 CALL SOLVER_NONLINEAR_CREATE_FINISH(SOLVER%NONLINEAR_SOLVER,err,error,*999)
               CASE(SOLVER_DYNAMIC_TYPE)
-                CALL SOLVER_DYNAMIC_CREATE_FINISH(SOLVER%DYNAMIC_SOLVER,err,error,*999)
+                CALL SolverDynamic_CreateFinish(SOLVER%DYNAMIC_SOLVER,err,error,*999)
               CASE(SOLVER_DAE_TYPE)
                 CALL SOLVER_DAE_CREATE_FINISH(SOLVER%DAE_SOLVER,err,error,*999)
               CASE(SOLVER_EIGENPROBLEM_TYPE)
@@ -12379,7 +12326,6 @@ CONTAINS
           IF(ASSOCIATED(nonlinearMapping)) THEN
             !Default to FIELD_U_VARIABLE_TYPE
             dynamicVariableType=FIELD_U_VARIABLE_TYPE
-            IF(ASSOCIATED(dynamicTempVector)) NULLIFY(dynamicTempVector)                                      
             !Get the nonlinear vector contribute to the RHS values if nonlinear solve
             IF(solver%SOLVE_TYPE==SOLVER_NONLINEAR_TYPE) THEN 
               NULLIFY(previousResidualParameters)
@@ -12823,7 +12769,7 @@ CONTAINS
           SELECT CASE(interfaceCondition%METHOD)
           CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
             NULLIFY(interfaceEquations)
-            CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+            CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
             NULLIFY(interfaceMapping)
             CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
             NULLIFY(interfaceMatrices)
@@ -13071,7 +13017,7 @@ CONTAINS
             NULLIFY(interfaceCondition)
             CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition,err,error,*999)
             NULLIFY(interfaceEquations)
-            CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+            CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
             NULLIFY(interfaceMapping)
             CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
             NULLIFY(interfaceMatrices)
@@ -21850,7 +21796,7 @@ CONTAINS
               IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
               !TODO Generalize
               NULLIFY(interfaceEquations)
-              CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+              CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
               NULLIFY(interfaceMapping)
               CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
               NULLIFY(dependentField)

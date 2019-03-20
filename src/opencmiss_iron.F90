@@ -47141,7 +47141,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
     CALL InterfaceEquations_MatrixTimeDependenceTypeGet(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
       & timeDependenceTypes,err,error,*999)
 
@@ -47290,7 +47290,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
     CALL InterfaceEquations_MatrixTimeDependenceTypeSet(interfaceEquations,interfaceMatrixIdx,hasTranspose, &
       & timeDependenceTypes,err,error,*999)
 
@@ -47402,7 +47402,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
     CALL INTERFACE_EQUATIONS_OUTPUT_TYPE_GET(interfaceEquations,outputType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_OutputTypeGetNumber")
@@ -47476,7 +47476,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
     CALL INTERFACE_EQUATIONS_OUTPUT_TYPE_SET(interfaceEquations,outputType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_OutputTypeSetNumber")
@@ -47550,7 +47550,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
     CALL INTERFACE_EQUATIONS_SPARSITY_TYPE_GET(interfaceEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_SparsityGetNumber")
@@ -47624,7 +47624,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
-    CALL InterfaceCondition_EquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
     CALL INTERFACE_EQUATIONS_SPARSITY_TYPE_SET(interfaceEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_SparsitySetNumber")

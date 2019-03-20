@@ -2352,8 +2352,8 @@ CONTAINS
       localError=localError//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_ELEMENT_BASED_INTERPOLATION) THEN
-      localError="Cannot index by element"// &
+    IF(fieldVariable%components(componentNumber)%interpolationType/=FIELD_GAUSS_POINT_BASED_INTERPOLATION) THEN
+      localError="Cannot index by Gauss point"// &
         & " for field component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
         & " of field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
       IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
@@ -2362,13 +2362,13 @@ CONTAINS
       CASE(FIELD_CONSTANT_INTERPOLATION)
         localError=localError//" which has constant interpolation."            
       CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-        !?
+        localError=localError//" which has element based interpolation."            
       CASE(FIELD_NODE_BASED_INTERPOLATION)
         localError=localError//" which has node based interpolation."
       CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
         localError=localError//" which has grid point based interpolation."
       CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-        localError=localError//" which has Gauss point based interpolation."
+        !?
       CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
         localError=localError//" which has data point based interpolation."
       CASE DEFAULT

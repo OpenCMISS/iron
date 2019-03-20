@@ -96,6 +96,7 @@ set(IRON_Fortran_SRC
     interface_equations_routines.F90
     interface_equations_access_routines.F90
     interface_mapping_routines.F90
+    interface_mapping_access_routines.F90
     interface_matrices_constants.F90
     interface_matrices_routines.F90
     interface_operators_routines.F90
