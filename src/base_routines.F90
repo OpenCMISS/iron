@@ -501,7 +501,7 @@ CONTAINS
                 CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
                 WRITE(outputString, &
                   & '("***    Routine times:  Call Inclusive   Call Exclusive   Total Inclusive   Average Inclusive")')
-                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
                 WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"   ",E15.6,"   ",E17.6)')  &
                   & routinePtr%inclusiveCPUTime,routinePtr%inclusiveCPUTime-routinePtr%exclusiveCPUTime, &
                   & routinePtr%routineListItem%totalInclusiveCPUTime,routinePtr%routineListItem% &
@@ -1403,6 +1403,7 @@ CONTAINS
     CHARACTER(LEN=MAXSTRLEN) :: indentString=">>"
     CHARACTER(LEN=MAXSTRLEN) :: startString
     TYPE(VARYING_STRING) :: localError,localError2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
     indent=2
     IF(numberOfComputationalNodes>1) THEN
@@ -1421,13 +1422,13 @@ CONTAINS
       lastSpacePosition=INDEX(EXTRACT(localError,1,endPosition)," ",BACK=.TRUE.)
       IF(lastSpacePosition/=0) endPosition=lastSpacePosition-1
       WRITE(outputString,'(A,X,A)') startString(1:startStringLength),CHAR(EXTRACT(localError,1,endPosition))
-      CALL WriteStr(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
+      CALL WriteStr(ERROR_OUTPUT_TYPE,outputString,localErr,localError2,*999)
       localError=ADJUSTL(EXTRACT(localError,endPosition+1,LEN_TRIM(localError)))
       errorStringLength=LEN_TRIM(localError)
       startString=" "
     ENDDO !not finished
     WRITE(outputString,'(A,X,A)') startString(1:startStringLength),CHAR(localError)
-    CALL WriteStr(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
+    CALL WriteStr(ERROR_OUTPUT_TYPE,outputString,localErr,localError2,*999)
     !CPB 20/02/07 aix compiler does not like varying strings so split the remove statement up into two statements
     localError=REMOVE(error,1,position)
     error=localError
@@ -1435,7 +1436,7 @@ CONTAINS
     indent=indent+2
     DO WHILE(position/=0)
       WRITE(outputString,'(A)') indentString(1:indent)//CHAR(EXTRACT(error,1,position-1))
-      CALL WriteStr(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
+      CALL WriteStr(ERROR_OUTPUT_TYPE,outputString,localErr,localError2,*999)
       !CPB 20/02/07 aix compiler does not like varying strings so split the remove statement up into two statements
       localError=REMOVE(error,1,position)
       error=localError
@@ -1443,7 +1444,7 @@ CONTAINS
       indent=indent+2
     ENDDO
     WRITE(outputString,'(A)') indentString(1:indent)//CHAR(error)
-    CALL WriteStr(ERROR_OUTPUT_TYPE,localErr,localError2,*999)
+    CALL WriteStr(ERROR_OUTPUT_TYPE,outputString,localErr,localError2,*999)
 
     RETURN
     !Don't return an error code here otherwise we will get into a circular loop
@@ -1466,7 +1467,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: outputStreamID !<The outputStreamID of the output stream. An outputStreamID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    CHARACTER(LEN=MAXSTRLEN),INTENT(IN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
+    CHARACTER(LEN=MAXSTRLEN),INTENT(INOUT) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
     !Local Variables
     INTEGER(INTG) :: endLine(MAX_OUTPUT_LINES),i,j,length,numberBlanks,numberRecords
 

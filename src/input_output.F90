@@ -57,6 +57,8 @@ MODULE INPUT_OUTPUT
   PRIVATE
   
   !Module parameters
+ INTEGER(INTG), PARAMETER :: MAX_OUTPUT_LINES=500 !<Maximum number of lines that can be output \see BaseRoutines::WriteStr
+  INTEGER(INTG), PARAMETER :: MAX_OUTPUT_WIDTH=132 !<Maximum width of output line \see BaseRoutines::WriteStr
 
   !> \addtogroup INPUT_OUTPUT_MatrixNameIndexFormat INPUT_OUTPUT::MatrixNameIndexFormat
   !> \brief Output type parameter
