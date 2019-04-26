@@ -75,6 +75,7 @@ if (WITH_C_BINDINGS)
 endif()
 
 # Python-Bindings extra target
+set(WITH_Python_BINDINGS OFF)
 if (WITH_Python_BINDINGS)
     message(STATUS "Creating Python bindings")
     find_package(Python COMPONENTS Interpreter Development)

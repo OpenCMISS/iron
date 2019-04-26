@@ -367,9 +367,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
         
     WRITE(outputString,'(A)') string
-    CALL WriteStr(id,err,error,*999)
+    CALL WriteStr(id,outputString,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringC",err,error)
@@ -390,9 +391,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
         
     WRITE(outputString,'(A)') CHAR(string)
-    CALL WriteStr(id,err,error,*999)
+    CALL WriteStr(id,outputString,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringVS",err,error)
@@ -415,10 +417,11 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
         
     localString=firstString//value(1:LEN_TRIM(value))
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(id,err,error,*999)
+    CALL WriteStr(id,outputString,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringValueC",err,error)
@@ -442,11 +445,12 @@ CONTAINS
     !Local variables
     CHARACTER(LEN=1) :: formatString = "*"
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
        
     localString=firstString//NumberToVString(value,formatString,err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(id,err,error,*999)
+    CALL WriteStr(id,outputString,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringValueDP",err,error)
@@ -469,11 +473,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
         
     localString=firstString//NumberToVString(value,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringValueIntg",err,error)
@@ -496,11 +501,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
     localString=firstString//NumberToVString(value,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringValueLIntg",err,error)
@@ -523,11 +529,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
     localString=firstString//LogicalToVString(value,err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(id,err,error,*999)
+    CALL WriteStr(id,outputString,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringValueL",err,error)
@@ -551,11 +558,12 @@ CONTAINS
     !Local variables
     CHARACTER(LEN=1) :: formatString = "*"
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
        
     localString=firstString//NumberToVString(value,formatString,err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(id,err,error,*999)
+    CALL WriteStr(id,outputString,err,error,*999)
       
     RETURN
 999 ERRORS("WriteStringValueSP",err,error)
@@ -578,6 +586,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
     IF(value==" ") THEN
       localString=firstString
@@ -585,7 +594,7 @@ CONTAINS
       localString=firstString//value
     ENDIF
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(id,err,error,*999)
+    CALL WriteStr(id,outputString,err,error,*999)
 
     RETURN
 999 ERRORS("WriteStringValueVS",err,error)
@@ -610,12 +619,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_C_C",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_C_C")
     RETURN
@@ -641,13 +651,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_C_DP",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_C_DP")
     RETURN
@@ -673,13 +684,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_C_INTG",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_C_INTG")
     RETURN
@@ -705,12 +717,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_C_L",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_C_L")
     RETURN
@@ -736,13 +749,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_C_SP",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_C_SP")
     RETURN
@@ -768,12 +782,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_C_VS",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_C_VS")
     RETURN
@@ -799,13 +814,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_DP_C",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_DP_C")
     RETURN
@@ -831,6 +847,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_DP_DP",err,error,*999)
         
@@ -841,7 +858,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_DP_DP")
     RETURN
@@ -867,6 +884,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_DP_INTG",err,error,*999)
         
@@ -877,7 +895,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_DP_INTG")
     RETURN
@@ -903,6 +921,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_DP_L",err,error,*999)
         
@@ -912,7 +931,7 @@ CONTAINS
     localString2=localString//SECOND_STRING
     localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_DP_L")
     RETURN
@@ -938,6 +957,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_DP_SP",err,error,*999)
         
@@ -948,7 +968,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_DP_SP")
     RETURN
@@ -974,13 +994,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_DP_VS",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_DP_VS")
     RETURN
@@ -1006,13 +1027,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_INTG_C",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_INTG_C")
     RETURN
@@ -1038,6 +1060,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_INTG_DP",err,error,*999)
         
@@ -1048,7 +1071,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_INTG_DP")
     RETURN
@@ -1074,6 +1097,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_INTG_INTG",err,error,*999)
         
@@ -1084,7 +1108,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_INTG_INTG")
     RETURN
@@ -1110,6 +1134,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_INTG_L",err,error,*999)
         
@@ -1119,7 +1144,7 @@ CONTAINS
     localString2=localString//SECOND_STRING
     localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_INTG_L")
     RETURN
@@ -1145,6 +1170,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_INTG_SP",err,error,*999)
         
@@ -1155,7 +1181,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_INTG_SP")
     RETURN
@@ -1181,13 +1207,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_INTG_VS",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_INTG_VS")
     RETURN
@@ -1213,13 +1240,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_L_C",err,error,*999)
         
     localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_L_C")
     RETURN
@@ -1245,6 +1273,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_L_DP",err,error,*999)
         
@@ -1255,7 +1284,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_L_DP")
     RETURN
@@ -1281,6 +1310,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_L_INTG",err,error,*999)
         
@@ -1289,7 +1319,7 @@ CONTAINS
     localString=localString//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_L_INTG")
     RETURN
@@ -1315,6 +1345,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_L_L",err,error,*999)
         
@@ -1324,7 +1355,7 @@ CONTAINS
     localString2=localString//SECOND_STRING
     localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_L_INTG_L")
     RETURN
@@ -1350,6 +1381,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_L_SP",err,error,*999)
         
@@ -1358,7 +1390,7 @@ CONTAINS
     localString=localString//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_L_SP")
     RETURN
@@ -1384,13 +1416,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_L_VS",err,error,*999)
         
     localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_L_VS")
     RETURN
@@ -1416,13 +1449,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_SP_C",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_SP_C")
     RETURN
@@ -1448,6 +1482,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_SP_DP",err,error,*999)
         
@@ -1458,7 +1493,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_SP_DP")
     RETURN
@@ -1484,6 +1519,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_SP_INTG",err,error,*999)
         
@@ -1494,7 +1530,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_SP_INTG")
     RETURN
@@ -1520,6 +1556,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_SP_L",err,error,*999)
         
@@ -1527,7 +1564,7 @@ CONTAINS
     IF(err/=0) GOTO 999
     localString=localString//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_SP_L")
     RETURN
@@ -1553,6 +1590,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_SP_SP",err,error,*999)
         
@@ -1563,7 +1601,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_SP_SP")
     RETURN
@@ -1589,13 +1627,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_SP_VS",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,"*",err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_SP_VS")
     RETURN
@@ -1621,12 +1660,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_VS_C",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_VS_C")
     RETURN
@@ -1652,13 +1692,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_VS_DP",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_VS_DP")
     RETURN
@@ -1684,13 +1725,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_VS_INTG",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_VS_INTG")
     RETURN
@@ -1716,12 +1758,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_VS_L",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_VS_L")
     RETURN
@@ -1747,13 +1790,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_TWO_VALUE_VS_SP",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,"*",err,error)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_VS_SP")
     RETURN
@@ -1779,12 +1823,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_TWO_VALUE_VS_VS",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_VALUE_VS_VS")
     RETURN
@@ -1809,12 +1854,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_VALUE_C",err,error,*999)
         
     localString=firstString(1:LEN_TRIM(firstString))//VALUE(1:LEN_TRIM(VALUE))
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_VALUE_C")
     RETURN
@@ -1839,13 +1885,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_VALUE_DP",err,error,*999)
         
     localString=firstString//NumberToVString(VALUE,FORMAT_STRING,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_VALUE_DP")
     RETURN
@@ -1870,12 +1917,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_VALUE_INTG",err,error,*999)
         
     localString=firstString//NumberToVString(VALUE,FORMAT_STRING,err,error,ADJUST=.FALSE.)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_VALUE_INTG")
     RETURN
@@ -1900,12 +1948,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_VALUE_LINTG",err,error,*999)
         
     localString=firstString//NumberToVString(VALUE,FORMAT_STRING,err,error,ADJUST=.FALSE.)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_VALUE_LINTG")
     RETURN
@@ -1930,12 +1979,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_VALUE_L",err,error,*999)
         
     localString=firstString//LOGICAL_TO_VSTRING(VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_VALUE_L")
     RETURN
@@ -1960,13 +2010,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_VALUE_SP",err,error,*999)
         
     localString=firstString//NumberToVString(VALUE,FORMAT_STRING,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_VALUE_SP")
     RETURN
@@ -1991,12 +2042,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_VALUE_VS",err,error,*999)
         
     localString=firstString//VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_VALUE_VS")
     RETURN
@@ -2025,12 +2077,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_C",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_C")
     RETURN
@@ -2059,13 +2112,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_DP",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_DP")
     RETURN
@@ -2094,13 +2148,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_INTG",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_INTG")
     RETURN
@@ -2129,12 +2184,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_L",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_L")
     RETURN
@@ -2163,13 +2219,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_SP",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_SP")
     RETURN
@@ -2198,12 +2255,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_C_VS",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_C_VS")
     RETURN
@@ -2232,13 +2290,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_C",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_C")
     RETURN
@@ -2267,6 +2326,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_DP",err,error,*999)
         
@@ -2277,7 +2337,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_DP")
     RETURN
@@ -2306,6 +2366,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_INTG",err,error,*999)
         
@@ -2316,7 +2377,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_INTG")
     RETURN
@@ -2345,6 +2406,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_L",err,error,*999)
         
@@ -2354,7 +2416,7 @@ CONTAINS
     localString2=localString//SECOND_STRING
     localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_L")
     RETURN
@@ -2383,6 +2445,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_SP",err,error,*999)
         
@@ -2393,7 +2456,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_SP")
     RETURN
@@ -2422,13 +2485,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_DP_VS",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_DP_VS")
     RETURN
@@ -2457,13 +2521,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_C",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_C")
     RETURN
@@ -2492,6 +2557,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_DP",err,error,*999)
         
@@ -2502,7 +2568,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_DP")
     RETURN
@@ -2531,6 +2597,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_INTG",err,error,*999)
         
@@ -2541,7 +2608,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_INTG")
     RETURN
@@ -2570,6 +2637,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_L",err,error,*999)
         
@@ -2579,7 +2647,7 @@ CONTAINS
     localString2=localString//SECOND_STRING
     localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_L")
     RETURN
@@ -2608,6 +2676,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_SP",err,error,*999)
         
@@ -2618,7 +2687,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_SP")
     RETURN
@@ -2647,13 +2716,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_INTG_VS",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_INTG_VS")
     RETURN
@@ -2682,13 +2752,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_C",err,error,*999)
         
     localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_C")
     RETURN
@@ -2717,6 +2788,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_DP",err,error,*999)
         
@@ -2727,7 +2799,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_DP")
     RETURN
@@ -2756,6 +2828,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_INTG",err,error,*999)
         
@@ -2764,7 +2837,7 @@ CONTAINS
     localString=localString//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_INTG")
     RETURN
@@ -2793,6 +2866,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_L",err,error,*999)
         
@@ -2802,7 +2876,7 @@ CONTAINS
     localString2=localString//SECOND_STRING
     localString=localString2//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_TWO_L_INTG_L")
     RETURN
@@ -2831,6 +2905,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_SP",err,error,*999)
         
@@ -2839,7 +2914,7 @@ CONTAINS
     localString=localString//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_SP")
     RETURN
@@ -2868,13 +2943,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_L_VS",err,error,*999)
         
     localString=firstString//LOGICAL_TO_VSTRING(FIRST_VALUE,err,error)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_L_VS")
     RETURN
@@ -2903,13 +2979,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_C",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_C")
     RETURN
@@ -2938,6 +3015,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_DP",err,error,*999)
         
@@ -2948,7 +3026,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_DP")
     RETURN
@@ -2977,6 +3055,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_INTG",err,error,*999)
         
@@ -2987,7 +3066,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_INTG")
     RETURN
@@ -3016,6 +3095,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_L",err,error,*999)
         
@@ -3023,7 +3103,7 @@ CONTAINS
     IF(err/=0) GOTO 999
     localString=localString//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_L")
     RETURN
@@ -3052,6 +3132,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString,localString2
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_SP",err,error,*999)
         
@@ -3062,7 +3143,7 @@ CONTAINS
     localString=localString2//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_SP")
     RETURN
@@ -3091,13 +3172,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_SP_VS",err,error,*999)
         
     localString=firstString//NumberToVString(FIRST_VALUE,FIRST_FORMAT,err,error,ADJUST=.FALSE.)//SECOND_STRING//SECOND_VALUE
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_SP_VS")
     RETURN
@@ -3126,12 +3208,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_C",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_C")
     RETURN
@@ -3160,13 +3243,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_DP",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_DP")
     RETURN
@@ -3195,13 +3279,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_INTG",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_INTG")
     RETURN
@@ -3230,12 +3315,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_L",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//LOGICAL_TO_VSTRING(SECOND_VALUE,err,error)
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_L")
     RETURN
@@ -3264,13 +3350,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
  !   ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_SP",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//NumberToVString(SECOND_VALUE,SECOND_FORMAT,err,error,ADJUST=.FALSE.)
     IF(err/=0) GOTO 999
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_SP")
     RETURN
@@ -3299,12 +3386,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(VARYING_STRING) :: localString
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_FMT_TWO_VALUE_VS_VS",err,error,*999)
         
     localString=firstString//FIRST_VALUE//SECOND_STRING//SECOND_VALUE
     WRITE(outputString,'(A)') CHAR(localString)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
       
 !    EXITS("WRITE_STRING_FMT_TWO_VALUE_VS_VS")
     RETURN
@@ -3335,6 +3423,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_VECTOR_DP",err,error,*999)
         
@@ -3343,13 +3432,13 @@ CONTAINS
     IF(final>LAST_IDX) final=LAST_IDX
 
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     DO WHILE(final<LAST_IDX) !more stuff to do
       current=final+DELTA
       final=final+NUMBER_REPEAT*DELTA
       IF(final>LAST_IDX) final=LAST_IDX
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
     ENDDO !final<LAST_IDX
 
 !    EXITS("WRITE_STRING_VECTOR_DP")
@@ -3381,6 +3470,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_VECTOR_INTG",err,error,*999)
         
@@ -3388,13 +3478,13 @@ CONTAINS
     final=current+(NUMBER_FIRST-1)*DELTA
     IF(final>LAST_IDX) final=LAST_IDX
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     DO WHILE(final<LAST_IDX) !more stuff to do
       current=final+DELTA
       final=final+NUMBER_REPEAT*DELTA
       IF(final>LAST_IDX) final=LAST_IDX
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
     ENDDO !final<LAST_IDX
 
 !    EXITS("WRITE_STRING_VECTOR_INTG")
@@ -3426,6 +3516,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_VECTOR_LINTG",err,error,*999)
         
@@ -3433,13 +3524,13 @@ CONTAINS
     final=current+(NUMBER_FIRST-1)*DELTA
     IF(final>LAST_IDX) final=LAST_IDX
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     DO WHILE(final<LAST_IDX) !more stuff to do
       current=final+DELTA
       final=final+NUMBER_REPEAT*DELTA
       IF(final>LAST_IDX) final=LAST_IDX
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
     ENDDO !final<LAST_IDX
 
 !    EXITS("WRITE_STRING_VECTOR_LINTG")
@@ -3471,6 +3562,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_VECTOR_L",err,error,*999)
         
@@ -3478,13 +3570,13 @@ CONTAINS
     final=current+(NUMBER_FIRST-1)*DELTA
     IF(final>LAST_IDX) final=LAST_IDX
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     DO WHILE(final<LAST_IDX) !more stuff to do
       current=final+DELTA
       final=final+NUMBER_REPEAT*DELTA
       IF(final>LAST_IDX) final=LAST_IDX
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
     ENDDO !final<LAST_IDX
 
 !    EXITS("WRITE_STRING_VECTOR_L")
@@ -3516,6 +3608,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,final,count
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_VECTOR_SP",err,error,*999)
         
@@ -3523,13 +3616,13 @@ CONTAINS
     final=current+(NUMBER_FIRST-1)*DELTA
     IF(final>LAST_IDX) final=LAST_IDX
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR(count),count=current,final,DELTA)
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     DO WHILE(final<LAST_IDX) !more stuff to do
       current=final+DELTA
       final=final+NUMBER_REPEAT*DELTA
       IF(final>LAST_IDX) final=LAST_IDX
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR(count),count=current,final,DELTA)
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
     ENDDO !final<LAST_IDX
 
 !    EXITS("WRITE_STRING_VECTOR_SP")
@@ -3561,18 +3654,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,count,number_to_do
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_IDX_VECTOR_DP",err,error,*999)
         
     number_to_do=NUM_INDICES
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     number_to_do=NUM_INDICES-NUMBER_FIRST
     current=NUMBER_FIRST+1
     DO WHILE(number_to_do>0) !more stuff to do
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
         & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       current=current+NUMBER_REPEAT
       number_to_do=number_to_do-NUMBER_REPEAT
     ENDDO !number_to_do > 0
@@ -3606,18 +3700,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,count,number_to_do
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_IDX_VECTOR_INTG",err,error,*999)
         
     number_to_do=NUM_INDICES
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     number_to_do=NUM_INDICES-NUMBER_FIRST
     current=NUMBER_FIRST+1
     DO WHILE(number_to_do>0) !more stuff to do
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
         & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       current=current+NUMBER_REPEAT
       number_to_do=number_to_do-NUMBER_REPEAT
     ENDDO !number_to_do > 0
@@ -3656,18 +3751,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,count,number_to_do
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_IDX_VECTOR_LINTG",err,error,*999)
         
     number_to_do=NUM_INDICES
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     number_to_do=NUM_INDICES-NUMBER_FIRST
     current=NUMBER_FIRST+1
     DO WHILE(number_to_do>0) !more stuff to do
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
         & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       current=current+NUMBER_REPEAT
       number_to_do=number_to_do-NUMBER_REPEAT
     ENDDO !number_to_do > 0
@@ -3701,18 +3797,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,count,number_to_do
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_IDX_VECTOR_L",err,error,*999)
         
     number_to_do=NUM_INDICES
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     number_to_do=NUM_INDICES-NUMBER_FIRST
     current=NUMBER_FIRST+1
     DO WHILE(number_to_do>0) !more stuff to do
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
         & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       current=current+NUMBER_REPEAT
       number_to_do=number_to_do-NUMBER_REPEAT
     ENDDO !number_to_do > 0
@@ -3746,18 +3843,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) ::  current,count,number_to_do
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_IDX_VECTOR_SP",err,error,*999)
         
     number_to_do=NUM_INDICES
     WRITE(outputString,FMT=FIRST_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=1,MIN(NUMBER_FIRST,NUM_INDICES))
-    CALL WriteStr(ID,err,error,*999)
+    CALL WriteStr(ID,outputString,err,error,*999)
     number_to_do=NUM_INDICES-NUMBER_FIRST
     current=NUMBER_FIRST+1
     DO WHILE(number_to_do>0) !more stuff to do
       WRITE(outputString,FMT=REPEAT_FORMAT) (VECTOR((INDICES(count)-1)*DELTA+1),count=current,MIN(current+NUMBER_REPEAT-1, &
         & NUM_INDICES))
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       current=current+NUMBER_REPEAT
       number_to_do=number_to_do-NUMBER_REPEAT
     ENDDO !number_to_do > 0
@@ -3798,6 +3896,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) ::  current_row,current_column,final_column,count
     CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_MATRIX_DP",err,error,*999)
 
@@ -3817,13 +3916,13 @@ CONTAINS
       ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
         WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
       ENDIF
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       DO WHILE(final_column<LAST_COLUMN) !more stuff to do
         current_column=final_column+DELTA_COLUMN
         final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
         IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
         WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
+        CALL WriteStr(ID,outputString,err,error,*999)
       ENDDO !final_columnn<LAST_COLUMN
     ENDDO !current_row
     
@@ -3868,6 +3967,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) ::  current_row,current_column,final_column,count
     CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_MATRIX_INTG",err,error,*999)
 
@@ -3887,13 +3987,13 @@ CONTAINS
       ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
         WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
       ENDIF
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       DO WHILE(final_column<LAST_COLUMN) !more stuff to do
         current_column=final_column+DELTA_COLUMN
         final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
         IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
         WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
+        CALL WriteStr(ID,outputString,err,error,*999)
       ENDDO !final_columnn<LAST_COLUMN
     ENDDO !current_row
     
@@ -3935,6 +4035,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) ::  current_row,current_column,final_column,count
     CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_MATRIX_LINTG",err,error,*999)
 
@@ -3954,13 +4055,13 @@ CONTAINS
       ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
         WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
       ENDIF
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       DO WHILE(final_column<LAST_COLUMN) !more stuff to do
         current_column=final_column+DELTA_COLUMN
         final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
         IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
         WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
+        CALL WriteStr(ID,outputString,err,error,*999)
       ENDDO !final_columnn<LAST_COLUMN
     ENDDO !current_row
     
@@ -4000,6 +4101,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) ::  current_row,current_column,final_column,count
     CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_MATRIX_L",err,error,*999)
 
@@ -4019,13 +4121,13 @@ CONTAINS
       ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
         WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
       ENDIF
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       DO WHILE(final_column<LAST_COLUMN) !more stuff to do
         current_column=final_column+DELTA_COLUMN
         final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
         IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
         WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
+        CALL WriteStr(ID,outputString,err,error,*999)
       ENDDO !final_columnn<LAST_COLUMN
     ENDDO !current_row
     
@@ -4065,6 +4167,7 @@ CONTAINS
     !Local variables
     INTEGER(INTG) ::  current_row,current_column,final_column,count
     CHARACTER(LEN=MAXSTRLEN) :: FORMAT_STR
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
 !    ENTERS("WRITE_STRING_MATRIX_SP",err,error,*999)
 
@@ -4084,13 +4187,13 @@ CONTAINS
       ELSE IF(INDEX_FORMAT_TYPE==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
         WRITE(outputString,FMT=FORMAT_STR) current_row,(MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
       ENDIF
-      CALL WriteStr(ID,err,error,*999)
+      CALL WriteStr(ID,outputString,err,error,*999)
       DO WHILE(final_column<LAST_COLUMN) !more stuff to do
         current_column=final_column+DELTA_COLUMN
         final_column=final_column+NUMBER_REPEAT*DELTA_COLUMN
         IF(final_column>LAST_COLUMN) final_column=LAST_COLUMN
         WRITE(outputString,FMT=REPEAT_FORMAT) (MATRIX(current_row,count),count=current_column,final_column,DELTA_COLUMN)
-        CALL WriteStr(ID,err,error,*999)
+        CALL WriteStr(ID,outputString,err,error,*999)
       ENDDO !final_columnn<LAST_COLUMN
     ENDDO !current_row
     

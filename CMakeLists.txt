@@ -100,9 +100,10 @@ message(STATUS "Iron::Instrumentation: ${OPENCMISS_INSTRUMENTATION}")
 # Bindings options
 find_program(VIRTUALENV_EXEC virtualenv)
 mark_as_advanced(VIRTUALENV_EXEC)
+set(PYTHON_EXECUTABLE /usr/bin/python)
 
 option(WITH_C_BINDINGS "Build iron C bindings" ON)
-option(WITH_Python_BINDINGS "Build iron Python bindings" ON)
+option(WITH_Python_BINDINGS "Build iron Python bindings" OFF)
 set(IRON_VIRTUALENV_INSTALL_PREFIX "${IRON_VIRTUALENV_INSTALL_PREFIX}" CACHE PATH "Install prefix for the virtualenv Iron library.")
 if (DEFINED FE_VIRTUALENV_INSTALL_PREFIX)
     set(IRON_VIRTUALENV_INSTALL_PREFIX "${FE_VIRTUALENV_INSTALL_PREFIX}" CACHE PATH "Install prefix for the virtualenv Iron library." FORCE)

@@ -170,7 +170,6 @@ MODULE BaseRoutines
   LOGICAL, SAVE :: timingAllSubroutines !<.TRUE. if timing output is required in all routines
   LOGICAL, SAVE :: timingFromSubroutine !<.TRUE. if timing output is required from a particular routine
   LOGICAL, SAVE :: timingFileOpen !<.TRUE. if the timing output file is open
-  CHARACTER(LEN=MAXSTRLEN), SAVE :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
   TYPE(RoutineListType), SAVE :: diagRoutineList !<The list of routines for which diagnostic output is required
   TYPE(RoutineListType), SAVE :: timingRoutineList !<The list of routines for which timing output is required
   TYPE(RoutineStackType), SAVE :: routineStack !<The routime invocation stack
@@ -242,7 +241,6 @@ MODULE BaseRoutines
 
   PUBLIC cmissRandomSeeds
   
-  PUBLIC outputString
 
   PUBLIC BaseRoutines_Finalise,BaseRoutines_Initialise
 
@@ -292,6 +290,7 @@ CONTAINS
     LOGICAL :: needAlternate = .FALSE.
     TYPE(RoutineListItemType), POINTER :: listRoutinePtr
     TYPE(RoutineStackItemType), POINTER :: newRoutinePtr,routinePtr
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
    !$OMP CRITICAL(ENTERS_1)
     IF(diagOrTiming) THEN
@@ -345,13 +344,13 @@ CONTAINS
         ENDIF
         IF(routinePtr%diagnostics) THEN
           WRITE(outputString,'("*** Enters: ",A)') name(1:LEN_TRIM(name))
-          CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,err,error,*999)
+          CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,outputString,err,error,*999)
         ELSE IF(ASSOCIATED(routinePtr%previousRoutine)) THEN
           !CPB 16/05/2007 Only show the calls if we have level 3 diagnostics or higher
           IF(diagnostics3) THEN
             IF(routinePtr%previousRoutine%diagnostics) THEN
               WRITE(outputString,'("*** Calls : ",A)') name(1:LEN_TRIM(name))
-              CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,err,error,*999)
+              CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,outputString,err,error,*999)
             ENDIF
           ENDIF
         ENDIF
@@ -440,6 +439,7 @@ CONTAINS
     REAL(DP) :: exitsCPUTime,exitsSystemTime
     TYPE(VARYING_STRING) :: error
     TYPE(RoutineStackItemType), POINTER :: previousRoutinePtr,routinePtr
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
    !$OMP CRITICAL(EXITS_1)
     IF(diagOrTiming) THEN
@@ -449,7 +449,7 @@ CONTAINS
         IF(diagnostics) THEN
           IF(routinePtr%diagnostics) THEN
             WRITE(outputString,'("*** Exits : ",A)') name(1:LEN_TRIM(name))
-            CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,err,error,*999)
+            CALL WriteStr(DIAGNOSTIC_OUTPUT_TYPE,outputString,err,error,*999)
           ENDIF
           IF(ASSOCIATED(previousRoutinePtr)) THEN
             IF(previousRoutinePtr%diagnostics) THEN
@@ -495,10 +495,10 @@ CONTAINS
           IF(routinePtr%timing) THEN
             IF(.NOT.timingSummary) THEN
               WRITE(outputString,'("*** Timing : ",A)') name(1:LEN_TRIM(name))
-              CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+              CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
               IF(ASSOCIATED(routinePtr%routineListItem)) THEN
                 WRITE(outputString,'("***    Number of invocations: ",I10)') routinePtr%routineListItem%numberOfInvocations
-                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
                 WRITE(outputString, &
                   & '("***    Routine times:  Call Inclusive   Call Exclusive   Total Inclusive   Average Inclusive")')
                 CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
@@ -506,21 +506,21 @@ CONTAINS
                   & routinePtr%inclusiveCPUTime,routinePtr%inclusiveCPUTime-routinePtr%exclusiveCPUTime, &
                   & routinePtr%routineListItem%totalInclusiveCPUTime,routinePtr%routineListItem% &
                   & totalInclusiveCPUTime/REAL(routinePtr%routineListItem%numberOfInvocations,SP)
-                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
                 WRITE(outputString,'("***    System    (s):  ",E14.6,"   ",E14.6,"   ",E15.6,"   ",E17.6)')  &
                   & routinePtr%inclusiveSystemTime,routinePtr%inclusiveSystemTime-routinePtr%exclusiveSystemTime, &
                   & routinePtr%routineListItem%totalInclusiveSystemTime,routinePtr%routineListItem% &
                   & totalInclusiveSystemTime/REAL(routinePtr%routineListItem%numberOfInvocations,SP)
-                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
               ELSE
                 WRITE(outputString,'("***    Routine times:  Call Inclusive   Call Exclusive")')
-                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
                 WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6)')  &
                   & routinePtr%inclusiveCPUTime,routinePtr%inclusiveCPUTime-routinePtr%exclusiveCPUTime
-                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
                 WRITE(outputString,'("***    System    (s):  ",E14.6,"   ",E14.6)')  &
                   & routinePtr%inclusiveSystemTime,routinePtr%inclusiveSystemTime-routinePtr%exclusiveSystemTime
-                CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+                CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
               ENDIF
             ENDIF
           ENDIF
@@ -719,13 +719,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
     IF(numberOfComputationalNodes>1) THEN
       WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationalNodeNumber,string
     ELSE
       WRITE(outputString,'(">>WARNING: ",A)') string
     ENDIF
-    CALL WriteStr(WARNING_OUTPUT_TYPE,err,error,*999)
+    CALL WriteStr(WARNING_OUTPUT_TYPE,outputString,err,error,*999)
 
     RETURN 
 999 ERRORS("FlagWarningC",err,error)
@@ -745,13 +746,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
     IF(numberOfComputationalNodes>1) THEN
       WRITE(outputString,'(">>WARNING (",I0,"): ",A)') myComputationalNodeNumber,CHAR(string)
     ELSE
       WRITE(outputString,'(">>WARNING: ",A)') CHAR(string)
     ENDIF
-    CALL WriteStr(WARNING_OUTPUT_TYPE,err,error,*999)
+    CALL WriteStr(WARNING_OUTPUT_TYPE,outputString,err,error,*999)
 
     RETURN 
 999 ERRORS("FlagWarningVS",err,error)
@@ -792,6 +794,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,j,randomSeedsSize,time(8)
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
     err=0
     error=""
@@ -1334,6 +1337,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     TYPE(RoutineListItemType), POINTER :: routinePtr
+    CHARACTER(LEN=MAXSTRLEN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
 
     NULLIFY(routinePtr)
     
@@ -1341,35 +1345,35 @@ CONTAINS
 
     IF(timing) THEN
       WRITE(outputString,'("*** Timing Summary: ")') 
-      CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+      CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
       routinePtr=>timingRoutineList%head
       DO WHILE(ASSOCIATED(routinePtr))
         WRITE(outputString,'("*** Routine : ",A)') TRIM(routinePtr%name)
-        CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+        CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
         WRITE(outputString,'("***    Number of invocations: ",I10)') routinePtr%numberOfInvocations
-        CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+        CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
         WRITE(outputString,'("***    Routine times: Total Exclusive  Total Inclusive  Average Exclusive  Average Inclusive")')
-        CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+        CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
         IF(routinePtr%numberOfInvocations==0) THEN
           WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
             & routinePtr%totalExclusiveCPUTime,routinePtr%totalInclusiveCPUTime, &
             & REAL(routinePtr%numberOfInvocations,SP),REAL(routinePtr%numberOfInvocations,SP)
-          CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+          CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
           WRITE(outputString,'("***    System    (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
             & routinePtr%totalExclusiveSystemTime,routinePtr%totalInclusiveSystemTime, &
             & REAL(routinePtr%numberOfInvocations,SP),REAL(routinePtr%numberOfInvocations,SP)
-          CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+          CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
         ELSE
           WRITE(outputString,'("***    CPU       (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
             & routinePtr%totalExclusiveCPUTime,routinePtr%totalInclusiveCPUTime, &
             & routinePtr%totalExclusiveCPUTime/REAL(routinePtr%numberOfInvocations,SP), &
             & routinePtr%totalInclusiveCPUTime/REAL(routinePtr%numberOfInvocations,SP)
-          CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+          CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
           WRITE(outputString,'("***    System    (s):  ",E14.6,"   ",E14.6,"     ",E14.6,"     ",E14.6)')  &
             & routinePtr%totalExclusiveSystemTime,routinePtr%totalInclusiveSystemTime, &
             & routinePtr%totalExclusiveSystemTime/REAL(routinePtr%numberOfInvocations,SP), &
             & routinePtr%totalInclusiveSystemTime/REAL(routinePtr%numberOfInvocations,SP)
-          CALL WriteStr(TIMING_OUTPUT_TYPE,err,error,*999)
+          CALL WriteStr(TIMING_OUTPUT_TYPE,outputString,err,error,*999)
         ENDIF
         routinePtr=>routinePtr%nextRoutine
       ENDDO
@@ -1451,7 +1455,7 @@ CONTAINS
   !
 
   !>Writes the output string to a specified output stream.
-  SUBROUTINE WriteStr(outputStreamID,err,error,*)
+  SUBROUTINE WriteStr(outputStreamID,outputString,err,error,*)
 
 
 !!!!NOTE: No enters or exits is used here to avoid an infinite loop
@@ -1462,6 +1466,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: outputStreamID !<The outputStreamID of the output stream. An outputStreamID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    CHARACTER(LEN=MAXSTRLEN),INTENT(IN) :: outputString(MAX_OUTPUT_LINES) !<The array of lines to output
     !Local Variables
     INTEGER(INTG) :: endLine(MAX_OUTPUT_LINES),i,j,length,numberBlanks,numberRecords
 
