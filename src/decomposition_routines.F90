@@ -379,18 +379,18 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: adjacentElementIdx,adjacentElementNodeNumber,adjacentElementNumber,adjacencyWeights(1), &
-      & adjacentVertexNumber,computationNodeIdx,decompositionIdx,domainNumber, &
-      & edgeNumber,elementIdx,elementNodeNumber,elementNumber,elementRankNumber,elementStart,elementStop,graphElement, &
+      & adjacentVertexNumber,computationNodeIdx,domainNumber, &
+      & edgeNumber,elementIdx,elementNodeNumber,elementNumber,elementStart,elementStop,graphElement, &
       & graphNodeElement,groupCommunicator,insertStatus,interfaceElementIdx,linkedElement,linkedNodeElement, &
       & maxNumberOfElementsPerNode,maxNumberOfVerticesPerNode,mpiIError, &
-      & myElementStart,myElementStop,myNumberOfElements,myComputationNodeNumber,myTotalNumberOfEdges,myVertexStart, &
+      & myComputationNodeNumber,myTotalNumberOfEdges,myVertexStart, &
       & myVertexStop,myNumberOfVertices,numberFlag, &
       & numberOfComputationNodes,numberOfConstraints,numberOfEdges,numberOfGraphNodes,numberOfMeshElements, &
-      & numberOfNodes,numberOfNodeElements,numberOfNodeVertices,numberOfVertices, &
+      & numberOfNodeElements,numberOfNodeVertices,numberOfVertices, &
       & oldSuperVertexNumber,parmetisOptions(0:2),randomSeedsSize,sumEdges,superVertexNumber,totalNumberOfElements, &
       & totalNumberOfVertices,vertexIdx,vertexNumber,vertexStart,vertexStop,vertexRankNumber,weightFlag,xicIdx
     INTEGER(INTG), ALLOCATABLE :: adjacency(:),elementCounts(:),elementDisplacements(:),elementOffset(:),element2VertexMap(:), &
-      & elementStarts(:),elementStops(:),numberOfElements(:),myNumberOfEdges(:),vertexDomain(:),numberOfSuperVertices(:), &
+      & elementStarts(:),elementStops(:),numberOfElements(:),myNumberOfEdges(:),vertexDomain(:), &
       & randomSeeds(:),elementReceiveCounts(:),vertexDisplacements(:),vertexDistance(:),vertexReceiveCounts(:), &
       & vertexWeights(:),xAdjacency(:)
     INTEGER(INTG), POINTER :: vertex2ElementMap(:,:)
@@ -406,7 +406,7 @@ CONTAINS
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
-    TYPE(TreeType), POINTER :: superNodeTree,vertex2ElementTree
+    TYPE(TreeType), POINTER :: vertex2ElementTree
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Decomposer_ElementDomainCalculate",err,error,*999)
@@ -1869,14 +1869,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: decompositionIdx,dummyErr
-    TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
-    TYPE(ContextType), POINTER :: context
     TYPE(DecompositionType), POINTER :: newDecomposition    
     TYPE(DecompositionPtrType), ALLOCATABLE :: newDecompositions(:)
     TYPE(DecompositionsType), POINTER :: decompositions
-    TYPE(RegionType), POINTER :: region    
     TYPE(VARYING_STRING) :: dummyError,localError
-    TYPE(WorkGroupType), POINTER :: worldWorkGroup
 
     ENTERS("Decomposition_CreateStart",err,error,*999)
     
@@ -3085,8 +3081,8 @@ CONTAINS
     INTEGER(INTG) :: numberSurrounding,numberOfNodesXiC(4),numberSurroundingElements
     INTEGER(INTG), ALLOCATABLE :: nodeMatches(:),adjacentElements(:),surroundingElements(:)
     LOGICAL :: xiCollapsed,faceCollapsed(-3:3),subset
-    TYPE(LIST_TYPE), POINTER :: nodeMatchList, surroundingElementsList
-    TYPE(LIST_PTR_TYPE) :: adjacentElementsList(-4:4)
+    TYPE(ListType), POINTER :: nodeMatchList, surroundingElementsList
+    TYPE(ListPtrType) :: adjacentElementsList(-4:4)
     TYPE(BasisType), POINTER :: basis
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
@@ -5222,8 +5218,8 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainMappingType), POINTER :: elementsMapping
-    TYPE(LIST_TYPE), POINTER :: adjacentDomainsList
-    TYPE(LIST_PTR_TYPE), ALLOCATABLE :: adjacentElementsList(:)
+    TYPE(ListType), POINTER :: adjacentDomainsList
+    TYPE(ListPtrType), ALLOCATABLE :: adjacentElementsList(:)
     TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
     TYPE(MeshNodesType), POINTER :: meshNodes
@@ -5589,8 +5585,8 @@ CONTAINS
       & numberBoundaryNodes(:)
     INTEGER(INTG), ALLOCATABLE :: domains(:),allDomains(:),ghostNodes(:)
     LOGICAL :: boundaryDomain
-    TYPE(LIST_TYPE), POINTER :: adjacentDomainsList,allAdjacentDomainsList
-    TYPE(LIST_PTR_TYPE), ALLOCATABLE :: ghostNodesList(:)
+    TYPE(ListType), POINTER :: adjacentDomainsList,allAdjacentDomainsList
+    TYPE(ListPtrType), ALLOCATABLE :: ghostNodesList(:)
     TYPE(MeshType), POINTER :: mesh
     TYPE(MeshTopologyType), POINTER :: meshTopology
     TYPE(DecompositionType), POINTER :: decomposition

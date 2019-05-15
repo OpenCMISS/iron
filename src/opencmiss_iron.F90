@@ -4,8 +4,10 @@
 !>
 !> \mainpage OpenCMISS Iron Documentation
 !>
-!> An open source interactive computer program for Continuum Mechanics, Image analysis, Signal processing and System
-!> Identification. Target usage: Bioengineering application of finite element analysis, boundary element and collocation
+!> An open source interactive computer program for Continuum Mechanics, Image
+!analysis, Signal processing and System
+!> Identification. Target usage: Bioengineering application of finite element
+!analysis, boundary element and collocation
 !> techniques.
 !>
 !> \section LICENSE
@@ -47,7 +49,8 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 !>
-!> The top level OpenCMISS Iron module. This module is the buffer Fortran module between the OpenCMISS Iron library and user code.
+!> The top level OpenCMISS Iron module. This module is the buffer Fortran
+!module between the OpenCMISS Iron library and user code.
 
 ! Eclipse regular expressions to add the DLLEXPORT macro:
 ! Find: ^( *)(SUBROUTINE *)([^\(]*)(\([^\)]*\))
@@ -69,7 +72,7 @@ MODULE OpenCMISS_Iron
  USE Constants
  USE ContextRoutines
  USE ContextAccessRoutines
- USE CONTROL_LOOP_ROUTINES
+ USE ControlLoopRoutines
  USE ControlLoopAccessRoutines
  USE COORDINATE_ROUTINES
  USE CoordinateSystemAccessRoutines
@@ -80,6 +83,7 @@ MODULE OpenCMISS_Iron
  USE DecompositionRoutines
  USE DecompositionAccessRoutines
  USE DistributedMatrixVector
+ USE DistributedMatrixVectorAccessRoutines
  USE EquationsRoutines
  USE EquationsSetConstants
  USE EQUATIONS_SET_ROUTINES
@@ -113,7 +117,7 @@ MODULE OpenCMISS_Iron
  USE MeshAccessRoutines
  USE NodeRoutines
  USE PROBLEM_CONSTANTS
- USE PROBLEM_ROUTINES
+ USE ProblemRoutines
  USE ProblemAccessRoutines
  USE REGION_ROUTINES
  USE RegionAccessRoutines
@@ -172,7 +176,7 @@ MODULE OpenCMISS_Iron
  !>Contains information on a control loop.
  TYPE cmfe_ControlLoopType
    PRIVATE
-   TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+   TYPE(ControlLoopType), POINTER :: controlLoop
  END TYPE cmfe_ControlLoopType
 
  !>Contains information on a coordinate system.
@@ -317,7 +321,7 @@ MODULE OpenCMISS_Iron
  !>Contains information for a problem.
  TYPE cmfe_ProblemType
    PRIVATE
-   TYPE(PROBLEM_TYPE), POINTER :: problem
+   TYPE(ProblemType), POINTER :: problem
  END TYPE cmfe_ProblemType
 
  !>Contains information for a particular quadrature scheme for a basis.
@@ -375,29 +379,40 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_PetscOptionsSetValue
 
- PUBLIC cmfe_BasisType,cmfe_BasisTypesCopy,cmfe_Basis_Finalise,cmfe_Basis_Initialise
+ PUBLIC cmfe_BasisType,cmfe_BasisTypesCopy,cmfe_Basis_Finalise&
+   &,cmfe_Basis_Initialise
 
- PUBLIC cmfe_BoundaryConditionsType,cmfe_BoundaryConditions_Finalise,cmfe_BoundaryConditions_Initialise
+ PUBLIC cmfe_BoundaryConditionsType,cmfe_BoundaryConditions_Finalise&
+   &,cmfe_BoundaryConditions_Initialise
 
  PUBLIC cmfe_CellMLType,cmfe_CellML_Finalise,cmfe_CellML_Initialise
 
- PUBLIC cmfe_CellMLEquationsType,cmfe_CellMLEquations_Finalise,cmfe_CellMLEquations_Initialise
+ PUBLIC cmfe_CellMLEquationsType,cmfe_CellMLEquations_Finalise&
+   &,cmfe_CellMLEquations_Initialise
 
- PUBLIC cmfe_ComputationEnvironmentType,cmfe_ComputationEnvironment_Initialise,cmfe_ComputationEnvironment_Finalise
+ PUBLIC cmfe_ComputationEnvironmentType&
+   &,cmfe_ComputationEnvironment_Initialise&
+   &,cmfe_ComputationEnvironment_Finalise
 
  PUBLIC cmfe_ContextType,cmfe_Context_Finalise,cmfe_Context_Initialise
 
- PUBLIC cmfe_ControlLoopType,cmfe_ControlLoop_Finalise,cmfe_ControlLoop_Initialise,cmfe_ControlLoop_LoadOutputSet
+ PUBLIC cmfe_ControlLoopType,cmfe_ControlLoop_Finalise&
+   &,cmfe_ControlLoop_Initialise,cmfe_ControlLoop_LoadOutputSet
 
- PUBLIC cmfe_CoordinateSystemType,cmfe_CoordinateSystem_Finalise,cmfe_CoordinateSystem_Initialise
+ PUBLIC cmfe_CoordinateSystemType,cmfe_CoordinateSystem_Finalise&
+   &,cmfe_CoordinateSystem_Initialise
 
- PUBLIC cmfe_DataPointsType,cmfe_DataPoints_Finalise,cmfe_DataPoints_Initialise
+ PUBLIC cmfe_DataPointsType,cmfe_DataPoints_Finalise&
+   &,cmfe_DataPoints_Initialise
 
- PUBLIC cmfe_DataProjectionType,cmfe_DataProjection_Finalise,cmfe_DataProjection_Initialise
+ PUBLIC cmfe_DataProjectionType,cmfe_DataProjection_Finalise&
+   &,cmfe_DataProjection_Initialise
 
- PUBLIC cmfe_DecompositionType,cmfe_Decomposition_Finalise,cmfe_Decomposition_Initialise
+ PUBLIC cmfe_DecompositionType,cmfe_Decomposition_Finalise&
+   &,cmfe_Decomposition_Initialise
 
- PUBLIC cmfe_DecomposerType,cmfe_Decomposer_Finalise,cmfe_Decomposer_Initialise
+ PUBLIC cmfe_DecomposerType,cmfe_Decomposer_Finalise&
+   &,cmfe_Decomposer_Initialise
 
  PUBLIC cmfe_DistributedMatrixType,cmfe_DistributedVectorType
 
@@ -405,31 +420,39 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_EquationsType,cmfe_Equations_Finalise,cmfe_Equations_Initialise
 
- PUBLIC cmfe_EquationsSetType,cmfe_EquationsSet_Finalise,cmfe_EquationsSet_Initialise
+ PUBLIC cmfe_EquationsSetType,cmfe_EquationsSet_Finalise&
+   &,cmfe_EquationsSet_Initialise
 
  PUBLIC cmfe_FieldType,cmfe_Field_Finalise,cmfe_Field_Initialise
 
- PUBLIC cmfe_FieldsType,cmfe_Fields_Create,cmfe_Fields_Finalise,cmfe_Fields_Initialise
+ PUBLIC cmfe_FieldsType,cmfe_Fields_Create,cmfe_Fields_Finalise&
+   &,cmfe_Fields_Initialise
 
- PUBLIC cmfe_GeneratedMeshType,cmfe_GeneratedMesh_Finalise,cmfe_GeneratedMesh_Initialise
+ PUBLIC cmfe_GeneratedMeshType,cmfe_GeneratedMesh_Finalise&
+   &,cmfe_GeneratedMesh_Initialise
 
  PUBLIC cmfe_HistoryType,cmfe_History_Finalise,cmfe_History_Initialise
 
  PUBLIC cmfe_InterfaceType,cmfe_Interface_Finalise,cmfe_Interface_Initialise
 
- PUBLIC cmfe_InterfaceConditionType,cmfe_InterfaceCondition_Finalise,cmfe_InterfaceCondition_Initialise
+ PUBLIC cmfe_InterfaceConditionType,cmfe_InterfaceCondition_Finalise&
+   &,cmfe_InterfaceCondition_Initialise
 
- PUBLIC cmfe_InterfaceEquationsType,cmfe_InterfaceEquations_Finalise,cmfe_InterfaceEquations_Initialise
+ PUBLIC cmfe_InterfaceEquationsType,cmfe_InterfaceEquations_Finalise&
+   &,cmfe_InterfaceEquations_Initialise
 
- PUBLIC cmfe_InterfaceMeshConnectivityType,cmfe_InterfaceMeshConnectivity_Finalise, &
+ PUBLIC cmfe_InterfaceMeshConnectivityType&
+   &,cmfe_InterfaceMeshConnectivity_Finalise,&
    & cmfe_InterfaceMeshConnectivity_Initialise
 
- PUBLIC cmfe_InterfacePointsConnectivityType,cmfe_InterfacePointsConnectivity_Initialise, &
+ PUBLIC cmfe_InterfacePointsConnectivityType&
+   &,cmfe_InterfacePointsConnectivity_Initialise,&
    & cmfe_InterfacePointsConnectivity_Finalise
 
  PUBLIC cmfe_MeshType,cmfe_Mesh_Finalise,cmfe_Mesh_Initialise
 
- PUBLIC cmfe_MeshElementsType,cmfe_MeshElements_Finalise,cmfe_MeshElements_Initialise
+ PUBLIC cmfe_MeshElementsType,cmfe_MeshElements_Finalise&
+   &,cmfe_MeshElements_Initialise
 
  PUBLIC cmfe_MeshNodesType,cmfe_MeshNodes_Finalise,cmfe_MeshNodes_Initialise
 
@@ -437,13 +460,15 @@ MODULE OpenCMISS_Iron
 
  PUBLIC cmfe_ProblemType,cmfe_Problem_Finalise,cmfe_Problem_Initialise
 
- PUBLIC cmfe_QuadratureType,cmfe_Quadrature_Finalise,cmfe_Quadrature_Initialise
+ PUBLIC cmfe_QuadratureType,cmfe_Quadrature_Finalise&
+   &,cmfe_Quadrature_Initialise
 
  PUBLIC cmfe_RegionType,cmfe_Region_Finalise,cmfe_Region_Initialise
 
  PUBLIC cmfe_SolverType,cmfe_Solver_Finalise,cmfe_Solver_Initialise
 
- PUBLIC cmfe_SolverEquationsType,cmfe_SolverEquations_Finalise,cmfe_SolverEquations_Initialise
+ PUBLIC cmfe_SolverEquationsType,cmfe_SolverEquations_Finalise&
+   &,cmfe_SolverEquations_Initialise
 
  PUBLIC cmfe_WorkGroupType,cmfe_WorkGroup_Initialise,cmfe_WorkGroup_Finalise
 
@@ -1565,6 +1590,16 @@ MODULE OpenCMISS_Iron
  !>@{
  INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOOP_NODE = CONTROL_LOOP_NODE !<The identifier for a each "leaf" node in a control loop. \see OpenCMISS_ControlLoopIdentifiers,OpenCMISS
  !>@}
+ !> \addtogroup OpenCMISS_ControlLoopTypes OpenCMISS::Iron::ControlLoop::ControlLoopTypes
+ !> \brief Control loop type parameters
+ !> \see OpenCMISS::Iron::ControlLoop,OpenCMISS
+ !>@{
+ INTEGER(INTG), PARAMETER :: CMFE_CONTROL_SIMPLE_TYPE = CONTROL_SIMPLE_TYPE !<Simple, one iteration control loop. \see OpenCMISS_ControlLoopTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_CONTROL_FIXED_LOOP_TYPE = CONTROL_FIXED_LOOP_TYPE !<Fixed iteration control loop. \see OpenCMISS_ControlLoopTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_CONTROL_TIME_LOOP_TYPE = CONTROL_TIME_LOOP_TYPE !<Time control loop. \see OpenCMISS_ControlLoopTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_CONTROL_WHILE_LOOP_TYPE = CONTROL_WHILE_LOOP_TYPE !<While control loop. \see OpenCMISS_ControlLoopTypes,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_CONTROL_LOAD_INCREMENT_LOOP_TYPE = CONTROL_LOAD_INCREMENT_LOOP_TYPE !<Load increment control loop. \see OpenCMISS_ControlLoopTypes,OpenCMISS
+ !>@}
  !> \addtogroup OpenCMISS_ControlLoopOutputTypes OpenCMISS::Iron::ControlLoop::OutputTypes
  !> \brief The control loop output types.
  !> \see OpenCMISS::Iron::ControlLoop,OpenCMISS
@@ -1716,7 +1751,7 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_ControlLoop_TimesSetObj
  END INTERFACE cmfe_ControlLoop_TimesSet
 
- !>Sets/Changes the loop type for a control loop. \todo Is this really a public       method? \todo need a get method
+ !>Sets/Changes the loop type for a control loop. \todo Is this really a public method? \todo need a get method
  INTERFACE cmfe_ControlLoop_TypeSet
    MODULE PROCEDURE cmfe_ControlLoop_TypeSetNumber0
    MODULE PROCEDURE cmfe_ControlLoop_TypeSetNumber1
@@ -1725,6 +1760,9 @@ MODULE OpenCMISS_Iron
 
  PUBLIC CMFE_CONTROL_LOOP_NODE
 
+ PUBLIC CMFE_CONTROL_SIMPLE_TYPE,CMFE_CONTROL_FIXED_LOOP_TYPE,CMFE_CONTROL_TIME_LOOP_TYPE, &
+   & CMFE_CONTROL_WHILE_LOOP_TYPE,CMFE_CONTROL_LOAD_INCREMENT_LOOP_TYPE
+ 
  PUBLIC CMFE_CONTROL_LOOP_NO_OUTPUT,CMFE_CONTROL_LOOP_PROGRESS_OUTPUT,CMFE_CONTROL_LOOP_TIMING_OUTPUT
 
  PUBLIC cmfe_ControlLoop_CurrentTimesGet
@@ -6296,16 +6334,6 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE=PROBLEM_FE_CONTACT_REPROJECT_SUBTYPE !<finear elasticity problem subject to contact constraint, reproject at Newton iterations \see OpenCMISS_ProblemSubtypes,OpenCMISS
 
  !>@}
- !> \addtogroup OpenCMISS_ProblemControlLoopTypes OpenCMISS::Iron::Problem::ControlLoopTypes
- !> \brief Problem control loop type parameters
- !> \see OpenCMISS::Iron::Problem,OpenCMISS
- !>@{
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_SIMPLE_TYPE = PROBLEM_CONTROL_SIMPLE_TYPE !<Simple, one iteration control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_FIXED_LOOP_TYPE = PROBLEM_CONTROL_FIXED_LOOP_TYPE !<Fixed iteration control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_TIME_LOOP_TYPE = PROBLEM_CONTROL_TIME_LOOP_TYPE !<Time control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_WHILE_LOOP_TYPE = PROBLEM_CONTROL_WHILE_LOOP_TYPE !<While control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
- INTEGER(INTG), PARAMETER :: CMFE_PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE = PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE !<Load increment control loop. \see OpenCMISS_ProblemControlLoopTypes,OpenCMISS
- !>@}
  !>@}
 
  !Module types
@@ -6413,9 +6441,6 @@ MODULE OpenCMISS_Iron
 
  PUBLIC CMFE_PROBLEM_MONODOMAIN_BUENOOROVIO_SUBTYPE, CMFE_PROBLEM_MONODOMAIN_TENTUSSCHER06_SUBTYPE
 
- PUBLIC CMFE_PROBLEM_CONTROL_SIMPLE_TYPE,CMFE_PROBLEM_CONTROL_FIXED_LOOP_TYPE,CMFE_PROBLEM_CONTROL_TIME_LOOP_TYPE, &
-   & CMFE_PROBLEM_CONTROL_WHILE_LOOP_TYPE,CMFE_PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE
- 
  PUBLIC CMFE_PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, CMFE_PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
    & CMFE_PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,CMFE_PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE, &
    & CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_DIFFUSION_SUBTYPE, CMFE_PROBLEM_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFFUSION_SUBTYPE, &
@@ -13034,7 +13059,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
  
@@ -13077,7 +13102,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
  
@@ -13153,7 +13178,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
@@ -13245,7 +13270,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
@@ -13337,7 +13362,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
@@ -13431,7 +13456,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
@@ -13528,7 +13553,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
@@ -13627,7 +13652,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
@@ -13691,7 +13716,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(RegionType), POINTER :: region
@@ -13780,7 +13805,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
 
@@ -13826,7 +13851,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
 
@@ -13908,7 +13933,7 @@ CONTAINS
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: field
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -17997,8 +18022,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
  
     ENTERS("cmfe_ControlLoop_CurrentTimesGetNumber0",err,error,*999)
@@ -18039,8 +18064,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
  
     ENTERS("cmfe_ControlLoop_CurrentTimesGetNumber1",err,error,*999)
@@ -18105,8 +18130,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_DestroyNumber0",err,error,*999)
@@ -18144,8 +18169,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_DestroyNumber1",err,error,*999)
@@ -18211,8 +18236,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: rootControlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: rootControlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
  
     ENTERS("cmfe_ControlLoop_ControlLoopGetNumber00",err,error,*999)
@@ -18253,8 +18278,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: rootControlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: rootControlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_ControlLoopGetNumber10",err,error,*999)
@@ -18295,8 +18320,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: rootControlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: rootControlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_ControlLoopGetNumber01",err,error,*999)
@@ -18337,8 +18362,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: rootControlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: rootControlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_ControlLoopGetNumber11",err,error,*999)
@@ -18434,8 +18459,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_IterationsSetNumber0",err,error,*999)
@@ -18477,8 +18502,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_IterationsSetNumber1",err,error,*999)
@@ -18544,8 +18569,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_LabelGetCNumber0",err,error,*999)
@@ -18584,8 +18609,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_LabelGetCNumber1",err,error,*999)
@@ -18650,8 +18675,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_LabelGetVSNumber0",err,error,*999)
@@ -18690,8 +18715,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_LabelGetVSNumber1",err,error,*999)
@@ -18756,8 +18781,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_LabelSetCNumber0",err,error,*999)
@@ -18796,8 +18821,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_LabelSetCNumber1",err,error,*999)
@@ -18862,8 +18887,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_LabelSetVSNumber0",err,error,*999)
@@ -18902,8 +18927,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_LabelSetVSNumber1",err,error,*999)
@@ -18969,8 +18994,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_MaximumIterationsSetNumber0",err,error,*999)
@@ -19011,8 +19036,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_MaximumIterationsSetNumber1",err,error,*999)
@@ -19105,8 +19130,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_AbsoluteToleranceSetNumber0",err,error,*999)
@@ -19147,8 +19172,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_AbsoluteToleranceSetNumber1",err,error,*999)
@@ -19215,8 +19240,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_NumberOfIterationsGetNumber0",err,error,*999) 
@@ -19229,7 +19254,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET(controlLoop,numberOfIterations,err,error,*999)
+    CALL ControlLoop_NumberOfIterationsGet(controlLoop,numberOfIterations,err,error,*999)
      
     EXITS("cmfe_ControlLoop_NumberOfIterationsGetNumber0")
     RETURN
@@ -19257,8 +19282,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_NumberOfIterationsGetNumber1",err,error,*999) 
@@ -19271,7 +19296,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET(controlLoop,numberOfIterations,err,error,*999)
+    CALL ControlLoop_NumberOfIterationsGet(controlLoop,numberOfIterations,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfIteratonsGetNumber1")  
     RETURN
@@ -19298,7 +19323,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_NumberOfIterationsGetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_GET(controlLoop%controlLoop,numberOfIterations,err,error,*999)
+    CALL ControlLoop_NumberOfIterationsGet(controlLoop%controlLoop,numberOfIterations,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfIterationsGetObj")
     RETURN
@@ -19325,8 +19350,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_NumberOfIterationsSetNumber0",err,error,*999)
@@ -19339,7 +19364,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET(controlLoop,numberOfIterations,err,error,*999)
+    CALL ControlLoop_NumberOfIterationsSet(controlLoop,numberOfIterations,err,error,*999)
    
     EXITS("cmfe_ControlLoop_NumberOfItSetNumber0") 
     RETURN
@@ -19367,8 +19392,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_NumberOfIterationsSetNumber1",err,error,*999) 
@@ -19381,7 +19406,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET(controlLoop,numberOfIterations,err,error,*999)
+    CALL ControlLoop_NumberOfIterationsSet(controlLoop,numberOfIterations,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfIterationsSetNumber1") 
     RETURN
@@ -19408,7 +19433,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_NumberOfIterationsSetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_NUMBER_OF_ITERATIONS_SET(controlLoop%controlLoop,numberOfIterations,err,error,*999)
+    CALL ControlLoop_NumberOfIterationsSet(controlLoop%controlLoop,numberOfIterations,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfIterationsSetObj")
     RETURN
@@ -19435,8 +19460,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_NumberOfSubLoopsGetNumber0",err,error,*999)
@@ -19449,7 +19474,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifier,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_GET(controlLoop,numberOfSubLoops,err,error,*999)
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfSubLoopsGetNumber0")
     RETURN
@@ -19476,8 +19501,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_NumberOfSubLoopsGetNumber1",err,error,*999)
@@ -19490,7 +19515,7 @@ CONTAINS
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
     CALL Problem_ControlLoopGet(problem,controlLoopIdentifiers,controlLoop,err,error,*999)
-    CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_GET(controlLoop,numberOfSubLoops,err,error,*999)
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfSubLoopsGetNumber1")
     RETURN
@@ -19516,7 +19541,7 @@ CONTAINS
 
     ENTERS("cmfe_ControlLoop_NumberOfSubLoopsGetObj",err,error,*999)
 
-    CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_GET(controlLoop%controlLoop,numberOfSubLoops,err,error,*999)
+    CALL ControlLoop_NumberOfSubLoopsGet(controlLoop%controlLoop,numberOfSubLoops,err,error,*999)
 
     EXITS("cmfe_ControlLoop_NumberOfSubLoopsGetObj")
     RETURN
@@ -19543,8 +19568,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_NumberOfSubLoopsSetNumber",err,error,*999)
@@ -19584,8 +19609,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_NumberOfSubLoopsSetNumber1",err,error,*999)
@@ -19650,8 +19675,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_OutputTypeGetNumber0",err,error,*999)
@@ -19690,8 +19715,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_OutputTypeGetNumber1",err,error,*999)
@@ -19756,8 +19781,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_OutputTypeSetNumber0",err,error,*999)
@@ -19796,8 +19821,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_OutputTypeSetNumber1",err,error,*999)
@@ -19862,8 +19887,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TimeOutputSetNumber0",err,error,*999)
@@ -19902,8 +19927,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TimeOutputSetNumber1",err,error,*999)
@@ -19968,8 +19993,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TimeInputSetNumber0",err,error,*999)
@@ -20008,8 +20033,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TimeInputSetNumber1",err,error,*999)
@@ -20081,8 +20106,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TimesGetNumber0",err,error,*999)
@@ -20128,8 +20153,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TimesGetNumber1",err,error,*999)
@@ -20205,8 +20230,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TimesSetNumber0",err,error,*999)
@@ -20248,8 +20273,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TimesSetNumber1",err,error,*999)
@@ -20316,8 +20341,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TypeSetNumber0",err,error,*999)
@@ -20356,8 +20381,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_ControlLoop_TypeSetNumber1",err,error,*999)
@@ -52904,7 +52929,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_CellMLEquationsCreateFinishNumber",err,error,*999)
@@ -52915,7 +52940,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_CELLML_EQUATIONS_CREATE_FINISH(problem,err,error,*999)
+    CALL Problem_CellMLEquationsCreateFinish(problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('CellML Equations Create')
@@ -52945,7 +52970,7 @@ CONTAINS
 
     ENTERS("cmfe_Problem_CellMLEquationsCreateFinishObj",err,error,*999)
 
-    CALL PROBLEM_CELLML_EQUATIONS_CREATE_FINISH(problem%problem,err,error,*999)
+    CALL Problem_CellMLEquationsCreateFinish(problem%problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('CellML Equations Create')
@@ -52973,7 +52998,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_CellMLEquationsCreateStartNumber",err,error,*999)
@@ -52988,7 +53013,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_CELLML_EQUATIONS_CREATE_START(problem,err,error,*999)
+    CALL Problem_CellMLEquationsCreateStart(problem,err,error,*999)
 
     EXITS("cmfe_Problem_CellMLEquationsCreateStartNumber")
     RETURN
@@ -53018,7 +53043,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('CellML Equations Create')
 #endif
 
-    CALL PROBLEM_CELLML_EQUATIONS_CREATE_START(problem%problem,err,error,*999)
+    CALL Problem_CellMLEquationsCreateStart(problem%problem,err,error,*999)
 
     EXITS("cmfe_Problem_CellMLEquationsCreateStartObj")
     RETURN
@@ -53046,7 +53071,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_CellMLEquationsGetNumber0",err,error,*999)
@@ -53085,7 +53110,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_CellMLEquationsGetNumber1",err,error,*999)
@@ -53178,7 +53203,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_CreateFinishNumber",err,error,*999)
@@ -53189,7 +53214,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_CREATE_FINISH(problem,err,error,*999)
+    CALL Problem_CreateFinish(problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Problem Create')
@@ -53218,7 +53243,7 @@ CONTAINS
 
     ENTERS("cmfe_Problem_CreateFinishObj",err,error,*999)
 
-    CALL PROBLEM_CREATE_FINISH(problem%problem,err,error,*999)
+    CALL Problem_CreateFinish(problem%problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('problem Create')
@@ -53247,7 +53272,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     
     ENTERS("cmfe_Problem_CreateStartNumber",err,error,*999)
@@ -53261,7 +53286,7 @@ CONTAINS
     NULLIFY(problem)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
-    CALL PROBLEM_CREATE_START(problemUserNumber,problems,problemSpecification,problem,err,error,*999)
+    CALL Problem_CreateStart(problemUserNumber,problems,problemSpecification,problem,err,error,*999)
 
     EXITS("cmfe_Problem_CreateStartNumber")
     RETURN
@@ -53296,7 +53321,7 @@ CONTAINS
 
     NULLIFY(problems)
     CALL Context_ProblemsGet(context%context,problems,err,error,*999)
-    CALL PROBLEM_CREATE_START(problemUserNumber,problems,problemSpecification,problem%problem,err,error,*999)
+    CALL Problem_CreateStart(problemUserNumber,problems,problemSpecification,problem%problem,err,error,*999)
 
     EXITS("cmfe_Problem_CreateStartObj")
     RETURN
@@ -53320,7 +53345,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_ControlLoopCreateFinishNumber",err,error,*999)
@@ -53331,7 +53356,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_CONTROL_LOOP_CREATE_FINISH(problem,err,error,*999)
+    CALL Problem_ControlLoopCreateFinish(problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Problem Control Loop Create')
@@ -53360,7 +53385,7 @@ CONTAINS
 
     ENTERS("cmfe_Problem_ControlLoopCreateFinishObj",err,error,*999)
 
-    CALL PROBLEM_CONTROL_LOOP_CREATE_FINISH(problem%problem,err,error,*999)
+    CALL Problem_ControlLoopCreateFinish(problem%problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('problem Control Loop Create')
@@ -53388,7 +53413,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_ControlLoopCreateStartNumber",err,error,*999)
@@ -53403,7 +53428,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_CONTROL_LOOP_CREATE_START(problem,err,error,*999)
+    CALL Problem_ControlLoopCreateStart(problem,err,error,*999)
 
     EXITS("cmfe_Problem_ControlLoopCreateStartNumber")
     RETURN
@@ -53432,7 +53457,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('problem Control Loop Create')
 #endif
 
-    CALL PROBLEM_CONTROL_LOOP_CREATE_START(problem%problem,err,error,*999)
+    CALL Problem_ControlLoopCreateStart(problem%problem,err,error,*999)
 
     EXITS("cmfe_Problem_ControlLoopCreateStartObj")
     RETURN
@@ -53456,7 +53481,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_ControlLoopDestroyNumber",err,error,*999)
@@ -53467,7 +53492,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_CONTROL_LOOP_DESTROY(problem,err,error,*999)
+    CALL Problem_ControlLoopDestroy(problem,err,error,*999)
 
     EXITS("cmfe_Problem_ControlLoopDestroyNumber")
     RETURN
@@ -53492,7 +53517,7 @@ CONTAINS
 
     ENTERS("cmfe_Problem_ControlLoopDestroyObj",err,error,*999)
 
-    CALL PROBLEM_CONTROL_LOOP_DESTROY(problem%problem,err,error,*999)
+    CALL Problem_ControlLoopDestroy(problem%problem,err,error,*999)
 
     EXITS("cmfe_Problem_ControlLoopDestroyObj")
     RETURN
@@ -53518,7 +53543,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_ControlLoopGetNumber0",err,error,*999)
@@ -53555,7 +53580,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_ControlLoopGetNumber1",err,error,*999)
@@ -53644,7 +53669,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_DestroyNumber",err,error,*999)
@@ -53704,7 +53729,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolveNumber",err,error,*999)
@@ -53783,7 +53808,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolverGetNumber0",err,error,*999)
@@ -53821,7 +53846,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(VARYING_STRING) :: localError
 
@@ -53917,7 +53942,7 @@ CONTAINS
     !Local variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
 
@@ -53960,7 +53985,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
@@ -54026,7 +54051,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolverEquationsCreateFinishNumber",err,error,*999)
@@ -54037,7 +54062,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_SOLVER_EQUATIONS_CREATE_FINISH(problem,err,error,*999)
+    CALL Problem_SolverEquationsCreateFinish(problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Solver Equations Create')
@@ -54067,7 +54092,7 @@ CONTAINS
 
     ENTERS("cmfe_Problem_SolverEquationsCreateFinishObj",err,error,*999)
 
-    CALL PROBLEM_SOLVER_EQUATIONS_CREATE_FINISH(problem%problem,err,error,*999)
+    CALL Problem_SolverEquationsCreateFinish(problem%problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Solver Equations Create')
@@ -54095,7 +54120,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolverEquationsCreateStartNumber",err,error,*999)
@@ -54110,7 +54135,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_SOLVER_EQUATIONS_CREATE_START(problem,err,error,*999)
+    CALL Problem_SolverEquationsCreateStart(problem,err,error,*999)
 
     EXITS("cmfe_Problem_SolverEquationsCreateStartNumber")
     RETURN
@@ -54140,7 +54165,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('Solver Equations Create')
 #endif
 
-    CALL PROBLEM_SOLVER_EQUATIONS_CREATE_START(problem%problem,err,error,*999)
+    CALL Problem_SolverEquationsCreateStart(problem%problem,err,error,*999)
 
     EXITS("cmfe_Problem_SolverEquationsCreateStartObj")
     RETURN
@@ -54164,7 +54189,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolverEquationsDestroyNumber",err,error,*999)
@@ -54175,7 +54200,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_SOLVER_EQUATIONS_DESTROY(problem,err,error,*999)
+    CALL Problem_SolverEquationsDestroy(problem,err,error,*999)
 
     EXITS("cmfe_Problem_SolverEquationsDestroyNumber")
     RETURN
@@ -54200,7 +54225,7 @@ CONTAINS
 
     ENTERS("cmfe_Problem_SolverEquationsDestroyObj",err,error,*999)
 
-    CALL PROBLEM_SOLVER_EQUATIONS_DESTROY(problem%problem,err,error,*999)
+    CALL Problem_SolverEquationsDestroy(problem%problem,err,error,*999)
 
     EXITS("cmfe_Problem_SolverEquationsDestroyObj")
     RETURN
@@ -54228,7 +54253,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolverEquationsGetNumber0",err,error,*999)
@@ -54267,7 +54292,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolverEquationsGetNumber1",err,error,*999)
@@ -54360,7 +54385,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolversCreateFinishNumber",err,error,*999)
@@ -54371,7 +54396,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_SOLVERS_CREATE_FINISH(problem,err,error,*999)
+    CALL Problem_SolversCreateFinish(problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('Problem Solvers Create')
@@ -54400,7 +54425,7 @@ CONTAINS
 
     ENTERS("cmfe_Problem_SolversCreateFinishObj",err,error,*999)
 
-    CALL PROBLEM_SOLVERS_CREATE_FINISH(problem%problem,err,error,*999)
+    CALL Problem_SolversCreateFinish(problem%problem,err,error,*999)
 
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP('problem Solvers Create')
@@ -54428,7 +54453,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolversCreateStartNumber",err,error,*999)
@@ -54443,7 +54468,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_SOLVERS_CREATE_START(problem,err,error,*999)
+    CALL Problem_SolversCreateStart(problem,err,error,*999)
 
     EXITS("cmfe_Problem_SolversCreateStartNumber")
     RETURN
@@ -54472,7 +54497,7 @@ CONTAINS
     CALL TAU_STATIC_PHASE_START('problem Solvers Create')
 #endif
 
-    CALL PROBLEM_SOLVERS_CREATE_START(problem%problem,err,error,*999)
+    CALL Problem_SolversCreateStart(problem%problem,err,error,*999)
 
     EXITS("cmfe_Problem_SolversCreateStartObj")
     RETURN
@@ -54496,7 +54521,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SolversDestroyNumber",err,error,*999)
@@ -54507,7 +54532,7 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ProblemsGet(context,problems,err,error,*999)
     CALL Problem_Get(problems,problemUserNumber,problem,err,error,*999)
-    CALL PROBLEM_SOLVERS_DESTROY(problem,err,error,*999)
+    CALL Problem_SolversDestroy(problem,err,error,*999)
 
     EXITS("cmfe_Problem_SolversDestroyNumber")
     RETURN
@@ -54532,7 +54557,7 @@ CONTAINS
 
     ENTERS("cmfe_Problem_SolversDestroyObj",err,error,*999)
 
-    CALL PROBLEM_SOLVERS_DESTROY(problem%problem,err,error,*999)
+    CALL Problem_SolversDestroy(problem%problem,err,error,*999)
 
     EXITS("cmfe_Problem_SolversDestroyObj")
     RETURN
@@ -54557,7 +54582,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SpecificationGetNumber",err,error,*999)
@@ -54620,7 +54645,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
 
     ENTERS("cmfe_Problem_SpecificationSizeGetNumber",err,error,*999)
@@ -54683,7 +54708,7 @@ CONTAINS
     !Local variables
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -55400,7 +55425,7 @@ CONTAINS
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -55456,7 +55481,7 @@ CONTAINS
     TYPE(CELLML_TYPE), POINTER :: cellml
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -55536,7 +55561,7 @@ CONTAINS
     !Local variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -55607,7 +55632,7 @@ CONTAINS
     !Local variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -55678,7 +55703,7 @@ CONTAINS
     !Local variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -55751,7 +55776,7 @@ CONTAINS
     !Local variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -55823,7 +55848,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -55865,7 +55890,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -55932,7 +55957,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -55974,7 +55999,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
  
@@ -56042,7 +56067,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56084,7 +56109,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56152,7 +56177,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56194,7 +56219,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
  
@@ -56262,7 +56287,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56304,7 +56329,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56373,7 +56398,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
  
@@ -56416,7 +56441,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56485,7 +56510,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56527,7 +56552,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56594,7 +56619,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56635,7 +56660,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56702,7 +56727,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56743,7 +56768,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56811,7 +56836,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56853,7 +56878,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -56921,7 +56946,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,nonlinearSolver
 
@@ -56968,7 +56993,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,nonlinearSolver
 
@@ -57041,7 +57066,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
 
@@ -57087,7 +57112,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
 
@@ -57157,7 +57182,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57198,7 +57223,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57264,7 +57289,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57305,7 +57330,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57346,7 +57371,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57387,7 +57412,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57482,7 +57507,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57525,7 +57550,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
  
@@ -57594,7 +57619,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57663,7 +57688,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57734,7 +57759,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: field
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -57813,7 +57838,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57884,7 +57909,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -57955,7 +57980,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58027,7 +58052,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58102,7 +58127,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58175,7 +58200,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58245,7 +58270,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58316,7 +58341,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58386,7 +58411,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58427,7 +58452,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58494,7 +58519,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58535,7 +58560,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58602,7 +58627,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58643,7 +58668,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58710,7 +58735,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58751,7 +58776,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58819,7 +58844,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58861,7 +58886,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58928,7 +58953,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -58970,7 +58995,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59037,7 +59062,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59079,7 +59104,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59200,7 +59225,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59243,7 +59268,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
  
@@ -59312,7 +59337,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59355,7 +59380,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
    
@@ -59424,7 +59449,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59467,7 +59492,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59536,7 +59561,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59579,7 +59604,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59648,7 +59673,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59691,7 +59716,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59760,7 +59785,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59803,7 +59828,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59872,7 +59897,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59914,7 +59939,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -59981,7 +60006,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60023,7 +60048,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
  
@@ -60090,7 +60115,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60133,7 +60158,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60201,7 +60226,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60244,7 +60269,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60313,7 +60338,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60356,7 +60381,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60425,7 +60450,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
 
@@ -60471,7 +60496,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
 
@@ -60542,7 +60567,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,cellMLSolver
 
@@ -60588,7 +60613,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,cellMLSolver
 
@@ -60660,7 +60685,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60703,7 +60728,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60772,7 +60797,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60814,7 +60839,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60881,7 +60906,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60924,7 +60949,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -60992,7 +61017,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
  
@@ -61035,7 +61060,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61103,7 +61128,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61145,7 +61170,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61212,7 +61237,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61257,7 +61282,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61326,7 +61351,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61369,7 +61394,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61437,7 +61462,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61480,7 +61505,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61548,7 +61573,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61591,7 +61616,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61659,7 +61684,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61702,7 +61727,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61771,7 +61796,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61814,7 +61839,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61883,7 +61908,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61925,7 +61950,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -61991,7 +62016,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62034,7 +62059,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62103,7 +62128,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62146,7 +62171,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62215,7 +62240,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62258,7 +62283,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62327,7 +62352,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
  
@@ -62374,7 +62399,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,linearSolver
 
@@ -62446,7 +62471,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,cellMLSolver
 
@@ -62493,7 +62518,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver,cellMLSolver
 
@@ -62566,7 +62591,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62609,7 +62634,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62679,7 +62704,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62722,7 +62747,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62791,7 +62816,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62834,7 +62859,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62903,7 +62928,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -62946,7 +62971,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63014,7 +63039,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63057,7 +63082,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63126,7 +63151,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63169,7 +63194,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63238,7 +63263,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63281,7 +63306,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63350,7 +63375,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63393,7 +63418,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63462,7 +63487,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63505,7 +63530,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63574,7 +63599,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63617,7 +63642,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63686,7 +63711,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63728,7 +63753,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63795,7 +63820,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63838,7 +63863,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63906,7 +63931,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -63948,7 +63973,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64015,7 +64040,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64057,7 +64082,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64124,7 +64149,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64166,7 +64191,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64233,7 +64258,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64275,7 +64300,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64342,7 +64367,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64384,7 +64409,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64451,7 +64476,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64493,7 +64518,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
 
@@ -64563,7 +64588,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -64619,7 +64644,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
@@ -64704,7 +64729,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: interfaceRegion
     TYPE(RegionsType), POINTER :: regions
@@ -64766,7 +64791,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: interfaceRegion
     TYPE(RegionsType), POINTER :: regions
@@ -64851,7 +64876,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -64896,7 +64921,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -64966,7 +64991,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -65011,7 +65036,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -65081,7 +65106,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -65126,7 +65151,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -65195,7 +65220,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -65239,7 +65264,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -65308,7 +65333,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
@@ -65352,7 +65377,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
@@ -65425,7 +65450,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
 
@@ -65468,7 +65493,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
 

@@ -588,6 +588,10 @@ MODULE SolverAccessRoutines
   PUBLIC CELLML_EQUATIONS_STATIC,CELLML_EQUATIONS_QUASISTATIC,CELLML_EQUATIONS_DYNAMIC
   
   PUBLIC CellMLEquations_SolverGet
+
+  PUBLIC Solver_AssertIsFinished,Solver_AssertNotFinished
+
+  PUBLIC Solver_AssertIsDynamic,Solver_AssertIsLinear,Solver_AssertIsNonlinear,Solver_AssertIsOptimiser
   
   PUBLIC Solver_CellMLEquationsGet
 
@@ -596,6 +600,12 @@ MODULE SolverAccessRoutines
   PUBLIC Solver_ControlLoopGet
 
   PUBLIC Solver_DynamicSolverGet
+  
+  PUBLIC Solver_LinearSolverGet
+  
+  PUBLIC Solver_NonlinearSolverGet
+  
+  PUBLIC Solver_OptimiserSolverGet
   
   PUBLIC Solver_SolverEquationsGet
 
@@ -619,6 +629,8 @@ MODULE SolverAccessRoutines
 
   PUBLIC SolverDynamic_SolverGet
 
+  PUBLIC SolverEquations_AssertIsFinished,SolverEquations_AssertNotFinished
+
   PUBLIC SolverEquations_BoundaryConditionsGet
 
   PUBLIC SOLVER_EQUATIONS_BOUNDARY_CONDITIONS_GET
@@ -632,6 +644,10 @@ MODULE SolverAccessRoutines
   PUBLIC SolverLinear_SolverGet
   
   PUBLIC SolverNonlinear_LinearSolverGet
+  
+  PUBLIC SolverNonlinear_NewtonSolverGet
+  
+  PUBLIC SolverNonlinear_QuasiNewtonSolverGet
   
   PUBLIC SolverNonlinear_SolverGet
 
@@ -667,6 +683,182 @@ CONTAINS
     
   END SUBROUTINE CellMLEquations_SolverGet
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a solver has been finished
+  SUBROUTINE Solver_AssertIsFinished(solver,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_TYPE), POINTER, INTENT(IN) :: solver !<The solver to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Solver_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+
+    IF(.NOT.solver%SOLVER_FINISHED) CALL FlagError("Solver has not been finished.",err,error,*999)
+    
+    EXITS("Solver_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("Solver_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a solver has not been finished
+  SUBROUTINE Solver_AssertNotFinished(solver,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_TYPE), POINTER, INTENT(IN) :: solver !<The solver to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+
+    IF(solver%SOLVER_FINISHED) CALL FlagError("Solver has already been finished.",err,error,*999)
+    
+    EXITS("Solver_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("Solver_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_AssertNotFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a solver is a dynamic solver
+  SUBROUTINE Solver_AssertIsDynamic(solver,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_TYPE), POINTER, INTENT(INOUT) :: solver !<The solver to assert the dynamic solver for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Solver_AssertIsDynamic",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("solver is not associated.",err,error,*999)
+
+    IF(solver%SOLVE_TYPE/=SOLVER_DYNAMIC_TYPE) THEN
+      localError="The solver type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+        & " does not correspond to the required dynamic solve type."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Solver_AssertIsDynamic")
+    RETURN
+999 ERRORSEXITS("Solver_AssertIsDynamic",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_AssertIsDynamic
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a solver is a linear solver
+  SUBROUTINE Solver_AssertIsLinear(solver,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_TYPE), POINTER, INTENT(INOUT) :: solver !<The solver to assert the linear solver for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Solver_AssertIsLinear",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("solver is not associated.",err,error,*999)
+
+    IF(solver%SOLVE_TYPE/=SOLVER_LINEAR_TYPE) THEN
+      localError="The solver type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+        & " does not correspond to the required linear solve type."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Solver_AssertIsLinear")
+    RETURN
+999 ERRORSEXITS("Solver_AssertIsLinear",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_AssertIsLinear
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a solver is a nonlinear solver
+  SUBROUTINE Solver_AssertIsNonlinear(solver,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_TYPE), POINTER, INTENT(INOUT) :: solver !<The solver to assert the nonlinear solver for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Solver_AssertIsNonlinear",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("solver is not associated.",err,error,*999)
+
+    IF(solver%SOLVE_TYPE/=SOLVER_NONLINEAR_TYPE) THEN
+      localError="The solver type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+        & " does not correspond to the required nonlinear solve type."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Solver_AssertIsNonlinear")
+    RETURN
+999 ERRORSEXITS("Solver_AssertIsNonlinear",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_AssertIsNonlinear
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a solver is an optimiser solver
+  SUBROUTINE Solver_AssertIsOptimiser(solver,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_TYPE), POINTER, INTENT(INOUT) :: solver !<The solver to assert the optimiser solver for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Solver_AssertIsOptimiser",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("solver is not associated.",err,error,*999)
+
+    IF(solver%SOLVE_TYPE/=SOLVER_OPTIMISER_TYPE) THEN
+      localError="The solver type of "//TRIM(NumberToVString(solver%SOLVE_TYPE,"*",err,error))// &
+        & " does not correspond to the required optimiser solve type."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("Solver_AssertIsOptimiser")
+    RETURN
+999 ERRORSEXITS("Solver_AssertIsOptimiser",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_AssertIsOptimiser
+
   !
   !================================================================================================================================
   !
@@ -707,7 +899,7 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to get the control loop for
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<On exit, a pointer to the control loop for the specified solver. Must not be associated on entry.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<On exit, a pointer to the control loop for the specified solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -728,7 +920,7 @@ CONTAINS
         CALL FlagError("Solver solvers is not associated.",err,error,*999)
       ENDIF
     ENDIF
-    controlLoop=>solvers%CONTROL_LOOP
+    controlLoop=>solvers%controlLoop
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Solvers control loop is not associated.",err,error,*999)
     
     EXITS("Solver_ControlLoopGet")
@@ -768,6 +960,96 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Solver_DynamicSolverGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the linear solver for a solver.
+  SUBROUTINE Solver_LinearSolverGet(solver,linearSolver,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to get the linear solver for
+    TYPE(LINEAR_SOLVER_TYPE), POINTER :: linearSolver !<On exit, a pointer to the linear solver for the specified solver. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_LinearSolverGet",err,error,*998)
+
+    IF(ASSOCIATED(linearSolver)) CALL FlagError("Linear solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*998)
+
+    linearSolver=>solver%LINEAR_SOLVER
+    IF(.NOT.ASSOCIATED(linearSolver)) CALL FlagError("Solver linear solver is not associated.",err,error,*999)
+    
+    EXITS("Solver_LinearSolverGet")
+    RETURN
+999 NULLIFY(linearSolver)
+998 ERRORSEXITS("Solver_LinearSolverGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_LinearSolverGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the nonlinear solver for a solver.
+  SUBROUTINE Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to get the nonlinear solver for
+    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver !<On exit, a pointer to the nonlinear solver for the specified solver. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_NonlinearSolverGet",err,error,*998)
+
+    IF(ASSOCIATED(nonlinearSolver)) CALL FlagError("Nonlinear solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*998)
+
+    nonlinearSolver=>solver%NONLINEAR_SOLVER
+    IF(.NOT.ASSOCIATED(nonlinearSolver)) CALL FlagError("Solver nonlinear solver is not associated.",err,error,*999)
+    
+    EXITS("Solver_NonlinearSolverGet")
+    RETURN
+999 NULLIFY(nonlinearSolver)
+998 ERRORSEXITS("Solver_NonlinearSolverGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_NonlinearSolverGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the optimiser solver for a solver.
+  SUBROUTINE Solver_OptimiserSolverGet(solver,optimiserSolver,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_TYPE), POINTER :: solver !<A pointer to the solver to get the optimiser solver for
+    TYPE(OptimiserSolverType), POINTER :: optimiserSolver !<On exit, a pointer to the optimiser solver for the specified solver. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Solver_OptimiserSolverGet",err,error,*998)
+
+    IF(ASSOCIATED(optimiserSolver)) CALL FlagError("Optimiser solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*998)
+
+    optimiserSolver=>solver%optimiserSolver
+    IF(.NOT.ASSOCIATED(optimiserSolver)) CALL FlagError("Solver optimiser solver is not associated.",err,error,*999)
+    
+    EXITS("Solver_OptimiserSolverGet")
+    RETURN
+999 NULLIFY(optimiserSolver)
+998 ERRORSEXITS("Solver_OptimiserSolverGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Solver_OptimiserSolverGet
   
   !
   !================================================================================================================================
@@ -888,12 +1170,12 @@ CONTAINS
     NULLIFY(solvers)
     CALL Solver_SolversGet(solver,solvers,err,error,*999)
     IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Solver solvers is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(solvers%CONTROL_LOOP)) &
+    IF(.NOT.ASSOCIATED(solvers%controlLoop)) &
       & CALL FlagError("Solver solvers control loop is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(solvers%CONTROL_LOOP%problem)) &
+    IF(.NOT.ASSOCIATED(solvers%controlLoop%problem)) &
       & CALL FlagError("Solver solvers control loop problem is not associated.",err,error,*999)
 
-    workGroup=>solvers%CONTROL_LOOP%problem%workGroup
+    workGroup=>solvers%controlLoop%problem%workGroup
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("The solver work group is not associated.",err,error,*999)
        
     EXITS("Solver_WorkGroupGet")
@@ -913,7 +1195,7 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVERS_TYPE), POINTER :: solvers !<A pointer to the solvers to get the control loop for.
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<On exit, A pointer to the control loop for the solvers. Must not be associated on entry.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<On exit, A pointer to the control loop for the solvers. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -923,7 +1205,7 @@ CONTAINS
     IF(ASSOCIATED(controlLoop)) CALL FlagError("Control loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Solvers is not associated.",err,error,*999)
       
-    controlLoop=>solvers%CONTROL_LOOP
+    controlLoop=>solvers%controlLoop
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("The solvers control loop is not associated.",err,error,*999)
        
     EXITS("Solvers_ControlLoopGet")
@@ -1067,6 +1349,58 @@ CONTAINS
 
   END SUBROUTINE SolverDynamic_SolverGet
      
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a solver equations has been finished
+  SUBROUTINE SolverEquations_AssertIsFinished(solverEquations,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER, INTENT(IN) :: solverEquations !<The solver equations to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("SolverEquations_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+
+    IF(.NOT.solverEquations%SOLVER_EQUATIONS_FINISHED) CALL FlagError("Solver equations has not been finished.",err,error,*999)
+    
+    EXITS("SolverEquations_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("SolverEquations_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverEquations_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a solver equations has not been finished
+  SUBROUTINE SolverEquations_AssertNotFinished(solverEquations,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_EQUATIONS_TYPE), POINTER, INTENT(IN) :: solverEquations !<The solver equations to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverEquations_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
+
+    IF(solverEquations%SOLVER_EQUATIONS_FINISHED) CALL FlagError("Solver equations has already been finished.",err,error,*999)
+    
+    EXITS("SolverEquations_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("SolverEquations_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverEquations_AssertNotFinished
+
   !
   !================================================================================================================================
   !
@@ -1273,6 +1607,66 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE SolverNonlinear_LinearSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the newton solver for a nonlinear solver. 
+  SUBROUTINE SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*)
+
+    !Argument variables
+    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver !<A pointer to the nonlinear solver to get the Newton solver for
+    TYPE(NEWTON_SOLVER_TYPE), POINTER :: newtonSolver !<On exit, a pointer to the newton solver for the specified nonlinear solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverNonlinear_NewtonSolverGet",err,error,*998)
+
+    IF(ASSOCIATED(newtonSolver)) CALL FlagError("Newton solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(nonlinearSolver)) CALL FlagError("Nonlinear solver is not associated.",err,error,*999)
+
+    newtonSolver=>nonlinearSolver%NEWTON_SOLVER
+    IF(.NOT.ASSOCIATED(newtonSolver)) CALL FlagError("Nonlinear solver Newton solver is not associated.",err,error,*999)
+ 
+    EXITS("SolverNonlinear_NewtonSolverGet")
+    RETURN
+998 NULLIFY(newtonSolver)
+999 ERRORSEXITS("SolverNonlinear_NewtonSolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverNonlinear_NewtonSolverGet
+     
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the quasi Newton solver for a nonlinear solver. 
+  SUBROUTINE SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*)
+
+    !Argument variables
+    TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver !<A pointer to the nonlinear solver to get the quasi Newton solver for
+    TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: quasiNewtonSolver !<On exit, a pointer to the quasi Newton solver for the specified nonlinear solver. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("SolverNonlinear_QuasiNewtonSolverGet",err,error,*998)
+
+    IF(ASSOCIATED(quasiNewtonSolver)) CALL FlagError("Quasi Newton solver is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(nonlinearSolver)) CALL FlagError("Nonlinear solver is not associated.",err,error,*999)
+
+    quasiNewtonSolver=>nonlinearSolver%QUASI_NEWTON_SOLVER
+    IF(.NOT.ASSOCIATED(quasiNewtonSolver)) CALL FlagError("Nonlinear solver quasi Newton solver is not associated.",err,error,*999)
+ 
+    EXITS("SolverNonlinear_QuasiNewtonSolverGet")
+    RETURN
+998 NULLIFY(quasiNewtonSolver)
+999 ERRORSEXITS("SolverNonlinear_QuasiNewtonSolverGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE SolverNonlinear_QuasiNewtonSolverGet
      
   !
   !================================================================================================================================

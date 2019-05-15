@@ -302,7 +302,7 @@ CONTAINS
       & totalNumberOfAdjacentDomains
     INTEGER(INTG), ALLOCATABLE :: adjacentDomainMap(:),adjacentDomains(:,:),sendList(:),receiveList(:)
     LOGICAL :: ownedByAll,sendGlobal
-    TYPE(LIST_PTR_TYPE), ALLOCATABLE :: ghostSendLists(:),ghostReceiveLists(:)
+    TYPE(ListPtrType), ALLOCATABLE :: ghostSendLists(:),ghostReceiveLists(:)
     TYPE(VARYING_STRING) :: localError,dummyError
     TYPE(WorkGroupType), POINTER :: workGroup
     

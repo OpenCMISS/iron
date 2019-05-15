@@ -48,20 +48,20 @@ MODULE FINITE_ELASTICITY_FLUID_PRESSURE_ROUTINES
 
   USE BaseRoutines
   USE BasisRoutines
-  USE CONSTANTS
-  USE CONTROL_LOOP_ROUTINES
+  USE Constants
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE EquationsRoutines
   USE EquationsSetConstants
   USE FINITE_ELASTICITY_ROUTINES
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE SOLVER_ROUTINES
   USE SolverAccessRoutines
-  USE TYPES
+  USE Types
 
 #include "macros.h"  
 
@@ -230,7 +230,7 @@ CONTAINS
   SUBROUTINE FinElasticityFluidPressure_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the specification for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the specification for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -282,12 +282,12 @@ CONTAINS
   SUBROUTINE ELASTICITY_FLUID_PRESSURE_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -334,10 +334,10 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a load increment loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_LOAD_INCREMENT_LOOP_TYPE,ERR,ERROR,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)            
           CASE DEFAULT
@@ -348,7 +348,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -374,7 +374,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
             ! 
@@ -386,7 +386,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
             !
@@ -430,7 +430,7 @@ CONTAINS
   SUBROUTINE ELASTICITY_FLUID_PRESSURE_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -450,7 +450,7 @@ CONTAINS
           END IF
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_STANDARD_ELASTICITY_FLUID_PRESSURE_SUBTYPE)
-            IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
+            IF(CONTROL_LOOP%loopType==CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
               CALL FiniteElasticity_PreSolve(solver,err,error,*999)
             ENDIF
           CASE DEFAULT
@@ -482,7 +482,7 @@ CONTAINS
   SUBROUTINE ELASTICITY_FLUID_PRESSURE_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -532,13 +532,13 @@ CONTAINS
   SUBROUTINE FinElasticityFluidPressure_ControlLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_FLUID_PRESSURE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP_FLUID_PRESSURE
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_FLUID_PRESSURE
 
     ENTERS("FinElasticityFluidPressure_ControlLoopPreLoop",ERR,ERROR,*999)
 
@@ -549,20 +549,20 @@ CONTAINS
       IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
         ! Eventually we may want to do different things depending on problem type/subtype
         ! too but for now we can just check the loop type.
-        SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-        CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+        SELECT CASE(CONTROL_LOOP%loopType)
+        CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
           IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"-- Starting load increment --",ERR,ERROR,*999)
             CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"LOAD INCREMENT NUMBER =           ", &
-              & CONTROL_LOOP%LOAD_INCREMENT_LOOP%ITERATION_NUMBER,ERR,ERROR,*999)
+              & CONTROL_LOOP%loadIncrementLoop%iterationNumber,ERR,ERROR,*999)
             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
           ENDIF
           IF(DIAGNOSTICS1) THEN
             CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
             CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"-- Starting load increment --",ERR,ERROR,*999)
             CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"LOAD INCREMENT NUMBER =           ", &
-              & CONTROL_LOOP%LOAD_INCREMENT_LOOP%ITERATION_NUMBER,ERR,ERROR,*999)
+              & CONTROL_LOOP%loadIncrementLoop%iterationNumber,ERR,ERROR,*999)
             CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"------------------------------------",ERR,ERROR,*999)
           ENDIF
 

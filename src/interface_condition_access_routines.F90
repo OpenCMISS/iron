@@ -82,6 +82,10 @@ MODULE InterfaceConditionAccessRoutines
     MODULE PROCEDURE InterfaceCondition_UserNumberFind
   END INTERFACE INTERFACE_CONDITION_USER_NUMBER_FIND
 
+  PUBLIC InterfaceCondition_AssertIsFinished,InterfaceCondition_AssertNotFinished
+
+  PUBLIC InterfaceCondition_InterfaceDependentGet
+
   PUBLIC InterfaceCondition_InterfaceEquationsGet
 
   PUBLIC INTERFACE_CONDITION_EQUATIONS_GET
@@ -98,7 +102,104 @@ MODULE InterfaceConditionAccessRoutines
 
   PUBLIC INTERFACE_CONDITION_USER_NUMBER_FIND
 
+  PUBLIC InterfaceDependent_DependentVariableGet
+  
+  PUBLIC InterfaceDependent_EquationsSetGet
+
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an interface condition has been finished
+  SUBROUTINE InterfaceCondition_AssertIsFinished(interfaceCondition,err,error,*)
+
+    !Argument Variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER, INTENT(IN) :: interfaceCondition !<The interface condition to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceCondition_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+
+    IF(.NOT.interfaceCondition%INTERFACE_CONDITION_FINISHED) THEN
+      localError="Interface condition number "//TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))// &
+        & " has not been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("InterfaceCondition_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an interface condition has not been finished
+  SUBROUTINE InterfaceCondition_AssertNotFinished(interfaceCondition,err,error,*)
+
+    !Argument Variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER, INTENT(IN) :: interfaceCondition !<The interface condition to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceCondition_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+
+    IF(interfaceCondition%INTERFACE_CONDITION_FINISHED) THEN
+      localError="Interface condition number "//TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))// &
+        & " has already been finished."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("InterfaceCondition_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceCondition_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_AssertNotFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface dependent for an interface conditions.
+  SUBROUTINE InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface conditions to get the interface dependent for
+    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: interfaceDependent !<On exit, a pointer to the interface dependent in the specified interface condition. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_InterfaceDependentGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is already associated.",err,error,*998)
+    CALL InterfaceCondition_AssertIsFinished(interfaceCondition,err,error,*999)
+ 
+    interfaceDependent=>interfaceCondition%dependent
+    IF(.NOT.ASSOCIATED(interfaceDependent)) &
+      & CALL FlagError("Interface condition dependent is not associated.",err,error,*999)
+       
+    EXITS("InterfaceCondition_InterfaceDependentGet")
+    RETURN
+999 NULLIFY(interfaceDependent)
+998 ERRORSEXITS("InterfaceCondition_InterfaceDependentGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_InterfaceDependentGet
 
   !
   !================================================================================================================================
@@ -410,5 +511,92 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets an equations set for an interface dependent.
+  SUBROUTINE InterfaceDependent_EquationsSetGet(interfaceDependent,variableIdx,equationsSet,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: interfaceDependent !<A pointer to the interface dependent to get the equations set for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The index of the dependent variable to get the equations set for
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the specified equations set in the interface dependent. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceDependent_EquationsSetGet",err,error,*998)
+
+    IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is not associated.",err,error,*999)
+    IF(variableIdx<0.OR.variableIdx>interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES) THEN
+      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid. The variable index must be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ASSOCIATED(interfaceDependent%EQUATIONS_SETS)) &
+      & CALL FlagError("Interface dependent equations sets is not associated.",err,error,*999)
+ 
+    equationsSet=>interfaceDependent%EQUATIONS_SETS(variableIdx)%ptr      
+    IF(.NOT.ASSOCIATED(equationsSet)) THEN
+      localError="The equations set for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+       
+    EXITS("InterfaceDependent_EquationsSetGet")
+    RETURN
+999 NULLIFY(equationsSet)
+998 ERRORSEXITS("InterfaceDependent_EquationsSetGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceDependent_EquationsSetGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a dependent field variable for an interface dependent.
+  SUBROUTINE InterfaceDependent_DependentVariableGet(interfaceDependent,variableIdx,dependentVariable,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: interfaceDependent !<A pointer to the interface dependent to get the dependent variable for
+    INTEGER(INTG), INTENT(IN) :: variableIdx !<The index of the dependent variable to get the field variable for
+    TYPE(FieldVariableType), POINTER :: dependentVariable !<On exit, a pointer to the specified dependent variable in the interface dependent. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceDependent_DependentVariableGet",err,error,*998)
+
+    IF(ASSOCIATED(dependentVariable)) CALL FlagError("Dependent variable is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is not associated.",err,error,*999)
+    IF(variableIdx<0.OR.variableIdx>interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES) THEN
+      localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is invalid. The variable index must be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ASSOCIATED(interfaceDependent%fieldVariables)) &
+      & CALL FlagError("Interface dependent field variables is not associated.",err,error,*999)
+ 
+    dependentVariable=>interfaceDependent%fieldVariables(variableIdx)%ptr      
+    IF(.NOT.ASSOCIATED(dependentVariable)) THEN
+      localError="The dependent field variable for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
+        & " is not associated."
+      CALL FlagError(localError,err,error,*999)      
+    ENDIF
+       
+    EXITS("InterfaceDependent_DependentVariableGet")
+    RETURN
+999 NULLIFY(dependentVariable)
+998 ERRORSEXITS("InterfaceDependent_DependentVariableGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceDependent_DependentVariableGet
+
+  !
+  !================================================================================================================================
+  !
   
 END MODULE InterfaceConditionAccessRoutines

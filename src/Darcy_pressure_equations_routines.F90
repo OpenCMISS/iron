@@ -49,7 +49,8 @@ MODULE DARCY_PRESSURE_EQUATIONS_ROUTINES
   USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
+  USE ControlLoopAccessRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines
@@ -956,7 +957,7 @@ CONTAINS
   SUBROUTINE DARCY_PRESSURE_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -1007,7 +1008,7 @@ CONTAINS
   SUBROUTINE DARCY_PRESSURE_PRE_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string

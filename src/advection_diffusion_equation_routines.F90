@@ -50,9 +50,10 @@ MODULE ADVECTION_DIFFUSION_EQUATION_ROUTINES
   USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -2229,7 +2230,7 @@ CONTAINS
   SUBROUTINE ADVECTION_DIFFUSION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem set to setup a diffusion equation on.
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a diffusion equation on.
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3067,7 +3068,7 @@ CONTAINS
   SUBROUTINE AdvectionDiffusion_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the problem specification for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the problem specification for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3126,12 +3127,12 @@ CONTAINS
   SUBROUTINE AdvectionDiffusion_ProblemLinearSetup(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -3173,10 +3174,10 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
@@ -3187,7 +3188,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -3217,7 +3218,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3229,7 +3230,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3270,7 +3271,7 @@ CONTAINS
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
@@ -3281,7 +3282,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -3309,7 +3310,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3321,7 +3322,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3364,7 +3365,7 @@ CONTAINS
 !   SUBROUTINE ADVECTION_DIFFUSION_EQUATION_PROBLEM_NONLINEAR_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 ! 
 !     !Argument variables
-!     TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+!     TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
 !     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
 !     INTEGER(INTG), INTENT(OUT) :: err !<The error code
 !     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3391,8 +3392,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: problemSubType
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: SOLVER2 !<A pointer to the solvers
     TYPE(VARYING_STRING) :: localError
 
@@ -3447,7 +3448,7 @@ CONTAINS
   SUBROUTINE AdvectionDiffusion_PreSolveALEUpdateMesh(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3476,10 +3477,10 @@ CONTAINS
     NULLIFY(EQUATIONS_SET)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+      IF(CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
         CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-      ELSE IF(CONTROL_LOOP%CONTROL_LOOP_LEVEL>1) THEN
-        CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP%PARENT_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+      ELSE IF(CONTROL_LOOP%controlLoopLevel>1) THEN
+        CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP%parentLoop,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
       ENDIF
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
@@ -3536,7 +3537,7 @@ CONTAINS
                            !CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                             !& FIELD_VALUES_SET_TYPE,INPUT_DATA1,err,error,*999)
                            CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_DATA1, & 
-                            & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                            & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%timeLoop%iterationNumber,1.0_DP, &
                             & err,error,*999)
 
                             NULLIFY(MESH_DISPLACEMENT_VALUES)
@@ -3550,7 +3551,7 @@ CONTAINS
                             ENDIF
 
                            CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_DATA1, & 
-                            & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                            & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%timeLoop%iterationNumber,1.0_DP, &
                             & err,error,*999)
 
                             totalNumberOfDofs = GEOMETRIC_FIELD%variableTypeMap(FIELD_U_VARIABLE_TYPE)%ptr% &
@@ -3622,7 +3623,7 @@ CONTAINS
   SUBROUTINE AdvectionDiffusion_PreSolveStoreCurrentSoln(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3738,7 +3739,7 @@ CONTAINS
   SUBROUTINE AdvectionDiffusion_PreSolveGetSourceValue(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3888,7 +3889,7 @@ CONTAINS
   SUBROUTINE AdvectionDiffusion_PreSolveUpdateInputData(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3938,7 +3939,7 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%INDEPENDENT%INDEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                     & FIELD_VALUES_SET_TYPE,INPUT_DATA1,err,error,*999)
                   CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_DATA1, & 
-                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%timeLoop%iterationNumber,1.0_DP, &
                     & err,error,*999)
                   
                 ELSE
@@ -3985,7 +3986,7 @@ CONTAINS
   !Update the boundary conditions
   SUBROUTINE ADVECTION_DIFFUSION_PRE_SOLVE_UPDATE_BC(CONTROL_LOOP,SOLVER,err,error,*)
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4012,7 +4013,7 @@ CONTAINS
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
-      WRITE (*,*) CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
+      WRITE (*,*) CONTROL_LOOP%timeLoop%iterationNumber
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
           IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
@@ -4045,8 +4046,8 @@ CONTAINS
                         NULLIFY(BOUNDARY_VALUES)
                         NULLIFY(boundaryNodes)
                         CALL FLUID_MECHANICS_IO_READ_BOUNDARY_CONDITIONS_ITERATION(SOLVER_LINEAR_TYPE,BOUNDARY_VALUES, &
-                          & boundaryNodes,NUMBER_OF_COMPONENTS,BOUNDARY_CONDITION_FIXED,CONTROL_LOOP%TIME_LOOP%INPUT_NUMBER, &
-                          & CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,err,error,*999)
+                          & boundaryNodes,NUMBER_OF_COMPONENTS,BOUNDARY_CONDITION_FIXED,CONTROL_LOOP%timeLoop%inputNumber, &
+                          & CONTROL_LOOP%timeLoop%iterationNumber,err,error,*999)
                         WRITE(*,*) SIZE(BOUNDARY_VALUES)
                         DO node_idx=1,SIZE(BOUNDARY_VALUES)
                           !Default to version 1 of each node derivative
@@ -4117,8 +4118,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("AdvectionDiffusion_PostSolve",err,error,*999)
@@ -4161,7 +4162,7 @@ CONTAINS
   SUBROUTINE ADVECTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4198,11 +4199,11 @@ CONTAINS
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
 
-                    CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
-                    OUTPUT_ITERATION_NUMBER=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
+                    CURRENT_LOOP_ITERATION=CONTROL_LOOP%timeLoop%iterationNumber
+                    OUTPUT_ITERATION_NUMBER=CONTROL_LOOP%timeLoop%outputNumber
 
                     IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                      IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN
+                      IF(CONTROL_LOOP%timeLoop%currentTime<=CONTROL_LOOP%timeLoop%stopTime) THEN
                         IF(CURRENT_LOOP_ITERATION<10) THEN
                           WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
                         ELSE IF(CURRENT_LOOP_ITERATION<100) THEN

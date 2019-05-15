@@ -49,7 +49,7 @@ MODULE POISSON_EQUATIONS_ROUTINES
   USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES  
   USE DistributedMatrixVector
@@ -68,6 +68,7 @@ MODULE POISSON_EQUATIONS_ROUTINES
   USE Maths    
   USE MatrixVector
   USE PROBLEM_CONSTANTS
+  USE ProblemAccessRoutines
   USE Strings
   USE SOLVER_ROUTINES
   USE SolverAccessRoutines
@@ -1319,7 +1320,7 @@ CONTAINS
   SUBROUTINE POISSON_PRE_SOLVE_UPDATE_PPE_MESH(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1345,17 +1346,17 @@ CONTAINS
     ENTERS("POISSON_PRE_SOLVE_UPDATE_PPE_MESH",err,error,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP%PARENT_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
+      CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP%parentLoop,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
       NULLIFY(SOLVER_LAPLACE)
       NULLIFY(SOLVER_ALE_PPE)
       IF(ASSOCIATED(SOLVER)) THEN
-        IF(ASSOCIATED(CONTROL_LOOP%PARENT_LOOP%PROBLEM)) THEN
+        IF(ASSOCIATED(CONTROL_LOOP%parentLoop%PROBLEM)) THEN
           IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
             CALL FlagError("Problem specification is not allocated.",err,error,*999)
           ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
             CALL FlagError("Problem specification must have three entries for a Poisson problem.",err,error,*999)
           END IF
-          SELECT CASE(CONTROL_LOOP%PARENT_LOOP%PROBLEM%SPECIFICATION(3))
+          SELECT CASE(CONTROL_LOOP%parentLoop%PROBLEM%SPECIFICATION(3))
             CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE)
               ! do nothing ???
             CASE(PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE)
@@ -1386,8 +1387,8 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET_ALE_PPE%INDEPENDENT%INDEPENDENT_FIELD, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,MESH_DISPLACEMENT_VALUES, & 
-                      & numberOfDimensions_ALE_PPE,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%PARENT_LOOP%TIME_LOOP% &
-                      & ITERATION_NUMBER,1.0_DP,err,error,*999)
+                      & numberOfDimensions_ALE_PPE,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%parentLoop%timeLoop% &
+                      & iterationNumber,1.0_DP,err,error,*999)
                     CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET_ALE_PPE%INDEPENDENT%INDEPENDENT_FIELD, & 
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
                     CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET_ALE_PPE%INDEPENDENT%INDEPENDENT_FIELD, & 
@@ -1447,7 +1448,7 @@ CONTAINS
                 CALL FIELD_PARAMETER_SET_UPDATE_FINISH(EQUATIONS_SET_ALE_PPE%GEOMETRY%geometricField, & 
                   & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
                 !Now use displacement values to calculate velocity values
-                TIME_INCREMENT=CONTROL_LOOP%PARENT_LOOP%TIME_LOOP%TIME_INCREMENT
+                TIME_INCREMENT=CONTROL_LOOP%parentLoop%timeLoop%timeIncrement
                 ALPHA=1.0_DP/TIME_INCREMENT
                 CALL FIELD_PARAMETER_SETS_COPY(INDEPENDENT_FIELD_ALE_PPE,FIELD_U_VARIABLE_TYPE, & 
                   & FIELD_MESH_DISPLACEMENT_SET_TYPE,FIELD_MESH_VELOCITY_SET_TYPE,ALPHA,err,error,*999)
@@ -1482,7 +1483,7 @@ CONTAINS
   SUBROUTINE POISSON_PRE_SOLVE_UPDATE_PPE_SOURCE(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1568,7 +1569,7 @@ CONTAINS
                 END IF
                 !Copy result from FITTING to PPE's source field
                 IF(numberOfDimensions_PPE==numberOfDimensions_FITTED) THEN
-                  IF(CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER/=1) THEN
+                  IF(CONTROL_LOOP%timeLoop%iterationNumber/=1) THEN
                     DO I=1,numberOfDimensions_PPE
                       CALL WriteString(GENERAL_OUTPUT_TYPE,"Save old source field... ",err,error,*999)
                       CALL Field_ParametersToFieldParametersCopy(SOURCE_FIELD_PPE, & 
@@ -1582,7 +1583,7 @@ CONTAINS
                         & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,I,SOURCE_FIELD_PPE, & 
                         & FIELD_U_VARIABLE_TYPE,FIELD_INPUT_DATA1_SET_TYPE,I,err,error,*999)
                   END DO
-                  IF(CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER==1) THEN
+                  IF(CONTROL_LOOP%timeLoop%iterationNumber==1) THEN
                     CALL WriteString(GENERAL_OUTPUT_TYPE,"Old source field is new source field!... ",err,error,*999)
                     DO I=1,numberOfDimensions_PPE
                       CALL Field_ParametersToFieldParametersCopy(SOURCE_FIELD_PPE, & 
@@ -3238,7 +3239,7 @@ CONTAINS
   SUBROUTINE POISSON_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem set to setup a Poisson equation on.
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a Poisson equation on.
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4549,7 +4550,7 @@ CONTAINS
   SUBROUTINE Poisson_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the problem specification for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the problem specification for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4605,12 +4606,12 @@ CONTAINS
   SUBROUTINE Poisson_ProblemExtracellularBidomainSetup(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -4649,7 +4650,7 @@ CONTAINS
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
@@ -4660,7 +4661,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -4688,7 +4689,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -4700,7 +4701,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -4744,12 +4745,12 @@ CONTAINS
   SUBROUTINE Poisson_ProblemLinearSourceSetup(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -4788,7 +4789,7 @@ CONTAINS
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
@@ -4799,7 +4800,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -4827,7 +4828,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -4839,7 +4840,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -4883,12 +4884,12 @@ CONTAINS
   SUBROUTINE Poisson_ProblemPressurePoissonSetup(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT,SUB_LOOP
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT,SUB_LOOP
     TYPE(SOLVER_TYPE), POINTER :: SOLVER,FITTING_SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS,FITTING_SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -4931,16 +4932,16 @@ CONTAINS
             NULLIFY(SUB_LOOP)
             !Set up a simple control loop with 2 subloops
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
             CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(CONTROL_LOOP,1,err,error,*999)
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,SUB_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(SUB_LOOP,PROBLEM_CONTROL_WHILE_LOOP_TYPE,err,error,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,SUB_LOOP,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(SUB_LOOP,CONTROL_WHILE_LOOP_TYPE,err,error,*999)
             !Set the number of iterations for the while loop to 3 for now
 ! WRITE(*,*)'BE CAREFUL HERE ! MAKE IT MORE GENERAL'
             CALL CONTROL_LOOP_MAXIMUM_ITERATIONS_SET(SUB_LOOP,1,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
@@ -4951,10 +4952,10 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           NULLIFY(SUB_LOOP)
           NULLIFY(CONTROL_LOOP)
-          CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_ROOT,1,sub_LOOP,err,error,*999)
+          CALL ControlLoop_SubLoopGet(CONTROL_LOOP_ROOT,1,sub_LOOP,err,error,*999)
           CALL CONTROL_LOOP_GET(sub_LOOP,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
 
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
@@ -4983,10 +4984,11 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            NULLIFY(CONTROL_LOOP_ROOT)
+            CALL Problem_ControlLoopRootGet(problem,CONTROL_LOOP_ROOT,err,error,*999)
             NULLIFY(SUB_LOOP)
             NULLIFY(CONTROL_LOOP)
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_ROOT,1,sub_LOOP,err,error,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP_ROOT,1,sub_LOOP,err,error,*999)
             CALL CONTROL_LOOP_GET(sub_LOOP,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -4998,10 +5000,10 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             NULLIFY(SUB_LOOP)
             NULLIFY(CONTROL_LOOP)
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_ROOT,1,sub_LOOP,err,error,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP_ROOT,1,sub_LOOP,err,error,*999)
             CALL CONTROL_LOOP_GET(sub_LOOP,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -5039,10 +5041,10 @@ CONTAINS
               CASE(PROBLEM_SETUP_START_ACTION)
                 !Set up a time control loop
                 CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-                CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+                CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
               CASE(PROBLEM_SETUP_FINISH_ACTION)
                 !Finish the control loops
-                CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
                 CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
               CASE DEFAULT
@@ -5053,7 +5055,7 @@ CONTAINS
             END SELECT
           CASE(PROBLEM_SETUP_SOLVERS_TYPE)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
               CASE(PROBLEM_SETUP_START_ACTION)
@@ -5084,7 +5086,7 @@ CONTAINS
             SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
               CASE(PROBLEM_SETUP_START_ACTION)
                 !Get the control loop
-                CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
                 !Get the solver
                 CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -5102,7 +5104,7 @@ CONTAINS
                 CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
               CASE(PROBLEM_SETUP_FINISH_ACTION)
                 !Get the control loop
-                CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
                 !Get the solver equations
                 CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -5150,12 +5152,12 @@ CONTAINS
   SUBROUTINE Poisson_ProblemNonlinearSourceSetup(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -5194,7 +5196,7 @@ CONTAINS
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
@@ -5205,7 +5207,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -5232,7 +5234,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -5244,7 +5246,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -5291,8 +5293,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: solver2
     TYPE(VARYING_STRING) :: localError
 
@@ -5353,10 +5355,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop 
+    TYPE(ControlLoopType), POINTER :: controlLoop 
     TYPE(EquationsType), POINTER :: EQUATIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET 
-    TYPE(PROBLEM_TYPE), POINTER :: problem 
+    TYPE(ProblemType), POINTER :: problem 
     TYPE(SOLVER_TYPE), POINTER :: solver2 
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS 
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING 
@@ -5383,7 +5385,7 @@ CONTAINS
     CASE(PROBLEM_NONLINEAR_SOURCE_POISSON_SUBTYPE)
       ! do nothing
     CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE)
-      IF(controlLoop%WHILE_LOOP%ITERATION_NUMBER==1)THEN
+      IF(controlLoop%whileLoop%iterationNumber==1)THEN
         SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
@@ -5430,7 +5432,7 @@ CONTAINS
         CALL FlagError("Solver global number not associated for PPE problem.",err,error,*999)
       ENDIF
     CASE(PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
-      IF(CONTROLLOOP%WHILE_LOOP%ITERATION_NUMBER==1)THEN
+      IF(CONTROLLOOP%whileLoop%iterationNumber==1)THEN
         SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
@@ -5480,7 +5482,7 @@ CONTAINS
   SUBROUTINE POISSON_PRE_SOLVE_UPDATE_INPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -5497,7 +5499,7 @@ CONTAINS
     INTEGER(INTG) :: INPUT_TYPE,INPUT_OPTION
     REAL(DP), POINTER :: INPUT_VEL_NEW_DATA(:),INPUT_VEL_OLD_DATA(:)
     REAL(DP), POINTER :: INPUT_VEL_LABEL_DATA(:),INPUT_VEL_U_DATA(:),INPUT_VEL_V_DATA(:),INPUT_VEL_W_DATA(:)
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control loop to solve.
 
     LOGICAL :: BOUNDARY_UPDATE
 
@@ -5535,7 +5537,7 @@ CONTAINS
                     !Set pressure field to zero     
                     CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                       & numberOfDimensions,err,error,*999)
-                    CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
+                    CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
                     !this is the current time step
                     !\todo: Provide possibility for user to define input type and option (that's more or less an IO question)
                     INPUT_TYPE=1
@@ -5543,7 +5545,7 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
                       & FIELD_VALUES_SET_TYPE,INPUT_VEL_NEW_DATA,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_NEW_DATA, & 
-                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                       & err,error,*999)
                   ELSE
                       CALL FlagError("Equations set is not associated.",err,error,*999)
@@ -5568,7 +5570,7 @@ CONTAINS
                     !Set pressure field to zero     
                     CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                       & numberOfDimensions,err,error,*999)
-                    CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
+                    CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
                     !this is the current time step
                     !\todo: Provide possibility for user to define input type and option (that's more or less an IO question)
                     INPUT_TYPE=1
@@ -5576,7 +5578,7 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                       & FIELD_INPUT_LABEL_SET_TYPE,INPUT_VEL_LABEL_DATA,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_LABEL_DATA, & 
-                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                       & err,error,*999)
                     !this is the reference U velocity
                     INPUT_TYPE=1
@@ -5584,7 +5586,7 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                       & FIELD_INPUT_VEL1_SET_TYPE,INPUT_VEL_U_DATA,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_U_DATA, & 
-                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                       & err,error,*999)
                     !this is the reference V velocity
                     INPUT_TYPE=1
@@ -5592,7 +5594,7 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                       & FIELD_INPUT_VEL2_SET_TYPE,INPUT_VEL_V_DATA,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_V_DATA, & 
-                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                       & err,error,*999)
                     !this is the reference W velocity
                     INPUT_TYPE=1
@@ -5600,7 +5602,7 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                       & FIELD_INPUT_VEL3_SET_TYPE,INPUT_VEL_W_DATA,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_W_DATA, & 
-                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                       & err,error,*999)
                   ENDIF
                 ENDIF
@@ -5608,7 +5610,7 @@ CONTAINS
             ENDIF
           CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
             & PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
-            CONTROL_TIME_LOOP=>CONTROL_LOOP%PARENT_LOOP
+            CONTROL_TIME_LOOP=>CONTROL_LOOP%parentLoop
             CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
             CALL WriteString(GENERAL_OUTPUT_TYPE,"Read input data... ",err,error,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -5620,7 +5622,7 @@ CONTAINS
                 IF(ASSOCIATED(EQUATIONS_SET)) THEN
                   CALL FIELD_NUMBER_OF_COMPONENTS_GET(EQUATIONS_SET%GEOMETRY%geometricField,FIELD_U_VARIABLE_TYPE, &
                     & numberOfDimensions,err,error,*999)
-                  CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
+                  CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
                   !this is the current time step
                   !\todo: Provide possibility for user to define input type and option (that's more or less an IO question)
                   INPUT_TYPE=1
@@ -5628,7 +5630,7 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
                     & FIELD_INPUT_DATA1_SET_TYPE,INPUT_VEL_NEW_DATA,err,error,*999)
                   CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_NEW_DATA, & 
-                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                     & err,error,*999)
                   !this is the previous time step
                   !\todo: Provide possibility for user to define input type and option (that's more or less an IO question)
@@ -5637,7 +5639,7 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%SOURCE%SOURCE_FIELD,FIELD_U_VARIABLE_TYPE, & 
                     & FIELD_INPUT_DATA2_SET_TYPE,INPUT_VEL_OLD_DATA,err,error,*999)
                   CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_OLD_DATA, & 
-                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                     & err,error,*999)
                   !this is the interior flag
                   INPUT_TYPE=1
@@ -5645,7 +5647,7 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                     & FIELD_INPUT_LABEL_SET_TYPE,INPUT_VEL_LABEL_DATA,err,error,*999)
                   CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_LABEL_DATA, & 
-                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                     & err,error,*999)
                   !this is the reference U velocity
                   INPUT_TYPE=1
@@ -5653,7 +5655,7 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                     & FIELD_INPUT_VEL1_SET_TYPE,INPUT_VEL_U_DATA,err,error,*999)
                   CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_U_DATA, & 
-                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                     & err,error,*999)
                   !this is the reference V velocity
                   INPUT_TYPE=1
@@ -5661,7 +5663,7 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                     & FIELD_INPUT_VEL2_SET_TYPE,INPUT_VEL_V_DATA,err,error,*999)
                   CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_V_DATA, & 
-                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                     & err,error,*999)
                   !this is the reference W velocity
                   INPUT_TYPE=1
@@ -5669,7 +5671,7 @@ CONTAINS
                   CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD,FIELD_U_VARIABLE_TYPE, & 
                     & FIELD_INPUT_VEL3_SET_TYPE,INPUT_VEL_W_DATA,err,error,*999)
                   CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,INPUT_VEL_W_DATA, & 
-                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                    & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_TIME_LOOP%timeLoop%iterationNumber,1.0_DP, &
                     & err,error,*999)
                 ELSE
                   CALL FlagError("Equations set is not associated.",err,error,*999)
@@ -5717,7 +5719,7 @@ CONTAINS
   SUBROUTINE POISSON_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -5728,7 +5730,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
     INTEGER(INTG) :: EQUATIONS_SET_IDX,CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control loop to solve.
     LOGICAL :: EXPORT_FIELD
     TYPE(VARYING_STRING) :: METHOD!,FILE
     CHARACTER(14) :: FILE
@@ -5755,8 +5757,8 @@ CONTAINS
 !               do nothing
             CASE(PROBLEM_LINEAR_PRESSURE_POISSON_SUBTYPE,PROBLEM_NONLINEAR_PRESSURE_POISSON_SUBTYPE, &
               & PROBLEM_ALE_PRESSURE_POISSON_SUBTYPE)
-              IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==CONTROL_LOOP%WHILE_LOOP%MAXIMUM_NUMBER_OF_ITERATIONS)THEN
-                CONTROL_TIME_LOOP=>CONTROL_LOOP%PARENT_LOOP
+              IF(CONTROL_LOOP%whileLoop%iterationNumber==CONTROL_LOOP%whileLoop%maximumNumberOfIterations)THEN
+                CONTROL_TIME_LOOP=>CONTROL_LOOP%parentLoop
                 CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
@@ -5765,10 +5767,10 @@ CONTAINS
                     !Make sure the equations sets are up to date
                     DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                      CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
-                      OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%TIME_LOOP%OUTPUT_NUMBER
+                      CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
+                      OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%timeLoop%outputNumber
                       IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                        IF(CONTROL_TIME_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_TIME_LOOP%TIME_LOOP%STOP_TIME) THEN
+                        IF(CONTROL_TIME_LOOP%timeLoop%currentTime<=CONTROL_TIME_LOOP%timeLoop%stopTime) THEN
                           IF(CURRENT_LOOP_ITERATION<10) THEN
                             WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
                           ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
@@ -5808,10 +5810,10 @@ CONTAINS
                   !Make sure the equations sets are up to date
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%ptr
-                    CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
-                    OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%TIME_LOOP%OUTPUT_NUMBER
+                    CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
+                    OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%timeLoop%outputNumber
                     IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                      IF(CONTROL_TIME_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_TIME_LOOP%TIME_LOOP%STOP_TIME) THEN
+                      IF(CONTROL_TIME_LOOP%timeLoop%currentTime<=CONTROL_TIME_LOOP%timeLoop%stopTime) THEN
                       IF(CURRENT_LOOP_ITERATION<10) THEN
                          WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
                         ELSE IF(CURRENT_LOOP_ITERATION<100) THEN

@@ -50,9 +50,10 @@ MODULE ADVECTION_EQUATION_ROUTINES
   USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -690,7 +691,7 @@ CONTAINS
   SUBROUTINE Advection_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the problem specification for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the problem specification for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -740,7 +741,7 @@ CONTAINS
   SUBROUTINE ADVECTION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
@@ -783,12 +784,12 @@ CONTAINS
   SUBROUTINE ADVECTION_EQUATION_PROBLEM_LINEAR_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -825,10 +826,10 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
           CASE DEFAULT
@@ -839,7 +840,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -868,7 +869,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -880,7 +881,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -1103,8 +1104,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Advection_PreSolve",err,error,*999)
@@ -1150,7 +1151,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(EquationsType), POINTER :: EQUATIONS
@@ -1167,7 +1168,7 @@ CONTAINS
     IF(ASSOCIATED(SOLVER)) THEN
       SOLVERS=>SOLVER%SOLVERS
       IF(ASSOCIATED(SOLVERS)) THEN
-        CONTROL_LOOP=>SOLVERS%CONTROL_LOOP
+        CONTROL_LOOP=>SOLVERS%controlLoop
         CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT,CURRENT_LOOP_ITERATION, &
           & OUTPUT_ITERATION_NUMBER,err,error,*999)
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
@@ -1290,8 +1291,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Advection_PostSolve",err,error,*999)

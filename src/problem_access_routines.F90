@@ -110,6 +110,8 @@ MODULE ProblemAccessRoutines
     MODULE PROCEDURE Problem_UserNumberFind
   END INTERFACE PROBLEM_USER_NUMBER_FIND
 
+  PUBLIC Problem_AssertIsFinished,Problem_AssertNotFinished
+
   PUBLIC Problem_CellMLEquationsGet
 
   PUBLIC PROBLEM_CELLML_EQUATIONS_GET
@@ -140,7 +142,61 @@ MODULE ProblemAccessRoutines
 
   PUBLIC Problems_ContextGet
 
+  PUBLIC Problems_ProblemGet
+
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a problem has been finished
+  SUBROUTINE Problem_AssertIsFinished(problem,err,error,*)
+
+    !Argument Variables
+    TYPE(ProblemType), POINTER, INTENT(IN) :: problem !<The problem to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Problem_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+
+    IF(.NOT.problem%problemFinished) CALL FlagError("Problem has not been finished.",err,error,*999)
+    
+    EXITS("Problem_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("Problem_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a problem has not been finished
+  SUBROUTINE Problem_AssertNotFinished(problem,err,error,*)
+
+    !Argument Variables
+    TYPE(ProblemType), POINTER, INTENT(IN) :: problem !<The problem to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Problem_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+
+    IF(problem%problemFinished) CALL FlagError("Problem has already been finished.",err,error,*999)
+    
+    EXITS("Problem_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("Problem_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_AssertNotFinished
 
   !
   !================================================================================================================================
@@ -150,7 +206,7 @@ CONTAINS
   SUBROUTINE Problem_CellMLEquationsGet0(problem,controlLoopIdentifier,solverIndex,cellMLEquations,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get solver CellML equations for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get solver CellML equations for
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier to get the solver CellML equations for
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index in the solvers to get the solver CellML equations for
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<On exit, a pointer to the specified solver CellML equations. Must not be associated on entry.
@@ -177,14 +233,14 @@ CONTAINS
   SUBROUTINE Problem_CellMLEquationsGet1(problem,controlLoopIdentifiers,solverIndex,cellMLEquations,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get the CellML equations for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the CellML equations for
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifier to get the CellML equations for
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index in the solvers to get the CellML equations for
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations !<On exit, a pointer to the specified CellML equations. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop,controlLoopRoot
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(VARYING_STRING) :: LOCAL_ERROR
@@ -221,7 +277,7 @@ CONTAINS
   SUBROUTINE Problem_ContextGet(problem,context,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get the context for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the context for
     TYPE(ContextType), POINTER :: context !<On exit, a pointer to the context for the problem. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -261,9 +317,9 @@ CONTAINS
   SUBROUTINE Problem_ControlLoopGet0(problem,controlLoopIdentifier,controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get the control loop for.
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the control loop for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<On return, a pointer to the control loop. Must not be associated on entry.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<On return, a pointer to the control loop. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -287,9 +343,9 @@ CONTAINS
   SUBROUTINE Problem_ControlLoopGet1(problem,controlLoopIdentifiers,controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get the control loop for.
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the control loop for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifier.
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<On return, a pointer to the control loop. Must not be associated on entry.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<On return, a pointer to the control loop. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -298,9 +354,9 @@ CONTAINS
 
     IF(ASSOCIATED(controlLoop)) CALL FlagError("Control loop is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(problem%CONTROL_LOOP)) CALL FlagError("Problem control loop is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(problem%controlLoop)) CALL FlagError("Problem control loop is not associated.",err,error,*999)
 
-    CALL ControlLoop_Get(problem%CONTROL_LOOP,controlLoopIdentifiers,controlLoop,err,error,*999)
+    CALL ControlLoop_Get(problem%controlLoop,controlLoopIdentifiers,controlLoop,err,error,*999)
     
     EXITS("Problem_ControlLoopGet1")
     RETURN
@@ -318,8 +374,8 @@ CONTAINS
   SUBROUTINE Problem_ControlLoopRootGet(problem,controlLoopRoot,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<a pointer to the problem to get the control loop root for.
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoopRoot !<On return, a pointer to the control loop root for the problem. Must not be associated on entry.
+    TYPE(ProblemType), POINTER :: problem !<a pointer to the problem to get the control loop root for.
+    TYPE(ControlLoopType), POINTER :: controlLoopRoot !<On return, a pointer to the control loop root for the problem. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -330,7 +386,7 @@ CONTAINS
     IF(ASSOCIATED(controlLoopRoot)) CALL FlagError("Control loop root is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
 
-    controlLoopRoot=>problem%CONTROL_LOOP
+    controlLoopRoot=>problem%controlLoop
     IF(.NOT.ASSOCIATED(controlLoopRoot)) THEN
       localError="The problem control loop root is not associated for problem number "// &
         & TRIM(NumberToVString(problem%userNumber,"*",err,error))//"."
@@ -355,7 +411,7 @@ CONTAINS
     !Argument variables
     TYPE(ProblemsType), POINTER :: problems !<The problems to get the user number for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the problem to find
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<On exit, a pointer to the problem with the specified user number if it exists. Must not be associated on entry.
+    TYPE(ProblemType), POINTER :: problem !<On exit, a pointer to the problem with the specified user number if it exists. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -384,7 +440,7 @@ CONTAINS
   SUBROUTINE Problem_ProblemsGet(problem,problems,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<a pointer to the problem to get the problems for.
+    TYPE(ProblemType), POINTER :: problem !<a pointer to the problem to get the problems for.
     TYPE(ProblemsType), POINTER :: problems !<On return, a pointer to the problems for the problem. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -419,7 +475,7 @@ CONTAINS
   SUBROUTINE Problem_SolverGet0(problem,controlLoopIdentifier,solverIndex,solver,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get the solver for.
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the solver for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver for.
     TYPE(SOLVER_TYPE), POINTER :: solver !<On return, a pointer to the solver. Must not be associated on entry.
@@ -446,14 +502,14 @@ CONTAINS
   SUBROUTINE Problem_SolverGet1(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get the solver for.
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get the solver for.
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<The control loop identifier to get the solver for.
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index to get the solver for.
     TYPE(SOLVER_TYPE), POINTER :: solver !<On return, a pointer to the solver. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop,controlLoopRoot
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SOLVERS_TYPE), POINTER :: solvers
  
     ENTERS("Problem_SolverGet1",err,error,*998)
@@ -487,7 +543,7 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsGet0(problem,controlLoopIdentifier,solverIndex,solverEquations,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get solver equations for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get solver equations for
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier to get the solver equations for
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index in the solvers to get the solver equations for
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<On exit, a pointer to the specified solver equations. Must not be associated on entry.
@@ -514,14 +570,14 @@ CONTAINS
   SUBROUTINE Problem_SolverEquationsGet1(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to get solver equations for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to get solver equations for
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(identifierIdx). The control loop identifiers to get the solver equations for
     INTEGER(INTG), INTENT(IN) :: solverIndex !<The solver index in the solvers to get the solver equations for
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<On exit, a pointer to the specified solver equations. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop,controlLoopRoot
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
@@ -560,7 +616,7 @@ CONTAINS
     !Argument variables
     TYPE(ProblemsType), POINTER :: problems !<The problems to find the user number for.
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find.
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<On return, a pointer to the problem with the given user number. If no problem with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
+    TYPE(ProblemType), POINTER :: problem !<On return, a pointer to the problem with the given user number. If no problem with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -624,6 +680,49 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Problems_ContextGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the specified problem in the list of problems.
+  SUBROUTINE Problems_ProblemGet(problems,problemIndex,problem,err,error,*)
+
+    !Argument variables
+    TYPE(ProblemsType), POINTER :: problems !<A pointer to the problems to get the problem for
+    INTEGER(INTG), INTENT(IN) :: problemIndex !<The specified problem to get
+    TYPE(ProblemType), POINTER :: problem !<On exit, a pointer to the specified problem. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("Problems_ProblemGet",err,error,*998)
+
+    IF(ASSOCIATED(problem)) CALL FlagError("Problem is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(problems)) CALL FlagError("Problems is not associated.",err,error,*999)
+    IF(problemIndex<=0.OR.problemIndex>problems%numberOfProblems) THEN
+      localError="The specified problem index of "//TRIM(NumberToVString(problemIndex,"*",err,error))// &
+        & " is invalid. The problem index must be >= 1 and <= "// &
+        & TRIM(NumberToVString(problems%numberOfProblems,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ASSOCIATED(problems%problems)) CALL FlagError("Problems problems is not associated.",err,error,*999)
+      
+    problem=>problems%problems(problemIndex)%ptr
+    IF(.NOT.ASSOCIATED(problem)) THEN
+      localError="The problems problem is not associated for problem index "// &
+        & TRIM(NumberToVString(problemIndex,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("Problems_ProblemGet")
+    RETURN
+999 NULLIFY(problem)
+998 ERRORSEXITS("Problems_ProblemGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problems_ProblemGet
 
   !
   !================================================================================================================================

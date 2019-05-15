@@ -52,7 +52,7 @@ MODULE CHARACTERISTIC_EQUATION_ROUTINES
   USE BasisRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE DistributedMatrixVector
   USE DomainMappings
   USE EquationsRoutines

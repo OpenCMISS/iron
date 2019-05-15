@@ -57,6 +57,7 @@ MODULE EQUATIONS_SET_ROUTINES
   USE COORDINATE_ROUTINES
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE ELASTICITY_ROUTINES
   USE EquationsRoutines
@@ -1784,6 +1785,8 @@ CONTAINS
                                           CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                                             CALL FlagError("Not implemented.",err,error,*999)
                                           CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+                                            NULLIFY(ROW_INDICES)
+                                            NULLIFY(COLUMN_INDICES)
                                             CALL DistributedMatrix_StorageLocationsGet(EQUATIONS_DISTRIBUTED_MATRIX, &
                                               & ROW_INDICES,COLUMN_INDICES,err,error,*999)
                                             !Loop over the non-ghosted rows in the equations set

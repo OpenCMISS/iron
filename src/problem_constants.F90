@@ -286,17 +286,6 @@ MODULE PROBLEM_CONSTANTS
   INTEGER(INTG), PARAMETER :: PROBLEM_SETUP_FINISH_ACTION=2 !<Finish setup action. \see PROBLEM_CONSTANTS_SetupActionTypes,CONSTANTS_ROUTINES
   !>@}
 
-  !> \addtogroup PROBLEM_CONSTANTS_ControlLoopTypes PROBLEM_CONSTANTS::ControlLoopTypes
-  !> \brief Control loop type parameters
-  !> \see PROBLEM_CONSTANTS
-  !>@{
-  INTEGER(INTG), PARAMETER :: PROBLEM_CONTROL_SIMPLE_TYPE=1 !<Simple, one iteration control loop. \see PROBLEM_CONSTANTS_ControlLoopTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: PROBLEM_CONTROL_FIXED_LOOP_TYPE=2 !<Fixed iteration control loop. \see PROBLEM_CONSTANTS_ControlLoopTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: PROBLEM_CONTROL_TIME_LOOP_TYPE=3 !<Time control loop. \see PROBLEM_CONSTANTS_ControlLoopTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: PROBLEM_CONTROL_WHILE_LOOP_TYPE=4 !<While control loop. \see PROBLEM_CONSTANTS_ControlLoopTypes,PROBLEM_CONSTANTS
-  INTEGER(INTG), PARAMETER :: PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE=5 !<Load increment control loop. \see PROBLEM_CONSTANTS_ControlLoopTypes,PROBLEM_CONSTANTS
-  !>@}
-   
   !> \addtogroup PROBLEM_CONSTANTS_LinearityTypes PROBLEM_CONSTANTS::LinearityTypes
   !> \brief Setup type parameters
   !> \see PROBLEM_CONSTANTS

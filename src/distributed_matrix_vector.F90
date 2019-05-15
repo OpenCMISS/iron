@@ -77,57 +77,6 @@ MODULE DistributedMatrixVector
 #include "petscversion.h"
   
   !Module parameters
-
-  !> \addtogroup DistributedMatrixVector_LibraryTypes DistributedMatrixVector::LibraryTypes
-  !> \brief Distributed matrix-vector library types
-  !> \see DistributedMatrixVector
-  !>@{
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE=LIBRARY_CMISS_TYPE !<CMISS distributed matrix-vector library type \see DistributedMatrixVector_LibraryTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE=LIBRARY_PETSC_TYPE !<PETSc distributed matrix-vector library type \see DistributedMatrixVector_LibraryTypes,DistributedMatrixVector
-  !>@}
-  
-  !> \addtogroup DistributedMatrixVector_DataTypes DistributedMatrixVector::DataTypes
-  !> \brief Distributed matrix-vector data types
-  !> \see DistributedMatrixVector
-  !>@{
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE=MATRIX_VECTOR_INTG_TYPE !<Integer distributed matrix-vector data type \see DistributedMatrixVector_DataTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_SP_TYPE=MATRIX_VECTOR_SP_TYPE !<Single precision real distributed matrix-vector data type \see DistributedMatrixVector_DataTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_DP_TYPE=MATRIX_VECTOR_DP_TYPE !<Double precision real distributed matrix-vector data type \see DistributedMatrixVector_DataTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_L_TYPE=MATRIX_VECTOR_L_TYPE !<Logical distributed matrix-vector data type \see DistributedMatrixVector_DataTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE=MATRIX_VECTOR_SPC_TYPE !<Single precision complex distributed matrix-vector data type \see DistributedMatrixVector_DataTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE=MATRIX_VECTOR_DPC_TYPE !<Double precision complex distributed matrix-vector data type \see DistributedMatrixVector_DataTypes,DistributedMatrixVector
-  !>@}
-
-  !> \addtogroup DistributedMatrixVector_StorageTypes DistributedMatrixVector::StorageTypes
-  !> \brief Distributed matrix-vector storage type parameters
-  !>@{
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE !<Distributed matrix block storage type \see DistributedMatrixVector_StorageTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE=MATRIX_DIAGONAL_STORAGE_TYPE !<Distributed matrix diagonal storage type \see DistributedMatrixVector_StorageTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE=MATRIX_COLUMN_MAJOR_STORAGE_TYPE !<Distributed matrix column major storage type \see DistributedMatrixVector_StorageTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE=MATRIX_ROW_MAJOR_STORAGE_TYPE !<Distributed matrix row major storage type \see DistributedMatrixVector_StorageTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE=MATRIX_COMPRESSED_ROW_STORAGE_TYPE !<Distributed matrix compressed row storage type \see DistributedMatrixVector_StorageTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE=MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE !<Distributed matrix compressed column storage type \see DistributedMatrixVector_StorageTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE=MATRIX_ROW_COLUMN_STORAGE_TYPE !<Distributed matrix row-column storage type \see DistributedMatrixVector_StorageTypes,MATRIX_VECTOR
-  !>@}
-  
-  !> \addtogroup DistributedMatrixVector_SymmetryTypes DistributedMatrixVector::SymmetryTypes
-  !> \brief Distributed matrix symmetry type parameters
-  !> \see DistributedMatrixVector_Symmetry,DistributedMatrixVector
-  !>@{
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_SYMMETRIC_TYPE=MATRIX_SYMMETRIC_TYPE !<Distributed matrix is symmetric \see DistributedMatrixVector_SymmetryTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_HERMITIAN_TYPE=MATRIX_HERMITIAN_TYPE !<Distributed matrix is Hermitian (complex symmetric) \see DistributedMatrixVector_SymmetryTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_SKEW_SYMMETRIC_TYPE=MATRIX_SKEW_SYMMETRIC_TYPE !<Distributed matrix is skew-symmetric \see DistributedMatrixVector_SymmetryTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE=MATRIX_UNSYMMETRIC_TYPE !<Distributed matrix is unsymmetric \see DistributedMatrixVector_SymmetryTypes,DistributedMatrixVector
-  !>@}
-
-  !> \addtogroup DistributedMatrixVector_GhostingTypes DistributedMatrixVector::GhostingTypes
-  !> \brief Distributed matrix-vector ghosting types
-  !> \see DistributedMatrixVector
-  !>@{
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE=1 !<Include ghost values in the distributed matrix/vector \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
-  INTEGER(INTG), PARAMETER :: DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE=2 !<Do not include ghost values/rows in the distributed matrix/vector \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
-  !>@}
-  
   !Module types
 
   !Module variables
@@ -151,15 +100,7 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedMatrix_AllValuesSetDP
     MODULE PROCEDURE DistributedMatrix_AllValuesSetL
   END INTERFACE DistributedMatrix_AllValuesSet
-
-  INTERFACE DISTRIBUTED_MATRIX_CREATE_FINISH
-    MODULE PROCEDURE DistributedMatrix_CreateFinish
-  END INTERFACE DISTRIBUTED_MATRIX_CREATE_FINISH
-
-  INTERFACE DISTRIBUTED_MATRIX_CREATE_START
-    MODULE PROCEDURE DistributedMatrix_CreateStart
-  END INTERFACE DISTRIBUTED_MATRIX_CREATE_START
-
+  
   INTERFACE DISTRIBUTED_MATRIX_DATA_GET
     MODULE PROCEDURE DistributedMatrix_DataGetIntg
     MODULE PROCEDURE DistributedMatrix_DataGetSP
@@ -212,14 +153,6 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedMatrix_LibraryTypeSet
   END INTERFACE DISTRIBUTED_MATRIX_LIBRARY_TYPE_SET
 
-  INTERFACE DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET
-    MODULE PROCEDURE DistributedMatrix_MaxColumnsPerRowGet
-  END INTERFACE DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET
-
-  INTERFACE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET
-    MODULE PROCEDURE DistributedMatrix_NumberOfNonZerosGet
-  END INTERFACE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET
-
   INTERFACE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET
     MODULE PROCEDURE DistributedMatrix_NumberOfNonZerosSet
   END INTERFACE DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET
@@ -243,14 +176,15 @@ MODULE DistributedMatrixVector
   INTERFACE DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET
     MODULE PROCEDURE DistributedMatrix_StorageLocationsSet
   END INTERFACE DISTRIBUTED_MATRIX_STORAGE_LOCATIONS_SET
-
-  INTERFACE DISTRIBUTED_MATRIX_STORAGE_TYPE_GET
-    MODULE PROCEDURE DistributedMatrix_StorageTypeGet
-  END INTERFACE DISTRIBUTED_MATRIX_STORAGE_TYPE_GET
-
+  
   INTERFACE DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
     MODULE PROCEDURE DistributedMatrix_StorageTypeSet
   END INTERFACE DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
+
+  INTERFACE DistributedMatrix_TransposeRowsColumnsSet
+    MODULE PROCEDURE DistributedMatrix_TransposeRowsColumnsSet0
+    MODULE PROCEDURE DistributedMatrix_TransposeRowsColumnsSet1
+  END INTERFACE DistributedMatrix_TransposeRowsColumnsSet
 
   INTERFACE DISTRIBUTED_MATRIX_UPDATE_FINISH
     MODULE PROCEDURE DistributedMatrix_UpdateFinish
@@ -554,26 +488,9 @@ MODULE DistributedMatrixVector
     MODULE PROCEDURE DistributedMatrix_LinkListGet
   END INTERFACE DISTRIBUTED_MATRIX_LINKLIST_GET
 
-  PUBLIC DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE,DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE
-
-  PUBLIC DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE,DISTRIBUTED_MATRIX_VECTOR_SP_TYPE,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE, &
-    & DISTRIBUTED_MATRIX_VECTOR_L_TYPE,DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE,DISTRIBUTED_MATRIX_VECTOR_DPC_TYPE
-
-  PUBLIC DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE, &
-    & DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE,DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE, &
-    & DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE,DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE, &
-    & DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
-
-  PUBLIC DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,DISTRIBUTED_MATRIX_HERMITIAN_TYPE,DISTRIBUTED_MATRIX_SKEW_SYMMETRIC_TYPE, &
-    & DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE
-
-  PUBLIC DISTRIBUTED_MATRIX_VECTOR_INCLUDE_GHOSTS_TYPE,DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE
-  
   PUBLIC DISTRIBUTED_MATRIX_ALL_VALUES_SET
 
   PUBLIC DistributedMatrix_AllValuesSet
-
-  PUBLIC DISTRIBUTED_MATRIX_CREATE_FINISH,DISTRIBUTED_MATRIX_CREATE_START
 
   PUBLIC DistributedMatrix_CreateFinish,DistributedMatrix_CreateStart
 
@@ -583,9 +500,7 @@ MODULE DistributedMatrixVector
 
   PUBLIC DISTRIBUTED_MATRIX_DATA_TYPE_SET
 
-  PUBLIC DistributedMatrix_DataTypeGet,DistributedMatrix_DataTypeSet
-
-  PUBLIC DistributedMatrix_DimensionsGet
+  PUBLIC DistributedMatrix_DataTypeSet
 
   PUBLIC DISTRIBUTED_MATRIX_DESTROY
 
@@ -611,13 +526,15 @@ MODULE DistributedMatrixVector
 
   PUBLIC DistributedMatrix_LinkListSet,DistributedMatrix_LinkListGet
 
-  PUBLIC DISTRIBUTED_MATRIX_MAX_COLUMNS_PER_ROW_GET
+  PUBLIC DistributedMatrix_MatrixColumnAdd
 
-  PUBLIC DistributedMatrix_MaxColumnsPerRowGet
+  PUBLIC DistributedMatrix_MatrixCoupleAdd
 
-  PUBLIC DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET,DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_GET
+  PUBLIC DistributedMatrix_MatrixStructureCoupleCalculate
 
-  PUBLIC DistributedMatrix_NumberOfNonZerosGet,DistributedMatrix_NumberOfNonZerosSet
+  PUBLIC DISTRIBUTED_MATRIX_NUMBER_NON_ZEROS_SET
+
+  PUBLIC DistributedMatrix_NumberOfNonZerosSet
 
   PUBLIC DISTRIBUTED_MATRIX_OUTPUT
 
@@ -631,11 +548,15 @@ MODULE DistributedMatrixVector
 
   PUBLIC DistributedMatrix_StorageLocationsGet,DistributedMatrix_StorageLocationsSet
 
-  PUBLIC DISTRIBUTED_MATRIX_STORAGE_TYPE_GET,DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
+  PUBLIC DISTRIBUTED_MATRIX_STORAGE_TYPE_SET
 
-  PUBLIC DistributedMatrix_StorageTypeGet,DistributedMatrix_StorageTypeSet
+  PUBLIC DistributedMatrix_StorageTypeSet
 
-  PUBLIC DistributedMatrix_SymmetryTypeGet,DistributedMatrix_SymmetryTypeSet
+  PUBLIC DistributedMatrix_SymmetryTypeSet
+
+  PUBLIC DistributedMatrix_TransposeRowsColumnsSet
+
+  PUBLIC DistributedMatrix_TransposeTypeSet
 
   PUBLIC DISTRIBUTED_MATRIX_UPDATE_START,DISTRIBUTED_MATRIX_UPDATE_FINISH
 
@@ -675,7 +596,7 @@ MODULE DistributedMatrixVector
 
   PUBLIC DISTRIBUTED_VECTOR_DATA_TYPE_SET
 
-  PUBLIC DistributedVector_DataTypeGet,DistributedVector_DataTypeSet
+  PUBLIC DistributedVector_DataTypeSet
 
   PUBLIC DISTRIBUTED_VECTOR_DESTROY
 
@@ -721,6 +642,10 @@ MODULE DistributedMatrixVector
 
   PUBLIC DistributedVector_ValuesGet,DistributedVector_ValuesSet
 
+  PUBLIC DistributedVector_VectorCoupleAdd
+
+  PUBLIC DistributedVector_VectorRowCoupleAdd
+
 CONTAINS  
   
   !
@@ -741,8 +666,7 @@ CONTAINS
 
     ENTERS("DistributedMatrix_AllValuesSetIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -782,8 +706,7 @@ CONTAINS
 
     ENTERS("DistributedMatrix_AllValuesSetSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -824,8 +747,7 @@ CONTAINS
 
     ENTERS("DistributedMatrix_AllValuesSetDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -875,9 +797,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_AllValuesSetL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+   
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -1002,6 +923,7 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate CMISS distributed matrix.",err,error,*999)
     distributedMatrix%cmiss%distributedMatrix=>distributedMatrix
     distributedMatrix%libraryType=DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE
+    distributedMatrix%cmiss%globalM=rowDomainMapping%numberOfGlobal
     NULLIFY(distributedMatrix%cmiss%matrix)
     !Set the defaults
     CALL Matrix_CreateStart(distributedMatrix%cmiss%matrix,err,error,*999)
@@ -1046,8 +968,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_CreateFinish",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*998)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has been finished.",err,error,*998)
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1129,9 +1050,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_DataGetIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated",err,error,*999)
-    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated",err,error,*999)    
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated.",err,error,*999)    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1171,9 +1091,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_DataGetSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated",err,error,*999)
-    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated",err,error,*999)    
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated.",err,error,*999)    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1216,9 +1135,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_DataGetDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated",err,error,*999)
-    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated",err,error,*999)    
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated.",err,error,*999)    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
 
     NULLIFY(petscData)
     SELECT CASE(distributedMatrix%libraryType)
@@ -1249,6 +1167,10 @@ CONTAINS
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
           CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+          CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+          CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
         CASE DEFAULT
           localError="The PETSc matrix storage type of "//TRIM(NumberToVString( &
             & petscMatrix%storageType,"*",err,error))//" is invalid."
@@ -1274,6 +1196,10 @@ CONTAINS
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
           CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+          CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+          CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
         CASE DEFAULT
           localError="The PETSc matrix storage type of "//TRIM(NumberToVString( &
             & petscMatrix%storageType,"*",err,error))//" is invalid."
@@ -1304,6 +1230,10 @@ CONTAINS
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
           CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+          CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+          CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
         CASE DEFAULT
           localError="The PETSc matrix storage type of "//TRIM(NumberToVString( &
             & petscMatrix%storageType,"*",err,error))//" is invalid."
@@ -1341,9 +1271,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_DataGetL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated",err,error,*999)
     IF(ASSOCIATED(data)) CALL FlagError("Data is already associated",err,error,*999)    
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1382,9 +1311,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_DataRestoreIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1421,9 +1349,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_DataRestoreSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1463,8 +1390,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_DataRestoreDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1496,6 +1422,10 @@ CONTAINS
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
           CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+          CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+          CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
         CASE DEFAULT
           localError="The PETSc matrix storage type of "//TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))// &
             & " is invalid."
@@ -1518,10 +1448,14 @@ CONTAINS
           ELSE
             !Do nothing, PETSc doesn't yet have the facility to restore a pointer to the matrix data for MPI matrices
           ENDIF
-       CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
           CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+          CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+          CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
         CASE DEFAULT
           localError="The PETSc matrix storage type of "//TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))// &
             & " is invalid."
@@ -1547,6 +1481,10 @@ CONTAINS
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
           CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+          CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+          CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
         CASE DEFAULT
           localError="The PETSc matrix storage type of "//TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))// &
             & " is invalid."
@@ -1583,9 +1521,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_DataRestoreL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1609,39 +1546,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the data type of a distributed matrix.
-  SUBROUTINE DistributedMatrix_DataTypeGet(distributedMatrix,dataType,err,error,*)
-
-    !Argument variables
-    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the data type of the matrix. \see DISTRIBUTED_MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-
-    ENTERS("DistributedMatrix_DataTypeGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The matrix has not been finished.",err,error,*999)
-    
-    dataType=distributedMatrix%dataType
- 
-    EXITS("DistributedMatrix_DataTypeGet")
-    RETURN
-999 ERRORSEXITS("DistributedMatrix_DataTypeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE DistributedMatrix_DataTypeGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the data type of a distributed matrix.
   SUBROUTINE DistributedMatrix_DataTypeSet(distributedMatrix,dataType,err,error,*)
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(IN) :: dataType !<The data type to set. \see MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: dataType !<The data type to set. \see DistributedMatrixVector_DataTypes,DistributedMatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1650,8 +1560,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_DataTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
      
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -1689,57 +1598,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DistributedMatrix_DataTypeSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the dimensions of a matrix on this computation node.
-  SUBROUTINE DistributedMatrix_DimensionsGet(distributedMatrix,m,n,err,error,*)
-
-    !Argument variables
-    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to get dimensions for
-    INTEGER(INTG), INTENT(OUT) :: m !<On return, the number of rows in the matrix for this domain
-    INTEGER(INTG), INTENT(OUT) :: n !<On return, the number of columns in the matrix for this domain
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local variables
-    TYPE(MATRIX_TYPE), POINTER :: matrix
-    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
-    TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("DistributedMatrix_DimensionsGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    
-    SELECT CASE(distributedMatrix%libraryType)
-    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-      NULLIFY(cmissMatrix)
-      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
-!!\TODO Move this to a matrix method
-      matrix=>cmissMatrix%matrix
-      IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Distributed matrix CMISS matrix is not associated.",err,error,*999)
-      IF(.NOT.matrix%matrix_finished) CALL FlagError("The matrix has not been finished.",err,error,*999)
-      m=matrix%m
-      n=matrix%n
-    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-      NULLIFY(petscMatrix)
-      CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      m=petscMatrix%m
-      n=petscMatrix%n
-    CASE DEFAULT
-      localError="The distributed matrix library type of "// &
-        & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-
-    EXITS("DistributedMatrix_DimensionsGet")
-    RETURN
-999 ERRORSEXITS("DistributedMatrix_DimensionsGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE DistributedMatrix_DimensionsGet
 
   !
   !================================================================================================================================
@@ -1905,6 +1763,10 @@ CONTAINS
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
           CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+          CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+        CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+          CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
         CASE DEFAULT
           localError="The PETSc matrix storage type of "//TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))// &
             & " is invalid."
@@ -1940,7 +1802,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(IN) :: ghostingType !<The ghosting type \see DISTRIBUTED_MATRIX_VECTOR_GhostingTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: ghostingType !<The ghosting type \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1951,8 +1813,7 @@ CONTAINS
 
     ENTERS("DistributedMatrix_GhostingTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has already been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
 
     NULLIFY(rowDomainMapping)
     CALL DistributedMatrix_RowMappingGet(distributedMatrix,rowDomainMapping,err,error,*999)
@@ -2009,7 +1870,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix 
-    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type \see DistributedMatrixVector_LibraryTypes,DistributedMatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -2018,9 +1879,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_LibraryTypeSet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*998)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has already been finished.",err,error,*998)
-     
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
+    
     oldLibraryType=distributedMatrix%libraryType
     IF(libraryType/=oldLibraryType) THEN
       !Initialise the new library type
@@ -2107,45 +1967,479 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the maximum number of columns in each row of a distributed matrix.
-  SUBROUTINE DistributedMatrix_MaxColumnsPerRowGet(distributedMatrix,maxColumnsPerRow,err,error,*)
+  !>Adds a column from a distributed matrix times an alpha value to a distributed vector
+  SUBROUTINE DistributedMatrix_MatrixColumnAdd(distributedMatrix,columnNumber,rowCoupling,alpha,distributedVector,err,error,*)
 
     !Argument variables
-    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(OUT) :: maxColumnsPerRow !<On return, the maximum number of columns in each row
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<The distributed matrix to take the column from
+    INTEGER(INTG), INTENT(IN) :: columnNumber !<The column number to add
+    TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
+    TYPE(DistributedVectorType), POINTER :: distributedVector !<The distributed vector to add the column to
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
-    TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
+    INTEGER(INTG) :: coupledRowIdx,coupledRowNumber,numberOfMatrixColumns,numberOfMatrixRows,numberOfVectorRows, &
+      & rowIdx,rowNumber,storageType,transposePosition,transposeType
+    INTEGER(INTG), POINTER :: columnIndicesT(:),dataSwivelT(:),rowIndicesT(:)
+    REAL(DP) :: rowCouplingCoefficient,matrixValue,vectorValue
+    REAL(DP), POINTER :: matrixData(:)
     TYPE(VARYING_STRING) :: localError
-
-    ENTERS("DistributedMatrix_MaxColumnsPerRowGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed mtrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
     
+    ENTERS("DistributedMatrix_MatrixColumnAdd",err,error,*999)
+    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedMatrix_NumberOfLocalRowsGet(distributedMatrix,numberOfMatrixRows,err,error,*999)
+    CALL DistributedMatrix_NumberOfColumnsGet(distributedMatrix,numberOfMatrixColumns,err,error,*999)
+    CALL DistributedVector_NumberOfLocalRowsGet(distributedVector,numberOfVectorRows,err,error,*999)
+    IF(columnNumber<=0.OR.columnNumber>numberOfMatrixColumns) THEN
+      localError="The specified column number of "//TRIM(NumberToVString(columnNumber,"*",err,error))// &
+        & " is invalid. The column number should be >=1 and <= "// TRIM(NumberToVString(numberOfMatrixColumns,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(numberOfMatrixRows/=numberOfVectorRows) THEN
+      localError="The number of rows in the matrix of "//TRIM(NumberToVString(numberOfMatrixRows,"*",err,error))// &
+        & " does not match the number of rows in the vector of "// &
+        & TRIM(NumberToVString(numberOfVectorRows,"*",err,error))//"."
+    ENDIF
+    IF(numberOfMatrixRows/=SIZE(rowCoupling,1)) THEN
+      localError="The size of the specified row coupling of "//TRIM(NumberToVString(SIZE(rowCoupling,1),"*",err,error))// &
+        & " does not match the number of rows in the matrix of "//TRIM(NumberToVString(numberOfMatrixRows,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-      NULLIFY(cmissMatrix)
-      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
-      CALL Matrix_MaxColumnsPerRowGet(cmissMatrix%matrix,maxColumnsPerRow,err,error,*999)
+      CALL DistributedMatrix_StorageTypeGet(distributedMatrix,storageType,err,error,*999)
+      NULLIFY(matrixData)
+      CALL DistributedMatrix_DataGet(distributedMatrix,matrixData,err,error,*999)
+      SELECT CASE(storageType)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+        DO rowNumber=1,numberOfMatrixRows
+          CALL DistributedMatrix_ValuesGet(distributedMatrix,rowNumber,columnNumber,matrixValue,err,error,*999)
+          IF(ABS(matrixValue)>=ZERO_TOLERANCE) THEN
+            DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
+              coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
+              rowCouplingCoefficient=rowCoupling(rowNumber)%couplingCoefficients(coupledRowIdx)
+              vectorValue=matrixValue*alpha*rowCouplingCoefficient
+              CALL DistributedVector_ValuesAdd(distributedVector,rowNumber,vectorValue,err,error,*999)
+            ENDDO !coupledRowIdx
+          ENDIF
+        ENDDO !rowNumber
+      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+        rowNumber=columnNumber
+        CALL DistributedMatrix_ValuesGet(distributedMatrix,rowNumber,columnNumber,matrixValue,err,error,*999)
+        IF(ABS(matrixValue)>=ZERO_TOLERANCE) THEN
+          DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
+            coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
+            rowCouplingCoefficient=rowCoupling(rowNumber)%couplingCoefficients(coupledRowIdx)
+            vectorValue=matrixValue*alpha*rowCouplingCoefficient
+            CALL DistributedVector_ValuesAdd(distributedVector,rowNumber,vectorValue,err,error,*999)
+          ENDDO !coupledRowIdx
+        ENDIF
+      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        CALL DistributedMatrix_TransposeTypeGet(distributedMatrix,transposeType,err,error,*999)
+        IF(transposeType==DISTRIBUTED_MATRIX_PARTIAL_TRANSPOSE_REQUIRED.OR. &
+          & transposeType==DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED) THEN
+          NULLIFY(rowIndicesT)
+          NULLIFY(columnIndicesT)
+          NULLIFY(dataSwivelT)
+          CALL DistributedMatrix_StorageTransposeLocationsGet(distributedMatrix,rowIndicesT,columnIndicesT,dataSwivelT, &
+            & err,error,*999)
+          CALL DistributedMatrix_TransposeRowColumnPositionGet(distributedMatrix,columnNumber,transposePosition,err,error,*999)
+          DO rowIdx=columnIndicesT(transposePosition),columnIndicesT(transposePosition+1)-1
+            rowNumber=rowIndicesT(rowIdx)
+            CALL DistributedMatrix_ValuesGet(distributedMatrix,rowNumber,columnNumber,matrixValue,err,error,*999)
+            IF(ABS(matrixValue)>=ZERO_TOLERANCE) THEN
+              DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
+                coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
+                rowCouplingCoefficient=rowCoupling(rowNumber)%couplingCoefficients(coupledRowIdx)
+                vectorValue=matrixValue*alpha*rowCouplingCoefficient
+                CALL DistributedVector_ValuesAdd(distributedVector,rowNumber,vectorValue,err,error,*999)
+              ENDDO !coupledRowIdx
+            ENDIF
+          ENDDO !rowIdx
+        ELSE
+          CALL FlagError("Not implemented.",err,error,*999)
+        ENDIF
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The storage type of "//TRIM(NumberToVString(storageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      CALL DistributedMatrix_DataRestore(distributedMatrix,matrixData,err,error,*999)
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-      NULLIFY(petscMatrix)
-      CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      maxColumnsPerRow=petscMatrix%maximumColumnIndicesPerRow
+      CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
-      localError="The distributed matrix library type of "// &
-        & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
+      localError="The distributed matrix library type of "//TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))// &
+        & " is invalid."
       CALL FlagError(localError,err,error,*999)
-    END SELECT
- 
-    EXITS("DistributedMatrix_MaxColumnsPerRowGet")
+    END SELECT        
+    
+    EXITS("DistributedMatrix_MatrixColumnAdd")
     RETURN
-999 ERRORSEXITS("DistributedMatrix_MaxColumnsPerRowGet",err,error)
+999 ERRORSEXITS("DistributedMatrix_MatrixColumnAdd",err,error)
     RETURN 1
     
-  END SUBROUTINE DistributedMatrix_MaxColumnsPerRowGet
+  END SUBROUTINE DistributedMatrix_MatrixColumnAdd
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a coupled distributed matrix to a distributed matrix i.e., A = A + alpha.C(B)
+  SUBROUTINE DistributedMatrix_MatrixCoupleAdd(aMatrix,rowCoupling,columnCoupling,alpha,bMatrix,transposeB,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedMatrixType), POINTER :: aMatrix !<The distributed matrix to add to
+    TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
+    TYPE(MatrixRowColCouplingType), INTENT(IN) :: columnCoupling(:) !<The column coupling information
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
+    TYPE(DistributedMatrixType), POINTER :: bMatrix !<The distributed matrix to couple and add
+    LOGICAL, INTENT(IN) :: transposeB !<If .TRUE. then the transpose of the b matrix is coupled in, if .FALSE. the b matrix is used.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: aColumn,aColumnIdx,aRow,aRowIdx,bBlockSize,bColumn,bColumnBlock,bColumnIdx,bColumnBlockIdx,blockColumnIdx, &
+      & blockRowIdx,bRowBlockIdx,bNumberOfColumnBlocks,bNumberOfRowBlocks,bMaxNumberOfRows,bStorageType,bRow, &
+      & columnOffset,dataIdx,numberOfBColumns,numberOfBRows
+    INTEGER(INTG), POINTER :: bColumnIndices(:),bRowIndices(:)
+    REAL(DP) :: aValue,columnCouplingCoefficient,rowCouplingCoefficient,matrixValue
+    REAL(DP), POINTER :: bMatrixData(:)
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedMatrix_MatrixCoupleAdd",err,error,*999)
+
+    CALL DistributedMatrix_AssertIsFinished(aMatrix,err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(bMatrix,err,error,*999)
+    CALL DistributedMatrix_NumberOfLocalRowsGet(bMatrix,numberOfBRows,err,error,*999)
+    CALL DistributedMatrix_NumberOfColumnsGet(bMatrix,numberOfBColumns,err,error,*999)
+    IF(numberOfBRows/=SIZE(rowCoupling,1)) THEN
+      localError="The size of the specified row coupling of "//TRIM(NumberToVString(SIZE(rowCoupling,1),"*",err,error))// &
+        & " does not match the number of rows in the B matrix of "//TRIM(NumberToVString(numberOfBRows,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(numberOfBColumns/=SIZE(columnCoupling,1)) THEN
+      localError="The size of the specified column coupling of "//TRIM(NumberToVString(SIZE(columnCoupling,1),"*",err,error))// &
+        & " does not match the number of columns in the B matrix of "//TRIM(NumberToVString(numberOfBColumns,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    SELECT CASE(bMatrix%libraryType)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      CALL DistributedMatrix_StorageTypeGet(bMatrix,bStorageType,err,error,*999)
+      NULLIFY(bMatrixData)
+      CALL DistributedMatrix_DataGet(bMatrix,bMatrixData,err,error,*999)
+      SELECT CASE(bStorageType)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+        CALL DistributedMatrix_MaxNumberOfRowsGet(bMatrix,bMaxNumberOfRows,err,error,*999)
+        !Loop over the rows of the b matrix
+        DO bRow=1,numberOfBRows
+          !Loop over the rows this row is mapped to
+          DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
+            aRow=rowCoupling(bRow)%rowCols(aRowIdx)
+            rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
+            !Loop over the columns of the b matrix
+            DO bColumn=1,numberOfBColumns
+              !Loop over the columns this column is mapped to
+              DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
+                aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
+                columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
+                !Add in the matrix value
+                aValue=alpha*bMatrixData(bRow+(bColumn-1)*bMaxNumberOfRows)*rowCouplingCoefficient*columnCouplingCoefficient
+                IF(transposeB) THEN
+                 CALL DistributedMatrix_ValuesAdd(aMatrix,aColumn,aRow,aValue,err,error,*999)
+                 ELSE
+                  CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
+                ENDIF
+              ENDDO !aColumnIdx
+            ENDDO !bColumn
+          ENDDO !aRowIdx
+        ENDDO !bRow
+      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+        !Loop over the rows of the b matrix
+        DO bRow=1,numberOfBRows
+          !Loop over the rows this row is mapped to
+          DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
+            aRow=rowCoupling(bRow)%rowCols(aRowIdx)
+            rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
+            bColumn=bRow
+            !Loop over the columns this column is mapped to
+            DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
+              aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
+              columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
+              !Add in the solver matrix value
+              aValue=alpha*bMatrixData(bRow)*rowCouplingCoefficient*columnCouplingCoefficient
+              IF(transposeB) THEN
+                CALL DistributedMatrix_ValuesAdd(aMatrix,aColumn,aRow,aValue,err,error,*999)
+              ELSE
+                CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
+              ENDIF
+            ENDDO !aColumnIdx
+          ENDDO !aRowIdx
+        ENDDO !bRow
+      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        NULLIFY(bRowIndices)
+        NULLIFY(bColumnIndices)
+        CALL DistributedMatrix_StorageLocationsGet(bMatrix,bRowIndices,bColumnIndices,err,error,*999)
+        !Loop over the rows of the b matrix
+        DO bRow=1,numberOfBRows
+          !Loop over the rows this row is mapped to
+          DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
+            aRow=rowCoupling(bRow)%rowCols(aRowIdx)
+            rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
+            !Loop over the columns of the b matrix
+            DO bColumnIdx=bRowIndices(bRow),bRowIndices(bRow+1)-1
+              bColumn=bColumnIndices(bColumnIdx)
+              !Loop over the columns this column is mapped to
+              DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
+                aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
+                columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
+                !Add in the solver matrix value
+                aValue=alpha*bMatrixData(bColumnIdx)*rowCouplingCoefficient*columnCouplingCoefficient
+                IF(transposeB) THEN
+                  CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
+                ELSE
+                  CALL DistributedMatrix_ValuesAdd(aMatrix,aColumn,aRow,aValue,err,error,*999)
+                ENDIF
+              ENDDO !aColumnIdx
+            ENDDO !bColumnIdx
+          ENDDO !aRowIdx
+        ENDDO !bRow
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        CALL DistributedMatrix_NumberOfBlocksGet(bMatrix,bNumberOfRowBlocks,bNumberOfColumnBlocks,err,error,*999)
+        CALL DistributedMatrix_BlockSizeGet(bMatrix,bBlockSize,err,error,*999)
+        NULLIFY(bRowIndices)
+        NULLIFY(bColumnIndices)
+        CALL DistributedMatrix_StorageLocationsGet(bMatrix,bRowIndices,bColumnIndices,err,error,*999)
+        !Loop over the rows blocks of the b matrix
+        DO bRowBlockIdx=1,bNumberOfRowBlocks
+          !Loop over rows in the block
+          DO blockRowIdx=1,bBlockSize
+            bRow=blockRowIdx+(bRowBlockIdx-1)*bBlockSize
+            !Loop over the rows this row is mapped to
+            DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
+              aRow=rowCoupling(bRow)%rowCols(aRowIdx)
+              rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
+              !Loop over the columns of the b matrix
+              DO bColumnBlockIdx=bRowIndices(bRowBlockIdx),bRowIndices(bRowBlockIdx+1)-1
+                bColumnBlock=bColumnIndices(bColumnBlockIdx)
+                DO blockColumnIdx=1,bBlockSize
+                  bColumn=blockColumnIdx+(bColumnBlock-1)*bBlockSize
+                  !Loop over the columns this column is mapped to
+                  DO aColumnIdx=1,columnCoupling(bColumn)%numberOfRowCols
+                    aColumn=columnCoupling(bColumn)%rowCols(aColumnIdx)
+                    columnCouplingCoefficient=columnCoupling(bColumn)%couplingCoefficients(aColumnIdx)
+                    !Add in the solver matrix value
+                    dataIdx=blockRowIdx+(blockColumnIdx-1)*bBlockSize+(bColumnBlockIdx-1)*bBlockSize*bBlockSize
+                    matrixValue=bMatrixData(dataIdx)
+                    IF(ABS(matrixValue)>ZERO_TOLERANCE) THEN
+                      aValue=alpha*matrixValue*rowCouplingCoefficient*columnCouplingCoefficient
+                      IF(transposeB) THEN
+                        CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
+                      ELSE
+                        CALL DistributedMatrix_ValuesAdd(aMatrix,aRow,aColumn,aValue,err,error,*999)
+                      ENDIF
+                    ENDIF
+                  ENDDO !aColumnIdx
+                ENDDO !blockColumnIdx
+              ENDDO !bColumnBlockIdx
+            ENDDO !aRowIdx
+          ENDDO !blockRowIdx
+        ENDDO !bBlockRowIdx
+      CASE DEFAULT
+        localError="The B matrix storage type of "//TRIM(NumberToVString(bStorageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+      CALL DistributedMatrix_DataRestore(bMatrix,bMatrixData,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The B distributed matrix library type of "//TRIM(NumberToVString(bMatrix%libraryType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+        
+    EXITS("DistributedMatrix_MatrixCoupleAdd")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_MatrixCoupleAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_MatrixCoupleAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the additional structure of a distributed matrix by adding in a coupled matrix 
+  SUBROUTINE DistributedMatrix_MatrixStructureCoupleCalculate(distributedMatrix,transposeMatrix,rowCoupling,columnCoupling, &
+    & columnIndicesLists,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<The distributed matrix to add the structure for
+    LOGICAL, INTENT(IN) :: transposeMatrix !<If .TRUE. then the transpose of the matrix is coupled in, if .FALSE. the matrix is used.
+    TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
+    TYPE(MatrixRowColCouplingType), INTENT(IN) :: columnCoupling(:) !<The column coupling information
+    TYPE(ListPtrType), INTENT(INOUT) :: columnIndicesLists(:) !<The column indicies lists
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: blockSize,blockColumnIdx,blockRowIdx,columnIdx,columnBlock,columnBlockIdx,columnNumber,coupledColumn, &
+      & coupledColumnIdx,coupledColumnNumber,coupledRow,coupledRowIdx,coupledRowNumber,matrixStorageType,numberOfColumns, &
+      & numberOfColumnBlocks,numberOfRows,numberOfRowBlocks,rowBlockIdx,rowNumber
+    INTEGER(INTG), POINTER :: columnIndices(:),rowIndices(:)
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedMatrix_MatrixStructureCoupleCalculate",err,error,*999)
+
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+    CALL DistributedMatrix_NumberOfLocalRowsGet(distributedMatrix,numberOfRows,err,error,*999)
+    CALL DistributedMatrix_NumberOfColumnsGet(distributedMatrix,numberOfColumns,err,error,*999) 
+    SELECT CASE(distributedMatrix%libraryType)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      CALL DistributedMatrix_StorageTypeGet(distributedMatrix,matrixStorageType,err,error,*999)
+      SELECT CASE(matrixStorageType)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+        !Loop over the rows of the matrix to add
+        DO rowNumber=1,numberOfRows
+          !Loop over the rows this row is mapped to
+          DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
+            coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)                                            
+            !Loop over the columns of the matrix to add
+            DO columnNumber=1,numberOfColumns
+              !Loop over the columns this column is mapped to
+              DO coupledColumnIdx=1,columnCoupling(columnNumber)%numberOfRowCols
+                coupledColumnNumber=columnCoupling(columnNumber)%rowCols(coupledColumnIdx)
+                IF(transposeMatrix) THEN
+                  CALL List_ItemAdd(columnIndicesLists(coupledColumnNumber)%ptr,coupledRowNumber,err,error,*999)
+                ELSE
+                  CALL List_ItemAdd(columnIndicesLists(coupledRowNumber)%ptr,coupledColumnNumber,err,error,*999)
+                ENDIF
+              ENDDO !coupledColumnIdx
+            ENDDO !columnNumber
+          ENDDO !coupledRowIdx
+        ENDDO !rowNumber
+      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+        !Loop over the rows of the matrix to add
+        DO rowNumber=1,numberOfRows
+          !Loop over the rows this row is mapped to
+          DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
+            coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)                                            
+            coupledColumnNumber=coupledRowNumber
+            !Loop over the columns this column is mapped to
+            DO coupledColumnIdx=1,columnCoupling(coupledColumnNumber)%numberOfRowCols
+              coupledColumnNumber=columnCoupling(coupledColumnNumber)%rowCols(coupledColumnIdx)
+              IF(transposeMatrix) THEN
+                CALL List_ItemAdd(columnIndicesLists(coupledColumnNumber)%ptr,coupledRowNumber,err,error,*999)
+               ELSE
+                CALL List_ItemAdd(columnIndicesLists(coupledRowNumber)%ptr,coupledColumnNumber,err,error,*999)
+              ENDIF
+            ENDDO !coupledColumnIdx
+          ENDDO !coupledRowIdx
+        ENDDO !rowNumber
+      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        NULLIFY(rowIndices)
+        NULLIFY(columnIndices)
+        CALL DistributedMatrix_StorageLocationsGet(distributedMatrix,rowIndices,columnIndices,err,error,*999)
+        !Loop over the rows of the matrix to add
+        DO rowNumber=1,numberOfRows
+          !Loop over the solver rows this equations row is mapped to
+          DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
+            coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
+            !Loop over the columns of the  matrix
+            DO columnIdx=rowIndices(rowNumber),rowIndices(rowNumber+1)-1
+              columnNumber=columnIndices(columnIdx)
+              !Loop over the columns this column is mapped to
+              DO coupledColumnIdx=1,columnCoupling(columnNumber)%numberOfRowCols
+                coupledColumnNumber=columnCoupling(columnNumber)%rowCols(coupledColumnIdx)
+                IF(transposeMatrix) THEN
+                  CALL List_ItemAdd(columnIndicesLists(coupledColumnNumber)%ptr,coupledRowNumber,err,error,*999)
+                ELSE
+                  CALL List_ItemAdd(columnIndicesLists(coupledRowNumber)%ptr,coupledColumnNumber,err,error,*999)
+                ENDIF
+              ENDDO !coupledColumnIdx
+            ENDDO !columnIdx
+          ENDDO !coupledRowIdx
+        ENDDO !rowNumber
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        CALL DistributedMatrix_NumberOfBlocksGet(distributedMatrix,numberOfRowBlocks,numberOfColumnBlocks,err,error,*999)
+        CALL DistributedMatrix_BlockSizeGet(distributedMatrix,blockSize,err,error,*999)
+        CALL DistributedMatrix_StorageLocationsGet(distributedMatrix,rowIndices,columnIndices,err,error,*999)
+        !Loop over the rows blocks of the matrix
+        DO rowBlockIdx=1,numberOfRowBlocks
+          !Loop over rows in the block
+          DO blockRowIdx=1,blockSize
+            rowNumber=blockRowIdx+(rowBlockIdx-1)*blockSize
+            !Loop over the rows this row is mapped to
+            DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
+              coupledRow=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
+              !Loop over the columns of the matrix
+              DO columnBlockIdx=rowIndices(rowBlockIdx),rowIndices(rowBlockIdx+1)-1
+                columnBlock=columnIndices(columnBlockIdx)
+                DO blockColumnIdx=1,blockSize
+                  columnNumber=blockColumnIdx+(columnBlock-1)*blockSize
+                  !Loop over the columns this column is mapped to
+                  DO coupledColumnIdx=1,columnCoupling(columnNumber)%numberOfRowCols
+                    coupledColumn=columnCoupling(columnNumber)%rowCols(coupledColumnIdx)
+                    !Add in the solver matrix value
+                    IF(transposeMatrix) THEN
+                      CALL List_ItemAdd(columnIndicesLists(coupledColumn)%ptr,coupledRow,err,error,*999)
+                    ELSE
+                      CALL List_ItemAdd(columnIndicesLists(coupledRow)%ptr,coupledColumn,err,error,*999)
+                    ENDIF
+                  ENDDO !coupledColumnIdx
+                ENDDO !blockColumnIdx
+              ENDDO !columnBlockIdx
+            ENDDO !coupledRowIdx
+          ENDDO !blockRowIdx
+        ENDDO !rowBlockIdx
+      CASE DEFAULT
+        localError="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(matrixStorageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The distributed matrix library type of "//TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("DistributedMatrix_MatrixStructureCoupleCalculate")
+    RETURN
+999 ERRORS("DistributedMatrix_MatrixStructureCoupleCalculate",err,error)
+    EXITS("DistributedMatrix_MatrixStructureCoupleCalculate")
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_MatrixStructureCoupleCalculate
 
   !
   !================================================================================================================================
@@ -2166,8 +2460,7 @@ CONTAINS
 
     ENTERS("DistributedMatrix_NumberOfNonZerosSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed mtrix is not associated.",err,error,*999)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
     IF(numberOfNonZeros<=0) THEN
       localError="The specified number of non zeros of "//TRIM(NumberToVString(numberOfNonZeros,"*",err,error))// &
         & " is invalid. The number must be > 0."
@@ -2200,50 +2493,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of non zeros for a distributed matrix.
-  SUBROUTINE DistributedMatrix_NumberOfNonZerosGet(distributedMatrix,numberOfNonZeros,err,error,*)
-
-    !Argument variables
-    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(OUT) :: numberOfNonZeros !<On return, the number of non zeros in the matrix to get
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
-    TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("DistributedMatrix_NumberOfNonZerosGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix is not finished.",err,error,*999)
-    
-    SELECT CASE(distributedMatrix%libraryType)
-    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-      NULLIFY(cmissMatrix)
-      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
-      CALL Matrix_NumberOfNonZerosGet(cmissMatrix%matrix,numberOfNonZeros,err,error,*999)
-    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-      NULLIFY(petscMatrix)
-      CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      numberOfNonZeros=petscMatrix%numberOfNonZeros
-    CASE DEFAULT
-      localError="The distributed matrix library type of "// &
-        & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-
-    EXITS("DistributedMatrix_NumberOfNonZerosGet")
-    RETURN
-999 ERRORSEXITS("DistributedMatrix_NumberOfNonZerosGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE DistributedMatrix_NumberOfNonZerosGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the LIST STRUCTURE for a distributed matrix.
   SUBROUTINE DistributedMatrix_LinkListSet(distributedMatrix,list,err,error,*)
 
@@ -2259,9 +2508,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_LinkListSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed mtrix is not associated.",err,error,*999)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
+   
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -2304,8 +2552,7 @@ CONTAINS
 
     ENTERS("DistributedMatrix_LinkListGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix is not finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -2354,8 +2601,7 @@ CONTAINS
      
     ENTERS("DistributedMatrix_Output",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("Distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -2422,8 +2668,7 @@ CONTAINS
 
     ENTERS("DistributedMatrix_OverrideSetOn",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("Distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -2464,8 +2709,7 @@ CONTAINS
 
     ENTERS("DistributedMatrix_OverrideSetOff",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("Distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -2585,6 +2829,10 @@ CONTAINS
       CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
     CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
       CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
     CASE DEFAULT
       localError="The PETSc matrix storage type of "//TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))// &
         & " is invalid."
@@ -2728,8 +2976,7 @@ CONTAINS
      
     ENTERS("DistributedMatrix_StorageLocationsGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -2755,6 +3002,10 @@ CONTAINS
         CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
       CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
         CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+        CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
       CASE DEFAULT
         localError="The matrix storage type of "// &
           & TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))//" is invalid."
@@ -2795,9 +3046,8 @@ CONTAINS
 
     ENTERS("DistributedMatrix_StorageLocationsSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has been finished.",err,error,*999)
-
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
+    
     NULLIFY(rowDomainMapping)
     CALL DistributedMatrix_RowMappingGet(distributedMatrix,rowDomainMapping,err,error,*999)
     NULLIFY(columnDomainMapping)
@@ -2918,6 +3168,10 @@ CONTAINS
         CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
       CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
         CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+        CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
       CASE DEFAULT
         localError="The specified matrix storage type of "// &
           & TRIM(NumberToVString(petscMatrix%storageType,"*",err,error))//" is invalid."
@@ -2944,45 +3198,44 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the storage type of a distributed matrix.
-  SUBROUTINE DistributedMatrix_StorageTypeGet(distributedMatrix,storageType,err,error,*)
+  !>Gets the storage transpose locations (sparsity pattern) for a distributed matrix.
+  SUBROUTINE DistributedMatrix_StorageTransposeLocationsGet(distributedMatrix,rowIndicesT,columnIndicesT,dataSwivelT,err,error,*)
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(OUT) :: storageType !<On return, the storage (sparsity) type of the distributed matrix. \see MATRIX_VECTOR_StorageTypes,MATRIX_VECTOR
+    INTEGER(INTG), POINTER :: rowIndicesT(:) !<rowIndicesT(i). On return, the i'th row index of the transpose matrix storage locations
+    INTEGER(INTG), POINTER :: columnIndicesT(:) !<columnIndicesT(i). On return, the i'th column index of the transpose matrix storage locations
+    INTEGER(INTG), POINTER :: dataSwivelT(:) !<dataSwivelT(i). On return, the i'th swivel to locate the transpose entry in the orginal matrix storage
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
-    TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
     TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("DistributedMatrix_StorageTypeGet",err,error,*999)
+     
+    ENTERS("DistributedMatrix_StorageTransposeLocationsGet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
       CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
-      CALL Matrix_StorageTypeGet(cmissMatrix%matrix,storageType,err,error,*999)
+      CALL Matrix_StorageTransposeLocationsGet(cmissMatrix%matrix,rowIndicesT,columnIndicesT,dataSwivelT,err,error,*999)
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-      NULLIFY(petscMatrix)
-      CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      storageType=petscMatrix%storageType
+      CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="The distributed matrix library type of "// &
         & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
-    EXITS("DistributedMatrix_StorageTypeGet")
+    EXITS("DistributedMatrix_StorageTransposeLocationsGet")
     RETURN
-999 ERRORSEXITS("DistributedMatrix_StorageTypeGet",err,error)
+999 ERRORS("DistributedMatrix_StorageTransposeLocationsGet",err,error)
+    EXITS("DistributedMatrix_StorageTransposeLocationsGet")
     RETURN 1
     
-  END SUBROUTINE DistributedMatrix_StorageTypeGet
+  END SUBROUTINE DistributedMatrix_StorageTransposeLocationsGet
 
   !
   !================================================================================================================================
@@ -2993,7 +3246,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
-    INTEGER(INTG), INTENT(IN) :: storageType !<The storage (sparsity) type to set. \see DISTRIBUTED_MATRIX_VECTOR_StorageTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: storageType !<The storage (sparsity) type to set. \see DistributedMatrixVector_StorageTypes,DistributedMatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3003,8 +3256,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_StorageTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)  
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3029,6 +3281,10 @@ CONTAINS
         CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
       CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
         CALL FlagError("Row column storage is not implemented for PETSc matrices.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        CALL FlagError("Block compressed row storage is not implemented for PETSc matrices.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+        CALL FlagError("Modified KRM storage is not implemented for PETSc matrices.",err,error,*999)
       CASE DEFAULT
         localError="The specified matrix storage type of "//TRIM(NumberToVString(storageType,"*",err,error))// &
           & " is invalid."
@@ -3051,56 +3307,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the symetry type of a distributed matrix.
-  SUBROUTINE DistributedMatrix_SymmetryTypeGet(distributedMatrix,symmetryType,err,error,*)
-
-    !Argument variables
-    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to get the symmetry type for
-    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type of the distributed matrix. \see DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes,DISTRIBUTED_MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
-    TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
-    TYPE(VARYING_STRING) :: localError
-    
-    ENTERS("DistributedMatrix_SymmetryTypeGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
-    SELECT CASE(distributedMatrix%libraryType)
-    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
-      NULLIFY(cmissMatrix)
-      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
-      CALL Matrix_SymmetryTypeGet(cmissMatrix%matrix,symmetryType,err,error,*999)
-    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
-      NULLIFY(petscMatrix)
-      CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
-      symmetryType=petscMatrix%symmetryType
-    CASE DEFAULT
-      localError="The distributed matrix library type of "// &
-        & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-    
-    EXITS("DistributedMatrix_SymmetryTypeGet")
-    RETURN
-999 ERRORSEXITS("DistributedMatrix_SymmetryTypeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE DistributedMatrix_SymmetryTypeGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the symmetry type of a distributed matrix.
   SUBROUTINE DistributedMatrix_SymmetryTypeSet(distributedMatrix,symmetryType,err,error,*)
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to set the symmetry type for
-    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see DISTRIBUTED_MATRIX_VECTOR_SymmetryTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see DistributedMatrixVector_SymmetryTypes,DistributedMatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3110,8 +3322,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_SymmetryTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3159,6 +3370,186 @@ CONTAINS
   !
   !================================================================================================================================
   !
+  
+  !>Returns the position in the transpose indices list for the specified row/column number.
+  SUBROUTINE DistributedMatrix_TransposeRowColumnPositionGet(distributedMatrix,rowColumnNumber,transposePosition,err,error,*)
+    
+    !Argument variables    
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to find the transpose position for
+    INTEGER(INTG), INTENT(IN) :: rowColumnNumber !<The row/column number to find the position for
+    INTEGER(INTG), INTENT(OUT) :: transposePosition !<On return, the position in the transfer indices for the row/column. If the row/column is not in the transfer indices then the transpose position will be zero. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedMatrix_TransposeRowColumnPositionGet",err,error,*999)
+
+     CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+    
+    SELECT CASE(distributedMatrix%libraryType)      
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      NULLIFY(cmissMatrix)
+      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
+      CALL Matrix_TransposeRowColumnPositionGet(cmissMatrix%matrix,rowColumnNumber,transposePosition,err,error,*999)
+      IF(transposePosition==0) THEN
+        localError="The transpose position for row/column number "//TRIM(NumberToVString(rowColumnNumber,"*",err,error))// &
+          & " could not be found."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The distributed matrix library type of "// &
+        & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
+    EXITS("DistributedMatrix_TransposeRowColumnPositionGet")
+    RETURN
+999 ERRORS("DistributedMatrix_TransposeRowColumnPositionGet",err,error)
+    EXITS("DistributedMatrix_TransposeRowColumnPositionGet")
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_TransposeRowColumnPositionGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the transpose row/column for a distributed matrix.
+  SUBROUTINE DistributedMatrix_TransposeRowsColumnsSet0(distributedMatrix,transposeRowColumn,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to set the transpose row/column for
+    INTEGER(INTG), INTENT(IN) :: transposeRowColumn !<The transpose row/column to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedMatrix_TransposeRowsColumnsSet0",err,error,*999)
+
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+    
+    SELECT CASE(distributedMatrix%libraryType)      
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      NULLIFY(cmissMatrix)
+      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
+      CALL Matrix_TransposeRowsColumnsSet(cmissMatrix%matrix,transposeRowColumn,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The distributed matrix library type of "// &
+        & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("DistributedMatrix_TransposeRowsColumnsSet0")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_TransposeRowsColumnsSet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_TransposeRowsColumnsSet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the transpose rows/columns for a distributed matrix.
+  SUBROUTINE DistributedMatrix_TransposeRowsColumnsSet1(distributedMatrix,transposeRowsColumns,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to set the transpose row/column for
+    INTEGER(INTG), INTENT(IN) :: transposeRowsColumns(:) !<transposeRowsColumns(i). The i'th transpose row/column to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedMatrix_TransposeRowsColumnsSet1",err,error,*999)
+
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+    
+    SELECT CASE(distributedMatrix%libraryType)      
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      NULLIFY(cmissMatrix)
+      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
+      CALL Matrix_TransposeRowsColumnsSet(cmissMatrix%matrix,transposeRowsColumns,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The distributed matrix library type of "// &
+        & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("DistributedMatrix_TransposeRowsColumnsSet1")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_TransposeRowsColumnsSet1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_TransposeRowsColumnsSet1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the transpose type of a distributed matrix.
+  SUBROUTINE DistributedMatrix_TransposeTypeSet(distributedMatrix,transposeType,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix to set the transpose type for
+    INTEGER(INTG), INTENT(IN) :: transposeType !<The transpose type to set. \see DistributedMatrixVector_TransposeTypes,DistributedMatrixVector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
+    TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedMatrix_TransposeTypeSet",err,error,*999)
+
+    CALL DistributedMatrix_AssertNotFinished(distributedMatrix,err,error,*999)
+    
+    SELECT CASE(distributedMatrix%libraryType)      
+    CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
+      NULLIFY(cmissMatrix)
+      CALL DistributedMatrix_CMISSMatrixGet(distributedMatrix,cmissMatrix,err,error,*999)
+      CALL Matrix_TransposeTypeSet(cmissMatrix%matrix,transposeType,err,error,*999)
+    CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
+      NULLIFY(petscMatrix)
+      CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
+      SELECT CASE(transposeType)
+      CASE(DISTRIBUTED_MATRIX_NO_TRANSPOSE_REQUIRED)
+        petscMatrix%transposeType=DISTRIBUTED_MATRIX_NO_TRANSPOSE_REQUIRED
+      CASE(DISTRIBUTED_MATRIX_PARTIAL_TRANSPOSE_REQUIRED)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The specified transpose type of "//TRIM(NumberToVString(transposeType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The distributed matrix library type of "// &
+        & TRIM(NumberToVString(distributedMatrix%libraryType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("DistributedMatrix_TransposeTypeSet")
+    RETURN
+999 ERRORSEXITS("DistributedMatrix_TransposeTypeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedMatrix_TransposeTypeSet
+
+  !
+  !================================================================================================================================
+  !
 
   !>Finishes the update procedure for a distributed matrix. This routine will wait until all transfers have completed!
   SUBROUTINE DistributedMatrix_UpdateFinish(distributedMatrix,err,error,*)
@@ -3173,8 +3564,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_UpdateFinish",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3217,8 +3607,7 @@ CONTAINS
     ENTERS("DistributedMatrix_UpdateIsFinished",err,error,*999)
 
     isFinished=.FALSE.
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     !Do nothing for now.
     isFinished=.TRUE.
@@ -3245,8 +3634,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_UpdateWaitFinished",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     !Do nothing for now.
     
@@ -3274,8 +3662,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_UpdateStart",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished)  CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3321,8 +3708,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3364,8 +3750,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddIntg1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3407,8 +3792,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddIntg2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3450,8 +3834,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3493,9 +3876,8 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddSP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+   
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -3536,8 +3918,7 @@ CONTAINS
    
     ENTERS("DistributedMatrix_ValuesAddSP2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3581,8 +3962,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3655,9 +4035,8 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddDP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -3711,9 +4090,8 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddDP2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+   
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -3779,8 +4157,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3822,8 +4199,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddL1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3865,8 +4241,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesAddL2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3908,8 +4283,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)  
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3951,8 +4325,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetIntg1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -3994,8 +4367,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetIntg2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
      
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4037,8 +4409,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4080,8 +4451,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetSP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4123,9 +4493,8 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetSP2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+   
     SELECT CASE(distributedMatrix%libraryType)  
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -4168,8 +4537,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
    
     SELECT CASE(distributedMatrix%libraryType)     
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4240,9 +4608,8 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetDP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+   
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -4296,8 +4663,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetDP2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4364,8 +4730,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4407,8 +4772,7 @@ CONTAINS
    
     ENTERS("DistributedMatrix_ValuesGetL1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4450,8 +4814,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesGetL2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4492,8 +4855,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4535,8 +4897,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetIntg1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4578,9 +4939,8 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetIntg2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+   
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -4621,9 +4981,8 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
-    
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -4664,8 +5023,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetSP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4707,8 +5065,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetSP2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4752,8 +5109,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
    
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4822,8 +5178,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetDP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
    
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4875,8 +5230,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetDP2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
    
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4943,8 +5297,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
    
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -4986,8 +5339,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetL1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
    
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -5029,8 +5381,7 @@ CONTAINS
     
     ENTERS("DistributedMatrix_ValuesSetL2",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated.",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("The distributed matrix has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
    
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -5060,35 +5411,34 @@ CONTAINS
   !>product vector. NOTE: This will only work for specific CMISS distributed matrices i.e., ones in which the columns of the
   !>matrix are distributed in the same way as the rows of the multiplied vector are distributed, and the rows of the matrix
   !>are distributed in the same way as the rows of the product vector.
-  SUBROUTINE DistributedMatrix_MatrixByVectorAdd(rowSelectionType,alpha,distributedMatrix,distributedVector,distributedProduct, &
-    & err,error,*)
+  SUBROUTINE DistributedMatrix_MatrixByVectorAdd(rowSelectionType,alpha,distributedMatrix,transposeMatrix,distributedVector, &
+    & distributedProduct,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the matrix-vector product \see DISTRIBUTED_MATRIX_VECTOR_GhostingTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: rowSelectionType !<The row selection for the matrix-vector product \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the distributed matrix
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
+    LOGICAL, INTENT(IN) :: transposeMatrix !<If .TRUE. then the transpose of the matrix is coupled in, if .FALSE. the matrix is used.
     TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
     TYPE(DistributedVectorType), POINTER :: distributedProduct !<On exit, the value of the matrix vector product added to the distributed product vector.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnIdx,localColumn,globalColumn,numberOfColumns,numberOfRows,row,rowIdx
+    INTEGER(INTG) :: columnIdx,localColumn,globalColumn,numberOfColumns,numberOfRows,row,rowIdx,transposePosition,transposeType
+    INTEGER(INTG), POINTER :: columnIndicesT(:),dataSwivelT(:),rowIndicesT(:)
     REAL(DP) :: sum
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector,cmissProduct
     TYPE(DomainMappingType), POINTER :: rowMapping,columnMapping,productMapping,vectorMapping
-    TYPE(MATRIX_TYPE), POINTER :: matrix
+    TYPE(MatrixType), POINTER :: matrix
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("DistributedMatrix_MatrixByVectorAdd",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedMatrix)) CALL FlagError("Distributed matrix is not associated",err,error,*999)
-    IF(.NOT.distributedMatrix%matrixFinished) CALL FlagError("Distributed matrix has not been finished.",err,error,*999)
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distrubuted vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("Distributed vector has not been finished.",err,error,*999)
-    IF(.NOT.ASSOCIATED(distributedProduct)) CALL FlagError("The distributed product vector is not associated.",err,error,*999)
-    IF(.NOT.distributedProduct%vectorFinished) &
-      & CALL FlagError("The distributed product vector has not been finished.",err,error,*999)
+    CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedProduct,err,error,*999)
+    
     IF(distributedMatrix%libraryType/=distributedVector%libraryType) THEN
       localError="The distributed vector library type of "// &
         & TRIM(NumberToVString(distributedVector%libraryType,"*",err,error))// &
@@ -5161,64 +5511,131 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
-          SELECT CASE(matrix%storage_Type)
+          SELECT CASE(matrix%storageType)
           CASE(MATRIX_BLOCK_STORAGE_TYPE)
-            DO row=1,numberOfRows
-              sum=0.0_DP
+            IF(transposeMatrix) THEN
               DO localColumn=1,columnMapping%totalNumberOfLocal
                 globalColumn=columnMapping%localToGlobalMap(localColumn)
-                sum=sum+matrix%data_DP(row+(globalColumn-1)*matrix%m)*cmissVector%dataDP(localColumn)
+                sum=0.0_DP
+                DO row=1,numberOfRows
+                  sum=sum++matrix%dataDP(row+(globalColumn-1)*matrix%m)*cmissVector%dataDP(row)
+                ENDDO !row
+                cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
               ENDDO !localColumn
-              cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-            ENDDO !row
+            ELSE
+              DO row=1,numberOfRows
+                sum=0.0_DP
+                DO localColumn=1,columnMapping%totalNumberOfLocal
+                  globalColumn=columnMapping%localToGlobalMap(localColumn)
+                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%m)*cmissVector%dataDP(localColumn)
+                ENDDO !localColumn
+                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+              ENDDO !row
+            ENDIF
           CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
             DO row=1,numberOfRows
-              sum=matrix%data_DP(row)*cmissVector%dataDP(row)
+              sum=matrix%dataDP(row)*cmissVector%dataDP(row)
               cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
             ENDDO !row
           CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-            DO row=1,numberOfRows
-              sum=0.0_DP
+            IF(transposeMatrix) THEN
               DO localColumn=1,columnMapping%totalNumberOfLocal
                 globalColumn=columnMapping%localToGlobalMap(localColumn)
-                sum=sum+matrix%data_DP(row+(globalColumn-1)*matrix%MAX_M)*cmissVector%dataDP(localColumn)
+                sum=0.0_DP
+                DO row=1,numberOfRows
+                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%maxM)*cmissVector%dataDP(row)
+                ENDDO !row
+                cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
               ENDDO !localColumn
-              cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-            ENDDO !row
-          CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-            DO row=1,numberOfRows
-              sum=0.0_DP
-              DO localColumn=1,columnMapping%totalNumberOfLocal
-                globalColumn=columnMapping%localToGlobalMap(localColumn)
-                sum=sum+matrix%data_DP((row-1)*matrix%MAX_N+globalColumn)*cmissVector%dataDP(localColumn)
-              ENDDO !localColumn
-              cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-            ENDDO !row
-          CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-            DO row=1,numberOfRows
-              sum=0.0_DP
-              DO columnIdx=matrix%row_Indices(row),matrix%row_Indices(row+1)-1
-                globalColumn=matrix%column_Indices(columnIdx)
-                !This ranks global to local mappings are stored in the first position
-                localColumn=columnMapping%globalToLocalMap(globalColumn)%localNumber(1)
-                sum=sum+matrix%data_DP(columnIdx)*cmissVector%dataDP(localColumn)
-              ENDDO !localColumn
-              cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-            ENDDO !row
-          CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-            DO columnIdx=1,numberOfColumns
-              DO rowIdx=matrix%column_Indices(columnIdx),matrix%column_Indices(columnIdx+1)-1
-                row=matrix%row_Indices(rowIdx)
-                localColumn=columnMapping%globalToLocalMap(columnIdx)%localNumber(1)
-                sum=matrix%data_DP(rowIdx)*cmissVector%dataDP(localColumn)
+            ELSE
+              DO row=1,numberOfRows
+                sum=0.0_DP
+                DO localColumn=1,columnMapping%totalNumberOfLocal
+                  globalColumn=columnMapping%localToGlobalMap(localColumn)
+                  sum=sum+matrix%dataDP(row+(globalColumn-1)*matrix%maxM)*cmissVector%dataDP(localColumn)
+                ENDDO !localColumn
                 cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-              ENDDO !local_row
-            ENDDO !columnIdx
+              ENDDO !row
+            ENDIF
+          CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+            IF(transposeMatrix) THEN
+               DO localColumn=1,columnMapping%totalNumberOfLocal
+                 globalColumn=columnMapping%localToGlobalMap(localColumn)
+                 sum=0.0_DP
+                 DO row=1,numberOfRows
+                   sum=sum+matrix%dataDP((row-1)*matrix%maxN+globalColumn)*cmissVector%dataDP(row)
+                 ENDDO !row
+                 cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
+               ENDDO !localColumn
+             ELSE
+              DO row=1,numberOfRows
+                sum=0.0_DP
+                DO localColumn=1,columnMapping%totalNumberOfLocal
+                  globalColumn=columnMapping%localToGlobalMap(localColumn)
+                  sum=sum+matrix%dataDP((row-1)*matrix%maxN+globalColumn)*cmissVector%dataDP(localColumn)
+                ENDDO !localColumn
+                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+              ENDDO !row
+            ENDIF
+          CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+            IF(transposeMatrix) THEN              
+              CALL DistributedMatrix_TransposeTypeGet(distributedMatrix,transposeType,err,error,*999)
+              IF(transposeType==DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED) THEN
+                CALL DistributedMatrix_StorageTransposeLocationsGet(distributedMatrix,rowIndicesT,columnIndicesT,dataSwivelT, &
+                  & err,error,*999)
+                DO localColumn=1,columnMapping%totalNumberOfLocal
+                  globalColumn=columnMapping%localToGlobalMap(localColumn)
+                  CALL DistributedMatrix_TransposeRowColumnPositionGet(distributedMatrix,globalColumn,transposePosition, &
+                    & err,error,*999)
+                  sum=0.0_DP
+                  DO rowIdx=1,columnIndicesT(transposePosition),columnIndicesT(transposePosition+1)-1
+                    row=rowIndicesT(rowIdx)
+                    sum=sum+matrix%dataDP(dataSwivelT(row))*cmissVector%dataDP(row)
+                  ENDDO !rowIdx
+                  cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
+                ENDDO !localColumn
+              ELSE
+                CALL FlagError("Not implemented.",err,error,*999)
+              ENDIF
+            ELSE              
+              DO row=1,numberOfRows
+                sum=0.0_DP
+                DO columnIdx=matrix%rowIndices(row),matrix%rowIndices(row+1)-1
+                  globalColumn=matrix%columnIndices(columnIdx)
+                  !This ranks global to local mappings are stored in the first position
+                  localColumn=columnMapping%globalToLocalMap(globalColumn)%localNumber(1)
+                  sum=sum+matrix%dataDP(columnIdx)*cmissVector%dataDP(localColumn)
+                ENDDO !localColumn
+                cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+              ENDDO !row
+            ENDIF
+          CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+            IF(transposeMatrix) THEN
+              DO localColumn=1,columnMapping%totalNumberOfLocal
+                globalColumn=columnMapping%localToGlobalMap(localColumn)
+                DO rowIdx=matrix%columnIndices(columnIdx),matrix%columnIndices(columnIdx+1)-1
+                  row=matrix%rowIndices(rowIdx)
+                  sum=sum+matrix%dataDP(row)*cmissVector%dataDP(row)
+                ENDDO !rowIdx
+                cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
+              ENDDO !localColumn
+            ELSE
+              DO localColumn=1,columnMapping%totalNumberOfLocal
+                globalColumn=columnMapping%localToGlobalMap(localColumn)
+                DO rowIdx=matrix%columnIndices(globalColumn),matrix%columnIndices(globalColumn+1)-1
+                  row=matrix%rowIndices(rowIdx)
+                  sum=matrix%dataDP(rowIdx)*cmissVector%dataDP(localColumn)
+                  cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
+                ENDDO !local_row
+              ENDDO !columnIdx
+            ENDIF
           CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+            CALL FlagError("Not implemented.",err,error,*999)
+          CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The matrix storage type of "// &
-              & TRIM(NumberToVString(matrix%storage_Type,"*",err,error))//" is invalid."            
+              & TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."            
             CALL FlagError(localError,err,error,*999)
           END SELECT
         CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
@@ -5266,13 +5683,8 @@ CONTAINS
 
     ENTERS("DistributedVector_AllValuesSetIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The data type of "//TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the integer data type of the given value."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -5312,13 +5724,8 @@ CONTAINS
 
     ENTERS("DistributedVector_AllValuesSetSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The data type of "//TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the single precision data type of the given value."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -5359,13 +5766,8 @@ CONTAINS
 
     ENTERS("DistributedVector_AllValuesSetDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The data type of "//TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the double precision data type of the given value."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -5411,13 +5813,8 @@ CONTAINS
 
     ENTERS("DistributedVector_AllValuesSetL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
-      localError="The data type of "//TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the logical data type of the given value."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -5459,20 +5856,14 @@ CONTAINS
     
     ENTERS("DistributedVector_CopyIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(fromVector)) CALL FlagError("From vector is not associated.",err,error,*999)
-    IF(.NOT.fromVector%vectorFinished) CALL FlagError("From vector has not been finished.",err,error,*999)
-    IF(.NOT.ASSOCIATED(toVector)) CALL FlagError("To vector is not associated.",err,error,*999)
-    IF(.NOT.toVector%vectorFinished) CALL FlagError("To vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(fromVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(toVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(fromVector,err,error,*999)
     IF(fromVector%dataType/=toVector%dataType) THEN
       localError="The from vector data type of "// &
         & TRIM(NumberToVString(fromVector%dataType,"*",err,error))// &
         & " does not match the to vector data type of "// &
         & TRIM(NumberToVString(toVector%dataType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(fromVector%dataType/=DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The from vector data type of "//TRIM(NumberToVString(fromVector%dataType,"*",err,error))// &
-        & " does not match the integer data type of the supplied alpha value."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(fromVector%libraryType/=toVector%libraryType) CALL FlagError("Not implemented.",err,error,*999) !Vectors are of from different library types
@@ -5525,20 +5916,14 @@ CONTAINS
     
     ENTERS("DistributedVector_CopySP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(fromVector)) CALL FlagError("From vector is not associated.",err,error,*999)
-    IF(.NOT.fromVector%vectorFinished) CALL FlagError("From vector has not been finished.",err,error,*999)
-    IF(.NOT.ASSOCIATED(toVector)) CALL FlagError("To vector is not associated.",err,error,*999)
-    IF(.NOT.toVector%vectorFinished) CALL FlagError("To vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(fromVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(toVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(fromVector,err,error,*999)
     IF(fromVector%dataType/=toVector%dataType) THEN
       localError="The from vector data type of "// &
         & TRIM(NumberToVString(fromVector%dataType,"*",err,error))// &
         & " does not match the to vector data type of "// &
         & TRIM(NumberToVString(toVector%dataType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(fromVector%dataType/=DISTRIBUTED_MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The from vector data type of "//TRIM(NumberToVString(fromVector%dataType,"*",err,error))// &
-        & " does not match the single precision real data type of the supplied alpha value."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(fromVector%libraryType/=toVector%libraryType) CALL FlagError("Not implemented.",err,error,*999) !Vectors are of from different library types
@@ -5593,20 +5978,14 @@ CONTAINS
     
     ENTERS("DistributedVector_CopyDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(fromVector)) CALL FlagError("From vector is not associated.",err,error,*999)
-    IF(.NOT.fromVector%vectorFinished) CALL FlagError("From vector has not been finished.",err,error,*999)
-    IF(.NOT.ASSOCIATED(toVector)) CALL FlagError("To vector is not associated.",err,error,*999)
-    IF(.NOT.toVector%vectorFinished) CALL FlagError("To vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(fromVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(toVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(fromVector,err,error,*999)
     IF(fromVector%dataType/=toVector%dataType) THEN
       localError="The from vector data type of "// &
         & TRIM(NumberToVString(fromVector%dataType,"*",err,error))// &
         & " does not match the to vector data type of "// &
         & TRIM(NumberToVString(toVector%dataType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(fromVector%dataType/=DISTRIBUTED_MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The from vector data type of "//TRIM(NumberToVString(fromVector%dataType,"*",err,error))// &
-        & " does not match the double precision real data type of the supplied alpha value."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(fromVector%libraryType/=toVector%libraryType) CALL FlagError("Not implemented.",err,error,*999) !Vectors are of from different library types
@@ -5679,20 +6058,14 @@ CONTAINS
     
     ENTERS("DistributedVector_CopyL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(fromVector)) CALL FlagError("From vector is not associated.",err,error,*999)
-    IF(.NOT.fromVector%vectorFinished) CALL FlagError("From vector has not been finished.",err,error,*999)
-    IF(.NOT.ASSOCIATED(toVector)) CALL FlagError("To vector is not associated.",err,error,*999)
-    IF(.NOT.toVector%vectorFinished) CALL FlagError("To vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(fromVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(toVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(fromVector,err,error,*999)
     IF(fromVector%dataType/=toVector%dataType) THEN
       localError="The from vector data type of "// &
         & TRIM(NumberToVString(fromVector%dataType,"*",err,error))// &
         & " does not match the to vector data type of "// &
         & TRIM(NumberToVString(toVector%dataType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(fromVector%dataType/=DISTRIBUTED_MATRIX_VECTOR_L_TYPE) THEN
-      localError="The from vector data type of "//TRIM(NumberToVString(fromVector%dataType,"*",err,error))// &
-        & " does not match the logical data type of the supplied alpha value."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(fromVector%libraryType/=toVector%libraryType) CALL FlagError("Not implemented.",err,error,*999) !Vectors are of from different library types
@@ -5962,8 +6335,7 @@ CONTAINS
     
     ENTERS("DistributedVector_CreateFinish",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(distributedVector%vectorFinished) CALL FlagError("The distributed vector has already been finished.",err,error,*999)
+    CALL DistributedVector_AssertNotFinished(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)      
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6025,39 +6397,12 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the data type of a distributed vector.
-  SUBROUTINE DistributedVector_DataTypeGet(distributedVector,dataType,err,error,*)
-
-    !Argument variables
-    TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the data type of the vector. \see DISTRIBUTED_MATRIX_VECTOR_DataTypes,MATRIX_VECTOR
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-
-    ENTERS("DistributedVector_DataTypeGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    
-    dataType=distributedVector%dataType
-
-    EXITS("DistributedVector_DataTypeGet")
-    RETURN
-999 ERRORSEXITS("DistributedVector_DataTypeGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE DistributedVector_DataTypeGet
-
-  !
-  !================================================================================================================================
-  !
-
   !>Sets/changes the data type of a distributed vector.
   SUBROUTINE DistributedVector_DataTypeSet(distributedVector,dataType,err,error,*)
 
     !Argument variables
     TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector
-    INTEGER(INTG), INTENT(IN) :: dataType !<The data type to be set \see DISTRIBUTED_MATRIX_VECTOR_DataTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: dataType !<The data type to be set \see DistributedMatrixVector_DataTypes,DistributedMatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6065,8 +6410,7 @@ CONTAINS
     
     ENTERS("DistributedVector_DataTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(distributedVector%vectorFinished) CALL FlagError("The distributed vector has been finished.",err,error,*999)
+    CALL DistributedVector_AssertNotFinished(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6264,15 +6608,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DataGetIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(ASSOCIATED(DATA)) CALL FlagError("Data is already associated.",err,error,*999)     
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the integer data type of the requested values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated.",err,error,*999)     
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
      
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6312,15 +6650,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DataGetSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(ASSOCIATED(DATA)) CALL FlagError("Data is already associated.",err,error,*999)     
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the single precision real data type of the requested values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated.",err,error,*999)     
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
      
     SELECT CASE(distributedVector%libraryType)       
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6361,15 +6693,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DataGetDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
     IF(ASSOCIATED(data)) CALL FlagError("Data is already associated.",err,error,*999)     
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the double precision real data type of the requested values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
      
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6415,15 +6741,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DataGetL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(ASSOCIATED(DATA)) CALL FlagError("Data is already associated.",err,error,*999)     
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the logical data type of the requested values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    IF(ASSOCIATED(data)) CALL FlagError("Data is already associated.",err,error,*999)     
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6462,9 +6782,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DataRestoreIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)     
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6501,9 +6821,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DataRestoreSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)     
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6541,9 +6861,9 @@ CONTAINS
     
     ENTERS("DistributedVector_DataRestoreDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)     
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    IF(.NOT.ASSOCIATED(DATA)) CALL FlagError("Data is not associated.",err,error,*999)     
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6586,9 +6906,9 @@ CONTAINS
  
     ENTERS("DistributedVector_DataRestoreL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(data)) CALL FlagError("Data is not associated.",err,error,*999)     
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6617,7 +6937,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector 
-    INTEGER(INTG), INTENT(IN) :: ghostingType !<The ghosting type \see DISTRIBUTED_MATRIX_VECTOR_GhostingTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: ghostingType !<The ghosting type \see DistributedMatrixVector_GhostingTypes,DistributedMatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6628,8 +6948,7 @@ CONTAINS
 
     ENTERS("DistributedVector_GhostingTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(distributedVector%vectorFinished) CALL FlagError("The distributed vector has already been finished.",err,error,*999)
+    CALL DistributedVector_AssertNotFinished(distributedVector,err,error,*999)
     NULLIFY(domainMapping)
     CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
     
@@ -6681,7 +7000,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DistributedVectorType), POINTER :: distributedVector !<A pointer to the distributed vector 
-    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type \see DISTRIBUTED_MATRIX_VECTOR_LibraryTypes,DISTRIBUTED_MATRIX_VECTOR
+    INTEGER(INTG), INTENT(IN) :: libraryType !<The library type \see DistributedMatrixVector_LibraryTypes,DistributedMatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6690,8 +7009,7 @@ CONTAINS
 
     ENTERS("DistributedVector_LibraryTypeSet",err,error,*998)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*998)
-    IF(distributedVector%vectorFinished) CALL FlagError("The distributed vector has already been finished.",err,error,*998)
+    CALL DistributedVector_AssertNotFinished(distributedVector,err,error,*999)
     
     oldLibraryType=distributedVector%libraryType
     IF(libraryType/=oldLibraryType) THEN
@@ -6753,8 +7071,7 @@ CONTAINS
 
     ENTERS("DistributedVector_Output",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("Distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6829,8 +7146,7 @@ CONTAINS
 
     ENTERS("DistributedVector_OverrideSetOn",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("Distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -6871,8 +7187,7 @@ CONTAINS
 
     ENTERS("DistributedVector_OverrideSetOff",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("Distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -7142,8 +7457,7 @@ CONTAINS
    
     ENTERS("DistributedVector_UpdateFinish",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
     NULLIFY(domainMapping)
     CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
     
@@ -7290,8 +7604,7 @@ CONTAINS
     ENTERS("DistributedVector_UpdateIsFinished",err,error,*999)
 
     isFinished=.FALSE.
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
     NULLIFY(domainMapping)
     CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
     
@@ -7343,8 +7656,7 @@ CONTAINS
     
     ENTERS("DistributedVector_UpdateWaitFinished",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
     NULLIFY(domainMapping)
     CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
     
@@ -7392,8 +7704,7 @@ CONTAINS
     
     ENTERS("DistributedVector_UpdateStart",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
     NULLIFY(domainMapping)
     CALL DistributedVector_RowMappingGet(distributedVector,domainMapping,err,error,*999)
     
@@ -7718,8 +8029,7 @@ CONTAINS
 
     ENTERS("DistributedVector_L2Norm",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -7779,10 +8089,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DotProductIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVectorA)) CALL FlagError("Distributed vector A is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(distributedVectorB)) CALL FlagError("Distributed vector B is not associated.",err,error,*999)    
-    IF(.NOT.distributedVectorA%vectorFinished) CALL FlagError("Distributed vector A has not been finished.",err,error,*999)
-    IF(.NOT.distributedVectorB%vectorFinished) CALL FlagError("Distributed vector B has not been finished.",err,error,*999)    
+    CALL DistributedVector_AssertIsFinished(distributedVectorA,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVectorB,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVectorA,err,error,*999)
     IF(distributedVectorA%libraryType/=distributedVectorB%libraryType) THEN
       localError="The distributed vector A library type of "// &
         & TRIM(NumberToVString(distributedVectorA%libraryType,"*",err,error))// &
@@ -7795,12 +8104,6 @@ CONTAINS
         & TRIM(NumberToVString(distributedVectorA%dataType,"*",err,error))// &
         & " does not match the distributed vector B data type of "// &
         & TRIM(NumberToVString(distributedVectorB%dataType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVectorA%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The distributed vectors data type of "// &
-        & TRIM(NumberToVString(distributedVectorA%dataType,"*",err,error))// &
-        & " does not match the integer data type of the supplied dot product value."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -7856,10 +8159,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DotProductSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVectorA)) CALL FlagError("Distributed vector A is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(distributedVectorB)) CALL FlagError("Distributed vector B is not associated.",err,error,*999)    
-    IF(.NOT.distributedVectorA%vectorFinished) CALL FlagError("Distributed vector A has not been finished.",err,error,*999)
-    IF(.NOT.distributedVectorB%vectorFinished) CALL FlagError("Distributed vector B has not been finished.",err,error,*999)    
+    CALL DistributedVector_AssertIsFinished(distributedVectorA,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVectorB,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVectorA,err,error,*999)
     IF(distributedVectorA%libraryType/=distributedVectorB%libraryType) THEN
       localError="The distributed vector A library type of "// &
         & TRIM(NumberToVString(distributedVectorA%libraryType,"*",err,error))// &
@@ -7872,12 +8174,6 @@ CONTAINS
         & TRIM(NumberToVString(distributedVectorA%dataType,"*",err,error))// &
         & " does not match the distributed vector B data type of "// &
         & TRIM(NumberToVString(distributedVectorB%dataType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVectorA%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed vectors data type of "// &
-        & TRIM(NumberToVString(distributedVectorA%dataType,"*",err,error))// &
-        & " does not match the single precision real data type of the supplied dot product value."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -7934,10 +8230,9 @@ CONTAINS
 
     ENTERS("DistributedVector_DotProductDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVectorA)) CALL FlagError("Distributed vector A is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(distributedVectorB)) CALL FlagError("Distributed vector B is not associated.",err,error,*999)    
-    IF(.NOT.distributedVectorA%vectorFinished) CALL FlagError("Distributed vector A has not been finished.",err,error,*999)
-    IF(.NOT.distributedVectorB%vectorFinished) CALL FlagError("Distributed vector B has not been finished.",err,error,*999)    
+    CALL DistributedVector_AssertIsFinished(distributedVectorA,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVectorB,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVectorA,err,error,*999)
     IF(distributedVectorA%libraryType/=distributedVectorB%libraryType) THEN
       localError="The distributed vector A library type of "// &
         & TRIM(NumberToVString(distributedVectorA%libraryType,"*",err,error))// &
@@ -7950,12 +8245,6 @@ CONTAINS
         & TRIM(NumberToVString(distributedVectorA%dataType,"*",err,error))// &
         & " does not match the distributed vector B data type of "// &
         & TRIM(NumberToVString(distributedVectorB%dataType,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVectorA%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The distributed vectors data type of "// &
-        & TRIM(NumberToVString(distributedVectorA%dataType,"*",err,error))// &
-        & " does not match the double precision real data type of the supplied dot product value."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8015,17 +8304,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesAddIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the integer data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8077,14 +8360,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesAddIntg1",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the integer data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -8133,17 +8410,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesAddSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the single precision real data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8195,14 +8466,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesAddSP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the single precision real data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -8252,17 +8517,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesAddDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the double precision real data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8324,14 +8583,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesAddDP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the double precision real data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)  
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -8389,17 +8642,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesAddL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the logical data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8451,14 +8698,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesAddL1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the logical data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -8507,17 +8748,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesGetIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the integer data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8568,14 +8803,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesGetIntg1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the integer data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -8623,17 +8852,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesGetSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the single precision real data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8684,14 +8907,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesGetSP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the single precision real data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -8741,17 +8958,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesGetDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the double precision real data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8817,14 +9028,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesGetDP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the double precision real data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -8882,17 +9087,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesGetL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the logical data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -8943,14 +9142,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesGetL1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the logical data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -8998,17 +9191,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesSetIntg",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the integer data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -9060,14 +9247,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesSetIntg1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_INTG_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the integer data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsIntgData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -9116,17 +9297,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesSetSP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the single precision real data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -9178,14 +9353,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesSetSP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_SP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the single precision real data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsSPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -9235,17 +9404,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesSetDP",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the double precision real data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -9308,14 +9471,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesSetDP1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_DP_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the double precision real data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsDPData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -9372,17 +9529,11 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesSetL",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     IF(SIZE(indices,1)/=SIZE(values,1)) THEN
       localError="The size of the indicies array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
         & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(distributedVector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the logical data type of the given values."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
@@ -9434,14 +9585,8 @@ CONTAINS
     
     ENTERS("DistributedVector_ValuesSetL1",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(distributedVector)) CALL FlagError("Distributed vector is not associated.",err,error,*999)
-    IF(.NOT.distributedVector%vectorFinished) CALL FlagError("The distributed vector has not been finished.",err,error,*999)
-    IF(distributedVector%dataType/=MATRIX_VECTOR_L_TYPE) THEN
-      localError="The distributed data type of "// &
-        & TRIM(NumberToVString(distributedVector%dataType,"*",err,error))// &
-        & " does not correspond to the logical data type of the given values."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
+    CALL DistributedVector_AssertIsLData(distributedVector,err,error,*999)
     
     SELECT CASE(distributedVector%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
@@ -9469,6 +9614,96 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DistributedVector_ValuesSetL1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a coupled distributed vector to a distributed vector i.e., a = a + alpha.C(b)
+  SUBROUTINE DistributedVector_VectorCoupleAdd(aVector,rowCoupling,alpha,bVector,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedVectorType), POINTER :: aVector !<The distributed vector to add to
+    TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
+    TYPE(DistributedVectorType), POINTER :: bVector !<The distributed vector to couple and add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: aRow,aRowIdx,bRow,numberOfBRows
+    REAL(DP) :: aValue,rowCouplingCoefficient
+    REAL(DP), POINTER :: bVectorData(:)
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedVector_VectorCoupleAdd",err,error,*999)
+
+    CALL DistributedVector_AssertIsFinished(aVector,err,error,*999)
+    CALL DistributedVector_AssertIsFinished(bVector,err,error,*999)
+    CALL DistributedVector_NumberOfLocalRowsGet(bVector,numberOfBRows,err,error,*999)
+    IF(numberOfBRows/=SIZE(rowCoupling,1)) THEN
+      localError="The size of the specified row coupling of "//TRIM(NumberToVString(SIZE(rowCoupling,1),"*",err,error))// &
+        & " does not match the number of rows in the b vector of "//TRIM(NumberToVString(numberOfBRows,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    NULLIFY(bVectorData)
+    CALL DistributedVector_DataGet(bVector,bVectorData,err,error,*999)
+    !Loop over the rows of the b vector
+    DO bRow=1,numberOfBRows
+      !Loop over the rows this row is mapped to
+      DO aRowIdx=1,rowCoupling(bRow)%numberOfRowCols
+        aRow=rowCoupling(bRow)%rowCols(aRowIdx)
+        rowCouplingCoefficient=rowCoupling(bRow)%couplingCoefficients(aRowIdx)
+        aValue=alpha*bVectorData(bRow)*rowCouplingCoefficient
+        CALL DistributedVector_ValuesAdd(aVector,aRow,aValue,err,error,*999)
+      ENDDO !aRowIdx
+    ENDDO !bRowNumber
+    CALL DistributedVector_DataRestore(bVector,bVectorData,err,error,*999)
+        
+    EXITS("DistributedVector_VectorCoupleAdd")
+    RETURN
+999 ERRORSEXITS("DistributedVector_VectorCoupleAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedVector_VectorCoupleAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a coupled row of distributed vector to a distributed vector row i.e., a(rows) = a(rows) + alpha.C(bValue)
+  SUBROUTINE DistributedVector_VectorRowCoupleAdd(aVector,rowCoupling,alpha,bValue,err,error,*)
+
+    !Argument variables
+    TYPE(DistributedVectorType), POINTER :: aVector !<The distributed vector to add to
+    TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling !<The row coupling information
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
+    REAL(DP), INTENT(IN) :: bValue !<The value of the b vector to couple
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: aRow,aRowIdx,bRow
+    REAL(DP) :: aValue,rowCouplingCoefficient
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DistributedVector_VectorRowCoupleAdd",err,error,*999)
+
+    CALL DistributedVector_AssertIsFinished(aVector,err,error,*999)
+
+    !Loop over the rows this row is mapped to
+    DO aRowIdx=1,rowCoupling%numberOfRowCols
+      aRow=rowCoupling%rowCols(aRowIdx)
+      rowCouplingCoefficient=rowCoupling%couplingCoefficients(aRowIdx)
+      aValue=alpha*bValue*rowCouplingCoefficient
+      CALL DistributedVector_ValuesAdd(aVector,aRow,aValue,err,error,*999)
+    ENDDO !aRowIdx
+        
+    EXITS("DistributedVector_VectorRowCoupleAdd")
+    RETURN
+999 ERRORSEXITS("DistributedVector_VectorRowCoupleAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DistributedVector_VectorRowCoupleAdd
 
   !
   !================================================================================================================================

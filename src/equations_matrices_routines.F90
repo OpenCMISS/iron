@@ -46,6 +46,7 @@ MODULE EquationsMatricesRoutines
 
   USE BaseRoutines
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
@@ -425,6 +426,8 @@ CONTAINS
           & ptr%matrix,err,error,*999)
         CALL DistributedMatrix_DataTypeSet(equationsMatrix%matrix,MATRIX_VECTOR_DP_TYPE,err,error,*999)
         CALL DistributedMatrix_StorageTypeSet(equationsMatrix%matrix,equationsMatrix%storageType,err,error,*999)
+        CALL DistributedMatrix_TransposeTypeSet(equationsMatrix%matrix,DISTRIBUTED_MATRIX_PARTIAL_TRANSPOSE_REQUIRED, &
+          & err,error,*999)
         !Calculate and set the matrix structure/sparsity pattern
         IF(equationsMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
           & equationsMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
@@ -459,6 +462,8 @@ CONTAINS
           & ptr%matrix,err,error,*999)
         CALL DistributedMatrix_DataTypeSet(equationsMatrix%matrix,MATRIX_VECTOR_DP_TYPE,err,error,*999)
         CALL DistributedMatrix_StorageTypeSet(equationsMatrix%matrix,equationsMatrix%storageType,err,error,*999)
+        CALL DistributedMatrix_TransposeTypeSet(equationsMatrix%matrix,DISTRIBUTED_MATRIX_PARTIAL_TRANSPOSE_REQUIRED, &
+          & err,error,*999)
         !Calculate and set the matrix structure/sparsity pattern
         IF(equationsMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
           & equationsMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
@@ -493,6 +498,8 @@ CONTAINS
         CALL DistributedMatrix_CreateStart(rowDomainMap,columnDomainMap,jacobianMatrix%jacobian,err,error,*999)
         CALL DistributedMatrix_DataTypeSet(jacobianMatrix%jacobian,MATRIX_VECTOR_DP_TYPE,err,error,*999)
         CALL DistributedMatrix_StorageTypeSet(jacobianMatrix%jacobian,jacobianMatrix%storageType,err,error,*999)
+        CALL DistributedMatrix_TransposeTypeSet(jacobianMatrix%jacobian,DISTRIBUTED_MATRIX_PARTIAL_TRANSPOSE_REQUIRED, &
+          & err,error,*999)
         !Calculate and set the matrix structure/sparsity pattern
         IF(jacobianMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
           & jacobianMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
@@ -4346,7 +4353,7 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable
-    TYPE(LIST_PTR_TYPE), ALLOCATABLE :: columnIndicesLists(:)
+    TYPE(ListPtrType), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("EquationsMatrix_StructureCalculate",err,error,*998)
@@ -4719,7 +4726,7 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping,rowDofsParamMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable,rowVariable
-    TYPE(LIST_PTR_TYPE), ALLOCATABLE :: columnIndicesLists(:)
+    TYPE(ListPtrType), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("JacobianMatrix_StructureCalculate",err,error,*998)

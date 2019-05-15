@@ -69,10 +69,10 @@ MODULE FIELDML_TYPES
     LOGICAL :: IS_OUT !< True if the state is being used for output, false otherwise.
 !    INTEGER(C_INT) :: elementDofsHandle !<The FieldML element dofs evaluator handle.
 !    INTEGER(C_INT) :: constantDofsHandle !<The FieldML constant dofs evaluator handle.
-    TYPE(LIST_TYPE), POINTER :: COMPONENT_HANDLES
-    TYPE(LIST_TYPE), POINTER :: BASIS_HANDLES
-    TYPE(LIST_TYPE), POINTER :: BASIS_CONNECTIVITY_HANDLES
-    TYPE(LIST_TYPE), POINTER :: BASIS_LAYOUT_HANDLES
+    TYPE(ListType), POINTER :: COMPONENT_HANDLES
+    TYPE(ListType), POINTER :: BASIS_HANDLES
+    TYPE(ListType), POINTER :: BASIS_CONNECTIVITY_HANDLES
+    TYPE(ListType), POINTER :: BASIS_LAYOUT_HANDLES
   END TYPE FIELDML_IO_TYPE
 
   !Interfaces

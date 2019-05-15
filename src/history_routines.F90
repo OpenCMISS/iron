@@ -146,7 +146,7 @@ CONTAINS
   SUBROUTINE HISTORY_CREATE_START(CONTROL_LOOP,HISTORY,ERR,ERROR,*)
     
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to setup
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to setup
     TYPE(HISTORY_TYPE), POINTER :: HISTORY !<On exit, a pointer to the created history file. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -230,7 +230,7 @@ CONTAINS
   SUBROUTINE HISTORY_INITIALISE(CONTROL_LOOP,ERR,ERROR,*)
     
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control_loop to initialise the history file for
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control_loop to initialise the history file for
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -243,7 +243,7 @@ CONTAINS
       ELSE
         ALLOCATE(CONTROL_LOOP%HISTORY,STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate control loop history.",ERR,ERROR,*999)
-        CONTROL_LOOP%HISTORY%CONTROL_LOOP=>CONTROL_LOOP
+        CONTROL_LOOP%HISTORY%controlLoop=>CONTROL_LOOP
         CONTROL_LOOP%HISTORY%HISTORY_FINISHED=.FALSE.
         CONTROL_LOOP%HISTORY%FILE_FORMAT=HISTORY_BINARY_FILE_FORMAT
         CONTROL_LOOP%HISTORY%FILENAME="History"

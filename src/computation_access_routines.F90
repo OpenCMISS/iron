@@ -236,7 +236,7 @@ CONTAINS
   SUBROUTINE WorkGroup_AssertIsFinished(workGroup,err,error,*)
 
     !Argument Variables
-    TYPE(WorkGroupType), POINTER, INTENT(INOUT) :: workGroup !<The work group to assert the finished status for
+    TYPE(WorkGroupType), POINTER, INTENT(IN) :: workGroup !<The work group to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -267,7 +267,7 @@ CONTAINS
   SUBROUTINE WorkGroup_AssertNotFinished(workGroup,err,error,*)
 
     !Argument Variables
-    TYPE(WorkGroupType), POINTER, INTENT(INOUT) :: workGroup !<The work group to assert the finished status for
+    TYPE(WorkGroupType), POINTER, INTENT(IN) :: workGroup !<The work group to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

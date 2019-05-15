@@ -49,7 +49,7 @@ MODULE FittingRoutines
   USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE DARCY_EQUATIONS_ROUTINES, ONLY: idebug1
   USE DistributedMatrixVector
@@ -4553,7 +4553,7 @@ CONTAINS
   SUBROUTINE Fitting_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem set to setup a fitting problem on.
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem set to setup a fitting problem on.
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4607,12 +4607,12 @@ CONTAINS
   SUBROUTINE FITTING_PROBLEM_STANDARD_SETUP(PROBLEM,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -4651,7 +4651,7 @@ CONTAINS
             CALL ControlLoop_CreateStart(PROBLEM,CONTROL_LOOP,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>problem%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>problem%controlLoop
             CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL ControlLoop_CreateFinish(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -4662,7 +4662,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>problem%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>problem%controlLoop
           CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(problemSetup%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -4689,7 +4689,7 @@ CONTAINS
           SELECT CASE(problemSetup%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>problem%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>problem%controlLoop
             CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL ControlLoop_SolversGet(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -4701,7 +4701,7 @@ CONTAINS
             CALL SolverEquations_SparsityTypeSet(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>problem%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>problem%controlLoop
             CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL ControlLoop_SolversGet(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -4742,12 +4742,12 @@ CONTAINS
   SUBROUTINE Fitting_ProblemStaticSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop, controlLoopRoot
+    TYPE(ControlLoopType), POINTER :: controlLoop, controlLoopRoot
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVERS_TYPE), POINTER :: solvers
@@ -4786,7 +4786,7 @@ CONTAINS
             CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            controlLoopRoot=>problem%CONTROL_LOOP
+            controlLoopRoot=>problem%controlLoop
             CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
             CALL ControlLoop_CreateFinish(controlLoop,err,error,*999)
           CASE DEFAULT
@@ -4797,7 +4797,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          controlLoopRoot=>problem%CONTROL_LOOP
+          controlLoopRoot=>problem%controlLoop
           CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
           SELECT CASE(problemSetup%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -4824,7 +4824,7 @@ CONTAINS
           SELECT CASE(problemSetup%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            controlLoopRoot=>problem%CONTROL_LOOP
+            controlLoopRoot=>problem%controlLoop
             CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
             !Get the solver
             CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
@@ -4836,7 +4836,7 @@ CONTAINS
             CALL SolverEquations_SparsityTypeSet(solverEquations,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            controlLoopRoot=>problem%CONTROL_LOOP
+            controlLoopRoot=>problem%controlLoop
             CALL ControlLoop_Get(controlLoopRoot,CONTROL_LOOP_NODE,controlLoop,err,error,*999)
             !Get the solver equations
             CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
@@ -4879,12 +4879,12 @@ CONTAINS
   SUBROUTINE FITTING_PROBLEM_VECTORDATA_SETUP(PROBLEM,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -4925,13 +4925,13 @@ CONTAINS
             !Set up a simple control loop
             CALL ControlLoop_CreateStart(PROBLEM,CONTROL_LOOP,err,error,*999)
             IF(problem%specification(3)==PROBLEM_DATA_POINT_VECTOR_STATIC_FITTING_SUBTYPE) THEN
-              CALL ControlLoop_TypeSet(CONTROL_LOOP,PROBLEM_CONTROL_SIMPLE_TYPE,err,error,*999)
+              CALL ControlLoop_TypeSet(CONTROL_LOOP,CONTROL_SIMPLE_TYPE,err,error,*999)
             ELSE
-              CALL ControlLoop_TypeSet(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+              CALL ControlLoop_TypeSet(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
             ENDIF
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>problem%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>problem%controlLoop
             CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL ControlLoop_CreateFinish(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -4942,7 +4942,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>problem%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>problem%controlLoop
           CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(problemSetup%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -4969,7 +4969,7 @@ CONTAINS
           SELECT CASE(problemSetup%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>problem%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>problem%controlLoop
             CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL ControlLoop_SolversGet(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -4985,7 +4985,7 @@ CONTAINS
             CALL SolverEquations_SparsityTypeSet(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>problem%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>problem%controlLoop
             CALL ControlLoop_Get(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL ControlLoop_SolversGet(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -5027,7 +5027,7 @@ CONTAINS
   SUBROUTINE Fitting_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the specification for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the specification for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The proboem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -5137,8 +5137,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
@@ -5147,7 +5147,7 @@ CONTAINS
     IF(ASSOCIATED(solver)) THEN
       solvers=>solver%solvers
       IF(ASSOCIATED(solvers)) THEN
-        controlLoop=>solvers%CONTROL_LOOP
+        controlLoop=>solvers%controlLoop
         IF(ASSOCIATED(controlLoop)) THEN
           problem=>controlLoop%problem
           IF(ASSOCIATED(problem)) THEN
@@ -5172,7 +5172,7 @@ CONTAINS
             CASE(PROBLEM_DATA_POINT_VECTOR_QUASISTATIC_FITTING_SUBTYPE)
               !Do nothing
             CASE(PROBLEM_VECTOR_DATA_FITTING_SUBTYPE,PROBLEM_DIV_FREE_VECTOR_DATA_FITTING_SUBTYPE)
-              !IF(controlLoop%WHILE_LOOP%ITERATION_NUMBER==1)THEN
+              !IF(controlLoop%WHILE_LOOP%iterationNumber==1)THEN
               CALL WriteString(GENERAL_OUTPUT_TYPE,"Read in vector data... ",err,error,*999)
               !Update indpendent data fields
               CALL Fitting_PreSolveUpdateInputData(solver,err,error,*999)
@@ -5218,8 +5218,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
@@ -5228,7 +5228,7 @@ CONTAINS
     IF(ASSOCIATED(solver)) THEN
       solvers=>solver%solvers
       IF(ASSOCIATED(solvers)) THEN
-        controlLoop=>solvers%CONTROL_LOOP
+        controlLoop=>solvers%controlLoop
         IF(ASSOCIATED(controlLoop)) THEN
           problem=>controlLoop%problem
           IF(ASSOCIATED(problem)) THEN
@@ -5289,8 +5289,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
-    TYPE(PROBLEM_TYPE), POINTER :: problem  !<A pointer to the solver equations
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    TYPE(ProblemType), POINTER :: problem  !<A pointer to the solver equations
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
     TYPE(SOLVERS_TYPE), POINTER :: solvers
@@ -5298,7 +5298,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
     REAL(DP) :: currentTime,timeIncrement
     INTEGER(INTG) :: equationsSetIdx,currentLoopIteration,outputIterationNumber
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlTimeLoop !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: controlTimeLoop !<A pointer to the control loop to solve.
     LOGICAL :: exportField
     CHARACTER(7) :: outputFile
 
@@ -5307,7 +5307,7 @@ CONTAINS
     IF(ASSOCIATED(solver)) THEN
       solvers=>solver%solvers
       IF(ASSOCIATED(solvers)) THEN
-        controlLoop=>solvers%CONTROL_LOOP
+        controlLoop=>solvers%controlLoop
         IF(ASSOCIATED(controlLoop)) THEN
           problem=>controlLoop%problem
           IF(ASSOCIATED(problem)) THEN
@@ -5337,10 +5337,10 @@ CONTAINS
                   !Make sure the equations sets are up to date
                   DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
                     equationsSet=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%ptr
-                    currentLoopIteration=controlTimeLoop%TIME_LOOP%ITERATION_NUMBER
-                    outputIterationNumber=controlTimeLoop%TIME_LOOP%OUTPUT_NUMBER
+                    currentLoopIteration=controlTimeLoop%timeLoop%iterationNumber
+                    outputIterationNumber=controlTimeLoop%timeLoop%outputNumber
                     IF(outputIterationNumber/=0) THEN
-                      IF(controlTimeLoop%TIME_LOOP%CURRENT_TIME<=controlTimeLoop%TIME_LOOP%STOP_TIME) THEN
+                      IF(controlTimeLoop%timeLoop%currentTime<=controlTimeLoop%timeLoop%stopTime) THEN
                         IF(currentLoopIteration<10) THEN
                           WRITE(outputFile,'("DATA_0",I0)') currentLoopIteration
                         ELSE IF(currentLoopIteration<100) THEN
@@ -5399,8 +5399,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop,controlTimeLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop,controlTimeLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
     TYPE(SOLVERS_TYPE), POINTER :: solvers
@@ -5422,7 +5422,7 @@ CONTAINS
     IF(ASSOCIATED(solver)) THEN
       solvers=>solver%solvers
       IF(ASSOCIATED(solvers)) THEN
-        controlLoop=>solvers%CONTROL_LOOP
+        controlLoop=>solvers%controlLoop
         IF(ASSOCIATED(controlLoop)) THEN
           problem=>controlLoop%problem
           IF(ASSOCIATED(problem)) THEN
@@ -5460,7 +5460,7 @@ CONTAINS
                   IF(ASSOCIATED(equationsSet)) THEN
                     CALL Field_NumberOfComponentsGet(equationsSet%geometry%geometricField,FIELD_U_VARIABLE_TYPE, &
                       & numberOfDimensions,err,error,*999)
-                    currentLoopIteration=controlTimeLoop%TIME_LOOP%ITERATION_NUMBER
+                    currentLoopIteration=controlTimeLoop%timeLoop%iterationNumber
                     !this is the current time step
                     !\todo: Provide possibility for user to define input type and option (that's more or less an IO question)
                     inputType=1

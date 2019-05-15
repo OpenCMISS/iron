@@ -1626,8 +1626,8 @@ CONTAINS
     INTEGER(INTG) :: numberSurrounding,numberOfNodesXiC(4)
     INTEGER(INTG), ALLOCATABLE :: nodeMatches(:),adjacentElements(:)
     LOGICAL :: xiCollapsed,faceCollapsed(-3:3),subset
-    TYPE(LIST_TYPE), POINTER :: nodeMatchList
-    TYPE(LIST_PTR_TYPE) :: adjacentElementsList(-4:4)
+    TYPE(ListType), POINTER :: nodeMatchList
+    TYPE(ListPtrType) :: adjacentElementsList(-4:4)
     TYPE(BasisType), POINTER :: basis
     TYPE(MeshElementsType), POINTER :: meshElements
     TYPE(MeshNodesType), POINTER :: meshNOdes
@@ -2707,7 +2707,7 @@ CONTAINS
     INTEGER(INTG), ALLOCATABLE :: derivatives(:)
     LOGICAL :: found
     TYPE(BasisType), POINTER :: basis
-    TYPE(LIST_TYPE), POINTER :: nodeDerivativeList
+    TYPE(ListType), POINTER :: nodeDerivativeList
     TYPE(MeshElementsType), POINTER :: meshElements
     TYPE(MeshNodesType), POINTER :: meshNodes
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -2821,7 +2821,7 @@ CONTAINS
     INTEGER(INTG) :: elementIdx,localNodeIdx,derivativeIdx,nodeIdx,numberOfVersions,versionIdx
     INTEGER(INTG), ALLOCATABLE :: versions(:)
     TYPE(BasisType), POINTER :: basis
-    TYPE(LIST_PTR_TYPE), POINTER :: nodeVersionList(:,:)
+    TYPE(ListPtrType), POINTER :: nodeVersionList(:,:)
     TYPE(MeshElementsType), POINTER :: meshElements
     TYPE(MeshNodesType), POINTER :: meshNodes
     

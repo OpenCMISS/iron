@@ -59,10 +59,50 @@ MODULE ControlLoopAccessRoutines
 
   !Module parameters
 
+  !> \addtogroup OpenCMISS_ControlLoopConstants OpenCMISS::Iron::ControlLoop::Constants
+  !> \brief Control loop constants.
+  !>@{
   !> \addtogroup ControlLoopRoutines_ControlLoopIdentifiers ControlLoopRoutines::ControlLoopIdentifiers
   !> \brief The control loop identification parameters
   !>@{
   INTEGER(INTG), PARAMETER :: CONTROL_LOOP_NODE=0 !<The identifier for a each "leaf" node in a control loop. \see ControlLoopRoutines_ControlLoopIdentifiers,ControlLoopRoutines
+  !>@}
+  !> \addtogroup ControlLoopRoutines_ControlLoopTypes ControlLoopRoutines::ControlLoopTypes
+  !> \brief Control loop type parameters
+  !> \see ControlLoopRoutines
+  !>@{
+  INTEGER(INTG), PARAMETER :: CONTROL_SIMPLE_TYPE=1 !<Simple, one iteration control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
+  INTEGER(INTG), PARAMETER :: CONTROL_FIXED_LOOP_TYPE=2 !<Fixed iteration control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
+  INTEGER(INTG), PARAMETER :: CONTROL_TIME_LOOP_TYPE=3 !<Time control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
+  INTEGER(INTG), PARAMETER :: CONTROL_WHILE_LOOP_TYPE=4 !<While control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
+  INTEGER(INTG), PARAMETER :: CONTROL_LOAD_INCREMENT_LOOP_TYPE=5 !<Load increment control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
+  !>@}
+  !> \addtogroup ControlLoop_OutputTypes OpenCMISS::Iron::ControlLoop::OutputTypes
+  !> \brief The types of output for a control loop.
+  !> \see ControlLoop
+  !>@{
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_NO_OUTPUT=0 !<No output from the control loop \see ControlLoop_OutputTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_PROGRESS_OUTPUT=1 !<Progress output from control loop \see ControlLoop_OutputTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_TIMING_OUTPUT=2 !<Timing output from the control loop \see ControlLoop_OutputTypes,ControlLoop
+  !>@}
+
+  !> \addtogroup ControlLoop_FieldVariableLinearityTypes OpenCMISS::Iron::ControlLoop::FieldVariableLinearityTypes
+  !> \brief The linearity type of control loop field variables
+  !> \see ControlLoop
+  !>@{
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_LINEAR=1 !<The control loop field variable is linear \see ControlLoop_FieldVariableLinearityTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR=2 !<The control loop field variable is nonlinear \see ControlLoop_FieldVariableLinearityTypes,ControlLoop
+  !>@}
+
+  !> \addtogroup ControlLoop_FieldVariableTimeDependenceTypes OpenCMISS::Iron::ControlLoop::FieldVariableTimeDependenceTypes
+  !> \brief The time dependence type of control loop field variables
+  !> \see ControlLoop
+  !>@{
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_STATIC=1 !<The control loop field variable is static \see ControlLoop_FieldVariableTimeDependenceTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC=2 !<The control loop field variable is quasistatic \see ControlLoop_FieldVariableTimeDependenceTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC=3 !<The control loop field variable is first degree dynamic i.e., we use first time derivatives \see ControlLoop_FieldVariableTimeDependenceTypes,ControlLoop
+  INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC=4 !<The control loop field variable is second degree dynamic i.e., we use second time derivatives \see ControlLoop_FieldVariableTimeDependenceTypes,ControlLoop
+  !>@}
   !>@}
   
   !Module types
@@ -93,6 +133,28 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC CONTROL_LOOP_NODE
 
+  PUBLIC CONTROL_SIMPLE_TYPE,CONTROL_FIXED_LOOP_TYPE,CONTROL_TIME_LOOP_TYPE,CONTROL_WHILE_LOOP_TYPE, &
+    & CONTROL_LOAD_INCREMENT_LOOP_TYPE
+
+  PUBLIC CONTROL_LOOP_NO_OUTPUT,CONTROL_LOOP_PROGRESS_OUTPUT,CONTROL_LOOP_TIMING_OUTPUT
+  
+  PUBLIC CONTROL_LOOP_FIELD_VARIABLE_LINEAR,CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR
+
+  PUBLIC CONTROL_LOOP_FIELD_VARIABLE_STATIC,CONTROL_LOOP_FIELD_VARIABLE_QUASISTATIC, &
+    & CONTROL_LOOP_FIELD_VARIABLE_FIRST_DEGREE_DYNAMIC,CONTROL_LOOP_FIELD_VARIABLE_SECOND_DEGREE_DYNAMIC
+
+  PUBLIC ControlLoop_AssertIsFinished,ControlLoop_AssertNotFinished
+
+  PUBLIC ControlLoop_AssertIsFixedLoop
+
+  PUBLIC ControlLoop_AssertIsLoadIncrementLoop
+
+  PUBLIC ControlLoop_AssertIsSimpleLoop
+
+  PUBLIC ControlLoop_AssertIsTimeLoop
+
+  PUBLIC ControlLoop_AssertIsWhileLoop
+
   PUBLIC ControlLoop_Get
 
   PUBLIC CONTROL_LOOP_GET
@@ -103,13 +165,218 @@ MODULE ControlLoopAccessRoutines
 
   PUBLIC ControlLoop_CurrentTimeInformationGet
 
+  PUBLIC ControlLoop_FixedLoopGet
+
+  PUBLIC ControlLoop_LoadIncrementLoopGet
+
+  PUBLIC ControlLoop_NumberOfIterationsGet
+
+  PUBLIC ControlLoop_NumberOfSubLoopsGet
+
+  PUBLIC ControlLoop_OutputTypeGet
+
   PUBLIC ControlLoop_ProblemGet
+
+  PUBLIC ControlLoop_SimpleLoopGet
 
   PUBLIC ControlLoop_SolversGet
 
   PUBLIC CONTROL_LOOP_SOLVERS_GET
 
+  PUBLIC ControlLoop_SubLoopGet
+
+  PUBLIC ControlLoop_TimeLoopGet
+
+  PUBLIC ControlLoop_WhileLoopGet
+
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop has been finished
+  SUBROUTINE ControlLoop_AssertIsFinished(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("ControlLoop_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(.NOT.controlLoop%controlLoopFinished) CALL FlagError("Control loop has not been finished.",err,error,*999)
+    
+    EXITS("ControlLoop_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop has not been finished
+  SUBROUTINE ControlLoop_AssertNotFinished(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(controlLoop%controlLoopFinished) CALL FlagError("Control loop has already been finished.",err,error,*999)
+    
+    EXITS("ControlLoop_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertNotFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop is a fixed loop
+  SUBROUTINE ControlLoop_AssertIsFixedLoop(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the fixed loop for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_AssertIsFixedLoop",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(controlLoop%loopType/=CONTROL_FIXED_LOOP_TYPE) &
+      & CALL FlagError("The specified control loop is not a fixed control loop.",err,error,*999)
+          
+    EXITS("ControlLoop_AssertIsFixedLoop")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertIsFixedLoop",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertIsFixedLoop
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop is a load increment loop
+  SUBROUTINE ControlLoop_AssertIsLoadIncrementLoop(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the load increment loop for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_AssertIsLoadIncrementLoop",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(controlLoop%loopType/=CONTROL_LOAD_INCREMENT_LOOP_TYPE) &
+      & CALL FlagError("The specified control loop is not a load increment control loop.",err,error,*999)
+          
+    EXITS("ControlLoop_AssertIsLoadIncrementLoop")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertIsLoadIncrementLoop",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertIsLoadIncrementLoop
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop is a simple loop
+  SUBROUTINE ControlLoop_AssertIsSimpleLoop(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the simple loop for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_AssertIsSimpleLoop",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(controlLoop%loopType/=CONTROL_SIMPLE_TYPE) &
+      & CALL FlagError("The specified control loop is not a simple control loop.",err,error,*999)
+          
+    EXITS("ControlLoop_AssertIsSimpleLoop")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertIsSimpleLoop",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertIsSimpleLoop
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop is a time loop
+  SUBROUTINE ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the time loop for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_AssertIsTimeLoop",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(controlLoop%loopType/=CONTROL_TIME_LOOP_TYPE) &
+      & CALL FlagError("The specified control loop is not a time control loop.",err,error,*999)
+          
+    EXITS("ControlLoop_AssertIsTimeLoop")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertIsTimeLoop",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertIsTimeLoop
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that a control loop is a while loop
+  SUBROUTINE ControlLoop_AssertIsWhileLoop(controlLoop,err,error,*)
+
+    !Argument Variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to assert the while loop for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_AssertIsWhileLoop",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(controlLoop%loopType/=CONTROL_WHILE_LOOP_TYPE) &
+      & CALL FlagError("The specified control loop is not a while control loop.",err,error,*999)
+          
+    EXITS("ControlLoop_AssertIsWhileLoop")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AssertIsWhileLoop",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AssertIsWhileLoop
 
   !
   !================================================================================================================================
@@ -119,9 +386,9 @@ CONTAINS
   SUBROUTINE ControlLoop_Get0(controlLoopRoot,controlLoopIdentifier,controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoopRoot!<A pointer to the control loop to root
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoopRoot!<A pointer to the control loop to root
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifier !<The control loop identifier
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<On exit, the specified control loop
+    TYPE(ControlLoopType), POINTER :: controlLoop !<On exit, the specified control loop
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -144,9 +411,9 @@ CONTAINS
   SUBROUTINE ControlLoop_Get1(controlLoopRoot,controlLoopIdentifiers,controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoopRoot !<A pointer to the control loop to root
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoopRoot !<A pointer to the control loop to root
     INTEGER(INTG), INTENT(IN) :: controlLoopIdentifiers(:) !<controlLoopIdentifiers(identifierIdx). The control loop identifiers
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<On exit, the specified control loop. Must not be associated on entry.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<On exit, the specified control loop. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -176,8 +443,8 @@ CONTAINS
         EXIT
       ELSE
         IF(controlLoopIdentifiers(controlLoopIdx)>0.AND. &
-          & controlLoopIdentifiers(controlLoopIdx)<=controlLoop%NUMBER_OF_SUB_LOOPS) THEN
-          controlLoop=>controlLoop%SUB_LOOPS(controlLoopIdentifiers(controlLoopIdx))%ptr
+          & controlLoopIdentifiers(controlLoopIdx)<=controlLoop%numberOfSubLoops) THEN
+          controlLoop=>controlLoop%subLoops(controlLoopIdentifiers(controlLoopIdx))%ptr
           IF(.NOT.ASSOCIATED(controlLoop)) THEN
             localError="Control sub loop number "//TRIM(NumberToVString(controlLoopIdentifiers(controlLoopIdx),"*",err,error))// &
               & " at identifier index "//TRIM(NumberToVString(controlLoopIdx,"*",err,error))//" is not associated."
@@ -187,7 +454,7 @@ CONTAINS
           localError="Invalid control loop identifier. The identifier at index "// &
             & TRIM(NumberToVString(controlLoopIdx,"*",err,error))//" is "// &
             & TRIM(NumberToVString(controlLoopIdentifiers(controlLoopIdx),"*",err,error))// &
-            & ". The identifier must be between 1 and "//TRIM(NumberToVString(controlLoop%NUMBER_OF_SUB_LOOPS,"*",err,error))//"."
+            & ". The identifier must be between 1 and "//TRIM(NumberToVString(controlLoop%numberOfSubLoops,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ENDIF
@@ -209,7 +476,7 @@ CONTAINS
   SUBROUTINE ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the current times for
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the current times for
     REAL(DP), INTENT(OUT) :: currentTime !<On exit, the current time.
     REAL(DP), INTENT(OUT) :: timeIncrement !<On exit, the current time increment.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -239,7 +506,7 @@ CONTAINS
     & outputIteration,err,error,*)
     
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the time information for
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<The control loop to get the time information for
     REAL(DP), INTENT(OUT) :: currentTime !<On exit, the current time.
     REAL(DP), INTENT(OUT) :: timeIncrement !<On exit, the current time increment.
     REAL(DP), INTENT(OUT) :: startTime !<On exit, the start time for the loop
@@ -250,36 +517,36 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables    
     INTEGER(INTG) :: controlLoopLevel,levelIdx
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: parentLoop
-    TYPE(CONTROL_LOOP_TIME_TYPE), POINTER :: timeLoop
+    TYPE(ControlLoopType), POINTER :: parentLoop
+    TYPE(ControlLoopTimeType), POINTER :: timeLoop
 
     ENTERS("ControlLoop_CurrentTimeInformationGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
-    IF(.NOT.controlLoop%CONTROL_LOOP_FINISHED) CALL FlagError("Control loop has not been finished.",err,error,*999)
+    IF(.NOT.controlLoop%controlLoopFinished) CALL FlagError("Control loop has not been finished.",err,error,*999)
 
     !Find a time loop from either the specified control loop or the next time loop up the chain.
-    controlLoopLevel=controlLoop%CONTROL_LOOP_LEVEL
+    controlLoopLevel=controlLoop%controlLoopLevel
     parentLoop=>controlLoop
     DO levelIdx=controlLoopLevel,1,-1
       IF(controlLoopLevel==0) THEN
         CALL FlagError("Could not find a time loop for the specified control loop.",err,error,*999)
       ELSE
-        IF(parentLoop%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
-          timeLoop=>parentLoop%TIME_LOOP
+        IF(parentLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+          timeLoop=>parentLoop%timeLoop
           IF(ASSOCIATED(timeLoop)) THEN
-            currentTime=timeLoop%CURRENT_TIME
-            timeIncrement=timeLoop%TIME_INCREMENT
-            startTime=timeLoop%START_TIME
-            stopTime=timeLoop%STOP_TIME
-            currentIteration=timeLoop%ITERATION_NUMBER
-            outputIteration=timeLoop%OUTPUT_NUMBER
+            currentTime=timeLoop%currentTime
+            timeIncrement=timeLoop%timeIncrement
+            startTime=timeLoop%startTime
+            stopTime=timeLoop%stopTime
+            currentIteration=timeLoop%iterationNumber
+            outputIteration=timeLoop%outputNumber
           ELSE
             CALL FlagError("Control loop time loop is not associated.",err,error,*999)
           ENDIF
           EXIT
         ELSE
-          parentLoop=>parentLoop%PARENT_LOOP
+          parentLoop=>parentLoop%parentLoop
         ENDIF
       ENDIF
     ENDDO !levelIdx
@@ -295,12 +562,157 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the fixed loop for a control loop.
+  SUBROUTINE ControlLoop_FixedLoopGet(controlLoop,fixedLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
+    TYPE(ControlLoopFixedType), POINTER :: fixedLoop !<On exit, a pointer to the control loop fixed loop. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_FixedLoopGet",err,error,*998)
+
+    IF(ASSOCIATED(fixedLoop)) CALL FlagError("Fixed loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    fixedLoop=>controlLoop%fixedLoop
+    IF(.NOT.ASSOCIATED(fixedLoop)) CALL FlagError("Control loop fixed loop is not associated.",err,error,*999)
+       
+    EXITS("ControlLoop_FixedLoopGet")
+    RETURN
+999 NULLIFY(fixedLoop)
+998 ERRORSEXITS("ControlLoop_FixedLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_FixedLoopGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the load increment loop for a control loop.
+  SUBROUTINE ControlLoop_LoadIncrementLoopGet(controlLoop,loadIncrementLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
+    TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop !<On exit, a pointer to the control loop load increment loop. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_LoadIncrementLoopGet",err,error,*998)
+
+    IF(ASSOCIATED(loadIncrementLoop)) CALL FlagError("Load increment loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    loadIncrementLoop=>controlLoop%loadIncrementLoop
+    IF(.NOT.ASSOCIATED(loadIncrementLoop)) CALL FlagError("Control loop load increment loop is not associated.",err,error,*999)
+       
+    EXITS("ControlLoop_LoadIncrementLoopGet")
+    RETURN
+999 NULLIFY(loadIncrementLoop)
+998 ERRORSEXITS("ControlLoop_LoadIncrementLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_LoadIncrementLoopGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of iterations for a time type control loop. If the value is not set to something /=0, it will be computed the first time the loop is executed. If it is retrieved earlier and 0 is returned, this means the value was not yet computed. \see OpenCMISS_ControlLoop_NumberOfIterationsGet
+  SUBROUTINE ControlLoop_NumberOfIterationsGet(controlLoop,numberOfIterations,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to time control loop to set the number of iterations for
+    INTEGER(INTG), INTENT(OUT) :: numberOfIterations !<The number of iterations for the time control loop.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(ControlLoopTimeType), POINTER :: timeLoop
+ 
+    ENTERS("ControlLoop_NumberOfIterationsGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+    CALL ControlLoop_AssertIsTimeLoop(controlLoop,err,error,*999)
+    NULLIFY(timeLoop)
+    CALL ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*999)
+    
+    numberOfIterations=timeLoop%numberOfIterations
+       
+    EXITS("ControlLoop_NumberOfIterationsGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_NumberOfIterationsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_NumberOfIterationsGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of sub loops for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_NumberOfSubLoopsGet
+  SUBROUTINE ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the number of sub loops for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSubLoops !<On return, the number of sub loops for the specified control loop
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_NumberOfSubLoopsGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+
+    numberOfSubLoops=controlLoop%numberOfSubLoops
+        
+    EXITS("ControlLoop_NumberOfSubLoopsGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_NumberOfSubLoopsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_NumberOfSubLoopsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the output type for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_OutputTypeGet
+  SUBROUTINE ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to the control loop to get the output type for.
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the control loop \see ControlLoopRoutines_OutputTypes,ControlLoopRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_OutputTypeGet",err,error,*999)
+
+    CALL ControlLoop_AssertIsFinished(controlLoop,err,error,*999)
+
+    outputType=controlLoop%outputType
+       
+    EXITS("ControlLoop_OutputTypeGet")
+    RETURN
+999 ERRORSEXITS("ControlLoop_OutputTypeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_OutputTypeGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the problem for a control loop.
   SUBROUTINE ControlLoop_ProblemGet(controlLoop,problem,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<On exit, a pointer to the control loop problem. Must not be associated on entry.
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
+    TYPE(ProblemType), POINTER :: problem !<On exit, a pointer to the control loop problem. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -325,11 +737,41 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to the simple loop for a control loop.
+  SUBROUTINE ControlLoop_SimpleLoopGet(controlLoop,simpleLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
+    TYPE(ControlLoopSimpleType), POINTER :: simpleLoop !<On exit, a pointer to the control loop simple loop. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_SimpleLoopGet",err,error,*998)
+
+    IF(ASSOCIATED(simpleLoop)) CALL FlagError("Simple loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    simpleLoop=>controlLoop%simpleLoop
+    IF(.NOT.ASSOCIATED(simpleLoop)) CALL FlagError("Control loop simple loop is not associated.",err,error,*999)
+       
+    EXITS("ControlLoop_SimpleLoopGet")
+    RETURN
+999 NULLIFY(simpleLoop)
+998 ERRORSEXITS("ControlLoop_SimpleLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_SimpleLoopGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the solvers for a control loop.
   SUBROUTINE ControlLoop_SolversGet(controlLoop,solvers,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the solvers for.
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the solvers for.
     TYPE(SOLVERS_TYPE), POINTER :: solvers !<On exit, a pointer to the control loop solvers. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -350,6 +792,109 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_SolversGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to the specified sub loop for a control loop.
+  SUBROUTINE ControlLoop_SubLoopGet(controlLoop,subLoopIdx,subLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to get the sub loop for
+    INTEGER(INTG), INTENT(IN) :: subLoopIdx !<The sub loop index in the control loop to get the sub loop for
+    TYPE(ControlLoopType), POINTER :: subLoop !<On exit, a pointer to the specified sub loop. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("ControlLoop_SubLoopGet",err,error,*998)
+
+    IF(ASSOCIATED(subLoop)) CALL FlagError("Sub loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+    IF(subLoopIdx<=0.OR.subLoopIdx>controlLoop%numberOfSubLoops) THEN
+      localError="The specified sub loop index of "//TRIM(NumberToVString(subLoopIdx,"*",err,error))// &
+        & " is invalid. The index must be > 0 and <= "// TRIM(NumberToVString(controlLoop%numberOfSubLoops,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(controlLoop%subLoops)) &
+      & CALL FlagError("Control loop sub loops is not allocated.",err,error,*999)
+
+    subLoop=>controlLoop%subLoops(subLoopIdx)%ptr
+    IF(.NOT.ASSOCIATED(subLoop)) THEN
+      localError="The sub loop for the specified sub loop index of "// &
+        & TRIM(NumberToVString(subLoopIdx,"*",err,error))//" is not associated."      
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    EXITS("ControlLoop_SubLoopGet")
+    RETURN
+999 NULLIFY(subLoop)
+998 ERRORSEXITS("ControlLoop_SubLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_SubLoopGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the time loop for a control loop.
+  SUBROUTINE ControlLoop_TimeLoopGet(controlLoop,timeLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
+    TYPE(ControlLoopTimeType), POINTER :: timeLoop !<On exit, a pointer to the control loop time loop. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_TimeLoopGet",err,error,*998)
+
+    IF(ASSOCIATED(timeLoop)) CALL FlagError("Time loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    timeLoop=>controlLoop%timeLoop
+    IF(.NOT.ASSOCIATED(timeLoop)) CALL FlagError("Control loop time loop is not associated.",err,error,*999)
+       
+    EXITS("ControlLoop_TimeLoopGet")
+    RETURN
+999 NULLIFY(timeLoop)
+998 ERRORSEXITS("ControlLoop_TimeLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_TimeLoopGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to the while loop for a control loop.
+  SUBROUTINE ControlLoop_WhileLoopGet(controlLoop,whileLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to control loop to get the problem for.
+    TYPE(ControlLoopWhileType), POINTER :: whileLoop !<On exit, a pointer to the control loop while loop. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ControlLoop_WhileLoopGet",err,error,*998)
+
+    IF(ASSOCIATED(whileLoop)) CALL FlagError("While loop is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    whileLoop=>controlLoop%whileLoop
+    IF(.NOT.ASSOCIATED(whileLoop)) CALL FlagError("Control loop while loop is not associated.",err,error,*999)
+       
+    EXITS("ControlLoop_WhileLoopGet")
+    RETURN
+999 NULLIFY(whileLoop)
+998 ERRORSEXITS("ControlLoop_WhileLoopGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_WhileLoopGet
 
   !
   !================================================================================================================================

@@ -116,33 +116,32 @@ MODULE Types
   !
 
   !>Buffer type to allow arrays of pointers to a list
-  TYPE LIST_PTR_TYPE
-    TYPE(LIST_TYPE), POINTER :: ptr !<The pointer to the list
-  END TYPE LIST_PTR_TYPE
+  TYPE ListPtrType
+    TYPE(ListType), POINTER :: ptr !<The pointer to the list
+  END TYPE ListPtrType
 
   !>Contains information on a list
-  TYPE LIST_TYPE
-    LOGICAL :: MUTABLE !<If true, list entries can be changed once they have been added. False by default.
-    LOGICAL :: LIST_FINISHED !<Is .TRUE. if the list has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: NUMBER_IN_LIST !<The number of items currently in the list
-    INTEGER(INTG) :: DATA_DIMENSION !<The dimension of the data being stored
-    INTEGER(INTG) :: INITIAL_SIZE !<The size of the list when it was initially created.
-    INTEGER(INTG) :: SIZE !<The current size of the list.
-    INTEGER(INTG) :: dataType !<The data type of the list \see LISTS_DataType
-    INTEGER(INTG) :: KEY_DIMENSION !<The key dimension number i.e., the dimension index used for indexing and sorting
-    INTEGER(INTG) :: SORT_ORDER !<The ordering to be used when sorting the list \see LISTS_SortingOrder
-    INTEGER(INTG) :: SORT_METHOD !<The sorting method to be used when sorting the list \see LISTS_SortingMethod
-    INTEGER(INTG), ALLOCATABLE :: LIST_INTG(:) !<The integer data (dimension = 1) for integer lists. 
-    INTEGER(INTG), ALLOCATABLE :: LIST_INTG2(:,:) !<The integer data (dimension > 1) for integer lists. 
-    REAL(SP), ALLOCATABLE :: LIST_SP(:) !<The single precision data (dimension = 1)for single precision real lists. 
-    REAL(SP), ALLOCATABLE :: LIST_SP2(:,:) !<The single precision data (dimension > 1) for single precision real lists. 
-    REAL(DP), ALLOCATABLE :: LIST_DP(:) !<The double precision data (dimension = 1)for double precision real lists. 
-    REAL(DP), ALLOCATABLE :: LIST_DP2(:,:) !<The double precision data (dimension > 1) for double precision real lists. 
-    INTEGER(C_INT), ALLOCATABLE :: LIST_C_INT(:) !<The integer data (dimension = 1) for integer lists. 
-    INTEGER(C_INT), ALLOCATABLE :: LIST_C_INT2(:,:) !<The integer data (dimension > 1) for integer lists. 
-  END TYPE LIST_TYPE
+  TYPE ListType
+    LOGICAL :: mutable !<If true, list entries can be changed once they have been added. False by default.
+    LOGICAL :: listFinished !<Is .TRUE. if the list has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: numberInList !<The number of items currently in the list
+    INTEGER(INTG) :: dataDimension !<The dimension of the data being stored
+    INTEGER(INTG) :: initialSize !<The size of the list when it was initially created.
+    INTEGER(INTG) :: size !<The current size of the list.
+    INTEGER(INTG) :: dataType !<The data type of the list \see Lists_DataType
+    INTEGER(INTG) :: keyDimension !<The key dimension number i.e., the dimension index used for indexing and sorting
+    INTEGER(INTG) :: sortOrder !<The ordering to be used when sorting the list \see Lists_SortingOrder
+    INTEGER(INTG) :: sortMethod !<The sorting method to be used when sorting the list \see Lists_SortingMethod
+    INTEGER(INTG) :: searchMethod !<The search method to be used when searching the list \see Lists_SearchingMethod
+    INTEGER(INTG), ALLOCATABLE :: listIntg(:) !<The integer data (dimension = 1) for integer lists. 
+    INTEGER(INTG), ALLOCATABLE :: listIntg2(:,:) !<The integer data (dimension > 1) for integer lists. 
+    REAL(SP), ALLOCATABLE :: listSP(:) !<The single precision data (dimension = 1)for single precision real lists. 
+    REAL(SP), ALLOCATABLE :: listSP2(:,:) !<The single precision data (dimension > 1) for single precision real lists. 
+    REAL(DP), ALLOCATABLE :: listDP(:) !<The double precision data (dimension = 1)for double precision real lists. 
+    REAL(DP), ALLOCATABLE :: listDP2(:,:) !<The double precision data (dimension > 1) for double precision real lists. 
+  END TYPE ListType
 
-  PUBLIC LIST_PTR_TYPE,LIST_TYPE
+  PUBLIC ListPtrType,ListType
     
   !
   !================================================================================================================================
@@ -284,7 +283,7 @@ MODULE Types
     INTEGER(INTG) :: numberOfDimensions !<The number of dimensions for the coordinate system. Old CMISS name NJT.
     REAL(DP) :: focus !<The focus of the coordinate system for a prolate-spheriodal coordinate system.
     REAL(DP) :: origin(3) !<origin(coordinateIdx). The coordinateIdx'th component of the origin of the coordinate system wrt the global coordinate system. NOTE: maybe this should be wrt to the parent regions coordinate system - this would then go into the REGION type.
-    REAL(DP) :: orientation(3,3) !<ORIENTATION(coordinateIdx1,coordinateIdx2). he orientation matrix for the orientation of the coordinate system wrt to the global coordinate system. NOTE: maybe this should be wrt to the parent regions coordinate system - this would then go into the RegionType.
+    REAL(DP) :: orientation(3,3) !<ORIENTATION(coordinateIdx1,coordinateIdx2). The orientation matrix for the orientation of the coordinate system wrt to the global coordinate system. NOTE: maybe this should be wrt to the parent regions coordinate system - this would then go into the RegionType.
   END TYPE CoordinateSystemType
 
   !>A buffer type to allow for an array of pointers to a CoordinateSystemType.
@@ -902,7 +901,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE DistributedMatrixCMISSType
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<A pointer to the distributed matrix
     INTEGER(INTG) :: baseTagNumber !<The base number for the MPI tag numbers that will be used to communicate the distributed matrix data amongst the domains. The base tag number can be thought of as the identification number for the distributed matrix object.
-    TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to store the rows corresponding to this domain.
+    INTEGER(INTG) :: globalM !<The number of global rows in the matrix
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to store the rows corresponding to this domain.
   END TYPE DistributedMatrixCMISSType
 
   !>Contains information for a PETSc distributed matrix
@@ -913,7 +913,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: globalM !<The number of global rows in the PETSc matrix
     INTEGER(INTG) :: globalN !<The number of global columns in the PETSc matrix
     INTEGER(INTG) :: storageType !<The storage type (sparsity) of the PETSc matrix
-    INTEGER(INTG) :: symmetryType !<The symmetry type of the PETSc matrix
+    INTEGER(INTG) :: symmetryType !<The symmetry type of the PETSc matrix \see DistributedMatrixVector_SymmetryTypes
+    INTEGER(INTG) :: transposeType !<The transpose type of the matrix \see DistributedMatrixVector_TransposeTypes
     INTEGER(INTG) :: numberOfNonZeros !<The number of non-zeros in the PETSc matrix
     INTEGER(INTG) :: dataSize !<The size of the allocated data in the PETSc matrix
     INTEGER(INTG) :: maximumColumnIndicesPerRow!<The maximum number of column indicies for the rows.
@@ -952,45 +953,66 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !
 
   !>Contains information for a vector
-  TYPE VECTOR_TYPE
+  TYPE VectorType
     INTEGER(INTG) :: ID !<The ID of the vector.
-    LOGICAL :: VECTOR_FINISHED !<Is .TRUE. if the vector has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: N !<The length of the vector
+    LOGICAL :: vectorFinished !<Is .TRUE. if the vector has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: n !<The length of the vector
     INTEGER(INTG) :: dataType !<The data type of the vector \see MatrixVector_DataTypes 
-    INTEGER(INTG) :: SIZE !<The size of the data array of the vector
-    INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer vector. The i'th component contains the data for the i'th component vector data on the domain. 
-    REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision real vector. The i'th component contains the data for the i'th component vector data on the domain. 
-    REAL(DP), ALLOCATABLE :: DATA_DP(:) !<DATA_DP(i). The real data for a double precision real vector. The i'th component contains the data for the i'th component vector data on the domain. 
-    LOGICAL, ALLOCATABLE :: DATA_L(:) !<DATA_L(i). The real for a logical vector. The i'th component contains the data for the i'th component vector data on the domain. 
-  END TYPE VECTOR_TYPE
+    INTEGER(INTG) :: size !<The size of the data array of the vector
+    INTEGER(INTG), ALLOCATABLE :: dataIntg(:) !<dataIntg(i). The integer data for an integer vector. The i'th component contains the data for the i'th component vector data on the domain. 
+    REAL(SP), ALLOCATABLE :: dataSP(:) !<dataSP(i). The real data for a single precision real vector. The i'th component contains the data for the i'th component vector data on the domain. 
+    REAL(DP), ALLOCATABLE :: dataDP(:) !<dataDP(i). The real data for a double precision real vector. The i'th component contains the data for the i'th component vector data on the domain. 
+    LOGICAL, ALLOCATABLE :: dataL(:) !<dataL(i). The real for a logical vector. The i'th component contains the data for the i'th component vector data on the domain. 
+  END TYPE VectorType
 
   !>Contains information for a matrix
-  TYPE MATRIX_TYPE
+  TYPE MatrixType
     INTEGER(INTG) :: ID !<The ID of the matrix
-    LOGICAL :: MATRIX_FINISHED !<Is .TRUE. if the matrix has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: M !<The number of rows in the matrix
-    INTEGER(INTG) :: N !<The number of columns in the matrix
-    INTEGER(INTG) :: MAX_M !<The maximum number of columns in the matrix storage
-    INTEGER(INTG) :: MAX_N !<The maximum number of rows in the matrix storage
+    LOGICAL :: matrixFinished !<Is .TRUE. if the matrix has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: m !<The number of rows in the matrix
+    INTEGER(INTG) :: n !<The number of columns in the matrix
+    INTEGER(INTG) :: maxM !<The maximum number of columns in the matrix storage
+    INTEGER(INTG) :: maxN !<The maximum number of rows in the matrix storage
     INTEGER(INTG) :: dataType !<The data type of the matrix  \see MatrixVector_DataTypes 
-    INTEGER(INTG) :: STORAGE_TYPE !<The storage type of the matrix \see MatrixVector_StorageTypes 
-    INTEGER(INTG) :: symmetryType !<The symmetry type of the matrix \see MatrixVector_SymmetryTypes 
-    INTEGER(INTG) :: NUMBER_NON_ZEROS !<The number of non-zero elements in the matrix 
-    INTEGER(INTG) :: SIZE !<The size of the data arrays
-    INTEGER(INTG) :: MAXIMUM_COLUMN_INDICES_PER_ROW !<The maximum number of column indicies for the rows.
-    INTEGER(INTG), ALLOCATABLE :: ROW_INDICES(:) !<ROW_INDICES(i). The row indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
-    INTEGER(INTG), ALLOCATABLE :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
-    TYPE(LINKEDLIST),POINTER :: LIST(:) !\todo Comment
-    INTEGER(INTG), ALLOCATABLE :: DATA_INTG(:) !<DATA_INTG(i). The integer data for an integer matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
-    REAL(SP), ALLOCATABLE :: DATA_SP(:) !<DATA_SP(i). The real data for a single precision matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
-    REAL(DP), ALLOCATABLE :: DATA_DP(:) !<DATA_DP(i). The real data for a double precision matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
-    LOGICAL, ALLOCATABLE :: DATA_L(:) !<DATA_L(i). The logical data for a logical matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
-  END TYPE MATRIX_TYPE
+    INTEGER(INTG) :: storageType !<The storage type of the matrix \see MatrixVector_StorageTypes 
+    INTEGER(INTG) :: symmetryType !<The symmetry type of the matrix \see MatrixVector_SymmetryTypes
+    INTEGER(INTG) :: transposeType !<The transpose type of the matrix \see MatrixVector_TransposeTypes
+    INTEGER(INTG) :: numberOfNonZeros !<The number of non-zero elements in the matrix 
+    INTEGER(INTG) :: size !<The size of the data arrays
+    INTEGER(INTG) :: maximumColumnIndicesPerRow !<The maximum number of column indicies for the rows.
+    INTEGER(INTG) :: maximumRowIndicesPerColumn !<If the matrix transpose is required the maximum number of row indicies for the columns.
+    INTEGER(INTG) :: blockSize !<The block size for blocked storage types.
+    INTEGER(INTG) :: numberOfBlocks !<The number of non-zero blocks
+    INTEGER(INTG) :: numberOfRowBlocks !<The number of blocks in the row direction
+    INTEGER(INTG) :: numberOfColumnBlocks !<The number of blocks in the column direction.
+    INTEGER(INTG), ALLOCATABLE :: rowIndices(:) !<rowIndices(i). The row indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
+    INTEGER(INTG), ALLOCATABLE :: columnIndices(:) !<columnIndices(i). The column indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
+    INTEGER(INTG), ALLOCATABLE :: transposeRowsColumns(:) !<transposeRowsColumns(i). If the matrix has the transpose set for a number of columns then transposeRowsColumns(i) stores the i'th row of column in the transpose. \see MatrixVector_TransposeTypes
+    INTEGER(INTG), ALLOCATABLE :: rowIndicesT(:) !<rowIndicesT(i). The transpose row indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
+    INTEGER(INTG), ALLOCATABLE :: columnIndicesT(:) !<columnIndicesT(i). The transpose column indices for the matrix storage scheme. \see MatrixVector_MatrixStorageStructures
+    INTEGER(INTG), ALLOCATABLE :: transposeDataSwivel(:) !transposeDataSwivel(i). The mapping from the transpose non-zero location to the corresponding non-zero location in the non-tranposed data array.
+    INTEGER(INTG), ALLOCATABLE :: rowColStart(:) !<rowColStart(i). If the matrix transpose is required then rowColStart(i) stores the index into the rowColList which is the start of the i'th row or column. \see MatrixVector_MatrixStorageStructures \see MatrixVector_TransposeTypes
+    INTEGER(INTG), ALLOCATABLE :: rowColList(:) !<rowColList(i). If the matrix transpose is required then the rowColList(j) stores the next entry in the row or column. If the entry is negative k then that indicates that is the end of the kth row or column. \see MatrixVector_MatrixStorageStructures \see MatrixVector_TransposeTypes
+    TYPE(LINKEDLIST),POINTER :: list(:) !\todo Comment
+    INTEGER(INTG), ALLOCATABLE :: dataIntg(:) !<dataIntg(i). The integer data for an integer matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
+    REAL(SP), ALLOCATABLE :: dataSP(:) !<dataSP(i). The real data for a single precision matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
+    REAL(DP), ALLOCATABLE :: dataDP(:) !<dataDP(i). The real data for a double precision matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
+    LOGICAL, ALLOCATABLE :: dataL(:) !<dataL(i). The logical data for a logical matrix. The i'th component contains the data for the i'th matrix data stored on the domain.
+  END TYPE MatrixType
 
-  PUBLIC VECTOR_TYPE
+  !>Type to allow for coupling of equations/interface rows/columns to a solver row/column
+  TYPE MatrixRowColCouplingType
+    INTEGER(INTG) :: numberOfRowCols !<The number of rows/columns in the coupling
+    INTEGER(INTG), ALLOCATABLE :: rowCols(:) !<rowCols(i). The row/column for the i'th row/column that is mapped.
+    REAL(DP), ALLOCATABLE :: couplingCoefficients(:) !<couplingCoefficients(i). The coupling coefficient for the i'th row/column that is mapped.
+  END TYPE MatrixRowColCouplingType
+  
+  PUBLIC VectorType
 
-  PUBLIC MATRIX_TYPE
+  PUBLIC MatrixType
 
+  PUBLIC MatrixRowColCouplingType
+  
   !
   !================================================================================================================================
   !
@@ -3094,7 +3116,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_MATRIX_PTR_TYPE), ALLOCATABLE :: MATRICES(:) !<MATRICES(matrix_idx)%PTR contains the information on the matrix_idx'th solver matrix
     !Nonlinear matrices and vectors
     LOGICAL :: UPDATE_RESIDUAL !<Is .TRUE. if the residual vector is to be updated
-    TYPE(DistributedVectorType), POINTER :: RESIDUAL !<A pointer to the distributed residual vector for nonlinear problems
+    TYPE(DistributedVectorType), POINTER :: residual !<A pointer to the distributed residual vector for nonlinear problems
     !Optimiser matrices and vectors
     LOGICAL :: updateGradient !<Is .TRUE. if the gradient vector is to be updated
     TYPE(DistributedVectorType), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation problems
@@ -3479,7 +3501,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information on the solvers to be used in a control loop
   TYPE SOLVERS_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the parent control loop
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the parent control loop
     LOGICAL :: SOLVERS_FINISHED !<Is .TRUE. if the solvers have finished being created, .FALSE. if not.
     INTEGER(INTG) :: NUMBER_OF_SOLVERS !<The number of solvers
     TYPE(SOLVER_PTR_TYPE), ALLOCATABLE :: SOLVERS(:) !<A pointer to the solvers information for the problem.
@@ -3518,12 +3540,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !
   ! Solver mapping types
   !
-  
-  TYPE EQUATIONS_COL_TO_SOLVER_COLS_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_SOLVER_COLS !<The number of solver cols this equations column is mapped to
-    INTEGER(INTG), ALLOCATABLE :: SOLVER_COLS(:) !<SOLVER_COLS(i). The solver column number for the i'th solver column that this column is mapped to
-    REAL(DP), ALLOCATABLE :: COUPLING_COEFFICIENTS(:) !<COUPLING_COEFFICIENTS(i). The coupling coefficients for the i'th solver column that this column is mapped to.
-  END TYPE EQUATIONS_COL_TO_SOLVER_COLS_MAP_TYPE
 
   TYPE EQUATIONS_TO_SOLVER_MAPS_TYPE
     INTEGER(INTG) :: EQUATIONS_MATRIX_TYPE !<The type of equations matrix \see SOLVER_MAPPING_EquationsMatrixTypes,SOLVER_MAPPING
@@ -3531,7 +3547,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The solver matrix number being mapped.
     TYPE(EquationsMatrixType), POINTER :: EQUATIONS_MATRIX !<A pointer to the equations matrix being mapped.
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix being mapped.
-    TYPE(EQUATIONS_COL_TO_SOLVER_COLS_MAP_TYPE), ALLOCATABLE :: EQUATIONS_COL_TO_SOLVER_COLS_MAP(:) !<EQUATIONS_COL_TO_SOLVER_COL_MAP(column_idx). The mapping from the column_idx'th column of this equations matrix to the solver matrix columns. Note for interface matrices this will actually be for the transposed interface matrix i.e., for the interface matrix rows.
+    TYPE(MatrixRowColCouplingType), ALLOCATABLE :: equationsColToSolverColsMap(:) !<equationsColToSolverColsMap(columnIdx). The mapping from the columnIdx'th column of this equations matrix to the solver matrix columns. Note for interface matrices this will actually be for the transposed interface matrix i.e., for the interface matrix rows.
   END TYPE EQUATIONS_TO_SOLVER_MAPS_TYPE
 
   !>A buffer type to allow for an array of pointers to a EQUATIONS_TO_SOLVER_MAPS_TYPE \see Types::EQUATIONS_TO_SOLVER_MAPS_TYPE
@@ -3544,7 +3560,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The solver matrix number being mapped.
     TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX !<A pointer to the interface matrix being mapped.
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix being mapped.
-    TYPE(EQUATIONS_COL_TO_SOLVER_COLS_MAP_TYPE), ALLOCATABLE :: INTERFACE_ROW_TO_SOLVER_COLS_MAP(:) !<INTERFACE_ROW_TO_SOLVER_COL_MAP(column_idx). The mapping from the row_idx'th row of this interface matrix to the solver matrix columns.
+    TYPE(MatrixRowColCouplingType), ALLOCATABLE :: interfaceRowToSolverColsMap(:) !<interfaceRowToSolverColsMap(rowIdx). The mapping from the rowIdx'th row of this interface matrix to the solver matrix columns.
   END TYPE INTERFACE_TO_SOLVER_MAPS_TYPE
 
   !>A buffer type to allow for an array of pointers to a INTERFACE_TO_SOLVER_MAPS_TYPE \see Types::INTERFACE_TO_SOLVER_MAPS_TYPE
@@ -3552,17 +3568,11 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_TO_SOLVER_MAPS_TYPE), POINTER :: ptr !<A pointer to the interface to solver maps
   END TYPE INTERFACE_TO_SOLVER_MAPS_PTR_TYPE
   
-  TYPE JACOBIAN_COL_TO_SOLVER_COLS_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_SOLVER_COLS !<The number of solver cols this Jacobian column is mapped to
-    INTEGER(INTG), ALLOCATABLE :: SOLVER_COLS(:) !<SOLVER_COLS(i). The solver column number for the i'th solver column that this column is mapped to
-    REAL(DP), ALLOCATABLE :: COUPLING_COEFFICIENTS(:) !<COUPLING_COEFFICIENTS(i). The coupling coefficients for the i'th solver column that this column is mapped to.
-  END TYPE JACOBIAN_COL_TO_SOLVER_COLS_MAP_TYPE
-
   TYPE JACOBIAN_TO_SOLVER_MAP_TYPE
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The solver matrix number being mapped.
     TYPE(EquationsJacobianType), POINTER :: JACOBIAN_MATRIX !<A pointer to the Jacobian matrix being mapped.
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix being mapped.
-    TYPE(JACOBIAN_COL_TO_SOLVER_COLS_MAP_TYPE), ALLOCATABLE :: JACOBIAN_COL_TO_SOLVER_COLS_MAP(:) !<JACOBIAN_COL_TO_SOLVER_COL_MAP(column_idx). The mapping from the column_idx'th column of the Jacobian matrix to the solver matrix columns.
+    TYPE(MatrixRowColCouplingType), ALLOCATABLE :: jacobianColToSolverColsMap(:) !<jacobianColToSolverColsMap(columnIdx). The mapping from the columnIdx'th column of the Jacobian matrix to the solver matrix columns.
   END TYPE JACOBIAN_TO_SOLVER_MAP_TYPE
 
   TYPE JACOBIAN_TO_SOLVER_MAP_PTR_TYPE
@@ -3605,13 +3615,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_TO_SOLVER_MAPS_PTR_TYPE), ALLOCATABLE :: EQUATIONS_TO_SOLVER_MATRIX_MAPS(:) !<EQUATIONS_TO_SOLVER_MATRIX_MAPS(solver_matrix_idx). The maps from the equation matrix to the solver_matrix_idx'th solver matrix
   END TYPE EQUATIONS_TO_SOLVER_MATRIX_MAPS_EM_TYPE
 
-  !>Contains information on the mapping from the equations rows in an equations set to the solver rows 
-  TYPE EQUATIONS_ROW_TO_SOLVER_ROWS_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_SOLVER_ROWS !<The number of solver rows this equations row is mapped to
-    INTEGER(INTG), ALLOCATABLE :: SOLVER_ROWS(:) !<SOLVER_ROWS(i). The solver row number for the i'th solver row that this row is mapped to
-    REAL(DP), ALLOCATABLE :: COUPLING_COEFFICIENTS(:) !<COUPLING_COEFFICIENTS(i). The coupling coefficients for the i'th solver row that this row is mapped to.
-  END TYPE EQUATIONS_ROW_TO_SOLVER_ROWS_MAP_TYPE
-  
   !>Contains information on the mappings from an equations set to the solver matrices
   TYPE EQUATIONS_SET_TO_SOLVER_MAP_TYPE
     INTEGER(INTG) :: EQUATIONS_SET_INDEX !<The index of the equations set for these mappings
@@ -3622,7 +3625,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM_TYPE), ALLOCATABLE :: EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(:) !<EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx). The mappings from the equations matrices in this equation set to the solver_matrix_idx'th solver_matrix
     TYPE(EQUATIONS_TO_SOLVER_MATRIX_MAPS_EM_TYPE), ALLOCATABLE :: EQUATIONS_TO_SOLVER_MATRIX_MAPS_EM(:) !<EQUATIONS_TO_SOLVER_MATRIX_MAPS_EM(equations_matrix_idx). The mappings from the equation_matrix_idx'th equations matrix in this equation set to the solver_matrices.
     TYPE(JACOBIAN_TO_SOLVER_MAP_PTR_TYPE), ALLOCATABLE :: EQUATIONS_TO_SOLVER_MATRIX_MAPS_JM(:) !<EQUATIONS_TO_SOLVER_MATRIX_MAPS_JM(jacobian_idx). The mappings from the jacobian_idx'th Jacobian matrix in this equation set to the solver_matrices.
-    TYPE(EQUATIONS_ROW_TO_SOLVER_ROWS_MAP_TYPE), ALLOCATABLE :: EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(:) !<EQUATIONS_ROW_TO_SOLVER_ROWS_MAPS(equations_row_idx). The mappings from the equations_row_idx'th equations row to the solver matrices rows.
+    TYPE(MatrixRowColCouplingType), ALLOCATABLE :: equationsRowToSolverRowsMap(:) !<equationsRowToSolverRowsMap(equationsRowIdx). The mappings from the equationsRowIdx'th equations row to the solver matrices rows.
   END TYPE EQUATIONS_SET_TO_SOLVER_MAP_TYPE
 
   !>Contains information on the interface to solver matrix mappings when indexing by solver matrix number
@@ -3637,22 +3640,15 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE), ALLOCATABLE :: DEPENDENT_VARIABLE_TO_SOLVER_COL_MAPS(:) !<DEPENDENT_VARIABLE_TO_SOLVER_COL_MAPS(interface_matrix_idx). The mappings from the dependent variable dofs to the solver dofs for the interface_matrix_idx'th interface matrix dependent variable in the interface condition that is mapped to the solver matrix.
     INTEGER(INTG) :: NUMBER_OF_INTERFACE_MATRICES !<The number of interface matrices mapped to this solver matrix
     TYPE(INTERFACE_TO_SOLVER_MAPS_PTR_TYPE), ALLOCATABLE :: INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(:) !<INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interface_matrix_idx). The maps from the interface)matrix_idx'th interface matrix to solver matrix
-    TYPE(EQUATIONS_COL_TO_SOLVER_COLS_MAP_TYPE), ALLOCATABLE :: INTERFACE_COL_TO_SOLVER_COLS_MAP(:) !<EQUATIONS_COL_SOLVER_COL_MAP(column_idx). The mapping from the column_idx'th column of this interface matrix to the solver matrix columns.
+    TYPE(MatrixRowColCouplingType), ALLOCATABLE :: interfaceColToSolverColsMap(:) !<interfaceColToSolverColsMap(columnIdx). The mapping from the columnIdx'th column of this interface matrix to the solver matrix columns.
   END TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE
-
-  !>Contains information on the mapping from an interface condition column to a solver row.
-  TYPE INTERFACE_ROW_TO_SOLVER_ROWS_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_SOLVER_ROWS !<The number of solver rows that the interface condition row in mapped to (can be either 0 or 1 at he moment.)
-    INTEGER(INTG) :: SOLVER_ROW !<The solver row that the interface condition row is mapped to
-    REAL(DP) :: COUPLING_COEFFICIENT !<The coupling coefficient for the mapping.
-  END TYPE INTERFACE_ROW_TO_SOLVER_ROWS_MAP_TYPE
   
   !>Contains information on the interface to solver matrix mappings when indexing by interface matrix number
   TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_IM_TYPE
     INTEGER(INTG) :: INTERFACE_MATRIX_NUMBER !<The number of the interface  matrix for these mappings
     INTEGER(INTG) :: NUMBER_OF_SOLVER_MATRICES !<The number of solver matrices mapped to this interface matrix
     TYPE(INTERFACE_TO_SOLVER_MAPS_PTR_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS(:) !<EQUATIONS_TO_SOLVER_MATRIX_MAPS(solver_matrix_idx). The maps from the equation matrix to the solver_matrix_idx'th solver matrix
-    TYPE(INTERFACE_ROW_TO_SOLVER_ROWS_MAP_TYPE), ALLOCATABLE :: INTERFACE_ROW_TO_SOLVER_ROWS_MAP(:) !<INTERFACE_ROW_TO_SOLVER_ROW_MAP(interface_row_idx). The mapping from the interface_row_idx'th interface matrix to a solver row.
+   TYPE(MatrixRowColCouplingType), ALLOCATABLE :: interfaceRowToSolverRowsMap(:) !<interfaceRowToSolverRowsMap(interfaceRowIdx). The mapping from the interfaceRowIdx'th interface matrix to a solver row.
   END TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_IM_TYPE
 
   TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE
@@ -3660,13 +3656,6 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     INTEGER(INTG) :: INTERFACE_MATRIX_INDEX
   END TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE
-  
-  !>Contains information on the mapping from an interface condition column to a solver row.
-  TYPE INTERFACE_COLUMN_TO_SOLVER_ROWS_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_SOLVER_ROWS !<The number of solver rows that the interface condition column in mapped to (can be either 0 or 1 at he moment.)
-    INTEGER(INTG) :: SOLVER_ROW !<The solver row that the interface condition column is mapped to
-    REAL(DP) :: COUPLING_COEFFICIENT !<The coupling coefficient for the mapping.
-  END TYPE INTERFACE_COLUMN_TO_SOLVER_ROWS_MAP_TYPE
   
   !>Contains information on the mappings from an interface condition to the solver matrices
   TYPE INTERFACE_CONDITION_TO_SOLVER_MAP_TYPE
@@ -3677,7 +3666,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(equations_set_idx). The equations set information of the equations_set_idx'th equations set that the interface condition affects.
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx). The mappings from the interface matrices in this interface condition to the solver_matrix_idx'th solver_matrix
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_IM_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(interface_matrix_idx). The mappings from the interface_matrix_idx'th interface matrix in this interface condition to the solver_matrices.
-    TYPE(INTERFACE_COLUMN_TO_SOLVER_ROWS_MAP_TYPE), ALLOCATABLE :: INTERFACE_COLUMN_TO_SOLVER_ROWS_MAPS(:) !<INTERFACE_COLUMN_TO_SOLVER_ROW_MAP(interface_column_idx). The mapping from the interface_column_idx'th interface column to a solver row.
+    TYPE(MatrixRowColCouplingType), ALLOCATABLE :: interfaceColToSolverRowsMap(:) !<interfaceColToSolverRowsMap(interfaceColumnIdx). The mapping from the interfaceColumnIdx'th interface column to solver rows.
   END TYPE INTERFACE_CONDITION_TO_SOLVER_MAP_TYPE
   
  !>Contains information about the mapping from a solver matrix column to dynamic equations matrices and variables
@@ -3760,15 +3749,15 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information about the cached create values for a solver mapping
   TYPE SOLVER_MAPPING_CREATE_VALUES_CACHE_TYPE
-    TYPE(LIST_PTR_TYPE), POINTER :: EQUATIONS_VARIABLE_LIST(:) !<EQUATIONS_VARIABLES_LIST(solver_matrix_idx). The list of equations set variables in the solver mapping.
-    TYPE(LIST_TYPE), POINTER :: equationsRHSVariablesList !<The list of equations RHS variables in the solver mapping.
+    TYPE(ListPtrType), POINTER :: EQUATIONS_VARIABLE_LIST(:) !<EQUATIONS_VARIABLES_LIST(solver_matrix_idx). The list of equations set variables in the solver mapping.
+    TYPE(ListType), POINTER :: equationsRHSVariablesList !<The list of equations RHS variables in the solver mapping.
     INTEGER, ALLOCATABLE :: DYNAMIC_VARIABLE_TYPE(:) !<DYNAMIC_VARIABLE_TYPE(equations_set_idx). The variable type that is mapped to the dynamic matrices for the equations_set_idx'th equations set.
     INTEGER(INTG), ALLOCATABLE :: MATRIX_VARIABLE_TYPES(:,:,:) !<MATRIX_VARIABLE_TYPES(0:..,equations_set_idx,matrix_idx). The list of matrix variable types in the equations_set_idx'th equations set for the matrix_idx'th solver matrix. MATRIX_VARIABLE_TYPES(0,equations_set_idx,matrix_idx) is the number of variable types in the equations_set_idx'th equations set mapped to the matrix_idx'th solver matrix and MATRIX_VARIABLE_TYPES(1..,equations_set_idx,matrix_idx) is the list of the variable types in the equations set.
     INTEGER(INTG), ALLOCATABLE :: RESIDUAL_VARIABLE_TYPES(:,:) !<RESIDUAL_VARIABLE_TYPES(0:..,equations_set_idx). The list of residual variable types in the equations_set_idx'th equations set. RESIDUAL_VARIABLE_TYPES(0,equations_set_idx) is the number of variable types in the equations_set_idx'th equations set and RESIDUAL_VARIABLE_TYPES(1..,equations_set_idx) is the list of the variable types in the equations set.
     INTEGER(INTG), ALLOCATABLE :: RHS_VARIABLE_TYPE(:) !<RHS_VARIABLE_TYPE(equations_set_idx). The variable type that is mapped to the solution RHS for the equations_set_idx'th equations set
     INTEGER, ALLOCATABLE :: SOURCE_VARIABLE_TYPE(:) !<SOURCE_VARIABLE_TYPE(equations_set_idx). The source variable type that is mapped to the RHS for the equations_set_idx'th equations set.
-    TYPE(LIST_PTR_TYPE), POINTER :: INTERFACE_VARIABLE_LIST(:) !<INTERFACE_VARIABLES_LIST(solver_matrix_idx). The list of interface condition variables in the solver mapping for the solver_matrix idx'th solver matrix.
-    TYPE(LIST_PTR_TYPE), POINTER :: INTERFACE_INDICES(:) !<INTERFACE_INDICES(equations_set_idx). The list of interface condition indices in the equations_set_idx'th equations set.
+    TYPE(ListPtrType), POINTER :: INTERFACE_VARIABLE_LIST(:) !<INTERFACE_VARIABLES_LIST(solver_matrix_idx). The list of interface condition variables in the solver mapping for the solver_matrix idx'th solver matrix.
+    TYPE(ListPtrType), POINTER :: INTERFACE_INDICES(:) !<INTERFACE_INDICES(equations_set_idx). The list of interface condition indices in the equations_set_idx'th equations set.
   END TYPE SOLVER_MAPPING_CREATE_VALUES_CACHE_TYPE
 
   TYPE SOLVER_MAPPING_VARIABLE_TYPE
@@ -3814,13 +3803,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOlVER_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE !<The create values cache for the solver mapping
   END TYPE SOLVER_MAPPING_TYPE
 
-  PUBLIC EQUATIONS_COL_TO_SOLVER_COLS_MAP_TYPE
-
   PUBLIC EQUATIONS_TO_SOLVER_MAPS_TYPE,EQUATIONS_TO_SOLVER_MAPS_PTR_TYPE
 
   PUBLIC INTERFACE_TO_SOLVER_MAPS_TYPE,INTERFACE_TO_SOLVER_MAPS_PTR_TYPE
-
-  PUBLIC JACOBIAN_COL_TO_SOLVER_COLS_MAP_TYPE
 
   PUBLIC JACOBIAN_TO_SOLVER_MAP_TYPE,JACOBIAN_TO_SOLVER_MAP_PTR_TYPE
 
@@ -3830,17 +3815,11 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   PUBLIC EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM_TYPE,EQUATIONS_TO_SOLVER_MATRIX_MAPS_EM_TYPE
 
-  PUBLIC EQUATIONS_ROW_TO_SOLVER_ROWS_MAP_TYPE
-
   PUBLIC EQUATIONS_SET_TO_SOLVER_MAP_TYPE
 
   PUBLIC INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE,INTERFACE_TO_SOLVER_MATRIX_MAPS_IM_TYPE
 
-  PUBLIC INTERFACE_ROW_TO_SOLVER_ROWS_MAP_TYPE
-
   PUBLIC INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE
-
-  PUBLIC INTERFACE_COLUMN_TO_SOLVER_ROWS_MAP_TYPE
 
   PUBLIC INTERFACE_CONDITION_TO_SOLVER_MAP_TYPE
 
@@ -3870,7 +3849,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information about a history file for a control loop. \see OpenCMISS::Iron::cmfe_HistoryType
   TYPE HISTORY_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop for the history file
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop for the history file
     LOGICAL :: HISTORY_FINISHED !<Is .TRUE. if the history file has finished being created, .FALSE. if not.
     INTEGER(INTG) :: FILE_FORMAT !<The format of the history file \see HISTORY_ROUTINES_FileFormatTypes,HISTORY_ROUTINES
     TYPE(VARYING_STRING) :: FILENAME !<The file name of the history file
@@ -3887,51 +3866,51 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !
   
   !>Contains information on a simple (execute once) control loop
-  TYPE CONTROL_LOOP_SIMPLE_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-  END TYPE CONTROL_LOOP_SIMPLE_TYPE
+  TYPE ControlLoopSimpleType
+    TYPE(ControlLoopType), POINTER :: controlLoop
+  END TYPE ControlLoopSimpleType
 
   !>Contains information on a fixed iteration control loop
-  TYPE CONTROL_LOOP_FIXED_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-    INTEGER(INTG) :: ITERATION_NUMBER
-    INTEGER(INTG) :: START_ITERATION
-    INTEGER(INTG) :: STOP_ITERATION
-    INTEGER(INTG) :: ITERATION_INCREMENT
-  END TYPE CONTROL_LOOP_FIXED_TYPE
+  TYPE ControlLoopFixedType
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    INTEGER(INTG) :: iterationNumber
+    INTEGER(INTG) :: startIteration
+    INTEGER(INTG) :: stopIteration
+    INTEGER(INTG) :: iterationIncrement
+  END TYPE ControlLoopFixedType
 
   !>Contains information on a time iteration control loop
-  TYPE CONTROL_LOOP_TIME_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-    INTEGER(INTG) :: ITERATION_NUMBER
-    INTEGER(INTG) :: GLOBAL_ITERATION_NUMBER
+  TYPE ControlLoopTimeType
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    INTEGER(INTG) :: iterationNumber
+    INTEGER(INTG) :: globalIterationNumber
 ! sebk: is thei usefull?
-    INTEGER(INTG) :: OUTPUT_NUMBER          !< The frequency of output, is only used if the specific problem implementation accesses it
-    INTEGER(INTG) :: INPUT_NUMBER
-    REAL(DP) :: CURRENT_TIME
-    REAL(DP) :: START_TIME
-    REAL(DP) :: STOP_TIME
-    REAL(DP) :: TIME_INCREMENT
-    INTEGER(INTG) :: NUMBER_OF_ITERATIONS   !< The total number of iterations for this loop, if 0 it will be computed from time span and increment
-  END TYPE CONTROL_LOOP_TIME_TYPE
+    INTEGER(INTG) :: outputNumber          !< The frequency of output, is only used if the specific problem implementation accesses it
+    INTEGER(INTG) :: inputNumber
+    REAL(DP) :: currentTime
+    REAL(DP) :: startTime
+    REAL(DP) :: stopTime
+    REAL(DP) :: timeIncrement
+    INTEGER(INTG) :: numberOfIterations   !< The total number of iterations for this loop, if 0 it will be computed from time span and increment
+  END TYPE ControlLoopTimeType
 
   !>Contains information on a do-while control loop
-  TYPE CONTROL_LOOP_WHILE_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-    INTEGER(INTG) :: ITERATION_NUMBER
-    INTEGER(INTG) :: MAXIMUM_NUMBER_OF_ITERATIONS
-    REAL(DP) :: ABSOLUTE_TOLERANCE
-    REAL(DP) :: RELATIVE_TOLERANCE
-    LOGICAL :: CONTINUE_LOOP
-  END TYPE CONTROL_LOOP_WHILE_TYPE
+  TYPE ControlLoopWhileType
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    INTEGER(INTG) :: iterationNumber
+    INTEGER(INTG) :: maximumNumberOfIterations
+    REAL(DP) :: absoluteTolerance
+    REAL(DP) :: relativeTolerance
+    LOGICAL :: continueLoop
+  END TYPE ControlLoopWhileType
 
   !>Contains information on a load-increment control loop
-  TYPE CONTROL_LOOP_LOAD_INCREMENT_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP
-    INTEGER(INTG) :: ITERATION_NUMBER
-    INTEGER(INTG) :: MAXIMUM_NUMBER_OF_ITERATIONS
-    INTEGER(INTG) :: OUTPUT_NUMBER
-  END TYPE CONTROL_LOOP_LOAD_INCREMENT_TYPE
+  TYPE ControlLoopLoadIncrementType
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    INTEGER(INTG) :: iterationNumber
+    INTEGER(INTG) :: maximumNumberOfIterations
+    INTEGER(INTG) :: outputNumber
+  END TYPE ControlLoopLoadIncrementType
 
   !>Contains information about a dependent field variable involved in a control loop solver.
   TYPE ControlLoopFieldVariableType
@@ -3946,43 +3925,42 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(ControlLoopFieldVariableType), ALLOCATABLE :: fieldVariables(:) !<fieldVariables(fieldVariableIdx). The information for the fieldVariableIdx'th field variable.
   END TYPE ControlLoopFieldVariablesType
 
-  !>A buffer type to allow for an array of pointers to a CONTROL_LOOP_TYPE \see Types::CONTROL_LOOP_TYPE
-  TYPE CONTROL_LOOP_PTR_TYPE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: ptr !<The pointer to the control loop
-  END TYPE CONTROL_LOOP_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a ControlLoopType \see Types::ControlLoopType
+  TYPE ControlLoopPtrType
+    TYPE(ControlLoopType), POINTER :: ptr !<The pointer to the control loop
+  END TYPE ControlLoopPtrType
 
   !>Contains information on a control loop. \see OpenCMISS::Iron::cmfe_ControlLoopType
-  TYPE CONTROL_LOOP_TYPE
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer back to the problem for the control loop
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: PARENT_LOOP !<A pointer back to the parent control loop if this is a sub loop
-    LOGICAL :: CONTROL_LOOP_FINISHED !<Is .TRUE. if the problem control has finished being created, .FALSE. if not.
-    TYPE(VARYING_STRING) :: LABEL !<A user defined label for the control loop.
+  TYPE ControlLoopType
+    TYPE(ProblemType), POINTER :: problem !<A pointer back to the problem for the control loop
+    TYPE(ControlLoopType), POINTER :: parentLoop !<A pointer back to the parent control loop if this is a sub loop
+    LOGICAL :: controlLoopFinished !<Is .TRUE. if the problem control has finished being created, .FALSE. if not.
+    TYPE(VARYING_STRING) :: label !<A user defined label for the control loop.
     
-    INTEGER(INTG) :: LOOP_TYPE !<The type of control loop \see PROBLEM_CONSTANTS_ControlTypes,PROBLEM_CONSTANTS
-    INTEGER(INTG) :: CONTROL_LOOP_LEVEL !<The level of the control loop
-    INTEGER(INTG) :: SUB_LOOP_INDEX !<The position of this loop in the sub loops of the parent loop if this is a sub loop.
-    INTEGER(INTG) :: outputType !<The output type of the control loop \see CONTROL_LOOP_ROUTINES_OutputTypes,CONTROL_LOOP_ROUTINES
+    INTEGER(INTG) :: loopType !<The type of control loop \see ControlLoopRoutines_ControlTypes,ControlLoopRoutines
+    INTEGER(INTG) :: controlLoopLevel !<The level of the control loop
+    INTEGER(INTG) :: subLoopIndex !<The position of this loop in the sub loops of the parent loop if this is a sub loop.
+    INTEGER(INTG) :: outputType !<The output type of the control loop \see ControlLoopRoutines_OutputTypes,ControlLoopRoutines
     
-    TYPE(CONTROL_LOOP_SIMPLE_TYPE), POINTER :: SIMPLE_LOOP !<A pointer to the simple loop information
-    TYPE(CONTROL_LOOP_FIXED_TYPE), POINTER :: FIXED_LOOP !<A pointer to the fixed loop information
-    TYPE(CONTROL_LOOP_TIME_TYPE), POINTER :: TIME_LOOP !<A pointer to the time loop information
-    TYPE(CONTROL_LOOP_WHILE_TYPE), POINTER :: WHILE_LOOP !<A pointer to the while loop information
-    TYPE(CONTROL_LOOP_LOAD_INCREMENT_TYPE), POINTER :: LOAD_INCREMENT_LOOP !<A pointer to the load increment loop information
+    TYPE(ControlLoopSimpleType), POINTER :: simpleLoop !<A pointer to the simple loop information
+    TYPE(ControlLoopFixedType), POINTER :: fixedLoop !<A pointer to the fixed loop information
+    TYPE(ControlLoopTimeType), POINTER :: timeLoop !<A pointer to the time loop information
+    TYPE(ControlLoopWhileType), POINTER :: whileLoop !<A pointer to the while loop information
+    TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop !<A pointer to the load increment loop information
     
-    INTEGER(INTG) :: NUMBER_OF_SUB_LOOPS !<The number of control loops below this loop
-    TYPE(CONTROL_LOOP_PTR_TYPE), ALLOCATABLE :: SUB_LOOPS(:) !<A array of pointers to the loops below this loop.
+    INTEGER(INTG) :: numberOfSubLoops !<The number of control loops below this loop
+    TYPE(ControlLoopPtrType), ALLOCATABLE :: subLoops(:) !<A array of pointers to the loops below this loop.
 
     TYPE(ControlLoopFieldVariablesType), POINTER :: fieldVariables !<A pointer to the field variables information for this control loop.
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS !<A pointer to the solvers for this control loop
-    TYPE(HISTORY_TYPE), POINTER :: HISTORY !<A pointer to the history file for this control loop.
-  END TYPE CONTROL_LOOP_TYPE
+    TYPE(SOLVERS_TYPE), POINTER :: solvers !<A pointer to the solvers for this control loop
+    TYPE(HISTORY_TYPE), POINTER :: history !<A pointer to the history file for this control loop.
+  END TYPE ControlLoopType
 
-  PUBLIC CONTROL_LOOP_SIMPLE_TYPE,CONTROL_LOOP_FIXED_TYPE,CONTROL_LOOP_TIME_TYPE,CONTROL_LOOP_WHILE_TYPE, &
-    & CONTROL_LOOP_LOAD_INCREMENT_TYPE
+  PUBLIC ControlLoopSimpleType,ControlLoopFixedType,ControlLoopTimeType,ControlLoopWhileType,ControlLoopLoadIncrementType
 
   PUBLIC ControlLoopFieldVariableType,ControlLoopFieldVariablesType
 
-  PUBLIC CONTROL_LOOP_TYPE,CONTROL_LOOP_PTR_TYPE
+  PUBLIC ControlLoopType,ControlLoopPtrType
   
   !
   !================================================================================================================================
@@ -3996,31 +3974,31 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE PROBLEM_SETUP_TYPE
   
   !>Contains information for a problem. \see OpenCMISS::Iron::cmfe_ProblemType
-  TYPE PROBLEM_TYPE
+  TYPE ProblemType
     INTEGER(INTG) :: userNumber !<The user defined identifier for the problem. The user number must be unique.
     INTEGER(INTG) :: globalNumber !<The global number of the problem in the list of problems.
-    LOGICAL :: PROBLEM_FINISHED !<Is .TRUE. if the problem has finished being created, .FALSE. if not.
-    TYPE(ProblemsType), POINTER :: PROBLEMS !<A pointer to the problems for this problem.
-    INTEGER(INTG), ALLOCATABLE :: SPECIFICATION(:) !<The problem specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
+    LOGICAL :: problemFinished !<Is .TRUE. if the problem has finished being created, .FALSE. if not.
+    TYPE(ProblemsType), POINTER :: problems !<A pointer to the problems for this problem.
+    INTEGER(INTG), ALLOCATABLE :: specification(:) !<The problem specification array, eg. [class, type, subtype], although there can be more or fewer identifiers. Unused identifiers are set to zero.
     TYPE(WorkGroupType), POINTER :: workGroup !<The work group to use for the problem.
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop information for the problem.
-  END TYPE PROBLEM_TYPE
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop information for the problem.
+  END TYPE ProblemType
   
-  !>A buffer type to allow for an array of pointers to a PROBLEM_TYPE \see TYPES:PROBLEM_TYPE
-  TYPE PROBLEM_PTR_TYPE
-    TYPE(PROBLEM_TYPE), POINTER :: ptr !<The pointer to the problem.
-  END TYPE PROBLEM_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a ProblemType \see Types:ProblemType
+  TYPE ProblemPtrType
+    TYPE(ProblemType), POINTER :: ptr !<The pointer to the problem.
+  END TYPE ProblemPtrType
        
   !>Contains information on the problems defined.
   TYPE ProblemsType
     TYPE(ContextType), POINTER :: context !<A pointer to the context for the problems
     INTEGER(INTG) :: numberOfProblems !<The number of problems defined.
-    TYPE(PROBLEM_PTR_TYPE), POINTER :: problems(:) !<The array of pointers to the problems.
+    TYPE(ProblemPtrType), POINTER :: problems(:) !<The array of pointers to the problems.
   END TYPE ProblemsType
 
   PUBLIC PROBLEM_SETUP_TYPE
 
-  PUBLIC PROBLEM_TYPE,PROBLEM_PTR_TYPE,ProblemsType
+  PUBLIC ProblemType,ProblemPtrType,ProblemsType
 
   !
   !================================================================================================================================

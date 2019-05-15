@@ -52,7 +52,7 @@ MODULE BIOELECTRIC_FINITE_ELASTICITY_ROUTINES
   USE BIOELECTRIC_ROUTINES
   USE BIODOMAIN_EQUATION_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -218,7 +218,7 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the problem specification for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the problem specification for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -274,13 +274,13 @@ CONTAINS
   SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: MONODOMAIN_SUB_LOOP,ELASTICITY_SUB_LOOP
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: MONODOMAIN_SUB_LOOP,ELASTICITY_SUB_LOOP
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
@@ -331,32 +331,32 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
             CALL CONTROL_LOOP_NUMBER_OF_SUB_LOOPS_SET(CONTROL_LOOP,2,ERR,ERROR,*999)
             CALL CONTROL_LOOP_OUTPUT_TYPE_SET(CONTROL_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
 
             !Set up the control sub loop for monodomain
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_LABEL_SET(MONODOMAIN_SUB_LOOP,'MONODOMAIN_TIME_LOOP',ERR,ERROR,*999)
-            CALL CONTROL_LOOP_TYPE_SET(MONODOMAIN_SUB_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
+            CALL CONTROL_LOOP_TYPE_SET(MONODOMAIN_SUB_LOOP,CONTROL_TIME_LOOP_TYPE,ERR,ERROR,*999)
             CALL CONTROL_LOOP_OUTPUT_TYPE_SET(MONODOMAIN_SUB_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
 
             IF(PROBLEM%specification(3)==PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE) THEN
               !Set up the control sub loop for finite elasicity
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
               CALL CONTROL_LOOP_LABEL_SET(ELASTICITY_SUB_LOOP,'ELASTICITY_WHILE_LOOP',ERR,ERROR,*999)
-              CALL CONTROL_LOOP_TYPE_SET(ELASTICITY_SUB_LOOP,PROBLEM_CONTROL_WHILE_LOOP_TYPE,ERR,ERROR,*999)
+              CALL CONTROL_LOOP_TYPE_SET(ELASTICITY_SUB_LOOP,CONTROL_WHILE_LOOP_TYPE,ERR,ERROR,*999)
               CALL CONTROL_LOOP_OUTPUT_TYPE_SET(ELASTICITY_SUB_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
             ELSE
               !Set up the control sub loop for finite elasicity
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
               CALL CONTROL_LOOP_LABEL_SET(ELASTICITY_SUB_LOOP,'ELASTICITY_LOAD_INCREMENT_LOOP',ERR,ERROR,*999)
-              CALL CONTROL_LOOP_TYPE_SET(ELASTICITY_SUB_LOOP,PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE,ERR,ERROR,*999)
+              CALL CONTROL_LOOP_TYPE_SET(ELASTICITY_SUB_LOOP,CONTROL_LOAD_INCREMENT_LOOP_TYPE,ERR,ERROR,*999)
               CALL CONTROL_LOOP_OUTPUT_TYPE_SET(ELASTICITY_SUB_LOOP,CONTROL_LOOP_PROGRESS_OUTPUT,ERR,ERROR,*999)
             ENDIF
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,ERR,ERROR,*999)
             !Sub-loops are finished when parent is finished
@@ -368,12 +368,12 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the monodomain sub loop
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
             CALL SOLVERS_NUMBER_SET(MONODOMAIN_SOLVERS,2,ERR,ERROR,*999)
@@ -395,7 +395,7 @@ CONTAINS
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_CMISS_LIBRARY,ERR,ERROR,*999)
 
             !Get the finite elasticity sub loop
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
             !Start the solvers creation
             CALL SOLVERS_CREATE_START(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
             CALL SOLVERS_NUMBER_SET(ELASTICITY_SOLVERS,1,ERR,ERROR,*999)
@@ -406,13 +406,13 @@ CONTAINS
             CALL SOLVER_LIBRARY_TYPE_SET(SOLVER,SOLVER_PETSC_LIBRARY,ERR,ERROR,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the monodomain solvers
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(MONODOMAIN_SOLVERS,ERR,ERROR,*999)
 
             !Get the finite elasticity solvers
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
             !Finish the solvers creation
             CALL SOLVERS_CREATE_FINISH(ELASTICITY_SOLVERS,ERR,ERROR,*999)
@@ -426,11 +426,11 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
 
             !Get the monodomain sub loop and solvers
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
             !Create the solver equations for the second (parabolic) solver
             NULLIFY(SOLVER)
@@ -441,7 +441,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
 
             !Get the finite elasticity sub loop and solvers
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
             !Get the finite elasticity solver and create the finite elasticity solver equations
             NULLIFY(SOLVER)
@@ -453,11 +453,11 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,ERR,ERROR,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
             
             !Get the monodomain sub loop and solvers
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
             !Get the solver equations for the second (parabolic) solver
             NULLIFY(SOLVER)
@@ -468,7 +468,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_CREATE_FINISH(SOLVER_EQUATIONS,ERR,ERROR,*999)             
 
             !Get the finite elasticity sub loop and solvers
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(ELASTICITY_SUB_LOOP,ELASTICITY_SOLVERS,ERR,ERROR,*999)
             !Finish the creation of the finite elasticity solver equations
             NULLIFY(SOLVER)
@@ -486,9 +486,9 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
             !Get the solvers
             CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
             !Create the CellML equations for the first DAE solver
@@ -496,9 +496,9 @@ CONTAINS
             CALL CELLML_EQUATIONS_CREATE_START(SOLVER,CELLML_EQUATIONS,ERR,ERROR,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,ERR,ERROR,*999)
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,MONODOMAIN_SUB_LOOP,ERR,ERROR,*999)
             !Get the solvers
             CALL CONTROL_LOOP_SOLVERS_GET(MONODOMAIN_SUB_LOOP,MONODOMAIN_SOLVERS,ERR,ERROR,*999)
             !Get the CellML equations for the first DAE solver
@@ -541,7 +541,7 @@ CONTAINS
   SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -563,24 +563,24 @@ CONTAINS
           SELECT CASE(CONTROL_LOOP%PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE,PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE, &
             & PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-            SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-            CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+            SELECT CASE(CONTROL_LOOP%loopType)
+            CASE(CONTROL_TIME_LOOP_TYPE)
               CALL BIODOMAIN_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
-            CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+            CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
               CALL FiniteElasticity_PreSolve(solver,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
           CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-            SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-            CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+            SELECT CASE(CONTROL_LOOP%loopType)
+            CASE(CONTROL_TIME_LOOP_TYPE)
               CALL BIODOMAIN_PRE_SOLVE(SOLVER,ERR,ERROR,*999)
-            CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
+            CASE(CONTROL_WHILE_LOOP_TYPE)
               CALL FiniteElasticity_PreSolve(solver,err,error,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
                 & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
@@ -614,7 +614,7 @@ CONTAINS
   SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -679,17 +679,17 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_ControlLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
     ENTERS("BioelectricFiniteElasticity_ControlLoopPreLoop",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
+      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
         PROBLEM=>CONTROL_LOOP%PROBLEM
         IF(ASSOCIATED(PROBLEM)) THEN
           IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
@@ -700,10 +700,10 @@ CONTAINS
           END IF
           SELECT CASE(PROBLEM%SPECIFICATION(2))
           CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
-            SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-            CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+            SELECT CASE(CONTROL_LOOP%loopType)
+            CASE(CONTROL_TIME_LOOP_TYPE)
               !do nothing ???
-            CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+            CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
               SELECT CASE(PROBLEM%SPECIFICATION(3))
               CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
                 CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
@@ -717,10 +717,10 @@ CONTAINS
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
               CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
-            CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
+            CASE(CONTROL_WHILE_LOOP_TYPE)
               SELECT CASE(PROBLEM%SPECIFICATION(3))
               CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
-                IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1) THEN
+                IF(CONTROL_LOOP%whileLoop%iterationNumber==1) THEN
                   CALL BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*999)
                 ENDIF
                 CALL BioelectricFiniteElasticity_ComputeFibreStretch(CONTROL_LOOP,ERR,ERROR,*999)
@@ -733,7 +733,7 @@ CONTAINS
               END SELECT
               CALL FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,ERR,ERROR,*999)
             CASE DEFAULT
-              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
+              LOCAL_ERROR="Control loop loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
                 & " is not valid for bioelectric finite elasticity problem type."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
@@ -769,7 +769,7 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_ComputeFibreStretch(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -815,13 +815,13 @@ CONTAINS
     NULLIFY(GEOMETRIC_INTERPOLATED_POINT_METRICS,DEPENDENT_INTERPOLATED_POINT_METRICS)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
-        SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-        CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
+        SELECT CASE(CONTROL_LOOP%loopType)
+        CASE(CONTROL_TIME_LOOP_TYPE)
           !do nothing
-        CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+        CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
           !do nothing
-        CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
+        CASE(CONTROL_WHILE_LOOP_TYPE)
           CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
           CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
           CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
@@ -886,7 +886,7 @@ CONTAINS
           DECOMPOSITION=>dependentField%DECOMPOSITION
           meshComponentNumber=decomposition%meshComponentNumber
 
-          IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1) THEN
+          IF(CONTROL_LOOP%whileLoop%iterationNumber==1) THEN
             !copy the old fibre stretch to the previous values parameter set
             CALL FIELD_PARAMETER_SETS_COPY(independentField,FIELD_U1_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
@@ -964,7 +964,7 @@ CONTAINS
           CALL FIELD_PARAMETER_SET_UPDATE_FINISH(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
         CASE DEFAULT
-          LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
             & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -991,11 +991,11 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_ForceLengthVelocityRelation(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP_PARENT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_PARENT
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
@@ -1046,14 +1046,14 @@ CONTAINS
     NULLIFY(GEOMETRIC_INTERPOLATED_POINT_METRICS,DEPENDENT_INTERPOLATED_POINT_METRICS)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
-        SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-        CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
+        SELECT CASE(CONTROL_LOOP%loopType)
+        CASE(CONTROL_TIME_LOOP_TYPE)
           !do nothing
-        CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+        CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
           !do nothing
-        CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
-          CALL CONTROL_LOOP_GET(CONTROL_LOOP%PROBLEM%CONTROL_LOOP,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
+        CASE(CONTROL_WHILE_LOOP_TYPE)
+          CALL CONTROL_LOOP_GET(CONTROL_LOOP%PROBLEM%controlLoop,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
           CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
           CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
           CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
@@ -1100,8 +1100,8 @@ CONTAINS
           CALL Field_ParameterSetGetConstant(independentField,FIELD_U1_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
             & 3,VELOCITY_MAX,ERR,ERROR,*999)
 
-          ITERATION_NUMBER=CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER
-          MAXIMUM_NUMBER_OF_ITERATIONS=CONTROL_LOOP%WHILE_LOOP%MAXIMUM_NUMBER_OF_ITERATIONS
+          ITERATION_NUMBER=CONTROL_LOOP%whileLoop%iterationNumber
+          MAXIMUM_NUMBER_OF_ITERATIONS=CONTROL_LOOP%whileLoop%maximumNumberOfIterations
           !in the first iteration store the unaltered homogenized active stress field 
           IF(ITERATION_NUMBER==1) THEN
             CALL FIELD_PARAMETER_SETS_COPY(independentField,FIELD_U_VARIABLE_TYPE, &
@@ -1112,7 +1112,7 @@ CONTAINS
               & FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
           ENDIF
 
-          TIME_STEP=CONTROL_LOOP_PARENT%TIME_LOOP%TIME_INCREMENT
+          TIME_STEP=CONTROL_LOOP_PARENT%timeLoop%timeIncrement
 
           DECOMPOSITION=>dependentField%DECOMPOSITION
           meshComponentNumber=decomposition%meshComponentNumber
@@ -1321,7 +1321,7 @@ CONTAINS
           CALL FIELD_PARAMETER_SET_UPDATE_FINISH(independentField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,ERR,ERROR,*999)
 
         CASE DEFAULT
-          LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%LOOP_TYPE,"*",ERR,ERROR))// &
+          LOCAL_ERROR="Control loop type "//TRIM(NUMBER_TO_VSTRING(CONTROL_LOOP%loopType,"*",ERR,ERROR))// &
             & " is not valid for a bioelectrics finite elasticity type of a multi physics problem class."
           CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         END SELECT
@@ -1349,13 +1349,13 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_ControlLoopPostLoop(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ProblemType), POINTER :: PROBLEM
     INTEGER(INTG) :: equations_set_idx
-    TYPE(CONTROL_LOOP_TIME_TYPE), POINTER :: TIME_LOOP
+    TYPE(ControlLoopTimeType), POINTER :: TIME_LOOP
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField
     TYPE(RegionType), POINTER :: DEPENDENT_REGION   
@@ -1364,12 +1364,12 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(VARYING_STRING) :: FILENAME,LOCAL_ERROR,METHOD
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: ELASTICITY_SUB_LOOP,BIOELECTRIC_SUB_LOOP
+    TYPE(ControlLoopType), POINTER :: ELASTICITY_SUB_LOOP,BIOELECTRIC_SUB_LOOP
 
     ENTERS("BioelectricFiniteElasticity_ControlLoopPostLoop",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
+      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
         PROBLEM=>CONTROL_LOOP%PROBLEM
         IF(ASSOCIATED(PROBLEM)) THEN
           IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
@@ -1378,8 +1378,8 @@ CONTAINS
             CALL FlagError("Problem specification must have three entries for a bioelectric-finite elasticity problem.", &
               & err,error,*999)
           END IF
-          SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-          CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+          SELECT CASE(CONTROL_LOOP%loopType)
+          CASE(CONTROL_TIME_LOOP_TYPE)
             SELECT CASE(PROBLEM%SPECIFICATION(2))
             CASE(PROBLEM_BIOELECTRIC_FINITE_ELASTICITY_TYPE)
               !the monodomain time loop - output of the monodomain fields
@@ -1389,9 +1389,9 @@ CONTAINS
                 & " is not valid for a multi physics problem class."
               CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             END SELECT
-          CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+          CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
             CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
-          CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
+          CASE(CONTROL_WHILE_LOOP_TYPE)
             CALL BioelectricFiniteElasticity_ConvergenceCheck(CONTROL_LOOP,ERR,ERROR,*999)
           CASE DEFAULT
             !do nothing
@@ -1403,7 +1403,7 @@ CONTAINS
         !the main time loop - output the finite elasticity fields 
         IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
           !Export the dependent field for this time step
-          TIME_LOOP=>CONTROL_LOOP%TIME_LOOP
+          TIME_LOOP=>CONTROL_LOOP%timeLoop
           IF(ASSOCIATED(TIME_LOOP)) THEN
             PROBLEM=>CONTROL_LOOP%PROBLEM
             IF(ASSOCIATED(PROBLEM)) THEN
@@ -1412,7 +1412,7 @@ CONTAINS
               NULLIFY(SOLVER_EQUATIONS)
               NULLIFY(ELASTICITY_SUB_LOOP)
               !Get the solver. The first solver of the second sub loop will contain the finite elasticity dependent field equation set
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP,2,ELASTICITY_SUB_LOOP,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(ELASTICITY_SUB_LOOP,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
               CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
@@ -1427,7 +1427,7 @@ CONTAINS
                       NULLIFY(DEPENDENT_REGION)
                       CALL FIELD_REGION_GET(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
                       FILENAME="MainTime_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                        & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%GLOBAL_ITERATION_NUMBER,"*",ERR,ERROR))
+                        & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
                       METHOD="FORTRAN"
                       CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
                     ELSE
@@ -1452,7 +1452,7 @@ CONTAINS
                 NULLIFY(SOLVER_EQUATIONS)
                 NULLIFY(BIOELECTRIC_SUB_LOOP)
                 !Get the solver. The second solver of the first sub loop will contain the bioelectrics equation set
-                CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP,1,BIOELECTRIC_SUB_LOOP,ERR,ERROR,*999)
+                CALL ControlLoop_SubLoopGet(CONTROL_LOOP,1,BIOELECTRIC_SUB_LOOP,ERR,ERROR,*999)
                 CALL CONTROL_LOOP_SOLVERS_GET(BIOELECTRIC_SUB_LOOP,SOLVERS,ERR,ERROR,*999)
                 CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
                 CALL SOLVER_SOLVER_EQUATIONS_GET(SOLVER,SOLVER_EQUATIONS,ERR,ERROR,*999)
@@ -1467,11 +1467,11 @@ CONTAINS
                         NULLIFY(DEPENDENT_REGION)
                         CALL FIELD_REGION_GET(dependentField,DEPENDENT_REGION,ERR,ERROR,*999)
                         FILENAME="MainTime_M_"//TRIM(NUMBER_TO_VSTRING(DEPENDENT_REGION%userNumber,"*",ERR,ERROR))// &
-                          & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%GLOBAL_ITERATION_NUMBER,"*",ERR,ERROR))
+                          & "_"//TRIM(NUMBER_TO_VSTRING(TIME_LOOP%globalIterationNumber,"*",ERR,ERROR))
                         METHOD="FORTRAN"
                         CALL FIELD_IO_NODES_EXPORT(DEPENDENT_REGION%FIELDS,FILENAME,METHOD,ERR,ERROR,*999)
                         
-                        WRITE(*,*) TIME_LOOP%ITERATION_NUMBER
+                        WRITE(*,*) TIME_LOOP%iterationNumber
                         
                       ELSE
                         LOCAL_ERROR="Equations set is not associated for equations set index "// &
@@ -1516,11 +1516,11 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_ConvergenceCheck(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ProblemType), POINTER :: PROBLEM
     INTEGER(INTG) :: equations_set_idx,numberOfNodes,dof_idx,node_idx
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: dependentField
@@ -1540,15 +1540,15 @@ CONTAINS
     NULLIFY(FIELD_VAR)
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
+      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
         PROBLEM=>CONTROL_LOOP%PROBLEM
         IF(ASSOCIATED(PROBLEM)) THEN
-          SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-          CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+          SELECT CASE(CONTROL_LOOP%loopType)
+          CASE(CONTROL_TIME_LOOP_TYPE)
             !do nothing
-          CASE(PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE)
+          CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
             !do nothing
-          CASE(PROBLEM_CONTROL_WHILE_LOOP_TYPE)
+          CASE(CONTROL_WHILE_LOOP_TYPE)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,ERR,ERROR,*999)
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
             CALL SOLVER_SOLUTION_UPDATE(SOLVER,ERR,ERROR,*999) !tomo added this
@@ -1575,7 +1575,7 @@ CONTAINS
               CALL FlagError("Solver solver equations are not associated.",ERR,ERROR,*999)
             ENDIF
 
-            IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==1) THEN
+            IF(CONTROL_LOOP%whileLoop%iterationNumber==1) THEN
               !
             ELSE
               CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,FIELD_VAR,ERR,ERROR,*999)
@@ -1608,12 +1608,12 @@ CONTAINS
               ENDDO
               
               IF(my_sum<1.0E-06_DP) THEN !if converged then:
-                CONTROL_LOOP%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
+                CONTROL_LOOP%whileLoop%continueLoop=.FALSE.
                 CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
                 !copy the current solution to the previous solution
                 CALL FIELD_PARAMETER_SETS_COPY(dependentField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP,ERR,ERROR,*999)
-              ELSEIF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==CONTROL_LOOP%WHILE_LOOP%MAXIMUM_NUMBER_OF_ITERATIONS) THEN
+              ELSEIF(CONTROL_LOOP%whileLoop%iterationNumber==CONTROL_LOOP%whileLoop%maximumNumberOfIterations) THEN
                 CALL BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,.FALSE.,ERR,ERROR,*999)
                 CALL FLAG_WARNING('----------- Maximum number of iterations in while loop reached. -----------',ERR,ERROR,*999)
                 !copy the current solution to the previous solution
@@ -1657,13 +1657,13 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_UpdateGeometricField(CONTROL_LOOP,CALC_CLOSEST_GAUSS_POINT,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     LOGICAL, INTENT(IN) :: CALC_CLOSEST_GAUSS_POINT !<If true then the closest finite elasticity Gauss point for each bioelectrics node is calculated
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_ELASTICITY,CONTROL_LOOP_MONODOMAIN
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_ELASTICITY,CONTROL_LOOP_MONODOMAIN
+    TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(FieldType), POINTER :: independent_Field_ELASTICITY,GEOMETRIC_FIELD_MONODOMAIN,GEOMETRIC_FIELD_ELASTICITY
@@ -1717,7 +1717,7 @@ CONTAINS
     NULLIFY(GAUSS_POSITIONS)
     
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
-      IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
+      IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
         PROBLEM=>CONTROL_LOOP%PROBLEM
         IF(ASSOCIATED(PROBLEM)) THEN
           IF(.NOT.ALLOCATED(problem%specification)) THEN
@@ -1732,10 +1732,10 @@ CONTAINS
 
             CASE(PROBLEM_GUDUNOV_MONODOMAIN_SIMPLE_ELASTICITY_SUBTYPE)
 
-              CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+              CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
               CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
               !get the monodomain sub loop, solvers, solver, and finally geometric and field
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -1763,7 +1763,7 @@ CONTAINS
               NULLIFY(EQUATIONS_SET)
               NULLIFY(SOLVER_EQUATIONS)
               !get the finite elasticity sub loop, solvers, solver, and finally the dependent field
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -1806,10 +1806,10 @@ CONTAINS
             CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
               & PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
 
-              CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+              CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
               CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
               !get the monodomain sub loop, solvers, solver, and finally geometric field and dependent field
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -1846,7 +1846,7 @@ CONTAINS
               NULLIFY(EQUATIONS_SET)
               NULLIFY(SOLVER_EQUATIONS)
               !get the finite elasticity sub loop, solvers, solver, and finally the dependent and independent fields
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -1896,7 +1896,7 @@ CONTAINS
               !The max lengthening velocity is assumed to be   abs(VELOCITY_MAX)/2.0
               
               !get the time step of the elasticity problem
-              TIME_STEP=CONTROL_LOOP_PARENT%TIME_LOOP%TIME_INCREMENT
+              TIME_STEP=CONTROL_LOOP_PARENT%timeLoop%timeIncrement
 
 
               !loop over the elements of the finite elasticity mesh (internal and boundary elements)
@@ -2274,10 +2274,10 @@ CONTAINS
 
             CASE(PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE)
 
-              CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+              CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
               CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
               !get the monodomain sub loop, solvers, solver, and finally geometric field and dependent field
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -2314,7 +2314,7 @@ CONTAINS
               NULLIFY(EQUATIONS_SET)
               NULLIFY(SOLVER_EQUATIONS)
               !get the finite elasticity sub loop, solvers, solver, and finally the dependent and independent fields
-              CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
+              CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
               CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
               CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -2574,12 +2574,12 @@ CONTAINS
   SUBROUTINE BioelectricFiniteElasticity_IndependentFieldInterpolate(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the time control loop
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the time control loop
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_ELASTICITY,CONTROL_LOOP_MONODOMAIN
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_ELASTICITY,CONTROL_LOOP_MONODOMAIN
+    TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(FieldType), POINTER :: INDEPENDENT_FIELD_MONODOMAIN,INDEPENDENT_FIELD_ELASTICITY
@@ -2628,11 +2628,11 @@ CONTAINS
         SELECT CASE(PROBLEM%SPECIFICATION(3))
         CASE(PROBLEM_GUDUNOV_MONODOMAIN_1D3D_ELASTICITY_SUBTYPE,PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
           & PROBLEM_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE,PROBLEM_MONODOMAIN_1D3D_ACTIVE_STRAIN_SUBTYPE)
-          IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
             !--- MONODOMAIN ---
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
             CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -2657,7 +2657,7 @@ CONTAINS
             !--- FINITE ELASTICITY ---
             NULLIFY(SOLVERS)
             NULLIFY(SOLVER)
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,2,CONTROL_LOOP_ELASTICITY,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_ELASTICITY,SOLVERS,ERR,ERROR,*999)
             CALL SOLVERS_SOLVER_GET(SOLVERS,1,SOLVER,ERR,ERROR,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
@@ -2900,12 +2900,12 @@ CONTAINS
   SUBROUTINE BIOELECTRIC_FINITE_ELASTICITY_COMPUTE_TITIN(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !A pointer to the time control loop
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !A pointer to the time control loop
     INTEGER(INTG), INTENT(OUT) :: ERR !The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_MONODOMAIN
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_ROOT,CONTROL_LOOP_PARENT,CONTROL_LOOP_MONODOMAIN
+    TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(FieldType), POINTER :: INDEPENDENT_FIELD_MONODOMAIN
@@ -3019,11 +3019,11 @@ CONTAINS
       IF(ASSOCIATED(PROBLEM)) THEN
         SELECT CASE(PROBLEM%SPECIFICATION(3))
         CASE(PROBLEM_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE)
-          IF(CONTROL_LOOP%NUMBER_OF_SUB_LOOPS==0) THEN
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          IF(CONTROL_LOOP%numberOfSubLoops==0) THEN
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP_PARENT,ERR,ERROR,*999)
             !The first control_loop is the one for monodomain
-            CALL CONTROL_LOOP_SUB_LOOP_GET(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
+            CALL ControlLoop_SubLoopGet(CONTROL_LOOP_PARENT,1,CONTROL_LOOP_MONODOMAIN,ERR,ERROR,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP_MONODOMAIN,SOLVERS,ERR,ERROR,*999)
             !The second solver is associated with the diffusion part of the monodomain equation
             CALL SOLVERS_SOLVER_GET(SOLVERS,2,SOLVER,ERR,ERROR,*999)

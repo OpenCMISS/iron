@@ -55,6 +55,7 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE COORDINATE_ROUTINES
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsAccessRoutines
   USE EquationsMappingAccessRoutines
@@ -311,7 +312,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: EQUATION_MATRIX
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: SPARSITY_INDICES
-    TYPE(LIST_TYPE), POINTER :: SPARSE_INDICES
+    TYPE(ListType), POINTER :: SPARSE_INDICES
     TYPE(LinkedList),POINTER :: LIST(:)
     INTEGER(INTG), ALLOCATABLE:: COLUMN_ARRAY(:)
     TYPE(WorkGroupType), POINTER :: workGroup
@@ -463,6 +464,11 @@ CONTAINS
                                     & err,error,*999)
                                   matrixVariable=>linearMapping%equationsMatrixToVarMaps(equ_matrix_idx)%variable
                                   IF(ASSOCIATED(matrixVariable,FIELD_VARIABLE)) THEN
+                                    IF(BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS>0) THEN
+                                      CALL DistributedMatrix_TransposeRowsColumnsSet(EQUATION_MATRIX%MATRIX, &
+                                        & BOUNDARY_CONDITIONS_DIRICHLET%DIRICHLET_DOF_INDICES(1: &
+                                        & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS),ERR,ERROR,*999)
+                                    ENDIF
                                     CALL DistributedMatrix_StorageTypeGet(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
                                     SELECT CASE(STORAGE_TYPE)
                                     CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -475,8 +481,8 @@ CONTAINS
                                       CALL FlagError("Not implemented for row major storage.",ERR,ERROR,*999)
                                     CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                                       !Get Sparsity pattern, number of non zeros, number of rows
-                                      CALL DistributedMatrix_StorageLocationsGet(EQUATION_MATRIX%MATRIX,ROW_INDICES, &
-                                        & COLUMN_INDICES,ERR,ERROR,*999)
+                                      !CALL DistributedMatrix_StorageLocationsGet(EQUATION_MATRIX%MATRIX,ROW_INDICES, &
+                                      !  & COLUMN_INDICES,ERR,ERROR,*999)
                                       CALL DistributedMatrix_NumberOfNonZerosGet(EQUATION_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
                                         & ERR,ERROR,*999)
                                       !Get the matrix stored as a linked list
@@ -545,6 +551,11 @@ CONTAINS
                                    & err,error,*999)
                                   matrixVariable=>dynamicMapping%equationsMatrixToVarMaps(equ_matrix_idx)%variable
                                   IF(ASSOCIATED(matrixVariable,FIELD_VARIABLE)) THEN
+                                    IF(BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS>0) THEN
+                                      CALL DistributedMatrix_TransposeRowsColumnsSet(EQUATION_MATRIX%MATRIX, &
+                                        & BOUNDARY_CONDITIONS_DIRICHLET%DIRICHLET_DOF_INDICES(1: &
+                                        & BOUNDARY_CONDITION_VARIABLE%NUMBER_OF_DIRICHLET_CONDITIONS),ERR,ERROR,*999)
+                                    ENDIF
                                     CALL DistributedMatrix_StorageTypeGet(EQUATION_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
                                     SELECT CASE(STORAGE_TYPE)
                                     CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
@@ -557,8 +568,8 @@ CONTAINS
                                       CALL FlagError("Not implemented for row major storage.",ERR,ERROR,*999)
                                     CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
                                       !Get Sparsity pattern, number of non zeros, number of rows
-                                      CALL DistributedMatrix_StorageLocationsGet(EQUATION_MATRIX%MATRIX,ROW_INDICES, &
-                                        & COLUMN_INDICES,ERR,ERROR,*999)
+                                      !CALL DistributedMatrix_StorageLocationsGet(EQUATION_MATRIX%MATRIX,ROW_INDICES, &
+                                      !  & COLUMN_INDICES,ERR,ERROR,*999)
                                       CALL DistributedMatrix_NumberOfNonZerosGet(EQUATION_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
                                         & ERR,ERROR,*999)
                                       !Sparse matrix in a list
@@ -2263,7 +2274,7 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: topology
     TYPE(DomainLineType), POINTER :: line
     TYPE(DomainFaceType), POINTER :: face
-    TYPE(LIST_TYPE), POINTER :: columnIndicesList, rowColumnIndicesList
+    TYPE(ListType), POINTER :: columnIndicesList, rowColumnIndicesList
     TYPE(VARYING_STRING) :: dummyError
     TYPE(WorkGroupType), POINTER :: workGroup
 
@@ -2549,7 +2560,8 @@ CONTAINS
               & TRIM(NUMBER_TO_VSTRING(boundaryConditionsVariable%BOUNDARY_CONDITIONS%neumannMatrixSparsity,"*",err,error))// &
               & " is invalid.",err,error,*999)
         END SELECT
-
+        CALL DistributedMatrix_TransposeTypeSet(boundaryConditionsNeumann%integrationMatrix, &
+          & DISTRIBUTED_MATRIX_NO_TRANSPOSE_REQUIRED,err,error,*999)
         CALL DistributedMatrix_CreateFinish(boundaryConditionsNeumann%integrationMatrix,err,error,*999)
 
         !Set up vector of Neumann point values
@@ -2990,7 +3002,7 @@ CONTAINS
       CALL DistributedVector_AllValuesSet(integratedValues,0.0_DP,err,error,*999)
       ! Perform matrix multiplication, f = N q, to calculate force vector from integration matrix and point values
       CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-        & neumannConditions%integrationMatrix,neumannConditions%pointValues,integratedValues, &
+        & neumannConditions%integrationMatrix,.FALSE.,neumannConditions%pointValues,integratedValues, &
         & err,error,*999)
 
       CALL FIELD_PARAMETER_SET_UPDATE_START(rhsVariable%FIELD,rhsVariable%variableType,FIELD_INTEGRATED_NEUMANN_SET_TYPE, &

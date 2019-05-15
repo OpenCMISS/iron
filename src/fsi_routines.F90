@@ -48,7 +48,7 @@ MODULE FSIRoutines
   USE BasisRoutines
   USE CMISS_CELLML
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -96,7 +96,7 @@ CONTAINS
   SUBROUTINE FSI_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the specification for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the specification for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -146,13 +146,13 @@ CONTAINS
   SUBROUTINE FSI_ProblemSetup(problem,problemSetup,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: problemSetup !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: cellMLEquations
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -192,7 +192,7 @@ CONTAINS
           !Set up a time control loop as parent loop
           NULLIFY(controlLoop)
           CALL ControlLoop_CreateStart(problem,controlLoop,err,error,*999)
-          CALL ControlLoop_TypeSet(controlLoop,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+          CALL ControlLoop_TypeSet(controlLoop,CONTROL_TIME_LOOP_TYPE,err,error,*999)
           CALL ControlLoop_OutputTypeSet(controlLoop,CONTROL_LOOP_PROGRESS_OUTPUT,err,error,*999)       
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Finish the control loops
@@ -553,8 +553,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FSI_PreSolve",err,error,*999)
@@ -610,10 +610,10 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx
     LOGICAL :: fluidEquationsSetFound
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: dynamicSolver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
@@ -703,7 +703,7 @@ CONTAINS
   SUBROUTINE FSI_PreLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -728,7 +728,7 @@ CONTAINS
   SUBROUTINE FSI_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -743,7 +743,7 @@ CONTAINS
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(InterfaceType), POINTER :: fsInterface
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: dynamicSolver,linearSolver
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: dynamicSolverEquations
@@ -806,7 +806,9 @@ CONTAINS
         & (equationsSet%specification(3)==EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE).OR. &
         & (equationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE).OR. &
         & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE).OR. &
-        & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE))) THEN
+        & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE).OR. &
+        & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE).OR. &
+        & (equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE))) THEN
         solidEquationsSet=>equationsSet
         solidEquationsSetFound=.TRUE.
       ELSE IF(equationsSet%specification(1)==EQUATIONS_SET_FLUID_MECHANICS_CLASS &

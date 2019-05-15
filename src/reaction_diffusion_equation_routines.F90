@@ -51,9 +51,10 @@ MODULE REACTION_DIFFUSION_EQUATION_ROUTINES
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -1006,7 +1007,7 @@ CONTAINS
   SUBROUTINE ReactionDiffusion_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER, INTENT(IN) :: problem !<A pointer to the problem to set the problem specification for.
+    TYPE(ProblemType), POINTER, INTENT(IN) :: problem !<A pointer to the problem to set the problem specification for.
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1058,13 +1059,13 @@ CONTAINS
   SUBROUTINE REACTION_DIFFUSION_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem set to setup a bioelectric domain equation on.
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a bioelectric domain equation on.
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(CELLML_EQUATIONS_TYPE), POINTER :: CELLML_EQUATIONS
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -1102,11 +1103,11 @@ CONTAINS
         CASE(PROBLEM_SETUP_START_ACTION)
           !Set up a time control loop
           CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-          CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+          CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
           CALL CONTROL_LOOP_LABEL_SET(CONTROL_LOOP,"Time Loop",err,error,*999)
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Finish the control loops
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)            
         CASE DEFAULT
@@ -1117,7 +1118,7 @@ CONTAINS
         END SELECT
       CASE(PROBLEM_SETUP_SOLVERS_TYPE)
         !Get the control loop
-        CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+        CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
         CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
         SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
         CASE(PROBLEM_SETUP_START_ACTION)
@@ -1201,7 +1202,7 @@ CONTAINS
         SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM%SPECIFICATION(3))
           CASE(PROBLEM_CELLML_REAC_INTEG_REAC_DIFF_STRANG_SPLIT_SUBTYPE)
@@ -1240,7 +1241,7 @@ CONTAINS
 
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
           SELECT CASE(PROBLEM%SPECIFICATION(3))
@@ -1278,7 +1279,7 @@ CONTAINS
         SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
         CASE(PROBLEM_SETUP_START_ACTION)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           !Get the solver
           CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -1317,7 +1318,7 @@ CONTAINS
           ENDIF
         CASE(PROBLEM_SETUP_FINISH_ACTION)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
           SELECT CASE(PROBLEM%SPECIFICATION(3))
@@ -1380,8 +1381,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     REAL(DP) :: currentTime,timeIncrement
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
      TYPE(VARYING_STRING) :: localError
 
     ENTERS("ReactionDiffusion_PreSolve",err,error,*999)
@@ -1439,8 +1440,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(SOLVER_TYPE), POINTER :: pdeSolver
     TYPE(VARYING_STRING) :: localError
@@ -1502,7 +1503,7 @@ CONTAINS
   SUBROUTINE REACTION_DIFFUSION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1543,16 +1544,16 @@ CONTAINS
                   !Make sure the equations sets are up to date
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
-                    CURRENT_LOOP_ITERATION=CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER
-                    OUTPUT_FREQUENCY=CONTROL_LOOP%TIME_LOOP%OUTPUT_NUMBER
+                    CURRENT_LOOP_ITERATION=CONTROL_LOOP%timeLoop%iterationNumber
+                    OUTPUT_FREQUENCY=CONTROL_LOOP%timeLoop%outputNumber
                     NULLIFY(workGroup)
                     CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
                     CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
-                    MAX_DIGITS=FLOOR(LOG10((CONTROL_LOOP%TIME_LOOP%STOP_TIME-CONTROL_LOOP%TIME_LOOP%START_TIME)/ &
-                      & CONTROL_LOOP%TIME_LOOP%TIME_INCREMENT))+1
+                    MAX_DIGITS=FLOOR(LOG10((CONTROL_LOOP%timeLoop%stopTime-CONTROL_LOOP%timeLoop%startTime)/ &
+                      & CONTROL_LOOP%timeLoop%timeIncrement))+1
                     IF(OUTPUT_FREQUENCY>0) THEN
                       IF(MOD(CURRENT_LOOP_ITERATION,OUTPUT_FREQUENCY)==0) THEN
-                        IF(CONTROL_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_LOOP%TIME_LOOP%STOP_TIME) THEN
+                        IF(CONTROL_LOOP%timeLoop%currentTime<=CONTROL_LOOP%timeLoop%stopTime) THEN
                           IF(SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS.EQ.1) THEN
                             WRITE(TEMP_FMT,'("I",I0,".",I0)') MAX_DIGITS,MAX_DIGITS
                             !100 FORMAT 
@@ -1617,11 +1618,11 @@ CONTAINS
   SUBROUTINE REACTION_DIFFUSION_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EquationsType), POINTER :: equations !<A pointer to the equations

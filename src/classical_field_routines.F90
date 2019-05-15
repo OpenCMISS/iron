@@ -47,6 +47,7 @@ MODULE CLASSICAL_FIELD_ROUTINES
   USE ADVECTION_EQUATION_ROUTINES
   USE ADVECTION_DIFFUSION_EQUATION_ROUTINES
   USE BaseRoutines
+  USE ControlLoopAccessRoutines
   USE DIFFUSION_EQUATION_ROUTINES
   USE EquationsSetConstants
   USE HELMHOLTZ_EQUATIONS_ROUTINES
@@ -174,11 +175,11 @@ CONTAINS
   SUBROUTINE CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM
+    TYPE(ProblemType), POINTER :: PROBLEM
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("CLASSICAL_FIELD_CONTROL_LOOP_POST_LOOP",err,error,*999)
@@ -186,8 +187,8 @@ CONTAINS
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       PROBLEM=>CONTROL_LOOP%PROBLEM
       IF(ASSOCIATED(PROBLEM)) THEN
-        SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-        CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+        SELECT CASE(CONTROL_LOOP%loopType)
+        CASE(CONTROL_TIME_LOOP_TYPE)
           SELECT CASE(PROBLEM%specification(2))
           CASE(PROBLEM_DIFFUSION_EQUATION_TYPE)
             CALL DIFFUSION_EQUATION_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,err,error,*999)
@@ -650,7 +651,7 @@ CONTAINS
   SUBROUTINE ClassicalField_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the specification for.
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the specification for.
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -712,7 +713,7 @@ CONTAINS
   SUBROUTINE CLASSICAL_FIELD_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -775,8 +776,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("ClassicalField_PreSolve",err,error,*999)
@@ -836,8 +837,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: controlLoop
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("ClassicalField_PostSolve",err,error,*999)

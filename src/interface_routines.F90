@@ -1683,7 +1683,7 @@ CONTAINS
     INTEGER(INTG) :: elementIdx,dataPointIdx,globalDataPointNumber,globalElementNumber,numberOfElementDataPoints, &
       & numberOfCoupledElements,coupledElementIdx
     INTEGER(INTG), ALLOCATABLE :: elementNumbers(:)
-    TYPE(LIST_TYPE), POINTER :: elementNumbersList
+    TYPE(ListType), POINTER :: elementNumbersList
     TYPE(MeshTopologyType), POINTER :: meshTopology
     TYPE(MeshDataPointsType), POINTER :: meshDataPoints
   

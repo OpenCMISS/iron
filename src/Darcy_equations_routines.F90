@@ -5,12 +5,13 @@ MODULE DARCY_EQUATIONS_ROUTINES
   USE BasisAccessRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE COORDINATE_ROUTINES
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -3357,7 +3358,7 @@ CONTAINS
   SUBROUTINE Darcy_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the problem specification for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the problem specification for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3415,12 +3416,12 @@ CONTAINS
   SUBROUTINE DARCY_EQUATION_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem to setup
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem to setup
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER, SOLVER_MAT_PROPERTIES
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS, SOLVER_EQUATIONS_MAT_PROPERTIES
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -3467,7 +3468,7 @@ CONTAINS
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -3478,7 +3479,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -3505,7 +3506,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3517,7 +3518,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3559,10 +3560,10 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -3573,7 +3574,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -3600,7 +3601,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3612,7 +3613,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3654,10 +3655,10 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -3668,7 +3669,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -3700,7 +3701,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             !Get the material-properties solver and create the material-properties solver equations
@@ -3718,7 +3719,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             !Finish the creation of the material-properties solver equations
@@ -3763,10 +3764,10 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a time control loop
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -3777,7 +3778,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -3814,7 +3815,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop and solvers
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             !Get the material-properties solver and create the material-properties solver equations
@@ -3832,7 +3833,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
             !Finish the creation of the material-properties solver equations
@@ -3877,10 +3878,10 @@ CONTAINS
               CASE(PROBLEM_SETUP_START_ACTION)
                 !Set up a time control loop
                 CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-                CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+                CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
               CASE(PROBLEM_SETUP_FINISH_ACTION)
                 !Finish the control loops
-                CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
                 CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
               CASE DEFAULT
@@ -3891,7 +3892,7 @@ CONTAINS
             END SELECT
           CASE(PROBLEM_SETUP_SOLVERS_TYPE)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
               CASE(PROBLEM_SETUP_START_ACTION)
@@ -3921,7 +3922,7 @@ CONTAINS
             SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
               CASE(PROBLEM_SETUP_START_ACTION)
                 !Get the control loop
-                CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
                 !Get the solver
                 CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3934,7 +3935,7 @@ CONTAINS
                 CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
               CASE(PROBLEM_SETUP_FINISH_ACTION)
                 !Get the control loop
-                CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+                CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
                 CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
                 !Get the solver equations
                 CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -3984,7 +3985,7 @@ CONTAINS
   SUBROUTINE DARCY_EQUATION_PRE_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -4065,7 +4066,7 @@ CONTAINS
               CALL Darcy_PreSolveUpdateBoundaryConditions(CONTROL_LOOP,SOLVER,err,error,*999)
             CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
 
-              IF((CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) &
+              IF((CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) &
                   & .AND.SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
                 !--- flags to ensure once-per-time-step output in conjunction with diagnostics
                 idebug1 = .TRUE.
@@ -4104,7 +4105,7 @@ CONTAINS
               & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
               & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
 
-              IF((CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) &
+              IF((CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) &
                   & .AND.SOLVER%globalNumber==SOLVER_NUMBER_MAT_PROPERTIES) THEN
                 !--- flags to ensure once-per-time-step output in conjunction with diagnostics
                 idebug1 = .TRUE.
@@ -4136,8 +4137,8 @@ CONTAINS
                   ENDIF
                  ENDIF
                 ENDIF
-              ELSE IF((CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_SIMPLE_TYPE.OR. &
-                    & CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE).AND.SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
+              ELSE IF((CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE.OR. &
+                    & CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE).AND.SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
 ! ! !                 !n o t   f o r   n o w   ! ! !
 ! ! !                 !--- 2.1 Update the material field
 ! ! !                 CALL Darcy_PreSolveUpdateMatrixProperties(CONTROL_LOOP,SOLVER,err,error,*999)
@@ -4170,12 +4171,12 @@ CONTAINS
   SUBROUTINE DARCY_CONTROL_TIME_LOOP_PRE_LOOP(CONTROL_LOOP,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the time control loop for the Darcy  problem
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the time control loop for the Darcy  problem
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP_DARCY
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_DARCY
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_DARCY
 
     ENTERS("DARCY_CONTROL_TIME_LOOP_PRE_LOOP",err,error,*999)
@@ -4219,7 +4220,7 @@ CONTAINS
     END SELECT
 
     !If this is the first time step then store reference data
-    IF(CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER==0) THEN
+    IF(CONTROL_LOOP%timeLoop%iterationNumber==0) THEN
       IF(CONTROL_LOOP%outputType>=CONTROL_LOOP_PROGRESS_OUTPUT) THEN
         CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,'== Storing reference data',err,error,*999)
       ENDIF
@@ -4246,7 +4247,7 @@ CONTAINS
   SUBROUTINE Darcy_PreSolveStoreReferenceData(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -4416,7 +4417,7 @@ CONTAINS
   SUBROUTINE Darcy_PreSolveStorePreviousData(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -4535,7 +4536,7 @@ CONTAINS
   SUBROUTINE DARCY_EQUATION_PRE_SOLVE_ALE_UPDATE_MESH(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -4545,7 +4546,7 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
     TYPE(VARYING_STRING) :: localError
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT,ALPHA
@@ -4563,13 +4564,13 @@ CONTAINS
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-        IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
+        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
           CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
           EXIT
         ENDIF
-        IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
+        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
@@ -4709,7 +4710,7 @@ CONTAINS
   SUBROUTINE Darcy_PreSolveUpdateBoundaryConditions(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -4724,7 +4725,7 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField, geometricField
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP
 
     REAL(DP), POINTER :: MESH_VELOCITY_VALUES(:)
     REAL(DP), POINTER :: INITIAL_VALUES(:)
@@ -4741,13 +4742,13 @@ CONTAINS
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-        IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
+        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
           CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
           EXIT
         ENDIF
-        IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
+        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
@@ -4975,7 +4976,7 @@ CONTAINS
   SUBROUTINE Darcy_PreSolveUpdateMatrixProperties(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -5018,7 +5019,7 @@ CONTAINS
             CASE(PROBLEM_ALE_DARCY_SUBTYPE,PROBLEM_PGM_DARCY_SUBTYPE,PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE, &
               & PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_TRANSIENT_DARCY_SUBTYPE, &
               & PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
-              IF((CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) &
+              IF((CONTROL_LOOP%loopType==CONTROL_SIMPLE_TYPE.OR.CONTROL_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) &
                   & .AND.SOLVER%globalNumber==SOLVER_NUMBER_DARCY) THEN
                 !--- Get the dependent field of the Material-Properties Galerkin-Projection equations
                 IF(SOLVER%outputType>=SOLVER_PROGRESS_OUTPUT) THEN
@@ -5134,7 +5135,7 @@ CONTAINS
   SUBROUTINE DARCY_EQUATION_POST_SOLVE(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER!<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -5201,7 +5202,7 @@ CONTAINS
   SUBROUTINE DARCY_EQUATION_POST_SOLVE_OUTPUT_DATA(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -5211,7 +5212,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET !<A pointer to the equations set
     TYPE(FieldsType), POINTER :: Fields
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop.
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop.
     TYPE(VARYING_STRING) :: localError,METHOD,FILENAME
     CHARACTER(14) :: OUTPUT_FILE
     LOGICAL :: EXPORT_FIELD
@@ -5268,25 +5269,25 @@ CONTAINS
                    IF(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_DARCY_EQUATION_TYPE)THEN
                     IF(EQUATIONS_SET%SPECIFICATION(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)THEN
                       CONTROL_TIME_LOOP=>CONTROL_LOOP
-                      DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-                        IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
-                          CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
-                          OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%TIME_LOOP%OUTPUT_NUMBER
+                      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
+                        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+                          CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
+                          OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%timeLoop%outputNumber
                           EXIT
                         ENDIF
-                        IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-                          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
+                        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+                          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
                         ELSE
                           CURRENT_LOOP_ITERATION=0
                           OUTPUT_ITERATION_NUMBER=0
                         ENDIF
                       ENDDO
-                      IF(CONTROL_LOOP%PARENT_LOOP%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN
-                        SUBITERATION_NUMBER=CONTROL_LOOP%PARENT_LOOP%WHILE_LOOP%ITERATION_NUMBER
+                      IF(CONTROL_LOOP%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN
+                        SUBITERATION_NUMBER=CONTROL_LOOP%parentLoop%whileLoop%iterationNumber
                       ENDIF
 
                       IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                       IF(CONTROL_TIME_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_TIME_LOOP%TIME_LOOP%STOP_TIME) THEN
+                       IF(CONTROL_TIME_LOOP%timeLoop%currentTime<=CONTROL_TIME_LOOP%timeLoop%stopTime) THEN
                          IF(CURRENT_LOOP_ITERATION<10) THEN
                            WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
                          ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
@@ -5317,7 +5318,7 @@ CONTAINS
                       ENDIF
 
                       !Subiteration intermediate solutions / iterates output:
-!                        IF(CONTROL_LOOP%PARENT_LOOP%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN  !subiteration exists
+!                        IF(CONTROL_LOOP%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN  !subiteration exists
 !                         IF(CURRENT_LOOP_ITERATION<10) THEN
 !                           IF(SUBITERATION_NUMBER<10) THEN
 !                             WRITE(OUTPUT_FILE,'("T_00",I0,"_SB_0",I0,"_C",I0)') CURRENT_LOOP_ITERATION,SUBITERATION_NUMBER, &
@@ -5341,30 +5342,30 @@ CONTAINS
                     ELSE !for single compartment (i.e. standary Darcy flow) equations sets
                       !Find the time loop
                       CONTROL_TIME_LOOP=>CONTROL_LOOP
-                      DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-                        IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
-                          CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
-                          OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%TIME_LOOP%OUTPUT_NUMBER
+                      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
+                        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+                          CURRENT_LOOP_ITERATION=CONTROL_TIME_LOOP%timeLoop%iterationNumber
+                          OUTPUT_ITERATION_NUMBER=CONTROL_TIME_LOOP%timeLoop%outputNumber
                           EXIT
                         ENDIF
-                        IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-                          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
+                        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+                          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
                         ELSE
                           CURRENT_LOOP_ITERATION=0
                           OUTPUT_ITERATION_NUMBER=0
                         ENDIF
                       ENDDO
                       !If coupled with finite elasticity and using subiterations, get the while loop iteration number
-                      IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-                        IF(CONTROL_LOOP%PARENT_LOOP%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN
-                          SUBITERATION_NUMBER=CONTROL_LOOP%PARENT_LOOP%WHILE_LOOP%ITERATION_NUMBER
+                      IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+                        IF(CONTROL_LOOP%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN
+                          SUBITERATION_NUMBER=CONTROL_LOOP%parentLoop%whileLoop%iterationNumber
                         ELSE
                           SUBITERATION_NUMBER=0
                         ENDIF
                       ENDIF
 
                       IF(OUTPUT_ITERATION_NUMBER/=0) THEN
-                        IF(CONTROL_TIME_LOOP%TIME_LOOP%CURRENT_TIME<=CONTROL_TIME_LOOP%TIME_LOOP%STOP_TIME) THEN
+                        IF(CONTROL_TIME_LOOP%timeLoop%currentTime<=CONTROL_TIME_LOOP%timeLoop%stopTime) THEN
                           IF(CURRENT_LOOP_ITERATION<10) THEN
                             WRITE(OUTPUT_FILE,'("TIME_STEP_000",I0)') CURRENT_LOOP_ITERATION
                           ELSE IF(CURRENT_LOOP_ITERATION<100) THEN
@@ -5396,7 +5397,7 @@ CONTAINS
 
 
 !                       !Subiteration intermediate solutions / iterates output:
-!                        IF(CONTROL_LOOP%PARENT_LOOP%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN  !subiteration exists
+!                        IF(CONTROL_LOOP%parentLoop%loopType==CONTROL_WHILE_LOOP_TYPE) THEN  !subiteration exists
 !                         IF(CURRENT_LOOP_ITERATION<10) THEN
 !                           IF(SUBITERATION_NUMBER<10) THEN
 !                             WRITE(OUTPUT_FILE,'("T_00",I0,"_SUB_000",I0)') CURRENT_LOOP_ITERATION,SUBITERATION_NUMBER
@@ -6367,7 +6368,7 @@ CONTAINS
   SUBROUTINE Darcy_PreSolveGetSolidDisplacement(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -6378,8 +6379,8 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_FINITE_ELASTICITY, SOLVER_EQUATIONS_DARCY  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_FINITE_ELASTICITY, SOLVER_MAPPING_DARCY !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET_FINITE_ELASTICITY, EQUATIONS_SET_DARCY !<A pointer to the equations set
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: ROOT_CONTROL_LOOP, CONTROL_LOOP_SOLID
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
+    TYPE(ControlLoopType), POINTER :: ROOT_CONTROL_LOOP, CONTROL_LOOP_SOLID
     TYPE(VARYING_STRING) :: localError
 
     REAL(DP), POINTER :: MESH_DISPLACEMENT_VALUES(:),SOLUTION_VALUES_SOLID(:)
@@ -6404,13 +6405,13 @@ CONTAINS
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-        IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
+        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
           CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
           EXIT
         ENDIF
-        IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
+        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
@@ -6429,7 +6430,7 @@ CONTAINS
 
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          ROOT_CONTROL_LOOP=>CONTROL_LOOP%PROBLEM%CONTROL_LOOP
+          ROOT_CONTROL_LOOP=>CONTROL_LOOP%PROBLEM%controlLoop
           IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
             CALL FlagError("Problem specification is not allocated.",err,error,*999)
           ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN
@@ -6520,7 +6521,7 @@ CONTAINS
                     CALL FIELD_PARAMETER_SET_DATA_GET(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,MESH_DISPLACEMENT_VALUES, &
-                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%timeLoop%iterationNumber,1.0_DP, &
                       & err,error,*999)
                     CALL FIELD_PARAMETER_SET_UPDATE_START(EQUATIONS_SET_DARCY%GEOMETRY%geometricField, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_MESH_DISPLACEMENT_SET_TYPE,err,error,*999)
@@ -6718,7 +6719,7 @@ CONTAINS
   SUBROUTINE Darcy_PreSolveStorePreviousIterate(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -6866,7 +6867,7 @@ CONTAINS
   SUBROUTINE Darcy_PreSolveUpdateAnalyticValues(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -6885,7 +6886,7 @@ CONTAINS
 !    REAL(DP), POINTER :: BOUNDARY_VALUES(:)
     REAL(DP), POINTER :: GEOMETRIC_PARAMETERS(:)
     INTEGER(INTG) :: numberOfDimensions
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP
 
     REAL(DP) :: CURRENT_TIME,TIME_INCREMENT
 !     REAL(DP) :: k_xx, k_yy, k_zz
@@ -6908,13 +6909,13 @@ CONTAINS
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-        IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
+        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
           CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
           EXIT
         ENDIF
-        IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
+        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
@@ -7188,7 +7189,7 @@ CONTAINS
   SUBROUTINE DARCY_EQUATION_MONITOR_CONVERGENCE(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -7308,9 +7309,9 @@ CONTAINS
                                   END DO
                                   RESIDUAL_NORM = SQRT(RESIDUAL_NORM / numberOfDofs)
 
-                                  IF(CONTROL_LOOP%LOOP_TYPE==PROBLEM_CONTROL_WHILE_LOOP_TYPE) THEN
-                                    IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER>=2) THEN !Omit initialised solution
-                                      IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER==2) THEN
+                                  IF(CONTROL_LOOP%loopType==CONTROL_WHILE_LOOP_TYPE) THEN
+                                    IF(CONTROL_LOOP%whileLoop%iterationNumber>=2) THEN !Omit initialised solution
+                                      IF(CONTROL_LOOP%whileLoop%iterationNumber==2) THEN
                                       RESIDUAL_NORM_0 = RESIDUAL_NORM
                                       WRITE(23,*) 'RESIDUAL_NORM_0 = ',RESIDUAL_NORM_0
                                       WRITE(23,*) 'R / R0 :'
@@ -7328,9 +7329,9 @@ CONTAINS
                                         write(*,*)'++++++++++++++++++++++++++++++++++++'
                                         write(*,*)'+++    SUBITERATION CONVERGED    +++'
                                         write(*,*)'++++++++++++++++++++++++++++++++++++'
-                                        CONTROL_LOOP%WHILE_LOOP%CONTINUE_LOOP=.FALSE.
-                                      ELSE IF(CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER== &
-                                          & CONTROL_LOOP%WHILE_LOOP%MAXIMUM_NUMBER_OF_ITERATIONS) THEN
+                                        CONTROL_LOOP%whileLoop%continueLoop=.FALSE.
+                                      ELSE IF(CONTROL_LOOP%whileLoop%iterationNumber== &
+                                          & CONTROL_LOOP%whileLoop%maximumNumberOfIterations) THEN
                                         CALL FLAG_WARNING("Subiterations between solid and fluid "// &
                                             & "equations did not converge.",err,error,*999)
                                       ENDIF
@@ -7341,7 +7342,7 @@ CONTAINS
                                   ENDIF
 
 
-!                                   SUBITERATION_NUMBER = CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER
+!                                   SUBITERATION_NUMBER = CONTROL_LOOP%whileLoop%iterationNumber
 !
 !                                   WRITE(FILENAME,'("Darcy_DOFs_N_",I2.2,".dat")') SUBITERATION_NUMBER
 !                                   FILEPATH = "./output/"//FILENAME
@@ -7430,7 +7431,7 @@ CONTAINS
   SUBROUTINE DARCY_EQUATION_ACCELERATE_CONVERGENCE(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -7538,7 +7539,7 @@ CONTAINS
 
                                   RELAXATION_PARAM = 2.0_DP  !\ToDo Devise better way of determining optimal Aitken parameter
 
-                                  IF( CONTROL_LOOP%WHILE_LOOP%ITERATION_NUMBER>2 )THEN
+                                  IF( CONTROL_LOOP%whileLoop%iterationNumber>2 )THEN
                                     CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Darcy accelerate convergence ... ",err,error,*999)
                                     DO dof_number=1,numberOfDofs
                                       ACCELERATED_VALUE = ITERATION_VALUES_N(dof_number) &
@@ -7623,7 +7624,7 @@ CONTAINS
   SUBROUTINE DARCY_EQUATION_POST_SOLVE_SET_MASS_INCREASE(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -7634,8 +7635,8 @@ CONTAINS
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS_DARCY  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_DARCY !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equations_SET_DARCY !<A pointer to the equations set
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: ROOT_CONTROL_LOOP, CONTROL_LOOP_SOLID
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP !<A pointer to the control time loop
+    TYPE(ControlLoopType), POINTER :: ROOT_CONTROL_LOOP, CONTROL_LOOP_SOLID
     TYPE(VARYING_STRING) :: localError
 
     REAL(DP), POINTER :: MESH_DISPLACEMENT_VALUES(:),SOLUTION_VALUES_SOLID(:)
@@ -7656,13 +7657,13 @@ CONTAINS
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-        IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
+        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
           CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
           EXIT
         ENDIF
-        IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
+        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
@@ -7681,7 +7682,7 @@ CONTAINS
 
       IF(ASSOCIATED(SOLVER)) THEN
         IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-          ROOT_CONTROL_LOOP=>CONTROL_LOOP%PROBLEM%CONTROL_LOOP
+          ROOT_CONTROL_LOOP=>CONTROL_LOOP%PROBLEM%controlLoop
           IF(.NOT.ALLOCATED(CONTROL_LOOP%PROBLEM%SPECIFICATION)) THEN
             CALL FlagError("Problem specification is not allocated.",err,error,*999)
           ELSE IF(SIZE(CONTROL_LOOP%PROBLEM%SPECIFICATION,1)<3) THEN

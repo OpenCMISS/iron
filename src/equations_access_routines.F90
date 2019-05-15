@@ -65,6 +65,8 @@ MODULE EquationsAccessRoutines
 
   !Interfaces
 
+  PUBLIC Equations_AssertIsFinished, Equations_AssertNotFinished
+
   PUBLIC Equations_EquationsSetGet
   
   PUBLIC Equations_InterpolationGet
@@ -124,6 +126,58 @@ MODULE EquationsAccessRoutines
   PUBLIC EquationsVector_VectorMatricesGet
   
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an equations has been finished
+  SUBROUTINE Equations_AssertIsFinished(equations,err,error,*)
+
+    !Argument Variables
+    TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Equations_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+
+    IF(.NOT.equations%equationsFinished) CALL FlagError("Equations has not been finished.",err,error,*999)
+    
+    EXITS("Equations_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("Equations_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an equations has not been finished
+  SUBROUTINE Equations_AssertNotFinished(equations,err,error,*)
+
+    !Argument Variables
+    TYPE(EquationsType), POINTER, INTENT(IN) :: equations !<The equations to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("Equations_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equations)) CALL FlagError("Equations is not associated.",err,error,*999)
+
+    IF(equations%equationsFinished) CALL FlagError("Equations has already been finished.",err,error,*999)
+    
+    EXITS("Equations_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("Equations_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Equations_AssertNotFinished
 
   !
   !================================================================================================================================

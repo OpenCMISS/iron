@@ -55,6 +55,7 @@ MODULE FIELD_ROUTINES
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE FieldAccessRoutines
   USE Kinds
@@ -17805,7 +17806,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: component_idx,DUMMY_ERR,NUMBER_OF_MESH_COMPONENTS,scaling_idx,variable_idx
     INTEGER(INTG), ALLOCATABLE :: MESH_COMPONENTS(:),MESH_COMPONENTS_MAP(:)
-    TYPE(LIST_TYPE), POINTER :: MESH_COMPONENTS_LIST
+    TYPE(ListType), POINTER :: MESH_COMPONENTS_LIST
     TYPE(VARYING_STRING) :: DUMMY_ERROR
 
     NULLIFY(MESH_COMPONENTS_LIST)

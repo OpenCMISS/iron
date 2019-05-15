@@ -51,13 +51,14 @@ MODULE FINITE_ELASTICITY_ROUTINES
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE COORDINATE_ROUTINES  
   USE CoordinateSystemAccessRoutines
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
+  USE DistributedMatrixVectorAccessRoutines
   USE DomainMappings
   USE EquationsRoutines
   USE EquationsAccessRoutines
@@ -6606,7 +6607,7 @@ CONTAINS
   SUBROUTINE FiniteElasticity_PostLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -6614,7 +6615,7 @@ CONTAINS
     REAL(DP) :: currentTime,timeIncrement,startTIme,stopTime
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,geometricField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(RegionType), POINTER :: region
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -6632,12 +6633,12 @@ CONTAINS
 
     SELECT CASE(problem%specification(3))
     CASE(PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_NO_SUBTYPE)
-      IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
+      IF(controlLoop%loopType==CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
         CALL FiniteElasticity_ControlLoadIncrementLoopPostLoop(controlLoop,err,error,*999)
       ENDIF
     CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE)
       !Check if we are a time loop.
-      IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+      IF(controlLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
         !Get times
         CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
           & outputIteration,err,error,*999)
@@ -6671,7 +6672,7 @@ CONTAINS
             !ENDDO !equationsSetIdx            
           ENDIF
         ENDIF
-      ELSE IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
+      ELSE IF(controlLoop%loopType==CONTROL_LOAD_INCREMENT_LOOP_TYPE) THEN
         CALL FiniteElasticity_ControlLoadIncrementLoopPostLoop(controlLoop,err,error,*999)
       ENDIF
     CASE DEFAULT
@@ -14105,12 +14106,12 @@ CONTAINS
   SUBROUTINE FINITE_ELASTICITY_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem set to setup a Laplace equation on.
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a Laplace equation on.
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_TYPE), POINTER :: CELLML_SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -14160,12 +14161,12 @@ CONTAINS
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
             SELECT CASE(PROBLEM_SUBTYPE)
             CASE(PROBLEM_NO_SUBTYPE,PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_CELLML_SUBTYPE)
-              CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
+              CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
             CASE(PROBLEM_QUASISTATIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_QUASISTATIC_FINITE_ELASTICITY_WITH_GROWTH_SUBTYPE, &
               & PROBLEM_DYNAMIC_FINITE_ELASTICITY_SUBTYPE,PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE, &
               & PROBLEM_FINITE_ELASTICITY_WITH_GROWTH_CELLML_SUBTYPE)
 !!TODO: Should we have a load step loop inside the time loop?
-              CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_TIME_LOOP_TYPE,err,error,*999)
+              CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_TIME_LOOP_TYPE,err,error,*999)
               CALL ControlLoop_LabelSet(CONTROL_LOOP,"Time Loop",err,error,*999)
             CASE DEFAULT
               localError="Problem subtype "//TRIM(NumberToVString(PROBLEM_SUBTYPE,"*",err,error))// &
@@ -14174,7 +14175,7 @@ CONTAINS
             END SELECT
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -14185,7 +14186,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -14319,7 +14320,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -14359,7 +14360,7 @@ CONTAINS
             END SELECT
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -14388,7 +14389,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_CELLML_EQUATIONS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
@@ -14555,12 +14556,12 @@ CONTAINS
   SUBROUTINE FiniteElasticity_ContactProblemSetup(PROBLEM,PROBLEM_SETUP,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem set to setup a Laplace equation on.
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem set to setup a Laplace equation on.
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP,CONTROL_LOOP_ROOT
     TYPE(SOLVER_TYPE), POINTER :: nonlinearSolver,transformationSolver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
@@ -14602,10 +14603,10 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a simple control loop: default is load increment type now
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -14616,7 +14617,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -14646,7 +14647,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -14658,7 +14659,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -14696,10 +14697,10 @@ CONTAINS
           CASE(PROBLEM_SETUP_START_ACTION)
             !Set up a simple control loop: default is load increment type now
             CALL CONTROL_LOOP_CREATE_START(PROBLEM,CONTROL_LOOP,err,error,*999)
-            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
+            CALL CONTROL_LOOP_TYPE_SET(CONTROL_LOOP,CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Finish the control loops
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             CALL CONTROL_LOOP_CREATE_FINISH(CONTROL_LOOP,err,error,*999)
           CASE DEFAULT
@@ -14710,7 +14711,7 @@ CONTAINS
           END SELECT
         CASE(PROBLEM_SETUP_SOLVERS_TYPE)
           !Get the control loop
-          CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+          CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
           CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
@@ -14737,7 +14738,7 @@ CONTAINS
           SELECT CASE(PROBLEM_SETUP%ACTION_TYPE)
           CASE(PROBLEM_SETUP_START_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -14749,7 +14750,7 @@ CONTAINS
             CALL SOLVER_EQUATIONS_SPARSITY_TYPE_SET(SOLVER_EQUATIONS,SOLVER_SPARSE_MATRICES,err,error,*999)
           CASE(PROBLEM_SETUP_FINISH_ACTION)
             !Get the control loop
-            CONTROL_LOOP_ROOT=>PROBLEM%CONTROL_LOOP
+            CONTROL_LOOP_ROOT=>PROBLEM%controlLoop
             CALL CONTROL_LOOP_GET(CONTROL_LOOP_ROOT,CONTROL_LOOP_NODE,CONTROL_LOOP,err,error,*999)
             !Get the solver equations
             CALL CONTROL_LOOP_SOLVERS_GET(CONTROL_LOOP,SOLVERS,err,error,*999)
@@ -14791,7 +14792,7 @@ CONTAINS
   SUBROUTINE FiniteElasticity_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the problem subtype for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the problem subtype for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<the error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<the error string
@@ -14861,7 +14862,7 @@ CONTAINS
   SUBROUTINE FiniteElasticity_ContactProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the problem subtype for
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the problem subtype for
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -14926,10 +14927,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,I
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop
+    TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,independentField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
     TYPE(SOLVER_TYPE), POINTER :: nonlinearSolver
@@ -15012,10 +15013,10 @@ CONTAINS
     CASE(PROBLEM_STANDARD_ELASTICITY_DARCY_SUBTYPE,PROBLEM_PGM_ELASTICITY_DARCY_SUBTYPE, &
       & PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_ELAST_TRANS_DARCY_MAT_SOLVE_SUBTYPE)
       !Call divergence test only if finite element loop: THIS IS NOT A PROPER FIX
-      IF(controlLoop%SUB_LOOP_INDEX==1) THEN
+      IF(controlLoop%subLoopIndex==1) THEN
         CALL Solver_NonlinearDivergenceExit(solver,err,error,*999)
       ENDIF
-      IF(controlLoop%LOOP_TYPE==PROBLEM_CONTROL_LOAD_INCREMENT_LOOP_TYPE.AND.solver%globalNumber==1) THEN
+      IF(controlLoop%loopType==CONTROL_LOAD_INCREMENT_LOOP_TYPE.AND.solver%globalNumber==1) THEN
         CALL FiniteElasticity_PostSolveOutputData(solver,err,error,*999)
       END IF
     CASE(PROBLEM_FINITE_ELASTICITY_WITH_ACTIVE_SUBTYPE)
@@ -15065,12 +15066,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS,solverEquations  !<A pointer to the solver equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET,equationsSet !<A pointer to the equations set
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING,solverMapping !<A pointer to the solver mapping
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: TIME_LOOP !<A pointer to the control time loop.
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ControlLoopType), POINTER :: TIME_LOOP !<A pointer to the control time loop.
+    TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: LOCAL_ERROR,localError
     TYPE(VARYING_STRING) :: METHOD,outputFile !,FILE
     CHARACTER(14) :: file
@@ -15175,18 +15176,18 @@ CONTAINS
             IF(EQUATIONS_SET%SPECIFICATION(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE) THEN
               TIME_LOOP=>controlLoop !Initialise time loop (load increment loop on first)
               !Move up to find outer time loop
-              DO loop_idx=1,controlLoop%CONTROL_LOOP_LEVEL-1
-                IF(ASSOCIATED(TIME_LOOP%PARENT_LOOP)) THEN
-                  TIME_LOOP=>TIME_LOOP%PARENT_LOOP
+              DO loop_idx=1,controlLoop%controlLoopLevel-1
+                IF(ASSOCIATED(TIME_LOOP%parentLoop)) THEN
+                  TIME_LOOP=>TIME_LOOP%parentLoop
                 ELSE
                   CALL FlagError("Could not find a time control loop.",err,error,*999)
                 ENDIF
               ENDDO
-              CURRENT_LOOP_ITERATION=TIME_LOOP%TIME_LOOP%ITERATION_NUMBER
-              OUTPUT_ITERATION_NUMBER=TIME_LOOP%TIME_LOOP%OUTPUT_NUMBER
+              CURRENT_LOOP_ITERATION=TIME_LOOP%timeLoop%iterationNumber
+              OUTPUT_ITERATION_NUMBER=TIME_LOOP%timeLoop%outputNumber
               
               !Write out fields at each timestep
-              IF(TIME_LOOP%TIME_LOOP%CURRENT_TIME<=TIME_LOOP%TIME_LOOP%STOP_TIME) THEN
+              IF(TIME_LOOP%timeLoop%currentTime<=TIME_LOOP%timeLoop%stopTime) THEN
                 WRITE(OUTPUT_FILE,'("S_TIMESTP_",I4.4)') CURRENT_LOOP_ITERATION
                 FILE=OUTPUT_FILE
                 METHOD="FORTRAN"
@@ -15232,13 +15233,13 @@ CONTAINS
   SUBROUTINE FiniteElasticity_ControlTimeLoopPreLoop(CONTROL_LOOP,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the time control loop
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the time control loop
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
 
     !Local Variables
     TYPE(SOLVER_TYPE), POINTER :: SOLVER_SOLID !<A pointer to the solid solver
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP_SOLID
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP_SOLID
     TYPE(FieldType), POINTER :: independentField
 
     NULLIFY(SOLVER_SOLID)
@@ -15298,7 +15299,7 @@ CONTAINS
   SUBROUTINE FiniteElasticity_ControlLoadIncrementLoopPostLoop(controlLoop,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -15315,8 +15316,8 @@ CONTAINS
     ENTERS("FiniteElasticity_ControlLoadIncrementLoopPostLoop",err,error,*999)
 
     IF(ASSOCIATED(controlLoop)) THEN
-      incrementIdx=controlLoop%LOAD_INCREMENT_LOOP%ITERATION_NUMBER
-      outputNumber=controlLoop%LOAD_INCREMENT_LOOP%OUTPUT_NUMBER
+      incrementIdx=controlLoop%loadIncrementLoop%iterationNumber
+      outputNumber=controlLoop%loadIncrementLoop%outputNumber
       IF(outputNumber>0) THEN
         IF(MOD(incrementIdx,outputNumber)==0) THEN
           solvers=>controlLoop%SOLVERS
@@ -15379,11 +15380,11 @@ CONTAINS
     INTEGER(INTG) :: solverMatrixIdx,equationsSetIdx
     LOGICAL :: cellMLSolve,nonlinearSolve,validSubType
     REAL(DP) :: currentTime,timeIncrement
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_TYPE), POINTER :: cellMLSolver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
@@ -15951,7 +15952,7 @@ CONTAINS
   SUBROUTINE FiniteElasticity_PreSolveGetSolidDisplacement(CONTROL_LOOP,SOLVER,err,error,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solvers
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -15963,7 +15964,7 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING_FINITE_ELASTICITY !<A pointer to the solver mapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET_FINITE_ELASTICITY !<A pointer to the equations set
     TYPE(VARYING_STRING) :: LOCAL_ERROR
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_TIME_LOOP
+    TYPE(ControlLoopType), POINTER :: CONTROL_TIME_LOOP
 
     REAL(DP), POINTER :: MESH_DISPLACEMENT_VALUES(:)
     REAL(DP), POINTER :: DUMMY_VALUES2(:)
@@ -15983,13 +15984,13 @@ CONTAINS
 
     IF(ASSOCIATED(CONTROL_LOOP)) THEN
       CONTROL_TIME_LOOP=>CONTROL_LOOP
-      DO loop_idx=1,CONTROL_LOOP%CONTROL_LOOP_LEVEL
-        IF(CONTROL_TIME_LOOP%LOOP_TYPE==PROBLEM_CONTROL_TIME_LOOP_TYPE) THEN
+      DO loop_idx=1,CONTROL_LOOP%controlLoopLevel
+        IF(CONTROL_TIME_LOOP%loopType==CONTROL_TIME_LOOP_TYPE) THEN
           CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_TIME_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
           EXIT
         ENDIF
-        IF (ASSOCIATED(CONTROL_LOOP%PARENT_LOOP)) THEN
-          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%PARENT_LOOP
+        IF (ASSOCIATED(CONTROL_LOOP%parentLoop)) THEN
+          CONTROL_TIME_LOOP=>CONTROL_TIME_LOOP%parentLoop
         ELSE
           CALL FlagError("Could not find a time control loop.",err,error,*999)
         ENDIF
@@ -16033,7 +16034,7 @@ CONTAINS
                     CALL Field_ParameterSetDataGet(EQUATIONS_SET_FINITE_ELASTICITY%DEPENDENT%DEPENDENT_FIELD, &
                       & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,MESH_DISPLACEMENT_VALUES,err,error,*999)
                     CALL FLUID_MECHANICS_IO_READ_DATA(SOLVER_LINEAR_TYPE,MESH_DISPLACEMENT_VALUES, & 
-                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%TIME_LOOP%ITERATION_NUMBER,1.0_DP, &
+                      & numberOfDimensions,INPUT_TYPE,INPUT_OPTION,CONTROL_LOOP%timeLoop%iterationNumber,1.0_DP, &
                       & err,error,*999)
                     CALL Field_ParameterSetUpdateStart(EQUATIONS_SET_FINITE_ELASTICITY%DEPENDENT%DEPENDENT_FIELD, & 
                       & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,err,error,*999)
@@ -16092,14 +16093,14 @@ CONTAINS
     !Local Variables
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: boundaryConditionsVariable
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop!<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: controlLoop!<A pointer to the control loop to solve.
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(FieldType), POINTER :: dependentField, geometricField
-    TYPE(PROBLEM_TYPE), POINTER :: problem
+    TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations  !<A pointer to the solver equations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
  

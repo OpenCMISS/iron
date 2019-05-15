@@ -48,22 +48,22 @@
 !>    matrix dimension MAX_M (>=M) is used to calcualte the matrix storage locations. If storage is
 !>    MATRIX_ROW_MAJOR_STORAGE_TYPE the matrix is not sparse and the non-sparse matrix dimension MAX_N (>=N) is used to
 !>    calcualte the matrix storage locations. If STORAGE is MATRIX_COMPRESSED_ROW_STORAGE_TYPE the matrix has compressed row
-!>    storage/sparsity (see below) and the sparsity structure arrays ROW_INDICES and COLUMN_INDICES are used for the
+!>    storage/sparsity (see below) and the sparsity structure arrays rowIndices and columnIndices are used for the
 !>    storage location calculation. If STORAGE is MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE the matrix has compressed column
-!>    storage/sparsity (see below) and the sparsity structure arrays ROW_INDICES and COLUMN_INDICES are used for the
+!>    storage/sparsity (see below) and the sparsity structure arrays rowIndices and columnIndices are used for the
 !>    storage location calculation. If STORAGE is MATRIX_ROW_COLUMN_STORAGE_TYPE the matrix has row column
-!>    storage/sparsity (see below) and the sparsity structure arrays ROW_INDICES and COLUMN_INDICES are used for the
+!>    storage/sparsity (see below) and the sparsity structure arrays rowIndices and columnIndices are used for the
 !>    storage location calculation. 
 !>    
 !>    \subsection MatrixVector_CompressedRowStorage COMPRESSED-ROW STORAGE:
 !>    
 !>      The storage structure scheme is based on storing a MxN matrix as a one dimensional array of length SIZE
-!>      (=NUMBER_NON_ZEROS) (where NUMBER_NON_ZEROS=sxMxN, s is the sparsity of the array) that stores only the non-zero
-!>      elements of the matrix. Two additional arrays ROW_INDICES and COLUMN_INDICES store the positions of the non-zero
-!>      elements. ROW_INDICES is of length M+1 and COLUMN is of length NUMBER_NON_ZEROS. ROW_INDICES(i) stores the position
-!>      in COLUMN_INDICES of  the start of row i. The M+1 position of ROW_INDICES stores the size of COLUMN_INDICES+1 i.e.,
-!>      NUMBER_NON_ZEROS+1. The number of non-zero elements in row i can be found from ROW_INDICES(i+1)-ROW_INDICES(i).
-!>      COLUMN_INDICES(nz) gives the column number for non-zero element nz. See also COMPRESSED-COLUMN storage.
+!>      (=numberOfNonZeros) (where numberOfNonZeros=sxMxN, s is the sparsity of the array) that stores only the non-zero
+!>      elements of the matrix. Two additional arrays rowIndices and columnIndices store the positions of the non-zero
+!>      elements. rowIndices is of length M+1 and COLUMN is of length numberOfNonZeros. rowIndices(i) stores the position
+!>      in columnIndices of  the start of row i. The M+1 position of rowIndices stores the size of columnIndices+1 i.e.,
+!>      numberOfNonZeros+1. The number of non-zero elements in row i can be found from rowIndices(i+1)-rowIndices(i).
+!>      columnIndices(nz) gives the column number for non-zero element nz. See also COMPRESSED-COLUMN storage.
 !>   
 !>      Example of the compressed-row storage scheme on a NxN matrix (N=6). Here the sparsity is 8/36 or 22%
 !>      \verbatim
@@ -72,9 +72,9 @@
 !>         ____________        DATA(nz)                        
 !>       1| 0 A 0 B 0 0          A B C D E F G H  
 !>       2| 0 0 C 0 0 0          
-!>       3| 0 0 0 0 D E        ROW_INDICES(i)
+!>       3| 0 0 0 0 D E        rowIndices(i)
 !>       4| F 0 0 0 0 0          1 3 4 6 7 8 9
-!>       5| 0 0 G 0 0 0        COLUMN_INDICES(i)  
+!>       5| 0 0 G 0 0 0        columnIndices(i)  
 !>       6| 0 0 0 0 0 H          2 4 3 5 6 1 3 6
 !>      
 !>      \endverbatim
@@ -82,12 +82,12 @@
 !>    \subsection MatrixVector_CompressedColumnStorage COMPRESSED-COLUMN STORAGE:
 !>    
 !>      The storage structure scheme is based on storing a MxN matrix as a one dimensional array of length SIZE
-!>      (=NUMBER_NON_ZEROS) (where NUMBER_NON_ZEROS=sxMxN, s is the sparsity of the array) that stores only the non-zero
-!>      elements of the matrix. Two additional arrays ROW_INDICES and COLUMN_INDICES store the positions of the non-zero
-!>      elements. ROW_INDICES is of length NUMBER_NON_ZEROS and COLUMN is of length N+1. COLUMN_INDICES(j) stores the position
-!>      in ROW_INDICES of  the start of column j. The N+1 position of COLUMN_INDICES stores the size of ROW_INDICES+1 i.e.,
-!>      NUMBER_NON_ZEROS+1. The number of non-zero elements in column j can be found from COLUMN_INDICES(j+1)-COLUMN_INDICES(j).
-!>      ROW_INDICES(nz) gives the row number for non-zero element nz. See also COMPRESSED-ROW storage.
+!>      (=numberOfNonZeros) (where numberOfNonZeros=sxMxN, s is the sparsity of the array) that stores only the non-zero
+!>      elements of the matrix. Two additional arrays rowIndices and columnIndices store the positions of the non-zero
+!>      elements. rowIndices is of length numberOfNonZeros and COLUMN is of length N+1. columnIndices(j) stores the position
+!>      in rowIndices of  the start of column j. The N+1 position of columnIndices stores the size of rowIndices+1 i.e.,
+!>      numberOfNonZeros+1. The number of non-zero elements in column j can be found from columnIndices(j+1)-columnIndices(j).
+!>      rowIndices(nz) gives the row number for non-zero element nz. See also COMPRESSED-ROW storage.
 !>   
 !>      Example of compressed-column storage scheme on a NxN matrix (N=6). Here the sparsity is 8/36 or 22%
 !>      \verbatim
@@ -96,9 +96,9 @@
 !>         ____________        DATA(nz)                        
 !>       1| 0 A 0 B 0 0          F A C G B D E H  
 !>       2| 0 0 C 0 0 0          
-!>       3| 0 0 0 0 D E        ROW_INDICES(i)
+!>       3| 0 0 0 0 D E        rowIndices(i)
 !>       4| F 0 0 0 0 0          4 1 2 5 1 3 3 6
-!>       5| 0 0 G 0 0 0        COLUMN_INDICES(i)  
+!>       5| 0 0 G 0 0 0        columnIndices(i)  
 !>       6| 0 0 0 0 0 H          1 2 3 5 6 7 9
 !>      
 !>      \endverbatim
@@ -106,10 +106,10 @@
 !>    \subsection MatrixVector_RowColumnStorage ROW-COLUMN STORAGE:
 !>    
 !>      The storage structure scheme is based on storing a MxN matrix as a one dimensional array of length SIZE
-!>      (=NUMBER_NON_ZEROS) (where NUMBER_NON_ZEROS=sxMxN, s is the sparsity of the array) that stores only the non-zero
-!>      elements of the matrix. Two additional arrays ROW_INDICES and COLUMN_INDICES store the positions of the non-zero
-!>      elements. Both ROW_INDICES and COLUMN_INDICES are of length NUMBER_NON_ZEROS. ROW_INDICES(nz) gives the row number for
-!>      non-zero element nz and COLUMN_INDICES(nz) gives the column number for non-zero element nz.
+!>      (=numberOfNonZeros) (where numberOfNonZeros=sxMxN, s is the sparsity of the array) that stores only the non-zero
+!>      elements of the matrix. Two additional arrays rowIndices and columnIndices store the positions of the non-zero
+!>      elements. Both rowIndices and columnIndices are of length numberOfNonZeros. rowIndices(nz) gives the row number for
+!>      non-zero element nz and columnIndices(nz) gives the column number for non-zero element nz.
 !>  
 !>      Example of row-column storage scheme on a NxN matrix (N=6). Here the sparsity is 8/36 or 22%
 !>      \verbatim
@@ -118,24 +118,85 @@
 !>         ____________        DATA(nz)                        
 !>       1| 0 A 0 B 0 0          A B C D E F G H  
 !>       2| 0 0 C 0 0 0          
-!>       3| 0 0 0 0 D E        ROW_INDICES(i)
+!>       3| 0 0 0 0 D E        rowIndices(i)
 !>       4| F 0 0 0 0 0          1 1 2 3 3 4 5 6 
-!>       5| 0 0 G 0 0 0        COLUMN_INDICES(i)  
+!>       5| 0 0 G 0 0 0        columnIndices(i)  
 !>       6| 0 0 0 0 0 H          2 4 3 5 6 1 3 6
 !>
 !>      \endverbatim
+!>
+!>    \subsection MatrixVector_BlockCompressedRowStorage BLOCK COMPRESSED-ROW STORAGE:
+!>    
+!>      The storage structure scheme is based on storing a MxN matrix as a number of blocks of size blockSize. Blocks are
+!>      only stored if they have one non-zero element. All entries in the block (zero's included) are stored in the data
+!>      array in row-major order. The row and column indices are then used to locate the non-zero blocks inside the matrix.
+!>      rowIndicies is of size numberOfRowBlocks + 1 and columnIndicies is of size numberOfBlocks. The row and column indices
+!>      use the compressed row storage scheme to locate the non-zero blocks. 
+!>   
+!>      Example of the compressed-row storage scheme on a NxN matrix (N=6). Here the sparsity is 8/36 or 22%. The matrix is
+!>      split into 3x3 blocks of 2x2 entries.
+!>      \verbatim
+!>                             BLOCKS
+!>      GX  1 2 3 4 5 6                                       data(nz) 0 0 A 0 0 C B 0 0 F 0 0 D 0 E 0 G 0 0 0 0 0 0 H
+!>         ____________        0 A   0 B   0 0                       
+!>       1| 0 A 0 B 0 0        0 0   C 0   0 0                rowIndices(i)
+!>       2| 0 0 C 0 0 0                                        1 3 5 7     
+!>       3| 0 0 0 0 D E        0 0   0 0   D E                columnIndices(i)
+!>       4| F 0 0 0 0 0        F 0   0 0   0 0                 1 2 1 3 2 3
+!>       5| 0 0 G 0 0 0                                       
+!>       6| 0 0 0 0 0 H        0 0   G 0   0 0                 
+!>                             0 0   0 0   0 H                               
+!>                                                            
+!>      \endverbatim
+!>
+!>    \subsection MatrixVector_ModifiedKRMStorage MODIFIED KRM STORAGE:
+!>    
+!>      The storage structure scheme is based on storing a MxN matrix in a modified Knuth-Rheinboldt-Mesztenyi format. This
+!>      is also known as Duff-Reid or Harwell. The format allows for the matrix to be indexed by row or by column. The non-zero
+!>      entries are stored in a DATA array of length number of zeros. The row and column indicies arrays are also of number of
+!>      non-zero size. Two additional arrays give the start for each row (size M) and the start for each column (size N).
+!>      The row and column indicies index using a circular linked-list. The end of each row or column is indicated by a negative
+!>      row or column number. For example consider the matrix below. To loop across row 3 you go to rowStart(3). This gives the
+!>      non-zero index of 4. The first element in the row is thus data(4) or D. The next element in the row is given by
+!>      rowIndices(4) which is 5. As the entry is non-negative the next entry in the row is given by data(5) which is E. The
+!>      next entry is given by rowIndices(5) which is -3. The value is the negative of the row number and so this indicates the
+!>      last entry in the row. To loop down column 3 we go to columnStart(3) which is 3. The first entry in the column is given
+!>      by data(3) which is C. The next entry in the column is given by columnIndices(3) which is 7. The next value in the column
+!>      is given by data(7) which is G. The next entry in the column is given by columnIndices(7) which is -3. The value is the
+!>      negative of the column number and so this indicates the last entry in the column. To find out the row and column number
+!>      for a particular non-zero number you need to scan te row and column indicies array for a negative number. For example
+!>      consider the non-zero number 4 which has a value of data(4) or D. To find the row number you look at rowIndices(4) which
+!>      has value 5. As this is not negative you move along to rowIndicies(5) which is a value of -3. This is negative and so
+!>      D has a row number of 3. To find the column number you look at columnIndices(4) which has a value of -5. This is negative
+!>      and so D has a column number of 5.
+!>  
+!>      \verbatim
+!>                             data(nz)         
+!>      GX  1 2 3 4 5 6          A  B  C  D  E  F  G  H          
+!>         ____________     
+!>       1| 0 A 0 B 0 0        rowIndices(nz)        
+!>       2| 0 0 C 0 0 0          2 -1 -2  5 -3 -4 -5 -6         
+!>       3| 0 0 0 0 D E        columnIndices(nz)        
+!>       4| F 0 0 0 0 0         -2 -4  7 -5  8 -1 -3 -6      
+!>       5| 0 0 G 0 0 0        rowStart(i)                                        
+!>       6| 0 0 0 0 0 H          1 3 4 6 7 8         
+!>                             columnStart(j)                                       
+!>                               6 1 3 2 4 5                                   
+!>      \endverbatim
+!>
 
 !>This module contains all routines dealing with (non-distributed) matrix and vectors types.
 MODULE MatrixVector
 
   USE BaseRoutines
-  USE CONSTANTS
+  USE Constants
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE LISTS
-  USE STRINGS
-  USE TYPES
+  USE Kinds
+  USE Lists
+  USE MatrixVectorAccessRoutines
+  USE Strings
+  USE Types
   USE LINKEDLIST_ROUTINES
 
 #include "macros.h"  
@@ -145,41 +206,6 @@ MODULE MatrixVector
   !PRIVATE
 
   !Module parameters
-
-  !> \addtogroup MatrixVector_DataTypes MatrixVector::DataTypes
-  !> \brief Matrix vector data types
-  !> \see MatrixVector
-  !>@{
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_INTG_TYPE=INTEGER_TYPE !<Integer matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_SP_TYPE=SINGLE_REAL_TYPE !<Single precision real matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_DP_TYPE=DOUBLE_REAL_TYPE !<Double precision real matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_L_TYPE=LOGICAL_TYPE !<Logical matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_SPC_TYPE=SINGLE_COMPLEX_TYPE !<Single precision complex matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_DPC_TYPE=DOUBLE_COMPLEX_TYPE !<Double precision complex matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
-   !>@}
-  
-  !> \addtogroup MatrixVector_StorageTypes MatrixVector::StorageTypes
-  !> \brief Matrix-vector storage type parameters
-  !> \see MatrixVector_MatrixStorageStructures,MatrixVector
-  !>@{
-  INTEGER(INTG), PARAMETER :: MATRIX_BLOCK_STORAGE_TYPE=0 !<Matrix block storage type \see MatrixVector_StorageTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_DIAGONAL_STORAGE_TYPE=1 !<Matrix diagonal storage type \see MatrixVector_StorageTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_COLUMN_MAJOR_STORAGE_TYPE=2 !<Matrix column major storage type \see MatrixVector_StorageTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_ROW_MAJOR_STORAGE_TYPE=3 !<Matrix row major storage type \see MatrixVector_StorageTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_COMPRESSED_ROW_STORAGE_TYPE=4 !<Matrix compressed row storage type \see MatrixVector_StorageTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE=5 !<Matrix compressed column storage type \see MatrixVector_StorageTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_ROW_COLUMN_STORAGE_TYPE=6 !<Matrix row-column storage type \see MatrixVector_StorageTypes,MatrixVector
-  !>@}
-  
-  !> \addtogroup MatrixVector_SymmetryTypes MatrixVector::SymmetryTypes
-  !> \brief Matrix-vector storage type parameters
-  !> \see MatrixVector_MatrixStorageStructures,MatrixVector
-  !>@{
-  INTEGER(INTG), PARAMETER :: MATRIX_SYMMETRIC_TYPE=0 !<Matrix is symmetric \see MatrixVector_SymmetryTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_HERMITIAN_TYPE=1 !<Matrix is Hermitian (complex symmetric) \see MatrixVector_SymmetryTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_SKEW_SYMMETRIC_TYPE=2 !<Matrix is skew-symmetric \see MatrixVector_SymmetryTypes,MatrixVector
-  INTEGER(INTG), PARAMETER :: MATRIX_UNSYMMETRIC_TYPE=3 !<Matrix is unsymmetric \see MatrixVector_SymmetryTypes,MatrixVector
-  !>@}
 
   INTEGER(INTG), PARAMETER :: bisectionToLinearSearchThreshold=10 !<Threshold for transition from bisection to linear search.
 
@@ -194,270 +220,231 @@ MODULE MatrixVector
   !Interfaces
 
   INTERFACE MATRIX_ALL_VALUES_SET
-    MODULE PROCEDURE MATRIX_ALL_VALUES_SET_INTG
-    MODULE PROCEDURE MATRIX_ALL_VALUES_SET_SP
-    MODULE PROCEDURE MATRIX_ALL_VALUES_SET_DP
-    MODULE PROCEDURE MATRIX_ALL_VALUES_SET_L
+    MODULE PROCEDURE Matrix_AllValuesSetIntg
+    MODULE PROCEDURE Matrix_AllValuesSetSP
+    MODULE PROCEDURE Matrix_AllValuesSetDP
+    MODULE PROCEDURE Matrix_AllValuesSetL
   END INTERFACE MATRIX_ALL_VALUES_SET
 
   INTERFACE Matrix_AllValuesSet
-    MODULE PROCEDURE MATRIX_ALL_VALUES_SET_INTG
-    MODULE PROCEDURE MATRIX_ALL_VALUES_SET_SP
-    MODULE PROCEDURE MATRIX_ALL_VALUES_SET_DP
-    MODULE PROCEDURE MATRIX_ALL_VALUES_SET_L
+    MODULE PROCEDURE Matrix_AllValuesSetIntg
+    MODULE PROCEDURE Matrix_AllValuesSetSP
+    MODULE PROCEDURE Matrix_AllValuesSetDP
+    MODULE PROCEDURE Matrix_AllValuesSetL
   END INTERFACE Matrix_AllValuesSet
 
-  INTERFACE Matrix_CreateFinish
-    MODULE PROCEDURE MATRIX_CREATE_FINISH
-  END INTERFACE Matrix_CreateFinish
+  INTERFACE MATRIX_CREATE_FINISH
+    MODULE PROCEDURE Matrix_CreateFinish
+  END INTERFACE MATRIX_CREATE_FINISH
 
-  INTERFACE Matrix_CreateStart
-    MODULE PROCEDURE MATRIX_CREATE_START
-  END INTERFACE Matrix_CreateStart
-
-  INTERFACE MATRIX_DATA_GET
-    MODULE PROCEDURE MATRIX_DATA_GET_INTG
-    MODULE PROCEDURE MATRIX_DATA_GET_SP
-    MODULE PROCEDURE MATRIX_DATA_GET_DP
-    MODULE PROCEDURE MATRIX_DATA_GET_L
-  END INTERFACE MATRIX_DATA_GET
-
-  INTERFACE Matrix_DataGet
-    MODULE PROCEDURE MATRIX_DATA_GET_INTG
-    MODULE PROCEDURE MATRIX_DATA_GET_SP
-    MODULE PROCEDURE MATRIX_DATA_GET_DP
-    MODULE PROCEDURE MATRIX_DATA_GET_L
-  END INTERFACE Matrix_DataGet
-
-  INTERFACE Matrix_DataTypeSet
-    MODULE PROCEDURE MATRIX_DATA_TYPE_SET
-  END INTERFACE Matrix_DataTypeSet
-
-  INTERFACE Matrix_MaxColumnsPerRowGet
-    MODULE PROCEDURE MATRIX_MAX_COLUMNS_PER_ROW_GET
-  END INTERFACE Matrix_MaxColumnsPerRowGet
-
-  INTERFACE Matrix_NumberOfNonZerosGet
-    MODULE PROCEDURE MATRIX_NUMBER_NON_ZEROS_GET
-  END INTERFACE Matrix_NumberOfNonZerosGet
-
-  INTERFACE Matrix_NumberOfNonZerosSet
-    MODULE PROCEDURE MATRIX_NUMBER_NON_ZEROS_SET
-  END INTERFACE Matrix_NumberOfNonZerosSet
-
-  INTERFACE Matrix_MaxSizeSet
-    MODULE PROCEDURE MATRIX_MAX_SIZE_SET
-  END INTERFACE Matrix_MaxSizeSet
-
-  INTERFACE Matrix_SizeSet
-    MODULE PROCEDURE MATRIX_SIZE_SET
-  END INTERFACE Matrix_SizeSet
-
-  INTERFACE Matrix_StorageLocationFind
-    MODULE PROCEDURE MATRIX_STORAGE_LOCATION_FIND
-  END INTERFACE Matrix_StorageLocationFind
-
-  INTERFACE Matrix_StorageLocationsGet
-    MODULE PROCEDURE MATRIX_STORAGE_LOCATIONS_GET
-  END INTERFACE Matrix_StorageLocationsGet
-
-  INTERFACE Matrix_StorageLocationsSet
-    MODULE PROCEDURE MATRIX_STORAGE_LOCATIONS_SET
-  END INTERFACE Matrix_StorageLocationsSet
-
-  INTERFACE Matrix_StorageTypeGet
-    MODULE PROCEDURE MATRIX_STORAGE_TYPE_GET
-  END INTERFACE Matrix_StorageTypeGet
+  INTERFACE MATRIX_CREATE_START
+    MODULE PROCEDURE Matrix_CreateStart
+  END INTERFACE MATRIX_CREATE_START
   
-  INTERFACE Matrix_StorageTypeSet
-    MODULE PROCEDURE MATRIX_STORAGE_TYPE_SET
-  END INTERFACE Matrix_StorageTypeSet
+  INTERFACE MATRIX_DATA_TYPE_SET
+    MODULE PROCEDURE Matrix_DataTypeSet
+  END INTERFACE MATRIX_DATA_TYPE_SET
+
+  INTERFACE MATRIX_NUMBER_NON_ZEROS_SET
+    MODULE PROCEDURE Matrix_NumberOfNonZerosSet
+  END INTERFACE MATRIX_NUMBER_NON_ZEROS_SET
+
+  INTERFACE MATRIX_MAX_SIZE_SET
+    MODULE PROCEDURE Matrix_MaxSizeSet
+  END INTERFACE MATRIX_MAX_SIZE_SET
+
+  INTERFACE MATRIX_SIZE_SET
+    MODULE PROCEDURE Matrix_SizeSet
+  END INTERFACE MATRIX_SIZE_SET
+
+  INTERFACE MATRIX_STORAGE_LOCATION_FIND
+    MODULE PROCEDURE Matrix_StorageLocationFind
+  END INTERFACE MATRIX_STORAGE_LOCATION_FIND
+
+  INTERFACE MATRIX_STORAGE_LOCATIONS_SET
+    MODULE PROCEDURE Matrix_StorageLocationsSet
+  END INTERFACE MATRIX_STORAGE_LOCATIONS_SET
+  
+  INTERFACE MATRIX_STORAGE_TYPE_SET
+    MODULE PROCEDURE Matrix_StorageTypeSet
+  END INTERFACE MATRIX_STORAGE_TYPE_SET
+
+  INTERFACE Matrix_TransposeRowsColumnsSet
+    MODULE PROCEDURE Matrix_TransposeRowsColumnsSet0
+    MODULE PROCEDURE Matrix_TransposeRowsColumnsSet1
+  END INTERFACE Matrix_TransposeRowsColumnsSet
 
   INTERFACE MATRIX_VALUES_ADD
-    MODULE PROCEDURE MATRIX_VALUES_ADD_INTG
-    MODULE PROCEDURE MATRIX_VALUES_ADD_INTG1
-    MODULE PROCEDURE MATRIX_VALUES_ADD_INTG2
-    MODULE PROCEDURE MATRIX_VALUES_ADD_SP
-    MODULE PROCEDURE MATRIX_VALUES_ADD_SP1
-    MODULE PROCEDURE MATRIX_VALUES_ADD_SP2
-    MODULE PROCEDURE MATRIX_VALUES_ADD_DP
-    MODULE PROCEDURE MATRIX_VALUES_ADD_DP1
-    MODULE PROCEDURE MATRIX_VALUES_ADD_DP2
-    MODULE PROCEDURE MATRIX_VALUES_ADD_L
-    MODULE PROCEDURE MATRIX_VALUES_ADD_L1
-    MODULE PROCEDURE MATRIX_VALUES_ADD_L2
+    MODULE PROCEDURE Matrix_ValuesAddIntg
+    MODULE PROCEDURE Matrix_ValuesAddIntg1
+    MODULE PROCEDURE Matrix_ValuesAddIntg2
+    MODULE PROCEDURE Matrix_ValuesAddSP
+    MODULE PROCEDURE Matrix_ValuesAddSP1
+    MODULE PROCEDURE Matrix_ValuesAddSP2
+    MODULE PROCEDURE Matrix_ValuesAddDP
+    MODULE PROCEDURE Matrix_ValuesAddDP1
+    MODULE PROCEDURE Matrix_ValuesAddDP2
+    MODULE PROCEDURE Matrix_ValuesAddL
+    MODULE PROCEDURE Matrix_ValuesAddL1
+    MODULE PROCEDURE Matrix_ValuesAddL2
   END INTERFACE MATRIX_VALUES_ADD
 
   INTERFACE Matrix_ValuesAdd
-    MODULE PROCEDURE MATRIX_VALUES_ADD_INTG
-    MODULE PROCEDURE MATRIX_VALUES_ADD_INTG1
-    MODULE PROCEDURE MATRIX_VALUES_ADD_INTG2
-    MODULE PROCEDURE MATRIX_VALUES_ADD_SP
-    MODULE PROCEDURE MATRIX_VALUES_ADD_SP1
-    MODULE PROCEDURE MATRIX_VALUES_ADD_SP2
-    MODULE PROCEDURE MATRIX_VALUES_ADD_DP
-    MODULE PROCEDURE MATRIX_VALUES_ADD_DP1
-    MODULE PROCEDURE MATRIX_VALUES_ADD_DP2
-    MODULE PROCEDURE MATRIX_VALUES_ADD_L
-    MODULE PROCEDURE MATRIX_VALUES_ADD_L1
-    MODULE PROCEDURE MATRIX_VALUES_ADD_L2
+    MODULE PROCEDURE Matrix_ValuesAddIntg
+    MODULE PROCEDURE Matrix_ValuesAddIntg1
+    MODULE PROCEDURE Matrix_ValuesAddIntg2
+    MODULE PROCEDURE Matrix_ValuesAddSP
+    MODULE PROCEDURE Matrix_ValuesAddSP1
+    MODULE PROCEDURE Matrix_ValuesAddSP2
+    MODULE PROCEDURE Matrix_ValuesAddDP
+    MODULE PROCEDURE Matrix_ValuesAddDP1
+    MODULE PROCEDURE Matrix_ValuesAddDP2
+    MODULE PROCEDURE Matrix_ValuesAddL
+    MODULE PROCEDURE Matrix_ValuesAddL1
+    MODULE PROCEDURE Matrix_ValuesAddL2
   END INTERFACE Matrix_ValuesAdd
 
   INTERFACE MATRIX_VALUES_GET
-    MODULE PROCEDURE MATRIX_VALUES_GET_INTG
-    MODULE PROCEDURE MATRIX_VALUES_GET_INTG1
-    MODULE PROCEDURE MATRIX_VALUES_GET_INTG2
-    MODULE PROCEDURE MATRIX_VALUES_GET_SP
-    MODULE PROCEDURE MATRIX_VALUES_GET_SP1
-    MODULE PROCEDURE MATRIX_VALUES_GET_SP2
-    MODULE PROCEDURE MATRIX_VALUES_GET_DP
-    MODULE PROCEDURE MATRIX_VALUES_GET_DP1
-    MODULE PROCEDURE MATRIX_VALUES_GET_DP2
-    MODULE PROCEDURE MATRIX_VALUES_GET_L
-    MODULE PROCEDURE MATRIX_VALUES_GET_L1
-    MODULE PROCEDURE MATRIX_VALUES_GET_L2
+    MODULE PROCEDURE Matrix_ValuesGetIntg
+    MODULE PROCEDURE Matrix_ValuesGetIntg1
+    MODULE PROCEDURE Matrix_ValuesGetIntg2
+    MODULE PROCEDURE Matrix_ValuesGetSP
+    MODULE PROCEDURE Matrix_ValuesGetSP1
+    MODULE PROCEDURE Matrix_ValuesGetSP2
+    MODULE PROCEDURE Matrix_ValuesGetDP
+    MODULE PROCEDURE Matrix_ValuesGetDP1
+    MODULE PROCEDURE Matrix_ValuesGetDP2
+    MODULE PROCEDURE Matrix_ValuesGetL
+    MODULE PROCEDURE Matrix_ValuesGetL1
+    MODULE PROCEDURE Matrix_ValuesGetL2
   END INTERFACE MATRIX_VALUES_GET
   
   INTERFACE Matrix_ValuesGet
-    MODULE PROCEDURE MATRIX_VALUES_GET_INTG
-    MODULE PROCEDURE MATRIX_VALUES_GET_INTG1
-    MODULE PROCEDURE MATRIX_VALUES_GET_INTG2
-    MODULE PROCEDURE MATRIX_VALUES_GET_SP
-    MODULE PROCEDURE MATRIX_VALUES_GET_SP1
-    MODULE PROCEDURE MATRIX_VALUES_GET_SP2
-    MODULE PROCEDURE MATRIX_VALUES_GET_DP
-    MODULE PROCEDURE MATRIX_VALUES_GET_DP1
-    MODULE PROCEDURE MATRIX_VALUES_GET_DP2
-    MODULE PROCEDURE MATRIX_VALUES_GET_L
-    MODULE PROCEDURE MATRIX_VALUES_GET_L1
-    MODULE PROCEDURE MATRIX_VALUES_GET_L2
+    MODULE PROCEDURE Matrix_ValuesGetIntg
+    MODULE PROCEDURE Matrix_ValuesGetIntg1
+    MODULE PROCEDURE Matrix_ValuesGetIntg2
+    MODULE PROCEDURE Matrix_ValuesGetSP
+    MODULE PROCEDURE Matrix_ValuesGetSP1
+    MODULE PROCEDURE Matrix_ValuesGetSP2
+    MODULE PROCEDURE Matrix_ValuesGetDP
+    MODULE PROCEDURE Matrix_ValuesGetDP1
+    MODULE PROCEDURE Matrix_ValuesGetDP2
+    MODULE PROCEDURE Matrix_ValuesGetL
+    MODULE PROCEDURE Matrix_ValuesGetL1
+    MODULE PROCEDURE Matrix_ValuesGetL2
   END INTERFACE Matrix_ValuesGet
   
   INTERFACE MATRIX_VALUES_SET
-    MODULE PROCEDURE MATRIX_VALUES_SET_INTG
-    MODULE PROCEDURE MATRIX_VALUES_SET_INTG1
-    MODULE PROCEDURE MATRIX_VALUES_SET_INTG2
-    MODULE PROCEDURE MATRIX_VALUES_SET_SP
-    MODULE PROCEDURE MATRIX_VALUES_SET_SP1
-    MODULE PROCEDURE MATRIX_VALUES_SET_SP2
-    MODULE PROCEDURE MATRIX_VALUES_SET_DP
-    MODULE PROCEDURE MATRIX_VALUES_SET_DP1
-    MODULE PROCEDURE MATRIX_VALUES_SET_DP2
-    MODULE PROCEDURE MATRIX_VALUES_SET_L
-    MODULE PROCEDURE MATRIX_VALUES_SET_L1
-    MODULE PROCEDURE MATRIX_VALUES_SET_L2
+    MODULE PROCEDURE Matrix_ValuesSetIntg
+    MODULE PROCEDURE Matrix_ValuesSetIntg1
+    MODULE PROCEDURE Matrix_ValuesSetIntg2
+    MODULE PROCEDURE Matrix_ValuesSetSP
+    MODULE PROCEDURE Matrix_ValuesSetSP1
+    MODULE PROCEDURE Matrix_ValuesSetSP2
+    MODULE PROCEDURE Matrix_ValuesSetDP
+    MODULE PROCEDURE Matrix_ValuesSetDP1
+    MODULE PROCEDURE Matrix_ValuesSetDP2
+    MODULE PROCEDURE Matrix_ValuesSetL
+    MODULE PROCEDURE Matrix_ValuesSetL1
+    MODULE PROCEDURE Matrix_ValuesSetL2
   END INTERFACE MATRIX_VALUES_SET
 
   INTERFACE Matrix_ValuesSet
-    MODULE PROCEDURE MATRIX_VALUES_SET_INTG
-    MODULE PROCEDURE MATRIX_VALUES_SET_INTG1
-    MODULE PROCEDURE MATRIX_VALUES_SET_INTG2
-    MODULE PROCEDURE MATRIX_VALUES_SET_SP
-    MODULE PROCEDURE MATRIX_VALUES_SET_SP1
-    MODULE PROCEDURE MATRIX_VALUES_SET_SP2
-    MODULE PROCEDURE MATRIX_VALUES_SET_DP
-    MODULE PROCEDURE MATRIX_VALUES_SET_DP1
-    MODULE PROCEDURE MATRIX_VALUES_SET_DP2
-    MODULE PROCEDURE MATRIX_VALUES_SET_L
-    MODULE PROCEDURE MATRIX_VALUES_SET_L1
-    MODULE PROCEDURE MATRIX_VALUES_SET_L2
+    MODULE PROCEDURE Matrix_ValuesSetIntg
+    MODULE PROCEDURE Matrix_ValuesSetIntg1
+    MODULE PROCEDURE Matrix_ValuesSetIntg2
+    MODULE PROCEDURE Matrix_ValuesSetSP
+    MODULE PROCEDURE Matrix_ValuesSetSP1
+    MODULE PROCEDURE Matrix_ValuesSetSP2
+    MODULE PROCEDURE Matrix_ValuesSetDP
+    MODULE PROCEDURE Matrix_ValuesSetDP1
+    MODULE PROCEDURE Matrix_ValuesSetDP2
+    MODULE PROCEDURE Matrix_ValuesSetL
+    MODULE PROCEDURE Matrix_ValuesSetL1
+    MODULE PROCEDURE Matrix_ValuesSetL2
   END INTERFACE Matrix_ValuesSet
 
   INTERFACE VECTOR_ALL_VALUES_SET
-    MODULE PROCEDURE VECTOR_ALL_VALUES_SET_INTG
-    MODULE PROCEDURE VECTOR_ALL_VALUES_SET_SP
-    MODULE PROCEDURE VECTOR_ALL_VALUES_SET_DP
-    MODULE PROCEDURE VECTOR_ALL_VALUES_SET_L
+    MODULE PROCEDURE Vector_AllValuesSetIntg
+    MODULE PROCEDURE Vector_AllValuesSetSP
+    MODULE PROCEDURE Vector_AllValuesSetDP
+    MODULE PROCEDURE Vector_AllValuesSetL
   END INTERFACE VECTOR_ALL_VALUES_SET
 
   INTERFACE Vector_AllValuesSet
-    MODULE PROCEDURE VECTOR_ALL_VALUES_SET_INTG
-    MODULE PROCEDURE VECTOR_ALL_VALUES_SET_SP
-    MODULE PROCEDURE VECTOR_ALL_VALUES_SET_DP
-    MODULE PROCEDURE VECTOR_ALL_VALUES_SET_L
+    MODULE PROCEDURE Vector_AllValuesSetIntg
+    MODULE PROCEDURE Vector_AllValuesSetSP
+    MODULE PROCEDURE Vector_AllValuesSetDP
+    MODULE PROCEDURE Vector_AllValuesSetL
   END INTERFACE Vector_AllValuesSet
 
-  INTERFACE Vector_CreateFinish
-    MODULE PROCEDURE VECTOR_CREATE_FINISH
-  END INTERFACE Vector_CreateFinish
+  INTERFACE VECTOR_CREATE_FINISH
+    MODULE PROCEDURE Vector_CreateFinish
+  END INTERFACE VECTOR_CREATE_FINISH
 
-  INTERFACE Vector_CreateStart
-    MODULE PROCEDURE VECTOR_CREATE_START
-  END INTERFACE Vector_CreateStart
+  INTERFACE VECTOR_CREATE_START
+    MODULE PROCEDURE Vector_CreateStart
+  END INTERFACE VECTOR_CREATE_START
 
-  INTERFACE VECTOR_DATA_GET
-    MODULE PROCEDURE VECTOR_DATA_GET_INTG
-    MODULE PROCEDURE VECTOR_DATA_GET_SP
-    MODULE PROCEDURE VECTOR_DATA_GET_DP
-    MODULE PROCEDURE VECTOR_DATA_GET_L
-  END INTERFACE VECTOR_DATA_GET
+  INTERFACE VECTOR_DATA_TYPE_SET
+    MODULE PROCEDURE Vector_DataTypeSet
+  END INTERFACE VECTOR_DATA_TYPE_SET
 
-  INTERFACE Vector_DataGet
-    MODULE PROCEDURE VECTOR_DATA_GET_INTG
-    MODULE PROCEDURE VECTOR_DATA_GET_SP
-    MODULE PROCEDURE VECTOR_DATA_GET_DP
-    MODULE PROCEDURE VECTOR_DATA_GET_L
-  END INTERFACE Vector_DataGet
-
-  INTERFACE Vector_DataTypeSet
-    MODULE PROCEDURE VECTOR_DATA_TYPE_SET
-  END INTERFACE Vector_DataTypeSet
-
-  INTERFACE Vector_SizeSet
-    MODULE PROCEDURE VECTOR_SIZE_SET
-  END INTERFACE Vector_SizeSet
+  INTERFACE VECTOR_SIZE_SET
+    MODULE PROCEDURE Vector_SizeSet
+  END INTERFACE VECTOR_SIZE_SET
 
   INTERFACE VECTOR_VALUES_GET
-    MODULE PROCEDURE VECTOR_VALUES_GET_INTG
-    MODULE PROCEDURE VECTOR_VALUES_GET_INTG1
-    MODULE PROCEDURE VECTOR_VALUES_GET_SP
-    MODULE PROCEDURE VECTOR_VALUES_GET_SP1
-    MODULE PROCEDURE VECTOR_VALUES_GET_DP
-    MODULE PROCEDURE VECTOR_VALUES_GET_DP1
-    MODULE PROCEDURE VECTOR_VALUES_GET_L
-    MODULE PROCEDURE VECTOR_VALUES_GET_L1
+    MODULE PROCEDURE Vector_ValuesGetIntg
+    MODULE PROCEDURE Vector_ValuesGetIntg1
+    MODULE PROCEDURE Vector_ValuesGetSP
+    MODULE PROCEDURE Vector_ValuesGetSP1
+    MODULE PROCEDURE Vector_ValuesGetDP
+    MODULE PROCEDURE Vector_ValuesGetDP1
+    MODULE PROCEDURE Vector_ValuesGetL
+    MODULE PROCEDURE Vector_ValuesGetL1
   END INTERFACE VECTOR_VALUES_GET
   
   INTERFACE Vector_ValuesGet
-    MODULE PROCEDURE VECTOR_VALUES_GET_INTG
-    MODULE PROCEDURE VECTOR_VALUES_GET_INTG1
-    MODULE PROCEDURE VECTOR_VALUES_GET_SP
-    MODULE PROCEDURE VECTOR_VALUES_GET_SP1
-    MODULE PROCEDURE VECTOR_VALUES_GET_DP
-    MODULE PROCEDURE VECTOR_VALUES_GET_DP1
-    MODULE PROCEDURE VECTOR_VALUES_GET_L
-    MODULE PROCEDURE VECTOR_VALUES_GET_L1
+    MODULE PROCEDURE Vector_ValuesGetIntg
+    MODULE PROCEDURE Vector_ValuesGetIntg1
+    MODULE PROCEDURE Vector_ValuesGetSP
+    MODULE PROCEDURE Vector_ValuesGetSP1
+    MODULE PROCEDURE Vector_ValuesGetDP
+    MODULE PROCEDURE Vector_ValuesGetDP1
+    MODULE PROCEDURE Vector_ValuesGetL
+    MODULE PROCEDURE Vector_ValuesGetL1
   END INTERFACE Vector_ValuesGet
   
   INTERFACE VECTOR_VALUES_SET
-    MODULE PROCEDURE VECTOR_VALUES_SET_INTG
-    MODULE PROCEDURE VECTOR_VALUES_SET_INTG1
-    MODULE PROCEDURE VECTOR_VALUES_SET_SP
-    MODULE PROCEDURE VECTOR_VALUES_SET_SP1
-    MODULE PROCEDURE VECTOR_VALUES_SET_DP
-    MODULE PROCEDURE VECTOR_VALUES_SET_DP1
-    MODULE PROCEDURE VECTOR_VALUES_SET_L
-    MODULE PROCEDURE VECTOR_VALUES_SET_L1
+    MODULE PROCEDURE Vector_ValuesSetIntg
+    MODULE PROCEDURE Vector_ValuesSetIntg1
+    MODULE PROCEDURE Vector_ValuesSetSP
+    MODULE PROCEDURE Vector_ValuesSetSP1
+    MODULE PROCEDURE Vector_ValuesSetDP
+    MODULE PROCEDURE Vector_ValuesSetDP1
+    MODULE PROCEDURE Vector_ValuesSetL
+    MODULE PROCEDURE Vector_ValuesSetL1
   END INTERFACE VECTOR_VALUES_SET
 
   INTERFACE Vector_ValuesSet
-    MODULE PROCEDURE VECTOR_VALUES_SET_INTG
-    MODULE PROCEDURE VECTOR_VALUES_SET_INTG1
-    MODULE PROCEDURE VECTOR_VALUES_SET_SP
-    MODULE PROCEDURE VECTOR_VALUES_SET_SP1
-    MODULE PROCEDURE VECTOR_VALUES_SET_DP
-    MODULE PROCEDURE VECTOR_VALUES_SET_DP1
-    MODULE PROCEDURE VECTOR_VALUES_SET_L
-    MODULE PROCEDURE VECTOR_VALUES_SET_L1
+    MODULE PROCEDURE Vector_ValuesSetIntg
+    MODULE PROCEDURE Vector_ValuesSetIntg1
+    MODULE PROCEDURE Vector_ValuesSetSP
+    MODULE PROCEDURE Vector_ValuesSetSP1
+    MODULE PROCEDURE Vector_ValuesSetDP
+    MODULE PROCEDURE Vector_ValuesSetDP1
+    MODULE PROCEDURE Vector_ValuesSetL
+    MODULE PROCEDURE Vector_ValuesSetL1
   END INTERFACE Vector_ValuesSet
 
-  INTERFACE Matrix_LinklistGet
-    MODULE PROCEDURE MATRIX_LINKLIST_GET
-  END INTERFACE Matrix_LinklistGet
+  INTERFACE MATRIX_LINKLIST_GET
+    MODULE PROCEDURE Matrix_LinklistGet
+  END INTERFACE MATRIX_LINKLIST_GET
 
-  INTERFACE Matrix_LinklistSet
-    MODULE PROCEDURE MATRIX_LINKLIST_SET
-  END INTERFACE Matrix_LinklistSet
+  INTERFACE MATRIX_LINKLIST_SET
+    MODULE PROCEDURE Matrix_LinklistSet
+  END INTERFACE MATRIX_LINKLIST_SET
 
   PUBLIC MATRIX_VECTOR_INTG_TYPE,MATRIX_VECTOR_SP_TYPE,MATRIX_VECTOR_DP_TYPE,MATRIX_VECTOR_L_TYPE, &
     MATRIX_VECTOR_SPC_TYPE,MATRIX_VECTOR_DPC_TYPE
@@ -471,33 +458,29 @@ MODULE MatrixVector
 
   PUBLIC Matrix_AllValuesSet
 
+  PUBLIC Matrix_BlockSizeSet
+
   PUBLIC MATRIX_CREATE_FINISH,MATRIX_CREATE_START
 
   PUBLIC Matrix_CreateStart,Matrix_CreateFinish
 
-  PUBLIC MATRIX_DATA_GET
-
-  PUBLIC MATRIX_DATA_TYPE_SET
-
-  PUBLIC Matrix_DataTypeGet,Matrix_DataTypeSet
+  PUBLIC Matrix_DataTypeSet
 
   PUBLIC Matrix_Destroy
    
   PUBLIC Matrix_Duplicate
 
-  PUBLIC MATRIX_MAX_COLUMNS_PER_ROW_GET
+  PUBLIC MATRIX_NUMBER_NON_ZEROS_SET
 
-  PUBLIC Matrix_MaxColumnsPerRowGet
-
-  PUBLIC MATRIX_NUMBER_NON_ZEROS_GET,MATRIX_NUMBER_NON_ZEROS_SET
-
-  PUBLIC Matrix_NumberOfNonZerosGet,Matrix_NumberOfNonZerosSet
+  PUBLIC Matrix_NumberOfNonZerosSet
 
   PUBLIC MATRIX_MAX_SIZE_SET
 
   PUBLIC Matrix_MaxSizeSet
 
   PUBLIC Matrix_Output
+
+  PUBLIC MatrixRowColCoupling_Finalise,MatrixRowColCoupling_Initialise
 
   PUBLIC MATRIX_SIZE_SET
 
@@ -507,16 +490,22 @@ MODULE MatrixVector
 
   PUBLIC Matrix_StorageLocationFind
 
-  PUBLIC MATRIX_STORAGE_LOCATIONS_GET,MATRIX_STORAGE_LOCATIONS_SET
+  PUBLIC MATRIX_STORAGE_LOCATIONS_SET
 
-  PUBLIC Matrix_StorageLocationsGet,Matrix_StorageLocationsSet
+  PUBLIC Matrix_StorageLocationsSet
 
-  PUBLIC MATRIX_STORAGE_TYPE_GET,MATRIX_STORAGE_TYPE_SET
+  PUBLIC MATRIX_STORAGE_TYPE_SET
 
-  PUBLIC Matrix_StorageTypeGet,Matrix_StorageTypeSet
+  PUBLIC Matrix_StorageTypeSet
 
-  PUBLIC Matrix_SymmetryTypeGet,Matrix_SymmetryTypeSet
+  PUBLIC Matrix_SymmetryTypeSet
 
+  PUBLIC Matrix_TransposeRowColumnPositionGet
+
+  PUBLIC Matrix_TransposeRowsColumnsSet
+
+  PUBLIC Matrix_TransposeTypeSet
+  
   PUBLIC MATRIX_VALUES_ADD
 
   PUBLIC Matrix_ValuesAdd
@@ -533,13 +522,9 @@ MODULE MatrixVector
 
   PUBLIC Vector_CreateFinish,Vector_CreateStart
 
-  PUBLIC VECTOR_DATA_GET
-
-  PUBLIC Vector_DataGet
-
   PUBLIC VECTOR_DATA_TYPE_SET
 
-  PUBLIC Vector_DataTypeGet,Vector_DataTypeSet
+  PUBLIC Vector_DataTypeSet
 
   PUBLIC Vector_Destroy
 
@@ -564,1715 +549,1590 @@ CONTAINS
   !
 
   !>Sets all values in an integer matrix to the specified value.
-  SUBROUTINE MATRIX_ALL_VALUES_SET_INTG(MATRIX,VALUE,ERR,ERROR,*)
+  SUBROUTINE Matrix_AllValuesSetIntg(matrix,matrixValue,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: VALUE !<The value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set all values for
+    INTEGER(INTG), INTENT(IN) :: matrixValue !<The value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("MATRIX_ALL_VALUES_SET_INTG",ERR,ERROR,*999)
+    ENTERS("Matrix_AllValuesSetIntg",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-          MATRIX%DATA_INTG=VALUE
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the integer data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
 
-    EXITS("MATRIX_ALL_VALUES_SET_INTG")
+    matrix%dataIntg=matrixValue
+
+    EXITS("Matrix_AllValuesSetIntg")
     RETURN
-999 ERRORSEXITS("MATRIX_ALL_VALUES_SET_INTG",ERR,ERROR)
+999 ERRORSEXITS("Matrix_AllValuesSetIntg",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_ALL_VALUES_SET_INTG
+    
+  END SUBROUTINE Matrix_AllValuesSetIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Sets all values in a single precision matrix to the specified value.
-  SUBROUTINE MATRIX_ALL_VALUES_SET_SP(MATRIX,VALUE,ERR,ERROR,*)
+  !>Sets all values in a single precision real matrix to the specified value.
+  SUBROUTINE Matrix_AllValuesSetSP(matrix,matrixValue,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    REAL(SP), INTENT(IN) :: VALUE !<The value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set all values for
+    REAL(SP), INTENT(IN) :: matrixValue !<The value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("MATRIX_ALL_VALUES_SET_SP",ERR,ERROR,*999)
+    ENTERS("Matrix_AllValuesSetSP",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-          MATRIX%DATA_SP=VALUE
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the single precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
 
-    EXITS("MATRIX_ALL_VALUES_SET_SP")
+    matrix%dataSP=matrixValue
+
+    EXITS("Matrix_AllValuesSetSP")
     RETURN
-999 ERRORSEXITS("MATRIX_ALL_VALUES_SET_SP",ERR,ERROR)
+999 ERRORSEXITS("Matrix_AllValuesSetSP",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_ALL_VALUES_SET_SP
+    
+  END SUBROUTINE Matrix_AllValuesSetSP
 
   !
   !================================================================================================================================
   !
 
-  !>Sets all values in a double precision matrix to the specified value.
-  SUBROUTINE MATRIX_ALL_VALUES_SET_DP(MATRIX,VALUE,ERR,ERROR,*)
+  !>Sets all values in a double precision real matrix to the specified value.
+  SUBROUTINE Matrix_AllValuesSetDP(matrix,matrixValue,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    REAL(DP), INTENT(IN) :: VALUE !<The value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set all values for
+    REAL(DP), INTENT(IN) :: matrixValue !<The value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("MATRIX_ALL_VALUES_SET_DP",ERR,ERROR,*999)
+    ENTERS("Matrix_AllValuesSetDP",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-          MATRIX%DATA_DP=VALUE
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the double precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
 
-    EXITS("MATRIX_ALL_VALUES_SET_DP")
+    matrix%dataDP=matrixValue
+
+    EXITS("Matrix_AllValuesSetDP")
     RETURN
-999 ERRORSEXITS("MATRIX_ALL_VALUES_SET_DP",ERR,ERROR)
+999 ERRORSEXITS("Matrix_AllValuesSetDP",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_ALL_VALUES_SET_DP
+    
+  END SUBROUTINE Matrix_AllValuesSetDP
 
   !
   !================================================================================================================================
   !
 
   !>Sets all values in a logical matrix to the specified value.
-  SUBROUTINE MATRIX_ALL_VALUES_SET_L(MATRIX,VALUE,ERR,ERROR,*)
+  SUBROUTINE Matrix_AllValuesSetL(matrix,matrixValue,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    LOGICAL, INTENT(IN) :: VALUE !<The value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set all values for
+    LOGICAL, INTENT(IN) :: matrixValue !<The value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("MATRIX_ALL_VALUES_SET_L",ERR,ERROR,*999)
+    ENTERS("Matrix_AllValuesSetL",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-          MATRIX%DATA_L=VALUE
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the logical data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
 
-    EXITS("MATRIX_ALL_VALUES_SET_L")
+    matrix%dataL=matrixValue
+
+    EXITS("Matrix_AllValuesSetL")
     RETURN
-999 ERRORSEXITS("MATRIX_ALL_VALUES_SET_L",ERR,ERROR)
+999 ERRORSEXITS("Matrix_AllValuesSetL",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_ALL_VALUES_SET_L
+    
+  END SUBROUTINE Matrix_AllValuesSetL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the block size for a matrix.
+  SUBROUTINE Matrix_BlockSizeSet(matrix,blockSize,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: blockSize !<The block size of the matrix to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_BlockSizeSet",err,error,*999)
+
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
+    
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      CALL FlagError("Can not set the block size for a matrix with block storage.",err,error,*999)
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      CALL FlagError("Can not set the block size for a matrix with diagonal storage.",err,error,*999)
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      CALL FlagError("Can not set the block size for a matrix with column major storage.",err,error,*999)          
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      CALL FlagError("Can not set the block size for a matrix with row major storage.",err,error,*999)          
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      CALL FlagError("Can not set the block size for a matrix with compressed row storage.",err,error,*999)
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      CALL FlagError("Can not set the block size for a matrix with compressed column storage.",err,error,*999)
+    CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      CALL FlagError("Can not set the block size for a matrix with row column storage.",err,error,*999)      
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      IF(blockSize<1.OR.blockSize>MIN(matrix%m,matrix%n)) THEN
+        localError="The specified block size of "//TRIM(NumberToVString(blockSize,"*",err,error))// &
+          & " is invalid. The number must be >= 1 and <= "//TRIM(NumberToVString(MIN(matrix%M,matrix%n),"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      matrix%blockSize=blockSize
+      matrix%numberOfRowBlocks=CEILING(REAL(matrix%m,DP)/REAL(matrix%blockSize,DP),INTG)
+      matrix%numberOfColumnBlocks=CEILING(REAL(matrix%n,DP)/REAL(matrix%blockSize,DP),INTG)
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Can not set the block size for a matrix with modified KRM storage.",err,error,*999)      
+    CASE DEFAULT      
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Matrix_BlockSizeSet")
+    RETURN
+999 ERRORSEXITS("Matrix_BlockSizeSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_BlockSizeSet
 
   !
   !================================================================================================================================
   !
 
   !>Finishes the creation a matrix.
-  SUBROUTINE MATRIX_CREATE_FINISH(MATRIX,ERR,ERROR,*)
+  SUBROUTINE Matrix_CreateFinish(matrix,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to finish
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to finish
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: column_idx,COUNT,row_idx,row_idx2
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: columnIdx,count,rowIdx,rowIdx2
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_CREATE_FINISH",ERR,ERROR,*999)
+    ENTERS("Matrix_CreateFinish",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        CALL FlagError("Matrix has been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(MATRIX%STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE)
-          IF(MATRIX%MAX_M==-1) MATRIX%MAX_M=MATRIX%M
-          IF(MATRIX%MAX_N==-1) MATRIX%MAX_N=MATRIX%N
-          MATRIX%SIZE=MATRIX%M*MATRIX%N
-          MATRIX%NUMBER_NON_ZEROS=MATRIX%M*MATRIX%N
-          MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=MATRIX%N
-        CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-          IF(MATRIX%MAX_M==-1) MATRIX%MAX_M=MATRIX%M
-          IF(MATRIX%MAX_N==-1) MATRIX%MAX_N=MATRIX%N
-          MATRIX%SIZE=MATRIX%M
-          MATRIX%NUMBER_NON_ZEROS=MATRIX%M
-          MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=1
-        CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-          IF(MATRIX%MAX_M==-1) CALL FlagError("Maximum number of rows has not been set for this matrix.",ERR,ERROR,*999)
-          IF(MATRIX%MAX_N==-1) CALL FlagError("Maximum number of columns has not been set for this matrix.",ERR,ERROR,*999)
-          MATRIX%SIZE=MATRIX%MAX_M*MATRIX%N
-          MATRIX%NUMBER_NON_ZEROS=MATRIX%M*MATRIX%N
-          MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=MATRIX%N
-        CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-          IF(MATRIX%MAX_M==-1) CALL FlagError("Maximum number of rows has not been set for this matrix.",ERR,ERROR,*999)
-          IF(MATRIX%MAX_N==-1) CALL FlagError("Maximum number of columns has not been set for this matrix.",ERR,ERROR,*999)
-          MATRIX%SIZE=MATRIX%M*MATRIX%MAX_N
-          MATRIX%NUMBER_NON_ZEROS=MATRIX%M*MATRIX%N
-          MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=MATRIX%N
-        CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          IF(MATRIX%NUMBER_NON_ZEROS==-1) CALL FlagError("Number of non-zeros has not been set for this matrix.",ERR,ERROR,*999)
-          IF(MATRIX%MAX_M==-1) MATRIX%MAX_M=MATRIX%M
-          IF(MATRIX%MAX_N==-1) MATRIX%MAX_N=MATRIX%N
-          MATRIX%SIZE=MATRIX%NUMBER_NON_ZEROS
-          IF(.NOT.ALLOCATED(MATRIX%COLUMN_INDICES))  &
-            & CALL FlagError("Matrix storage locations column indices have not been set.",ERR,ERROR,*999)
-          IF(.NOT.ALLOCATED(MATRIX%ROW_INDICES))  &
-            & CALL FlagError("Matrix storage locations row indices have not been set.",ERR,ERROR,*999)
-          MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=0
-          DO row_idx=1,MATRIX%M
-            IF((MATRIX%ROW_INDICES(row_idx+1)-MATRIX%ROW_INDICES(row_idx))>MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW) &
-              & MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=MATRIX%ROW_INDICES(row_idx+1)-MATRIX%ROW_INDICES(row_idx)
-          ENDDO !row_idx
-        CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-          IF(MATRIX%NUMBER_NON_ZEROS==-1) CALL FlagError("Number of non-zeros has not been set for this matrix.",ERR,ERROR,*999)
-          IF(MATRIX%MAX_M==-1) MATRIX%MAX_M=MATRIX%M
-          IF(MATRIX%MAX_N==-1) MATRIX%MAX_N=MATRIX%N
-          MATRIX%SIZE=MATRIX%NUMBER_NON_ZEROS
-          IF(.NOT.ALLOCATED(MATRIX%COLUMN_INDICES))  &
-            & CALL FlagError("Matrix storage locations column indices have not been set.",ERR,ERROR,*999)
-          IF(.NOT.ALLOCATED(MATRIX%ROW_INDICES))  &
-            & CALL FlagError("Matrix storage locations row indices have not been set.",ERR,ERROR,*999)
-          MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=0
-          DO row_idx=1,MATRIX%M
-            COUNT=0
-            DO column_idx=1,MATRIX%N
-              DO row_idx2=MATRIX%COLUMN_INDICES(column_idx),MATRIX%COLUMN_INDICES(column_idx+1)-1
-                IF(MATRIX%ROW_INDICES(row_idx2)==row_idx) COUNT=COUNT+1
-              ENDDO !row_idx2
-            ENDDO !column_idx
-            IF(COUNT>MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW) MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=COUNT
-          ENDDO !row_idx
-        CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          IF(MATRIX%NUMBER_NON_ZEROS==-1) CALL FlagError("Number of non-zeros has not been set for this matrix.",ERR,ERROR,*999)
-          IF(MATRIX%MAX_M==-1) MATRIX%MAX_M=MATRIX%M
-          IF(MATRIX%MAX_N==-1) MATRIX%MAX_N=MATRIX%N
-          MATRIX%SIZE=MATRIX%NUMBER_NON_ZEROS  
-          IF(.NOT.ALLOCATED(MATRIX%COLUMN_INDICES))  &
-            & CALL FlagError("Matrix storage locations column indices have not been set.",ERR,ERROR,*999)
-          IF(.NOT.ALLOCATED(MATRIX%ROW_INDICES))  &
-            & CALL FlagError("Matrix storage locations row indices have not been set.",ERR,ERROR,*999)
-          MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=0
-          DO row_idx=1,MATRIX%M
-            COUNT=0
-            DO row_idx2=1,MATRIX%NUMBER_NON_ZEROS
-              IF(MATRIX%ROW_INDICES(row_idx2)==row_idx) COUNT=COUNT+1
-            ENDDO !row_idx2            
-            IF(COUNT>MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW) MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=COUNT
-          ENDDO !row_idx          
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-        IF(MATRIX%SIZE>0) THEN
-          SELECT CASE(MATRIX%dataType)
-          CASE(MATRIX_VECTOR_INTG_TYPE)
-            ALLOCATE(MATRIX%DATA_INTG(MATRIX%SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate matrix integer data.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_SP_TYPE)
-            ALLOCATE(MATRIX%DATA_SP(MATRIX%SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate matrix single precision data.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_DP_TYPE)
-            ALLOCATE(MATRIX%DATA_DP(MATRIX%SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate matrix double precision data.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_L_TYPE)
-            ALLOCATE(MATRIX%DATA_L(MATRIX%SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate matrix logical data.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_SPC_TYPE)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_DPC_TYPE)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The matrix data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))//" is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ENDIF
-        MATRIX%ID=MATRIX_VECTOR_ID
-        MATRIX_VECTOR_ID=MATRIX_VECTOR_ID+1
-        MATRIX%MATRIX_FINISHED=.TRUE.
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
     
-    EXITS("MATRIX_CREATE_FINISH")
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      IF(matrix%maxM==-1) matrix%maxM=matrix%m
+      IF(matrix%maxN==-1) matrix%maxN=matrix%n
+      matrix%size=matrix%m*matrix%n
+      matrix%numberOfNonZeros=matrix%m*matrix%n
+      matrix%maximumColumnIndicesPerRow=matrix%n
+      matrix%blockSize=MAX(matrix%m,matrix%n)
+      matrix%numberOfBlocks=1
+      matrix%numberOfRowBlocks=1
+      matrix%numberOfColumnBlocks=1
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      IF(matrix%maxM==-1) matrix%maxM=matrix%m
+      IF(matrix%maxN==-1) matrix%maxN=matrix%n
+      matrix%size=matrix%m
+      matrix%numberOfNonZeros=matrix%m
+      matrix%maximumColumnIndicesPerRow=1
+      matrix%blockSize=MAX(matrix%m,matrix%n)
+      matrix%numberOfBlocks=1
+      matrix%numberOfRowBlocks=1
+      matrix%numberOfColumnBlocks=1
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      IF(matrix%maxM==-1) CALL FlagError("Maximum number of rows has not been set for this matrix.",err,error,*999)
+      IF(matrix%maxN==-1) CALL FlagError("Maximum number of columns has not been set for this matrix.",err,error,*999)
+      matrix%size=matrix%maxM*matrix%n
+      matrix%numberOfNonZeros=matrix%m*matrix%n
+      matrix%maximumColumnIndicesPerRow=matrix%n
+      matrix%blockSize=MAX(matrix%m,matrix%n)
+      matrix%numberOfBlocks=1
+      matrix%numberOfRowBlocks=1
+      matrix%numberOfColumnBlocks=1
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      IF(matrix%maxM==-1) CALL FlagError("Maximum number of rows has not been set for this matrix.",err,error,*999)
+      IF(matrix%maxN==-1) CALL FlagError("Maximum number of columns has not been set for this matrix.",err,error,*999)
+      matrix%size=matrix%m*matrix%maxN
+      matrix%numberOfNonZeros=matrix%m*matrix%n
+      matrix%maximumColumnIndicesPerRow=matrix%n
+      matrix%blockSize=MAX(matrix%m,matrix%n)
+      matrix%numberOfBlocks=1
+      matrix%numberOfRowBlocks=1
+      matrix%numberOfColumnBlocks=1
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      IF(matrix%numberOfNonZeros==-1) CALL FlagError("Number of non-zeros has not been set for this matrix.",err,error,*999)
+      IF(matrix%maxM==-1) matrix%maxM=matrix%m
+      IF(matrix%maxN==-1) matrix%maxN=matrix%n
+      matrix%size=matrix%numberOfNonZeros
+      IF(.NOT.ALLOCATED(matrix%columnIndices))  &
+        & CALL FlagError("Matrix storage locations column indices have not been set.",err,error,*999)
+      IF(.NOT.ALLOCATED(matrix%rowIndices))  &
+        & CALL FlagError("Matrix storage locations row indices have not been set.",err,error,*999)
+      matrix%maximumColumnIndicesPerRow=0
+      DO rowIdx=1,matrix%m
+        IF((matrix%rowIndices(rowIdx+1)-matrix%rowIndices(rowIdx))>matrix%maximumColumnIndicesPerRow) &
+          & matrix%maximumColumnIndicesPerRow=matrix%rowIndices(rowIdx+1)-matrix%rowIndices(rowIdx)
+      ENDDO !rowIdx
+      matrix%blockSize=MAX(matrix%m,matrix%n)
+      matrix%numberOfBlocks=1
+      matrix%numberOfRowBlocks=1
+      matrix%numberOfColumnBlocks=1
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      IF(matrix%numberOfNonZeros==-1) CALL FlagError("Number of non-zeros has not been set for this matrix.",err,error,*999)
+      IF(matrix%maxM==-1) matrix%maxM=matrix%m
+      IF(matrix%maxN==-1) matrix%maxN=matrix%n
+      matrix%size=matrix%numberOfNonZeros
+      IF(.NOT.ALLOCATED(matrix%columnIndices))  &
+        & CALL FlagError("Matrix storage locations column indices have not been set.",err,error,*999)
+      IF(.NOT.ALLOCATED(matrix%rowIndices))  &
+        & CALL FlagError("Matrix storage locations row indices have not been set.",err,error,*999)
+      matrix%maximumColumnIndicesPerRow=0
+      DO rowIdx=1,matrix%m
+        count=0
+        DO columnIdx=1,matrix%n
+          DO rowIdx2=matrix%columnIndices(columnIdx),matrix%columnIndices(columnIdx+1)-1
+            IF(matrix%rowIndices(rowIdx2)==rowIdx) count=count+1
+          ENDDO !rowIdx2
+        ENDDO !columnIdx
+        IF(count>matrix%maximumColumnIndicesPerRow) matrix%maximumColumnIndicesPerRow=count
+      ENDDO !rowIdx
+      matrix%blockSize=MAX(matrix%m,matrix%n)
+      matrix%numberOfBlocks=1
+      matrix%numberOfRowBlocks=1
+      matrix%numberOfColumnBlocks=1
+    CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      IF(matrix%numberOfNonZeros==-1) CALL FlagError("Number of non-zeros has not been set for this matrix.",err,error,*999)
+      IF(matrix%maxM==-1) matrix%maxM=matrix%m
+      IF(matrix%maxN==-1) matrix%maxN=matrix%n
+      matrix%size=matrix%numberOfNonZeros  
+      IF(.NOT.ALLOCATED(matrix%columnIndices))  &
+        & CALL FlagError("Matrix storage locations column indices have not been set.",err,error,*999)
+      IF(.NOT.ALLOCATED(matrix%rowIndices))  &
+        & CALL FlagError("Matrix storage locations row indices have not been set.",err,error,*999)
+      matrix%maximumColumnIndicesPerRow=0
+      DO rowIdx=1,matrix%m
+        count=0
+        DO rowIdx2=1,matrix%numberOfNonZeros
+          IF(matrix%rowIndices(rowIdx2)==rowIdx) count=count+1
+        ENDDO !rowIdx2            
+        IF(count>matrix%maximumColumnIndicesPerRow) matrix%maximumColumnIndicesPerRow=count
+      ENDDO !rowIdx          
+      matrix%blockSize=MAX(matrix%m,matrix%n)
+      matrix%numberOfBlocks=1
+      matrix%numberOfRowBlocks=1
+      matrix%numberOfColumnBlocks=1
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      IF(.NOT.ALLOCATED(matrix%columnIndices))  &
+        & CALL FlagError("Matrix storage locations column indices have not been set.",err,error,*999)
+      IF(.NOT.ALLOCATED(matrix%rowIndices))  &
+        & CALL FlagError("Matrix storage locations row indices have not been set.",err,error,*999)
+      matrix%numberOfRowBlocks=CEILING(REAL(matrix%m,DP)/REAL(matrix%blockSize,DP),INTG)
+      matrix%numberOfColumnBlocks=CEILING(REAL(matrix%n,DP)/REAL(matrix%blockSize,DP),INTG)
+      matrix%maxM=matrix%numberOfRowBlocks*matrix%blockSize
+      matrix%maxN=matrix%numberOfColumnBlocks*matrix%blockSize
+      matrix%numberOfNonZeros=matrix%numberOfBlocks*matrix%blockSize*matrix%blockSize
+      matrix%size=matrix%numberOfNonZeros
+      matrix%maximumColumnIndicesPerRow=0
+      DO rowIdx=1,matrix%numberOfRowBlocks
+        IF((matrix%rowIndices(rowIdx+1)-matrix%rowIndices(rowIdx))>matrix%maximumColumnIndicesPerRow) &
+          & matrix%maximumColumnIndicesPerRow=matrix%rowIndices(rowIdx+1)-matrix%rowIndices(rowIdx)
+      ENDDO !rowIdx
+      matrix%maximumColumnIndicesPerRow=matrix%maximumColumnIndicesPerRow*matrix%blockSize
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    IF(matrix%size>0) THEN
+      SELECT CASE(matrix%dataType)
+      CASE(MATRIX_VECTOR_INTG_TYPE)
+        ALLOCATE(matrix%dataIntg(matrix%size),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate matrix integer data.",err,error,*999)
+      CASE(MATRIX_VECTOR_SP_TYPE)
+        ALLOCATE(matrix%dataSP(matrix%size),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate matrix single precision data.",err,error,*999)
+      CASE(MATRIX_VECTOR_DP_TYPE)
+        ALLOCATE(matrix%dataDP(matrix%size),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate matrix double precision data.",err,error,*999)
+      CASE(MATRIX_VECTOR_L_TYPE)
+        ALLOCATE(matrix%dataL(matrix%size),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate matrix logical data.",err,error,*999)
+      CASE(MATRIX_VECTOR_SPC_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(MATRIX_VECTOR_DPC_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDIF
+    matrix%ID=MATRIX_VECTOR_ID
+    MATRIX_VECTOR_ID=MATRIX_VECTOR_ID+1
+    matrix%matrixFinished=.TRUE.
+    IF(matrix%transposeType==MATRIX_FULL_TRANSPOSE_REQUIRED) CALL Matrix_TransposeLocationsCalculate(matrix,err,error,*999)
+    
+    EXITS("Matrix_CreateFinish")
     RETURN
 !!TODO: deallocate on error
-999 ERRORSEXITS("MATRIX_CREATE_FINISH",ERR,ERROR)
+999 ERRORSEXITS("Matrix_CreateFinish",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_CREATE_FINISH
+    
+  END SUBROUTINE Matrix_CreateFinish
 
   !
   !================================================================================================================================
   !
 
   !>Starts the creation a matrix.
-  SUBROUTINE MATRIX_CREATE_START(MATRIX,ERR,ERROR,*)
+  SUBROUTINE Matrix_CreateStart(matrix,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("MATRIX_CREATE_START",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      CALL FlagError("Matrix is already associated.",ERR,ERROR,*998)
-    ELSE
-      ALLOCATE(MATRIX,STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate the matrix.",ERR,ERROR,*999)
-      CALL MATRIX_INITIALISE(MATRIX,ERR,ERROR,*999)
-      !Set the defaults
-      MATRIX%dataType=MATRIX_VECTOR_DP_TYPE
-      MATRIX%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
-    ENDIF
-    
-    EXITS("MATRIX_CREATE_START")
-    RETURN
-999 IF(ASSOCIATED(MATRIX)) CALL MATRIX_FINALISE(MATRIX,ERR,ERROR,*998)
-998 ERRORSEXITS("MATRIX_CREATE_START",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_CREATE_START
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data of an integer matrix. Note: the values can be used for read operations but a MATRIX_VALUES_SET call must be used to change any values. The pointer should not be deallocated.
-  SUBROUTINE MATRIX_DATA_GET_INTG(MATRIX,DATA,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), POINTER :: DATA(:) !<On return a pointer to the matrix data
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_DATA_GET_INTG",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(ASSOCIATED(DATA)) THEN
-        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(DATA)    
-        IF(MATRIX%MATRIX_FINISHED) THEN
-          IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-            DATA=>MATRIX%DATA_INTG
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the integer data type of the requested values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("MATRIX_DATA_GET_INTG")
-    RETURN
-999 ERRORSEXITS("MATRIX_DATA_GET_INTG",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_DATA_GET_INTG
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data of a single precision matrix. Note: the values can be used for read operations but aMATRIX_VALUES_SET call must be used to change any values. The pointer should not be deallocated.
-  SUBROUTINE MATRIX_DATA_GET_SP(MATRIX,DATA,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    REAL(SP), POINTER :: DATA(:) !<On return a pointer to the matrix data
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_DATA_GET_SP",ERR,ERROR,*999)
-
-     IF(ASSOCIATED(MATRIX)) THEN
-      IF(ASSOCIATED(DATA)) THEN
-        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(DATA)
-        IF(MATRIX%MATRIX_FINISHED) THEN
-          IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-            DATA=>MATRIX%DATA_SP
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the single precision data type of the requested values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("MATRIX_DATA_GET_SP")
-    RETURN
-999 ERRORSEXITS("MATRIX_DATA_GET_SP",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_DATA_GET_SP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data of a double precision matrix. Note: the values can be used for read operations but a MATRIX_VALUES_SET call must be used to change any values. The pointer should not be deallocated.
-  SUBROUTINE MATRIX_DATA_GET_DP(MATRIX,DATA,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    REAL(DP), POINTER :: DATA(:) !<On return a pointer to the matrix data
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_DATA_GET_DP",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(ASSOCIATED(DATA)) THEN
-        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(DATA)
-        IF(MATRIX%MATRIX_FINISHED) THEN
-          IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-            DATA=>MATRIX%DATA_DP
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the double precision data type of the requested values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("MATRIX_DATA_GET_DP")
-    RETURN
-999 ERRORSEXITS("MATRIX_DATA_GET_DP",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_DATA_GET_DP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data of a logical matrix. Note: the values can be used for read operations but a MATRIX_VALUES_SET call must be used to change any values. The pointer should not be deallocated.
-  SUBROUTINE MATRIX_DATA_GET_L(MATRIX,DATA,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    LOGICAL, POINTER :: DATA(:) !<On return a pointer to the matrix data
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_DATA_GET_L",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(ASSOCIATED(DATA)) THEN
-        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(DATA)
-        IF(MATRIX%MATRIX_FINISHED) THEN
-          IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-            DATA=>MATRIX%DATA_L
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the logical data type of the requested values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("MATRIX_DATA_GET_L")
-    RETURN
-999 ERRORSEXITS("MATRIX_DATA_GET_L",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_DATA_GET_L
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the data type of a matrix.
-  SUBROUTINE Matrix_DataTypeGet(matrix,dataType,err,error,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the data type of the matrix. \see MatrixVector_DataTypes,MatrixVector
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
 
-    ENTERS("Matrix_DataTypeGet",err,error,*999)
+    ENTERS("Matrix_CreateStart",err,error,*998)
 
-    IF(ASSOCIATED(matrix)) THEN
-      IF(.NOT.matrix%matrix_finished) THEN
-        CALL flag_error("The matrix has not been finished.",err,error,*999)
-      ELSE
-        dataType=matrix%dataType
-      END IF
-    ELSE
-      CALL flag_error("Matrix is not associated.",err,error,*999)
-    END IF
-
-    EXITS("Matrix_DataTypeGet")
+    IF(ASSOCIATED(matrix)) CALL FlagError("Matrix is already associated.",err,error,*998)
+    
+    ALLOCATE(matrix,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate the matrix.",err,error,*999)
+    CALL Matrix_Initialise(matrix,err,error,*999)
+    !Set the defaults
+    matrix%dataType=MATRIX_VECTOR_DP_TYPE
+    matrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
+    
+    EXITS("Matrix_CreateStart")
     RETURN
-999 ERRORSEXITS("Matrix_DataTypeGet",err,error)
+999 IF(ASSOCIATED(matrix)) CALL Matrix_Finalise(matrix,err,error,*998)
+998 ERRORSEXITS("Matrix_CreateStart",err,error)
     RETURN 1
-  END SUBROUTINE Matrix_DataTypeGet
+    
+  END SUBROUTINE Matrix_CreateStart
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the data type of a matrix.
-  SUBROUTINE MATRIX_DATA_TYPE_SET(MATRIX,DATA_TYPE,ERR,ERROR,*)
+  SUBROUTINE Matrix_DataTypeSet(matrix,dataType,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix 
-    INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type to set for the matrix. \see MatrixVector_DataTypes,MatrixVector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set the data type for
+    INTEGER(INTG), INTENT(IN) :: dataType !<The data type to set for the matrix. \see MatrixVector_DataTypes,MatrixVector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_DATA_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("Matrix_DataTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN      
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        CALL FlagError("The matrix has been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(DATA_TYPE)
-        CASE(MATRIX_VECTOR_INTG_TYPE)
-          MATRIX%dataType=MATRIX_VECTOR_INTG_TYPE
-        CASE(MATRIX_VECTOR_SP_TYPE)
-          MATRIX%dataType=MATRIX_VECTOR_SP_TYPE
-        CASE(MATRIX_VECTOR_DP_TYPE)
-          MATRIX%dataType=MATRIX_VECTOR_DP_TYPE
-        CASE(MATRIX_VECTOR_L_TYPE)
-          MATRIX%dataType=MATRIX_VECTOR_L_TYPE
-        CASE(MATRIX_VECTOR_SPC_TYPE)
-          MATRIX%dataType=MATRIX_VECTOR_SPC_TYPE
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(MATRIX_VECTOR_DPC_TYPE)
-          MATRIX%dataType=MATRIX_VECTOR_DPC_TYPE
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix vector data type of "//TRIM(NUMBER_TO_VSTRING(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
+    
+    SELECT CASE(dataType)
+    CASE(MATRIX_VECTOR_INTG_TYPE)
+      matrix%dataType=MATRIX_VECTOR_INTG_TYPE
+    CASE(MATRIX_VECTOR_SP_TYPE)
+      matrix%dataType=MATRIX_VECTOR_SP_TYPE
+    CASE(MATRIX_VECTOR_DP_TYPE)
+      matrix%dataType=MATRIX_VECTOR_DP_TYPE
+    CASE(MATRIX_VECTOR_L_TYPE)
+      matrix%dataType=MATRIX_VECTOR_L_TYPE
+    CASE(MATRIX_VECTOR_SPC_TYPE)
+      matrix%dataType=MATRIX_VECTOR_SPC_TYPE
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(MATRIX_VECTOR_DPC_TYPE)
+      matrix%dataType=MATRIX_VECTOR_DPC_TYPE
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix vector data type of "//TRIM(NumberToVString(dataType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("MATRIX_DATA_TYPE_SET")
+    EXITS("Matrix_DataTypeSet")
     RETURN
-999 ERRORSEXITS("MATRIX_DATA_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("Matrix_DataTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_DATA_TYPE_SET
+    
+  END SUBROUTINE Matrix_DataTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Destroys a matrix 
-  SUBROUTINE MATRIX_DESTROY(MATRIX,ERR,ERROR,*)
+  SUBROUTINE Matrix_Destroy(matrix,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
-    ENTERS("MATRIX_DESTROY",ERR,ERROR,*999)
+    ENTERS("Matrix_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      CALL MATRIX_FINALISE(MATRIX,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
+    
+    CALL Matrix_Finalise(matrix,err,error,*999)
 
-    EXITS("MATRIX_DESTROY")
+    EXITS("Matrix_Destroy")
     RETURN
-999 ERRORSEXITS("MATRIX_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("Matrix_Destroy",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_DESTROY
+    
+  END SUBROUTINE Matrix_Destroy
 
   !
   !================================================================================================================================
   !
 
-  !>Duplicates the matrix and returns a pointer to the duplicated matrix in NEWMATRIX.
-  SUBROUTINE MATRIX_DUPLICATE(MATRIX,NEW_MATRIX,ERR,ERROR,*)
+  !>Duplicates the matrix and returns a pointer to the duplicated matrix in newMatrix.
+  SUBROUTINE Matrix_Duplicate(matrix,newMatrix,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to duplicate
-    TYPE(MATRIX_TYPE), POINTER :: NEW_MATRIX !<On return a pointer to a new duplicated matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to duplicate
+    TYPE(MatrixType), POINTER :: newMatrix !<On return a pointer to a new duplicated matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError,localError
     
-    ENTERS("MATRIX_DUPLICATE",ERR,ERROR,*998)
+    ENTERS("Matrix_Duplicate",err,error,*998)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(ASSOCIATED(NEW_MATRIX)) THEN
-        CALL FlagError("New matrix is already associated.",ERR,ERROR,*998)
-      ELSE
-        CALL MATRIX_CREATE_START(NEW_MATRIX,ERR,ERROR,*999)
-        CALL MATRIX_DATA_TYPE_SET(NEW_MATRIX,MATRIX%dataType,ERR,ERROR,*999)
-        CALL MATRIX_SIZE_SET(NEW_MATRIX,MATRIX%M,MATRIX%N,ERR,ERROR,*999)
-        CALL MATRIX_STORAGE_TYPE_SET(NEW_MATRIX,MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
-        SELECT CASE(MATRIX%STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE,MATRIX_DIAGONAL_STORAGE_TYPE)
-          !Do nothing
-        CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE,MATRIX_ROW_MAJOR_STORAGE_TYPE)
-          CALL MATRIX_MAX_SIZE_SET(NEW_MATRIX,MATRIX%MAX_M,MATRIX%MAX_N,ERR,ERROR,*999)          
-        CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE,MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE,MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          CALL MATRIX_NUMBER_NON_ZEROS_SET(NEW_MATRIX,MATRIX%NUMBER_NON_ZEROS,ERR,ERROR,*999)
-          CALL MATRIX_STORAGE_LOCATIONS_SET(NEW_MATRIX,MATRIX%ROW_INDICES,MATRIX%COLUMN_INDICES,ERR,ERROR,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-        CALL MATRIX_CREATE_FINISH(NEW_MATRIX,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(ASSOCIATED(newMatrix)) CALL FlagError("New matrix is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*998)
+    
+    CALL Matrix_CreateStart(newMatrix,err,error,*999)
+    CALL Matrix_DataTypeSet(newMatrix,matrix%dataType,err,error,*999)
+    CALL Matrix_SizeSet(newMatrix,matrix%m,matrix%n,err,error,*999)
+    CALL Matrix_StorageTypeSet(newMatrix,matrix%storageType,err,error,*999)
+    CALL Matrix_SymmetryTypeSet(newMatrix,matrix%symmetryType,err,error,*999)
+    CALL Matrix_TransposeTypeSet(newMatrix,matrix%transposeType,err,error,*999)
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE,MATRIX_DIAGONAL_STORAGE_TYPE)
+      !Do nothing
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE,MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      CALL Matrix_MaxSizeSet(newMatrix,matrix%maxM,matrix%maxN,err,error,*999)          
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE,MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE,MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      CALL Matrix_NumberOfNonZerosSet(newMatrix,matrix%numberOfNonZeros,err,error,*999)
+      CALL Matrix_StorageLocationsSet(newMatrix,matrix%rowIndices,matrix%columnIndices,err,error,*999)
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      CALL Matrix_BlockSizeSet(newMatrix,matrix%blockSize,err,error,*999)
+      CALL Matrix_StorageLocationsSet(newMatrix,matrix%rowIndices,matrix%columnIndices,err,error,*999)
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    CALL Matrix_CreateFinish(newMatrix,err,error,*999)
 
-    EXITS("MATRIX_DUPLICATE")
+    EXITS("Matrix_Duplicate")
     RETURN
-999 CALL MATRIX_FINALISE(NEW_MATRIX,ERR,ERROR,*998)
-998 ERRORSEXITS("MATRIX_DUPLICATE",ERR,ERROR)
+999 CALL Matrix_Finalise(newMatrix,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Matrix_Duplicate",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_DUPLICATE
+    
+  END SUBROUTINE Matrix_Duplicate
 
   !
   !================================================================================================================================
   !
 
   !>Finalises a matrix and deallocates all memory.
-  SUBROUTINE MATRIX_FINALISE(MATRIX,ERR,ERROR,*)
+  SUBROUTINE Matrix_Finalise(matrix,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("MATRIX_FINALISE",ERR,ERROR,*999)
+    ENTERS("Matrix_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(ALLOCATED(MATRIX%ROW_INDICES)) DEALLOCATE(MATRIX%ROW_INDICES)
-      IF(ALLOCATED(MATRIX%COLUMN_INDICES)) DEALLOCATE(MATRIX%COLUMN_INDICES)
-      IF(ALLOCATED(MATRIX%DATA_INTG)) DEALLOCATE(MATRIX%DATA_INTG)
-      IF(ALLOCATED(MATRIX%DATA_SP)) DEALLOCATE(MATRIX%DATA_SP)
-      IF(ALLOCATED(MATRIX%DATA_DP)) DEALLOCATE(MATRIX%DATA_DP)
-      IF(ALLOCATED(MATRIX%DATA_L)) DEALLOCATE(MATRIX%DATA_L)
-      DEALLOCATE(MATRIX)
+    IF(ASSOCIATED(matrix)) THEN
+      IF(ALLOCATED(matrix%rowIndices)) DEALLOCATE(matrix%rowIndices)
+      IF(ALLOCATED(matrix%columnIndices)) DEALLOCATE(matrix%columnIndices)
+      IF(ALLOCATED(matrix%rowIndicesT)) DEALLOCATE(matrix%rowIndicesT)
+      IF(ALLOCATED(matrix%columnIndicesT)) DEALLOCATE(matrix%columnIndicesT)
+      IF(ALLOCATED(matrix%dataIntg)) DEALLOCATE(matrix%dataIntg)
+      IF(ALLOCATED(matrix%dataSP)) DEALLOCATE(matrix%dataSP)
+      IF(ALLOCATED(matrix%dataDP)) DEALLOCATE(matrix%dataDP)
+      IF(ALLOCATED(matrix%dataL)) DEALLOCATE(matrix%dataL)
+      DEALLOCATE(matrix)
     ENDIF
 
-    EXITS("MATRIX_FINALISE")
+    EXITS("Matrix_Finalise")
     RETURN
-999 ERRORSEXITS("MATRIX_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("Matrix_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_FINALISE
+    
+  END SUBROUTINE Matrix_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises a matrix.
-  SUBROUTINE MATRIX_INITIALISE(MATRIX,ERR,ERROR,*)
+  SUBROUTINE Matrix_Initialise(matrix,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("MATRIX_INITIALISE",ERR,ERROR,*999)
+    ENTERS("Matrix_Initialise",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      !!TODO: have a matrix user number etc.
-      MATRIX%ID=0
-      MATRIX%MATRIX_FINISHED=.FALSE.
-      MATRIX%M=0
-      MATRIX%N=0
-      MATRIX%MAX_M=-1
-      MATRIX%MAX_N=-1
-      MATRIX%dataType=0
-      MATRIX%STORAGE_TYPE=0
-      MATRIX%symmetryType=MATRIX_UNSYMMETRIC_TYPE !Should this default to symmetric???
-      MATRIX%NUMBER_NON_ZEROS=0
-      MATRIX%SIZE=0      
-      MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW=0      
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
+    
+!!TODO: have a matrix user number etc.
+    matrix%ID=0
+    matrix%matrixFinished=.FALSE.
+    matrix%m=0
+    matrix%n=0
+    matrix%maxM=-1
+    matrix%maxN=-1
+    matrix%dataType=0
+    matrix%storageType=0
+    matrix%symmetryType=MATRIX_UNSYMMETRIC_TYPE !Should this default to symmetric???
+    matrix%transposeType=MATRIX_NO_TRANSPOSE_REQUIRED
+    matrix%numberOfNonZeros=0
+    matrix%size=0      
+    matrix%maximumColumnIndicesPerRow=0
+    matrix%blockSize=2
+    matrix%numberOfBlocks=0
+    matrix%numberOfRowBlocks=0
+    matrix%numberOfColumnBlocks=0
 
-    EXITS("MATRIX_INITIALISE")
+    EXITS("Matrix_Initialise")
     RETURN
-999 ERRORSEXITS("MATRIX_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("Matrix_Initialise",err,error)
     RETURN 1
     
-  END SUBROUTINE MATRIX_INITIALISE
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the maximum number of columns in each row of a distributed matrix.
-  SUBROUTINE MATRIX_MAX_COLUMNS_PER_ROW_GET(MATRIX,MAX_COLUMNS_PER_ROW,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: MAX_COLUMNS_PER_ROW !<On return, the maximum number of columns in each row
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    
-    ENTERS("MATRIX_MAX_COLUMNS_PER_ROW_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        MAX_COLUMNS_PER_ROW=MATRIX%MAXIMUM_COLUMN_INDICES_PER_ROW
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("MATRIX_MAX_COLUMNS_PER_ROW_GET")
-    RETURN
-999 ERRORSEXITS("MATRIX_MAX_COLUMNS_PER_ROW_GET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_MAX_COLUMNS_PER_ROW_GET
+  END SUBROUTINE Matrix_Initialise
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the number of non zeros for a matrix.
-  SUBROUTINE MATRIX_NUMBER_NON_ZEROS_SET(MATRIX,NUMBER_NON_ZEROS,ERR,ERROR,*)
+  SUBROUTINE Matrix_NumberOfNonZerosSet(matrix,numberOfNonZeros,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: NUMBER_NON_ZEROS !<The number of non zeros in the matrix to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: numberOfNonZeros !<The number of non zeros in the matrix to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_NUMBER_NON_ZEROS_SET",ERR,ERROR,*999)
+    ENTERS("Matrix_NumberOfNonZerosSet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        CALL FlagError("The matrix has already been finished.",ERR,ERROR,*999)
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
+    
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      CALL FlagError("Can not set the number of non-zeros for a matrix with block storage.",err,error,*999)
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      CALL FlagError("Can not set the number of non-zeros for a matrix with diagonal storage.",err,error,*999)
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      CALL FlagError("Can not set the number of non-zeros for a matrix with column major storage.",err,error,*999)          
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      CALL FlagError("Can not set the number of non-zeros for a matrix with row major storage.",err,error,*999)          
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE,MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE,MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      IF(numberOfNonZeros>=0) THEN
+        matrix%numberOfNonZeros=numberOfNonZeros
       ELSE
-        SELECT CASE(MATRIX%STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE)
-          CALL FlagError("Can not set the number of non-zeros for a matrix with block storage.",ERR,ERROR,*999)
-        CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-          CALL FlagError("Can not set the number of non-zeros for a matrix with diagonal storage.",ERR,ERROR,*999)
-        CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-          CALL FlagError("Can not set the number of non-zeros for a matrix with column major storage.",ERR,ERROR,*999)          
-        CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-          CALL FlagError("Can not set the number of non-zeros for a matrix with row major storage.",ERR,ERROR,*999)          
-        CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE,MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE,MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          IF(NUMBER_NON_ZEROS>=0) THEN
-            MATRIX%NUMBER_NON_ZEROS=NUMBER_NON_ZEROS
-          ELSE
-            LOCAL_ERROR="The number of non-zeros ("//TRIM(NUMBER_TO_VSTRING(NUMBER_NON_ZEROS,"*",ERR,ERROR))// &
-              & ") is invalid. The number must be greater than or equal to zero."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
+        localError="The number of non-zeros ("//TRIM(NumberToVString(numberOfNonZeros,"*",err,error))// &
+          & ") is invalid. The number must be greater than or equal to zero."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      CALL FlagError("Can not set the number of non-zeros for a matrix with block compressed row storage.",err,error,*999)
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("MATRIX_NUMBER_NON_ZEROS_SET")
+    EXITS("Matrix_NumberOfNonZerosSet")
     RETURN
-999 ERRORSEXITS("MATRIX_NUMBER_NON_ZEROS_SET",ERR,ERROR)
+999 ERRORSEXITS("Matrix_NumberOfNonZerosSet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_NUMBER_NON_ZEROS_SET
+    
+  END SUBROUTINE Matrix_NumberOfNonZerosSet
 
   !
   !================================================================================================================================
   !
-
-  !>Gets the number of non zeros for a matrix.
-  SUBROUTINE MATRIX_NUMBER_NON_ZEROS_GET(MATRIX,NUMBER_NON_ZEROS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_NON_ZEROS !<On return, The number of non zeros in the matrix to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_NUMBER_NON_ZEROS_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        SELECT CASE(MATRIX%STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE,MATRIX_DIAGONAL_STORAGE_TYPE,MATRIX_COLUMN_MAJOR_STORAGE_TYPE, &
-          & MATRIX_ROW_MAJOR_STORAGE_TYPE,MATRIX_COMPRESSED_ROW_STORAGE_TYPE,MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE, &
-          & MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          NUMBER_NON_ZEROS=MATRIX%NUMBER_NON_ZEROS
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("The matrix is not finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_NUMBER_NON_ZEROS_GET")
-    RETURN
-999 ERRORSEXITS("MATRIX_NUMBER_NON_ZEROS_GET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_NUMBER_NON_ZEROS_GET
-
-  !
-  !================================================================================================================================
-  !
-!>Gets the maximum number of columns in each row of a distributed matrix.
-  SUBROUTINE MATRIX_LINKLIST_SET(MATRIX,LIST,ERR,ERROR,*)
+  
+  !>Gets the maximum number of columns in each row of a distributed matrix.
+  SUBROUTINE Matrix_LinkListSet(matrix,list,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    TYPE(LinkedList),pointer :: LIST(:) 
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    TYPE(LinkedList),pointer :: list(:) 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("MATRIX_LINKLIST_SET",ERR,ERROR,*999)
+    ENTERS("Matrix_LinkListSet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        CALL FlagError("The matrix has been finished",ERR,ERROR,*999)
-      ELSE
-        MATRIX%LIST => LIST      
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
     
-    EXITS("MATRIX_LINKLIST_SET")
+    matrix%list=>list      
+    
+    EXITS("Matrix_LinkListSet")
     RETURN
-999 ERRORSEXITS("MATRIX_LINKLIST_SET",ERR,ERROR)
+999 ERRORSEXITS("Matrix_LinkListSet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_LINKLIST_SET
+    
+  END SUBROUTINE Matrix_LinkListSet
 
    !
   !================================================================================================================================
   !!>Gets the maximum number of columns in each row of a distributed matrix.
-  SUBROUTINE MATRIX_LINKLIST_GET(MATRIX,LIST,ERR,ERROR,*)
+  SUBROUTINE Matrix_LinkListGet(matrix,list,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
     type(LinkedList),pointer :: list(:) 
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("MATRIX_LINKLIST_GET",ERR,ERROR,*999)
+    ENTERS("Matrix_LinkListGet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        LIST=>MATRIX%LIST
-      ELSE
-        CALL FlagError("The matrix has not been finished",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
     
-    EXITS("MATRIX_LINKLIST_GET")
+    list=>matrix%list
+     
+    EXITS("Matrix_LinkListGet")
     RETURN
-999 ERRORSEXITS("MATRIX_LINKLIST_GET",ERR,ERROR)
+999 ERRORSEXITS("Matrix_LinkListGet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_LINKLIST_GET
+    
+  END SUBROUTINE Matrix_LinkListGet
 
-   !
+  !
   !================================================================================================================================
   !
-  !
+  
   !>Sets/changes the maximum size of a matrix.
-  SUBROUTINE MATRIX_MAX_SIZE_SET(MATRIX,MAX_M,MAX_N,ERR,ERROR,*)
+  SUBROUTINE Matrix_MaxSizeSet(matrix,maxM,maxN,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: MAX_M !<The maximum number of rows to set
-    INTEGER(INTG), INTENT(IN) :: MAX_N !<The maximum number of columns to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: maxM !<The maximum number of rows to set
+    INTEGER(INTG), INTENT(IN) :: maxN !<The maximum number of columns to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_MAX_SIZE_SET",ERR,ERROR,*999)
+    ENTERS("Matrix_MaxSizeSet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        CALL FlagError("The matrix has been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(MAX_M>0) THEN
-          IF(MAX_N>0) THEN
-            IF(MAX_M>=MATRIX%M) THEN
-              IF(MAX_N>=MATRIX%N) THEN
-                MATRIX%MAX_M=MAX_M
-                MATRIX%MAX_N=MAX_N
-              ELSE
-                LOCAL_ERROR="The maximum number of matrix rows ("//TRIM(NUMBER_TO_VSTRING(MAX_N,"*",ERR,ERROR))// &
-                  & ") must be >= the number of matrix rows ("//TRIM(NUMBER_TO_VSTRING(MATRIX%N,"*",ERR,ERROR))//")."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The maximum number of matrix columns ("//TRIM(NUMBER_TO_VSTRING(MAX_M,"*",ERR,ERROR))// &
-                & ") must be >= the number of matrix columns ("//TRIM(NUMBER_TO_VSTRING(MATRIX%M,"*",ERR,ERROR))//")."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The maximum number of matrix columns of "//TRIM(NUMBER_TO_VSTRING(MAX_N,"*",ERR,ERROR))// &
-              & " is invalid. The number must be > 0."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The maximum number of matrix rows of "//TRIM(NUMBER_TO_VSTRING(MAX_M,"*",ERR,ERROR))// &
-            & " is invalid. The number must be > 0."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
+    IF(maxM<=0) THEN
+      localError="The maximum number of matrix rows of "//TRIM(NumberToVString(maxM,"*",err,error))// &
+        & " is invalid. The number must be > 0."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(maxN<=0) THEN
+      localError="The maximum number of matrix columns of "//TRIM(NumberToVString(maxN,"*",err,error))// &
+        & " is invalid. The number must be > 0."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF  
+    IF(maxM<matrix%m) THEN
+      localError="The maximum number of matrix columns of "//TRIM(NumberToVString(maxM,"*",err,error))// &
+        & " must be >= the number of matrix columns of "//TRIM(NumberToVString(matrix%m,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(maxN<matrix%n) THEN
+      localError="The maximum number of matrix rows of "//TRIM(NumberToVString(maxN,"*",err,error))// &
+        & " must be >= the number of matrix rows of "//TRIM(NumberToVString(matrix%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    matrix%maxM=maxM
+    matrix%maxN=maxN
 
-    EXITS("MATRIX_MAX_SIZE_SET")
+    EXITS("Matrix_MaxSizeSet")
     RETURN
-999 ERRORSEXITS("MATRIX_MAX_SIZE_SET",ERR,ERROR)
+999 ERRORSEXITS("Matrix_MaxSizeSet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_MAX_SIZE_SET
-
+    
+  END SUBROUTINE Matrix_MaxSizeSet
+  
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the size of a matrix.
-  SUBROUTINE MATRIX_OUTPUT(ID,MATRIX,ERR,ERROR,*)
+  SUBROUTINE Matrix_Output(ID,matrix,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: ID !<The ID to output to
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: i,j
-    CHARACTER(LEN=9) :: ROW_STRING,COL_STRING
-    CHARACTER(LEN=39) :: INITIAL_STRING
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: columnIdx,columnBlockIdx,columnBlockNumber,dataIdx,entryIdx,rowIdx,rowBlockIdx,rowNumber
+    INTEGER(INTG), ALLOCATABLE :: rowEntriesIntg(:)
+    REAL(SP), ALLOCATABLE :: rowEntriesSP(:)
+    REAL(DP), ALLOCATABLE :: rowEntriesDP(:)
+    LOGICAL, ALLOCATABLE :: rowEntriesL(:)
+    CHARACTER(LEN=9) :: rowString,columnString
+    CHARACTER(LEN=39) :: initialString
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_OUTPUT",ERR,ERROR,*999)
+    ENTERS("Matrix_Output",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        SELECT CASE(MATRIX%STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE)
-          SELECT CASE(MATRIX%dataType)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      SELECT CASE(matrix%dataType)
+      CASE(MATRIX_VECTOR_INTG_TYPE)
+        CALL WriteStringMatrix(ID,1,1,matrix%m,1,1,matrix%n,8,8,RESHAPE(matrix%dataIntg,[matrix%maxM,matrix%maxN]), &
+          & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,I13))','(20X,8(X,I13))', &
+          & err,error,*999)
+      CASE(MATRIX_VECTOR_SP_TYPE)
+        CALL WriteStringMatrix(ID,1,1,matrix%m,1,1,matrix%n,8,8,RESHAPE(matrix%dataSP,[matrix%maxM,matrix%maxN]), &
+          & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,E13.6))','(20X,8(X,E13.6))', &
+          & err,error,*999)
+      CASE(MATRIX_VECTOR_DP_TYPE)
+        CALL WriteStringMatrix(ID,1,1,matrix%m,1,1,matrix%n,8,8,RESHAPE(matrix%dataDP,[matrix%maxM,matrix%maxN]), &
+          & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,E13.6))','(20X,8(X,E13.6))', &
+          & err,error,*999)
+      CASE(MATRIX_VECTOR_L_TYPE)            
+        CALL WriteStringMatrix(ID,1,1,matrix%m,1,1,matrix%n,8,8,RESHAPE(matrix%dataL,[matrix%maxM,matrix%maxN]), &
+          & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,L13))','(20X,8(X,L13))', &
+          & err,error,*999)
+      CASE(MATRIX_VECTOR_SPC_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(MATRIX_VECTOR_DPC_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      DO rowIdx=1,matrix%m
+        rowString=NumberToCharacter(rowIdx,"I9",err,error)
+        initialString='Matrix('//rowString//','//rowString//'):'
+        SELECT CASE(matrix%dataType)              
+        CASE(MATRIX_VECTOR_INTG_TYPE)
+          CALL WriteStringFmtValue(ID,initialString(1:LEN_TRIM(initialString)),matrix%dataIntg(rowIdx),'(7X,I13)', &
+            & err,error,*999)
+        CASE(MATRIX_VECTOR_SP_TYPE)
+          CALL WriteStringFmtValue(ID,initialString(1:LEN_TRIM(initialString)),matrix%dataSP(rowIdx),'(7X,E13.6)', &
+            & err,error,*999)
+        CASE(MATRIX_VECTOR_DP_TYPE)
+          CALL WriteStringFmtValue(ID,initialString(1:LEN_TRIM(initialString)),matrix%dataDP(rowIdx),'(7X,E13.6)', &
+            & err,error,*999)
+        CASE(MATRIX_VECTOR_L_TYPE)            
+          CALL WriteStringFmtValue(ID,initialString(1:LEN_TRIM(initialString)),matrix%dataL(rowIdx),'(7X,L13)', &
+            & err,error,*999)
+        CASE(MATRIX_VECTOR_SPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(MATRIX_VECTOR_DPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDDO !rowIdx
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      DO rowIdx=1,matrix%m
+        rowString=NumberToCharacter(rowIdx,"I9",err,error)
+        SELECT CASE(matrix%dataType)              
+        CASE(MATRIX_VECTOR_INTG_TYPE)
+          initialString='("Matrix('//rowString//',:):",8(X,I13))'
+          CALL WriteStringVector(ID,matrix%rowIndices(rowIdx),1,matrix%rowIndices(rowIdx+1)-1,8,8,matrix%dataIntg,initialString, &
+            & '(20X,8(X,I13))',err,error,*999)
+        CASE(MATRIX_VECTOR_SP_TYPE)
+          initialString='("Matrix('//rowString//',:):",8(X,E13.6))'
+          CALL WriteStringVector(ID,matrix%rowIndices(rowIdx),1,matrix%rowIndices(rowIdx+1)-1,8,8,matrix%dataSP,initialString, &
+            & '(20X,8(X,E13.6))',err,error,*999)
+        CASE(MATRIX_VECTOR_DP_TYPE)
+          initialString='("Matrix('//rowString//',:):",8(X,E13.6))'
+          CALL WriteStringVector(ID,matrix%rowIndices(rowIdx),1,matrix%rowIndices(rowIdx+1)-1,8,8,matrix%dataDP,initialString, &
+            & '(20X,8(X,E13.6))',err,error,*999)
+        CASE(MATRIX_VECTOR_L_TYPE)            
+          initialString='("Matrix('//rowString//',:):",8(X,L13))'
+          CALL WriteStringVector(ID,matrix%rowIndices(rowIdx),1,matrix%rowIndices(rowIdx+1)-1,8,8,matrix%dataL,initialString, &
+            & '(20X,8(X,L13))',err,error,*999)
+        CASE(MATRIX_VECTOR_SPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(MATRIX_VECTOR_DPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDDO !rowIdx
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      DO columnIdx=1,matrix%n
+        columnString=NumberToCharacter(columnIdx,"I9",err,error)
+        SELECT CASE(matrix%dataType)              
+        CASE(MATRIX_VECTOR_INTG_TYPE)
+          initialString='("Matrix(:,'//columnString//'):",8(X,I13))'
+          CALL WriteStringVector(ID,matrix%columnIndices(columnIdx),1,matrix%columnIndices(columnIdx+1)-1,8,8,matrix%dataIntg, &
+            & initialString,'(20X,8(X,I13))',err,error,*999)
+        CASE(MATRIX_VECTOR_SP_TYPE)
+          initialString='("Matrix(:,'//columnString//'):",8(X,E13.6))'
+          CALL WriteStringVector(ID,matrix%columnIndices(columnIdx),1,matrix%columnIndices(columnIdx+1)-1,8,8,matrix%dataSP, &
+            & initialString,'(20X,8(X,E13.6))',err,error,*999)
+        CASE(MATRIX_VECTOR_DP_TYPE)
+          initialString='("Matrix(:,'//columnString//'):",8(X,E13.6))'
+          CALL WriteStringVector(ID,matrix%columnIndices(columnIdx),1,matrix%columnIndices(columnIdx+1)-1,8,8,matrix%dataDP, &
+            & initialString,'(20X,8(X,E13.6))',err,error,*999)
+        CASE(MATRIX_VECTOR_L_TYPE)            
+          initialString='("Matrix(:,'//columnString//'):",8(X,L13))'
+          CALL WriteStringVector(ID,matrix%columnIndices(columnIdx),1,matrix%columnIndices(columnIdx+1)-1,8,8,matrix%dataL, &
+            & initialString,'(20X,8(X,L13))',err,error,*999)
+        CASE(MATRIX_VECTOR_SPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(MATRIX_VECTOR_DPC_TYPE)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      ENDDO !columnIdx
+    CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      !Create temporary array to store the row
+      SELECT CASE(matrix%dataType)
+      CASE(MATRIX_VECTOR_INTG_TYPE)
+        initialString='("Matrix(:,'//columnString//'):",8(X,I13))'
+        ALLOCATE(rowEntriesIntg(matrix%maximumColumnIndicesPerRow),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate integer row entries.",err,error,*999)
+      CASE(MATRIX_VECTOR_SP_TYPE)
+        initialString='("Matrix(:,'//columnString//'):",8(X,E13.6))'
+        ALLOCATE(rowEntriesSP(matrix%maximumColumnIndicesPerRow),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate single precision real row entries.",err,error,*999)
+      CASE(MATRIX_VECTOR_DP_TYPE)
+        initialString='("Matrix(:,'//columnString//'):",8(X,E13.6))'
+        ALLOCATE(rowEntriesDP(matrix%maximumColumnIndicesPerRow),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate double precision real row entries.",err,error,*999)
+      CASE(MATRIX_VECTOR_L_TYPE)            
+        initialString='("Matrix(:,'//columnString//'):",8(X,L13))'
+        ALLOCATE(rowEntriesL(matrix%maximumColumnIndicesPerRow),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate logical row entries.",err,error,*999)
+      CASE(MATRIX_VECTOR_SPC_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(MATRIX_VECTOR_DPC_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT  
+      DO rowBlockIdx=1,matrix%numberOfRowBlocks
+        DO rowIdx=1,matrix%blockSize
+          rowNumber=rowIdx+(rowBlockIdx-1)*matrix%blockSize
+          rowString=NumberToCharacter(rowNumber,"I9",err,error)
+          entryIdx=0
+          DO columnBlockIdx=matrix%rowIndices(rowBlockIdx),matrix%rowIndices(rowBlockIdx+1)-1
+            columnBlockNumber=matrix%columnIndices(columnBlockIdx)
+            DO columnIdx=1,matrix%blockSize
+              dataIdx=columnIdx+(columnBlockNumber-1)*matrix%blockSize
+              entryIdx=entryIdx+1
+              SELECT CASE(matrix%dataType)              
+              CASE(MATRIX_VECTOR_INTG_TYPE)
+                rowEntriesIntg(entryIdx)=matrix%dataIntg(dataIdx)
+              CASE(MATRIX_VECTOR_SP_TYPE)
+                rowEntriesSP(entryIdx)=matrix%dataSP(dataIdx)
+              CASE(MATRIX_VECTOR_DP_TYPE)
+                rowEntriesDP(entryIdx)=matrix%dataDP(dataIdx)
+              CASE(MATRIX_VECTOR_L_TYPE)            
+                rowEntriesL(entryIdx)=matrix%dataL(dataIdx)
+              CASE(MATRIX_VECTOR_SPC_TYPE)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE(MATRIX_VECTOR_DPC_TYPE)
+                CALL FlagError("Not implemented.",err,error,*999)
+              CASE DEFAULT
+                localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ENDDO !columnIdx
+          ENDDO !columnBlockIdx
+          SELECT CASE(matrix%dataType)              
           CASE(MATRIX_VECTOR_INTG_TYPE)
-            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_INTG,[MATRIX%MAX_M,MATRIX%MAX_N]), &
-              & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,I13))','(20X,8(X,I13))', &
-              & ERR,ERROR,*999)
+            CALL WriteStringVector(ID,1,1,entryIdx,8,8,rowEntriesIntg,initialString,'(20X,8(X,I13))',err,error,*999)
           CASE(MATRIX_VECTOR_SP_TYPE)
-            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_SP,[MATRIX%MAX_M,MATRIX%MAX_N]), &
-              & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,E13.6))','(20X,8(X,E13.6))', &
-              & ERR,ERROR,*999)
+            CALL WriteStringVector(ID,1,1,entryIdx,8,8,rowEntriesSP,initialString,'(20X,8(X,E13.6))',err,error,*999)
           CASE(MATRIX_VECTOR_DP_TYPE)
-            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_DP,[MATRIX%MAX_M,MATRIX%MAX_N]), &
-              & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,E13.6))','(20X,8(X,E13.6))', &
-              & ERR,ERROR,*999)
+            CALL WriteStringVector(ID,1,1,entryIdx,8,8,rowEntriesDP,initialString,'(20X,8(X,E13.6))',err,error,*999)
           CASE(MATRIX_VECTOR_L_TYPE)            
-            CALL WRITE_STRING_MATRIX(ID,1,1,MATRIX%M,1,1,MATRIX%N,8,8,RESHAPE(MATRIX%DATA_L,[MATRIX%MAX_M,MATRIX%MAX_N]), &
-              & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("Matrix','(",I9,",:)',':",8(X,L13))','(20X,8(X,L13))', &
-              & ERR,ERROR,*999)
+            CALL WriteStringVector(ID,1,1,entryIdx,8,8,rowEntriesL,initialString,'(20X,8(X,L13))',err,error,*999)
           CASE(MATRIX_VECTOR_SPC_TYPE)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(MATRIX_VECTOR_DPC_TYPE)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
-            LOCAL_ERROR="The matrix data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))//" is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-          DO i=1,MATRIX%M
-            ROW_STRING=NUMBER_TO_CHARACTER(i,"I9",ERR,ERROR)
-            INITIAL_STRING='Matrix('//ROW_STRING//','//ROW_STRING//'):'
-            SELECT CASE(MATRIX%dataType)              
-            CASE(MATRIX_VECTOR_INTG_TYPE)
-              CALL WRITE_STRING_FMT_VALUE(ID,INITIAL_STRING(1:LEN_TRIM(INITIAL_STRING)),MATRIX%DATA_INTG(i),'(7X,I13)', &
-                & ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_SP_TYPE)
-              CALL WRITE_STRING_FMT_VALUE(ID,INITIAL_STRING(1:LEN_TRIM(INITIAL_STRING)),MATRIX%DATA_SP(i),'(7X,E13.6)', &
-                & ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_DP_TYPE)
-              CALL WRITE_STRING_FMT_VALUE(ID,INITIAL_STRING(1:LEN_TRIM(INITIAL_STRING)),MATRIX%DATA_DP(i),'(7X,E13.6)', &
-                & ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_L_TYPE)            
-              CALL WRITE_STRING_FMT_VALUE(ID,INITIAL_STRING(1:LEN_TRIM(INITIAL_STRING)),MATRIX%DATA_L(i),'(7X,L13)', &
-                & ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_SPC_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(MATRIX_VECTOR_DPC_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="The matrix data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))//" is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          ENDDO !i
-        CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          DO i=1,MATRIX%M
-            ROW_STRING=NUMBER_TO_CHARACTER(i,"I9",ERR,ERROR)
-            SELECT CASE(MATRIX%dataType)              
-            CASE(MATRIX_VECTOR_INTG_TYPE)
-              INITIAL_STRING='("Matrix('//ROW_STRING//',:):",8(X,I13))'
-              CALL WRITE_STRING_VECTOR(ID,MATRIX%ROW_INDICES(i),1,MATRIX%ROW_INDICES(i+1)-1,8,8,MATRIX%DATA_INTG,INITIAL_STRING, &
-                & '(20X,8(X,I13))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_SP_TYPE)
-              INITIAL_STRING='("Matrix('//ROW_STRING//',:):",8(X,E13.6))'
-              CALL WRITE_STRING_VECTOR(ID,MATRIX%ROW_INDICES(i),1,MATRIX%ROW_INDICES(i+1)-1,8,8,MATRIX%DATA_SP,INITIAL_STRING, &
-                & '(20X,8(X,E13.6))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_DP_TYPE)
-              INITIAL_STRING='("Matrix('//ROW_STRING//',:):",8(X,E13.6))'
-              CALL WRITE_STRING_VECTOR(ID,MATRIX%ROW_INDICES(i),1,MATRIX%ROW_INDICES(i+1)-1,8,8,MATRIX%DATA_DP,INITIAL_STRING, &
-                & '(20X,8(X,E13.6))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_L_TYPE)            
-              INITIAL_STRING='("Matrix('//ROW_STRING//',:):",8(X,L13))'
-              CALL WRITE_STRING_VECTOR(ID,MATRIX%ROW_INDICES(i),1,MATRIX%ROW_INDICES(i+1)-1,8,8,MATRIX%DATA_L,INITIAL_STRING, &
-                & '(20X,8(X,L13))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_SPC_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(MATRIX_VECTOR_DPC_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="The matrix data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))//" is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          ENDDO !i
-        CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-          DO j=1,MATRIX%N
-            COL_STRING=NUMBER_TO_CHARACTER(j,"I9",ERR,ERROR)
-            SELECT CASE(MATRIX%dataType)              
-            CASE(MATRIX_VECTOR_INTG_TYPE)
-              INITIAL_STRING='("Matrix(:,'//COL_STRING//'):",8(X,I13))'
-              CALL WRITE_STRING_VECTOR(ID,MATRIX%COLUMN_INDICES(j),1,MATRIX%COLUMN_INDICES(j+1)-1,8,8,MATRIX%DATA_INTG, &
-                & INITIAL_STRING,'(20X,8(X,I13))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_SP_TYPE)
-              INITIAL_STRING='("Matrix(:,'//COL_STRING//'):",8(X,E13.6))'
-              CALL WRITE_STRING_VECTOR(ID,MATRIX%COLUMN_INDICES(j),1,MATRIX%COLUMN_INDICES(j+1)-1,8,8,MATRIX%DATA_SP, &
-                & INITIAL_STRING,'(20X,8(X,E13.6))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_DP_TYPE)
-              INITIAL_STRING='("Matrix(:,'//COL_STRING//'):",8(X,E13.6))'
-              CALL WRITE_STRING_VECTOR(ID,MATRIX%COLUMN_INDICES(j),1,MATRIX%COLUMN_INDICES(j+1)-1,8,8,MATRIX%DATA_DP, &
-                & INITIAL_STRING,'(20X,8(X,E13.6))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_L_TYPE)            
-              INITIAL_STRING='("Matrix(:,'//COL_STRING//'):",8(X,L13))'
-              CALL WRITE_STRING_VECTOR(ID,MATRIX%COLUMN_INDICES(j),1,MATRIX%COLUMN_INDICES(j+1)-1,8,8,MATRIX%DATA_L, &
-                & INITIAL_STRING,'(20X,8(X,L13))',ERR,ERROR,*999)
-            CASE(MATRIX_VECTOR_SPC_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE(MATRIX_VECTOR_DPC_TYPE)
-              CALL FlagError("Not implemented.",err,error,*999)
-            CASE DEFAULT
-              LOCAL_ERROR="The matrix data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))//" is invalid."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            END SELECT
-          ENDDO !j
-        CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          CALL FlagError("Not implemented.",ERR,ERROR,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF      
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+            localError="The matrix data type of "//TRIM(NumberToVString(matrix%dataType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT          
+        ENDDO ! rowIdx
+      ENDDO !rowBlockIdx
+      IF(ALLOCATED(rowEntriesIntg)) DEALLOCATE(rowEntriesIntg)
+      IF(ALLOCATED(rowEntriesSP)) DEALLOCATE(rowEntriesSP)
+      IF(ALLOCATED(rowEntriesDP)) DEALLOCATE(rowEntriesDP)
+      IF(ALLOCATED(rowEntriesL)) DEALLOCATE(rowEntriesL)
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("MATRIX_OUTPUT")
+    EXITS("Matrix_Output")
     RETURN
-999 ERRORSEXITS("MATRIX_OUTPUT",ERR,ERROR)
+999 IF(ALLOCATED(rowEntriesIntg)) DEALLOCATE(rowEntriesIntg)
+    IF(ALLOCATED(rowEntriesSP)) DEALLOCATE(rowEntriesSP)
+    IF(ALLOCATED(rowEntriesDP)) DEALLOCATE(rowEntriesDP)
+    IF(ALLOCATED(rowEntriesL)) DEALLOCATE(rowEntriesL)
+    ERRORSEXITS("Matrix_Output",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_OUTPUT
+    
+  END SUBROUTINE Matrix_Output
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalise the matrix row/column coupling 
+  SUBROUTINE MatrixRowColCoupling_Finalise(rowColCoupling,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixRowColCouplingType), INTENT(INOUT) :: rowColCoupling !<The row or column couplings to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+
+    ENTERS("MatrixRowColCoupling_Finalise",err,error,*999)
+
+    IF(ALLOCATED(rowColCoupling%rowCols)) DEALLOCATE(rowColCoupling%rowCols)
+    IF(ALLOCATED(rowColCoupling%couplingCoefficients)) DEALLOCATE(rowColCoupling%couplingCoefficients)
+    rowColCoupling%numberOfRowCols=0
+
+    EXITS("MatrixRowColCoupling_Finalise")
+    RETURN
+999 ERRORSEXITS("MatrixRowColCoupling_Finalise",err,error)
+    RETURN 1
+
+  END SUBROUTINE MatrixRowColCoupling_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise the matrix row/column coupling
+  SUBROUTINE MatrixRowColCoupling_Initialise(rowColCoupling,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixRowColCouplingType), INTENT(INOUT) :: rowColCoupling !<The row/column coupling to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+
+    ENTERS("MatrixRowColCoupling_Initialise",err,error,*999)
+
+    rowColCoupling%numberOfRowCols=0
+
+    EXITS("MatrixRowColCoupling_Initialise")
+    RETURN
+999 ERRORSEXITS("MatrixRowColCoupling_Initialise",err,error)
+    RETURN 1
+
+  END SUBROUTINE MatrixRowColCoupling_Initialise
+  
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the size of a matrix.
-  SUBROUTINE MATRIX_SIZE_SET(MATRIX,M,N,ERR,ERROR,*)
+  SUBROUTINE Matrix_SizeSet(matrix,m,n,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: M !<The number of rows to set
-    INTEGER(INTG), INTENT(IN) :: N !<The number of columns to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: m !<The number of rows to set
+    INTEGER(INTG), INTENT(IN) :: n !<The number of columns to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_SIZE_SET",ERR,ERROR,*999)
+    ENTERS("Matrix_SizeSet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        CALL FlagError("The matrix has been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(M>0) THEN
-          IF(N>0) THEN
-            MATRIX%M=M
-            MATRIX%N=N
-          ELSE
-            LOCAL_ERROR="The number of matrix columns of "//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))// &
-              & " is invalid. The number must be >0."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The number of matrix rows of "//TRIM(NUMBER_TO_VSTRING(M,"*",ERR,ERROR))// &
-            & " is invalid. The number must be >0."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)    
+    IF(m<=0) THEN
+      localError="The number of matrix rows of "//TRIM(NumberToVString(m,"*",err,error))// &
+        & " is invalid. The number must be >0."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(n<=0) THEN
+      localError="The number of matrix columns of "//TRIM(NumberToVString(n,"*",err,error))// &
+        & " is invalid. The number must be >0."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    matrix%m=m
+    matrix%n=n
+
+    IF(matrix%storageType==MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE) THEN
+      matrix%numberOfRowBlocks=CEILING(REAL(matrix%m,DP)/REAL(matrix%blockSize,DP),INTG)
+      matrix%numberOfColumnBlocks=CEILING(REAL(matrix%n,DP)/REAL(matrix%blockSize,DP),INTG)
     ENDIF
 
-    EXITS("MATRIX_SIZE_SET")
+    EXITS("Matrix_SizeSet")
     RETURN
-999 ERRORSEXITS("MATRIX_SIZE_SET",ERR,ERROR)
+999 ERRORSEXITS("Matrix_SizeSet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_SIZE_SET
+    
+  END SUBROUTINE Matrix_SizeSet
 
   !
   !================================================================================================================================
   !
 
-  !>Returns the storage location in the data array of a matrix that correponds to location I,J. If the location does not exist the routine returns zero.
-  SUBROUTINE MATRIX_STORAGE_LOCATION_FIND(MATRIX,I,J,LOCATION,ERR,ERROR,*)
+  !>Returns the storage location in the data array of a matrix that correponds to location i,j. If the location does not exist the routine returns zero.
+  SUBROUTINE Matrix_StorageLocationFind(matrix,i,j,location,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: I !<The row number of the location to find
-    INTEGER(INTG), INTENT(IN) :: J !<The column number of the location to find
-    INTEGER(INTG), INTENT(OUT) :: LOCATION !<On return the location of the specified row and column in the matrix data. If the row and column does not exist in the matrix then zero is returned.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: i !<The row number of the location to find
+    INTEGER(INTG), INTENT(IN) :: j !<The column number of the location to find
+    INTEGER(INTG), INTENT(OUT) :: location !<On return the location of the specified row and column in the matrix data. If the row and column does not exist in the matrix then zero is returned.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: k,LOWLIMIT,MIDPOINT,UPLIMIT
-    LOGICAL :: FOUNDCOLUMN, FOUNDROW
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: columnBlock,columnBlockNumber,columnOffset,k,lowLimit,midPoint,rowBlockNumber,rowOffset,upLimit
+    LOGICAL :: foundColumn, foundRow
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_STORAGE_LOCATION_FIND",ERR,ERROR,*999)
+    ENTERS("Matrix_StorageLocationFind",err,error,*999)
 
-    LOCATION=0
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(I<1.OR.I>MATRIX%M) THEN
-          LOCAL_ERROR="Row number "//TRIM(NUMBER_TO_VSTRING(I,"*",ERR,ERROR))//" is outside the matrix range of 1 to "// &
-            & TRIM(NUMBER_TO_VSTRING(MATRIX%M,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-        IF(J<1.OR.J>MATRIX%N) THEN
-          LOCAL_ERROR="Column number "//TRIM(NUMBER_TO_VSTRING(J,"*",ERR,ERROR))//" is outside the matrix range of 1 to "// &
-            & TRIM(NUMBER_TO_VSTRING(MATRIX%M,"*",ERR,ERROR))//"."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
+    location=0
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    IF(i<1.OR.i>matrix%m) THEN
+      localError="Row number "//TRIM(NumberToVString(i,"*",err,error))//" is outside the matrix range of 1 to "// &
+        & TRIM(NumberToVString(matrix%m,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(j<1.OR.j>matrix%n) THEN
+      localError="Column number "//TRIM(NumberToVString(j,"*",err,error))//" is outside the matrix range of 1 to "// &
+        & TRIM(NumberToVString(matrix%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
       
-        SELECT CASE(MATRIX%STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE)
-          LOCATION=I+(J-1)*MATRIX%M
-        CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-          IF(I==J) LOCATION=I
-        CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-          LOCATION=I+(J-1)*MATRIX%MAX_M
-        CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-          LOCATION=(I-1)*MATRIX%MAX_N+J
-        CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          !Search for the column number in the sparsity list using the bisection (binary search) algorithm
-          LOWLIMIT=MATRIX%ROW_INDICES(I)
-          IF(J>=MATRIX%COLUMN_INDICES(LOWLIMIT)) THEN
-            UPLIMIT=MATRIX%ROW_INDICES(I+1)
-            IF(UPLIMIT>LOWLIMIT) THEN
-              IF(J<=MATRIX%COLUMN_INDICES(UPLIMIT-1)) THEN
-                DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                  MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                  IF(MATRIX%COLUMN_INDICES(MIDPOINT)>J) THEN
-                    UPLIMIT=MIDPOINT
-                  ELSE
-                    LOWLIMIT=MIDPOINT
-                  ENDIF
-                ENDDO
-                DO k=LOWLIMIT,UPLIMIT
-                  IF(MATRIX%COLUMN_INDICES(k)==J) THEN
-                    LOCATION=k
-                    EXIT
-                  ENDIF
-                ENDDO !k
-              ENDIF
-            ENDIF
-          ENDIF
-        CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-          !Search for the row number in the sparsity list using the bisection (binary search) algorithm
-          LOWLIMIT=MATRIX%COLUMN_INDICES(J)
-          IF(I>=MATRIX%ROW_INDICES(LOWLIMIT)) THEN
-            UPLIMIT=MATRIX%COLUMN_INDICES(J+1)
-            IF(UPLIMIT>LOWLIMIT) THEN
-              IF(I<=MATRIX%ROW_INDICES(UPLIMIT-1)) THEN
-                DO WHILE((UPLIMIT-LOWLIMIT)>1)
-                  MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                  IF(MATRIX%ROW_INDICES(MIDPOINT)>I) THEN
-                    UPLIMIT=MIDPOINT
-                  ELSE
-                    LOWLIMIT=MIDPOINT
-                  ENDIF
-                ENDDO
-                IF(MATRIX%ROW_INDICES(LOWLIMIT)==I) LOCATION=LOWLIMIT
-                DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                  MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                  IF(MATRIX%ROW_INDICES(MIDPOINT)>I) THEN
-                    UPLIMIT=MIDPOINT
-                  ELSE
-                    LOWLIMIT=MIDPOINT
-                  ENDIF
-                ENDDO
-                DO k=LOWLIMIT,UPLIMIT
-                  IF(MATRIX%ROW_INDICES(k)==I) THEN
-                    LOCATION=k
-                    EXIT
-                  ENDIF
-                ENDDO !k
-              ENDIF
-            ENDIF
-          ENDIF
-        CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          FOUNDROW=.FALSE.
-          LOCATION=1
-          DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-            IF(MATRIX%ROW_INDICES(LOCATION)==I) THEN
-              DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                IF(MATRIX%COLUMN_INDICES(LOCATION)==J.AND.MATRIX%ROW_INDICES(LOCATION)==I) THEN
-                  FOUNDCOLUMN=.TRUE.
-                ELSE IF(MATRIX%ROW_INDICES(LOCATION)/=I) THEN
-                  LOCATION=MATRIX%SIZE+1
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      location=i+(j-1)*matrix%m
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      IF(i==j) location=i
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      location=i+(j-1)*matrix%maxM
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      location=(i-1)*matrix%maxN+j
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm
+      lowLimit=matrix%rowIndices(i)
+      IF(lowLimit<=matrix%numberOfNonZeros) THEN
+        IF(j>=matrix%columnIndices(lowLimit)) THEN
+          upLimit=matrix%rowIndices(i+1)
+          IF(upLimit>matrix%numberOfNonZeros) upLimit=upLimit-1
+          IF(upLimit>lowLimit) THEN
+            IF(j<=matrix%columnIndices(upLimit-1)) THEN
+              DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+                midPoint=(upLimit+lowLimit)/2
+                IF(matrix%columnIndices(midPoint)>j) THEN
+                  upLimit=midPoint
                 ELSE
-                  LOCATION=LOCATION+1
+                  lowLimit=midPoint
                 ENDIF
               ENDDO
+              DO k=lowLimit,upLimit
+                IF(matrix%columnIndices(k)==j) THEN
+                  location=k
+                  EXIT
+                ENDIF
+              ENDDO !k
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      !Search for the row number in the sparsity list using the bisection (binary search) algorithm
+      lowLimit=matrix%columnIndices(j)
+      IF(lowLimit<=matrix%numberOfNonZeros) THEN
+        IF(i>=matrix%rowIndices(lowLimit)) THEN
+          upLimit=matrix%columnIndices(j+1)
+          IF(upLimit>matrix%numberOfNonZeros) upLimit=upLimit-1
+          IF(upLimit>lowLimit) THEN
+            IF(i<=matrix%rowIndices(upLimit-1)) THEN
+              DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+                midPoint=(upLimit+lowLimit)/2
+                IF(matrix%rowIndices(midPoint)>i) THEN
+                  upLimit=midPoint
+                ELSE
+                  lowLimit=midPoint
+                ENDIF
+              ENDDO
+              DO k=lowLimit,upLimit
+                IF(matrix%rowIndices(k)==i) THEN
+                  location=k
+                  EXIT
+                ENDIF
+              ENDDO !k
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+    CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      foundRow=.FALSE.
+      location=1
+      DO WHILE(.NOT.foundColumn.AND.location<=matrix%size)
+        IF(matrix%rowIndices(location)==i) THEN
+          DO WHILE(.NOT.foundColumn.AND.location<=matrix%size)
+            IF(matrix%columnIndices(location)==j.AND.matrix%rowIndices(location)==i) THEN
+              foundColumn=.TRUE.
+            ELSE IF(matrix%rowIndices(location)/=i) THEN
+              location=matrix%size+1
             ELSE
-              LOCATION=LOCATION+1
+              location=location+1
             ENDIF
           ENDDO
-          IF(.NOT.(FOUNDROW.AND.FOUNDCOLUMN)) LOCATION=0
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
+        ELSE
+          location=location+1
+        ENDIF
+      ENDDO
+      IF(.NOT.(foundRow.AND.foundColumn)) location=0
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      rowBlockNumber=FLOOR(REAL(i,DP)/REAL(matrix%blockSize,DP),INTG)
+      rowOffset=MOD(i,matrix%blockSize)
+      columnBlockNumber=FLOOR(REAL(j,DP)/REAL(matrix%blockSize,DP),INTG)
+      columnOffset=MOD(j,matrix%blockSize)
+      !Search for the column block number in the sparsity list using the bisection (binary search) algorithm
+      columnBlock=0
+      lowLimit=matrix%rowIndices(rowBlockNumber)
+      IF(columnBlockNumber>=matrix%columnIndices(lowLimit)) THEN
+        upLimit=matrix%rowIndices(rowBlockNumber+1)
+        IF(upLimit>lowLimit) THEN
+          IF(columnBlockNumber<=matrix%columnIndices(upLimit-1)) THEN
+            DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+              midPoint=(upLimit+lowLimit)/2
+              IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
+                upLimit=midPoint
+              ELSE
+                lowLimit=midPoint
+              ENDIF
+            ENDDO
+            DO k=lowLimit,upLimit
+              IF(matrix%columnIndices(k)==columnBlockNumber) THEN
+                columnBlock=k
+                EXIT
+              ENDIF
+            ENDDO !k
+          ENDIF
+        ENDIF
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+      IF(columnBlock/=0) location=columnBlock*matrix%blockSize*matrix%blockSize+(columnOffset-1)*matrix%blockSize+rowOffset
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    EXITS("MATRIX_STORAGE_LOCATION_FIND")
+    EXITS("Matrix_StorageLocationFind")
     RETURN
-999 ERRORSEXITS("MATRIX_STORAGE_LOCATION_FIND",ERR,ERROR)
+999 ERRORSEXITS("Matrix_StorageLocationFind",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_STORAGE_LOCATION_FIND
+    
+  END SUBROUTINE Matrix_StorageLocationFind
 
   !
   !================================================================================================================================
   !
 
-  !>Gets the storage locations (sparsity pattern) of a matrix.
-  SUBROUTINE MATRIX_STORAGE_LOCATIONS_GET(MATRIX,ROW_INDICES,COLUMN_INDICES,ERR,ERROR,*)
+  !>Returns the storage location in a matrix corresponding to the specified row and column. If the storage location corresponding to the row and column does not exist then an error is flagged.
+  SUBROUTINE Matrix_StorageLocationGet(matrix,row,column,location,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), POINTER :: ROW_INDICES(:) !<ROW_INDICES(i). On return, the row index values for the matrix.
-    INTEGER(INTG), POINTER :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). On return, the column index values for the matrix.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to get the storage location for
+    INTEGER(INTG), INTENT(IN) :: row !<The row to get
+    INTEGER(INTG), INTENT(IN) :: column !<The column to get
+    INTEGER(INTG), INTENT(OUT) :: location !<On return, the storage location corresponding to the row and column.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_STORAGE_LOCATIONS_GET",ERR,ERROR,*999)
+    ENTERS("Matrix_StorageLocationGet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        SELECT CASE(MATRIX%STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE)
-          CALL FlagError("Can not get matrix locations for a block storage matrix.",ERR,ERROR,*999)
-        CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-          CALL FlagError("Can not get matrix locations for a diagonal storage matrix.",ERR,ERROR,*999)
-        CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-          CALL FlagError("Can not get matrix locations for a column major storage matrix.",ERR,ERROR,*999)
-        CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-          CALL FlagError("Can not get matrix locations for a row major storage matrix.",ERR,ERROR,*999)
-        CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)          
-          ROW_INDICES=>MATRIX%ROW_INDICES
-          COLUMN_INDICES=>MATRIX%COLUMN_INDICES
-        CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-          ROW_INDICES=>MATRIX%ROW_INDICES
-          COLUMN_INDICES=>MATRIX%COLUMN_INDICES          
-        CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          ROW_INDICES=>MATRIX%ROW_INDICES
-          COLUMN_INDICES=>MATRIX%COLUMN_INDICES
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ELSE
-        CALL FlagError("Matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-   ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+
+    CALL Matrix_StorageLocationFind(matrix,row,column,location,err,error,*999)
+    IF(location==0) THEN
+      localError="Row "//TRIM(NumberToVString(row,"*",err,error))//" and column "// &
+        & TRIM(NumberToVString(column,"*",err,error))//" does not exist in the matrix."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    EXITS("MATRIX_STORAGE_LOCATIONS_GET")
+    EXITS("Matrix_StorageLocationGet")
     RETURN
-999 ERRORSEXITS("MATRIX_STORAGE_LOCATIONS_GET",ERR,ERROR)
+999 ERRORSEXITS("Matrix_StorageLocationGet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_STORAGE_LOCATIONS_GET
+    
+  END SUBROUTINE Matrix_StorageLocationGet
 
   !
   !================================================================================================================================
   !
 
   !>Sets the storage locations (sparsity pattern) in a matrix to that specified by the row and column indices.
-  SUBROUTINE MATRIX_STORAGE_LOCATIONS_SET(MATRIX,ROW_INDICES,COLUMN_INDICES,ERR,ERROR,*)
+  SUBROUTINE Matrix_StorageLocationsSet(matrix,rowIndices,columnIndices,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index values for the sparisty pattern.
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column index values for the sparsity pattern.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index values for the sparisty pattern.
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index values for the sparsity pattern.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,j,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG), ALLOCATABLE :: rowCounts(:)
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_STORAGE_LOCATIONS_SET",ERR,ERROR,*999)
+    ENTERS("Matrix_StorageLocationsSet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        CALL FlagError("Matrix has been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(MATRIX%STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE)
-          CALL FlagError("Can not set matrix locations for a block storage matrix.",ERR,ERROR,*999)
-        CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-          CALL FlagError("Can not set matrix locations for a diagonal storage matrix.",ERR,ERROR,*999)
-        CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-          CALL FlagError("Can not set matrix locations for a column major storage matrix.",ERR,ERROR,*999)
-        CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-          CALL FlagError("Can not set matrix locations for a row major storage matrix.",ERR,ERROR,*999)
-        CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          IF(SIZE(ROW_INDICES,1)==MATRIX%M+1) THEN
-            IF(SIZE(COLUMN_INDICES,1)==MATRIX%NUMBER_NON_ZEROS) THEN
-              IF(ROW_INDICES(1)==1) THEN
-                IF(ROW_INDICES(MATRIX%M+1)==MATRIX%NUMBER_NON_ZEROS+1) THEN
-                  DO i=2,MATRIX%M+1
-                    IF(ROW_INDICES(i)<ROW_INDICES(i-1)) THEN
-                      LOCAL_ERROR="Invalid row indices. Row "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" index number ("// &
-                        & TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//") is less than row "// &
-                        & TRIM(NUMBER_TO_VSTRING(i-1,"*",ERR,ERROR))//" index number ("// &
-                        & TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i-1),"*",ERR,ERROR))//")."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF                    
-                  ENDDO !i
-                  DO i=1,MATRIX%M
-                    DO j=ROW_INDICES(i),ROW_INDICES(i+1)-1
-                      k=COLUMN_INDICES(j)
-                      IF(k>0) THEN
-                        IF(k>MATRIX%N) THEN
-                          LOCAL_ERROR="Invalid column indices. Column index "//TRIM(NUMBER_TO_VSTRING(j,"*",ERR,ERROR))//" ("// &
-                            & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//") is greater than the number of columns ("// &
-                            & TRIM(NUMBER_TO_VSTRING(MATRIX%N,"*",ERR,ERROR))//")."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        ENDIF
-                      ELSE
-                        LOCAL_ERROR="Invalid column indices. Column index "//TRIM(NUMBER_TO_VSTRING(j,"*",ERR,ERROR))//" ("// &
-                          & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//") is less than zero."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    ENDDO !j
-                  ENDDO !i
-                  IF(ALLOCATED(MATRIX%ROW_INDICES)) DEALLOCATE(MATRIX%ROW_INDICES)
-                  IF(ALLOCATED(MATRIX%COLUMN_INDICES)) DEALLOCATE(MATRIX%COLUMN_INDICES)
-                  ALLOCATE(MATRIX%ROW_INDICES(MATRIX%M+1),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate matrix row indices.",ERR,ERROR,*999)
-                  ALLOCATE(MATRIX%COLUMN_INDICES(MATRIX%NUMBER_NON_ZEROS),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate matrix column indices.",ERR,ERROR,*999)                  
-                  MATRIX%ROW_INDICES(1:MATRIX%M+1)=ROW_INDICES(1:MATRIX%M+1)
-                  MATRIX%COLUMN_INDICES(1:MATRIX%NUMBER_NON_ZEROS)=COLUMN_INDICES(1:MATRIX%NUMBER_NON_ZEROS)
-                  !Don't really need this???
-                  !DO i=1,MATRIX%M
-                  !  CALL LIST_SORT(MATRIX%COLUMN_INDICES(MATRIX%ROW_INDICES(i):MATRIX%ROW_INDICES(i+1)-1),ERR,ERROR,*999)
-                  !ENDDO !i
-                ELSE
-                  LOCAL_ERROR="Invalid row indices. The last row index ("// &
-                    & TRIM(NUMBER_TO_VSTRING(ROW_INDICES(MATRIX%M+1),"*",ERR,ERROR))// &
-                    & ") does not equal the number of non-zeros + 1 ("// &
-                    & TRIM(NUMBER_TO_VSTRING(MATRIX%NUMBER_NON_ZEROS+1,"*",ERR,ERROR))//")."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                LOCAL_ERROR="Invalid row indices. The first row index ("// &
-                  & TRIM(NUMBER_TO_VSTRING(ROW_INDICES(1),"*",ERR,ERROR))//") does not equal 1."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The supplied number of column indices ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-                & ") does not match the number of non-zeros in the matrix ("// &
-                & TRIM(NUMBER_TO_VSTRING(MATRIX%NUMBER_NON_ZEROS,"*",ERR,ERROR))//")."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
+    
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      CALL FlagError("Can not set matrix locations for a block storage matrix.",err,error,*999)
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      CALL FlagError("Can not set matrix locations for a diagonal storage matrix.",err,error,*999)
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      CALL FlagError("Can not set matrix locations for a column major storage matrix.",err,error,*999)
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      CALL FlagError("Can not set matrix locations for a row major storage matrix.",err,error,*999)
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      IF(SIZE(rowIndices,1)/=matrix%m+1) THEN
+        localError="The supplied number of row indices of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+          & " does not match the number of rows in the matrix + 1 of "// &
+          & TRIM(NumberToVString(matrix%m+1,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(SIZE(columnIndices,1)/=matrix%numberOfNonZeros) THEN
+        localError="The supplied number of column indices of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+          & " does not match the number of non-zeros in the matrix of "// &
+          & TRIM(NumberToVString(matrix%numberOfNonZeros,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(rowIndices(1)/=1) THEN
+        localError="Invalid row indices. The first row index of "//TRIM(NumberToVString(rowIndices(1),"*",err,error))// &
+          & " does not equal 1."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(rowIndices(matrix%m+1)/=matrix%numberOfNonZeros+1) THEN
+        localError="Invalid row indices. The last row index of "//TRIM(NumberToVString(rowIndices(matrix%m+1),"*",err,error))// &
+          & " does not equal the number of non-zeros + 1 of "// &
+          & TRIM(NumberToVString(matrix%numberOfNonZeros+1,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      DO i=2,matrix%m+1
+        IF(rowIndices(i)<rowIndices(i-1)) THEN
+          localError="Invalid row indices. Row "//TRIM(NumberToVString(i,"*",err,error))//" index number "// &
+            & TRIM(NumberToVString(rowIndices(i),"*",err,error))//" is less than row "// &
+            & TRIM(NumberToVString(i-1,"*",err,error))//" index number "// &
+            & TRIM(NumberToVString(rowIndices(i-1),"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !i
+      DO i=1,matrix%m
+        DO j=rowIndices(i),rowIndices(i+1)-1
+          k=columnIndices(j)
+          IF(k>0) THEN
+            IF(k>matrix%n) THEN
+              localError="Invalid column indices. Column index "//TRIM(NumberToVString(j,"*",err,error))//" with value "// &
+                & TRIM(NumberToVString(k,"*",err,error))//" is greater than the number of columns of "// &
+                & TRIM(NumberToVString(matrix%n,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
             ENDIF
           ELSE
-            LOCAL_ERROR="The supplied number of row indices ("//TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not match the number of rows in the matrix + 1 ("// &
-              & TRIM(NUMBER_TO_VSTRING(MATRIX%M+1,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+            localError="Invalid column indices. Column index "//TRIM(NumberToVString(j,"*",err,error))//" with value "// &
+              & TRIM(NumberToVString(k,"*",err,error))//" is less than zero."
+            CALL FlagError(localError,err,error,*999)
           ENDIF
-        CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-          IF(SIZE(COLUMN_INDICES,1)==MATRIX%N+1) THEN
-            IF(SIZE(ROW_INDICES,1)==MATRIX%NUMBER_NON_ZEROS) THEN
-             IF(COLUMN_INDICES(1)==1) THEN
-                IF(COLUMN_INDICES(MATRIX%N+1)==MATRIX%NUMBER_NON_ZEROS+1) THEN
-                  IF(COLUMN_INDICES(1)/=1) THEN
-                    LOCAL_ERROR="Invalid column indices. Column index 1 ("// &
-                      & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(1),"*",ERR,ERROR))//") "// &
-                      & " should be equal to one."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  END IF
-                  DO j=2,MATRIX%N+1
-                    IF(COLUMN_INDICES(j)<COLUMN_INDICES(j-1)) THEN
-                      LOCAL_ERROR="Invalid column indices. Column "//TRIM(NUMBER_TO_VSTRING(j,"*",ERR,ERROR))// &
-                        & " index number ("//TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//") is less than column "// &
-                        & TRIM(NUMBER_TO_VSTRING(j-1,"*",ERR,ERROR))//" index number ("// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j-1),"*",ERR,ERROR))//")."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    END IF
-                    IF(COLUMN_INDICES(j)<0.OR.COLUMN_INDICES(j)>MATRIX%NUMBER_NON_ZEROS+1) THEN
-                      LOCAL_ERROR="Invalid column indices. Column index "//TRIM(NUMBER_TO_VSTRING(j,"*",ERR,ERROR))//" ("// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//") "// &
-                        & " should be in the range of one to the number of non-zeros + 1 ("// &
-                        & TRIM(NUMBER_TO_VSTRING(MATRIX%NUMBER_NON_ZEROS+1,"*",ERR,ERROR))//")."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    END IF
-                  ENDDO !i
-                  DO j=1,MATRIX%N
-                    DO i=COLUMN_INDICES(j),COLUMN_INDICES(j+1)-1
-                      k=ROW_INDICES(i)
-                      IF(k>0) THEN
-                        IF(k>MATRIX%M) THEN
-                          LOCAL_ERROR="Invalid row indices. Row index "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" ("// &
-                            & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//") is greater than the number of rows ("// &
-                            & TRIM(NUMBER_TO_VSTRING(MATRIX%M,"*",ERR,ERROR))//")."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        ENDIF
-                      ELSE
-                        LOCAL_ERROR="Invalid row indices. Row index "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" ("// &
-                          & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//") is less than zero."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      ENDIF
-                    ENDDO !i
-                  ENDDO !j
-                  IF(ALLOCATED(MATRIX%ROW_INDICES)) DEALLOCATE(MATRIX%ROW_INDICES)
-                  IF(ALLOCATED(MATRIX%COLUMN_INDICES)) DEALLOCATE(MATRIX%COLUMN_INDICES)
-                  ALLOCATE(MATRIX%ROW_INDICES(MATRIX%NUMBER_NON_ZEROS),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate matrix row indices.",ERR,ERROR,*999)
-                  ALLOCATE(MATRIX%COLUMN_INDICES(MATRIX%N+1),STAT=ERR)
-                  IF(ERR/=0) CALL FlagError("Could not allocate matrix column indices.",ERR,ERROR,*999)                  
-                  MATRIX%ROW_INDICES(1:MATRIX%NUMBER_NON_ZEROS)=ROW_INDICES(1:MATRIX%NUMBER_NON_ZEROS)
-                  MATRIX%COLUMN_INDICES(1:MATRIX%N+1)=COLUMN_INDICES(1:MATRIX%N+1)
-                  !Don't really need this???
-                  !DO j=1,MATRIX%N                    
-                  !  CALL LIST_SORT(MATRIX%ROW_INDICES(MATRIX%COLUMN_INDICES(j):MATRIX%COLUMN_INDICES(j+1)-1),ERR,ERROR,*999)
-                  !ENDDO !j
-                ELSE
-                  LOCAL_ERROR="Invalid column indices. The last column index ("// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(MATRIX%N+1),"*",ERR,ERROR))// &
-                    & ") does not equal the number of non-zeros + 1 ("// &
-                    & TRIM(NUMBER_TO_VSTRING(MATRIX%NUMBER_NON_ZEROS+1,"*",ERR,ERROR))//")."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                LOCAL_ERROR="Invalid column indices. The first column index ("// &
-                  & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(1),"*",ERR,ERROR))//") does not equal 1."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The supplied number of row indices ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-                & ") does not match the number of non-zeros in the matrix ("// &
-                & TRIM(NUMBER_TO_VSTRING(MATRIX%NUMBER_NON_ZEROS,"*",ERR,ERROR))//")."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The supplied number of column indices ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not match the number of columns in the matrix + 1 ("// &
-              & TRIM(NUMBER_TO_VSTRING(MATRIX%N+1,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          IF(SIZE(ROW_INDICES,1)==MATRIX%NUMBER_NON_ZEROS) THEN
-            IF(SIZE(COLUMN_INDICES,1)==MATRIX%NUMBER_NON_ZEROS) THEN
-              DO k=1,MATRIX%NUMBER_NON_ZEROS
-                IF(ROW_INDICES(k)<1.OR.ROW_INDICES(k)>MATRIX%M) THEN
-                  LOCAL_ERROR="Invalid row indices. Row index number "//TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" ("// &
-                    & TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))// &
-                    & ") is out of range. The row index must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(MATRIX%M,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE IF(COLUMN_INDICES(k)<1.OR.COLUMN_INDICES(k)>MATRIX%N) THEN
-                  LOCAL_ERROR="Invalid column indices. Column index number "//TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" ("// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))// &
-                    & ") is out of range. The column index must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(MATRIX%N,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !k
-              MATRIX%ROW_INDICES(1:MATRIX%NUMBER_NON_ZEROS)=ROW_INDICES(1:MATRIX%NUMBER_NON_ZEROS)
-              MATRIX%COLUMN_INDICES(1:MATRIX%NUMBER_NON_ZEROS)=COLUMN_INDICES(1:MATRIX%NUMBER_NON_ZEROS)
-              !!TODO: sort the row and colum indices!!!!!
-            ELSE
-              LOCAL_ERROR="The supplied number of column indices ("// &
-                & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-                & ") does not match the number of non-zeros in the matrix ("// &
-                & TRIM(NUMBER_TO_VSTRING(MATRIX%NUMBER_NON_ZEROS,"*",ERR,ERROR))//")."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The supplied number of row indices ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not match the number of non-zeros in the matrix ("// &
-              & TRIM(NUMBER_TO_VSTRING(MATRIX%NUMBER_NON_ZEROS,"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
+        ENDDO !j
+      ENDDO !i
+      
+      IF(ALLOCATED(matrix%rowIndices)) DEALLOCATE(matrix%rowIndices)
+      IF(ALLOCATED(matrix%columnIndices)) DEALLOCATE(matrix%columnIndices)
+      ALLOCATE(matrix%rowIndices(matrix%m+1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate matrix row indices.",err,error,*999)
+      ALLOCATE(matrix%columnIndices(matrix%numberOfNonZeros),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate matrix column indices.",err,error,*999)                  
+      matrix%rowIndices(1:matrix%m+1)=rowIndices(1:matrix%m+1)
+      matrix%columnIndices(1:matrix%numberOfNonZeros)=columnIndices(1:matrix%numberOfNonZeros)
+      !Don't really need this???
+      !DO i=1,matrix%m
+      !  CALL List_Sort(matrix%columnIndices(matrix%rowIndices(i):matrix%rowIndices(i+1)-1),err,error,*999)
+      !ENDDO !i
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      IF(SIZE(columnIndices,1)/=matrix%n+1) THEN
+        localError="The supplied number of column indices of "// &
+          & TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+          & " does not match the number of columns in the matrix + 1 of "// &
+          & TRIM(NumberToVString(matrix%n+1,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(SIZE(rowIndices,1)==matrix%numberOfNonZeros) THEN
+        localError="The supplied number of row indices of "// &
+          & TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+          & " does not match the number of non-zeros in the matrix of "// &
+          & TRIM(NumberToVString(matrix%numberOfNonZeros,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(columnIndices(1)/=1) THEN
+        localError="Invalid column indices. The first column index of "// &
+          & TRIM(NumberToVString(columnIndices(1),"*",err,error))//" does not equal 1."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(columnIndices(matrix%n+1)==matrix%numberOfNonZeros+1) THEN
+        localError="Invalid column indices. The last column index of "// &
+          & TRIM(NumberToVString(columnIndices(matrix%n+1),"*",err,error))// &
+          & " does not equal the number of non-zeros + 1 of "// &
+          & TRIM(NumberToVString(matrix%numberOfNonZeros+1,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_STORAGE_LOCATIONS_SET")
-    RETURN
-999 ERRORSEXITS("MATRIX_STORAGE_LOCATIONS_SET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_STORAGE_LOCATIONS_SET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the storage type for a matrix.
-  SUBROUTINE MATRIX_STORAGE_TYPE_GET(MATRIX,STORAGE_TYPE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(OUT) :: STORAGE_TYPE !<On return, the storage type of the matrix. \see MatrixVector_StorageTypes,MatrixVector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("MATRIX_STORAGE_TYPE_GET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN        
-        STORAGE_TYPE=MATRIX%STORAGE_TYPE
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
+      DO j=2,matrix%n+1
+        IF(columnIndices(j)<columnIndices(j-1)) THEN
+          localError="Invalid column indices. Column "//TRIM(NumberToVString(j,"*",err,error))// &
+            & " index number "//TRIM(NumberToVString(columnIndices(j),"*",err,error))//" is less than column "// &
+            & TRIM(NumberToVString(j-1,"*",err,error))//" index number "// &
+            & TRIM(NumberToVString(columnIndices(j-1),"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        END IF
+        IF(columnIndices(j)<0.OR.columnIndices(j)>matrix%numberOfNonZeros+1) THEN
+          localError="Invalid column indices. Column index "//TRIM(NumberToVString(j,"*",err,error))//" with value "// &
+            & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" "// &
+            & " should be in the range of one to the number of non-zeros + 1 of "// &
+            & TRIM(NumberToVString(matrix%numberOfNonZeros+1,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        END IF
+      ENDDO !i
+      DO j=1,matrix%n
+        DO i=columnIndices(j),columnIndices(j+1)-1
+          k=rowIndices(i)
+          IF(k>0) THEN
+            IF(k>matrix%m) THEN
+              localError="Invalid row indices. Row index "//TRIM(NumberToVString(i,"*",err,error))//" with value "// &
+                & TRIM(NumberToVString(k,"*",err,error))//" is greater than the number of rows of "// &
+                & TRIM(NumberToVString(matrix%m,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE
+            localError="Invalid row indices. Row index "//TRIM(NumberToVString(i,"*",err,error))//" with value "// &
+              & TRIM(NumberToVString(k,"*",err,error))//" is less than zero."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDDO !i
+      ENDDO !j
+      IF(ALLOCATED(matrix%rowIndices)) DEALLOCATE(matrix%rowIndices)
+      IF(ALLOCATED(matrix%columnIndices)) DEALLOCATE(matrix%columnIndices)
+      ALLOCATE(matrix%rowIndices(matrix%numberOfNonZeros),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate matrix row indices.",err,error,*999)
+      ALLOCATE(matrix%columnIndices(matrix%n+1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate matrix column indices.",err,error,*999)                  
+      matrix%rowIndices(1:matrix%numberOfNonZeros)=rowIndices(1:matrix%numberOfNonZeros)
+      matrix%columnIndices(1:matrix%n+1)=columnIndices(1:matrix%n+1)
+      !Don't really need this???
+      !DO j=1,matrix%n                    
+      !  CALL List_Sort(matrix%rowIndices(matrix%columnIndices(j):matrix%columnIndices(j+1)-1),err,error,*999)
+      !ENDDO !j
+    CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      IF(SIZE(rowIndices,1)/=matrix%numberOfNonZeros) THEN
+        localError="The supplied number of row indices of "// &
+          & TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+          & " does not match the number of non-zeros in the matrix of "// &
+          & TRIM(NumberToVString(matrix%numberOfNonZeros,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(SIZE(columnIndices,1)/=matrix%numberOfNonZeros) THEN
+        localError="The supplied number of column indices of "// &
+          & TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+          & " does not match the number of non-zeros in the matrix of "// &
+          & TRIM(NumberToVString(matrix%numberOfNonZeros,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_STORAGE_TYPE_GET")
+        
+      DO k=1,matrix%numberOfNonZeros
+        IF(rowIndices(k)<1.OR.rowIndices(k)>matrix%m) THEN
+          localError="Invalid row indices. Row index number "//TRIM(NumberToVString(k,"*",err,error))//" with value "// &
+            & TRIM(NumberToVString(rowIndices(k),"*",err,error))// &
+            & " is out of range. The row index must be between 1 and "// &
+            & TRIM(NumberToVString(matrix%m,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ELSE IF(columnIndices(k)<1.OR.columnIndices(k)>matrix%n) THEN
+          localError="Invalid column indices. Column index number "//TRIM(NumberToVString(k,"*",err,error))//" with value "// &
+            & TRIM(NumberToVString(columnIndices(k),"*",err,error))// &
+            & " is out of range. The column index must be between 1 and "// &
+            & TRIM(NumberToVString(matrix%n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !k
+      matrix%rowIndices(1:matrix%numberOfNonZeros)=rowIndices(1:matrix%numberOfNonZeros)
+      matrix%columnIndices(1:matrix%numberOfNonZeros)=columnIndices(1:matrix%numberOfNonZeros)
+!!TODO: sort the row and colum indices!!!!!
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      IF(SIZE(rowIndices,1)/=matrix%numberOfRowBlocks+1) THEN
+        localError="The supplied number of row indices of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+          & " does not match the number of row blocks in the matrix + 1 of "// &
+          & TRIM(NumberToVString(matrix%numberOfRowBlocks+1,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(SIZE(columnIndices,1)>matrix%numberOfRowBlocks*matrix%numberOfColumnBlocks) THEN
+        localError="The supplied number of column indices of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+          & " is greater than the number of blocks in the matrix of "// &
+          & TRIM(NumberToVString(matrix%numberOfRowBlocks*matrix%numberOfColumnBlocks,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      IF(rowIndices(1)/=1) THEN
+        localError="Invalid row indices. The first row index of "//TRIM(NumberToVString(rowIndices(1),"*",err,error))// &
+          & " does not equal 1."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      IF(rowIndices(matrix%numberOfRowBlocks+1)/=SIZE(columnIndices,1)) THEN
+        localError="Invalid row indices. The last row index of "// &
+          & TRIM(NumberToVString(rowIndices(matrix%numberOfRowBlocks+1),"*",err,error))// &
+          & " does not equal the number of column blocks of "// &
+          & TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF        
+      DO i=2,matrix%numberOfRowBlocks+1
+        IF(rowIndices(i)<rowIndices(i-1)) THEN
+          localError="Invalid row indices. Row "//TRIM(NumberToVString(i,"*",err,error))//" index number "// &
+            & TRIM(NumberToVString(rowIndices(i),"*",err,error))//" is less than row "// &
+            & TRIM(NumberToVString(i-1,"*",err,error))//" index number "// &
+            & TRIM(NumberToVString(rowIndices(i-1),"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ENDDO !i
+      DO i=1,matrix%m
+        DO j=rowIndices(i),rowIndices(i+1)-1
+          k=columnIndices(j)
+          IF(k>0) THEN
+            IF(k>matrix%numberOfColumnBlocks) THEN
+              localError="Invalid column indices. Column index "//TRIM(NumberToVString(j,"*",err,error))//" with value "// &
+                & TRIM(NumberToVString(k,"*",err,error))//" is greater than the number of columns blocks of "// &
+                & TRIM(NumberToVString(matrix%numberOfColumnBlocks,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+          ELSE
+            localError="Invalid column indices. Column index "//TRIM(NumberToVString(j,"*",err,error))//" with value "// &
+              & TRIM(NumberToVString(k,"*",err,error))//" is less than zero."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+      matrix%numberOfBlocks=SIZE(columnIndices,1)
+      IF(ALLOCATED(matrix%rowIndices)) DEALLOCATE(matrix%rowIndices)
+      IF(ALLOCATED(matrix%columnIndices)) DEALLOCATE(matrix%columnIndices)
+      ALLOCATE(matrix%rowIndices(matrix%numberOfRowBlocks+1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate matrix row indices.",err,error,*999)
+      ALLOCATE(matrix%columnIndices(matrix%numberOfBlocks),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate matrix column indices.",err,error,*999)                  
+      matrix%rowIndices(1:matrix%numberOfRowBlocks+1)=rowIndices(1:matrix%numberOfRowBlocks+1)
+      matrix%columnIndices(1:matrix%numberOfBlocks)=columnIndices(1:matrix%numberOfBlocks)
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Matrix_StorageLocationsSet")
     RETURN
-999 ERRORSEXITS("MATRIX_STORAGE_TYPE_GET",ERR,ERROR)
+999 IF(ALLOCATED(rowCounts)) DEALLOCATE(rowCounts)
+    ERRORSEXITS("Matrix_StorageLocationsSet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_STORAGE_TYPE_GET
+    
+  END SUBROUTINE Matrix_StorageLocationsSet
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the storage type for a matrix.
-  SUBROUTINE MATRIX_STORAGE_TYPE_SET(MATRIX,STORAGE_TYPE,ERR,ERROR,*)
+  SUBROUTINE Matrix_StorageTypeSet(matrix,storageType,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE !<The storage type to set. \see MatrixVector_StorageTypes,MatrixVector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_STORAGE_TYPE_SET",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        CALL FlagError("The matrix has been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(STORAGE_TYPE)
-        CASE(MATRIX_BLOCK_STORAGE_TYPE)
-          MATRIX%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
-        CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-          MATRIX%STORAGE_TYPE=MATRIX_DIAGONAL_STORAGE_TYPE
-        CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-          MATRIX%STORAGE_TYPE=MATRIX_COLUMN_MAJOR_STORAGE_TYPE
-        CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-          MATRIX%STORAGE_TYPE=MATRIX_ROW_MAJOR_STORAGE_TYPE
-        CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          MATRIX%STORAGE_TYPE=MATRIX_COMPRESSED_ROW_STORAGE_TYPE
-        CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-          MATRIX%STORAGE_TYPE=MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
-        CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-          MATRIX%STORAGE_TYPE=MATRIX_ROW_COLUMN_STORAGE_TYPE
-        CASE DEFAULT
-          LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_STORAGE_TYPE_SET")
-    RETURN
-999 ERRORSEXITS("MATRIX_STORAGE_TYPE_SET",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_STORAGE_TYPE_SET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the symmetry type for a matrix.
-  SUBROUTINE Matrix_SymmetryTypeGet(matrix,symmetryType,err,error,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to get the symmetry type for
-    INTEGER(INTG), INTENT(OUT) :: symmetryType !<On return, the symmetry type of the matrix. \see MatrixVector_SymmetryTypes,MatrixVector
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: storageType !<The storage type to set. \see MatrixVector_StorageTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Matrix_SymmetryTypeGet",err,error,*999)
+    ENTERS("Matrix_StorageTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
-    IF(.NOT.matrix%MATRIX_FINISHED) CALL FlagError("The matrix has not been finished.",err,error,*999)
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
+    
+    SELECT CASE(storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      matrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      matrix%storageType=MATRIX_DIAGONAL_STORAGE_TYPE
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      matrix%storageType=MATRIX_COLUMN_MAJOR_STORAGE_TYPE
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      matrix%storageType=MATRIX_ROW_MAJOR_STORAGE_TYPE
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      matrix%storageType=MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      matrix%storageType=MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
+    CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      matrix%storageType=MATRIX_ROW_COLUMN_STORAGE_TYPE
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      matrix%storageType=MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      matrix%storageType=MATRIX_MODIFIED_KRM_STORAGE_TYPE
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
 
-    symmetryType=matrix%symmetryType
-
-    EXITS("Matrix_SymmetryTypeGet")
+    EXITS("Matrix_StorageTypeSet")
     RETURN
-999 ERRORSEXITS("Matrix_SymmetryTypeGet",err,error)
+999 ERRORSEXITS("Matrix_StorageTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE Matrix_SymmetryTypeGet
+    
+  END SUBROUTINE Matrix_StorageTypeSet
 
   !
   !================================================================================================================================
@@ -2282,7 +2142,7 @@ CONTAINS
   SUBROUTINE Matrix_SymmetryTypeSet(matrix,symmetryType,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: matrix !<A pointer to the matrix to set the symmetry type for.
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set the symmetry type for.
     INTEGER(INTG), INTENT(IN) :: symmetryType !<The symmetry type to set. \see MatrixVector_SymmetryTypes,MatrixVector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2291,9 +2151,8 @@ CONTAINS
 
     ENTERS("Matrix_SymmetryTypeSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(matrix)) CALL FlagError("Matrix is not associated.",err,error,*999)
-    IF(matrix%MATRIX_FINISHED) CALL FlagError("The matrix has been finished.",err,error,*999)
-    
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
+   
     SELECT CASE(symmetryType)
     CASE(MATRIX_SYMMETRIC_TYPE)
       matrix%symmetryType=MATRIX_SYMMETRIC_TYPE
@@ -2312,4346 +2171,3557 @@ CONTAINS
       localError="The matrix symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-
+    
     EXITS("Matrix_SymmetryTypeSet")
     RETURN
 999 ERRORSEXITS("Matrix_SymmetryTypeSet",err,error)
     RETURN 1
+    
   END SUBROUTINE Matrix_SymmetryTypeSet
 
   !
   !================================================================================================================================
   !
 
-  !>Adds values to an integer matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_INTG(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Calculates the transpose rows/columns for a matrix.
+  SUBROUTINE Matrix_TransposeLocationsCalculate(matrix,err,error,*,transposeRowsColumns)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to add
-    INTEGER(INTG), INTENT(IN) :: VALUES(:) !<VALUES(i). The value of the i'th value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set the transpose rows/columns for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    INTEGER(INTG), INTENT(IN), OPTIONAL :: transposeRowsColumns(:) !<transposeRowsColumns(i). The list of transpose rows/columns to calculate. If this parameter is not present then all rows/columns are included in the transpose
+    !Local Variables
+    INTEGER(INTG) :: columnIdx,dummyErr,listItem(2),location,nonZeroIdx,numberOfColumns,numberOfNonZeros,numberOfRowsColumns, &
+      & numberOfRows,rowColumnIdx,rowIdx
+    INTEGER(INTG), ALLOCATABLE :: newColumnIndicesT(:),newRowIndicesT(:),newTransposeDataSwivel(:),newTransposeRowsColumns(:)
+    INTEGER(INTG), ALLOCATABLE :: rowColumnData(:,:)
+    LOGICAL :: fullTranspose
+    TYPE(ListPtrType), ALLOCATABLE :: rowColumnLists(:)
+    TYPE(VARYING_STRING) :: dummyError,localError
 
-    ENTERS("MATRIX_VALUES_ADD_INTG",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))//" and column "// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))//" does not exist in the matrix."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE
-                  MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUES(k)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the integer data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
+    ENTERS("Matrix_TransposeLocationsCalculate",err,error,*999)
+ 
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      !Do nothing, transpose is trivial to obtain
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      !Do nothing, transpose is trivial to obtain
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      !Do nothing, transpose is trivial to obtain
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      !Do nothing, transpose is trivial to obtain
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      !Store the transpose as a compressed column scheme      
+      IF(PRESENT(transposeRowsColumns)) THEN
+        numberOfRowsColumns=SIZE(transposeRowsColumns,1)
+        ALLOCATE(newTransposeRowsColumns(numberOfRowsColumns),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate new transpose rows columns array.",err,error,*999)
+        newTransposeRowsColumns(1:numberOfRowsColumns)=transposeRowsColumns(1:numberOfRowsColumns)
+        CALL List_SortHeap(newTransposeRowsColumns,err,error,*999)
+        fullTranspose=.FALSE.
       ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
+        numberOfRowsColumns=matrix%n
+        fullTranspose=.TRUE.
       ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_INTG")
+      !Create lists of the column entries for the specified columns
+      ALLOCATE(rowColumnLists(numberOfRowsColumns),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate row column lists.",err,error,*999)
+      DO rowColumnIdx=1,numberOfRowsColumns
+        NULLIFY(rowColumnLists(rowColumnIdx)%ptr)
+      ENDDO !rowColumnIdx
+      numberOfNonZeros=0
+      DO rowColumnIdx=1,numberOfRowsColumns
+        IF(fullTranspose) THEN
+          columnIdx=rowColumnIdx
+        ELSE
+          columnIdx=newTransposeRowsColumns(rowColumnIdx)
+        ENDIF
+        CALL List_CreateStart(rowColumnLists(rowColumnIdx)%ptr,err,error,*999)
+        CALL List_DataDimensionSet(rowColumnLists(rowColumnIdx)%ptr,2,err,error,*999)
+        CALL List_CreateFinish(rowColumnLists(rowColumnIdx)%ptr,err,error,*999)
+        DO rowIdx=1,matrix%m
+          CALL Matrix_StorageLocationFind(matrix,rowIdx,columnIdx,location,err,error,*999)
+          IF(location/=0) THEN
+            numberOfNonZeros=numberOfNonZeros+1
+            listItem(1)=rowIdx
+            listItem(2)=location
+            CALL List_ItemAdd(rowColumnLists(rowColumnIdx)%ptr,listItem,err,error,*999)
+          ENDIF
+        ENDDO !rowIdx
+      ENDDO !rowColumnIdx
+      ALLOCATE(newColumnIndicesT(numberOfRowsColumns+1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new column indices transpose.",err,error,*999)
+      ALLOCATE(newRowIndicesT(numberOfNonZeros),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new row indices transpose.",err,error,*999)
+      ALLOCATE(newTransposeDataSwivel(numberOfNonZeros),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new transpose data swivel.",err,error,*999)
+      newColumnIndicesT=0
+      newColumnIndicesT(1)=1
+      numberOfNonZeros=0
+      DO rowColumnIdx=1,numberOfRowsColumns
+        IF(fullTranspose) THEN
+          columnIdx=rowColumnIdx
+        ELSE
+          columnIdx=newTransposeRowsColumns(rowColumnIdx)
+        ENDIF
+        CALL List_DetachAndDestroy(rowColumnLists(rowColumnIdx)%ptr,numberOfRows,rowColumnData,err,error,*999)
+        numberOfNonZeros=numberOfNonZeros+numberOfRows
+        IF(numberOfRows>matrix%maximumRowIndicesPerColumn) matrix%maximumRowIndicesPerColumn=numberOfRows
+        DO nonZeroIdx=1,numberOfRows
+          rowIdx=rowColumnData(1,nonZeroIdx)
+          location=rowColumnData(2,nonZeroIdx)
+          newRowIndicesT(newColumnIndicesT(rowColumnIdx)+nonZeroIdx-1)=rowIdx
+          newTransposeDataSwivel(newColumnIndicesT(rowColumnIdx)+nonZeroIdx-1)=location
+        ENDDO !nonZeroIdx
+        newColumnIndicesT(rowColumnIdx+1)=numberOfNonZeros+1
+        IF(ALLOCATED(rowColumnData)) DEALLOCATE(rowColumnData)
+      ENDDO !rowColumnIdx
+      IF(.NOT.fullTranspose) CALL MOVE_ALLOC(newTransposeRowsColumns,matrix%transposeRowsColumns)
+      CALL MOVE_ALLOC(newColumnIndicesT,matrix%columnIndicesT)
+      CALL MOVE_ALLOC(newRowIndicesT,matrix%rowIndicesT)
+      CALL MOVE_ALLOC(newTransposeDataSwivel,matrix%transposeDataSwivel)
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      !Store the transpose as a compressed row scheme
+      !Create lists of the row entries for the specified rows
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+   
+    EXITS("Matrix_TransposeLocationsCalculate")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_INTG",ERR,ERROR)
+999 IF(ALLOCATED(newColumnIndicesT)) DEALLOCATE(newColumnIndicesT)
+    IF(ALLOCATED(newRowIndicesT)) DEALLOCATE(newRowIndicesT)
+    IF(ALLOCATED(newTransposeDataSwivel)) DEALLOCATE(newTransposeDataSwivel)
+    IF(ALLOCATED(rowColumnData)) DEALLOCATE(rowColumnData)
+    IF(ALLOCATED(rowColumnLists)) THEN
+      DO rowColumnIdx=1,SIZE(rowColumnLists,1)
+        IF(ASSOCIATED(rowColumnLists(rowColumnIdx)%ptr)) &
+          & CALL List_Destroy(rowColumnLists(rowColumnIdx)%ptr,dummyErr,dummyError,*998)
+      ENDDO !rowColumnIdx
+    ENDIF
+998 ERRORSEXITS("Matrix_TranposeLocationsCalculate",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_INTG
+    
+  END SUBROUTINE Matrix_TransposeLocationsCalculate
 
   !
   !================================================================================================================================
   !
 
-  !>Adds a value to an integer matrix at the location specified by the row and column index i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_INTG1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
+  !>Returns the position in the transpose indices list for the specified row/column number.
+  SUBROUTINE Matrix_TransposeRowColumnPositionGet(matrix,rowColumnNumber,transposePosition,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index for the value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index for the value to add
-    INTEGER(INTG), INTENT(IN) :: VALUE !<The value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to find the transpose position for.
+    INTEGER(INTG), INTENT(IN) :: rowColumnNumber !<The row/column number to find the position for
+    INTEGER(INTG), INTENT(OUT) :: transposePosition !<On return, the position in the transfer indices for the row/column. If the row/column is not in the transfer indices then the transpose position will be zero. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_ADD_INTG1",ERR,ERROR,*999)
+    ENTERS("Matrix_TransposeRowColumnPositionGet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDEX,"*",ERR,ERROR))//" and column "// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_INDEX,"*",ERR,ERROR))//" does not exist in the matrix."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the integer data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+   
+    SELECT CASE(matrix%transposeType)
+    CASE(MATRIX_NO_TRANSPOSE_REQUIRED)
+      transposePosition=0
+    CASE(MATRIX_PARTIAL_TRANSPOSE_REQUIRED)
+      SELECT CASE(matrix%storageType)
+      CASE(MATRIX_BLOCK_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        IF(rowColumnNumber<=0.OR.rowColumnNumber>matrix%n) THEN
+          localError="The specified column number of "//TRIM(NumberToVString(rowColumnNumber,"*",err,error))// &
+            & " is invalid. The column number should be >=1 and <= "//TRIM(NumberToVString(matrix%n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
         ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_INTG1")
+        CALL List_SearchBinary(matrix%transposeRowsColumns,rowColumnNumber,transposePosition,err,error,*999)
+      CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        IF(rowColumnNumber<=0.OR.rowColumnNumber>matrix%M) THEN
+          localError="The specified row number of "//TRIM(NumberToVString(rowColumnNumber,"*",err,error))// &
+            & " is invalid. The row number should be >=1 and <= "//TRIM(NumberToVString(matrix%m,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        CALL List_SearchBinary(matrix%transposeRowsColumns,rowColumnNumber,transposePosition,err,error,*999)
+      CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+        transposePosition=0
+      CASE DEFAULT
+        localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(MATRIX_FULL_TRANSPOSE_REQUIRED)
+      SELECT CASE(matrix%storageType)
+      CASE(MATRIX_BLOCK_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        IF(rowColumnNumber<=0.OR.rowColumnNumber>matrix%n) THEN
+          localError="The specified column number of "//TRIM(NumberToVString(rowColumnNumber,"*",err,error))// &
+            & " is invalid. The column number should be >=1 and <= "//TRIM(NumberToVString(matrix%n,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        transposePosition=rowColumnNumber
+      CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        IF(rowColumnNumber<=0.OR.rowColumnNumber>matrix%M) THEN
+          localError="The specified row number of "//TRIM(NumberToVString(rowColumnNumber,"*",err,error))// &
+            & " is invalid. The row number should be >=1 and <= "//TRIM(NumberToVString(matrix%m,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        transposePosition=rowColumnNumber
+      CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+        transposePosition=0
+      CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+        transposePosition=0
+      CASE DEFAULT
+        localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The matrix transpose type of "//TRIM(NumberToVString(matrix%transposeType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Matrix_TransposeRowColumnPositionGet")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_INTG1",ERR,ERROR)
+999 ERRORSEXITS("Matrix_TransposeRowColumnPositionGet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_INTG1
+    
+  END SUBROUTINE Matrix_TransposeRowColumnPositionGet
 
   !
   !================================================================================================================================
   !
 
-  !>Adds a matrix of values to an integer matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_INTG2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Sets/changes the tranpose type for a matrix.
+  SUBROUTINE Matrix_TransposeTypeSet(matrix,transposeType,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to add
-    INTEGER(INTG), INTENT(IN) :: VALUES(:,:) !<VALUES(i,j). The value of the ij'th value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,j,k,ROW_INDEX,PREVIOUS_ROW_INDEX,COLUMN_INDEX,PREVIOUS_COLUMN_INDEX,LOCATION,LOWLIMIT,MIDPOINT,UPLIMIT
-    LOGICAL :: FOUNDCOLUMN, FOUNDROW
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set the transpose type for.
+    INTEGER(INTG), INTENT(IN) :: transposeType !<The transpose type to set. \see MatrixVector_TransposeTypes,MatrixVector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_ADD_INTG2",ERR,ERROR,*999)
+    ENTERS("Matrix_TransposeTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              SELECT CASE(MATRIX%STORAGE_TYPE)
-              CASE(MATRIX_BLOCK_STORAGE_TYPE)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    ROW_INDEX=ROW_INDICES(i)
-                    LOCATION=ROW_INDEX+(COLUMN_INDEX-1)*MATRIX%M
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    LOCATION=0
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    IF(ROW_INDEX==COLUMN_INDEX) LOCATION=ROW_INDEX
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    ROW_INDEX=ROW_INDICES(i)
-                    LOCATION=ROW_INDEX+(COLUMN_INDEX-1)*MATRIX%MAX_M
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    LOCATION=(ROW_INDEX-1)*MATRIX%MAX_N+COLUMN_INDEX
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                !Search for the column number in the sparsity list using the bisection (binary search) algorithm
-                PREVIOUS_COLUMN_INDEX=-1
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  LOWLIMIT=MATRIX%ROW_INDICES(ROW_INDEX)
-                  UPLIMIT=MATRIX%ROW_INDICES(ROW_INDEX+1)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    LOCATION=0
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    IF(COLUMN_INDEX<=PREVIOUS_COLUMN_INDEX) THEN
-                      LOWLIMIT=MATRIX%ROW_INDICES(ROW_INDEX)
-                    ELSE
-                      UPLIMIT=MATRIX%ROW_INDICES(ROW_INDEX+1)
-                    ENDIF
-                    PREVIOUS_COLUMN_INDEX=COLUMN_INDEX
-                    DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                      MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                      IF(MATRIX%COLUMN_INDICES(MIDPOINT)>COLUMN_INDEX) THEN
-                        UPLIMIT=MIDPOINT
-                      ELSE
-                        LOWLIMIT=MIDPOINT
-                      ENDIF
-                    ENDDO
-                    DO k=LOWLIMIT,UPLIMIT
-                      IF(MATRIX%COLUMN_INDICES(k)==COLUMN_INDEX) THEN
-                        LOCATION=k
-                        LOWLIMIT=k+1
-                        EXIT
-                      ENDIF
-                    ENDDO !k
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                !Search for the row number in the sparsity list using the bisection (binary search) algorithm
-                PREVIOUS_ROW_INDEX=-1
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  LOWLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX)
-                  UPLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX+1)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    LOCATION=0
-                    ROW_INDEX=ROW_INDICES(i)
-                    IF(ROW_INDEX<=PREVIOUS_ROW_INDEX) THEN
-                      LOWLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX)
-                    ELSE
-                      UPLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX+1)
-                    ENDIF
-                    PREVIOUS_ROW_INDEX=ROW_INDEX
-                    DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                      MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                      IF(MATRIX%ROW_INDICES(MIDPOINT)>ROW_INDEX) THEN
-                        UPLIMIT=MIDPOINT
-                      ELSE
-                        LOWLIMIT=MIDPOINT
-                      ENDIF
-                    ENDDO
-                    DO k=LOWLIMIT,UPLIMIT
-                      IF(MATRIX%ROW_INDICES(k)==ROW_INDEX) THEN
-                        LOCATION=k
-                        LOWLIMIT=k+1
-                        EXIT
-                      ENDIF
-                    ENDDO !k
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    FOUNDROW=.FALSE.
-                    LOCATION=1
-                    DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                      IF(MATRIX%ROW_INDICES(LOCATION)==ROW_INDEX) THEN
-                        DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                          IF(MATRIX%COLUMN_INDICES(LOCATION)==COLUMN_INDEX.AND.MATRIX%ROW_INDICES(LOCATION)==ROW_INDEX) THEN
-                            FOUNDCOLUMN=.TRUE.
-                          ELSE IF(MATRIX%ROW_INDICES(LOCATION)/=ROW_INDEX) THEN
-                            LOCATION=MATRIX%SIZE+1
-                          ELSE
-                            LOCATION=LOCATION+1
-                          ENDIF
-                        ENDDO
-                      ELSE
-                        LOCATION=LOCATION+1
-                      ENDIF
-                    ENDDO
-                    IF(.NOT.(FOUNDROW.AND.FOUNDCOLUMN)) LOCATION=0
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_INTG(LOCATION)=MATRIX%DATA_INTG(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE DEFAULT
-                LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
-                  & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the integer data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_INTG2")
+    CALL Matrix_AssertNotFinished(matrix,err,error,*999)
+   
+    SELECT CASE(transposeType)
+    CASE(MATRIX_NO_TRANSPOSE_REQUIRED)
+      matrix%transposeType=MATRIX_NO_TRANSPOSE_REQUIRED
+    CASE(MATRIX_PARTIAL_TRANSPOSE_REQUIRED)
+      matrix%transposeType=MATRIX_PARTIAL_TRANSPOSE_REQUIRED
+    CASE(MATRIX_FULL_TRANSPOSE_REQUIRED)
+      matrix%transposeType=MATRIX_FULL_TRANSPOSE_REQUIRED
+    CASE DEFAULT
+      localError="The matrix transpose type of "//TRIM(NumberToVString(transposeType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Matrix_TransposeTypeSet")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_INTG2",ERR,ERROR)
+999 ERRORSEXITS("Matrix_TranposeTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_INTG2
+    
+  END SUBROUTINE Matrix_TransposeTypeSet
 
   !
   !================================================================================================================================
   !
 
-  !>Adds values to a single precision real matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_SP(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Sets/changes the transpose row/column for a matrix.
+  SUBROUTINE Matrix_TransposeRowsColumnsSet0(matrix,transposeRowColumn,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to add
-    REAL(SP), INTENT(IN) :: VALUES(:) !<VALUES(i). The value of the i'th value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set the transpose row/column for.
+    INTEGER(INTG), INTENT(IN) :: transposeRowColumn !<The transpose row/column to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
 
-    ENTERS("MATRIX_VALUES_ADD_SP",ERR,ERROR,*999)
+    ENTERS("Matrix_TransposeRowsColumnsSet0",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))//" and column "// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))//" does not exist in the matrix."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE
-                  MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUES(k)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the single precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_SP")
+    CALL Matrix_TransposeRowsColumnsSet(matrix,[transposeRowColumn],err,error,*999)
+    
+    EXITS("Matrix_TransposeRowsColumnsSet0")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_SP",ERR,ERROR)
+999 ERRORSEXITS("Matrix_TranposeRowsColumnsSet0",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_SP
+    
+  END SUBROUTINE Matrix_TransposeRowsColumnsSet0
 
   !
   !================================================================================================================================
   !
 
-  !>Adds a value to a single precision real matrix at the location specified by the row and column index i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_SP1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
+  !>Sets/changes the transpose rows/columns for a matrix.
+  SUBROUTINE Matrix_TransposeRowsColumnsSet1(matrix,transposeRowsColumns,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index for the value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index for the value to add
-    REAL(SP), INTENT(IN) :: VALUE !<The value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix to set the transpose rows/columns for.
+    INTEGER(INTG), INTENT(IN) :: transposeRowsColumns(:) !<transposeRowsColumns(i). The list of transpose rows/columns to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: columnIdx,numberOfRowsColumns
+    INTEGER(INTG), ALLOCATABLE :: newTransposeRowsColumns(:)
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_ADD_SP1",ERR,ERROR,*999)
+    ENTERS("Matrix_TransposeRowsColumnsSet1",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDEX,"*",ERR,ERROR))//" and column "// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_INDEX,"*",ERR,ERROR))//" does not exist in the matrix."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the single precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    IF(SIZE(transposeRowsColumns,1)<1.OR.SIZE(transposeRowsColumns,1)>matrix%n) THEN
+      localError="The size of the transpose rows columns array of "// &
+        & TRIM(NumberToVString(SIZE(transposeRowsColumns,1),"*",err,error))//" is invalid. The size must be >= 1 and <= "// &
+        & TRIM(NumberToVString(matrix%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    DO columnIdx=1,SIZE(transposeRowsColumns,1)
+      IF(transposeRowsColumns(columnIdx)<1.OR.transposeRowsColumns(columnIdx)>matrix%n) THEN
+        localError="The column number of "//TRIM(NumberToVString(transposeRowsColumns(columnIdx),"*",err,error))// &
+          & " at column index position "//TRIM(NumberToVString(columnIdx,"*",err,error))// &
+          & " is invalid. The column number must be >= 1 and <= "//TRIM(NumberToVString(matrix%n,"*",err,error))// &
+          & "."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDDO !columnIdx
 
-    EXITS("MATRIX_VALUES_ADD_SP1")
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE)
+      !Do nothing, transpose is trivial to obtain
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
+      !Do nothing, transpose is trivial to obtain
+    CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      !Do nothing, transpose is trivial to obtain
+    CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
+      !Do nothing, transpose is trivial to obtain
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      !Store the transpose as a compressed column scheme
+      numberOfRowsColumns=SIZE(transposeRowsColumns,1)
+      ALLOCATE(newTransposeRowsColumns(numberOfRowsColumns),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new transpose rows columns array.",err,error,*999)
+      newTransposeRowsColumns(1:numberOfRowsColumns)=transposeRowsColumns(1:numberOfRowsColumns)
+      CALL List_SortHeap(newTransposeRowsColumns,err,error,*999)
+      IF(err/=0) CALL FlagError("Could not allocate new transpose data swivel.",err,error,*999)
+      CALL MOVE_ALLOC(newTransposeRowsColumns,matrix%transposeRowsColumns)
+      CALL Matrix_TransposeLocationsCalculate(matrix,err,error,*999,matrix%transposeRowsColumns)
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      !Store the transpose as a compressed row scheme
+      !Create lists of the row entries for the specified rows
+    CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Matrix_TransposeRowsColumnsSet1")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_SP1",ERR,ERROR)
+999 ERRORSEXITS("Matrix_TranposeRowsColumnsSet1",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_SP1
+    
+  END SUBROUTINE Matrix_TransposeRowsColumnsSet1
 
   !
   !================================================================================================================================
   !
 
-  !>Adds a matrix of values to a single precision real matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_SP2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Adds a value to an integer matrix at the location specified by the row and column index i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddIntg(matrix,rowIndex,columnIndex,value,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to add
-    REAL(SP), INTENT(IN) :: VALUES(:,:) !<VALUES(i,j). The value of the ij'th value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index for the value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index for the value to add
+    INTEGER(INTG), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: i,j,k,ROW_INDEX,PREVIOUS_ROW_INDEX,COLUMN_INDEX,PREVIOUS_COLUMN_INDEX,LOCATION,LOWLIMIT,MIDPOINT,UPLIMIT
-    LOGICAL :: FOUNDCOLUMN, FOUNDROW
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: location
 
-    ENTERS("MATRIX_VALUES_ADD_SP2",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesAddIntg",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              SELECT CASE(MATRIX%STORAGE_TYPE)
-              CASE(MATRIX_BLOCK_STORAGE_TYPE)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    ROW_INDEX=ROW_INDICES(i)
-                    LOCATION=ROW_INDEX+(COLUMN_INDEX-1)*MATRIX%M
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    LOCATION=0
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    IF(ROW_INDEX==COLUMN_INDEX) LOCATION=ROW_INDEX
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    ROW_INDEX=ROW_INDICES(i)
-                    LOCATION=ROW_INDEX+(COLUMN_INDEX-1)*MATRIX%MAX_M
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    LOCATION=(ROW_INDEX-1)*MATRIX%MAX_N+COLUMN_INDEX
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                !Search for the column number in the sparsity list using the bisection (binary search) algorithm
-                PREVIOUS_COLUMN_INDEX=-1
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  LOWLIMIT=MATRIX%ROW_INDICES(ROW_INDEX)
-                  UPLIMIT=MATRIX%ROW_INDICES(ROW_INDEX+1)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    LOCATION=0
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    IF(COLUMN_INDEX<=PREVIOUS_COLUMN_INDEX) THEN
-                      LOWLIMIT=MATRIX%ROW_INDICES(ROW_INDEX)
-                    ELSE
-                      UPLIMIT=MATRIX%ROW_INDICES(ROW_INDEX+1)
-                    ENDIF
-                    PREVIOUS_COLUMN_INDEX=COLUMN_INDEX
-                    DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                      MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                      IF(MATRIX%COLUMN_INDICES(MIDPOINT)>COLUMN_INDEX) THEN
-                        UPLIMIT=MIDPOINT
-                      ELSE
-                        LOWLIMIT=MIDPOINT
-                      ENDIF
-                    ENDDO
-                    DO k=LOWLIMIT,UPLIMIT
-                      IF(MATRIX%COLUMN_INDICES(k)==COLUMN_INDEX) THEN
-                        LOCATION=k
-                        LOWLIMIT=k+1
-                        EXIT
-                      ENDIF
-                    ENDDO !k
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                !Search for the row number in the sparsity list using the bisection (binary search) algorithm
-                PREVIOUS_ROW_INDEX=-1
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  LOWLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX)
-                  UPLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX+1)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    LOCATION=0
-                    ROW_INDEX=ROW_INDICES(i)
-                    IF(ROW_INDEX<=PREVIOUS_ROW_INDEX) THEN
-                      LOWLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX)
-                    ELSE
-                      UPLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX+1)
-                    ENDIF
-                    PREVIOUS_ROW_INDEX=ROW_INDEX
-                    DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                      MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                      IF(MATRIX%ROW_INDICES(MIDPOINT)>ROW_INDEX) THEN
-                        UPLIMIT=MIDPOINT
-                      ELSE
-                        LOWLIMIT=MIDPOINT
-                      ENDIF
-                    ENDDO
-                    DO k=LOWLIMIT,UPLIMIT
-                      IF(MATRIX%ROW_INDICES(k)==ROW_INDEX) THEN
-                        LOCATION=k
-                        LOWLIMIT=k+1
-                        EXIT
-                      ENDIF
-                    ENDDO !k
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    FOUNDROW=.FALSE.
-                    LOCATION=1
-                    DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                      IF(MATRIX%ROW_INDICES(LOCATION)==ROW_INDEX) THEN
-                        DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                          IF(MATRIX%COLUMN_INDICES(LOCATION)==COLUMN_INDEX.AND.MATRIX%ROW_INDICES(LOCATION)==ROW_INDEX) THEN
-                            FOUNDCOLUMN=.TRUE.
-                          ELSE IF(MATRIX%ROW_INDICES(LOCATION)/=ROW_INDEX) THEN
-                            LOCATION=MATRIX%SIZE+1
-                          ELSE
-                            LOCATION=LOCATION+1
-                          ENDIF
-                        ENDDO
-                      ELSE
-                        LOCATION=LOCATION+1
-                      ENDIF
-                    ENDDO
-                    IF(.NOT.(FOUNDROW.AND.FOUNDCOLUMN)) LOCATION=0
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_SP(LOCATION)=MATRIX%DATA_SP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE DEFAULT
-                LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
-                  & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the single precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
 
-    EXITS("MATRIX_VALUES_ADD_SP2")
+    CALL Matrix_StorageLocationGet(matrix,rowIndex,columnIndex,location,err,error,*999)
+    matrix%dataIntg(location)=matrix%dataIntg(location)+value
+
+    EXITS("Matrix_ValuesAddIntg")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_SP2",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesAddIntg",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_SP2
+    
+  END SUBROUTINE Matrix_ValuesAddIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Adds values to a double precision real matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_DP(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Adds values to an integer matrix at the location specified by the row and column indices i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddIntg1(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to add
-    REAL(DP), INTENT(IN) :: VALUES(:) !<VALUES(i). The value of the i'th value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to add
+    INTEGER(INTG), INTENT(IN) :: values(:) !<values(i). The value of the i'th value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_ADD_DP",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesAddIntg1",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))//" and column "// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))//" does not exist in the matrix."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE
-                  MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUES(k)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the double precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_DP")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_DP",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_DP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Adds a value to a double precision real matrix at the location specified by the row and column index i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_DP1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index for the value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index for the value to add
-    REAL(DP), INTENT(IN) :: VALUE !<The value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_ADD_DP1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDEX,"*",ERR,ERROR))//" and column "// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_INDEX,"*",ERR,ERROR))//" does not exist in the matrix."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the double precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_DP1")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_DP1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_DP1
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Adds a matrix of values to a double precision real matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=MATRIX(I,J)+VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_DP2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to add
-    REAL(DP), INTENT(IN) :: VALUES(:,:) !<VALUES(i,j). The value of the ij'th value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,j,k,ROW_INDEX,PREVIOUS_ROW_INDEX,COLUMN_INDEX,PREVIOUS_COLUMN_INDEX,LOCATION,LOWLIMIT,MIDPOINT,UPLIMIT
-    LOGICAL :: FOUNDCOLUMN, FOUNDROW
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_ADD_DP2",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              SELECT CASE(MATRIX%STORAGE_TYPE)
-              CASE(MATRIX_BLOCK_STORAGE_TYPE)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    ROW_INDEX=ROW_INDICES(i)
-                    LOCATION=ROW_INDEX+(COLUMN_INDEX-1)*MATRIX%M
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    LOCATION=0
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    IF(ROW_INDEX==COLUMN_INDEX) LOCATION=ROW_INDEX
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    ROW_INDEX=ROW_INDICES(i)
-                    LOCATION=ROW_INDEX+(COLUMN_INDEX-1)*MATRIX%MAX_M
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    LOCATION=(ROW_INDEX-1)*MATRIX%MAX_N+COLUMN_INDEX
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                !Search for the column number in the sparsity list using the bisection (binary search) algorithm
-                PREVIOUS_COLUMN_INDEX=-1
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  LOWLIMIT=MATRIX%ROW_INDICES(ROW_INDEX)
-                  UPLIMIT=MATRIX%ROW_INDICES(ROW_INDEX+1)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    LOCATION=0
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    IF(COLUMN_INDEX<=PREVIOUS_COLUMN_INDEX) THEN
-                      LOWLIMIT=MATRIX%ROW_INDICES(ROW_INDEX)
-                    ELSE
-                      UPLIMIT=MATRIX%ROW_INDICES(ROW_INDEX+1)
-                    ENDIF
-                    PREVIOUS_COLUMN_INDEX=COLUMN_INDEX
-                    DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                      MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                      IF(MATRIX%COLUMN_INDICES(MIDPOINT)>COLUMN_INDEX) THEN
-                        UPLIMIT=MIDPOINT
-                      ELSE
-                        LOWLIMIT=MIDPOINT
-                      ENDIF
-                    ENDDO
-                    DO k=LOWLIMIT,UPLIMIT
-                      IF(MATRIX%COLUMN_INDICES(k)==COLUMN_INDEX) THEN
-                        LOCATION=k
-                        LOWLIMIT=k+1
-                        EXIT
-                      ENDIF
-                    ENDDO !k
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                !Search for the row number in the sparsity list using the bisection (binary search) algorithm
-                PREVIOUS_ROW_INDEX=-1
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  LOWLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX)
-                  UPLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX+1)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    LOCATION=0
-                    ROW_INDEX=ROW_INDICES(i)
-                    IF(ROW_INDEX<=PREVIOUS_ROW_INDEX) THEN
-                      LOWLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX)
-                    ELSE
-                      UPLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX+1)
-                    ENDIF
-                    PREVIOUS_ROW_INDEX=ROW_INDEX
-                    DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                      MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                      IF(MATRIX%ROW_INDICES(MIDPOINT)>ROW_INDEX) THEN
-                        UPLIMIT=MIDPOINT
-                      ELSE
-                        LOWLIMIT=MIDPOINT
-                      ENDIF
-                    ENDDO
-                    DO k=LOWLIMIT,UPLIMIT
-                      IF(MATRIX%ROW_INDICES(k)==ROW_INDEX) THEN
-                        LOCATION=k
-                        LOWLIMIT=k+1
-                        EXIT
-                      ENDIF
-                    ENDDO !k
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    FOUNDROW=.FALSE.
-                    LOCATION=1
-                    DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                      IF(MATRIX%ROW_INDICES(LOCATION)==ROW_INDEX) THEN
-                        DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                          IF(MATRIX%COLUMN_INDICES(LOCATION)==COLUMN_INDEX.AND.MATRIX%ROW_INDICES(LOCATION)==ROW_INDEX) THEN
-                            FOUNDCOLUMN=.TRUE.
-                          ELSE IF(MATRIX%ROW_INDICES(LOCATION)/=ROW_INDEX) THEN
-                            LOCATION=MATRIX%SIZE+1
-                          ELSE
-                            LOCATION=LOCATION+1
-                          ENDIF
-                        ENDDO
-                      ELSE
-                        LOCATION=LOCATION+1
-                      ENDIF
-                    ENDDO
-                    IF(.NOT.(FOUNDROW.AND.FOUNDCOLUMN)) LOCATION=0
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_DP(LOCATION)=MATRIX%DATA_DP(LOCATION)+VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE DEFAULT
-                LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
-                  & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the double precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_DP2")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_DP2",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_DP2
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Adds values to a logical matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=MATRIX(I,J).OR.VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_L(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to add
-    LOGICAL, INTENT(IN) :: VALUES(:) !<VALUES(i). The value of the i'th value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_ADD_L",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))//" and column "// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))//" does not exist in the matrix."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE
-                  MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUES(k)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the logical data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_L")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_L",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_L
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Adds a value to a logical matrix at the location specified by the row and column index i.e., MATRIX(I,J)=MATRIX(I,J).OR.VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_L1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index for the value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index for the value to add
-    LOGICAL, INTENT(IN) :: VALUE !<The value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_ADD_L1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDEX,"*",ERR,ERROR))//" and column "// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_INDEX,"*",ERR,ERROR))//" does not exist in the matrix."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the logical data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_L1")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_L1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_L1
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Adds a matrix of values to a logical matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=MATRIX(I,J).OR.VALUE
-  SUBROUTINE MATRIX_VALUES_ADD_L2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to add
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to add
-    LOGICAL, INTENT(IN) :: VALUES(:,:) !<VALUES(i,j). The value of the ij'th value to add
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,j,k,ROW_INDEX,PREVIOUS_ROW_INDEX,COLUMN_INDEX,PREVIOUS_COLUMN_INDEX,LOCATION,LOWLIMIT,MIDPOINT,UPLIMIT
-    LOGICAL :: FOUNDCOLUMN, FOUNDROW
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_ADD_L2",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              SELECT CASE(MATRIX%STORAGE_TYPE)
-              CASE(MATRIX_BLOCK_STORAGE_TYPE)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    ROW_INDEX=ROW_INDICES(i)
-                    LOCATION=ROW_INDEX+(COLUMN_INDEX-1)*MATRIX%M
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    LOCATION=0
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    IF(ROW_INDEX==COLUMN_INDEX) LOCATION=ROW_INDEX
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    ROW_INDEX=ROW_INDICES(i)
-                    LOCATION=ROW_INDEX+(COLUMN_INDEX-1)*MATRIX%MAX_M
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    LOCATION=(ROW_INDEX-1)*MATRIX%MAX_N+COLUMN_INDEX
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                !Search for the column number in the sparsity list using the bisection (binary search) algorithm
-                PREVIOUS_COLUMN_INDEX=-1
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  LOWLIMIT=MATRIX%ROW_INDICES(ROW_INDEX)
-                  UPLIMIT=MATRIX%ROW_INDICES(ROW_INDEX+1)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    LOCATION=0
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    IF(COLUMN_INDEX<=PREVIOUS_COLUMN_INDEX) THEN
-                      LOWLIMIT=MATRIX%ROW_INDICES(ROW_INDEX)
-                    ELSE
-                      UPLIMIT=MATRIX%ROW_INDICES(ROW_INDEX+1)
-                    ENDIF
-                    PREVIOUS_COLUMN_INDEX=COLUMN_INDEX
-                    DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                      MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                      IF(MATRIX%COLUMN_INDICES(MIDPOINT)>COLUMN_INDEX) THEN
-                        UPLIMIT=MIDPOINT
-                      ELSE
-                        LOWLIMIT=MIDPOINT
-                      ENDIF
-                    ENDDO
-                    DO k=LOWLIMIT,UPLIMIT
-                      IF(MATRIX%COLUMN_INDICES(k)==COLUMN_INDEX) THEN
-                        LOCATION=k
-                        LOWLIMIT=k+1
-                        EXIT
-                      ENDIF
-                    ENDDO !k
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                !Search for the row number in the sparsity list using the bisection (binary search) algorithm
-                PREVIOUS_ROW_INDEX=-1
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  COLUMN_INDEX=COLUMN_INDICES(j)
-                  LOWLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX)
-                  UPLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX+1)
-                  DO i=1,SIZE(ROW_INDICES,1)
-                    LOCATION=0
-                    ROW_INDEX=ROW_INDICES(i)
-                    IF(ROW_INDEX<=PREVIOUS_ROW_INDEX) THEN
-                      LOWLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX)
-                    ELSE
-                      UPLIMIT=MATRIX%COLUMN_INDICES(COLUMN_INDEX+1)
-                    ENDIF
-                    PREVIOUS_ROW_INDEX=ROW_INDEX
-                    DO WHILE((UPLIMIT-LOWLIMIT)>bisectionToLinearSearchThreshold)
-                      MIDPOINT=(UPLIMIT+LOWLIMIT)/2
-                      IF(MATRIX%ROW_INDICES(MIDPOINT)>ROW_INDEX) THEN
-                        UPLIMIT=MIDPOINT
-                      ELSE
-                        LOWLIMIT=MIDPOINT
-                      ENDIF
-                    ENDDO
-                    DO k=LOWLIMIT,UPLIMIT
-                      IF(MATRIX%ROW_INDICES(k)==ROW_INDEX) THEN
-                        LOCATION=k
-                        LOWLIMIT=k+1
-                        EXIT
-                      ENDIF
-                    ENDDO !k
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUES(i,j)
-                    ENDIF
-                  ENDDO !i
-                ENDDO !j
-              CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                DO i=1,SIZE(ROW_INDICES,1)
-                  ROW_INDEX=ROW_INDICES(i)
-                  DO j=1,SIZE(COLUMN_INDICES,1)
-                    COLUMN_INDEX=COLUMN_INDICES(j)
-                    FOUNDROW=.FALSE.
-                    LOCATION=1
-                    DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                      IF(MATRIX%ROW_INDICES(LOCATION)==ROW_INDEX) THEN
-                        DO WHILE(.NOT.FOUNDCOLUMN.AND.LOCATION<=MATRIX%SIZE)
-                          IF(MATRIX%COLUMN_INDICES(LOCATION)==COLUMN_INDEX.AND.MATRIX%ROW_INDICES(LOCATION)==ROW_INDEX) THEN
-                            FOUNDCOLUMN=.TRUE.
-                          ELSE IF(MATRIX%ROW_INDICES(LOCATION)/=ROW_INDEX) THEN
-                            LOCATION=MATRIX%SIZE+1
-                          ELSE
-                            LOCATION=LOCATION+1
-                          ENDIF
-                        ENDDO
-                      ELSE
-                        LOCATION=LOCATION+1
-                      ENDIF
-                    ENDDO
-                    IF(.NOT.(FOUNDROW.AND.FOUNDCOLUMN)) LOCATION=0
-                    IF(LOCATION==0) THEN
-                      LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                        & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ELSE
-                      MATRIX%DATA_L(LOCATION)=MATRIX%DATA_L(LOCATION).OR.VALUES(i,j)
-                    ENDIF
-                  ENDDO !j
-                ENDDO !i
-              CASE DEFAULT
-                LOCAL_ERROR="The matrix storage type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%STORAGE_TYPE,"*",ERR,ERROR))// &
-                  & " is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the logical data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_ADD_L2")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_ADD_L2",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_ADD_L2
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the values in an integer matrix at the location specified by the row and column indices i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_INTG(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: VALUES(:) !<VALUES(i). On return the value of the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_INTG",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  VALUES(k)=0
-                ELSE
-                  VALUES(k)=MATRIX%DATA_INTG(LOCATION)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the integer data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_INTG")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_INTG",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_INTG
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a value in an integer matrix at the location specified by the row and column index i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_INTG1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index of the value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index of the value to get
-    INTEGER(INTG), INTENT(OUT) :: VALUE !<On return the value in the matrix at the specified row and column
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_INTG1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            VALUE=0
-          ELSE
-            VALUE=MATRIX%DATA_INTG(LOCATION)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the integer data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_INTG1")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_INTG1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_INTG1
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the matrix of values in an integer matrix at the location specified by the row and column indices i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_INTG2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to get
-    INTEGER(INTG), INTENT(OUT) :: VALUES(:,:) !<VALUES(i,j). On return the value of the ij'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,j,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_INTG2",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-              DO i=1,SIZE(ROW_INDICES,1)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(i),COLUMN_INDICES(j),LOCATION,ERR,ERROR,*999)
-                  IF(LOCATION==0) THEN
-                    VALUES(i,j)=0
-                  ELSE
-                    VALUES(i,j)=MATRIX%DATA_INTG(LOCATION)
-                  ENDIF
-                ENDDO !j
-              ENDDO !i
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the integer data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows in the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("MATRIX_VALUES_GET_INTG2")
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationGet(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      matrix%dataIntg(location)=matrix%dataIntg(location)+values(k)
+    ENDDO !k
+    
+    EXITS("Matrix_ValuesAddIntg1")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_INTG2",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesAddIntg1",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_INTG2
+    
+  END SUBROUTINE Matrix_ValuesAddIntg1
 
   !
   !================================================================================================================================
   !
 
-  !>Gets values in a single precision real matrix at the location specified by the row and column indices i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_SP(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Adds a matrix of values to an integer matrix at the location specified by the row and column indices i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddIntg2(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to get
-    REAL(SP), INTENT(OUT) :: VALUES(:) !<VALUES(i). On return the value of the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to add
+    INTEGER(INTG), INTENT(IN) :: values(:,:) !<values(i,j). The value of the ij'th value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: blockLocation,i,j,k,rowIndex,previousRowIndex,columnIndex,columnNumber,columnBlockNumber,columnOffset, &
+      & previousColumnIndex,location,lowLimit,midPoint,previousColumnBlockNumber,rowBlockNumber,rowNumber,rowOffset,upLimit
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_GET_SP",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesAddIntg2",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  VALUES(k)=0.0_SP
-                ELSE
-                  VALUES(k)=MATRIX%DATA_SP(LOCATION)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the single precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)    
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("MATRIX_VALUES_GET_SP")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_SP",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_SP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a value in a single precision real matrix at the location specified by the row and column index i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_SP1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index of the value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index of the value to get
-    REAL(SP), INTENT(OUT) :: VALUE !<On return the value in the matrix at the specified row and column
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_SP1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            VALUE=0.0_SP
-          ELSE
-            VALUE=MATRIX%DATA_SP(LOCATION)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the single precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_SP1")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_SP1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_SP1
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a matrix of values in a single precision real matrix at the location specified by the row and column indices i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_SP2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to get
-    REAL(SP), INTENT(OUT) :: VALUES(:,:) !<VALUES(i,j). On return the value of the ij'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,j,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_SP2",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-              DO i=1,SIZE(ROW_INDICES,1)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(i),COLUMN_INDICES(j),LOCATION,ERR,ERROR,*999)
-                  IF(LOCATION==0) THEN
-                    VALUES(i,j)=0.0_SP
-                  ELSE
-                    VALUES(i,j)=MATRIX%DATA_SP(LOCATION)
-                  ENDIF
-                ENDDO !j
-              ENDDO !i
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the single precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows in the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_SP2")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_SP2",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_SP2
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets values in a double precision real matrix at the location specified by the row and column indices i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_DP(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to get
-    REAL(DP), INTENT(OUT) :: VALUES(:) !<VALUES(i). On return the value of the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_DP",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  VALUES(k)=0.0_DP
-                ELSE
-                  VALUES(k)=MATRIX%DATA_DP(LOCATION)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the double precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_DP")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_DP",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_DP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a value in a double precision real matrix at the location specified by the row and column index i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_DP1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index of the value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index of the value to get
-    REAL(DP), INTENT(OUT) :: VALUE !<On return the value in the matrix at the specified row and column
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_DP1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            VALUE=0.0_DP
-          ELSE
-            VALUE=MATRIX%DATA_DP(LOCATION)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the double precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_DP1")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_DP1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_DP1
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a matrix of values in a double precision real matrix at the location specified by the row and column indices i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_DP2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to get
-    REAL(DP), INTENT(OUT) :: VALUES(:,:) !<VALUES(i,j). On return the value of the ij'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,j,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_DP2",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              DO i=1,SIZE(ROW_INDICES,1)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(i),COLUMN_INDICES(j),LOCATION,ERR,ERROR,*999)
-                  IF(LOCATION==0) THEN
-                    VALUES(i,j)=0.0_DP
-                  ELSE
-                    VALUES(i,j)=MATRIX%DATA_DP(LOCATION)
-                  ENDIF
-                ENDDO !j
-              ENDDO !i
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the double precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows in the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_DP2")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_DP2",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_DP2
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets values in a logical matrix at the location specified by the row and column indices i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_L(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to get
-    LOGICAL, INTENT(OUT) :: VALUES(:) !<VALUES(i). On return the value of the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_L",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  VALUES(k)=.FALSE.
-                ELSE
-                  VALUES(k)=MATRIX%DATA_L(LOCATION)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the logical data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_L")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_L",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_L
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a value in a logical matrix at the location specified by the row and column index i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_L1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index of the value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index of the value to get
-    LOGICAL, INTENT(OUT) :: VALUE !<On return the value in the matrix at the specified row and column
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_L1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            VALUE=.FALSE.
-          ELSE
-            VALUE=MATRIX%DATA_L(LOCATION)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the logical data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_L1")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_L1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_L1
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a matrix of values in a logical matrix at the location specified by the row and column indices i.e., VALUE=MATRIX(I,J)
-  SUBROUTINE MATRIX_VALUES_GET_L2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to get
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to get
-    LOGICAL, INTENT(OUT) :: VALUES(:,:) !<VALUES(i,j). On return the value of the ij'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,j,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_GET_L2",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-              DO i=1,SIZE(ROW_INDICES,1)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(i),COLUMN_INDICES(j),LOCATION,ERR,ERROR,*999)
-                  IF(LOCATION==0) THEN
-                    VALUES(i,j)=.FALSE.
-                  ELSE
-                    VALUES(i,j)=MATRIX%DATA_L(LOCATION)
-                  ENDIF
-                ENDDO !j
-              ENDDO !i
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the logical data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows in the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_GET_L2")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_GET_L2",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_GET_L2
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets the values in an integer matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_INTG(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the i'th value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(i). The column index for the i'th value to set
-    INTEGER(INTG), INTENT(IN) :: VALUES(:) !<VALUES(i). The value of the i'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_SET_INTG",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))//" and column "// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))//" does not exist in the matrix."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE
-                  MATRIX%DATA_INTG(LOCATION)=VALUES(k)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the integer data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_SET_INTG")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_INTG",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_INTG
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets a value in an integer matrix at the location specified by the row and column index i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_INTG1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index of the value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index of the value to set
-    INTEGER(INTG), INTENT(IN) :: VALUE !<The value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_SET_INTG1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDEX,"*",ERR,ERROR))//" and column "// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_INDEX,"*",ERR,ERROR))//" does not exist in the matrix."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            MATRIX%DATA_INTG(LOCATION)=VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the integer data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("MATRIX_VALUES_SET_INTG1")
-    RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_INTG1",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_INTG1
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets the matrix of values in an integer matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_INTG2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index for the ij'th value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INIDICES(j). The column index for the ij'th value to set
-    INTEGER(INTG), INTENT(IN) :: VALUES(:,:) !<VALUES(i,j). The value of the i,j'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,j,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("MATRIX_VALUES_SET_INTG2",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-              DO i=1,SIZE(ROW_INDICES,1)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(i),COLUMN_INDICES(j),LOCATION,ERR,ERROR,*999)
-                  IF(LOCATION==0) THEN
-                    LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                      & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ELSE
-                    MATRIX%DATA_INTG(LOCATION)=VALUES(i,j)
-                  ENDIF
-                ENDDO !j
-              ENDDO !i
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the integer data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows in the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the number of columns in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("MATRIX_VALUES_SET_INTG2")
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE,MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      DO j=1,SIZE(columnIndices,1)
+        DO i=1,SIZE(rowIndices,1)
+          CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+          matrix%dataIntg(location)=matrix%dataIntg(location)+values(i,j)
+        ENDDO !i
+      ENDDO !j
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE,MATRIX_ROW_MAJOR_STORAGE_TYPE,MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      DO i=1,SIZE(rowIndices,1)
+        DO j=1,SIZE(columnIndices,1)
+          CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+          matrix%dataIntg(location)=matrix%dataIntg(location)+values(i,j)
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousColumnIndex=-1
+      DO i=1,SIZE(rowIndices,1)
+        rowIndex=rowIndices(i)
+        lowLimit=matrix%rowIndices(rowIndex)
+        upLimit=matrix%rowIndices(rowIndex+1)
+        DO j=1,SIZE(columnIndices,1)
+          location=0
+          columnIndex=columnIndices(j)
+          IF(columnIndex<=previousColumnIndex) THEN
+            lowLimit=matrix%rowIndices(rowIndex)
+          ELSE
+            upLimit=matrix%rowIndices(rowIndex+1)
+          ENDIF
+          previousColumnIndex=columnIndex
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%columnIndices(midPoint)>columnIndex) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%columnIndices(k)==columnIndex) THEN
+              location=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(location==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            matrix%dataIntg(location)=matrix%dataIntg(location)+values(i,j)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      !Search for the row number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousRowIndex=-1
+      DO j=1,SIZE(columnIndices,1)
+        columnIndex=columnIndices(j)
+        lowLimit=matrix%columnIndices(columnIndex)
+        upLimit=matrix%columnIndices(columnIndex+1)
+        DO i=1,SIZE(rowIndices,1)
+          location=0
+          rowIndex=rowIndices(i)
+          IF(rowIndex<=previousRowIndex) THEN
+            lowLimit=matrix%columnIndices(columnIndex)
+          ELSE
+            upLimit=matrix%columnIndices(columnIndex+1)
+          ENDIF
+          previousRowIndex=rowIndex
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%rowIndices(midPoint)>rowIndex) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%rowIndices(k)==rowIndex) THEN
+              location=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(location==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            matrix%dataIntg(location)=matrix%dataIntg(location)+values(i,j)
+          ENDIF
+        ENDDO !i
+      ENDDO !j
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousColumnBlockNumber=-1
+      DO i=1,SIZE(rowIndices,1)
+        rowNumber=rowIndices(i)
+        rowBlockNumber=FLOOR(REAL(rowNumber,DP)/REAL(matrix%blockSize,DP),INTG)
+        rowOffset=MOD(rowNumber,matrix%blockSize)
+        lowLimit=matrix%rowIndices(rowBlockNumber)
+        upLimit=matrix%rowIndices(rowBlockNumber+1)
+        DO j=1,SIZE(columnIndices,1)
+          columnNumber=columnIndices(j)
+          columnBlockNumber=FLOOR(REAL(columnNumber,DP)/REAL(matrix%blockSize,DP),INTG)
+          columnOffset=MOD(columnNumber,matrix%blockSize)
+          blockLocation=0
+          IF(columnBlockNumber<=previousColumnBlockNumber) THEN
+            lowLimit=matrix%rowIndices(rowBlockNumber)
+          ELSE
+            upLimit=matrix%rowIndices(rowBlockNumber+1)
+          ENDIF
+          previousColumnBlockNumber=columnBlockNumber
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%columnIndices(k)==columnBlockNumber) THEN
+              blockLocation=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(blockLocation==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            location=columnBlockNumber*matrix%blockSize*matrix%blockSize+(columnOffset-1)*matrix%blockSize+rowOffset
+            matrix%dataIntg(location)=matrix%dataIntg(location)+values(i,j)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Matrix_ValuesAddIntg2")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_INTG2",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesAddIntg2",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_INTG2
+    
+  END SUBROUTINE Matrix_ValuesAddIntg2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a value to a single precision real matrix at the location specified by the row and column index i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddSP(matrix,rowIndex,columnIndex,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index for the value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index for the value to add
+    REAL(SP), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesAddSP",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
+
+    CALL Matrix_StorageLocationGet(matrix,rowIndex,columnIndex,location,err,error,*999)
+    matrix%dataSP(location)=matrix%dataSP(location)+value
+
+    EXITS("Matrix_ValuesAddSP")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds values to a single precision real matrix at the location specified by the row and column indices i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddSP1(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to add
+    REAL(SP), INTENT(IN) :: values(:) !<values(i). The value of the i'th value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesAddSP1",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationGet(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      matrix%dataSP(location)=matrix%dataSP(location)+values(k)
+    ENDDO !k
+    
+    EXITS("Matrix_ValuesAddSP1")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddSP1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddSP1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a matrix of values to a single precision real matrix at the location specified by the row and column indices i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddSP2(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to add
+    REAL(SP), INTENT(IN) :: values(:,:) !<values(i,j). The value of the ij'th value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: blockLocation,i,j,k,rowIndex,previousRowIndex,columnIndex,columnNumber,columnBlockNumber,columnOffset, &
+      & previousColumnIndex,location,lowLimit,midPoint,previousColumnBlockNumber,rowBlockNumber,rowNumber,rowOffset,upLimit
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesAddSP2",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)    
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the number of columns in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE,MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      DO j=1,SIZE(columnIndices,1)
+        DO i=1,SIZE(rowIndices,1)
+          CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+          matrix%dataSP(location)=matrix%dataSP(location)+values(i,j)
+        ENDDO !i
+      ENDDO !j
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE,MATRIX_ROW_MAJOR_STORAGE_TYPE,MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      DO i=1,SIZE(rowIndices,1)
+        DO j=1,SIZE(columnIndices,1)
+          CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+          matrix%dataSP(location)=matrix%dataSP(location)+values(i,j)
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousColumnIndex=-1
+      DO i=1,SIZE(rowIndices,1)
+        rowIndex=rowIndices(i)
+        lowLimit=matrix%rowIndices(rowIndex)
+        upLimit=matrix%rowIndices(rowIndex+1)
+        DO j=1,SIZE(columnIndices,1)
+          location=0
+          columnIndex=columnIndices(j)
+          IF(columnIndex<=previousColumnIndex) THEN
+            lowLimit=matrix%rowIndices(rowIndex)
+          ELSE
+            upLimit=matrix%rowIndices(rowIndex+1)
+          ENDIF
+          previousColumnIndex=columnIndex
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%columnIndices(midPoint)>columnIndex) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%columnIndices(k)==columnIndex) THEN
+              location=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(location==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            matrix%dataSP(location)=matrix%dataSP(location)+values(i,j)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      !Search for the row number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousRowIndex=-1
+      DO j=1,SIZE(columnIndices,1)
+        columnIndex=columnIndices(j)
+        lowLimit=matrix%columnIndices(columnIndex)
+        upLimit=matrix%columnIndices(columnIndex+1)
+        DO i=1,SIZE(rowIndices,1)
+          location=0
+          rowIndex=rowIndices(i)
+          IF(rowIndex<=previousRowIndex) THEN
+            lowLimit=matrix%columnIndices(columnIndex)
+          ELSE
+            upLimit=matrix%columnIndices(columnIndex+1)
+          ENDIF
+          previousRowIndex=rowIndex
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%rowIndices(midPoint)>rowIndex) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%rowIndices(k)==rowIndex) THEN
+              location=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(location==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            matrix%dataSP(location)=matrix%dataSP(location)+values(i,j)
+          ENDIF
+        ENDDO !i
+      ENDDO !j
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousColumnBlockNumber=-1
+      DO i=1,SIZE(rowIndices,1)
+        rowNumber=rowIndices(i)
+        rowBlockNumber=FLOOR(REAL(rowNumber,DP)/REAL(matrix%blockSize,DP),INTG)
+        rowOffset=MOD(rowNumber,matrix%blockSize)
+        lowLimit=matrix%rowIndices(rowBlockNumber)
+        upLimit=matrix%rowIndices(rowBlockNumber+1)
+        DO j=1,SIZE(columnIndices,1)
+          columnNumber=columnIndices(j)
+          columnBlockNumber=FLOOR(REAL(columnNumber,DP)/REAL(matrix%blockSize,DP),INTG)
+          columnOffset=MOD(columnNumber,matrix%blockSize)
+          blockLocation=0
+          IF(columnBlockNumber<=previousColumnBlockNumber) THEN
+            lowLimit=matrix%rowIndices(rowBlockNumber)
+          ELSE
+            upLimit=matrix%rowIndices(rowBlockNumber+1)
+          ENDIF
+          previousColumnBlockNumber=columnBlockNumber
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%columnIndices(k)==columnBlockNumber) THEN
+              blockLocation=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(blockLocation==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            location=columnBlockNumber*matrix%blockSize*matrix%blockSize+(columnOffset-1)*matrix%blockSize+rowOffset
+            matrix%dataSP(location)=matrix%dataSP(location)+values(i,j)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Matrix_ValuesAddSP2")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddSP2",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddSP2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a value to a double precision real matrix at the location specified by the row and column index i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddDP(matrix,rowIndex,columnIndex,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index for the value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index for the value to add
+    REAL(DP), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesAddDP",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
+
+    CALL Matrix_StorageLocationGet(matrix,rowIndex,columnIndex,location,err,error,*999)
+    matrix%dataDP(location)=matrix%dataDP(location)+value
+
+    EXITS("Matrix_ValuesAddDP")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds values to a double precision real matrix at the location specified by the row and column indices i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddDP1(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to add
+    REAL(DP), INTENT(IN) :: values(:) !<values(i). The value of the i'th value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesAddDP1",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationGet(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      matrix%dataDP(location)=matrix%dataDP(location)+values(k)
+    ENDDO !k
+    
+    EXITS("Matrix_ValuesAddDP1")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddDP1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddDP1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a matrix of values to a double precision real matrix at the location specified by the row and column indices i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddDP2(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to add
+    REAL(DP), INTENT(IN) :: values(:,:) !<values(i,j). The value of the ij'th value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: blockLocation,i,j,k,rowIndex,previousRowIndex,columnIndex,columnNumber,columnBlockNumber,columnOffset, &
+      & previousColumnIndex,location,lowLimit,midPoint,previousColumnBlockNumber,rowBlockNumber,rowNumber,rowOffset,upLimit
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesAddDP2",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)    
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the number of columns in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE,MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      DO j=1,SIZE(columnIndices,1)
+        DO i=1,SIZE(rowIndices,1)
+          CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+          matrix%dataDP(location)=matrix%dataDP(location)+values(i,j)
+        ENDDO !i
+      ENDDO !j
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE,MATRIX_ROW_MAJOR_STORAGE_TYPE,MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      DO i=1,SIZE(rowIndices,1)
+        DO j=1,SIZE(columnIndices,1)
+          CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+          matrix%dataDP(location)=matrix%dataDP(location)+values(i,j)
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousColumnIndex=-1
+      DO i=1,SIZE(rowIndices,1)
+        rowIndex=rowIndices(i)
+        lowLimit=matrix%rowIndices(rowIndex)
+        upLimit=matrix%rowIndices(rowIndex+1)
+        DO j=1,SIZE(columnIndices,1)
+          location=0
+          columnIndex=columnIndices(j)
+          IF(columnIndex<=previousColumnIndex) THEN
+            lowLimit=matrix%rowIndices(rowIndex)
+          ELSE
+            upLimit=matrix%rowIndices(rowIndex+1)
+          ENDIF
+          previousColumnIndex=columnIndex
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%columnIndices(midPoint)>columnIndex) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%columnIndices(k)==columnIndex) THEN
+              location=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(location==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            matrix%dataDP(location)=matrix%dataDP(location)+values(i,j)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      !Search for the row number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousRowIndex=-1
+      DO j=1,SIZE(columnIndices,1)
+        columnIndex=columnIndices(j)
+        lowLimit=matrix%columnIndices(columnIndex)
+        upLimit=matrix%columnIndices(columnIndex+1)
+        DO i=1,SIZE(rowIndices,1)
+          location=0
+          rowIndex=rowIndices(i)
+          IF(rowIndex<=previousRowIndex) THEN
+            lowLimit=matrix%columnIndices(columnIndex)
+          ELSE
+            upLimit=matrix%columnIndices(columnIndex+1)
+          ENDIF
+          previousRowIndex=rowIndex
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%rowIndices(midPoint)>rowIndex) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%rowIndices(k)==rowIndex) THEN
+              location=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(location==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            matrix%dataDP(location)=matrix%dataDP(location)+values(i,j)
+          ENDIF
+        ENDDO !i
+      ENDDO !j
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousColumnBlockNumber=-1
+      DO i=1,SIZE(rowIndices,1)
+        rowNumber=rowIndices(i)
+        rowBlockNumber=FLOOR(REAL(rowNumber,DP)/REAL(matrix%blockSize,DP),INTG)
+        rowOffset=MOD(rowNumber,matrix%blockSize)
+        lowLimit=matrix%rowIndices(rowBlockNumber)
+        upLimit=matrix%rowIndices(rowBlockNumber+1)
+        DO j=1,SIZE(columnIndices,1)
+          columnNumber=columnIndices(j)
+          columnBlockNumber=FLOOR(REAL(columnNumber,DP)/REAL(matrix%blockSize,DP),INTG)
+          columnOffset=MOD(columnNumber,matrix%blockSize)
+          blockLocation=0
+          IF(columnBlockNumber<=previousColumnBlockNumber) THEN
+            lowLimit=matrix%rowIndices(rowBlockNumber)
+          ELSE
+            upLimit=matrix%rowIndices(rowBlockNumber+1)
+          ENDIF
+          previousColumnBlockNumber=columnBlockNumber
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%columnIndices(k)==columnBlockNumber) THEN
+              blockLocation=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(blockLocation==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            location=columnBlockNumber*matrix%blockSize*matrix%blockSize+(columnOffset-1)*matrix%blockSize+rowOffset
+            matrix%dataDP(location)=matrix%dataDP(location)+values(i,j)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Matrix_ValuesAddDP2")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddDP2",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddDP2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a value to a logical matrix at the location specified by the row and column index i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddL(matrix,rowIndex,columnIndex,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index for the value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index for the value to add
+    LOGICAL, INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesAddL",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
+
+    CALL Matrix_StorageLocationGet(matrix,rowIndex,columnIndex,location,err,error,*999)
+    matrix%dataL(location)=matrix%dataL(location).OR.value
+
+    EXITS("Matrix_ValuesAddL")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddL",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds values to a logical matrix at the location specified by the row and column indices i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddL1(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to add
+    LOGICAL, INTENT(IN) :: values(:) !<values(i). The value of the i'th value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesAddL1",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationGet(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      matrix%dataL(location)=matrix%dataL(location).OR.values(k)
+    ENDDO !k
+    
+    EXITS("Matrix_ValuesAddL1")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddL1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddL1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a matrix of values to a logical matrix at the location specified by the row and column indices i.e., matrix(i,j)=matrix(i,j)+value
+  SUBROUTINE Matrix_ValuesAddL2(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to add
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to add
+    LOGICAL, INTENT(IN) :: values(:,:) !<values(i,j). The value of the ij'th value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: blockLocation,i,j,k,rowIndex,previousRowIndex,columnIndex,columnNumber,columnBlockNumber,columnOffset, &
+      & previousColumnIndex,location,lowLimit,midPoint,previousColumnBlockNumber,rowBlockNumber,rowNumber,rowOffset,upLimit
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesAddL2",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)    
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the number of columns in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    SELECT CASE(matrix%storageType)
+    CASE(MATRIX_BLOCK_STORAGE_TYPE,MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+      DO j=1,SIZE(columnIndices,1)
+        DO i=1,SIZE(rowIndices,1)
+          CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+          matrix%dataL(location)=matrix%dataL(location).OR.values(i,j)
+        ENDDO !i
+      ENDDO !j
+    CASE(MATRIX_DIAGONAL_STORAGE_TYPE,MATRIX_ROW_MAJOR_STORAGE_TYPE,MATRIX_ROW_COLUMN_STORAGE_TYPE)
+      DO i=1,SIZE(rowIndices,1)
+        DO j=1,SIZE(columnIndices,1)
+          CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+          matrix%dataL(location)=matrix%dataL(location).OR.values(i,j)
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousColumnIndex=-1
+      DO i=1,SIZE(rowIndices,1)
+        rowIndex=rowIndices(i)
+        lowLimit=matrix%rowIndices(rowIndex)
+        upLimit=matrix%rowIndices(rowIndex+1)
+        DO j=1,SIZE(columnIndices,1)
+          location=0
+          columnIndex=columnIndices(j)
+          IF(columnIndex<=previousColumnIndex) THEN
+            lowLimit=matrix%rowIndices(rowIndex)
+          ELSE
+            upLimit=matrix%rowIndices(rowIndex+1)
+          ENDIF
+          previousColumnIndex=columnIndex
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%columnIndices(midPoint)>columnIndex) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%columnIndices(k)==columnIndex) THEN
+              location=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(location==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            matrix%dataL(location)=matrix%dataL(location).OR.values(i,j)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+      !Search for the row number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousRowIndex=-1
+      DO j=1,SIZE(columnIndices,1)
+        columnIndex=columnIndices(j)
+        lowLimit=matrix%columnIndices(columnIndex)
+        upLimit=matrix%columnIndices(columnIndex+1)
+        DO i=1,SIZE(rowIndices,1)
+          location=0
+          rowIndex=rowIndices(i)
+          IF(rowIndex<=previousRowIndex) THEN
+            lowLimit=matrix%columnIndices(columnIndex)
+          ELSE
+            upLimit=matrix%columnIndices(columnIndex+1)
+          ENDIF
+          previousRowIndex=rowIndex
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%rowIndices(midPoint)>rowIndex) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%rowIndices(k)==rowIndex) THEN
+              location=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(location==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            matrix%dataL(location)=matrix%dataL(location).OR.values(i,j)
+          ENDIF
+        ENDDO !i
+      ENDDO !j
+    CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
+      !Search for the column number in the sparsity list using the bisection (binary search) algorithm in order
+      !to take advantage of previous searches.
+      previousColumnBlockNumber=-1
+      DO i=1,SIZE(rowIndices,1)
+        rowNumber=rowIndices(i)
+        rowBlockNumber=FLOOR(REAL(rowNumber,DP)/REAL(matrix%blockSize,DP),INTG)
+        rowOffset=MOD(rowNumber,matrix%blockSize)
+        lowLimit=matrix%rowIndices(rowBlockNumber)
+        upLimit=matrix%rowIndices(rowBlockNumber+1)
+        DO j=1,SIZE(columnIndices,1)
+          columnNumber=columnIndices(j)
+          columnBlockNumber=FLOOR(REAL(columnNumber,DP)/REAL(matrix%blockSize,DP),INTG)
+          columnOffset=MOD(columnNumber,matrix%blockSize)
+          blockLocation=0
+          IF(columnBlockNumber<=previousColumnBlockNumber) THEN
+            lowLimit=matrix%rowIndices(rowBlockNumber)
+          ELSE
+            upLimit=matrix%rowIndices(rowBlockNumber+1)
+          ENDIF
+          previousColumnBlockNumber=columnBlockNumber
+          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            midPoint=(upLimit+lowLimit)/2
+            IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
+              upLimit=midPoint
+            ELSE
+              lowLimit=midPoint
+            ENDIF
+          ENDDO
+          DO k=lowLimit,upLimit
+            IF(matrix%columnIndices(k)==columnBlockNumber) THEN
+              blockLocation=k
+              lowLimit=k+1
+              EXIT
+            ENDIF
+          ENDDO !k
+          IF(blockLocation==0) THEN
+            localError="Row "//TRIM(NumberToVString(rowIndices(i),"*",err,error))//" and column "// &
+              & TRIM(NumberToVString(columnIndices(j),"*",err,error))//" does not exist in the matrix."
+            CALL FlagError(localError,err,error,*999)
+          ELSE
+            location=columnBlockNumber*matrix%blockSize*matrix%blockSize+(columnOffset-1)*matrix%blockSize+rowOffset
+            matrix%dataL(location)=matrix%dataL(location).OR.values(i,j)
+          ENDIF
+        ENDDO !j
+      ENDDO !i
+    CASE(MATRIX_MODIFIED_KRM_STORAGE_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The matrix storage type of "//TRIM(NumberToVString(matrix%storageType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Matrix_ValuesAddL2")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesAddL2",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesAddL2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a value in an integer matrix at the location specified by the row and column index i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetIntg(matrix,rowIndex,columnIndex,value,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index of the value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index of the value to get
+    INTEGER(INTG), INTENT(OUT) :: value !<On return the value in the matrix at the specified row and column
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesGetIntg",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
+
+    CALL Matrix_StorageLocationFind(matrix,rowIndex,columnIndex,location,err,error,*999)
+    IF(location==0) THEN
+      value=0
+    ELSE
+      value=matrix%dataIntg(location)
+    ENDIF
+
+    EXITS("Matrix_ValuesGetIntg")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetIntg",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the values in an integer matrix at the location specified by the row and column indices i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetIntg1(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: values(:) !<values(i). On return the value of the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesGetIntg1",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationFind(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      IF(location==0) THEN
+        values(k)=0
+      ELSE
+        values(k)=matrix%dataIntg(location)
+      ENDIF
+    ENDDO !k
+
+    EXITS("Matrix_ValuesGetIntg1")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetIntg1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetIntg1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix of values in an integer matrix at the location specified by the row and column indices i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetIntg2(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to get
+    INTEGER(INTG), INTENT(OUT) :: values(:,:) !<values(i,j). On return the value of the ij'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesGetIntg2",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of"// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO i=1,SIZE(rowIndices,1)
+      DO j=1,SIZE(columnIndices,1)
+        CALL Matrix_StorageLocationFind(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+        IF(location==0) THEN
+          values(i,j)=0
+        ELSE
+          values(i,j)=matrix%dataIntg(location)
+        ENDIF
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("Matrix_ValuesGetIntg2")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetIntg2",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetIntg2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a value in a single precision real matrix at the location specified by the row and column index i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetSP(matrix,rowIndex,columnIndex,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index of the value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index of the value to get
+    REAL(SP), INTENT(OUT) :: value !<On return the value in the matrix at the specified row and column
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesGetSP",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
+
+    CALL Matrix_StorageLocationFind(matrix,rowIndex,columnIndex,location,err,error,*999)
+    IF(location==0) THEN
+      value=0.0_SP
+    ELSE
+      value=matrix%dataSP(location)
+    ENDIF
+
+    EXITS("Matrix_ValuesGetSP")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the values in a single precision real matrix at the location specified by the row and column indices i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetSP1(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to get
+    REAL(SP), INTENT(OUT) :: values(:) !<values(i). On return the value of the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesGetSP1",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationFind(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      IF(location==0) THEN
+        values(k)=0.0_SP
+      ELSE
+        values(k)=matrix%dataSP(location)
+      ENDIF
+    ENDDO !k
+
+    EXITS("Matrix_ValuesGetSP1")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetSP1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetSP1
   
   !
   !================================================================================================================================
   !
 
-  !>Sets the values in a single precision real matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_SP(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Gets the matrix of values in a single precision real matrix at the location specified by the row and column indices i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetSP2(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to set
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index of the i'th value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column index of the i'th value to set
-    REAL(SP), INTENT(IN) :: VALUES(:) !<VALUES(i). The value of the i'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to get
+    REAL(SP), INTENT(OUT) :: values(:,:) !<values(i,j). On return the value of the ij'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: i,j,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_SET_SP",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesGetSP2",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))//" and column "// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))//" does not exist in the matrix."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE
-                  MATRIX%DATA_SP(LOCATION)=VALUES(k)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the single precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of"// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("MATRIX_VALUES_SET_SP")
+      
+    DO i=1,SIZE(rowIndices,1)
+      DO j=1,SIZE(columnIndices,1)
+        CALL Matrix_StorageLocationFind(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+        IF(location==0) THEN
+          values(i,j)=0.0_SP
+        ELSE
+          values(i,j)=matrix%dataSP(location)
+        ENDIF
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("Matrix_ValuesGetSP2")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_SP",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesGetSP2",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_SP
+    
+  END SUBROUTINE Matrix_ValuesGetSP2
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the value in a single precision real matrix at the location specified by the row and column index i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_SP1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
+  !>Gets a value in a double precision real matrix at the location specified by the row and column index i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetDP(matrix,rowIndex,columnIndex,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index of the value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index of the value to set
-    REAL(SP), INTENT(IN) :: VALUE !<The value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index of the value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index of the value to get
+    REAL(DP), INTENT(OUT) :: value !<On return the value in the matrix at the specified row and column
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: location
 
-    ENTERS("MATRIX_VALUES_SET_SP1",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesGetDP",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDEX,"*",ERR,ERROR))//" and column "// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_INDEX,"*",ERR,ERROR))//" does not exist in the matrix."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            MATRIX%DATA_SP(LOCATION)=VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the single precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
+
+    CALL Matrix_StorageLocationFind(matrix,rowIndex,columnIndex,location,err,error,*999)
+    IF(location==0) THEN
+      value=0.0_DP
     ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+      value=matrix%dataDP(location)
     ENDIF
 
-    EXITS("MATRIX_VALUES_SET_SP1")
+    EXITS("Matrix_ValuesGetDP")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_SP1",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesGetDP",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_SP1
+    
+  END SUBROUTINE Matrix_ValuesGetDP
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the matrix of values in a single precision real matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_SP2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Gets the values in a double precision real matrix at the location specified by the row and column indices i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetDP1(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to set
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index of the ij'th value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INDICES(j). The column index of the ij'th value to set
-    REAL(SP), INTENT(IN) :: VALUES(:,:) !<VALUES(i,j). The value of the ij'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to get
+    REAL(DP), INTENT(OUT) :: values(:) !<values(i). On return the value of the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: i,j,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_SET_SP2",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesGetDP1",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-              DO i=1,SIZE(ROW_INDICES,1)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(i),COLUMN_INDICES(j),LOCATION,ERR,ERROR,*999)
-                  IF(LOCATION==0) THEN
-                    LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                      & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ELSE
-                    MATRIX%DATA_SP(LOCATION)=VALUES(i,j)
-                  ENDIF
-                ENDDO !j
-              ENDDO !i
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the single precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows in the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationFind(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      IF(location==0) THEN
+        values(k)=0.0_DP
       ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
+        values(k)=matrix%dataDP(location)
       ENDIF
+    ENDDO !k
+
+    EXITS("Matrix_ValuesGetDP1")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetDP1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetDP1
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix of values in a double precision real matrix at the location specified by the row and column indices i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetDP2(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to get
+    REAL(DP), INTENT(OUT) :: values(:,:) !<values(i,j). On return the value of the ij'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesGetDP2",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of"// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO i=1,SIZE(rowIndices,1)
+      DO j=1,SIZE(columnIndices,1)
+        CALL Matrix_StorageLocationFind(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+        IF(location==0) THEN
+          values(i,j)=0.0_DP
+        ELSE
+          values(i,j)=matrix%dataDP(location)
+        ENDIF
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("Matrix_ValuesGetDP2")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetDP2",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetDP2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a value in a logical matrix at the location specified by the row and column index i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetL(matrix,rowIndex,columnIndex,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index of the value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index of the value to get
+    LOGICAL, INTENT(OUT) :: value !<On return the value in the matrix at the specified row and column
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesGetL",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
+
+    CALL Matrix_StorageLocationFind(matrix,rowIndex,columnIndex,location,err,error,*999)
+    IF(location==0) THEN
+      value=.FALSE.
     ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+      value=matrix%dataL(location)
+    ENDIF
+
+    EXITS("Matrix_ValuesGetL")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetL",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the values in a logical matrix at the location specified by the row and column indices i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetL1(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to get
+    LOGICAL, INTENT(OUT) :: values(:) !<values(i). On return the value of the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesGetL1",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationFind(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      IF(location==0) THEN
+        values(k)=.FALSE.
+      ELSE
+        values(k)=matrix%dataL(location)
+      ENDIF
+    ENDDO !k
+
+    EXITS("Matrix_ValuesGetL1")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetL1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetL1
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the matrix of values in a logical matrix at the location specified by the row and column indices i.e., value=matrix(i,j)
+  SUBROUTINE Matrix_ValuesGetL2(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to get
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to get
+    LOGICAL, INTENT(OUT) :: values(:,:) !<values(i,j). On return the value of the ij'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesGetL2",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of"// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO i=1,SIZE(rowIndices,1)
+      DO j=1,SIZE(columnIndices,1)
+        CALL Matrix_StorageLocationFind(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+        IF(location==0) THEN
+          values(i,j)=.FALSE.
+        ELSE
+          values(i,j)=matrix%dataL(location)
+        ENDIF
+      ENDDO !j
+    ENDDO !i
+    
+    EXITS("Matrix_ValuesGetL2")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesGetL2",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesGetL2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets a value in an integer matrix at the location specified by the row and column index i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetIntg(matrix,rowIndex,columnIndex,value,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index of the value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index of the value to set
+    INTEGER(INTG), INTENT(IN) :: value !<The value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesSetIntg",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
+    
+    CALL Matrix_StorageLocationGet(matrix,rowIndex,columnIndex,location,err,error,*999)
+    matrix%dataIntg(location)=value
+
+    EXITS("Matrix_ValuesSetIntg")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesSetIntg",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesSetIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the values in an integer matrix at the location specified by the row and column indices i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetIntg1(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to set
+    INTEGER(INTG), INTENT(IN) :: values(:) !<values(i). The value of the i'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesSetIntg1",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("MATRIX_VALUES_SET_SP2")
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationGet(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      matrix%dataIntg(location)=values(k)
+    ENDDO !k
+
+    EXITS("Matrix_ValuesSetIntg1")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_SP2",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesSetIntg1",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_SP2
+    
+  END SUBROUTINE Matrix_ValuesSetIntg1
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the values in a double precision real matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_DP(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Sets the matrix of values in an integer matrix at the location specified by the row and column indices i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetIntg2(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to set.
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index of the i'th value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column index of the i'th value to set
-    REAL(DP), INTENT(IN) :: VALUES(:) !<VALUES(i). The value of the i'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to set
+    INTEGER(INTG), INTENT(IN) :: values(:,:) !<values(i,j). The value of the i,j'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: i,j,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_SET_DP",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesSetIntg2",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))//" and column "// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))//" does not exist in the matrix."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE
-                  MATRIX%DATA_DP(LOCATION)=VALUES(k)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the double precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsIntgData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the number of columns in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("MATRIX_VALUES_SET_DP")
+      
+    DO i=1,SIZE(rowIndices,1)
+      DO j=1,SIZE(columnIndices,1)
+        CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+        matrix%dataIntg(location)=values(i,j)
+      ENDDO !j
+    ENDDO !i
+   
+    EXITS("Matrix_ValuesSetIntg2")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_DP",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesSetIntg2",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_DP
+    
+  END SUBROUTINE Matrix_ValuesSetIntg2
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets a value in a single precision real matrix at the location specified by the row and column index i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetSP(matrix,rowIndex,columnIndex,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index of the value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index of the value to set
+    REAL(SP), INTENT(IN) :: value !<The value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesSetSP",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
+    
+    CALL Matrix_StorageLocationGet(matrix,rowIndex,columnIndex,location,err,error,*999)
+    matrix%dataSP(location)=value
+
+    EXITS("Matrix_ValuesSetSP")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesSetSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesSetSP
 
   !
   !================================================================================================================================
   !
 
-  !>Sets a value in a double precision real matrix at the location specified by the row and column index i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_DP1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
+  !>Sets the values in a single precision real matrix at the location specified by the row and column indices i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetSP1(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index of the value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index of the value to set
-    REAL(DP), INTENT(IN) :: VALUE !<The value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to set
+    REAL(SP), INTENT(IN) :: values(:) !<values(i). The value of the i'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_SET_DP1",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesSetSP1",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDEX,"*",ERR,ERROR))//" and column "// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_INDEX,"*",ERR,ERROR))//" does not exist in the matrix."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            MATRIX%DATA_DP(LOCATION)=VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the double precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationGet(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      matrix%dataSP(location)=values(k)
+    ENDDO !k
 
-    EXITS("MATRIX_VALUES_SET_DP1")
+    EXITS("Matrix_ValuesSetSP1")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_DP1",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesSetSP1",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_DP1
+    
+  END SUBROUTINE Matrix_ValuesSetSP1
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the matrix of values in a double precision real matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_DP2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Sets the matrix of values in a single precision real matrix at the location specified by the row and column indices i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetSP2(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to set.
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index of the ij'th value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INDICES(j). The column index of the ij'th value to set
-    REAL(DP), INTENT(IN) :: VALUES(:,:) !<VALUES(i,j). The value of the ij'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to set
+    REAL(SP), INTENT(IN) :: values(:,:) !<values(i,j). The value of the i,j'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: i,j,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: i,j,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_SET_DP2",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesSetSP2",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-              DO i=1,SIZE(ROW_INDICES,1)
-                DO j=1,SIZE(COLUMN_INDICES,1)
-                  CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(i),COLUMN_INDICES(j),LOCATION,ERR,ERROR,*999)
-                  IF(LOCATION==0) THEN
-                    LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                      & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ELSE
-                    MATRIX%DATA_DP(LOCATION)=VALUES(i,j)
-                  ENDIF
-                ENDDO !j
-              ENDDO !i
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the double precision data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows in the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsSPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the number of columns in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("MATRIX_VALUES_SET_DP2")
+      
+    DO i=1,SIZE(rowIndices,1)
+      DO j=1,SIZE(columnIndices,1)
+        CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+        matrix%dataSP(location)=values(i,j)
+      ENDDO !j
+    ENDDO !i
+   
+    EXITS("Matrix_ValuesSetSP2")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_DP2",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesSetSP2",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_DP2
+    
+  END SUBROUTINE Matrix_ValuesSetSP2
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets a value in a double precision real matrix at the location specified by the row and column index i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetDP(matrix,rowIndex,columnIndex,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index of the value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index of the value to set
+    REAL(DP), INTENT(IN) :: value !<The value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesSetDP",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
+    
+    CALL Matrix_StorageLocationGet(matrix,rowIndex,columnIndex,location,err,error,*999)
+    matrix%dataDP(location)=value
+
+    EXITS("Matrix_ValuesSetDP")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesSetDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesSetDP
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the values in a logical matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_L(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Sets the values in a double precision real matrix at the location specified by the row and column indices i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetDP1(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to set
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index of the i'th value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INDICES(i). The column index of the i'th value to set
-    LOGICAL, INTENT(IN) :: VALUES(:) !<VALUES(i). The value of the i'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to set
+    REAL(DP), INTENT(IN) :: values(:) !<values(i). The value of the i'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: k,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_SET_L",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesSetDP1",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,1)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-              DO k=1,SIZE(ROW_INDICES,1)
-                CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(k),COLUMN_INDICES(k),LOCATION,ERR,ERROR,*999)
-                IF(LOCATION==0) THEN
-                  LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(k),"*",ERR,ERROR))//" and column "// &
-                    & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(k),"*",ERR,ERROR))//" does not exist in the matrix."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ELSE
-                  MATRIX%DATA_L(LOCATION)=VALUES(k)
-                ENDIF
-              ENDDO !k
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the logical data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationGet(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      matrix%dataDP(location)=values(k)
+    ENDDO !k
 
-    EXITS("MATRIX_VALUES_SET_L")
+    EXITS("Matrix_ValuesSetDP1")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_L",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesSetDP1",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_L
+    
+  END SUBROUTINE Matrix_ValuesSetDP1
 
   !
   !================================================================================================================================
   !
 
-  !>Sets a value in a logical matrix at the location specified by the row and column index i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_L1(MATRIX,ROW_INDEX,COLUMN_INDEX,VALUE,ERR,ERROR,*)
+  !>Sets the matrix of values in a double precision real matrix at the location specified by the row and column indices i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetDP2(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix
-    INTEGER(INTG), INTENT(IN) :: ROW_INDEX !<The row index of the value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDEX !<The column index of the value to set
-    LOGICAL, INTENT(IN) :: VALUE !<The value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to set
+    REAL(DP), INTENT(IN) :: values(:,:) !<values(i,j). The value of the i,j'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: i,j,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_SET_L1",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesSetDP2",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-          CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDEX,COLUMN_INDEX,LOCATION,ERR,ERROR,*999)
-          IF(LOCATION==0) THEN
-            LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDEX,"*",ERR,ERROR))//" and column "// &
-              & TRIM(NUMBER_TO_VSTRING(COLUMN_INDEX,"*",ERR,ERROR))//" does not exist in the matrix."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            MATRIX%DATA_L(LOCATION)=VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the logical data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsDPData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the number of columns in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("MATRIX_VALUES_SET_L1")
+      
+    DO i=1,SIZE(rowIndices,1)
+      DO j=1,SIZE(columnIndices,1)
+        CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+        matrix%dataDP(location)=values(i,j)
+      ENDDO !j
+    ENDDO !i
+   
+    EXITS("Matrix_ValuesSetDP2")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_L1",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesSetDP2",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_L1
+    
+  END SUBROUTINE Matrix_ValuesSetDP2
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets a value in a logical matrix at the location specified by the row and column index i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetL(matrix,rowIndex,columnIndex,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndex !<The row index of the value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndex !<The column index of the value to set
+    LOGICAL, INTENT(IN) :: value !<The value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: location
+
+    ENTERS("Matrix_ValuesSetL",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
+    
+    CALL Matrix_StorageLocationGet(matrix,rowIndex,columnIndex,location,err,error,*999)
+    matrix%dataL(location)=value
+
+    EXITS("Matrix_ValuesSetL")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesSetL",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesSetL
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the matrix of values in a logical matrix at the location specified by the row and column indices i.e., MATRIX(I,J)=VALUE
-  SUBROUTINE MATRIX_VALUES_SET_L2(MATRIX,ROW_INDICES,COLUMN_INDICES,VALUES,ERR,ERROR,*)
+  !>Sets the values in a logical matrix at the location specified by the row and column indices i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetL1(matrix,rowIndices,columnIndices,values,err,error,*)
 
     !Argument variables
-    TYPE(MATRIX_TYPE), POINTER :: MATRIX !<A pointer to the matrix to set
-    INTEGER(INTG), INTENT(IN) :: ROW_INDICES(:) !<ROW_INDICES(i). The row index of the ij'th value to set
-    INTEGER(INTG), INTENT(IN) :: COLUMN_INDICES(:) !<COLUMN_INDICES(j). The column index of the ij'th value to set
-    LOGICAL, INTENT(IN) :: VALUES(:,:) !<VALUES(i,j). The value of the ij'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the i'th value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(i). The column index for the i'th value to set
+    LOGICAL, INTENT(IN) :: values(:) !<values(i). The value of the i'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: i,j,LOCATION
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: k,location
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("MATRIX_VALUES_SET_L2",ERR,ERROR,*999)
+    ENTERS("Matrix_ValuesSetL1",err,error,*999)
 
-    IF(ASSOCIATED(MATRIX)) THEN
-      IF(MATRIX%MATRIX_FINISHED) THEN
-        IF(SIZE(ROW_INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(SIZE(COLUMN_INDICES,1)==SIZE(VALUES,2)) THEN
-            IF(MATRIX%dataType==MATRIX_VECTOR_L_TYPE) THEN
-              DO i=1,SIZE(ROW_INDICES,1)
-                DO j=1,SIZE(ROW_INDICES,1)
-                  CALL MATRIX_STORAGE_LOCATION_FIND(MATRIX,ROW_INDICES(i),COLUMN_INDICES(j),LOCATION,ERR,ERROR,*999)
-                  IF(LOCATION==0) THEN
-                    LOCAL_ERROR="Row "//TRIM(NUMBER_TO_VSTRING(ROW_INDICES(i),"*",ERR,ERROR))//" and column "// &
-                      & TRIM(NUMBER_TO_VSTRING(COLUMN_INDICES(j),"*",ERR,ERROR))//" does not exist in the matrix."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ELSE
-                    MATRIX%DATA_L(LOCATION)=VALUES(i,j)
-                  ENDIF
-                ENDDO !j
-              ENDDO !i
-            ELSE
-              LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(MATRIX%dataType,"*",ERR,ERROR))// &
-                & " does not correspond to the logical data type of the given values."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            LOCAL_ERROR="The size of the column indices array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(COLUMN_INDICES,1),"*",ERR,ERROR))// &
-              & ") does not conform to the number of columns in the values array ("// &
-              & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,2),"*",ERR,ERROR))//")."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the row indices array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(ROW_INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the number of rows in the values array ("// &
-            & TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The matrix has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Matrix is not associated.",ERR,ERROR,*999)
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(SIZE(columnIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO k=1,SIZE(rowIndices,1)
+      CALL Matrix_StorageLocationGet(matrix,rowIndices(k),columnIndices(k),location,err,error,*999)
+      matrix%dataL(location)=values(k)
+    ENDDO !k
 
-    EXITS("MATRIX_VALUES_SET_L2")
+    EXITS("Matrix_ValuesSetL1")
     RETURN
-999 ERRORSEXITS("MATRIX_VALUES_SET_L2",ERR,ERROR)
+999 ERRORSEXITS("Matrix_ValuesSetL1",err,error)
     RETURN 1
-  END SUBROUTINE MATRIX_VALUES_SET_L2
+    
+  END SUBROUTINE Matrix_ValuesSetL1
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the matrix of values in a logical matrix at the location specified by the row and column indices i.e., matrix(i,j)=value
+  SUBROUTINE Matrix_ValuesSetL2(matrix,rowIndices,columnIndices,values,err,error,*)
+
+    !Argument variables
+    TYPE(MatrixType), POINTER :: matrix !<A pointer to the matrix
+    INTEGER(INTG), INTENT(IN) :: rowIndices(:) !<rowIndices(i). The row index for the ij'th value to set
+    INTEGER(INTG), INTENT(IN) :: columnIndices(:) !<columnIndices(j). The column index for the ij'th value to set
+    LOGICAL, INTENT(IN) :: values(:,:) !<values(i,j). The value of the i,j'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,j,location
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Matrix_ValuesSetL2",err,error,*999)
+
+    CALL Matrix_AssertIsFinished(matrix,err,error,*999)
+    CALL Matrix_AssertIsLData(matrix,err,error,*999)
+    IF(SIZE(rowIndices,1)/=SIZE(values,1)) THEN
+      localError="The size of the row indices array of "//TRIM(NumberToVString(SIZE(rowIndices,1),"*",err,error))// &
+        & " does not conform to the number of rows in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF      
+    IF(SIZE(columnIndices,1)/=SIZE(values,2)) THEN
+      localError="The size of the column indices array of "//TRIM(NumberToVString(SIZE(columnIndices,1),"*",err,error))// &
+        & " does not conform to the number of columns in the values array of "// &
+        & TRIM(NumberToVString(SIZE(values,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+      
+    DO i=1,SIZE(rowIndices,1)
+      DO j=1,SIZE(columnIndices,1)
+        CALL Matrix_StorageLocationGet(matrix,rowIndices(i),columnIndices(j),location,err,error,*999)
+        matrix%dataL(location)=values(i,j)
+      ENDDO !j
+    ENDDO !i
+   
+    EXITS("Matrix_ValuesSetL2")
+    RETURN
+999 ERRORSEXITS("Matrix_ValuesSetL2",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Matrix_ValuesSetL2
+  
   !
   !================================================================================================================================
   !
 
   !>Sets all values in an integer vector to the specified value.
-  SUBROUTINE VECTOR_ALL_VALUES_SET_INTG(VECTOR,VALUE,ERR,ERROR,*)
+  SUBROUTINE Vector_AllValuesSetIntg(vector,value,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector to set
-    INTEGER(INTG), INTENT(IN) :: VALUE !<The value to set the vector to
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector to set
+    INTEGER(INTG), INTENT(IN) :: value !<The value to set the vector to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("VECTOR_ALL_VALUES_SET_INTG",ERR,ERROR,*999)
+    ENTERS("Vector_AllValuesSetIntg",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-          VECTOR%DATA_INTG=VALUE
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the integer data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsIntgData(vector,err,error,*999)
 
-    EXITS("VECTOR_ALL_VALUES_SET_INTG")
+    vector%dataIntg=value
+
+    EXITS("Vector_AllValuesSetIntg")
     RETURN
-999 ERRORSEXITS("VECTOR_ALL_VALUES_SET_INTG",ERR,ERROR)
+999 ERRORSEXITS("Vector_AllValuesSetIntg",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_ALL_VALUES_SET_INTG
+    
+  END SUBROUTINE Vector_AllValuesSetIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Sets all values in a single precision vector to the specified value.
-  SUBROUTINE VECTOR_ALL_VALUES_SET_SP(VECTOR,VALUE,ERR,ERROR,*)
+  !>Sets all values in a single precision real vector to the specified value.
+  SUBROUTINE Vector_AllValuesSetSP(vector,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector to set
-    REAL(SP), INTENT(IN) :: VALUE !<The value to set the vector to
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector to set
+    REAL(SP), INTENT(IN) :: value !<The value to set the vector to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("VECTOR_ALL_VALUES_SET_SP",ERR,ERROR,*999)
+    ENTERS("Vector_AllValuesSetSP",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-          VECTOR%DATA_SP=VALUE
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the single precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsSPData(vector,err,error,*999)
 
-    EXITS("VECTOR_ALL_VALUES_SET_SP")
+    vector%dataSP=value
+
+    EXITS("Vector_AllValuesSetSP")
     RETURN
-999 ERRORSEXITS("VECTOR_ALL_VALUES_SET_SP",ERR,ERROR)
+999 ERRORSEXITS("Vector_AllValuesSetSP",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_ALL_VALUES_SET_SP
+    
+  END SUBROUTINE Vector_AllValuesSetSP
 
   !
   !================================================================================================================================
   !
 
-  !>Sets all values in a double precision vector to the specified value.
-  SUBROUTINE VECTOR_ALL_VALUES_SET_DP(VECTOR,VALUE,ERR,ERROR,*)
+  !>Sets all values in a double precision real vector to the specified value.
+  SUBROUTINE Vector_AllValuesSetDP(vector,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector to set
-    REAL(DP), INTENT(IN) :: VALUE !<The value to set the vector to
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector to set
+    REAL(DP), INTENT(IN) :: value !<The value to set the vector to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("VECTOR_ALL_VALUES_SET_DP",ERR,ERROR,*999)
+    ENTERS("Vector_AllValuesSetDP",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-          VECTOR%DATA_DP=VALUE
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the double precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsDPData(vector,err,error,*999)
 
-    EXITS("VECTOR_ALL_VALUES_SET_DP")
+    vector%dataDP=value
+
+    EXITS("Vector_AllValuesSetDP")
     RETURN
-999 ERRORSEXITS("VECTOR_ALL_VALUES_SET_DP",ERR,ERROR)
+999 ERRORSEXITS("Vector_AllValuesSetDP",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_ALL_VALUES_SET_DP
+    
+  END SUBROUTINE Vector_AllValuesSetDP
 
   !
   !================================================================================================================================
   !
 
-  !> Sets all values in a logical vector to the specified value.
-  SUBROUTINE VECTOR_ALL_VALUES_SET_L(VECTOR,VALUE,ERR,ERROR,*)
+  !>Sets all values in a logical vector to the specified value.
+  SUBROUTINE Vector_AllValuesSetL(vector,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector to set
-    LOGICAL, INTENT(IN) :: VALUE !<The value to set the vector to
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector to set
+    LOGICAL, INTENT(IN) :: value !<The value to set the vector to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
 
-    ENTERS("VECTOR_ALL_VALUES_SET_L",ERR,ERROR,*999)
+    ENTERS("Vector_AllValuesSetL",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_L_TYPE) THEN
-          VECTOR%DATA_L=VALUE
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the logical data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsLData(vector,err,error,*999)
 
-    EXITS("VECTOR_ALL_VALUES_SET_L")
+    vector%dataL=value
+
+    EXITS("Vector_AllValuesSetL")
     RETURN
-999 ERRORSEXITS("VECTOR_ALL_VALUES_SET_L",ERR,ERROR)
+999 ERRORSEXITS("Vector_AllValuesSetL",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_ALL_VALUES_SET_L
+    
+  END SUBROUTINE Vector_AllValuesSetL
 
   !
   !================================================================================================================================
   !
 
   !>Finihses the creation of a vector. 
-  SUBROUTINE VECTOR_CREATE_FINISH(VECTOR,ERR,ERROR,*)
+  SUBROUTINE Vector_CreateFinish(vector,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_CREATE_FINISH",ERR,ERROR,*999)
+    ENTERS("Vector_CreateFinish",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        CALL FlagError("Vector has been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(VECTOR%SIZE>0) THEN
-          SELECT CASE(VECTOR%dataType)
-          CASE(MATRIX_VECTOR_INTG_TYPE)
-            ALLOCATE(VECTOR%DATA_INTG(VECTOR%SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate vector integer data.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_SP_TYPE)
-            ALLOCATE(VECTOR%DATA_SP(VECTOR%SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate vector single precision data.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_DP_TYPE)
-            ALLOCATE(VECTOR%DATA_DP(VECTOR%SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate vector double precision data.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_L_TYPE)
-            ALLOCATE(VECTOR%DATA_L(VECTOR%SIZE),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate vector logical data.",ERR,ERROR,*999)
-          CASE(MATRIX_VECTOR_SPC_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(MATRIX_VECTOR_DPC_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The vector data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))//" is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-        ENDIF
-        VECTOR%ID=MATRIX_VECTOR_ID
-        MATRIX_VECTOR_ID=MATRIX_VECTOR_ID+1
-        VECTOR%VECTOR_FINISHED=.TRUE.
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertNotFinished(vector,err,error,*999)
+    IF(vector%size>0) THEN
+      SELECT CASE(vector%dataType)
+      CASE(MATRIX_VECTOR_INTG_TYPE)
+        ALLOCATE(vector%dataIntg(vector%size),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate vector integer data.",err,error,*999)
+      CASE(MATRIX_VECTOR_SP_TYPE)
+        ALLOCATE(vector%dataSP(vector%size),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate vector single precision data.",err,error,*999)
+      CASE(MATRIX_VECTOR_DP_TYPE)
+        ALLOCATE(vector%dataDP(vector%size),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate vector double precision data.",err,error,*999)
+      CASE(MATRIX_VECTOR_L_TYPE)
+        ALLOCATE(vector%dataL(vector%size),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate vector logical data.",err,error,*999)
+      CASE(MATRIX_VECTOR_SPC_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(MATRIX_VECTOR_DPC_TYPE)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        localError="The vector data type of "//TRIM(NumberToVString(vector%dataType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
     ENDIF
-    
-    EXITS("VECTOR_CREATE_FINISH")
+    vector%ID=MATRIX_VECTOR_ID
+    MATRIX_VECTOR_ID=MATRIX_VECTOR_ID+1
+    vector%vectorFinished=.TRUE.
+   
+    EXITS("Vector_CreateFinish")
     RETURN
-999 ERRORSEXITS("VECTOR_CREATE_FINISH",ERR,ERROR)
+999 ERRORSEXITS("Vector_CreateFinish",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_CREATE_FINISH
+    
+  END SUBROUTINE Vector_CreateFinish
 
   !
   !================================================================================================================================
   !
 
   !>Starts the creation a vector. 
-  SUBROUTINE VECTOR_CREATE_START(VECTOR,ERR,ERROR,*)
+  SUBROUTINE Vector_CreateStart(vector,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-
-    ENTERS("VECTOR_CREATE_START",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      CALL FlagError("Vector is already associated.",ERR,ERROR,*998)
-    ELSE
-      ALLOCATE(VECTOR,STAT=ERR)
-      IF(ERR/=0) CALL FlagError("Could not allocate the vector.",ERR,ERROR,*999)
-      CALL VECTOR_INITIALISE(VECTOR,ERR,ERROR,*999)
-      !Set the defaults
-      VECTOR%dataType=MATRIX_VECTOR_DP_TYPE
-    ENDIF
- 
-    EXITS("VECTOR_CREATE_START")
-    RETURN
-999 IF(ASSOCIATED(VECTOR)) CALL VECTOR_FINALISE(VECTOR,ERR,ERROR,*998)
-998 ERRORSEXITS("VECTOR_CREATE_START",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_CREATE_START
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data of an integer vector. Note: the values can be used for read operations but a VECTOR_VALUES_SET call must be used to change any values. The pointer should not be deallocated.
-  SUBROUTINE VECTOR_DATA_GET_INTG(VECTOR,DATA,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), POINTER :: DATA(:) !<On return a pointer to the vector data
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("VECTOR_DATA_GET_INTG",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(ASSOCIATED(DATA)) THEN
-        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(DATA)
-        IF(VECTOR%VECTOR_FINISHED) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-            DATA=>VECTOR%DATA_INTG
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the integer data type of the requested values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("VECTOR_DATA_GET_INTG")
-    RETURN
-999 ERRORSEXITS("VECTOR_DATA_GET_INTG",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_DATA_GET_INTG
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data of a single precision vector. Note: the values can be used for read operations but a VECTOR_VALUES_SET call must be used to change any values. The pointer should not be deallocated.
-  SUBROUTINE VECTOR_DATA_GET_SP(VECTOR,DATA,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    REAL(SP), POINTER :: DATA(:) !<On return a pointer to the vector data
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("VECTOR_DATA_GET_SP",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(ASSOCIATED(DATA)) THEN
-        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(DATA)
-        IF(VECTOR%VECTOR_FINISHED) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-            DATA=>VECTOR%DATA_SP
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the single precision data type of the requested values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("VECTOR_DATA_GET_SP")
-    RETURN
-999 ERRORSEXITS("VECTOR_DATA_GET_SP",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_DATA_GET_SP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data of a double precision vector. Note: the values can be used for read operations but a VECTOR_VALUES_SET call must be used to change any values. The pointer should not be deallocated.
-  SUBROUTINE VECTOR_DATA_GET_DP(VECTOR,DATA,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    REAL(DP), POINTER :: DATA(:) !<On return a pointer to the vector data
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("VECTOR_DATA_GET_DP",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(ASSOCIATED(DATA)) THEN
-        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(DATA)
-        IF(VECTOR%VECTOR_FINISHED) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-            DATA=>VECTOR%DATA_DP
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the double precision data type of the requested values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("VECTOR_DATA_GET_DP")
-    RETURN
-999 ERRORSEXITS("VECTOR_DATA_GET_DP",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_DATA_GET_DP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Returns a pointer to the data of a logical vector. Note: the values can be used for read operations but a VECTOR_VALUES_SET call must be used to change any values. The pointer should not be deallocated.
-  SUBROUTINE VECTOR_DATA_GET_L(VECTOR,DATA,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    LOGICAL, POINTER :: DATA(:) !<On return a pointer to the vector data
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("VECTOR_DATA_GET_L",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(ASSOCIATED(DATA)) THEN
-        CALL FlagError("Data is already associated.",ERR,ERROR,*999)
-      ELSE
-        NULLIFY(DATA)
-        IF(VECTOR%VECTOR_FINISHED) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_L_TYPE) THEN
-            DATA=>VECTOR%DATA_L
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the logical data type of the requested values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("VECTOR_DATA_GET_L")
-    RETURN
-999 ERRORSEXITS("VECTOR_DATA_GET_L",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_DATA_GET_L
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the data type of a vector.
-  SUBROUTINE Vector_DataTypeGet(vector,dataType,err,error,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: vector !<A pointer to the vector
-    INTEGER(INTG), INTENT(OUT) :: dataType !<On return, the data type of the vector. \see MatrixVector_DataTypes,MatrixVector
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
 
-    ENTERS("Vector_DataTypeGet",err,error,*999)
+    ENTERS("Vector_CreateStart",err,error,*998)
 
-    IF(ASSOCIATED(vector)) THEN
-      IF(.NOT.vector%vector_finished) THEN
-        CALL flag_error("The vector has not been finished.",err,error,*999)
-      ELSE
-        dataType=vector%dataType
-      END IF
-    ELSE
-      CALL flag_error("Vector is not associated.",err,error,*999)
-    END IF
-
-    EXITS("Vector_DataTypeGet")
+    IF(ASSOCIATED(vector)) CALL FlagError("Vector is already associated.",err,error,*998)
+    
+    ALLOCATE(vector,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate the vector.",err,error,*999)
+    CALL Vector_Initialise(vector,err,error,*999)
+    !Set the defaults
+    vector%dataType=MATRIX_VECTOR_DP_TYPE
+ 
+    EXITS("Vector_CreateStart")
     RETURN
-999 ERRORSEXITS("Vector_DataTypeGet",err,error)
+999 CALL Vector_Finalise(vector,err,error,*998)
+998 ERRORSEXITS("Vector_CreateStart",err,error)
     RETURN 1
-  END SUBROUTINE Vector_DataTypeGet
+    
+  END SUBROUTINE Vector_CreateStart
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the data type of a vector.
-  SUBROUTINE VECTOR_DATA_TYPE_SET(VECTOR,DATA_TYPE,ERR,ERROR,*)
+  SUBROUTINE Vector_DataTypeSet(vector,dataType,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector.
-    INTEGER(INTG), INTENT(IN) :: DATA_TYPE !<The data type to set. \see MatrixVector_DataTypes,MatrixVector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector.
+    INTEGER(INTG), INTENT(IN) :: dataType !<The data type to set. \see MatrixVector_DataTypes,MatrixVector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_DATA_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("Vector_DataTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        CALL FlagError("The vector has been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(DATA_TYPE)
-        CASE(MATRIX_VECTOR_INTG_TYPE)
-          VECTOR%dataType=MATRIX_VECTOR_INTG_TYPE
-        CASE(MATRIX_VECTOR_SP_TYPE)
-          VECTOR%dataType=MATRIX_VECTOR_SP_TYPE
-        CASE(MATRIX_VECTOR_DP_TYPE)
-          VECTOR%dataType=MATRIX_VECTOR_DP_TYPE
-        CASE(MATRIX_VECTOR_L_TYPE)
-          VECTOR%dataType=MATRIX_VECTOR_L_TYPE
-        CASE(MATRIX_VECTOR_SPC_TYPE)
-          VECTOR%dataType=MATRIX_VECTOR_SPC_TYPE
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE(MATRIX_VECTOR_DPC_TYPE)
-          VECTOR%dataType=MATRIX_VECTOR_DPC_TYPE
-          CALL FlagError("Not implemented.",err,error,*999)
-        CASE DEFAULT
-          LOCAL_ERROR="The vector data type of "//TRIM(NUMBER_TO_VSTRING(DATA_TYPE,"*",ERR,ERROR))//" is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL Vector_AssertNotFinished(vector,err,error,*999)
 
-    EXITS("VECTOR_DATA_TYPE_SET")
+    SELECT CASE(dataType)
+    CASE(MATRIX_VECTOR_INTG_TYPE)
+      vector%dataType=MATRIX_VECTOR_INTG_TYPE
+    CASE(MATRIX_VECTOR_SP_TYPE)
+      vector%dataType=MATRIX_VECTOR_SP_TYPE
+    CASE(MATRIX_VECTOR_DP_TYPE)
+      vector%dataType=MATRIX_VECTOR_DP_TYPE
+    CASE(MATRIX_VECTOR_L_TYPE)
+      vector%dataType=MATRIX_VECTOR_L_TYPE
+    CASE(MATRIX_VECTOR_SPC_TYPE)
+      vector%dataType=MATRIX_VECTOR_SPC_TYPE
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(MATRIX_VECTOR_DPC_TYPE)
+      vector%dataType=MATRIX_VECTOR_DPC_TYPE
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The vector data type of "//TRIM(NumberToVString(dataType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Vector_DataTypeSet")
     RETURN
-999 ERRORSEXITS("VECTOR_DATA_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("Vector_DataTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_DATA_TYPE_SET
+    
+  END SUBROUTINE Vector_DataTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Destroys a vector
-  SUBROUTINE VECTOR_DESTROY(VECTOR,ERR,ERROR,*)
+  SUBROUTINE Vector_Destroy(vector,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("VECTOR_DESTROY",ERR,ERROR,*999)
+    ENTERS("Vector_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      CALL VECTOR_FINALISE(VECTOR,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+    
+    CALL Vector_Finalise(vector,err,error,*999)
 
-    EXITS("VECTOR_DESTROY")
+    EXITS("Vector_Destroy")
     RETURN
-999 ERRORSEXITS("VECTOR_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("Vector_Destroy",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_DESTROY
+    
+  END SUBROUTINE Vector_Destroy
 
   !
   !================================================================================================================================
   !
 
-  !>Duplicates a vector structure and returns a pointer to the new vector in NEW_VECTOR.
-  SUBROUTINE VECTOR_DUPLICATE(VECTOR,NEW_VECTOR,ERR,ERROR,*)
+  !>Duplicates a vector structure and returns a pointer to the new vector in newVector.
+  SUBROUTINE Vector_Duplicate(vector,newVector,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector to duplicate
-    TYPE(VECTOR_TYPE), POINTER :: NEW_VECTOR !<On return a pointer to the new duplicated vector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector to duplicate
+    TYPE(VectorType), POINTER :: newVector !<On return a pointer to the new duplicated vector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("VECTOR_DUPLICATE",ERR,ERROR,*998)
+    ENTERS("Vector_Duplicate",err,error,*998)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(ASSOCIATED(NEW_VECTOR)) THEN
-        CALL FlagError("New vector is already associated.",ERR,ERROR,*998)
-      ELSE
-        CALL VECTOR_CREATE_START(NEW_VECTOR,ERR,ERROR,*999)
-        CALL VECTOR_DATA_TYPE_SET(NEW_VECTOR,VECTOR%dataType,ERR,ERROR,*999)
-        CALL VECTOR_SIZE_SET(NEW_VECTOR,VECTOR%N,ERR,ERROR,*999)
-        CALL VECTOR_CREATE_FINISH(NEW_VECTOR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*998)
-    ENDIF
-
-    EXITS("VECTOR_DUPLICATE")
+    IF(ASSOCIATED(newVector)) CALL FlagError("New vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+    
+    CALL Vector_CreateStart(newVector,err,error,*999)
+    CALL Vector_DataTypeSet(newVector,vector%dataType,err,error,*999)
+    CALL Vector_SizeSet(newVector,vector%n,err,error,*999)
+    CALL Vector_CreateFinish(newVector,err,error,*999)
+ 
+    EXITS("Vector_Duplicate")
     RETURN
-999 CALL VECTOR_FINALISE(NEW_VECTOR,ERR,ERROR,*998)
-998 ERRORSEXITS("VECTOR_DUPLICATE",ERR,ERROR)
+999 CALL Vector_Finalise(newVector,err,error,*998)
+998 ERRORSEXITS("Vector_Duplicate",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_DUPLICATE
+    
+  END SUBROUTINE Vector_Duplicate
 
   !
   !================================================================================================================================
   !
 
   !>Finalises a vector and deallocates all memory
-  SUBROUTINE VECTOR_FINALISE(VECTOR,ERR,ERROR,*)
+  SUBROUTINE Vector_Finalise(vector,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("VECTOR_FINALISE",ERR,ERROR,*999)
+    ENTERS("Vector_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(ALLOCATED(VECTOR%DATA_INTG)) DEALLOCATE(VECTOR%DATA_INTG)
-      IF(ALLOCATED(VECTOR%DATA_SP)) DEALLOCATE(VECTOR%DATA_SP)
-      IF(ALLOCATED(VECTOR%DATA_DP)) DEALLOCATE(VECTOR%DATA_DP)
-      IF(ALLOCATED(VECTOR%DATA_L)) DEALLOCATE(VECTOR%DATA_L)
-      DEALLOCATE(VECTOR)
+    IF(ASSOCIATED(vector)) THEN
+      IF(ALLOCATED(vector%dataIntg)) DEALLOCATE(vector%dataIntg)
+      IF(ALLOCATED(vector%dataSP)) DEALLOCATE(vector%dataSP)
+      IF(ALLOCATED(vector%dataDP)) DEALLOCATE(vector%dataDP)
+      IF(ALLOCATED(vector%dataL)) DEALLOCATE(vector%dataL)
+      DEALLOCATE(vector)
     ENDIF
 
-    EXITS("VECTOR_FINALISE")
+    EXITS("Vector_Finalise")
     RETURN
-999 ERRORSEXITS("VECTOR_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("Vector_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_FINALISE
+    
+  END SUBROUTINE Vector_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises a vector
-  SUBROUTINE VECTOR_INITIALISE(VECTOR,ERR,ERROR,*)
+  SUBROUTINE Vector_Initialise(vector,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("VECTOR_INITIALISE",ERR,ERROR,*999)
+    ENTERS("Vector_Initialise",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      !!TODO: have a vector user number etc.
-      VECTOR%ID=0
-      VECTOR%VECTOR_FINISHED=.FALSE.
-      VECTOR%N=0
-      VECTOR%dataType=0
-      VECTOR%SIZE=0      
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(vector)) CALL FlagError("Vector is not associated.",err,error,*999)
+    
+!!TODO: have a vector user number etc.
+    vector%ID=0
+    vector%vectorFinished=.FALSE.
+    vector%n=0
+    vector%dataType=0
+    vector%size=0      
 
-    EXITS("VECTOR_INITIALISE")
+    EXITS("Vector_Initialise")
     RETURN
-999 ERRORSEXITS("VECTOR_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("Vector_Initialise",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_INITIALISE
+    
+  END SUBROUTINE Vector_Initialise
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the size of a vector
-  SUBROUTINE VECTOR_SIZE_SET(VECTOR,N,ERR,ERROR,*)
+  SUBROUTINE Vector_SizeSet(vector,n,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: N !<The size of the vector to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: n !<The size of the vector to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_SIZE_SET",ERR,ERROR,*999)
+    ENTERS("Vector_SizeSet",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        CALL FlagError("The vector has been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(N>0) THEN
-          VECTOR%N=N
-        ELSE
-          LOCAL_ERROR="The size of the vector ("//TRIM(NUMBER_TO_VSTRING(N,"*",ERR,ERROR))// &
-            & ") is invalid. The number must be >0."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertNotFinished(vector,err,error,*999)
+
+    IF(n<=0) THEN
+      localError="The size of the vector of "//TRIM(NumberToVString(n,"*",err,error))//" is invalid. The number must be >0."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("VECTOR_SIZE_SET")
+    
+    vector%n=n
+    
+    EXITS("Vector_SizeSet")
     RETURN
-999 ERRORSEXITS("VECTOR_SIZE_SET",ERR,ERROR)
+999 ERRORSEXITS("Vector_SizeSet",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_SIZE_SET
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the values in an integer vector at the indices specified.
-  SUBROUTINE VECTOR_VALUES_GET_INTG(VECTOR,INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDICES(:) !<INDICES(i). The i'th index to get
-    INTEGER(INTG), INTENT(OUT) :: VALUES(:) !<VALUES(i). On return the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("VECTOR_VALUES_GET_INTG",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-            DO i=1,SIZE(INDICES,1)
-              k=INDICES(i)
-              IF(k<1.OR.k>VECTOR%N) THEN
-                LOCAL_ERROR="Index number "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" is invalid. The index is "// &
-                    & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" and it must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ELSE
-                VALUES(i)=VECTOR%DATA_INTG(k)
-              ENDIF
-            ENDDO !i
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the integer data type of the given values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("VECTOR_VALUES_GET_INTG")
-    RETURN
-999 ERRORSEXITS("VECTOR_VALUES_GET_INTG",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_VALUES_GET_INTG
+    
+  END SUBROUTINE Vector_SizeSet
 
   !
   !================================================================================================================================
   !
 
   !>Gets a value in an integer vector at the location specified by the index
-  SUBROUTINE VECTOR_VALUES_GET_INTG1(VECTOR,INDEX,VALUE,ERR,ERROR,*)
+  SUBROUTINE Vector_ValuesGetIntg(vector,index,value,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDEX !<The index of the vector to get
-    INTEGER(INTG), INTENT(OUT) :: VALUE !<On return the value of the vector at the specified index
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: index !<The index of the vector to get
+    INTEGER(INTG), INTENT(OUT) :: value !<On return the value of the vector at the specified index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_GET_INTG1",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesGetIntg",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-          IF(INDEX<1.OR.INDEX>VECTOR%N) THEN
-            LOCAL_ERROR="The index value of "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
-              & " is invalid. The index must be between 1 and  "//TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            VALUE=VECTOR%DATA_INTG(INDEX)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the integer data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsIntgData(vector,err,error,*999)
+    IF(index<1.OR.index>vector%n) THEN
+      localError="The index value of "//TRIM(NumberToVString(index,"*",err,error))// &
+        & " is invalid. The index must be between 1 and "//TRIM(NumberToVString(vector%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    value=vector%dataIntg(index)
 
-    EXITS("VECTOR_VALUES_GET_INTG1")
+    EXITS("Vector_ValuesGetIntg")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_GET_INTG1",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesGetIntg",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_GET_INTG1
+    
+  END SUBROUTINE Vector_ValuesGetIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Gets the values in a single precision real vector at the indices specified
-  SUBROUTINE VECTOR_VALUES_GET_SP(VECTOR,INDICES,VALUES,ERR,ERROR,*)
+  !>Gets the values in an integer vector at the indices specified.
+  SUBROUTINE Vector_ValuesGetIntg1(vector,indices,values,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDICES(:) !<INDICES(i). The i'th index to get
-    REAL(SP), INTENT(OUT) :: VALUES(:) !<VALUES(i). On return the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: indices(:) !<indices(i). The i'th index to get
+    INTEGER(INTG), INTENT(OUT) :: values(:) !<values(i). On return the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_GET_SP",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesGetIntg1",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-            DO i=1,SIZE(INDICES,1)
-              k=INDICES(i)
-              IF(k<1.OR.k>VECTOR%N) THEN
-                LOCAL_ERROR="Index number "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" is invalid. The index is "// &
-                    & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" and it must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ELSE
-                VALUES(i)=VECTOR%DATA_SP(k)
-              ENDIF
-            ENDDO !i
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the single precision data type of the given values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsIntgData(vector,err,error,*999)
+    IF(SIZE(indices,1)/=SIZE(values,1)) THEN
+      localError="The size of the indices array of "//TRIM(NumberToVString(SIZE(INDICES,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    DO i=1,SIZE(indices,1)
+      k=indices(i)
+      IF(k<1.OR.k>vector%n) THEN
+        localError="Index number "//TRIM(NumberToVString(i,"*",err,error))//" is invalid. The index is "// &
+          & TRIM(NumberToVString(k,"*",err,error))//" and it must be between 1 and "// &
+          & TRIM(NumberToVString(vector%n,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      values(i)=vector%dataIntg(k)
+    ENDDO !i
 
-    EXITS("VECTOR_VALUES_GET_SP")
+    EXITS("Vector_ValuesGetIntg1")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_GET_SP",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesGetIntg1",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_GET_SP
+    
+  END SUBROUTINE Vector_ValuesGetIntg1
 
   !
   !================================================================================================================================
   !
 
-  !>Gets a value in a single precision vector at the location specified by the index
-  SUBROUTINE VECTOR_VALUES_GET_SP1(VECTOR,INDEX,VALUE,ERR,ERROR,*)
+  !>Gets a value in a single precision real vector at the location specified by the index
+  SUBROUTINE Vector_ValuesGetSP(vector,index,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDEX !<The index of the vector to get
-    REAL(SP), INTENT(OUT) :: VALUE !<On return the value of the vector at the specified index
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: index !<The index of the vector to get
+    REAL(SP), INTENT(OUT) :: value !<On return the value of the vector at the specified index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_GET_SP1",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesGetSP",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-          IF(INDEX<1.OR.INDEX>VECTOR%N) THEN
-            LOCAL_ERROR="The index value of "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
-              & " is invalid. The index must be between 1 and  "//TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            VALUE=VECTOR%DATA_SP(INDEX)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the single precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsSPData(vector,err,error,*999)
+    IF(index<1.OR.index>vector%n) THEN
+      localError="The index value of "//TRIM(NumberToVString(index,"*",err,error))// &
+        & " is invalid. The index must be between 1 and "//TRIM(NumberToVString(vector%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    value=vector%dataSP(index)
 
-    EXITS("VECTOR_VALUES_GET_SP1")
+    EXITS("Vector_ValuesGetSP")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_GET_SP1",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesGetSP",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_GET_SP1
+    
+  END SUBROUTINE Vector_ValuesGetSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the values in a single precision real vector at the indices specified.
+  SUBROUTINE Vector_ValuesGetSP1(vector,indices,values,err,error,*)
+
+    !Argument variables
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: indices(:) !<indices(i). The i'th index to get
+    REAL(SP), INTENT(OUT) :: values(:) !<values(i). On return the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: i,k
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Vector_ValuesGetSP1",err,error,*999)
+
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsSPData(vector,err,error,*999)
+    IF(SIZE(indices,1)/=SIZE(values,1)) THEN
+      localError="The size of the indices array of "//TRIM(NumberToVString(SIZE(INDICES,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    DO i=1,SIZE(indices,1)
+      k=indices(i)
+      IF(k<1.OR.k>vector%n) THEN
+        localError="Index number "//TRIM(NumberToVString(i,"*",err,error))//" is invalid. The index is "// &
+          & TRIM(NumberToVString(k,"*",err,error))//" and it must be between 1 and "// &
+          & TRIM(NumberToVString(vector%n,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      values(i)=vector%dataSP(k)
+    ENDDO !i
+
+    EXITS("Vector_ValuesGetSP1")
+    RETURN
+999 ERRORSEXITS("Vector_ValuesGetSP1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Vector_ValuesGetSP1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets a value in a double precision real vector at the location specified by the index
+  SUBROUTINE Vector_ValuesGetDP(vector,index,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: index !<The index of the vector to get
+    REAL(DP), INTENT(OUT) :: value !<On return the value of the vector at the specified index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Vector_ValuesGetDP",err,error,*999)
+
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsDPData(vector,err,error,*999)
+    IF(index<1.OR.index>vector%n) THEN
+      localError="The index value of "//TRIM(NumberToVString(index,"*",err,error))// &
+        & " is invalid. The index must be between 1 and "//TRIM(NumberToVString(vector%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    value=vector%dataDP(index)
+
+    EXITS("Vector_ValuesGetDP")
+    RETURN
+999 ERRORSEXITS("Vector_ValuesGetDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Vector_ValuesGetDP
 
   !
   !================================================================================================================================
   !
 
   !>Gets the values in a double precision real vector at the indices specified.
-  SUBROUTINE VECTOR_VALUES_GET_DP(VECTOR,INDICES,VALUES,ERR,ERROR,*)
+  SUBROUTINE Vector_ValuesGetDP1(vector,indices,values,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDICES(:) !<INDICES(i). The i'th index to get
-    REAL(DP), INTENT(OUT) :: VALUES(:) !<VALUES(i). On return the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: indices(:) !<indices(i). The i'th index to get
+    REAL(DP), INTENT(OUT) :: values(:) !<values(i). On return the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_GET_DP",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesGetDP1",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-            DO i=1,SIZE(INDICES,1)
-              k=INDICES(i)
-              IF(k<1.OR.k>VECTOR%N) THEN
-                LOCAL_ERROR="Index number "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" is invalid. The index is "// &
-                    & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" and it must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ELSE
-                VALUES(i)=VECTOR%DATA_DP(k)
-              ENDIF
-            ENDDO !i
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the double precision data type of the given values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsDPData(vector,err,error,*999)
+    IF(SIZE(indices,1)/=SIZE(values,1)) THEN
+      localError="The size of the indices array of "//TRIM(NumberToVString(SIZE(INDICES,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("VECTOR_VALUES_GET_DP")
-    RETURN
-999 ERRORSEXITS("VECTOR_VALUES_GET_DP",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_VALUES_GET_DP
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets a value in a double precision vector at the location specified by the index
-  SUBROUTINE VECTOR_VALUES_GET_DP1(VECTOR,INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDEX !<The index of the vector to get
-    REAL(DP), INTENT(OUT) :: VALUE !<On return the value of the vector at the specified index
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("VECTOR_VALUES_GET_DP1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-          IF(INDEX<1.OR.INDEX>VECTOR%N) THEN
-            LOCAL_ERROR="The index value of "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
-              & " is invalid. The index must be between 1 and  "//TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            VALUE=VECTOR%DATA_DP(INDEX)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the double precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
+    
+    DO i=1,SIZE(indices,1)
+      k=indices(i)
+      IF(k<1.OR.k>vector%n) THEN
+        localError="Index number "//TRIM(NumberToVString(i,"*",err,error))//" is invalid. The index is "// &
+          & TRIM(NumberToVString(k,"*",err,error))//" and it must be between 1 and "// &
+          & TRIM(NumberToVString(vector%n,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+      values(i)=vector%dataDP(k)
+    ENDDO !i
 
-    EXITS("VECTOR_VALUES_GET_DP1")
+    EXITS("Vector_ValuesGetDP1")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_GET_DP1",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesGetDP1",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_GET_DP1
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the values in a logical real vector at the indices specified.
-  SUBROUTINE VECTOR_VALUES_GET_L(VECTOR,INDICES,VALUES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDICES(:) !<INDICES(i). The i'th index to get
-    LOGICAL, INTENT(OUT) :: VALUES(:) !<VALUES(i). On return the i'th value to get
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    INTEGER(INTG) :: i,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("VECTOR_VALUES_GET_L",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_L_TYPE) THEN
-            DO i=1,SIZE(INDICES,1)
-              k=INDICES(i)
-              IF(k<1.OR.k>VECTOR%N) THEN
-                LOCAL_ERROR="Index number "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" is invalid. The index is "// &
-                    & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" and it must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ELSE
-                VALUES(i)=VECTOR%DATA_L(k)
-              ENDIF
-            ENDDO !i
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the logical data type of the given values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
-
-    EXITS("VECTOR_VALUES_GET_L")
-    RETURN
-999 ERRORSEXITS("VECTOR_VALUES_GET_L",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_VALUES_GET_L
+    
+  END SUBROUTINE Vector_ValuesGetDP1
 
   !
   !================================================================================================================================
   !
 
   !>Gets a value in a logical vector at the location specified by the index
-  SUBROUTINE VECTOR_VALUES_GET_L1(VECTOR,INDEX,VALUE,ERR,ERROR,*)
+  SUBROUTINE Vector_ValuesGetL(vector,index,VALUE,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDEX !<The index of the vector to get
-    LOGICAL, INTENT(OUT) :: VALUE !<On return the value of the vector at the specified index
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: index !<The index of the vector to get
+    LOGICAL, INTENT(OUT) :: value !<On return the value of the vector at the specified index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_GET_L1",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesGetL",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_L_TYPE) THEN
-          IF(INDEX<1.OR.INDEX>VECTOR%N) THEN
-            LOCAL_ERROR="The index value of "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
-              & " is invalid. The index must be between 1 and  "//TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            VALUE=VECTOR%DATA_L(INDEX)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the logical data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsLData(vector,err,error,*999)
+    IF(index<1.OR.index>vector%n) THEN
+      localError="The index value of "//TRIM(NumberToVString(index,"*",err,error))// &
+        & " is invalid. The index must be between 1 and "//TRIM(NumberToVString(vector%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    value=vector%dataL(index)
 
-    EXITS("VECTOR_VALUES_GET_L1")
+    EXITS("Vector_ValuesGetL")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_GET_L1",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesGetL",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_GET_L1
+    
+  END SUBROUTINE Vector_ValuesGetL
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the values in an integer vector at the specified indices.
-  SUBROUTINE VECTOR_VALUES_SET_INTG(VECTOR,INDICES,VALUES,ERR,ERROR,*)
+  !>Gets the values in a logical vector at the indices specified.
+  SUBROUTINE Vector_ValuesGetL1(vector,indices,values,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDICES(:) !<INDICES(i). The i'th index to set
-    INTEGER(INTG), INTENT(IN) :: VALUES(:) !<VALUES(i). The i'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: indices(:) !<indices(i). The i'th index to get
+    LOGICAL, INTENT(OUT) :: values(:) !<values(i). On return the i'th value to get
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_SET_INTG",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesGetL1",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-            DO i=1,SIZE(INDICES,1)
-              k=INDICES(i)
-              IF(k<1.OR.k>VECTOR%N) THEN
-                LOCAL_ERROR="Index number "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" is invalid. The index is "// &
-                    & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" and it must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ELSE
-                VECTOR%DATA_INTG(k)=VALUES(i)
-              ENDIF
-            ENDDO !i
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the integer data type of the given values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsLData(vector,err,error,*999)
+    IF(SIZE(indices,1)/=SIZE(values,1)) THEN
+      localError="The size of the indices array of "//TRIM(NumberToVString(SIZE(INDICES,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    DO i=1,SIZE(indices,1)
+      k=indices(i)
+      IF(k<1.OR.k>vector%n) THEN
+        localError="Index number "//TRIM(NumberToVString(i,"*",err,error))//" is invalid. The index is "// &
+          & TRIM(NumberToVString(k,"*",err,error))//" and it must be between 1 and "// &
+          & TRIM(NumberToVString(vector%n,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      values(i)=vector%dataL(k)
+    ENDDO !i
 
-    EXITS("VECTOR_VALUES_SET_INTG")
+    EXITS("Vector_ValuesGetL1")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_SET_INTG",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesGetL1",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_SET_INTG
+    
+  END SUBROUTINE Vector_ValuesGetL1
 
   !
   !================================================================================================================================
   !
   
   !>Sets a value in an integer vector at the specified index.
-  SUBROUTINE VECTOR_VALUES_SET_INTG1(VECTOR,INDEX,VALUE,ERR,ERROR,*)
+  SUBROUTINE Vector_ValuesSetIntg(vector,index,value,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDEX !<The index to set
-    INTEGER(INTG), INTENT(IN) :: VALUE !<The value to set at the specified index
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: index !<The index to set
+    INTEGER(INTG), INTENT(IN) :: value !<The value to set at the specified index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_SET_INTG1",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesSetIntg",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_INTG_TYPE) THEN
-          IF(INDEX<1.OR.INDEX>VECTOR%N) THEN
-            LOCAL_ERROR="The index value of "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
-              & " is invalid. The index must be between 1 and  "//TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            VECTOR%DATA_INTG(INDEX)=VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the integer data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsIntgData(vector,err,error,*999)
+    IF(index<1.OR.index>vector%n) THEN
+      localError="The index value of "//TRIM(NumberToVString(index,"*",err,error))// &
+        & " is invalid. The index must be between 1 and  "//TRIM(NumberToVString(vector%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("VECTOR_VALUES_SET_INTG1")
+    
+    vector%dataIntg(index)=value
+    
+    EXITS("Vector_ValuesSetIntg")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_SET_INTG1",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesSetIntg",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_SET_INTG1
+    
+  END SUBROUTINE Vector_ValuesSetIntg
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the values in a single precision vector at the specified indices.
-  SUBROUTINE VECTOR_VALUES_SET_SP(VECTOR,INDICES,VALUES,ERR,ERROR,*)
+  !>Sets the values in an integer vector at the specified indices.
+  SUBROUTINE Vector_ValuesSetIntg1(vector,indices,values,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDICES(:) !<INDICES(i). The i'th index to set
-    REAL(SP), INTENT(IN) :: VALUES(:) !<VALUES(i). The i'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: indices(:) !<indices(i). The i'th index to set
+    INTEGER(INTG), INTENT(IN) :: values(:) !<values(i). The i'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_SET_SP",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesSetIntg1",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-            DO i=1,SIZE(INDICES,1)
-              k=INDICES(i)
-              IF(k<1.OR.k>VECTOR%N) THEN
-                LOCAL_ERROR="Index number "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" is invalid. The index is "// &
-                    & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" and it must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ELSE
-               VECTOR%DATA_SP(k)=VALUES(i)
-              ENDIF
-            ENDDO !i
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the single precision data type of the given values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsIntgData(vector,err,error,*999)
+    IF(SIZE(indices,1)/=SIZE(values,1)) THEN
+      localError="The size of the indices array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    DO i=1,SIZE(indices,1)      
+      k=indices(i)
+      IF(k<1.OR.k>vector%n) THEN
+        localError="Index number "//TRIM(NumberToVString(i,"*",err,error))//" is invalid. The index is "// &
+          & TRIM(NumberToVString(k,"*",err,error))//" and it must be between 1 and "// &
+          & TRIM(NumberToVString(vector%n,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ELSE
+        vector%dataIntg(k)=values(i)
+      ENDIF
+    ENDDO !i
 
-    EXITS("VECTOR_VALUES_SET_SP")
+    EXITS("Vector_ValuesSetIntg1")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_SET_SP",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesSetIntg1",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_SET_SP
+    
+  END SUBROUTINE Vector_ValuesSetIntg1
 
   !
   !================================================================================================================================
   !
-
-  !>Sets a value in a single precision vector at the specified index.
-  SUBROUTINE VECTOR_VALUES_SET_SP1(VECTOR,INDEX,VALUE,ERR,ERROR,*)
+  
+  !>Sets a value in a single precision real vector at the specified index.
+  SUBROUTINE Vector_ValuesSetSP(vector,index,value,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDEX !<The index to set
-    REAL(SP), INTENT(IN) :: VALUE !<The value to set at the specified index
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: index !<The index to set
+    REAL(SP), INTENT(IN) :: value !<The value to set at the specified index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_SET_SP1",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesSetSP",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_SP_TYPE) THEN
-          IF(INDEX<1.OR.INDEX>VECTOR%N) THEN
-            LOCAL_ERROR="The index value of "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
-              & " is invalid. The index must be between 1 and  "//TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            VECTOR%DATA_SP(INDEX)=VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the single precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsSPData(vector,err,error,*999)
+    IF(index<1.OR.index>vector%n) THEN
+      localError="The index value of "//TRIM(NumberToVString(index,"*",err,error))// &
+        & " is invalid. The index must be between 1 and  "//TRIM(NumberToVString(vector%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("VECTOR_VALUES_SET_SP1")
+    
+    vector%dataSP(index)=value
+    
+    EXITS("Vector_ValuesSetSP")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_SET_SP1",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesSetSP",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_SET_SP1
+    
+  END SUBROUTINE Vector_ValuesSetSP
 
   !
   !================================================================================================================================
   !
 
-  !>Sets the values in a double precision vector at the specified indices.
-  SUBROUTINE VECTOR_VALUES_SET_DP(VECTOR,INDICES,VALUES,ERR,ERROR,*)
+  !>Sets the values in a single precision real vector at the specified indices.
+  SUBROUTINE Vector_ValuesSetSP1(vector,indices,values,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDICES(:) !<INDICES(i). The i'th index to set
-    REAL(DP), INTENT(IN) :: VALUES(:) !<VALUES(i). The i'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: indices(:) !<indices(i). The i'th index to set
+    REAL(SP), INTENT(IN) :: values(:) !<values(i). The i'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_SET_DP",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesSetSP1",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-            DO i=1,SIZE(INDICES,1)
-              k=INDICES(i)
-              IF(k<1.OR.k>VECTOR%N) THEN
-                LOCAL_ERROR="Index number "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" is invalid. The index is "// &
-                    & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" and it must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ELSE
-                VECTOR%DATA_DP(k)=VALUES(i)
-              ENDIF
-            ENDDO !i
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the double precision data type of the given values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsSPData(vector,err,error,*999)
+    IF(SIZE(indices,1)/=SIZE(values,1)) THEN
+      localError="The size of the indices array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    DO i=1,SIZE(indices,1)      
+      k=indices(i)
+      IF(k<1.OR.k>vector%n) THEN
+        localError="Index number "//TRIM(NumberToVString(i,"*",err,error))//" is invalid. The index is "// &
+          & TRIM(NumberToVString(k,"*",err,error))//" and it must be between 1 and "// &
+          & TRIM(NumberToVString(vector%n,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ELSE
+        vector%dataSP(k)=values(i)
+      ENDIF
+    ENDDO !i
 
-    EXITS("VECTOR_VALUES_SET_DP")
+    EXITS("Vector_ValuesSetSP1")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_SET_DP",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesSetSP1",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_SET_DP
+    
+  END SUBROUTINE Vector_ValuesSetSP1
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Sets a value in a double precision real vector at the specified index.
+  SUBROUTINE Vector_ValuesSetDP(vector,index,value,err,error,*)
+
+    !Argument variables
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: index !<The index to set
+    REAL(DP), INTENT(IN) :: value !<The value to set at the specified index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Vector_ValuesSetDP",err,error,*999)
+
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsDPData(vector,err,error,*999)
+    IF(index<1.OR.index>vector%n) THEN
+      localError="The index value of "//TRIM(NumberToVString(index,"*",err,error))// &
+        & " is invalid. The index must be between 1 and  "//TRIM(NumberToVString(vector%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    vector%dataDP(index)=value
+    
+    EXITS("Vector_ValuesSetDP")
+    RETURN
+999 ERRORSEXITS("Vector_ValuesSetDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Vector_ValuesSetDP
 
   !
   !================================================================================================================================
   !
 
-  !>Sets a value in a double precision vector at the specified index.
-  SUBROUTINE VECTOR_VALUES_SET_DP1(VECTOR,INDEX,VALUE,ERR,ERROR,*)
+  !>Sets the values in a double precision real vector at the specified indices.
+  SUBROUTINE Vector_ValuesSetDP1(vector,indices,values,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDEX !<The index to set
-    REAL(DP), INTENT(IN) :: VALUE !<The value to set at the specified index
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: indices(:) !<indices(i). The i'th index to set
+    REAL(DP), INTENT(IN) :: values(:) !<values(i). The i'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: i,k
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_SET_DP1",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesSetDP1",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_DP_TYPE) THEN
-          IF(INDEX<1.OR.INDEX>VECTOR%N) THEN
-            LOCAL_ERROR="The index value of "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
-              & " is invalid. The index must be between 1 and  "//TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            VECTOR%DATA_DP(INDEX)=VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the double precision data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsDPData(vector,err,error,*999)
+    IF(SIZE(indices,1)/=SIZE(values,1)) THEN
+      localError="The size of the indices array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
+    
+    DO i=1,SIZE(indices,1)      
+      k=indices(i)
+      IF(k<1.OR.k>vector%n) THEN
+        localError="Index number "//TRIM(NumberToVString(i,"*",err,error))//" is invalid. The index is "// &
+          & TRIM(NumberToVString(k,"*",err,error))//" and it must be between 1 and "// &
+          & TRIM(NumberToVString(vector%n,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ELSE
+        vector%dataDP(k)=values(i)
+      ENDIF
+    ENDDO !i
 
-    EXITS("VECTOR_VALUES_SET_DP1")
+    EXITS("Vector_ValuesSetDP1")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_SET_DP1",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesSetDP1",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_SET_DP1
+    
+  END SUBROUTINE Vector_ValuesSetDP1
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Sets a value in a logical vector at the specified index.
+  SUBROUTINE Vector_ValuesSetL(vector,index,value,err,error,*)
+
+    !Argument variables
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: index !<The index to set
+    LOGICAL, INTENT(IN) :: value !<The value to set at the specified index
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Vector_ValuesSetL",err,error,*999)
+
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsLData(vector,err,error,*999)
+    IF(index<1.OR.index>vector%n) THEN
+      localError="The index value of "//TRIM(NumberToVString(index,"*",err,error))// &
+        & " is invalid. The index must be between 1 and  "//TRIM(NumberToVString(vector%n,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    vector%dataL(index)=value
+    
+    EXITS("Vector_ValuesSetL")
+    RETURN
+999 ERRORSEXITS("Vector_ValuesSetL",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Vector_ValuesSetL
 
   !
   !================================================================================================================================
   !
 
   !>Sets the values in a logical vector at the specified indices.
-  SUBROUTINE VECTOR_VALUES_SET_L(VECTOR,INDICES,VALUES,ERR,ERROR,*)
+  SUBROUTINE Vector_ValuesSetL1(vector,indices,values,err,error,*)
 
     !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDICES(:) !<INDICES(i). The i'th index to set
-    LOGICAL, INTENT(IN) :: VALUES(:) !<VALUES(i). The i'th value to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(VectorType), POINTER :: vector !<A pointer to the vector
+    INTEGER(INTG), INTENT(IN) :: indices(:) !<indices(i). The i'th index to set
+    LOGICAL, INTENT(IN) :: values(:) !<values(i). The i'th value to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: i,k
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("VECTOR_VALUES_SET_L",ERR,ERROR,*999)
+    ENTERS("Vector_ValuesSetL1",err,error,*999)
 
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(SIZE(INDICES,1)==SIZE(VALUES,1)) THEN
-          IF(VECTOR%dataType==MATRIX_VECTOR_L_TYPE) THEN
-            DO i=1,SIZE(INDICES,1)
-              k=INDICES(i)
-              IF(k<1.OR.k>VECTOR%N) THEN
-                LOCAL_ERROR="Index number "//TRIM(NUMBER_TO_VSTRING(i,"*",ERR,ERROR))//" is invalid. The index is "// &
-                    & TRIM(NUMBER_TO_VSTRING(k,"*",ERR,ERROR))//" and it must be between 1 and "// &
-                    & TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ELSE
-                VECTOR%DATA_L(k)=VALUES(i)
-              ENDIF
-            ENDDO !i
-          ELSE
-            LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-              & " does not correspond to the logical data type of the given values."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The size of the indices array ("//TRIM(NUMBER_TO_VSTRING(SIZE(INDICES,1),"*",ERR,ERROR))// &
-            & ") does not conform to the size of the values array ("//TRIM(NUMBER_TO_VSTRING(SIZE(VALUES,1),"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
+    CALL Vector_AssertIsFinished(vector,err,error,*999)
+    CALL Vector_AssertIsLData(vector,err,error,*999)
+    IF(SIZE(indices,1)/=SIZE(values,1)) THEN
+      localError="The size of the indices array of "//TRIM(NumberToVString(SIZE(indices,1),"*",err,error))// &
+        & " does not conform to the size of the values array of "//TRIM(NumberToVString(SIZE(values,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
-
-    EXITS("VECTOR_VALUES_SET_L")
-    RETURN
-999 ERRORSEXITS("VECTOR_VALUES_SET_L",ERR,ERROR)
-    RETURN 1
-  END SUBROUTINE VECTOR_VALUES_SET_L
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets a value in a logical vector at the specified index.
-  SUBROUTINE VECTOR_VALUES_SET_L1(VECTOR,INDEX,VALUE,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(VECTOR_TYPE), POINTER :: VECTOR !<A pointer to the vector
-    INTEGER(INTG), INTENT(IN) :: INDEX !<The index to set
-    LOGICAL, INTENT(IN) :: VALUE !<The value to set at the specified index
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
-
-    ENTERS("VECTOR_VALUES_SET_L1",ERR,ERROR,*999)
-
-    IF(ASSOCIATED(VECTOR)) THEN
-      IF(VECTOR%VECTOR_FINISHED) THEN
-        IF(VECTOR%dataType==MATRIX_VECTOR_L_TYPE) THEN
-          IF(INDEX<1.OR.INDEX>VECTOR%N) THEN
-            LOCAL_ERROR="The index value of "//TRIM(NUMBER_TO_VSTRING(INDEX,"*",ERR,ERROR))// &
-              & " is invalid. The index must be between 1 and  "//TRIM(NUMBER_TO_VSTRING(VECTOR%N,"*",ERR,ERROR))//"."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ELSE
-            VECTOR%DATA_L(INDEX)=VALUE
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The data type of "//TRIM(NUMBER_TO_VSTRING(VECTOR%dataType,"*",ERR,ERROR))// &
-            & " does not correspond to the logical data type of the given value."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
+    
+    DO i=1,SIZE(indices,1)      
+      k=indices(i)
+      IF(k<1.OR.k>vector%n) THEN
+        localError="Index number "//TRIM(NumberToVString(i,"*",err,error))//" is invalid. The index is "// &
+          & TRIM(NumberToVString(k,"*",err,error))//" and it must be between 1 and "// &
+          & TRIM(NumberToVString(vector%n,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
       ELSE
-        CALL FlagError("The vector has not been finished.",ERR,ERROR,*999)
+        vector%dataL(k)=values(i)
       ENDIF
-    ELSE
-      CALL FlagError("Vector is not associated.",ERR,ERROR,*999)
-    ENDIF
+    ENDDO !i
 
-    EXITS("VECTOR_VALUES_SET_L1")
+    EXITS("Vector_ValuesSetL1")
     RETURN
-999 ERRORSEXITS("VECTOR_VALUES_SET_L1",ERR,ERROR)
+999 ERRORSEXITS("Vector_ValuesSetL1",err,error)
     RETURN 1
-  END SUBROUTINE VECTOR_VALUES_SET_L1
+    
+  END SUBROUTINE Vector_ValuesSetL1
 
   !
   !================================================================================================================================

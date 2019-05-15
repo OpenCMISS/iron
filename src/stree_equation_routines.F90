@@ -52,7 +52,7 @@ MODULE Stree_EQUATION_ROUTINES
   USE BasisRoutines
   USE BOUNDARY_CONDITIONS_ROUTINES
   USE Constants
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
   USE CmissMPI
   USE ComputationRoutines
@@ -770,7 +770,7 @@ CONTAINS
     !Local Variables
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: BOUNDARY_CONDITIONS_VARIABLE
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: controlLoop,parentLoop,navierstokesLoop
+    TYPE(ControlLoopType), POINTER :: controlLoop,parentLoop,navierstokesLoop
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainType), POINTER :: domain
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet,navierstokesEquationsSet
@@ -792,10 +792,10 @@ CONTAINS
     IF(ASSOCIATED(SOLVER)) THEN
       solvers=>SOLVER%SOLVERS
       IF(ASSOCIATED(SOLVERS)) THEN
-        controlLoop=>solvers%CONTROL_LOOP
+        controlLoop=>solvers%controlLoop
         CALL CONTROL_LOOP_CURRENT_TIMES_GET(controlLoop,currentTime,timeIncrement,err,error,*999)
-        parentLoop=>controlLoop%PARENT_LOOP
-        navierstokesLoop=>parentLoop%SUB_LOOPS(2)%ptr
+        parentLoop=>controlLoop%parentLoop
+        navierstokesLoop=>parentLoop%subLoops(2)%ptr
         navierstokesSolver=>navierstokesLoop%SOLVERS%SOLVERS(2)%ptr
         IF(ASSOCIATED(controlLoop%PROBLEM)) THEN
           SELECT CASE(controlLoop%PROBLEM%specification(3))

@@ -68,6 +68,8 @@ MODULE SolverMatricesAccessRoutines
 
   PUBLIC SolverMatrices_RHSVectorGet
 
+  PUBLIC SolverMatrices_ResidualVectorGet
+
   PUBLIC SolverMatrices_SolverMappingGet
 
   PUBLIC SolverMatrices_SolverMatrixGet
@@ -135,6 +137,37 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE SolverMatrices_RHSVectorGet
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Returns a pointer to specified solver residual vector for solver matrices.
+  SUBROUTINE SolverMatrices_ResidualVectorGet(solverMatrices,residualVector,err,error,*)
+
+    !Argument variables
+    TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices !<A pointer to the solver matrices to get the residual vector for
+    TYPE(DistributedVectorType), POINTER :: residualVector !<On exit, a pointer to the solver residual vector. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMatrices_ResidualVectorGet",err,error,*998)
+
+    IF(ASSOCIATED(residualVector)) CALL FlagError("Residual vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
+    
+    residualVector=>solverMatrices%residual
+    IF(.NOT.ASSOCIATED(residualVector)) &
+      & CALL FlagError("The residual vector is not associated for the solver matrices.",err,error,*999)
+      
+    EXITS("SolverMatrices_ResidualVectorGet")
+    RETURN
+999 NULLIFY(residualVector)
+998 ERRORSEXITS("SolverMatrices_ResidualVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMatrices_ResidualVectorGet
   
   !
   !================================================================================================================================

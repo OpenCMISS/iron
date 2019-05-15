@@ -53,20 +53,21 @@ MODULE FLUID_MECHANICS_ROUTINES
   USE BaseRoutines
   USE BURGERS_EQUATION_ROUTINES
   USE CHARACTERISTIC_EQUATION_ROUTINES
-  USE CONTROL_LOOP_ROUTINES
+  USE ControlLoopRoutines
+  USE ControlLoopAccessRoutines
   USE DARCY_EQUATIONS_ROUTINES
   USE DARCY_PRESSURE_EQUATIONS_ROUTINES
   USE EquationsSetConstants
   USE INPUT_OUTPUT
   USE ISO_VARYING_STRING
-  USE KINDS
+  USE Kinds
   USE STOKES_EQUATIONS_ROUTINES
   USE NAVIER_STOKES_EQUATIONS_ROUTINES
   USE POISEUILLE_EQUATIONS_ROUTINES
   USE PROBLEM_CONSTANTS
-  USE STRINGS
+  USE Strings
   USE STREE_EQUATION_ROUTINES
-  USE TYPES
+  USE Types
 
 #include "macros.h"  
 
@@ -683,7 +684,7 @@ CONTAINS
   SUBROUTINE FluidMechanics_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: problem !<A pointer to the problem to set the specification for.
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the specification for.
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification to set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -735,7 +736,7 @@ CONTAINS
   SUBROUTINE FLUID_MECHANICS_PROBLEM_SETUP(PROBLEM,PROBLEM_SETUP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(PROBLEM_TYPE), POINTER :: PROBLEM !<A pointer to the problem
+    TYPE(ProblemType), POINTER :: PROBLEM !<A pointer to the problem
     TYPE(PROBLEM_SETUP_TYPE), INTENT(INOUT) :: PROBLEM_SETUP !<The problem setup information
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -784,7 +785,7 @@ CONTAINS
   SUBROUTINE FLUID_MECHANICS_POST_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -833,7 +834,7 @@ CONTAINS
   SUBROUTINE FLUID_MECHANICS_PRE_SOLVE(CONTROL_LOOP,SOLVER,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     TYPE(SOLVER_TYPE), POINTER :: SOLVER !<A pointer to the solver
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -882,7 +883,7 @@ CONTAINS
   SUBROUTINE FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -891,8 +892,8 @@ CONTAINS
     ENTERS("FLUID_MECHANICS_CONTROL_LOOP_PRE_LOOP",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-      CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE)
+      SELECT CASE(CONTROL_LOOP%loopType)
+      CASE(CONTROL_TIME_LOOP_TYPE)
         IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
           CALL FlagError("Problem specification is not allocated.",err,error,*999)
         ELSE IF(SIZE(control_loop%problem%specification,1)<2) THEN
@@ -935,7 +936,7 @@ CONTAINS
   SUBROUTINE FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP(CONTROL_LOOP,ERR,ERROR,*)
 
     !Argument variables
-    TYPE(CONTROL_LOOP_TYPE), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
+    TYPE(ControlLoopType), POINTER :: CONTROL_LOOP !<A pointer to the control loop to solve.
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
@@ -944,8 +945,8 @@ CONTAINS
     ENTERS("FLUID_MECHANICS_CONTROL_LOOP_POST_LOOP",ERR,ERROR,*999)
 
     IF(ASSOCIATED(CONTROL_LOOP%PROBLEM)) THEN
-      SELECT CASE(CONTROL_LOOP%LOOP_TYPE)
-      CASE(PROBLEM_CONTROL_TIME_LOOP_TYPE,PROBLEM_CONTROL_SIMPLE_TYPE,PROBLEM_CONTROL_WHILE_LOOP_TYPE)
+      SELECT CASE(CONTROL_LOOP%loopType)
+      CASE(CONTROL_TIME_LOOP_TYPE,CONTROL_SIMPLE_TYPE,CONTROL_WHILE_LOOP_TYPE)
         IF(.NOT.ALLOCATED(control_loop%problem%specification)) THEN
           CALL FlagError("Problem specification is not allocated.",err,error,*999)
         ELSE IF(SIZE(control_loop%problem%specification,1)<2) THEN
