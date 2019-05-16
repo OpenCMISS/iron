@@ -44,13 +44,16 @@
 !> This module contains all program wide constants.
 MODULE Constants
 
-  USE KINDS
+  USE Kinds
 
   IMPLICIT NONE
 
   !Module parameters
 
-  !> \addtogroup Constants_MathPhysicalConstants Constants::MathPhysicalConstants
+  !> \addtogroup Constants OpenCMISS::Iron::Constants
+  !> \brief Distributed matrix vector constants.
+  !>@{
+  !> \addtogroup Constants_MathPhysicalConstants OpenCMISS::Iron::Constants::MathPhysicalConstants
   !> \see Constants
   !>@{ 
   REAL(DP), PARAMETER :: EULER=2.718281828459045235360287471352662497757_DP !<The double precision value of e \see Constants_MathPhysicalConstants,Constants
@@ -58,7 +61,7 @@ MODULE Constants
   REAL(DP), PARAMETER :: TWOPI=6.283185307179586476925286766559005768394_DP !<The double value of 2pi \see Constants_MathPhysicalConstants,Constants
   !>@}
   
-  !> \addtogroup Constants_NumericalConstants Constants::NumericalConstants
+  !> \addtogroup Constants_NumericalConstants OpenCMISS::Iron::Constants::NumericalConstants
   !> \see Constants
   !>@{ 
   REAL(DP), PARAMETER :: CONVERGENCE_TOLERANCE_DP=5.0_DP*EPSILON(1.0_DP) !<The convergence tolerance for double precision convergence calculations. Convergence tests should be of the form \f$\frac{|X_{i+1}-X_{i}|}{1+|X_{i}|}<\texttt{CONVERGENCE\_TOLERANCE}\f$ or for norms, \f$\frac{\|r\|}{\sqrt{n}+\|b\|}<\texttt{CONVERGENCE\_TOLERANCE}\f$
@@ -78,7 +81,7 @@ MODULE Constants
   !String parameters
   INTEGER(INTG), PARAMETER :: MAXSTRLEN=255 !<Maximum string length fro character strings
 
-  !> \addtogroup Constants_DataTypes Constants::DataTypes
+  !> \addtogroup Constants_DataTypes OpenCMISS::Iron::Constants::DataTypes
   !> Data type parameters for base data types
   !> \see Constants
   !>@{ 
@@ -96,7 +99,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: C_INT_TYPE=12  !<C integer data type \see Constants_DataTypes,Constants
   !>@}
 
-  !> \addtogroup Constants_EndianTypes Constants::EndianTypes
+  !> \addtogroup Constants_EndianTypes OpenCMISS::Iron::Constants::EndianTypes
   !> Endian type parameters
   !> \see Constants
   !>@{ 
@@ -104,7 +107,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: LITTLE_ENDIAN_NUMBER=2 !<Little endian number type \see Constants_EndianTypes,Constants
   !>@}
 
-  !> \addtogroup Constants_CharacterFormatTypes Constants::CharacterFormatTypes
+  !> \addtogroup Constants_CharacterFormatTypes OpenCMISS::Iron::Constants::CharacterFormatTypes
   !> Bit format types for characters
   !> \see Constants
   !>@{ 
@@ -112,7 +115,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: UNICODE_CHARACTER=2 !<Unicode character type \see Constants_CharacterFormatTypes,Constants
   !>@}
 
-  !> \addtogroup Constants_IntegerTypes Constants::IntegerTypes
+  !> \addtogroup Constants_IntegerTypes OpenCMISS::Iron::Constants::IntegerTypes
   !> Bit format types for integers
   !> \see Constants
   !>@{ 
@@ -120,7 +123,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: SIGNED_MAGNITUDE_INTEGER=2 !<Signed magnitude integer type \see Constants_IntegerFormatTypes,Constants
   !>@}
 
-  !> \addtogroup Constants_RealFormatTypes Constants::RealFormatTypes
+  !> \addtogroup Constants_RealFormatTypes OpenCMISS::Iron::Constants::RealFormatTypes
   !> Bit format types for reals
   !> \see Constants
   !>@{ 
@@ -128,7 +131,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: DPIEEE_NUMBER=2 !<Double precision IEEE real type \see Constants_RealFormatTypes,Constants
   !>@}
 
-  !> \addtogroup Constants_ComputerSystemTypes Constants::ComputerSystemTypes
+  !> \addtogroup Constants_ComputerSystemTypes OpenCMISS::Iron::Constants::ComputerSystemTypes
   !> Computer system type parameters
   !> \see Constants
   !>@{ 
@@ -140,7 +143,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: UNKNOWN_COMPUTER=255 !<Unknown computer system type \see Constants_ComputerSystemTypes,Constants
   !>@}
   
-  !> \addtogroup Constants_OperatingSystemTypes Constants::OperatingSystemTypes
+  !> \addtogroup Constants_OperatingSystemTypes OpenCMISS::Iron::Constants::OperatingSystemTypes
   !> Operating system type parameters
   !> \see Constants
   !>@{ 
@@ -152,7 +155,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: UNKNOWN_OS=255 !<Unknown operating system type \see Constants_OperatingSystemTypes,Constants
   !>@}
 
-  !> \addtogroup Constants_LiblraryTypes Constants::LibraryTypes
+  !> \addtogroup Constants_LibraryTypes OpenCMISS::Iron::Constants::LibraryTypes
   !> \brief Library type identifiers
   !> \see Constants
   !>@{ 
@@ -169,7 +172,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: LIBRARY_PASTIX_TYPE=11 !<PaStiX library type \see Constants_LibraryTypes,Constants
   !>@}
 
-  !> \addtogroup Constants_PartialDerivativeConstants Constants::PartialDerivativeConstants
+  !> \addtogroup Constants_PartialDerivativeConstants OpenCMISS::Iron::Constants::PartialDerivativeConstants
   !> \brief Partial derivative constant identifiers
   !> \see Constants
   !>@{ 
@@ -201,7 +204,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: PART_DERIV_S4_S4_S4=23 !<Third partial derivative in the s4 direction i.e., d^3u/ds4^3 \see Constants_PartialDerivativeConstants,Constants
   !>@}
   
-  !> \addtogroup Constants_GlobalDerivativeConstants Constants::GlobalDerivativeConstants
+  !> \addtogroup Constants_GlobalDerivativeConstants OpenCMISS::Iron::Constants::GlobalDerivativeConstants
   !> \brief Global derivative constant identifiers
   !> \see Constants
   !>@{ 
@@ -216,7 +219,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: GLOBAL_DERIV_S1_S2_S3=8 !<Cross derivative in the s1, s2 and s3 direction i.e., d^3u/ds1ds2ds3 \see Constants_GlobalDerivativeConstants,Constants
   !>@}
   
-  !> \addtogroup Constants_PhysicalDerivativeConstants Constants::PhysicalDerivativeConstants
+  !> \addtogroup Constants_PhysicalDerivativeConstants OpenCMISS::Iron::Constants::PhysicalDerivativeConstants
   !> \brief Physical derivative constant identifiers
   !> \see Constants
   !>@{ 
@@ -276,7 +279,7 @@ MODULE Constants
   INTEGER(INTG) :: OTHER_XI_ORIENTATIONS3(3,3) = RESHAPE([0,-1,1,1,0,-1,-1,1,0],[3,3]) !<OTHER_XI_ORIENTATIONSS3(ni,nii) gives the orientation of the given two xi directions. Is equal to leviCivita(ni,nii,OTHER_XI_DIRECTIONS3(ni,nii,2)) where leviCivita is the Levi-Civita or alternating symbol
   !>
 
-  !> \addtogroup Constants_ElementNormalXiDirections OpenCMISS::iron::Constants::ElementNormalXiDirections
+  !> \addtogroup Constants_ElementNormalXiDirections OpenCMISS::Iron::Constants::ElementNormalXiDirections
   !> \brief Xi normal directions
   !> \see Constants
   !>@{ 
@@ -290,7 +293,7 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: ELEMENT_NORMAL_PLUS_XI4=4 !<Positive xi 4 normal 
   !>@}
     
-  !> \addtogroup Constants_VoigtTensorIndices OpenCMISS::iron::Constants::VoigtTensorIndices
+  !> \addtogroup Constants_VoigtTensorIndices OpenCMISS::Iron::Constants::VoigtTensorIndices
   !> \brief The indices for converting back and forth between Voigt indices and symmetric rank 2 tensor indices.
   !> \see Constants
   !>@{ 

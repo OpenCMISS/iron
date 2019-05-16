@@ -11926,7 +11926,7 @@ CONTAINS
       & interfaceVariableType,numberOfInterfaceMatrices
     INTEGER(INTG) :: currentIteration,outputIteration
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
-    REAL(DP) :: dampingMatrixCoefficient,deltaT,dynamicValue,firstUpdateFactor,residualValue, &
+    REAL(DP) :: dampingMatrixCoefficient,deltaT,dofValue,dynamicValue,firstUpdateFactor,residualValue, &
       & linearValue,linearValueSum,massMatrixCoefficient,nonlinearValue,rhsValue,rowCouplingCoefficient,previousResidualValue, &
       & secondUpdateFactor,sourceValue,stiffnessMatrixCoefficient,VALUE,jacobianMatrixCoefficient,alphaValue, &
       & matrixValue,dynamicDisplacementFactor,dynamicVelocityFactor,dynamicAccelerationFactor,rhsIntegratedValue, &
@@ -11937,7 +11937,7 @@ CONTAINS
       & previousAccelerationVector(:),previousResidualParameters(:),previous2ResidualParameters(:), &
       & previous3ResidualParameters(:), previousRHSParameters(:),previous2RHSParameters(:),previous3RHSParameters(:), &
       & rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
-    LOGICAL :: hasIntegratedValues,interfaceDynamicMatrices,interfaceMatrixDynamic
+    LOGICAL :: hasIntegratedValues,interfaceMatrixDynamic
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_TYPE), POINTER :: sparsityIndices
     TYPE(BOUNDARY_CONDITIONS_VARIABLE_TYPE), POINTER :: rhsBoundaryConditions,dependentBoundaryConditions
@@ -12339,32 +12339,28 @@ CONTAINS
               CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
               NULLIFY(interfaceMatrices)
               CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-              interfaceMatrixLoop: DO interfaceMatrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
-                NULLIFY(interfaceMatrix)
-                CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
-                IF(interfaceMatrix%HAS_TRANSPOSE) THEN
-                  dependentVariable=>interfaceMapping%INTERFACE_MATRIX_TO_VAR_MAP(interfaceMatrixIdx)%VARIABLE
-                  IF(.NOT.ASSOCIATED(depdendentVariable)) THEN
-                    localError="The interface dependent variable is not associated for interface matrix number "// &
-                      & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))
-                    CALL FlagError(localError,err,error,*999)
+              interfaceMatrixLoop: DO interfaceMatrixIdx=1,solverMapping% &
+                & INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)% &
+                & NUMBER_OF_INTERFACE_MATRICES
+                interfaceToSolverMap=>solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
+                  & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)% &
+                  & INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interfaceMatrixIdx)%ptr
+                IF(ASSOCIATED(interfaceToSolverMap)) THEN
+                  interfaceMatrix=>interfaceToSolverMap%INTERFACE_MATRIX
+                  IF(interfaceMatrix%HAS_TRANSPOSE) THEN
+                    dependentVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)%VARIABLE
+                    IF(.NOT.ASSOCIATED(dependentVariable)) THEN
+                      localError="The interface dependent variable is not associated for interface matrix number "// &
+                        & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))
+                      CALL FlagError(localError,err,error,*999)
+                    ENDIF
+                    IF(ASSOCIATED(dependentVariable,dynamicVariable)) THEN
+                      interfaceMatrixDynamic=.TRUE.
+                      EXIT interfConditionLoop
+                    ENDIF
                   ENDIF
                 ENDIF
               ENDDO interfaceMatrixLoop !interfaceMatrixIdx
-              NULLIFY(interfaceDependent)
-              CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
-              depVariableLoop: DO dependentIdx=1,interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES
-                NULLIFY(interfaceEquationsSet)
-                CALL InterfaceDependent_EquationsSetGet(interfaceDependent,dependentIdx,interfaceEquationsSet,err,error,*999)
-                NULLIFY(dependentVariable)
-                CALL InterfaceDependent_DependentVariableGet(interfaceDependent,dependentIdx,dependentVariable,err,error,*999)
-                IF(ASSOCIATED(interfaceEquationsSet,equationsSet)) THEN
-                  IF(ASSOCIATED(dependentVariable,dynamicVariable)) THEN
-                    interfaceMatrixDynamic=.TRUE.
-                    EXIT interfConditionLoop
-                  ENDIF
-                ENDIF
-              ENDDO depVariableLoop !dependentIdx
             ENDDO interfConditionLoop !interfaceConditionIdx
           ENDIF
           nonlinearMapping=>vectorMapping%nonlinearMapping
@@ -12608,11 +12604,11 @@ CONTAINS
                       equationsMatrixNumber=dynamicMapping%varToEquationsMatricesMaps(variableType)% &
                         & equationsMatrixNumbers(equationsMatrixIdx)
                       IF(equationsMatrixNumber==dynamicMapping%stiffnessMatrixNumber) &
-                        & alphaValue=alphaValue*stiffnessMatrixCoefficient                        
+                        & dofValue=alphaValue*stiffnessMatrixCoefficient                        
                       IF(equationsMatrixNumber==dynamicMapping%dampingMatrixNumber) &
-                        & alphaValue=alphaValue*dampingMatrixCoefficient                     
+                        & dofValue=alphaValue*dampingMatrixCoefficient                     
                       IF(equationsMatrixNumber==dynamicMapping%massMatrixNumber) &
-                        & alphaValue=alphaValue*massMatrixCoefficient
+                        & dofValue=alphaValue*massMatrixCoefficient
                       equationsMatrix=>dynamicMatrices%matrices(equationsMatrixNumber)%ptr
                       equationsColumnNumber=dynamicMapping% &
                         & varToEquationsMatricesMaps(variableType)% &
@@ -12625,13 +12621,13 @@ CONTAINS
                           IF(dependentBoundaryConditions%DIRICHLET_BOUNDARY_CONDITIONS% &
                             & DIRICHLET_DOF_INDICES(dirichletIdx)==equationsColumnNumber) EXIT
                         ENDDO !dirichletIdx
-                        CALL DistributedMatrix_MatrixColumnAdd(equationsMatrix%matrix,equationsColumnNumber, &
+                        CALL DistributedMatrix_MatrixColumnAdd(equationsMatrix%matrix,.FALSE.,equationsColumnNumber, &
                           & solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(equationsSetIdx)%equationsRowToSolverRowsMap, &
-                          & -1.0_DP*alphaValue,solverRHSVector,err,error,*999)
+                          & -1.0_DP*dofValue,solverRHSVector,err,error,*999)
                       ENDIF
                     ENDDO !matrix_idx
                     !Loop over any interface matrices which are mapped to the dependent variable with the fixed BC.
-                    IF(interfaceDynamicMatrices) THEN
+                    IF(interfaceMatrixDynamic) THEN
                       DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
                         NULLIFY(interfaceCondition)
                         CALL SolverMapping_InterfaceConditionGet(solverMapping,interfaceConditionIdx,interfaceCondition, &
@@ -12642,34 +12638,42 @@ CONTAINS
                         CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
                         NULLIFY(interfaceMatrices)
                         CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-                        DO interfaceMatrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
-                          NULLIFY(interfaceMatrix)
-                          CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix, &
-                            & err,error,*999)
-                          interfaceDependentVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)% &
-                            & variable
-                          IF(ASSOCIATED(interfaceDependentVariable,dependentVariable)) THEN
-                            IF(interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)%HAS_TRANSPOSE) THEN
-                              !This interface matrix transpose involves the dependent dynamic variable.
+                        DO interfaceMatrixIdx=1,solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
+                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)%NUMBER_OF_INTERFACE_MATRICES
+                          interfaceToSolverMap=>solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
+                            & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)% &
+                            & INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interfaceMatrixIdx)%ptr
+                          IF(ASSOCIATED(interfaceToSolverMap)) THEN
+                            interfaceMatrix=>interfaceToSolverMap%INTERFACE_MATRIX
+                            IF(interfaceMatrix%HAS_TRANSPOSE) THEN
+                              dependentVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)%variable
+                              IF(.NOT.ASSOCIATED(dependentVariable)) THEN
+                                localError="The interface dependent variable is not associated for interface matrix number "// &
+                                  & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))
+                                CALL FlagError(localError,err,error,*999)
+                              ENDIF
+                              IF(ASSOCIATED(dependentVariable,dynamicVariable)) THEN
+                                SELECT CASE(interfaceMatrix%INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE)
+                                CASE(INTERFACE_MATRIX_STATIC)
+                                  dofValue=stiffnessMatrixCoefficient*alphaValue
+                                CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
+                                  dofValue=dampingMatrixCoefficient*alphaValue
+                                CASE(INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC)
+                                  dofValue=massMatrixCoefficient*alphaValue
+                                CASE DEFAULT
+                                  CALL FlagError("Not implemented.",err,error,*999)
+                                END SELECT
+                                interfaceColumnNumber=interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)% &
+                                  & VARIABLE_DOF_TO_ROW_MAP(variableDof)
+                                CALL DistributedMatrix_MatrixColumnAdd(interfaceMatrix%matrix,.TRUE.,interfaceColumnNumber, &
+                                  & solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
+                                  & interfaceColToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector, &
+                                  & err,error,*999)                                                            
+                              ENDIF
                             ENDIF
                           ENDIF
                         ENDDO !interfaceMatrixIdx
-                        NULLIFY(interfaceDependent)
-                        CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
-                        depVariableLoop2: DO dependentIdx=1,interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES
-                          NULLIFY(interfaceEquationsSet)
-                          CALL InterfaceDependent_EquationsSetGet(interfaceDependent,dependentIdx,interfaceEquationsSet, &
-                            & err,error,*999)
-                          NULLIFY(dependentVariable)
-                          CALL InterfaceDependent_DependentVariableGet(interfaceDependent,dependentIdx,dependentVariable, &
-                            & err,error,*999)
-                          IF(ASSOCIATED(interfaceEquationsSet,equationsSet)) THEN
-                            IF(ASSOCIATED(dependentVariable,dynamicVariable)) THEN
-                              !Muliply the interface matrix column by the fixed dynamic alpha and take over to the RHS.
-                            ENDIF
-                          ENDIF
-                        ENDDO depVariableLoop2 !dependentIdx
-                      ENDDO !interfaceConditionIdx
+                     ENDDO !interfaceConditionIdx
                     ENDIF
                   ENDIF
                 ENDIF
@@ -13837,12 +13841,12 @@ CONTAINS
                                                           IF(DEPENDENT_BOUNDARY_CONDITIONS%DIRICHLET_BOUNDARY_CONDITIONS% &
                                                             & DIRICHLET_DOF_INDICES(dirichlet_idx)==equations_column_number) EXIT
                                                         ENDDO
-                                                        CALL DistributedMatrix_MatrixColumnAdd(equationsMatrix%MATRIX, &
+                                                        CALL DistributedMatrix_MatrixColumnAdd(equationsMatrix%MATRIX,.FALSE., &
                                                           & equations_column_number,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP( &
                                                           & equations_set_idx)%equationsRowToSolverRowsMap,-1.0_DP* &
                                                           & DEPENDENT_VALUE,solverRHSVector,err,error,*999)
                                                         IF(SUBTRACT_FIXED_BCS_FROM_RESIDUAL) THEN
-                                                          CALL DistributedMatrix_MatrixColumnAdd(equationsMatrix%MATRIX, &
+                                                          CALL DistributedMatrix_MatrixColumnAdd(equationsMatrix%MATRIX,.FALSE., &
                                                           & equations_column_number,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP( &
                                                           & equations_set_idx)%equationsRowToSolverRowsMap,-1.0_DP* &
                                                           & DEPENDENT_VALUE,solverResidualVector,err,error,*999)

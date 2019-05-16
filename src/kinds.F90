@@ -42,50 +42,50 @@
 !>
 
 !> This module contains all kind definitions.
-MODULE KINDS
+MODULE Kinds
 
   IMPLICIT NONE
 
   !Module parameters
 
-  !> \addtogroup KINDS_IntegerKinds KINDS::IntegerKinds
+  !> \addtogroup Kinds_IntegerKinds Kinds::IntegerKinds
   !> \brief Kind parameters for integer data types
-  !> \see KINDS,OPENCMISS_IntegerKinds
+  !> \see Kinds,OpenCMISS_IntegerKinds
   !>@{
-  INTEGER, PARAMETER :: INTG=SELECTED_INT_KIND(9) !<Standard integer kind \see KINDS_IntegerKinds,KINDS
-  INTEGER, PARAMETER :: SINTG=SELECTED_INT_KIND(4) !<Short integer kind \see KINDS_IntegerKinds,KINDS
-  INTEGER, PARAMETER :: LINTG=SELECTED_INT_KIND(18) !<Long integer kind \see KINDS_IntegerKinds,KINDS
+  INTEGER, PARAMETER :: INTG=SELECTED_INT_KIND(9) !<Standard integer kind \see Kinds_IntegerKinds,Kinds
+  INTEGER, PARAMETER :: SINTG=SELECTED_INT_KIND(4) !<Short integer kind \see Kinds_IntegerKinds,Kinds
+  INTEGER, PARAMETER :: LINTG=SELECTED_INT_KIND(18) !<Long integer kind \see Kinds_IntegerKinds,Kinds
   INTEGER, PARAMETER :: PTR=INTG !<Pointer integer kind
   INTEGER, PARAMETER :: IDX=INTG !<Integer index kind
   INTEGER, PARAMETER :: LIDX=LINTG !<Long integer index kind
   !>@}
   
-  !> \addtogroup KINDS_RealKinds KINDS::RealKinds
+  !> \addtogroup Kinds_RealKinds Kinds::RealKinds
   !> \brief Kind parameters for real data types
-  !> \see KINDS,OPENCMISS_RealKinds
+  !> \see Kinds,OpenCMISS_RealKinds
   !>@{
-  INTEGER, PARAMETER :: SP=SELECTED_REAL_KIND(6,15) !<Single precision real kind \see KINDS_RealKinds,KINDS
-  INTEGER, PARAMETER :: DP=SELECTED_REAL_KIND(15,307) !<Double precision real kind \see KINDS_RealKinds,KINDS
-  INTEGER, PARAMETER :: QP=SELECTED_REAL_KIND(30,1000) !<Quadruple precision real kind \see KINDS_RealKinds,KINDS
+  INTEGER, PARAMETER :: SP=SELECTED_REAL_KIND(6,15) !<Single precision real kind \see Kinds_RealKinds,Kinds
+  INTEGER, PARAMETER :: DP=SELECTED_REAL_KIND(15,307) !<Double precision real kind \see Kinds_RealKinds,Kinds
+  INTEGER, PARAMETER :: QP=SELECTED_REAL_KIND(30,1000) !<Quadruple precision real kind \see Kinds_RealKinds,Kinds
 #ifdef SINGLE_REAL_PRECISION
-  INTEGER, PARAMETER :: RP=SP !<Real working precision kind i.e., single, double, etc. \see KINDS_RealKinds,KINDS
+  INTEGER, PARAMETER :: RP=SP !<Real working precision kind i.e., single, double, etc. \see Kinds_RealKinds,Kinds
 #else
-  INTEGER, PARAMETER :: RP=DP !<Real working precision kind i.e., single, double, etc. \see KINDS_RealKinds,KINDS
+  INTEGER, PARAMETER :: RP=DP !<Real working precision kind i.e., single, double, etc. \see Kinds_RealKinds,Kinds
 #endif
   !>@}
 
-  !> \addtogroup KINDS_ComplexKinds KINDS::ComplexKinds
+  !> \addtogroup Kinds_ComplexKinds Kinds::ComplexKinds
   !> \brief Kind parameters for complex data types
-  !> \see KINDS,OPENCMISS_ComplexKinds
+  !> \see Kinds,OpenCMISS_ComplexKinds
   !>@{
-  INTEGER, PARAMETER :: SPC=KIND((1.0_SP,1.0_SP)) !<Single precision complex kind \see KINDS_ComplexKinds,KINDS
-  INTEGER, PARAMETER :: DPC=KIND((1.0_DP,1.0_DP)) !<Double precision complex kind \see KINDS_ComplexKinds,KINDS
+  INTEGER, PARAMETER :: SPC=KIND((1.0_SP,1.0_SP)) !<Single precision complex kind \see Kinds_ComplexKinds,Kinds
+  INTEGER, PARAMETER :: DPC=KIND((1.0_DP,1.0_DP)) !<Double precision complex kind \see Kinds_ComplexKinds,Kinds
   !INTEGER, PARAMETER :: QPC=KIND((1.0_QP,1.0_QP))
 #ifdef SINGLE_REAL_PRECISION
-  INTEGER, PARAMETER :: RPC=SPC !<Real working precision complex kind i.e., single, double, etc. \see KINDS_ComplexKinds,KINDS
+  INTEGER, PARAMETER :: RPC=SPC !<Real working precision complex kind i.e., single, double, etc. \see Kinds_ComplexKinds,Kinds
 #else
-  INTEGER, PARAMETER :: RPC=DPC !<Real working precision complex kind i.e., single, double, etc. \see KINDS_ComplexKinds,KINDS
+  INTEGER, PARAMETER :: RPC=DPC !<Real working precision complex kind i.e., single, double, etc. \see Kinds_ComplexKinds,Kinds
 #endif
   !>@}
 
-END MODULE KINDS
+END MODULE Kinds

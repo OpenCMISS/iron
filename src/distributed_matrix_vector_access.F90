@@ -60,7 +60,7 @@ MODULE DistributedMatrixVectorAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup OpenCMISS_DistributedMatrixVectorConstants OpenCMISS::Iron::DistributedMatrixVector::Constants
+  !> \addtogroup DistributedMatrixVector_Constants OpenCMISS::Iron::DistributedMatrixVector::Constants
   !> \brief Distributed matrix vector constants.
   !>@{
   !> \addtogroup DistributedMatrixVector_LibraryTypes DistributedMatrixVector::LibraryTypes

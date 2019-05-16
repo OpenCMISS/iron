@@ -2057,13 +2057,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,loopIdx
+    INTEGER(INTG) :: equationsSetIdx
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(SOLVERS_TYPE), POINTER :: SOLVERS
     
     ENTERS("Problem_SolverEquationsDynamicLinearSolve",err,error,*999)
     
@@ -2116,7 +2115,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,loopIdx,interfaceConditionIdx
+    INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx
     REAL(DP) :: currentTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
@@ -2741,7 +2740,6 @@ CONTAINS
     TYPE(FieldParameterSetType), POINTER :: boundaryConditionsParameterSet
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(SOLVER_TYPE), POINTER :: solver
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
     TYPE(ControlLoopSimpleType), POINTER :: simpleLoop
@@ -2909,7 +2907,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: interfaceConditionIdx
-    TYPE(SOLVERS_TYPE), POINTER :: solvers
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
@@ -3028,13 +3025,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,load_step
-    LOGICAL :: dirExists
+    INTEGER(INTG) :: load_step
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(RegionType), POINTER :: region !<A pointer to region to output the fields for
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping 
-    TYPE(FieldsType), POINTER :: fields
-    TYPE(VARYING_STRING) :: fileName,method,directory
+    TYPE(VARYING_STRING) :: directory
     
     INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledElementNumber, &
       & coupledMeshFaceLineNumber, coupledMeshIdx,component
@@ -3055,9 +3049,8 @@ CONTAINS
     INTEGER(INTG) :: IUNIT
     CHARACTER(LEN=100) :: filenameOutput,groupname
 
-    TYPE(VARYING_STRING) :: fileToCheck,localError
-    LOGICAL :: fileExists
-    INTEGER(INTG) :: firstIterationNumber, solve_call, max_solve_calls
+    TYPE(VARYING_STRING) :: localError
+    INTEGER(INTG) :: solve_call
 
     ENTERS("Problem_SolverNewtonFieldsOutput",err,error,*999)
 
@@ -3156,6 +3149,8 @@ CONTAINS
         
         IF(diagnostics1) THEN
           IUNIT = 300
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
           DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
             interfaceCondition=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr
             INTERFACE=>solverMapping%interfaceConditions(interfaceConditionIdx)%ptr%INTERFACE
@@ -3268,7 +3263,6 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
     TYPE(OptimiserSolverType), POINTER :: optimiserSolver
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_SolverOptimiserMonitor",err,error,*999)
     
@@ -4123,8 +4117,6 @@ SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm
   TYPE(SOLVER_TYPE), POINTER :: context !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
-  TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
-  TYPE(SOLVER_TYPE), POINTER :: solver
   TYPE(VARYING_STRING) :: error
 
   IF(.NOT.ASSOCIATED(context)) CALL FlagError("Solver context is not associated.",err,error,*999)

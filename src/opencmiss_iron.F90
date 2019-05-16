@@ -43364,7 +43364,6 @@ CONTAINS
     TYPE(MeshType), POINTER :: PARENTMESH,CHILDMESH
     TYPE(RegionType), POINTER :: region1, REGION2
     TYPE(RegionsType), POINTER :: regions
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_MeshEmbedding_CreateNumber",err,error,*999)
 
@@ -44514,7 +44513,6 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: firstCoupledMeshNodeNumbers(:),secondCoupledMeshNodeNumbers(:) !<The coupled meshes nodes to be connected to the interface
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_InterfaceMeshConnectivity_NodeNumberSetObj",err,error,*999)
 
@@ -50475,6 +50473,8 @@ CONTAINS
     NULLIFY(region)
     NULLIFY(mesh)
     NULLIFY(meshElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_MeshElementsGet(mesh,meshComponentNumber,meshElements,err,error,*999)
@@ -50609,14 +50609,11 @@ CONTAINS
 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    INTEGER(INTG) :: localElementNode
-    LOGICAL :: found
     TYPE(ContextType), POINTER :: context
     TYPE(MeshType), POINTER :: mesh
     TYPE(MeshElementsType), POINTER :: meshElements
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_MeshElements_UserNodeVersionSetNumber",err,error,*999)
 
@@ -50658,10 +50655,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to set a version for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(VARYING_STRING) :: localError
-    INTEGER(INTG) :: localelementnode
-    LOGICAL :: FOUND
-
+ 
     ENTERS("cmfe_MeshElements_UserNodeVersionSetObj",err,error,*999)
 
     CALL MeshElements_UserNodeVersionSet(meshElements%meshElements,userElementNumber,versionNumber, &
@@ -53848,7 +53842,6 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("cmfe_Problem_SolverGetNumber1",err,error,*999)
 
@@ -65266,7 +65259,6 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
-    TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
 
     ENTERS("cmfe_SolverEquations_BoundaryConditionsCreateFinishNumber1",err,error,*999)

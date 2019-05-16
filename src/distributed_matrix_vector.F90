@@ -1968,10 +1968,12 @@ CONTAINS
   !
 
   !>Adds a column from a distributed matrix times an alpha value to a distributed vector
-  SUBROUTINE DistributedMatrix_MatrixColumnAdd(distributedMatrix,columnNumber,rowCoupling,alpha,distributedVector,err,error,*)
+  SUBROUTINE DistributedMatrix_MatrixColumnAdd(distributedMatrix,transposeMatrix,columnNumber,rowCoupling,alpha, &
+    & distributedVector,err,error,*)
 
     !Argument variables
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix !<The distributed matrix to take the column from
+    LOGICAL, INTENT(IN) :: transposeMatrix !<If .TRUE. the transpose of the distributed matrix is used
     INTEGER(INTG), INTENT(IN) :: columnNumber !<The column number to add
     TYPE(MatrixRowColCouplingType), INTENT(IN) :: rowCoupling(:) !<The row coupling information
     REAL(DP), INTENT(IN) :: alpha !<The multiplicative alpha factor
@@ -1981,7 +1983,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: coupledRowIdx,coupledRowNumber,numberOfMatrixColumns,numberOfMatrixRows,numberOfVectorRows, &
       & rowIdx,rowNumber,storageType,transposePosition,transposeType
-    INTEGER(INTG), POINTER :: columnIndicesT(:),dataSwivelT(:),rowIndicesT(:)
+    INTEGER(INTG), POINTER :: columnIndices(:),columnIndicesT(:),dataSwivelT(:),rowIndices(:),rowIndicesT(:)
     REAL(DP) :: rowCouplingCoefficient,matrixValue,vectorValue
     REAL(DP), POINTER :: matrixData(:)
     TYPE(VARYING_STRING) :: localError
@@ -1990,8 +1992,13 @@ CONTAINS
     
     CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
     CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
-    CALL DistributedMatrix_NumberOfLocalRowsGet(distributedMatrix,numberOfMatrixRows,err,error,*999)
-    CALL DistributedMatrix_NumberOfColumnsGet(distributedMatrix,numberOfMatrixColumns,err,error,*999)
+    IF(transposeMatrix) THEN
+      CALL DistributedMatrix_NumberOfLocalRowsGet(distributedMatrix,numberOfMatrixColumns,err,error,*999)
+      CALL DistributedMatrix_NumberOfColumnsGet(distributedMatrix,numberOfMatrixRows,err,error,*999)
+    ELSE
+      CALL DistributedMatrix_NumberOfLocalRowsGet(distributedMatrix,numberOfMatrixRows,err,error,*999)
+      CALL DistributedMatrix_NumberOfColumnsGet(distributedMatrix,numberOfMatrixColumns,err,error,*999)
+    ENDIF
     CALL DistributedVector_NumberOfLocalRowsGet(distributedVector,numberOfVectorRows,err,error,*999)
     IF(columnNumber<=0.OR.columnNumber>numberOfMatrixColumns) THEN
       localError="The specified column number of "//TRIM(NumberToVString(columnNumber,"*",err,error))// &
@@ -2017,7 +2024,11 @@ CONTAINS
       SELECT CASE(storageType)
       CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
         DO rowNumber=1,numberOfMatrixRows
-          CALL DistributedMatrix_ValuesGet(distributedMatrix,rowNumber,columnNumber,matrixValue,err,error,*999)
+          IF(transposeMatrix) THEN
+            CALL DistributedMatrix_ValuesGet(distributedMatrix,columnNumber,rowNumber,matrixValue,err,error,*999)
+          ELSE
+            CALL DistributedMatrix_ValuesGet(distributedMatrix,rowNumber,columnNumber,matrixValue,err,error,*999)
+          ENDIF
           IF(ABS(matrixValue)>=ZERO_TOLERANCE) THEN
             DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
               coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
@@ -2043,18 +2054,13 @@ CONTAINS
       CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-        CALL DistributedMatrix_TransposeTypeGet(distributedMatrix,transposeType,err,error,*999)
-        IF(transposeType==DISTRIBUTED_MATRIX_PARTIAL_TRANSPOSE_REQUIRED.OR. &
-          & transposeType==DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED) THEN
-          NULLIFY(rowIndicesT)
-          NULLIFY(columnIndicesT)
-          NULLIFY(dataSwivelT)
-          CALL DistributedMatrix_StorageTransposeLocationsGet(distributedMatrix,rowIndicesT,columnIndicesT,dataSwivelT, &
-            & err,error,*999)
-          CALL DistributedMatrix_TransposeRowColumnPositionGet(distributedMatrix,columnNumber,transposePosition,err,error,*999)
-          DO rowIdx=columnIndicesT(transposePosition),columnIndicesT(transposePosition+1)-1
-            rowNumber=rowIndicesT(rowIdx)
-            CALL DistributedMatrix_ValuesGet(distributedMatrix,rowNumber,columnNumber,matrixValue,err,error,*999)
+        IF(transposeMatrix) THEN
+          NULLIFY(rowIndices)
+          NULLIFY(columnIndices)
+          CALL DistributedMatrix_StorageLocationsGet(distributedMatrix,rowIndices,columnIndices,err,error,*999)
+          DO rowIdx=rowIndices(columnNumber),rowIndices(columnNumber+1)-1
+            rowNumber=columnIndices(rowIdx)
+            matrixValue=matrixData(rowIdx)
             IF(ABS(matrixValue)>=ZERO_TOLERANCE) THEN
               DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
                 coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
@@ -2065,7 +2071,30 @@ CONTAINS
             ENDIF
           ENDDO !rowIdx
         ELSE
-          CALL FlagError("Not implemented.",err,error,*999)
+          CALL DistributedMatrix_TransposeTypeGet(distributedMatrix,transposeType,err,error,*999)
+          IF(transposeType==DISTRIBUTED_MATRIX_PARTIAL_TRANSPOSE_REQUIRED.OR. &
+            & transposeType==DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED) THEN
+            NULLIFY(rowIndicesT)
+            NULLIFY(columnIndicesT)
+            NULLIFY(dataSwivelT)
+            CALL DistributedMatrix_StorageTransposeLocationsGet(distributedMatrix,rowIndicesT,columnIndicesT,dataSwivelT, &
+              & err,error,*999)
+            CALL DistributedMatrix_TransposeRowColumnPositionGet(distributedMatrix,columnNumber,transposePosition,err,error,*999)
+            DO rowIdx=columnIndicesT(transposePosition),columnIndicesT(transposePosition+1)-1
+              rowNumber=rowIndicesT(rowIdx)              
+              matrixValue=matrixData(dataSwivelT(rowIdx))
+              IF(ABS(matrixValue)>=ZERO_TOLERANCE) THEN
+                DO coupledRowIdx=1,rowCoupling(rowNumber)%numberOfRowCols
+                  coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
+                  rowCouplingCoefficient=rowCoupling(rowNumber)%couplingCoefficients(coupledRowIdx)
+                  vectorValue=matrixValue*alpha*rowCouplingCoefficient
+                  CALL DistributedVector_ValuesAdd(distributedVector,rowNumber,vectorValue,err,error,*999)
+                ENDDO !coupledRowIdx
+              ENDIF
+            ENDDO !rowIdx
+          ELSE
+            CALL FlagError("Not implemented.",err,error,*999)
+          ENDIF
         ENDIF
       CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
         CALL FlagError("Not implemented.",err,error,*999)
@@ -2114,7 +2143,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: aColumn,aColumnIdx,aRow,aRowIdx,bBlockSize,bColumn,bColumnBlock,bColumnIdx,bColumnBlockIdx,blockColumnIdx, &
       & blockRowIdx,bRowBlockIdx,bNumberOfColumnBlocks,bNumberOfRowBlocks,bMaxNumberOfRows,bStorageType,bRow, &
-      & columnOffset,dataIdx,numberOfBColumns,numberOfBRows
+      & dataIdx,numberOfBColumns,numberOfBRows
     INTEGER(INTG), POINTER :: bColumnIndices(:),bRowIndices(:)
     REAL(DP) :: aValue,columnCouplingCoefficient,rowCouplingCoefficient,matrixValue
     REAL(DP), POINTER :: bMatrixData(:)
@@ -5610,25 +5639,7 @@ CONTAINS
               ENDDO !row
             ENDIF
           CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-            IF(transposeMatrix) THEN
-              DO localColumn=1,columnMapping%totalNumberOfLocal
-                globalColumn=columnMapping%localToGlobalMap(localColumn)
-                DO rowIdx=matrix%columnIndices(columnIdx),matrix%columnIndices(columnIdx+1)-1
-                  row=matrix%rowIndices(rowIdx)
-                  sum=sum+matrix%dataDP(row)*cmissVector%dataDP(row)
-                ENDDO !rowIdx
-                cmissProduct%dataDP(localColumn)=cmissProduct%dataDP(localColumn)+alpha*sum
-              ENDDO !localColumn
-            ELSE
-              DO localColumn=1,columnMapping%totalNumberOfLocal
-                globalColumn=columnMapping%localToGlobalMap(localColumn)
-                DO rowIdx=matrix%columnIndices(globalColumn),matrix%columnIndices(globalColumn+1)-1
-                  row=matrix%rowIndices(rowIdx)
-                  sum=matrix%dataDP(rowIdx)*cmissVector%dataDP(localColumn)
-                  cmissProduct%dataDP(row)=cmissProduct%dataDP(row)+alpha*sum
-                ENDDO !local_row
-              ENDDO !columnIdx
-            ENDIF
+            CALL FlagError("Not implemented.",err,error,*999)
           CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
             CALL FlagError("Not implemented.",err,error,*999)
           CASE(MATRIX_BLOCK_COMPRESSED_ROW_STORAGE_TYPE)
