@@ -1840,6 +1840,7 @@ MODULE OpenCMISS_Iron
   !> \see OpenCMISS::Iron::DataProjection,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_CANCELLED = DATA_PROJECTION_CANCELLED !<Data projection has been cancelled. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_USER_SPECIFIED = DATA_PROJECTION_USER_SPECIFIED !<Data projection was user specified. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_CONVERGED = DATA_PROJECTION_EXIT_TAG_CONVERGED !<Data projection exited due to it being converged. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_BOUNDS = DATA_PROJECTION_EXIT_TAG_BOUNDS !<Data projection exited due to it hitting the bound and continue to travel out of the element. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
   INTEGER(INTG), PARAMETER :: CMFE_DATA_PROJECTION_EXIT_TAG_MAX_ITERATION = DATA_PROJECTION_EXIT_TAG_MAX_ITERATION !<Data projection exited due to it attaining maximum number of iteration specified by user. \see OpenCMISS_DataProjectionExitTags,OpenCMISS
@@ -2112,25 +2113,43 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_ResultDistanceGetObj
   END INTERFACE cmfe_DataProjection_ResultDistanceGet
 
-  !>Returns the projection element number for a data point identified by a given user number.
+  !>Returns the projection element number for a data point.
   INTERFACE cmfe_DataProjection_ResultElementNumberGet
     MODULE PROCEDURE cmfe_DataProjection_ResultElementNumberGetNumber
     MODULE PROCEDURE cmfe_DataProjection_ResultElementNumberGetObj
   END INTERFACE cmfe_DataProjection_ResultElementNumberGet
 
-  !>Returns the projection element face number for a data point identified by a given user number.
+  !>Sets the projection element number for a data point.
+  INTERFACE cmfe_DataProjection_ResultElementNumberSet
+    MODULE PROCEDURE cmfe_DataProjection_ResultElementNumberSetNumber
+    MODULE PROCEDURE cmfe_DataProjection_ResultElementNumberSetObj
+  END INTERFACE cmfe_DataProjection_ResultElementNumberSet
+
+  !>Returns the projection element face number for a data point.
   INTERFACE cmfe_DataProjection_ResultElementFaceNumberGet
     MODULE PROCEDURE cmfe_DataProjection_ResultElementFaceNumberGetNumber
     MODULE PROCEDURE cmfe_DataProjection_ResultElementFaceNumberGetObj
   END INTERFACE cmfe_DataProjection_ResultElementFaceNumberGet
 
-  !>Returns the projection element line number for a data point identified by a given user number.
+  !>Sets the projection element face number for a data point.
+  INTERFACE cmfe_DataProjection_ResultElementFaceNumberSet
+    MODULE PROCEDURE cmfe_DataProjection_ResultElementFaceNumberSetNumber
+    MODULE PROCEDURE cmfe_DataProjection_ResultElementFaceNumberSetObj
+  END INTERFACE cmfe_DataProjection_ResultElementFaceNumberSet
+
+  !>Returns the projection element line number for a data point.
   INTERFACE cmfe_DataProjection_ResultElementLineNumberGet
     MODULE PROCEDURE cmfe_DataProjection_ResultElementLineNumberGetNumber
     MODULE PROCEDURE cmfe_DataProjection_ResultElementLineNumberGetObj
   END INTERFACE cmfe_DataProjection_ResultElementLineNumberGet
 
-  !>Returns the projection exit tag for a data point identified by a given user number.
+  !>Sets the projection element line number for a data point.
+  INTERFACE cmfe_DataProjection_ResultElementLineNumberSet
+    MODULE PROCEDURE cmfe_DataProjection_ResultElementLineNumberSetNumber
+    MODULE PROCEDURE cmfe_DataProjection_ResultElementLineNumberSetObj
+  END INTERFACE cmfe_DataProjection_ResultElementLineNumberSet
+
+  !>Returns the projection exit tag for a data point.
   INTERFACE cmfe_DataProjection_ResultExitTagGet
     MODULE PROCEDURE cmfe_DataProjection_ResultExitTagGetNumber
     MODULE PROCEDURE cmfe_DataProjection_ResultExitTagGetObj
@@ -2175,8 +2194,8 @@ MODULE OpenCMISS_Iron
   PUBLIC CMFE_DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE,CMFE_DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE, &
     & CMFE_DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE
 
-  PUBLIC CMFE_DATA_PROJECTION_CANCELLED,CMFE_DATA_PROJECTION_EXIT_TAG_CONVERGED,CMFE_DATA_PROJECTION_EXIT_TAG_BOUNDS, &
-    & CMFE_DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,CMFE_DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
+  PUBLIC CMFE_DATA_PROJECTION_CANCELLED,CMFE_DATA_PROJECTION_USER_SPECIFIED,CMFE_DATA_PROJECTION_EXIT_TAG_CONVERGED, &
+    & CMFE_DATA_PROJECTION_EXIT_TAG_BOUNDS,CMFE_DATA_PROJECTION_EXIT_TAG_MAX_ITERATION,CMFE_DATA_PROJECTION_EXIT_TAG_NO_ELEMENT
 
   PUBLIC CMFE_DATA_PROJECTION_DISTANCE_GREATER,CMFE_DATA_PROJECTION_DISTANCE_GREATER_EQUAL,CMFE_DATA_PROJECTION_DISTANCE_LESS, &
     & CMFE_DATA_PROJECTION_DISTANCE_LESS_EQUAL
@@ -2227,9 +2246,13 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_DataProjection_ResultAnalysisOutput
 
-  PUBLIC cmfe_DataProjection_ResultDistanceGet,cmfe_DataProjection_ResultElementNumberGet
+  PUBLIC cmfe_DataProjection_ResultDistanceGet
 
-  PUBLIC cmfe_DataProjection_ResultElementFaceNumberGet,cmfe_DataProjection_ResultElementLineNumberGet
+  PUBLIC cmfe_DataProjection_ResultElementNumberGet,cmfe_DataProjection_ResultElementNumberSet
+
+  PUBLIC cmfe_DataProjection_ResultElementFaceNumberGet,cmfe_DataProjection_ResultElementFaceNumberSet
+
+  PUBLIC cmfe_DataProjection_ResultElementLineNumberGet,cmfe_DataProjection_ResultElementLineNumberSet
 
   PUBLIC cmfe_DataProjection_ResultExitTagGet
 
@@ -22794,6 +22817,75 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets the projection element number for a data point in a set of data points identified by user number.
+  SUBROUTINE cmfe_DataProjection_ResultElementNumberSetNumber(regionUserNumber,dataPointsUserNumber,dataProjectionUserNumber, &
+    & dataPointUserNumber,projectionElementUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementNumberSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: projectionElementUserNumber !<The projection element user number to set for the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ResultElementNumberSetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(dataPoints)
+    NULLIFY(dataProjection)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ResultElementNumberSet(dataProjection,dataPointUserNumber,projectionElementUserNumber,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultElementNumberSetNumber")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ResultElementNumberSetNumber",err,error)
+    EXITS("cmfe_DataProjection_ResultElementNumberSetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultElementNumberSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the projection element number for a data point in a set of data points identified by an object.
+  SUBROUTINE cmfe_DataProjection_ResultElementNumberSetObj(dataProjection,dataPointUserNumber,projectionElementUserNumber,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementNumberSetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to get attributes for.
+    INTEGER(INTG), INTENT(IN) :: projectionElementUserNumber !<The projection element user number to set for the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_ResultElementNumberSetObj",err,error,*999)
+
+    CALL DataProjection_ResultElementNumberSet(dataProjection%dataProjection,dataPointUserNumber,projectionElementUserNumber, &
+      & err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultElementNumberSetObj")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ResultElementNumberSetObj",err,error)
+    EXITS("cmfe_DataProjection_ResultElementNumberSetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultElementNumberSetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the projection element face number for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberGetNumber(regionUserNumber,dataPointsUserNumber, &
     & dataProjectionUserNumber,dataPointUserNumber,projectionElementFaceNumber,err)
@@ -22865,6 +22957,79 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Sets the projection element face number for a data point in a set of data points identified by user number.
+  SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberSetNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,projectionElementUserNumber,localFaceNormal,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementFaceNumberSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: projectionElementUserNumber !<The projection element user number to set for the data point.
+    INTEGER(INTG), INTENT(IN) :: localFaceNormal !<The projection candidate element face normal to set the result for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ResultElementFaceNumberSetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(dataPoints)
+    NULLIFY(dataProjection)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ResultElementFaceNumberSet(dataProjection,dataPointUserNumber,projectionElementUserNumber, &
+      & localFaceNormal,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultElementFaceNumberSetNumber")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ResultElementFaceNumberSetNumber",err,error)
+    EXITS("cmfe_DataProjection_ResultElementFaceNumberSetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the projection element face number for a data point in a set of data points identified by an object.
+  SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberSetObj(dataProjection,dataPointUserNumber, &
+    & projectionElementUserNumber,localFaceNormal,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementFaceNumberSetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: projectionElementUserNumber !<The projection element user number to set for the data point.
+    INTEGER(INTG), INTENT(IN) :: localFaceNormal !<The projection candidate element face normal to set the result for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_ResultElementFaceNumberSetObj",err,error,*999)
+
+    CALL DataProjection_ResultElementFaceNumberSet(dataProjection%dataProjection,dataPointUserNumber, &
+      & projectionElementUserNumber,localFaceNormal,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultElementFaceNumberSetObj")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ResultElementFaceNumberSetObj",err,error)
+    EXITS("cmfe_DataProjection_ResultElementFaceNumberSetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultElementFaceNumberSetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the projection element line number for a data point in a set of data points identified by user number.
   SUBROUTINE cmfe_DataProjection_ResultElementLineNumberGetNumber(regionUserNumber,dataPointsUserNumber, &
     & dataProjectionUserNumber,dataPointUserNumber,projectionElementLineNumber,err)
@@ -22931,6 +23096,79 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_ResultElementLineNumberGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the projection element line number for a data point in a set of data points identified by user number.
+  SUBROUTINE cmfe_DataProjection_ResultElementLineNumberSetNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,dataPointUserNumber,projectionElementUserNumber,localLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementLineNumberSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The user number of the data projection containing the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: projectionElementUserNumber !<The projection element user number to set for the data point.
+    INTEGER(INTG), INTENT(IN) :: localLineNormals(:) !<localLineNormals(lineNormalIdx). The local line normals to set for the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_ResultElementLineNumberSetNumber",err,error,*999)
+
+    NULLIFY(region)
+    NULLIFY(dataPoints)
+    NULLIFY(dataProjection)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_ResultElementLineNumberSet(dataProjection,dataPointUserNumber,projectionElementUserNumber, &
+      & localLineNormals,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultElementLineNumberSetNumber")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ResultElementLineNumberSetNumber",err,error)
+    EXITS("cmfe_DataProjection_ResultElementLineNumberSetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultElementLineNumberSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the projection element line number for a data point in a set of data points identified by an object.
+  SUBROUTINE cmfe_DataProjection_ResultElementLineNumberSetObj(dataProjection,dataPointUserNumber, &
+    & projectionElementUserNumber,localLineNormals,err)
+    !DLLEXPORT(cmfe_DataProjection_ResultElementLineNumberSetObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(IN) :: dataProjection !<The data projection to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The user number of the data points to set attributes for.
+    INTEGER(INTG), INTENT(IN) :: projectionElementUserNumber !<The projection element user number to set for the data point.
+    INTEGER(INTG), INTENT(IN) :: localLineNormals(:) !<localLineNormals(lineNormalIdx). The local line normals to set for the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_ResultElementLineNumberSetObj",err,error,*999)
+
+    CALL DataProjection_ResultElementLineNumberSet(dataProjection%dataProjection,dataPointUserNumber, &
+      & projectionElementUserNumber,localLineNormals,err,error,*999)
+
+    EXITS("cmfe_DataProjection_ResultElementLineNumberSetObj")
+    RETURN
+999 ERRORS("cmfe_DataProjection_ResultElementLineNumberSetObj",err,error)
+    EXITS("cmfe_DataProjection_ResultElementLineNumberSetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_ResultElementLineNumberSetObj
 
   !
   !================================================================================================================================
