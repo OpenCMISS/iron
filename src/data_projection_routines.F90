@@ -5009,24 +5009,37 @@ CONTAINS
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
     IF(dataProjection%dataProjectionProjected) CALL FlagError("Data projection has already been projected.",err,error,*999)
     
-    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
-    NULLIFY(decomposition)
-    CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
-    NULLIFY(decompositionTopology)
-    CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
-    CALL DecompositionTopology_ElementCheckExists(decompositionTopology,projectionElementUserNumber,elementExists, &
-      & elementLocalNumber,ghostElement,err,error,*999)       
-    IF(elementExists) THEN
-      IF(.NOT.ghostElement) THEN
-        dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber=elementLocalNumber
-        dataProjection%dataProjectionResults(dataPointGlobalNumber)%exitTag=DATA_PROJECTION_USER_SPECIFIED
+    SELECT CASE(dataProjection%projectionType)
+    CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
+      CALL FlagError("Use the result element faces routine not the element routine for a boundary faces projection.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE)
+      CALL FlagError("Use the result element lines routine not the element routine for a boundary lines projection.", &
+        & err,error,*999)
+    CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
+      CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
+      NULLIFY(decomposition)
+      CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
+      NULLIFY(decompositionTopology)
+      CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+      CALL DecompositionTopology_ElementCheckExists(decompositionTopology,projectionElementUserNumber,elementExists, &
+        & elementLocalNumber,ghostElement,err,error,*999)       
+      IF(elementExists) THEN
+        IF(.NOT.ghostElement) THEN
+          dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber=elementLocalNumber
+          dataProjection%dataProjectionResults(dataPointGlobalNumber)%exitTag=DATA_PROJECTION_USER_SPECIFIED
+        ENDIF
+      ELSE
+        localError="Element user number "//TRIM(NumberToVString(projectionElementUserNumber,"*",err,error))// &
+          & " does not exist."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
-    ELSE
-      localError="Element user number "//TRIM(NumberToVString(projectionElementUserNumber,"*",err,error))// &
-        & " does not exist."
+    CASE DEFAULT
+      localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"",err,error))// &
+        & " is invalid."
       CALL FlagError(localError,err,error,*999)
-    ENDIF
- 
+    END SELECT
+      
     EXITS("DataProjection_ResultElementNumberSet")
     RETURN
 999 ERRORSEXITS("DataProjection_ResultElementNumberSet",err,error)    
@@ -5229,7 +5242,7 @@ CONTAINS
 
     SELECT CASE(dataProjection%projectionType)
     CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
-      CALL FlagError("Use the result element faces routine not the element lines routine for a boundary faces projection.", &
+      CALL FlagError("Use the result element faces routine not the element lines routine for a boundary lines projection.", &
         & err,error,*999)
     CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
       CALL FlagError("Use the result elements routine not the element lines routine for an all elements projection.", &
