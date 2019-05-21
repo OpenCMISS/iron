@@ -64,10 +64,134 @@ MODULE InterfaceMatricesAccessRoutines
 
   !Interfaces
 
+  PUBLIC InterfaceMatrices_AssertIsFinished,InterfaceMatrices_AssertNotFinished
+
+  PUBLIC InterfaceMatrices_InterfaceEquationsGet
+
+  PUBLIC InterfaceMatrices_InterfaceMappingGet
+
   PUBLIC InterfaceMatrices_InterfaceMatrixGet
+  
+  PUBLIC InterfaceMatrices_RHSVectorGet
+
+  PUBLIC InterfaceMatrix_InterfaceMatricesGet
   
 CONTAINS
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an interface matrices has been finished
+  SUBROUTINE InterfaceMatrices_AssertIsFinished(interfaceMatrices,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMatricesType), POINTER, INTENT(IN) :: interfaceMatrices !<The interface matrices to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrices_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+
+    IF(.NOT.interfaceMatrices%interfaceMatricesFinished) CALL FlagError("Interface matrices has not been finished.",err,error,*999)
+    
+    EXITS("InterfaceMatrices_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an interface matrices has not been finished
+  SUBROUTINE InterfaceMatrices_AssertNotFinished(interfaceMatrices,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceMatricesType), POINTER, INTENT(IN) :: interfaceMatrices !<The interface matrices to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrices_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+
+    IF(interfaceMatrices%interfaceMatricesFinished) CALL FlagError("Interface matrices has already been finished.",err,error,*999)
+    
+    EXITS("InterfaceMatrices_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceMatrices_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_AssertNotFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface equations for an interface matrices.
+  SUBROUTINE InterfaceMatrices_InterfaceEquationsGet(interfaceMatrices,interfaceEquations,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to get the interface equations for
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<On exit, a pointer to the interface equations in the specified interface matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrices_InterfaceEquationsGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+
+    interfaceEquations=>interfaceMatrices%interfaceEquations
+    IF(.NOT.ASSOCIATED(interfaceEquations)) &
+      & CALL FlagError("Interface matrices interface equations is not associated.",err,error,*999)
+       
+    EXITS("InterfaceMatrices_InterfaceEquationsGet")
+    RETURN
+999 NULLIFY(interfaceEquations)
+998 ERRORSEXITS("InterfaceMatrices_InterfaceEquationsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_InterfaceEquationsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface mapping for an interface matrices.
+  SUBROUTINE InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to get the interface mapping for
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<On exit, a pointer to the interface mapping in the specified interface matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrices_InterfaceMappingGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+
+    interfaceMapping=>interfaceMatrices%interfaceMapping
+    IF(.NOT.ASSOCIATED(interfaceMapping)) &
+      & CALL FlagError("Interface matrices interface mapping is not associated.",err,error,*999)
+       
+    EXITS("InterfaceMatrices_InterfaceMappingGet")
+    RETURN
+999 NULLIFY(interfaceMapping)
+998 ERRORSEXITS("InterfaceMatrices_InterfaceMappingGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_InterfaceMappingGet
+
   !
   !================================================================================================================================
   !
@@ -76,9 +200,9 @@ CONTAINS
   SUBROUTINE InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices !<A pointer to the interface matrices to get the interface matrix for
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to get the interface matrix for
     INTEGER(INTG), INTENT(IN) :: matrixIdx !<The matrix index of the interface matrix to get
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix !<On exit, a pointer to the interface matrix for the matrixIdx'th interface matrix. Must not be associated on entry
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<On exit, a pointer to the interface matrix for the matrixIdx'th interface matrix. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -88,10 +212,10 @@ CONTAINS
 
     IF(ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
-    IF(matrixIdx<1.OR.matrixIdx>interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES) THEN
+    IF(matrixIdx<1.OR.matrixIdx>interfaceMatrices%numberOfInterfaceMatrices) THEN
       localError="The specified matrix index of "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
         & " is invalid. The matrix index must be >= 1 and <= "// &
-        & TRIM(NumberToVString(interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES,"*",err,error))//"."
+        & TRIM(NumberToVString(interfaceMatrices%numberOfInterfaceMatrices,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ALLOCATED(interfaceMatrices%matrices)) CALL FlagError("Interface matrices matrices is not allocated.",err,error,*999)
@@ -110,6 +234,66 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceMatrices_InterfaceMatrixGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the RHS vector for an interface matrices.
+  SUBROUTINE InterfaceMatrices_RHSVectorGet(interfaceMatrices,rhsVector,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to get the RHS vector for
+    TYPE(InterfaceRHSType), POINTER :: rhsVector !<On exit, a pointer to the RHS vector in the specified interface matrices. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrices_RHSVectorGet",err,error,*998)
+
+    IF(ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+
+    rhsVector=>interfaceMatrices%rhsVector
+    IF(.NOT.ASSOCIATED(rhsVector)) CALL FlagError("Interface matrices RHS vector is not associated.",err,error,*999)
+       
+    EXITS("InterfaceMatrices_RHSVectorGet")
+    RETURN
+999 NULLIFY(rhsVector)
+998 ERRORSEXITS("InterfaceMatrices_RHSVectorGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrices_RHSVectorGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface matrices for an interface matrix.
+  SUBROUTINE InterfaceMatrix_InterfaceMatricesGet(interfaceMatrix,interfaceMatrices,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to get the interfaces matrices for
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<On exit, a pointer to the interface matrices in the specified interface matrix. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMatrix_InterfaceMatricesGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*999)
+
+    interfaceMatrices=>interfaceMatrix%interfaceMatrices
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrix interface matrices is not associated.",err,error,*999)
+       
+    EXITS("InterfaceMatrix_InterfaceMatricesGet")
+    RETURN
+999 NULLIFY(interfaceMatrices)
+998 ERRORSEXITS("InterfaceMatrices_InterfaceMatricesGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMatrix_InterfaceMatricesGet
 
   !
   !================================================================================================================================

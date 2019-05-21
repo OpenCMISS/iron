@@ -125,7 +125,7 @@ CONTAINS
     IF(ASSOCIATED(rhsVector)) CALL FlagError("RHS vector is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
     
-    rhsVector=>solverMatrices%RHS_VECTOR
+    rhsVector=>solverMatrices%rhsVector
     IF(.NOT.ASSOCIATED(rhsVector)) THEN
       CALL FlagError("The RHS vector is not associated for the solver matrices.",err,error,*999)
     ENDIF
@@ -188,7 +188,7 @@ CONTAINS
     IF(ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solverMatrices)) CALL FlagError("Solver matrices is not associated.",err,error,*999)
 
-    solverMapping=>solverMatrices%SOLVER_MAPPING
+    solverMapping=>solverMatrices%solverMapping
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver matrices solver mapping is not associated.",err,error,*999)
       
     EXITS("SolverMatrices_SolverMappingGet")

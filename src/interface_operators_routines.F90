@@ -54,7 +54,7 @@ MODULE INTERFACE_OPERATORS_ROUTINES
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE INTERFACE_EQUATIONS_ROUTINES
   USE INTERFACE_MAPPING_ROUTINES
-  USE INTERFACE_MATRICES_ROUTINES
+  USE InterfaceMatricesRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
@@ -125,11 +125,11 @@ CONTAINS
     ENTERS("FieldContinuity_FiniteElementCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FLAG_error("Interface condition is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(interfaceCondition%INTERFACE_EQUATIONS)) CALL FLAG_error("Interface equations is not associated." &
+    IF(.NOT.ASSOCIATED(interfaceCondition%interfaceEquations)) CALL FLAG_error("Interface equations is not associated." &
       & ,err,error,*999)
     IF(.NOT.ASSOCIATED(interfaceCondition%INTERFACE)) CALL FLAG_error("Interface is not associated.",err,error,*999)
 
-    interfaceEquations=>interfaceCondition%INTERFACE_EQUATIONS
+    interfaceEquations=>interfaceCondition%interfaceEquations
 
     SELECT CASE(interfaceCondition%METHOD)
 
@@ -159,15 +159,15 @@ CONTAINS
         ENDSELECT
         !Integrate using the interface quadrature scheme
         interfaceQuadratureScheme=>interfaceGeometricBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-        lagrangeVariable=>interfaceEquations%INTERFACE_MAPPING%LAGRANGE_VARIABLE
+        lagrangeVariable=>interfaceEquations%interfaceMapping%lagrangeVariable
         lagrangeVariableType=lagrangeVariable%variableType
         !Get element interpolation parameters from the first geometric interpolation set (to get Jacobian for interface surface integral)
         CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,interfaceInterpolation% &
           & GEOMETRIC_INTERPOLATION(1)%interpolationParameters(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
         !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
         matrixCoefficient=1.0_DP
-        DO coupledMeshIdx=1,interfaceEquations%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-          IF(interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%UPDATE_MATRIX) THEN
+        DO coupledMeshIdx=1,interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices
+          IF(interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%updateMatrix) THEN
             !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
             IF(coupledMeshIdx>1) THEN
               matrixCoefficient=-1.0_DP
@@ -177,9 +177,9 @@ CONTAINS
             elementConnectivity=>interfaceCondition%INTERFACE%meshConnectivity%elementConnectivity(elementNumber,coupledMeshIdx)
             coupledElementNumber=elementConnectivity%coupledElementNumber
             interfaceMatrixVariable=> &
-              & interfaceEquations%INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(coupledMeshIdx)%VARIABLE
+              & interfaceEquations%interfaceMapping%interfaceMatrixRowsToVarMaps(coupledMeshIdx)%VARIABLE
             coupledMeshVariableType=interfaceMatrixVariable%variableType
-            interfaceElementMatrix=>interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%ELEMENT_MATRIX
+            interfaceElementMatrix=>interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%elementMatrix
             interfaceConnectivityBasis=>interfaceCondition%INTERFACE%meshConnectivity%BASIS
 
             !coupledMeshDependentInterpolation=>interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)% &
@@ -200,7 +200,7 @@ CONTAINS
               rwg=interfaceInterpolation%GEOMETRIC_INTERPOLATION(1)%interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR% &
                 & JACOBIAN*interfaceQuadratureScheme%GAUSS_WEIGHTS(GaussPoint)
               IF(interfaceCondition%METHOD==INTERFACE_CONDITION_PENALTY_METHOD .AND. &
-                  & coupledMeshIdx==interfaceEquations%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
+                  & coupledMeshIdx==interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices) THEN
                 CALL FIELD_INTERPOLATE_GAUSS(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,GaussPoint,interfaceInterpolation% &
                   & PENALTY_INTERPOLATION(1)%interpolatedPoint(FIELD_U_VARIABLE_TYPE)%PTR,err,error,*999)
                 rowIdx=0
@@ -324,7 +324,7 @@ CONTAINS
             !\todo check if scale factor adjustments are already made elsewhere eg when calculating the interface matrix contribution to the residual for non-linear problems
             !\todo update looping of variables/components for non-zero matrix elements as done above 
             IF(interfaceCondition%METHOD==INTERFACE_CONDITION_PENALTY_METHOD .AND. &
-              & coupledMeshIdx==interfaceEquations%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
+              & coupledMeshIdx==interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices) THEN
               !Scale factor adjustment for the Lagrange Variable (columns)
               IF(interfaceDependentField%SCALINGS%scalingType/=FIELD_NO_SCALING) THEN
                 CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber, &
@@ -414,7 +414,7 @@ CONTAINS
          
           !Calculate PGSMI, update interface matrices with PGSMI, and update scale factors
           DO coupledMeshIdx=1,interface%numberOfCoupledMeshes
-            IF(interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%UPDATE_MATRIX) THEN
+            IF(interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%updateMatrix) THEN
               numberOfMatrixCoupledElements=pointsConnectivity%coupledElements(interfaceElementNumber,coupledMeshIdx)% &
                 & numberOfCoupledElements
               numberOfCoupledMeshXi=interface%coupledMeshes(coupledMeshIdx)%PTR%numberOfDimensions
@@ -424,7 +424,7 @@ CONTAINS
                 & DEPENDENT%DEPENDENT_FIELD
 
               numberOfCoupledMeshGeoComp=coupledMeshGeometricField%VARIABLES(FIELD_U_VARIABLE_TYPE)%numberOfComponents
-              interfaceElementMatrix=>interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%ELEMENT_MATRIX
+              interfaceElementMatrix=>interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%elementMatrix
               !mesh component number is the same for all geometric components in elasticity problems
               meshComponentNumber=coupledMeshDependentField%VARIABLES(FIELD_U_VARIABLE_TYPE)%COMPONENTS(1)%meshComponentNumber
               DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
@@ -484,7 +484,7 @@ CONTAINS
                 ENDDO !dataPointIdx
               ENDIF !.NOT. FIELD_NO_SCALING
 
-            ENDIF !UPDATE_MATRIX
+            ENDIF !updateMatrix
           ENDDO !coupledMeshIdx
         ELSE
           CALL FlagError("Interface points connectivity is not associated.",err,error,*999)
@@ -537,7 +537,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: penaltyVariable
     TYPE(BasisType), POINTER :: coupledMeshDependentBasis
     TYPE(ElementMatrixType), POINTER :: interfaceElementMatrix
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: penaltyMatrix
+    TYPE(InterfaceMatrixType), POINTER :: penaltyMatrix
     INTEGER(INTG) :: meshComponentNumber,numberOfCoupledMeshGeoComp,numberOfInterfaceMeshXi,numberOfCoupledMeshXi, &
       & numberOfMatrixCoupledElements,localDof
     INTEGER(INTG) :: dataPointIdx,coupledMeshIdx,xiIdx,localElementNumber,localFaceLineNumber,matrixElementIdx,rowComponentIdx, &
@@ -555,7 +555,7 @@ CONTAINS
     ENTERS("FrictionlessContact_FiniteElementCalculate",err,error,*999)
     
     IF(ASSOCIATED(interfaceCondition)) THEN
-      interfaceEquations=>interfaceCondition%INTERFACE_EQUATIONS
+      interfaceEquations=>interfaceCondition%interfaceEquations
       IF(ASSOCIATED(interfaceEquations)) THEN
         interface=>interfaceCondition%INTERFACE
         IF(ASSOCIATED(interface)) THEN
@@ -689,7 +689,7 @@ CONTAINS
                 
                 !Calculate PGSMI, update interface matrices with PGSMI, and update scale factors
                 DO coupledMeshIdx=1,interface%numberOfCoupledMeshes
-                  IF(interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%UPDATE_MATRIX) THEN
+                  IF(interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%updateMatrix) THEN
                     numberOfMatrixCoupledElements=pointsConnectivity%coupledElements(interfaceElementNumber,coupledMeshIdx)% &
                       & numberOfCoupledElements
                     numberOfCoupledMeshXi=interface%coupledMeshes(coupledMeshIdx)%PTR%numberOfDimensions
@@ -697,7 +697,7 @@ CONTAINS
                       & geometricField%variableTypeMap(FIELD_U_VARIABLE_TYPE)%PTR%numberOfComponents
                     coupledMeshDependentField=>interfaceCondition%DEPENDENT%EQUATIONS_SETS(coupledMeshIdx)%PTR% &
                       & DEPENDENT%DEPENDENT_FIELD
-                    interfaceElementMatrix=>interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%ELEMENT_MATRIX
+                    interfaceElementMatrix=>interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%elementMatrix
                     DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
                       globalDataPointNumber=decompositionElementData%dataIndices(dataPointIdx)%globalNumber
                       !\todo: Allow the user to choose gap tolerance or default to zero tolerance (currently commented out).  
@@ -740,9 +740,9 @@ CONTAINS
                       !ENDIF !gaps(dataPointIdx)>ZERO_TOLERANCE
                     ENDDO !dataPointIdx
 
-                    IF(interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%FIRST_ASSEMBLY) &
-                      & interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%FIRST_ASSEMBLY=.FALSE.
-                  ENDIF !UPDATE_MATRIX
+                    IF(interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%firstAssembly) &
+                      & interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%firstAssembly=.FALSE.
+                  ENDIF !updateMatrix
                 ENDDO !coupledMeshIdx
                 
                 !###################################################################################################################
@@ -760,10 +760,10 @@ CONTAINS
                   IF(ASSOCIATED(interfacePenalty)) THEN
                     penaltyField=>interfacePenalty%PENALTY_FIELD
                     IF(ASSOCIATED(penaltyField)) THEN
-                      penaltyMatrix=>interfaceEquations%INTERFACE_MATRICES%MATRICES(interfaceEquations% &
-                        & INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES)%PTR
+                      penaltyMatrix=>interfaceEquations%interfaceMatrices%MATRICES(interfaceEquations% &
+                        & interfaceMatrices%numberOfInterfaceMatrices)%ptr
                       IF(ASSOCIATED(penaltyMatrix)) THEN
-                        IF(penaltyMatrix%FIRST_ASSEMBLY .AND. penaltyMatrix%UPDATE_MATRIX) THEN
+                        IF(penaltyMatrix%firstAssembly .AND. penaltyMatrix%updateMatrix) THEN
                           NULLIFY(penaltyVariable)
                           CALL Field_VariableGet(penaltyField,FIELD_U_VARIABLE_TYPE,penaltyVariable,err,error,*999)
                           DO componentIdx=1,penaltyVariable%numberOfComponents
@@ -772,7 +772,7 @@ CONTAINS
                               CALL FIELD_PARAMETER_SET_GET_CONSTANT(penaltyField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                 & componentIdx,contactStiffness,err,error,*999)
                               DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
-                                penaltyMatrix%ELEMENT_MATRIX%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
+                                penaltyMatrix%elementMatrix%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
                               ENDDO !dataPointIdx
                             CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
                               CALL FieldVariable_LocalElementDOFGet(penaltyVariable,interfaceElementNumber, &
@@ -780,7 +780,7 @@ CONTAINS
                                CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(penaltyField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                 & localDof,contactStiffness,err,error,*999)
                               DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
-                                penaltyMatrix%ELEMENT_MATRIX%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
+                                penaltyMatrix%elementMatrix%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
                               ENDDO !dataPointIdx
                             CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
                               DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
@@ -788,7 +788,7 @@ CONTAINS
                                   & localDof,err,error,*999)
                                 CALL FIELD_PARAMETER_SET_GET_LOCAL_DOF(penaltyField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
                                   & localDof,contactStiffness,err,error,*999)
-                                penaltyMatrix%ELEMENT_MATRIX%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
+                                penaltyMatrix%elementMatrix%matrix(dataPointIdx,dataPointIdx)=-(1.0_DP/contactStiffness)
                               ENDDO !dataPointIdx
                             CASE DEFAULT
                               localError="The interpolation type for component number "// &
@@ -886,11 +886,11 @@ CONTAINS
     ENTERS("SolidFluidOperator_FiniteElementCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(.NOT.ASSOCIATED(interfaceCondition%INTERFACE_EQUATIONS)) CALL FlagError("Interface equations is not associated." &
+    IF(.NOT.ASSOCIATED(interfaceCondition%interfaceEquations)) CALL FlagError("Interface equations is not associated." &
       & ,err,error,*999)
     IF(.NOT.ASSOCIATED(interfaceCondition%INTERFACE)) CALL FlagError("Interface is not associated.",err,error,*999)
 
-    interfaceEquations=>interfaceCondition%INTERFACE_EQUATIONS
+    interfaceEquations=>interfaceCondition%interfaceEquations
 
     !===============================================================================================================================
     !Select Interface method
@@ -912,8 +912,8 @@ CONTAINS
           & decomposition%meshComponentNumber)%PTR%TOPOLOGY%ELEMENTS%ELEMENTS(elementNumber)%BASIS
         !Integrate using the interface quadrature scheme
         interfaceQuadratureScheme=>interfaceGeometricBasis%QUADRATURE%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%PTR
-        lagrangeVariable=>interfaceEquations%INTERFACE_MAPPING%LAGRANGE_VARIABLE
-        !lagrangeVariableNumberOfComponents=>interfaceEquations%INTERFACE_MAPPING%LAGRANGE_VARIABLE%numberOfComponents
+        lagrangeVariable=>interfaceEquations%interfaceMapping%lagrangeVariable
+        !lagrangeVariableNumberOfComponents=>interfaceEquations%interfaceMapping%lagrangeVariable%numberOfComponents
         lagrangeVariableType=lagrangeVariable%variableType
         !Get element interpolation parameters from the first geometric interpolation set (to get Jacobian for interface surface integral)
         CALL FIELD_INTERPOLATION_PARAMETERS_ELEMENT_GET(FIELD_VALUES_SET_TYPE,elementNumber,interfaceInterpolation% &
@@ -921,8 +921,8 @@ CONTAINS
         !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
         matrixCoefficient=1.0_DP
         !Loop over interface matrices (1st solid, 2nd fluid)
-        DO coupledMeshIdx=1,interfaceEquations%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-          IF(interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%UPDATE_MATRIX) THEN
+        DO coupledMeshIdx=1,interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices
+          IF(interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%updateMatrix) THEN
             !\todo Use matrix coefficients in solver routines when assembling solver matrices instead of multiplying them here
             IF(coupledMeshIdx>1) THEN
               matrixCoefficient=-1.0_DP
@@ -932,9 +932,9 @@ CONTAINS
             elementConnectivity=>interfaceCondition%INTERFACE%meshConnectivity%elementConnectivity(elementNumber,coupledMeshIdx)
             coupledElementNumber=elementConnectivity%coupledElementNumber
             interfaceMatrixVariable=> &
-              & interfaceEquations%INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(coupledMeshIdx)%VARIABLE
+              & interfaceEquations%interfaceMapping%interfaceMatrixRowsToVarMaps(coupledMeshIdx)%VARIABLE
             coupledMeshVariableType=interfaceMatrixVariable%variableType
-            interfaceElementMatrix=>interfaceEquations%INTERFACE_MATRICES%MATRICES(coupledMeshIdx)%PTR%ELEMENT_MATRIX
+            interfaceElementMatrix=>interfaceEquations%interfaceMatrices%MATRICES(coupledMeshIdx)%PTR%elementMatrix
             interfaceConnectivityBasis=>interfaceCondition%INTERFACE%meshConnectivity%BASIS
 
             !coupledMeshDependentInterpolation=>interfaceEquations%INTERPOLATION%VARIABLE_INTERPOLATION(coupledMeshIdx)% &
@@ -960,7 +960,7 @@ CONTAINS
               rwg=interfaceInterpolation%GEOMETRIC_INTERPOLATION(1)%interpolatedPointMetrics(FIELD_U_VARIABLE_TYPE)%PTR% &
                 & JACOBIAN*interfaceQuadratureScheme%GAUSS_WEIGHTS(GaussPoint)
               IF(interfaceCondition%METHOD==INTERFACE_CONDITION_PENALTY_METHOD .AND. &
-                  & coupledMeshIdx==interfaceEquations%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
+                  & coupledMeshIdx==interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices) THEN
                 CALL FlagError("Not implemented.",err,error,*999)
               ELSE
                 !===================================================================================================================
@@ -1086,7 +1086,7 @@ CONTAINS
             !\todo check if scale factor adjustments are already made elsewhere eg when calculating the interface matrix contribution to the residual for non-linear problems
             !\todo update looping of variables/components for non-zero matrix elements as done above 
             IF(interfaceCondition%METHOD==INTERFACE_CONDITION_PENALTY_METHOD .AND. &
-              & coupledMeshIdx==interfaceEquations%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
+              & coupledMeshIdx==interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices) THEN
               CALL FlagError("Not implemented.",err,error,*999)
             ELSE
               !Scale factor adjustment for the Lagrange Variable (columns)

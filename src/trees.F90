@@ -1565,11 +1565,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Function variable
-    TYPE(TreeNodeType), POINTER :: Tree_Successor !<On return the pointer to the successor of X or NIL if no sucessor exits
+    TYPE(TreeNodeType), POINTER :: tree_Successor !<On return the pointer to the successor of X or NIL if no sucessor exits
     !Local Variables
     TYPE(TreeNodeType), POINTER :: y
 
-    NULLIFY(Tree_Successor)
+    NULLIFY(tree_Successor)
     
     ENTERS("Tree_Successor",err,error,*999)
 
@@ -1581,7 +1581,7 @@ CONTAINS
       DO WHILE(.NOT.ASSOCIATED(y%left,tree%nil))
         y=>y%left
       ENDDO
-      Tree_Successor=>y
+      tree_Successor=>y
       EXITS("Tree_Successor")
       RETURN
     ELSE
@@ -1591,9 +1591,9 @@ CONTAINS
         y=>y%parent
       ENDDO
       IF(ASSOCIATED(y,tree%root)) THEN
-        Tree_Successor=>tree%nil
+        tree_Successor=>tree%nil
       ELSE
-        Tree_Successor=>y
+        tree_Successor=>y
       ENDIF
     ENDIF
 
@@ -1617,7 +1617,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Tree_ValueInitialiseSet",err,error,*999)
 

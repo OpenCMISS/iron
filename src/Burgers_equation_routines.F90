@@ -1480,8 +1480,8 @@ CONTAINS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
               !Loop over all the equation sets and set the appropriate field variable type BCs and
               !the source field associated with each equation set
-              DO eqnset_idx=1,SOLVER_equations%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+              DO eqnset_idx=1,SOLVER_equations%solverMapping%NUMBER_OF_EQUATIONS_SETS
+                SOLVER_MAPPING=>SOLVER_equations%solverMapping
                 EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(eqnset_idx)%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
                   EQUATIONS_SET=>equations%equationsSet
@@ -1785,7 +1785,7 @@ CONTAINS
                 & CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,err,error,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Make sure the equations sets are up to date
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -1808,7 +1808,7 @@ CONTAINS
                 & CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,err,error,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Make sure the equations sets are up to date
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS

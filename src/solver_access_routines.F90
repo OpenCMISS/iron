@@ -1482,7 +1482,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(solverEquations)) CALL FlagError("Solver equations is not associated.",err,error,*999)
     IF(.NOT.solverEquations%SOLVER_EQUATIONS_FINISHED) CALL FlagError("Solver equations has not been finished.",err,error,*999)
 
-    solverMapping=>solverEquations%SOLVER_MAPPING
+    solverMapping=>solverEquations%solverMapping
     IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver equations solver mapping is not associated.",err,error,*999)
  
     EXITS("SolverEquations_SolverMappingGet")

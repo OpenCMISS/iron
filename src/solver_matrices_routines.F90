@@ -48,6 +48,7 @@ MODULE SOLVER_MATRICES_ROUTINES
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE INTERFACE_CONDITIONS_CONSTANTS
+  USE InterfaceMatricesAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
@@ -174,27 +175,27 @@ CONTAINS
       ELSE
         SOLVER_EQUATIONS=>SOLVER_MATRICES%SOLVER_EQUATIONS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-          SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+          SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
           IF(ASSOCIATED(SOLVER_MAPPING)) THEN
             !Now create the individual solver matrices
-            ROW_DOMAIN_MAP=>SOLVER_MAPPING%ROW_DOFS_MAPPING
+            ROW_DOMAIN_MAP=>SOLVER_MAPPING%rowDOFsMapping
             IF(ASSOCIATED(ROW_DOMAIN_MAP)) THEN
               DO matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
                 SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(matrix_idx)%PTR
                 IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-                  COLUMN_DOMAIN_MAP=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(matrix_idx)%COLUMN_DOFS_MAPPING
+                  COLUMN_DOMAIN_MAP=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(matrix_idx)%columnDOFSMapping
                   IF(ASSOCIATED(COLUMN_DOMAIN_MAP)) THEN
                     !!Create the distributed solver matrix
                     CALL DistributedMatrix_CreateStart(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,SOLVER_MATRICES%MATRICES(matrix_idx)% &
                          & PTR%MATRIX,ERR,ERROR,*999)
                     CALL DistributedMatrix_LibraryTypeSet(SOLVER_MATRIX%MATRIX,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
                     CALL DistributedMatrix_DataTypeSet(SOLVER_MATRIX%MATRIX,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                    CALL DistributedMatrix_StorageTypeSet(SOLVER_MATRIX%MATRIX,SOLVER_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
+                    CALL DistributedMatrix_StorageTypeSet(SOLVER_MATRIX%MATRIX,SOLVER_MATRIX%storageType,ERR,ERROR,*999)
                     CALL DistributedMatrix_TransposeTypeSet(SOLVER_MATRIX%MATRIX,DISTRIBUTED_MATRIX_NO_TRANSPOSE_REQUIRED, &
                       & err,error,*999)
                     !Calculate and set the matrix structure/sparsity pattern
-                    IF(SOLVER_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
-                      & SOLVER_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
+                    IF(SOLVER_MATRIX%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
+                      & SOLVER_MATRIX%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
                       CALL SOLVER_MATRIX_STRUCTURE_CALCULATE(SOLVER_MATRIX,NUMBER_OF_NON_ZEROS,ROW_INDICES, &
                         & COLUMN_INDICES,ERR,ERROR,*999)                  
                       CALL DistributedMatrix_NumberOfNonZerosSet(SOLVER_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS, &
@@ -230,10 +231,10 @@ CONTAINS
               ENDIF
 !!TODO: what to do if there is no RHS
               !Allocate the distributed rhs vector
-              CALL DistributedVector_CreateStart(ROW_DOMAIN_MAP,SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
-              CALL DistributedVector_LibraryTypeSet(SOLVER_MATRICES%RHS_VECTOR,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
-              CALL DistributedVector_DataTypeSet(SOLVER_MATRICES%RHS_VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-              CALL DistributedVector_CreateFinish(SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
+              CALL DistributedVector_CreateStart(ROW_DOMAIN_MAP,SOLVER_MATRICES%rhsVector,ERR,ERROR,*999)
+              CALL DistributedVector_LibraryTypeSet(SOLVER_MATRICES%rhsVector,SOLVER_MATRICES%matrixLibraryType,ERR,ERROR,*999)
+              CALL DistributedVector_DataTypeSet(SOLVER_MATRICES%rhsVector,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
+              CALL DistributedVector_CreateFinish(SOLVER_MATRICES%rhsVector,ERR,ERROR,*999)
               !Finish up
               SOLVER_MATRICES%SOLVER_MATRICES_FINISHED=.TRUE.
             ELSE
@@ -354,7 +355,7 @@ CONTAINS
         DEALLOCATE(SOLVER_MATRICES%MATRICES)
       ENDIF
       IF(ASSOCIATED(SOLVER_MATRICES%RESIDUAL)) CALL DistributedVector_Destroy(SOLVER_MATRICES%RESIDUAL,ERR,ERROR,*999)
-      IF(ASSOCIATED(SOLVER_MATRICES%RHS_VECTOR)) CALL DistributedVector_Destroy(SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
+      IF(ASSOCIATED(SOLVER_MATRICES%rhsVector)) CALL DistributedVector_Destroy(SOLVER_MATRICES%rhsVector,ERR,ERROR,*999)
       DEALLOCATE(SOLVER_MATRICES)
     ENDIF
         
@@ -387,15 +388,15 @@ CONTAINS
       IF(ASSOCIATED(SOLVER_EQUATIONS%SOLVER_MATRICES)) THEN
         CALL FlagError("Solver matrices is already associated for this solver equations.",ERR,ERROR,*998)
       ELSE
-        SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+        SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
           ALLOCATE(SOLVER_EQUATIONS%SOLVER_MATRICES,STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate solver matrices.",ERR,ERROR,*999)
           SOLVER_EQUATIONS%SOLVER_MATRICES%SOLVER_EQUATIONS=>SOLVER_EQUATIONS
           SOLVER_EQUATIONS%SOLVER_MATRICES%SOLVER_MATRICES_FINISHED=.FALSE.
-          SOLVER_EQUATIONS%SOLVER_MATRICES%SOLVER_MAPPING=>SOLVER_MAPPING
-          SOLVER_EQUATIONS%SOLVER_MATRICES%NUMBER_OF_ROWS=SOLVER_MAPPING%NUMBER_OF_ROWS
-          SOLVER_EQUATIONS%SOLVER_MATRICES%NUMBER_OF_GLOBAL_ROWS=SOLVER_MAPPING%NUMBER_OF_GLOBAL_ROWS
+          SOLVER_EQUATIONS%SOLVER_MATRICES%solverMapping=>SOLVER_MAPPING
+          SOLVER_EQUATIONS%SOLVER_MATRICES%numberOfRows=SOLVER_MAPPING%numberOfRows
+          SOLVER_EQUATIONS%SOLVER_MATRICES%numberOfGlobalRows=SOLVER_MAPPING%numberOfGlobalRows
           SOLVER_EQUATIONS%SOLVER_MATRICES%solverLibraryType=0
           SOLVER_EQUATIONS%SOLVER_MATRICES%matrixLibraryType=0
           SOLVER_EQUATIONS%SOLVER_MATRICES%NUMBER_OF_MATRICES=SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
@@ -442,7 +443,7 @@ CONTAINS
           ENDIF
           NULLIFY(SOLVER_EQUATIONS%SOLVER_MATRICES%RESIDUAL)
           SOLVER_EQUATIONS%SOLVER_MATRICES%UPDATE_RHS_VECTOR=.TRUE.
-          NULLIFY(SOLVER_EQUATIONS%SOLVER_MATRICES%RHS_VECTOR)
+          NULLIFY(SOLVER_EQUATIONS%SOLVER_MATRICES%rhsVector)
         ELSE
           CALL FlagError("Solver equations solver mapping is not associated",ERR,ERROR,*999)
         ENDIF
@@ -568,9 +569,9 @@ CONTAINS
           & SELECTION_TYPE==SOLVER_MATRICES_NONLINEAR_ONLY.OR. &
           & SELECTION_TYPE==SOLVER_MATRICES_RHS_ONLY.OR. &
           & SELECTION_TYPE==SOLVER_MATRICES_RHS_RESIDUAL_ONLY) THEN
-          IF(ASSOCIATED(SOLVER_MATRICES%RHS_VECTOR)) THEN
+          IF(ASSOCIATED(SOLVER_MATRICES%rhsVector)) THEN
             CALL WriteString(ID,"Solver RHS vector:",ERR,ERROR,*999)     
-            CALL DistributedVector_Output(ID,SOLVER_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
+            CALL DistributedVector_Output(ID,SOLVER_MATRICES%rhsVector,ERR,ERROR,*999)
           ENDIF
         ENDIF
       ELSE
@@ -611,7 +612,7 @@ CONTAINS
           DO matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
             SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(matrix_idx)%PTR
             IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-              STORAGE_TYPE(matrix_idx)=SOLVER_MATRIX%STORAGE_TYPE
+              STORAGE_TYPE(matrix_idx)=SOLVER_MATRIX%storageType
             ELSE
               CALL FlagError("Solver matrix is not associated.",ERR,ERROR,*999)
             ENDIF
@@ -664,19 +665,19 @@ CONTAINS
             IF(ASSOCIATED(SOLVER_MATRIX)) THEN
               SELECT CASE(STORAGE_TYPE(matrix_idx))
               CASE(MATRIX_BLOCK_STORAGE_TYPE)
-                SOLVER_MATRIX%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
+                SOLVER_MATRIX%storageType=MATRIX_BLOCK_STORAGE_TYPE
               CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
-                SOLVER_MATRIX%STORAGE_TYPE=MATRIX_DIAGONAL_STORAGE_TYPE        
+                SOLVER_MATRIX%storageType=MATRIX_DIAGONAL_STORAGE_TYPE        
               CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                SOLVER_MATRIX%STORAGE_TYPE=MATRIX_COLUMN_MAJOR_STORAGE_TYPE
+                SOLVER_MATRIX%storageType=MATRIX_COLUMN_MAJOR_STORAGE_TYPE
               CASE(MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                SOLVER_MATRIX%STORAGE_TYPE=MATRIX_ROW_MAJOR_STORAGE_TYPE
+                SOLVER_MATRIX%storageType=MATRIX_ROW_MAJOR_STORAGE_TYPE
               CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                SOLVER_MATRIX%STORAGE_TYPE=MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+                SOLVER_MATRIX%storageType=MATRIX_COMPRESSED_ROW_STORAGE_TYPE
               CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                SOLVER_MATRIX%STORAGE_TYPE=MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
+                SOLVER_MATRIX%storageType=MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
               CASE(MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                SOLVER_MATRIX%STORAGE_TYPE=MATRIX_ROW_COLUMN_STORAGE_TYPE
+                SOLVER_MATRIX%storageType=MATRIX_ROW_COLUMN_STORAGE_TYPE
               CASE DEFAULT
                 LOCAL_ERROR="The specified storage type of "//TRIM(NUMBER_TO_VSTRING(STORAGE_TYPE(matrix_idx),"*",ERR,ERROR))// &
                   & " for the matrix number "//TRIM(NUMBER_TO_VSTRING(matrix_idx,"*",ERR,ERROR))//" is invalid."
@@ -822,7 +823,7 @@ CONTAINS
           SOLVER_MATRICES=>SOLVER_MATRIX%SOLVER_MATRICES
           IF(ASSOCIATED(SOLVER_MATRICES)) THEN
             IF(SOLVER_MATRICES%SOLVER_MATRICES_FINISHED) THEN
-              SOLVER_MAPPING=>SOLVER_MATRICES%SOLVER_MAPPING
+              SOLVER_MAPPING=>SOLVER_MATRICES%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 linearMatrices=>equationsMatrix%linearMatrices
                 dynamicMatrices=>equationsMatrix%dynamicMatrices
@@ -837,7 +838,7 @@ CONTAINS
                       IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS) THEN
                         EQUATIONS_TO_SOLVER_MAP=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
                           & EQUATIONS_TO_SOLVER_MATRIX_MAPS_EM(equationsMatrix%matrixNumber)% &
-                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS(SOLVER_MATRIX%MATRIX_NUMBER)%PTR
+                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS(SOLVER_MATRIX%matrixNumber)%PTR
                         IF(ASSOCIATED(EQUATIONS_TO_SOLVER_MAP)) THEN
                           SOLVER_DISTRIBUTED_MATRIX=>SOLVER_MATRIX%MATRIX
                           IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
@@ -907,14 +908,14 @@ CONTAINS
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix
     INTEGER(INTG), INTENT(IN) :: interface_condition_idx !<The interface_condition_idx index in the solver mapping that contains the interface matrix to add
     REAL(DP), INTENT(IN) :: ALPHA(2) !<The multiplicative factor for the interface matrix
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX !<A pointer to the interface matrix to add    
+    TYPE(InterfaceMatrixType), POINTER :: INTERFACE_MATRIX !<A pointer to the interface matrix to add    
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
     !Local Variables
     INTEGER(INTG), POINTER :: COLUMN_INDICES(:),ROW_INDICES(:)
     REAL(DP), POINTER :: INTERFACE_MATRIX_DATA(:)
     TYPE(DistributedMatrixType), POINTER :: INTERFACE_DISTRIBUTED_MATRIX,SOLVER_DISTRIBUTED_MATRIX
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
+    TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
     TYPE(INTERFACE_TO_SOLVER_MAPS_TYPE), POINTER :: INTERFACE_TO_SOLVER_MAP
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -932,60 +933,53 @@ CONTAINS
           SOLVER_MATRICES=>SOLVER_MATRIX%SOLVER_MATRICES
           IF(ASSOCIATED(SOLVER_MATRICES)) THEN
             IF(SOLVER_MATRICES%SOLVER_MATRICES_FINISHED) THEN
-              SOLVER_MAPPING=>SOLVER_MATRICES%SOLVER_MAPPING
+              SOLVER_MAPPING=>SOLVER_MATRICES%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                INTERFACE_MATRICES=>INTERFACE_MATRIX%INTERFACE_MATRICES
-                IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-                  IF(INTERFACE_MATRICES%INTERFACE_MATRICES_FINISHED) THEN
-                    IF(interface_condition_idx>0.AND.interface_condition_idx<=SOLVER_MAPPING%numberOfInterfaceConditions) THEN
-                      INTERFACE_TO_SOLVER_MAP=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                        & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(INTERFACE_MATRIX%MATRIX_NUMBER)%INTERFACE_TO_SOLVER_MATRIX_MAPS( &
-                        & SOLVER_MATRIX%MATRIX_NUMBER)%PTR
-                      IF(ASSOCIATED(INTERFACE_TO_SOLVER_MAP)) THEN
-                        SOLVER_DISTRIBUTED_MATRIX=>SOLVER_MATRIX%MATRIX
-                        IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
-                          INTERFACE_DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX
-                          IF(ASSOCIATED(INTERFACE_DISTRIBUTED_MATRIX)) THEN
+                INTERFACE_MATRICES=>INTERFACE_MATRIX%interfaceMatrices
+                CALL InterfaceMatrices_AssertIsFinished(INTERFACE_MATRICES,err,error,*999)
+                IF(interface_condition_idx>0.AND.interface_condition_idx<=SOLVER_MAPPING%numberOfInterfaceConditions) THEN
+                  INTERFACE_TO_SOLVER_MAP=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
+                    & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(INTERFACE_MATRIX%matrixNumber)%INTERFACE_TO_SOLVER_MATRIX_MAPS( &
+                    & SOLVER_MATRIX%matrixNumber)%PTR
+                  IF(ASSOCIATED(INTERFACE_TO_SOLVER_MAP)) THEN
+                    SOLVER_DISTRIBUTED_MATRIX=>SOLVER_MATRIX%MATRIX
+                    IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
+                      INTERFACE_DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX
+                      IF(ASSOCIATED(INTERFACE_DISTRIBUTED_MATRIX)) THEN
+                        CALL DistributedMatrix_MatrixCoupleAdd(SOLVER_DISTRIBUTED_MATRIX,SOLVER_MAPPING% &
+                          & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
+                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(INTERFACE_MATRIX%matrixNumber)% &
+                          & interfaceRowToSolverRowsMap,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP( &
+                          & interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM( &
+                          & SOLVER_MATRIX%matrixNumber)%interfaceColToSolverColsMap,alpha(1),INTERFACE_DISTRIBUTED_MATRIX, &
+                          & .FALSE.,ERR,ERROR,*999)                           
+                        IF(INTERFACE_MATRIX%hasTranspose) THEN
+                          IF(ABS(ALPHA(2))>ZERO_TOLERANCE) THEN
+                            INTERFACE_DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%matrixTranspose
                             CALL DistributedMatrix_MatrixCoupleAdd(SOLVER_DISTRIBUTED_MATRIX,SOLVER_MAPPING% &
                               & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                              & INTERFACE_TO_SOLVER_MATRIX_MAPS_IM(INTERFACE_MATRIX%MATRIX_NUMBER)% &
-                              & interfaceRowToSolverRowsMap,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP( &
-                              & interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM( &
-                              & SOLVER_MATRIX%MATRIX_NUMBER)%interfaceColToSolverColsMap,alpha(1),INTERFACE_DISTRIBUTED_MATRIX, &
-                              & .FALSE.,ERR,ERROR,*999)                           
-                            IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                              IF(ABS(ALPHA(2))>ZERO_TOLERANCE) THEN
-                                INTERFACE_DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX_TRANSPOSE
-                                CALL DistributedMatrix_MatrixCoupleAdd(SOLVER_DISTRIBUTED_MATRIX,SOLVER_MAPPING% &
-                                  & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                                  & interfaceColToSolverRowsMap,INTERFACE_TO_SOLVER_MAP%interfaceRowToSolverColsMap, &
-                                  & alpha(2),INTERFACE_DISTRIBUTED_MATRIX,.FALSE.,ERR,ERROR,*999)
-                              ELSE
-                                CALL FlagError("The transpose interface matrix distributed matrix is not associated", &
-                                  & ERR,ERROR,*999)
-                              ENDIF
-                            ENDIF !Interface matrix transpose
+                              & interfaceColToSolverRowsMap,INTERFACE_TO_SOLVER_MAP%interfaceRowToSolverColsMap, &
+                              & alpha(2),INTERFACE_DISTRIBUTED_MATRIX,.FALSE.,ERR,ERROR,*999)
                           ELSE
-                            CALL FlagError("The interface matrix distributed matrix is not associated",ERR,ERROR,*999)
+                            CALL FlagError("The transpose interface matrix distributed matrix is not associated", &
+                              & ERR,ERROR,*999)
                           ENDIF
-                        ELSE
-                          CALL FlagError("Solver matrix distributed matrix is not associated.",ERR,ERROR,*999)
-                        ENDIF
+                        ENDIF !Interface matrix transpose
                       ELSE
-                        CALL FlagError("Interface to solver map is not associated.",ERR,ERROR,*999)
+                        CALL FlagError("The interface matrix distributed matrix is not associated",ERR,ERROR,*999)
                       ENDIF
                     ELSE
-                      LOCAL_ERROR="The specified interface condition index of "// &
-                        & TRIM(NUMBER_TO_VSTRING(interface_condition_idx,"*",ERR,ERROR))// &
-                        & " is invalid. The interface condition index needs to be between 1 and "// &
-                        & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%numberOfInterfaceConditions,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                      CALL FlagError("Solver matrix distributed matrix is not associated.",ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FlagError("Interface matrices have not been finished.",ERR,ERROR,*999)
+                    CALL FlagError("Interface to solver map is not associated.",ERR,ERROR,*999)
                   ENDIF
                 ELSE
-                  CALL FlagError("Interface matrix interface matrices is not associated.",ERR,ERROR,*999)
+                  LOCAL_ERROR="The specified interface condition index of "// &
+                    & TRIM(NUMBER_TO_VSTRING(interface_condition_idx,"*",ERR,ERROR))// &
+                    & " is invalid. The interface condition index needs to be between 1 and "// &
+                    & TRIM(NUMBER_TO_VSTRING(SOLVER_MAPPING%numberOfInterfaceConditions,"*",ERR,ERROR))//"."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ELSE
                 CALL FlagError("Solver matrices solver mapping is not associated.",ERR,ERROR,*999)
@@ -1052,7 +1046,7 @@ CONTAINS
           SOLVER_MATRICES=>SOLVER_MATRIX%SOLVER_MATRICES
           IF(ASSOCIATED(SOLVER_MATRICES)) THEN
             IF(SOLVER_MATRICES%SOLVER_MATRICES_FINISHED) THEN
-              SOLVER_MAPPING=>SOLVER_MATRICES%SOLVER_MAPPING
+              SOLVER_MAPPING=>SOLVER_MATRICES%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 nonlinearMatrices=>jacobianMatrix%nonlinearMatrices
 
@@ -1062,7 +1056,7 @@ CONTAINS
                     IF(vectorMatrices%vectorMatricesFinished) THEN
                       IF(equations_set_idx>0.AND.equations_set_idx<=SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS) THEN
                         JACOBIAN_TO_SOLVER_MAP=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
-                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(SOLVER_MATRIX%MATRIX_NUMBER)%JACOBIAN_TO_SOLVER_MATRIX_MAPS( &
+                          & EQUATIONS_TO_SOLVER_MATRIX_MAPS_SM(SOLVER_MATRIX%matrixNumber)%JACOBIAN_TO_SOLVER_MATRIX_MAPS( &
                           & jacobianMatrix%jacobianNumber)%PTR
                         IF(ASSOCIATED(JACOBIAN_TO_SOLVER_MAP)) THEN
                           SOLVER_DISTRIBUTED_MATRIX=>SOLVER_MATRIX%MATRIX
@@ -1152,8 +1146,8 @@ CONTAINS
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EQUATIONS_TO_SOLVER_MAPS_TYPE), POINTER :: EQUATIONS_TO_SOLVER_MAP
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES    
+    TYPE(InterfaceMatrixType), POINTER :: INTERFACE_MATRIX
+    TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES    
     TYPE(INTERFACE_TO_SOLVER_MAPS_TYPE), POINTER :: INTERFACE_TO_SOLVER_MAP
     TYPE(JACOBIAN_TO_SOLVER_MAP_TYPE), POINTER :: JACOBIAN_TO_SOLVER_MAP
     TYPE(ListPtrType), ALLOCATABLE :: COLUMN_INDICES_LISTS(:)
@@ -1174,9 +1168,9 @@ CONTAINS
             ELSE
               SOLVER_MATRICES=>SOLVER_MATRIX%SOLVER_MATRICES
               IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-                SOLVER_MAPPING=>SOLVER_MATRICES%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_MATRICES%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                  SELECT CASE(SOLVER_MATRIX%STORAGE_TYPE)
+                  SELECT CASE(SOLVER_MATRIX%storageType)
                   CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
                     CALL FlagError("Can not calculate the structure for a block storage matrix.",ERR,ERROR,*999)
                   CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
@@ -1186,7 +1180,7 @@ CONTAINS
                   CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
                     CALL FlagError("Not implemented.",ERR,ERROR,*999)
                   CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                    solver_matrix_idx=SOLVER_MATRIX%MATRIX_NUMBER
+                    solver_matrix_idx=SOLVER_MATRIX%matrixNumber
                     !Find the maximum number of column indices
                     MAX_COLUMN_INDICES=0
                     DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -1297,14 +1291,14 @@ CONTAINS
                       SELECT CASE(INTERFACE_CONDITION%METHOD)
                       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
                         DO interface_matrix_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_INTERFACE_MATRICES
+                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfInterfaceMatrices
                           INTERFACE_TO_SOLVER_MAP=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_conditioN_idx)% &
                             & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS( &
                             & interface_matrix_idx)%PTR
                           IF(ASSOCIATED(INTERFACE_TO_SOLVER_MAP)) THEN
-                            INTERFACE_MATRIX=>INTERFACE_TO_SOLVER_MAP%INTERFACE_MATRIX
+                            INTERFACE_MATRIX=>INTERFACE_TO_SOLVER_MAP%interfaceMatrix
                             IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-                              INTERFACE_MATRICES=>INTERFACE_MATRIX%INTERFACE_MATRICES
+                              INTERFACE_MATRICES=>INTERFACE_MATRIX%interfaceMatrices
                               IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
                                 DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX
                                 IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
@@ -1317,8 +1311,8 @@ CONTAINS
                                 CALL FlagError("Interface matrix interface matrices is not associated.",ERR,ERROR,*999)
                               ENDIF
                               MAX_TRANSPOSE_COLUMNS_PER_ROW=0
-                              IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX_TRANSPOSE
+                              IF(INTERFACE_MATRIX%hasTranspose) THEN
+                                DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%matrixTranspose
                                 IF(ASSOCIATED(DISTRIBUTED_MATRIX)) THEN
                                   CALL DistributedMatrix_MaxColumnsPerRowGet(DISTRIBUTED_MATRIX, &
                                     & MAX_TRANSPOSE_COLUMNS_PER_ROW,ERR,ERROR,*999)
@@ -1346,14 +1340,14 @@ CONTAINS
                       END SELECT
                     ENDDO !interface_condition_idx
                     !Allocate lists
-                    ALLOCATE(COLUMN_INDICES_LISTS(SOLVER_MAPPING%NUMBER_OF_ROWS),STAT=ERR)
+                    ALLOCATE(COLUMN_INDICES_LISTS(SOLVER_MAPPING%numberOfRows),STAT=ERR)
                     IF(ERR/=0) CALL FlagError("Could not allocate column indices lists.",ERR,ERROR,*999)
                     !Allocate row indices
-                    ALLOCATE(ROW_INDICES(SOLVER_MAPPING%NUMBER_OF_ROWS+1),STAT=ERR)
+                    ALLOCATE(ROW_INDICES(SOLVER_MAPPING%numberOfRows+1),STAT=ERR)
                     IF(ERR/=0) CALL FlagError("Could not allocate row indices.",ERR,ERROR,*999)
                     ROW_INDICES(1)=1
                     !Set up the column indicies lists
-                    DO solver_row_number=1,SOLVER_MAPPING%NUMBER_OF_ROWS
+                    DO solver_row_number=1,SOLVER_MAPPING%numberOfRows
                       NULLIFY(COLUMN_INDICES_LISTS(solver_row_number)%PTR)
                       CALL LIST_CREATE_START(COLUMN_INDICES_LISTS(solver_row_number)%PTR,ERR,ERROR,*999)
                       CALL LIST_DATA_TYPE_SET(COLUMN_INDICES_LISTS(solver_row_number)%PTR,LIST_INTG_TYPE,ERR,ERROR,*999)
@@ -1426,12 +1420,12 @@ CONTAINS
                       SELECT CASE(INTERFACE_CONDITION%METHOD)
                       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
                         DO interface_matrix_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_INTERFACE_MATRICES
+                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfInterfaceMatrices
                           INTERFACE_TO_SOLVER_MAP=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_conditioN_idx)% &
                             & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS( &
                             & interface_matrix_idx)%PTR
-                          INTERFACE_MATRIX=>INTERFACE_TO_SOLVER_MAP%INTERFACE_MATRIX
-                          INTERFACE_MATRICES=>INTERFACE_MATRIX%INTERFACE_MATRICES
+                          INTERFACE_MATRIX=>INTERFACE_TO_SOLVER_MAP%interfaceMatrix
+                          INTERFACE_MATRICES=>INTERFACE_MATRIX%interfaceMatrices
                           DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX
 
                           CALL DistributedMatrix_MatrixStructureCoupleCalculate(DISTRIBUTED_MATRIX,.FALSE.,SOLVER_MAPPING% &
@@ -1440,8 +1434,8 @@ CONTAINS
                             & interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)% &
                             & interfaceColToSolverColsMap,COLUMN_INDICES_LISTS,ERR,ERROR,*999)
 
-                          IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                            DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%MATRIX_TRANSPOSE
+                          IF(INTERFACE_MATRIX%hasTranspose) THEN
+                            DISTRIBUTED_MATRIX=>INTERFACE_MATRIX%matrixTranspose
 
                             CALL DistributedMatrix_MatrixStructureCoupleCalculate(DISTRIBUTED_MATRIX,.FALSE.,SOLVER_MAPPING% &
                               & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%interfaceColToSolverRowsMap, &
@@ -1461,7 +1455,7 @@ CONTAINS
                       END SELECT                        
                     ENDDO !interface_condition_idx
                     !Loop over the rows to calculate the number of non-zeros and setup the row indicces
-                    DO solver_row_number=1,SOLVER_MAPPING%NUMBER_OF_ROWS
+                    DO solver_row_number=1,SOLVER_MAPPING%numberOfRows
                       CALL LIST_REMOVE_DUPLICATES(COLUMN_INDICES_LISTS(solver_row_number)%PTR,ERR,ERROR,*999)
                       CALL LIST_NUMBER_OF_ITEMS_GET(COLUMN_INDICES_LISTS(solver_row_number)%PTR,NUMBER_OF_COLUMNS,ERR,ERROR,*999)
                       NUMBER_OF_NON_ZEROS=NUMBER_OF_NON_ZEROS+NUMBER_OF_COLUMNS
@@ -1470,7 +1464,7 @@ CONTAINS
                     !Allocate and setup the column locations
                     ALLOCATE(COLUMN_INDICES(NUMBER_OF_NON_ZEROS),STAT=ERR)
                     IF(ERR/=0) CALL FlagError("Could not allocate column indices.",ERR,ERROR,*999)
-                    DO solver_row_number=1,SOLVER_MAPPING%NUMBER_OF_ROWS
+                    DO solver_row_number=1,SOLVER_MAPPING%numberOfRows
                       CALL LIST_DETACH_AND_DESTROY(COLUMN_INDICES_LISTS(solver_row_number)%PTR,NUMBER_OF_COLUMNS,COLUMNS, &
                         & ERR,ERROR,*999)
                       DO solver_column_idx=1,NUMBER_OF_COLUMNS
@@ -1484,26 +1478,26 @@ CONTAINS
                     CALL FlagError("Not implemented.",ERR,ERROR,*999)                      
                   CASE DEFAULT
                     LOCAL_ERROR="The matrix storage type of "// &
-                      & TRIM(NUMBER_TO_VSTRING(SOLVER_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
+                      & TRIM(NUMBER_TO_VSTRING(SOLVER_MATRIX%storageType,"*",ERR,ERROR))//" is invalid."
                     CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                   END SELECT
 
                   IF(DIAGNOSTICS1) THEN
                     CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix structure:",ERR,ERROR,*999)
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix number : ",SOLVER_MATRIX%MATRIX_NUMBER, &
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Solver matrix number : ",SOLVER_MATRIX%matrixNumber, &
                       & ERR,ERROR,*999)
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",SOLVER_MATRICES%NUMBER_OF_ROWS, &
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",SOLVER_MATRICES%numberOfRows, &
                       & ERR,ERROR,*999)
-                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",SOLVER_MATRIX%NUMBER_OF_COLUMNS, &
+                    CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",SOLVER_MATRIX%numberOfColumns, &
                       & ERR,ERROR,*999)
                     CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ",NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
-                    IF(SOLVER_MATRICES%NUMBER_OF_ROWS*SOLVER_MATRIX%NUMBER_OF_COLUMNS/=0) THEN
-                      SPARSITY=REAL(NUMBER_OF_NON_ZEROS,DP)/REAL(SOLVER_MATRICES%NUMBER_OF_ROWS* &
-                        & SOLVER_MATRIX%NUMBER_OF_COLUMNS,DP)*100.0_DP
+                    IF(SOLVER_MATRICES%numberOfRows*SOLVER_MATRIX%numberOfColumns/=0) THEN
+                      SPARSITY=REAL(NUMBER_OF_NON_ZEROS,DP)/REAL(SOLVER_MATRICES%numberOfRows* &
+                        & SOLVER_MATRIX%numberOfColumns,DP)*100.0_DP
                       CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (%) = ",SPARSITY,"F6.2", ERR,ERROR,*999)
                     ENDIF
                     IF(DIAGNOSTICS2) THEN
-                      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,SOLVER_MATRICES%NUMBER_OF_ROWS+1,8,8,ROW_INDICES, &
+                      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,SOLVER_MATRICES%numberOfRows+1,8,8,ROW_INDICES, &
                         & '("  Row indices    :",8(X,I13))','(18X,8(X,I13))',ERR,ERROR,*999)
                       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_NON_ZEROS,8,8,COLUMN_INDICES, &
                         & '("  Column indices :",8(X,I13))','(18X,8(X,I13))', ERR,ERROR,*999)
@@ -1535,7 +1529,7 @@ CONTAINS
     IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
     IF(ALLOCATED(COLUMNS)) DEALLOCATE(COLUMNS)
     IF(ALLOCATED(COLUMN_INDICES_LISTS)) THEN
-      DO solver_row_number=1,SOLVER_MAPPING%NUMBER_OF_ROWS
+      DO solver_row_number=1,SOLVER_MAPPING%numberOfRows
         IF(ASSOCIATED(COLUMN_INDICES_LISTS(solver_row_number)%PTR)) &
           & CALL LIST_DESTROY(COLUMN_INDICES_LISTS(solver_row_number)%PTR,DUMMY_ERR,DUMMY_ERROR,*998)
       ENDDO !solver_row_number
@@ -1624,7 +1618,7 @@ CONTAINS
 
     IF(ASSOCIATED(SOLVER_MATRICES)) THEN
       IF(MATRIX_NUMBER>0.AND.MATRIX_NUMBER<=SOLVER_MATRICES%NUMBER_OF_MATRICES) THEN
-        SOLVER_MAPPING=>SOLVER_MATRICES%SOLVER_MAPPING
+        SOLVER_MAPPING=>SOLVER_MATRICES%solverMapping
         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
           IF(ASSOCIATED(SOLVER_MATRICES%MATRICES(MATRIX_NUMBER)%PTR)) THEN
             CALL FlagError("Solver matrix is already associated.",ERR,ERROR,*998)
@@ -1632,11 +1626,11 @@ CONTAINS
             ALLOCATE(SOLVER_MATRICES%MATRICES(MATRIX_NUMBER)%PTR,STAT=ERR)
             IF(ERR/=0) CALL FlagError("Could not allocate solver matrix.",ERR,ERROR,*999)
             SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(MATRIX_NUMBER)%PTR
-            SOLVER_MATRIX%MATRIX_NUMBER=MATRIX_NUMBER
+            SOLVER_MATRIX%matrixNumber=MATRIX_NUMBER
             SOLVER_MATRIX%SOLVER_MATRICES=>SOLVER_MATRICES
-            SOLVER_MATRIX%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
-            SOLVER_MATRIX%UPDATE_MATRIX=.TRUE.
-            SOLVER_MATRIX%NUMBER_OF_COLUMNS=SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(MATRIX_NUMBER)%NUMBER_OF_COLUMNS
+            SOLVER_MATRIX%storageType=MATRIX_BLOCK_STORAGE_TYPE
+            SOLVER_MATRIX%updateMatrix=.TRUE.
+            SOLVER_MATRIX%numberOfColumns=SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(MATRIX_NUMBER)%numberOfColumns
             SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(MATRIX_NUMBER)%SOLVER_MATRIX=>SOLVER_MATRIX
             NULLIFY(SOLVER_MATRIX%SOLVER_VECTOR)
             NULLIFY(SOLVER_MATRIX%MATRIX)

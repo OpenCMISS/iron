@@ -5332,7 +5332,7 @@ CONTAINS
               CALL ControlLoop_CurrentTimesGet(controlTimeLoop,currentTime,timeIncrement,err,error,*999)
               solverEquations=>solver%SOLVER_EQUATIONS
               IF(ASSOCIATED(solverEquations)) THEN
-                solverMapping=>solverEquations%SOLVER_MAPPING
+                solverMapping=>solverEquations%solverMapping
                 IF(ASSOCIATED(solverMapping)) THEN
                   !Make sure the equations sets are up to date
                   DO equationsSetIdx=1,solverMapping%NUMBER_OF_EQUATIONS_SETS
@@ -5453,7 +5453,7 @@ CONTAINS
               CALL WriteString(GENERAL_OUTPUT_TYPE,"Read input data... ",err,error,*999)
               solverEquations=>solver%SOLVER_EQUATIONS
               IF(ASSOCIATED(solverEquations)) THEN
-                solverMapping=>solverEquations%SOLVER_MAPPING
+                solverMapping=>solverEquations%solverMapping
                 equations=>solverMapping%EQUATIONS_SET_TO_SOLVER_MAP(1)%equations
                 IF(ASSOCIATED(equations)) THEN
                   equationsSet=>equations%equationsSet

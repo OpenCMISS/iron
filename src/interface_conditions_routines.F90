@@ -54,8 +54,9 @@ MODULE INTERFACE_CONDITIONS_ROUTINES
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceConditionAccessRoutines
   USE INTERFACE_EQUATIONS_ROUTINES
+  USE InterfaceEquationsAccessRoutines
   USE INTERFACE_MAPPING_ROUTINES
-  USE INTERFACE_MATRICES_ROUTINES
+  USE InterfaceMatricesRoutines
   USE INTERFACE_OPERATORS_ROUTINES
   USE ISO_VARYING_STRING
   USE Kinds
@@ -125,28 +126,21 @@ CONTAINS
         CALL WriteString(GENERAL_OUTPUT_TYPE,"",err,error,*999)
         CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Interface condition assemble: ",INTERFACE_CONDITION%label,err,error,*999)
       ENDIF
-      INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
-      IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-        IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-          SELECT CASE(INTERFACE_CONDITION%METHOD)
-          CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
-            CALL INTERFACE_CONDITION_ASSEMBLE_FEM(INTERFACE_CONDITION,err,error,*999)
-          CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The interface condition method of "// &
-              & TRIM(NumberToVString(INTERFACE_CONDITION%METHOD,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Interface equations have not been finished.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Interface condition interface equations is not associated.",err,error,*999)
-      ENDIF      
+      INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
+      CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+      SELECT CASE(INTERFACE_CONDITION%METHOD)
+      CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
+        CALL INTERFACE_CONDITION_ASSEMBLE_FEM(INTERFACE_CONDITION,err,error,*999)
+      CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        LOCAL_ERROR="The interface condition method of "// &
+          & TRIM(NumberToVString(INTERFACE_CONDITION%METHOD,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
+      END SELECT
     ELSE
       CALL FlagError("Interface condition is not associated.",err,error,*999)
     ENDIF
@@ -175,7 +169,7 @@ CONTAINS
       & systemTime5(1),systemTime6(1)
     TYPE(DomainMappingType), POINTER :: ELEMENTS_MAPPING
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
+    TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
     TYPE(FieldType), POINTER :: LAGRANGE_FIELD
     
 !#ifdef TAUPROF
@@ -190,9 +184,9 @@ CONTAINS
       IF(ASSOCIATED(INTERFACE_CONDITION%LAGRANGE)) THEN
         LAGRANGE_FIELD=>INTERFACE_CONDITION%lagrange%LAGRANGE_FIELD
         IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
-          INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+          INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
           IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-            INTERFACE_MATRICES=>INTERFACE_EQUATIONS%INTERFACE_MATRICES
+            INTERFACE_MATRICES=>INTERFACE_EQUATIONS%interfaceMatrices
             IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
               IF(INTERFACE_EQUATIONS%outputType>=INTERFACE_EQUATIONS_TIMING_OUTPUT) THEN
                 CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
@@ -200,11 +194,11 @@ CONTAINS
               ENDIF
               !Initialise the matrices and rhs vector
 #ifdef TAUPROF
-              CALL TAU_STATIC_PHASE_START("INTERFACE_MATRICES_VALUES_INITIALISE()")
+              CALL TAU_STATIC_PHASE_START("InterfaceMatrices_ValuesInitialise()")
 #endif
-              CALL INTERFACE_MATRICES_VALUES_INITIALISE(INTERFACE_MATRICES,0.0_DP,err,error,*999)
+              CALL InterfaceMatrices_ValueInitialise(INTERFACE_MATRICES,0.0_DP,err,error,*999)
 #ifdef TAUPROF
-              CALL TAU_STATIC_PHASE_STOP("INTERFACE_MATRICES_VALUES_INITIALISE()")
+              CALL TAU_STATIC_PHASE_STOP("InterfaceMatrices_ValuesInitialise()")
 #endif
               !Assemble the elements
               !Allocate the element matrices 
@@ -244,7 +238,7 @@ CONTAINS
                 numberOfTimes=numberOfTimes+1
                 CALL InterfaceMatrices_ElementCalculate(INTERFACE_MATRICES,ne,err,error,*999)
                 CALL InterfaceCondition_FiniteElementCalculate(INTERFACE_CONDITION,ne,err,error,*999)
-                CALL INTERFACE_MATRICES_ELEMENT_ADD(INTERFACE_MATRICES,err,error,*999)
+                CALL InterfaceMatrices_ElementAdd(INTERFACE_MATRICES,err,error,*999)
 !#ifdef TAUPROF
 !              CALL TAU_PHASE_STOP(PHASE)
 !#endif
@@ -272,7 +266,7 @@ CONTAINS
                 numberOfTimes=numberOfTimes+1
                 CALL InterfaceMatrices_ElementCalculate(INTERFACE_MATRICES,ne,err,error,*999)
                 CALL InterfaceCondition_FiniteElementCalculate(INTERFACE_CONDITION,ne,err,error,*999)
-                CALL INTERFACE_MATRICES_ELEMENT_ADD(INTERFACE_MATRICES,err,error,*999)
+                CALL InterfaceMatrices_ElementAdd(INTERFACE_MATRICES,err,error,*999)
               ENDDO !element_idx
 #ifdef TAUPROF
               CALL TAU_STATIC_PHASE_STOP("Boundary and Ghost Elements Loop")
@@ -292,11 +286,11 @@ CONTAINS
               ENDIF
               !Finalise the element matrices
 #ifdef TAUPROF
-              CALL TAU_STATIC_PHASE_START("INTERFACE_MATRICES_ELEMENT_FINALISE()")
+              CALL TAU_STATIC_PHASE_START("InterfaceMatrices_ElementFinalise()")
 #endif
-              CALL INTERFACE_MATRICES_ELEMENT_FINALISE(INTERFACE_MATRICES,err,error,*999)
+              CALL InterfaceMatrices_ElementFinalise(INTERFACE_MATRICES,err,error,*999)
 #ifdef TAUPROF
-              CALL TAU_STATIC_PHASE_STOP("INTERFACE_MATRICES_ELEMENT_FINALISE()")
+              CALL TAU_STATIC_PHASE_STOP("InterfaceMatrices_ElementFinalise()")
 #endif
               !Output timing information if required
               IF(INTERFACE_EQUATIONS%outputType>=INTERFACE_EQUATIONS_TIMING_OUTPUT) THEN
@@ -308,7 +302,7 @@ CONTAINS
               ENDIF
               !Output equations matrices and vector if required
               IF(INTERFACE_EQUATIONS%outputType>=INTERFACE_EQUATIONS_MATRIX_OUTPUT) THEN
-                CALL INTERFACE_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,INTERFACE_MATRICES,err,error,*999)
+                CALL InterfaceMatrices_Output(GENERAL_OUTPUT_TYPE,INTERFACE_MATRICES,err,error,*999)
               ENDIF
             ELSE
               CALL FlagError("Interface matrices is not associated.",err,error,*999)
@@ -336,7 +330,7 @@ CONTAINS
   !==================================================================================================================================
   !
 
-  !>Finishes the process of creating an interface condition. \see OPENCMISS::CMISSInterfaceConditionCreateStart
+  !>Finishes the process of creating an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_CreateFinish
   SUBROUTINE INTERFACE_CONDITION_CREATE_FINISH(INTERFACE_CONDITION,err,error,*)
 
     !Argument variables
@@ -468,7 +462,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating an interface condition on an interface. \see OPENCMISS::CMISSInterfaceConditionCreateStart
+  !>Starts the process of creating an interface condition on an interface. \see OpenCMISS::Iron::cmfe_InterfaceCondition_CreateStart
   SUBROUTINE INTERFACE_CONDITION_CREATE_START(USER_NUMBER,INTERFACE,GEOMETRIC_FIELD,INTERFACE_CONDITION,err,error,*)
 
     !Argument variables
@@ -661,7 +655,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds an equations set to an interface condition. \see OPENCMISS::CMISSInterfaceConditionEquationsSetAdd
+  !>Adds an equations set to an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_EquationsSetAdd
   SUBROUTINE INTERFACE_CONDITION_DEPENDENT_VARIABLE_ADD(INTERFACE_CONDITION,MESH_INDEX,EQUATIONS_SET,VARIABLE_TYPE,err,error,*)
 
     !Argument variables
@@ -824,7 +818,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys an interface condition. \see OPENCMISS::CMISSInterfaceConditionDestroy
+  !>Destroys an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_Destroy
   SUBROUTINE INTERFACE_CONDITION_DESTROY(INTERFACE_CONDITION,err,error,*)
 
     !Argument variables
@@ -889,7 +883,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of interface equations for the interface condition. \see OPENCMISS::CMISSInterfaceConditionEquationsCreateFinish
+  !>Finish the creation of interface equations for the interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_EquationsCreateFinish
   SUBROUTINE INTERFACE_CONDITION_EQUATIONS_CREATE_FINISH(INTERFACE_CONDITION,err,error,*)
 
     !Argument variables
@@ -902,8 +896,8 @@ CONTAINS
     INTEGER(INTG) :: number_of_dependent_variables
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
+    TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
+    TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
     TYPE(VARYING_STRING) :: LOCAL_ERROR
     
     ENTERS("INTERFACE_CONDITION_EQUATIONS_CREATE_FINISH",err,error,*999)
@@ -914,62 +908,59 @@ CONTAINS
         !Finish the interface equations creation
         NULLIFY(INTERFACE_EQUATIONS)
         CALL INTERFACE_CONDITION_EQUATIONS_GET(INTERFACE_CONDITION,INTERFACE_EQUATIONS,err,error,*999)
-        IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-          CALL FlagError("Interface condition equations have already been finished.",err,error,*999)
+        CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+        CALL INTERFACE_EQUATIONS_CREATE_FINISH(INTERFACE_EQUATIONS,err,error,*999)
+        INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
+        IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
+          !Create the interface mapping.
+          NULLIFY(INTERFACE_MAPPING)
+          CALL INTERFACE_MAPPING_CREATE_START(INTERFACE_EQUATIONS,INTERFACE_MAPPING,err,error,*999)
+          CALL InterfaceMapping_LagrangeVariableSet(INTERFACE_MAPPING,FIELD_U_VARIABLE_TYPE,err,error,*999)
+          SELECT CASE(INTERFACE_CONDITION%METHOD)
+          CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
+            number_of_dependent_variables=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
+          CASE(INTERFACE_CONDITION_PENALTY_METHOD)
+            number_of_dependent_variables=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES+1
+          ENDSELECT
+          CALL INTERFACE_MAPPING_MATRICES_NUMBER_SET(INTERFACE_MAPPING,number_of_dependent_variables,err,error,*999)
+          ALLOCATE(MATRICES_TRANSPOSE(number_of_dependent_variables),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate matrices transpose.",err,error,*999)
+          MATRICES_TRANSPOSE=.TRUE.
+          SELECT CASE(INTERFACE_CONDITION%METHOD)
+          CASE(INTERFACE_CONDITION_PENALTY_METHOD)
+            !Set the last interface matrix to have no transpose
+            MATRICES_TRANSPOSE(number_of_dependent_variables)=.FALSE.
+          ENDSELECT
+          CALL INTERFACE_MAPPING_MATRICES_TRANSPOSE_SET(INTERFACE_MAPPING,MATRICES_TRANSPOSE,err,error,*999)
+          IF(ALLOCATED(MATRICES_TRANSPOSE)) DEALLOCATE(MATRICES_TRANSPOSE)
+          CALL INTERFACE_MAPPING_RHS_VARIABLE_TYPE_SET(INTERFACE_MAPPING,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+          CALL INTERFACE_MAPPING_CREATE_FINISH(INTERFACE_MAPPING,err,error,*999)
+          !Create the interface matrices
+          NULLIFY(INTERFACE_MATRICES)
+          CALL InterfaceMatrices_CreateStart(INTERFACE_EQUATIONS,INTERFACE_MATRICES,err,error,*999)
+          ALLOCATE(STORAGE_TYPE(INTERFACE_MATRICES%numberOfInterfaceMatrices),STAT=ERR)
+          IF(ERR/=0) CALL FlagError("Could not allocate storage type.",err,error,*999)
+          SELECT CASE(INTERFACE_EQUATIONS%sparsityType)
+          CASE(INTERFACE_MATRICES_FULL_MATRICES) 
+            STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
+            CALL InterfaceMatrices_StorageTypeSet(INTERFACE_MATRICES,STORAGE_TYPE,err,error,*999)
+          CASE(INTERFACE_MATRICES_SPARSE_MATRICES) 
+            ALLOCATE(STRUCTURE_TYPE(INTERFACE_MATRICES%numberOfInterfaceMatrices),STAT=ERR)
+            IF(ERR/=0) CALL FlagError("Could not allocate structure type.",err,error,*999)
+            STORAGE_TYPE=MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+            STRUCTURE_TYPE=INTERFACE_MATRIX_FEM_STRUCTURE
+            CALL InterfaceMatrices_StorageTypeSet(INTERFACE_MATRICES,STORAGE_TYPE,err,error,*999)
+            CALL InterfaceMatrices_StructureTypeSet(INTERFACE_MATRICES,STRUCTURE_TYPE,err,error,*999)
+            IF(ALLOCATED(STRUCTURE_TYPE)) DEALLOCATE(STRUCTURE_TYPE)
+          CASE DEFAULT
+            LOCAL_ERROR="The interface equations sparsity type of "// &
+              & TRIM(NumberToVString(INTERFACE_EQUATIONS%sparsityType,"*",err,error))//" is invalid."
+            CALL FlagError(LOCAL_ERROR,err,error,*999)
+          END SELECT
+          IF(ALLOCATED(STORAGE_TYPE)) DEALLOCATE(STORAGE_TYPE)
+          CALL InterfaceMatrices_CreateFinish(INTERFACE_MATRICES,err,error,*999)
         ELSE
-          CALL INTERFACE_EQUATIONS_CREATE_FINISH(INTERFACE_EQUATIONS,err,error,*999)
-          INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
-          IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
-            !Create the interface mapping.
-            NULLIFY(INTERFACE_MAPPING)
-            CALL INTERFACE_MAPPING_CREATE_START(INTERFACE_EQUATIONS,INTERFACE_MAPPING,err,error,*999)
-            CALL InterfaceMapping_LagrangeVariableSet(INTERFACE_MAPPING,FIELD_U_VARIABLE_TYPE,err,error,*999)
-            SELECT CASE(INTERFACE_CONDITION%METHOD)
-            CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
-              number_of_dependent_variables=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
-            CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-              number_of_dependent_variables=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES+1
-            ENDSELECT
-            CALL INTERFACE_MAPPING_MATRICES_NUMBER_SET(INTERFACE_MAPPING,number_of_dependent_variables,err,error,*999)
-            ALLOCATE(MATRICES_TRANSPOSE(number_of_dependent_variables),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate matrices transpose.",err,error,*999)
-            MATRICES_TRANSPOSE=.TRUE.
-            SELECT CASE(INTERFACE_CONDITION%METHOD)
-            CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-              !Set the last interface matrix to have no transpose
-              MATRICES_TRANSPOSE(number_of_dependent_variables)=.FALSE.
-            ENDSELECT
-            CALL INTERFACE_MAPPING_MATRICES_TRANSPOSE_SET(INTERFACE_MAPPING,MATRICES_TRANSPOSE,err,error,*999)
-            IF(ALLOCATED(MATRICES_TRANSPOSE)) DEALLOCATE(MATRICES_TRANSPOSE)
-            CALL INTERFACE_MAPPING_RHS_VARIABLE_TYPE_SET(INTERFACE_MAPPING,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
-            CALL INTERFACE_MAPPING_CREATE_FINISH(INTERFACE_MAPPING,err,error,*999)
-            !Create the interface matrices
-            NULLIFY(INTERFACE_MATRICES)
-            CALL INTERFACE_MATRICES_CREATE_START(INTERFACE_EQUATIONS,INTERFACE_MATRICES,err,error,*999)
-            ALLOCATE(STORAGE_TYPE(INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate storage type.",err,error,*999)
-            SELECT CASE(INTERFACE_EQUATIONS%sparsityType)
-            CASE(INTERFACE_MATRICES_FULL_MATRICES) 
-              STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
-              CALL INTERFACE_MATRICES_STORAGE_TYPE_SET(INTERFACE_MATRICES,STORAGE_TYPE,err,error,*999)
-            CASE(INTERFACE_MATRICES_SPARSE_MATRICES) 
-              ALLOCATE(STRUCTURE_TYPE(INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES),STAT=ERR)
-              IF(ERR/=0) CALL FlagError("Could not allocate structure type.",err,error,*999)
-              STORAGE_TYPE=MATRIX_COMPRESSED_ROW_STORAGE_TYPE
-              STRUCTURE_TYPE=INTERFACE_MATRIX_FEM_STRUCTURE
-              CALL INTERFACE_MATRICES_STORAGE_TYPE_SET(INTERFACE_MATRICES,STORAGE_TYPE,err,error,*999)
-              CALL INTERFACE_MATRICES_STRUCTURE_TYPE_SET(INTERFACE_MATRICES,STRUCTURE_TYPE,err,error,*999)
-              IF(ALLOCATED(STRUCTURE_TYPE)) DEALLOCATE(STRUCTURE_TYPE)
-            CASE DEFAULT
-              LOCAL_ERROR="The interface equations sparsity type of "// &
-                & TRIM(NumberToVString(INTERFACE_EQUATIONS%sparsityType,"*",err,error))//" is invalid."
-              CALL FlagError(LOCAL_ERROR,err,error,*999)
-            END SELECT
-            IF(ALLOCATED(STORAGE_TYPE)) DEALLOCATE(STORAGE_TYPE)
-            CALL INTERFACE_MATRICES_CREATE_FINISH(INTERFACE_MATRICES,err,error,*999)
-          ELSE
-            CALL FlagError("Interface condition dependent is not associated.",err,error,*999)
-          ENDIF
+          CALL FlagError("Interface condition dependent is not associated.",err,error,*999)
         ENDIF
       CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
         CALL FlagError("Not implemented.",err,error,*999)
@@ -1039,7 +1030,7 @@ CONTAINS
                 CALL FlagError("Interface condition dependent is not associated.",err,error,*999)
               ENDIF
               !Return the pointer
-              INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+              INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
             ELSE
               CALL FlagError("Interface condition Lagrange field has not been finished.",err,error,*999)
             ENDIF
@@ -1070,7 +1061,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the interface equations for an interface condition. \see OPENCMISS::CMISSInterfaceConditionEquationsDestroy
+  !>Destroy the interface equations for an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_EquationsDestroy
   SUBROUTINE INTERFACE_CONDITION_EQUATIONS_DESTROY(INTERFACE_CONDITION,err,error,*)
 
     !Argument variables
@@ -1082,8 +1073,8 @@ CONTAINS
     ENTERS("INTERFACE_CONDITION_EQUATIONS_DESTROY",err,error,*999)
 
     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-      IF(ASSOCIATED(INTERFACE_CONDITION%INTERFACE_EQUATIONS)) THEN
-        CALL INTERFACE_EQUATIONS_DESTROY(INTERFACE_CONDITION%INTERFACE_EQUATIONS,err,error,*999)
+      IF(ASSOCIATED(INTERFACE_CONDITION%interfaceEquations)) THEN
+        CALL INTERFACE_EQUATIONS_DESTROY(INTERFACE_CONDITION%interfaceEquations,err,error,*999)
       ELSE
         CALL FlagError("Interface condition interface equations is not associated.",err,error,*999)
       ENDIF
@@ -1117,8 +1108,8 @@ CONTAINS
       CALL INTERFACE_CONDITION_LAGRANGE_FINALISE(INTERFACE_CONDITION%LAGRANGE,err,error,*999)
       CALL INTERFACE_CONDITION_PENALTY_FINALISE(INTERFACE_CONDITION%PENALTY,err,error,*999)
       CALL INTERFACE_CONDITION_DEPENDENT_FINALISE(INTERFACE_CONDITION%DEPENDENT,err,error,*999)
-      IF(ASSOCIATED(INTERFACE_CONDITION%INTERFACE_EQUATIONS)) &
-        & CALL INTERFACE_EQUATIONS_DESTROY(INTERFACE_CONDITION%INTERFACE_EQUATIONS,err,error,*999)
+      IF(ASSOCIATED(INTERFACE_CONDITION%interfaceEquations)) &
+        & CALL INTERFACE_EQUATIONS_DESTROY(INTERFACE_CONDITION%interfaceEquations,err,error,*999)
       DEALLOCATE(INTERFACE_CONDITION)
     ENDIF
        
@@ -1292,7 +1283,7 @@ CONTAINS
       NULLIFY(INTERFACE_CONDITION%LAGRANGE)
       NULLIFY(INTERFACE_CONDITION%PENALTY)
       NULLIFY(INTERFACE_CONDITION%DEPENDENT)
-      NULLIFY(INTERFACE_CONDITION%INTERFACE_EQUATIONS)
+      NULLIFY(INTERFACE_CONDITION%interfaceEquations)
       CALL INTERFACE_CONDITION_GEOMETRY_INITIALISE(INTERFACE_CONDITION,err,error,*999)
       NULLIFY(INTERFACE_CONDITION%BOUNDARY_CONDITIONS)
     ENDIF
@@ -1308,7 +1299,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating an interface condition's Lagrange multiplier field \see OPENCMISS::CMISSInterfaceConditionLagrangeConditionCreateFinish
+  !>Finishes the process of creating an interface condition's Lagrange multiplier field \see OpenCMISS::Iron::cmfe_InterfaceCondition_LagrangeFieldCreateFinish
   SUBROUTINE InterfaceCondition_LagrangeFieldCreateFinish(INTERFACE_CONDITION,err,error,*)
 
     !Argument variables
@@ -1358,7 +1349,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating the Lagrange multiplyer field for interface condition. \see OPENCMISS::CMISSInterfaceConditionLagrangeFieldCreateStart
+  !>Starts the process of creating the Lagrange multiplyer field for interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LagrangeFieldCreateStart
   SUBROUTINE InterfaceCondition_LagrangeFieldCreateStart(interfaceCondition,lagrangeFieldUserNumber,lagrangeField, &
     & err,error,*)
 
@@ -1579,7 +1570,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating an interface condition's penalty field'. \see OPENCMISS::CMISSInterfaceConditionPenaltyConditionCreateFinish
+  !>Finishes the process of creating an interface condition's penalty field'. \see OpenCMISS::Iron::cmfe_InterfaceCondition_PenaltyConditionCreateFinish
   SUBROUTINE InterfaceCondition_PenaltyFieldCreateFinish(INTERFACE_CONDITION,err,error,*)
 
     !Argument variables
@@ -1619,7 +1610,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating the penalty field for interface condition. \see OPENCMISS::CMISSInterfaceConditionPenaltyFieldCreateStart
+  !>Starts the process of creating the penalty field for interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_PenaltyFieldCreateStart
   SUBROUTINE InterfaceCondition_PenaltyFieldCreateStart(INTERFACE_CONDITION,PENALTY_FIELD_USER_NUMBER,PENALTY_FIELD, &
     & err,error,*)
 
@@ -1832,7 +1823,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the interface condition method \see OPENCMISS::CMISSInterfaceConditionMethodGet
+  !>Returns the interface condition method \see OpenCMISS::Iron::cmfe_InterfaceCondition_MethodGet
   SUBROUTINE INTERFACE_CONDITION_METHOD_GET(INTERFACE_CONDITION,INTERFACE_CONDITION_METHOD,err,error,*)
 
     !Argument variables
@@ -1864,7 +1855,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interface condition method \see OPENCMISS::CMISSInterfaceConditionMethodSet
+  !>Sets/changes the interface condition method \see OpenCMISS::Iron::cmfe_InterfaceCondition_MethodSet
   SUBROUTINE INTERFACE_CONDITION_METHOD_SET(INTERFACE_CONDITION,INTERFACE_CONDITION_METHOD,err,error,*)
 
     !Argument variables
@@ -1910,7 +1901,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the interface condition operator \see OPENCMISS::CMISSInterfaceConditionOperatorGet
+  !>Returns the interface condition operator \see OpenCMISS::Iron::cmfe_InterfaceCondition_OperatorGet
   SUBROUTINE INTERFACE_CONDITION_OPERATOR_GET(INTERFACE_CONDITION,INTERFACE_CONDITION_OPERATOR,err,error,*)
 
     !Argument variables
@@ -1942,7 +1933,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interface condition operator \see OPENCMISS::CMISSInterfaceConditionOperatorSet
+  !>Sets/changes the interface condition operator \see OpenCMISS::Iron::cmfe_InterfaceCondition_OperatorSet
   SUBROUTINE INTERFACE_CONDITION_OPERATOR_SET(INTERFACE_CONDITION,INTERFACE_CONDITION_OPERATOR,err,error,*)
 
     !Argument variables
@@ -2073,28 +2064,21 @@ CONTAINS
     ENTERS("INTERFACE_CONDITION_RESIDUAL_EVALUATE",err,error,*999)
 
     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-      INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
-      IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-        IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-          SELECT CASE(INTERFACE_CONDITION%METHOD)
-          CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
-            CALL INTERFACE_CONDITION_RESIDUAL_EVALUATE_FEM(INTERFACE_CONDITION,err,error,*999)
-          CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The interface condition method of "// &
-              & TRIM(NumberToVString(INTERFACE_CONDITION%METHOD,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,err,error,*999)
-          END SELECT
-        ELSE
-          CALL FlagError("Interface equations have not been finished.",err,error,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Interface condition equations is not associated.",err,error,*999)
-      ENDIF
+      INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
+      CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+      SELECT CASE(INTERFACE_CONDITION%METHOD)
+      CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
+        CALL INTERFACE_CONDITION_RESIDUAL_EVALUATE_FEM(INTERFACE_CONDITION,err,error,*999)
+      CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
+        CALL FlagError("Not implemented.",err,error,*999)
+      CASE DEFAULT
+        LOCAL_ERROR="The interface condition method of "// &
+          & TRIM(NumberToVString(INTERFACE_CONDITION%METHOD,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(LOCAL_ERROR,err,error,*999)
+      END SELECT
     ELSE
       CALL FlagError("Interface condition is not associated.",err,error,*999)
     ENDIF
@@ -2125,7 +2109,7 @@ CONTAINS
     TYPE(DomainMappingType), POINTER :: ELEMENTS_MAPPING
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: LAGRANGE
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
+    TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
     TYPE(FieldType), POINTER :: LAGRANGE_FIELD
  
     ENTERS("INTERFACE_CONDITION_RESIDUAL_EVALUATE_FEM",err,error,*999)
@@ -2135,9 +2119,9 @@ CONTAINS
       IF(ASSOCIATED(LAGRANGE)) THEN
         LAGRANGE_FIELD=>INTERFACE_CONDITION%lagrange%LAGRANGE_FIELD
         IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
-          INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+          INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
           IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-            INTERFACE_MATRICES=>INTERFACE_EQUATIONS%INTERFACE_MATRICES
+            INTERFACE_MATRICES=>INTERFACE_EQUATIONS%interfaceMatrices
             IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
               IF(INTERFACE_EQUATIONS%outputType>=INTERFACE_EQUATIONS_TIMING_OUTPUT) THEN
                 CALL CPUTimer(USER_CPU,userTime1,err,error,*999)
@@ -2146,11 +2130,11 @@ CONTAINS
 !!Do we need to transfer parameter sets???
               !Initialise the matrices and rhs vector
 #ifdef TAUPROF
-              CALL TAU_STATIC_PHASE_START("INTERFACE_MATRICES_VALUES_INITIALISE()")
+              CALL TAU_STATIC_PHASE_START("InterfaceMatrices_ValuesInitialise()")
 #endif
-              CALL INTERFACE_MATRICES_VALUES_INITIALISE(INTERFACE_MATRICES,0.0_DP,err,error,*999)
+              CALL InterfaceMatrices_ValueInitialise(INTERFACE_MATRICES,0.0_DP,err,error,*999)
 #ifdef TAUPROF
-              CALL TAU_STATIC_PHASE_STOP("INTERFACE_MATRICES_VALUES_INITIALISE()")
+              CALL TAU_STATIC_PHASE_STOP("InterfaceMatrices_ValuesInitialise()")
 #endif
               !Assemble the elements
               !Allocate the element matrices 
@@ -2184,7 +2168,7 @@ CONTAINS
                 numberOfTimes=numberOfTimes+1
                 CALL InterfaceMatrices_ElementCalculate(INTERFACE_MATRICES,ne,err,error,*999)
                 CALL InterfaceCondition_FiniteElementCalculate(INTERFACE_CONDITION,ne,err,error,*999)
-                CALL INTERFACE_MATRICES_ELEMENT_ADD(INTERFACE_MATRICES,err,error,*999)
+                CALL InterfaceMatrices_ElementAdd(INTERFACE_MATRICES,err,error,*999)
               ENDDO !element_idx                  
 #ifdef TAUPROF
               CALL TAU_STATIC_PHASE_STOP("Internal Elements Loop")
@@ -2208,7 +2192,7 @@ CONTAINS
                 numberOfTimes=numberOfTimes+1
                 CALL InterfaceMatrices_ElementCalculate(INTERFACE_MATRICES,ne,err,error,*999)
                 CALL InterfaceCondition_FiniteElementCalculate(INTERFACE_CONDITION,ne,err,error,*999)
-                CALL INTERFACE_MATRICES_ELEMENT_ADD(INTERFACE_MATRICES,err,error,*999)
+                CALL InterfaceMatrices_ElementAdd(INTERFACE_MATRICES,err,error,*999)
               ENDDO !element_idx
 #ifdef TAUPROF
               CALL TAU_STATIC_PHASE_STOP("Boundary and Ghost Elements Loop")
@@ -2228,11 +2212,11 @@ CONTAINS
               ENDIF
               !Finalise the element matrices
 #ifdef TAUPROF
-              CALL TAU_STATIC_PHASE_START("INTERFACE_MATRICES_ELEMENT_FINALISE()")
+              CALL TAU_STATIC_PHASE_START("InterfaceMatrices_ElementFinalise()")
 #endif
-              CALL INTERFACE_MATRICES_ELEMENT_FINALISE(INTERFACE_MATRICES,err,error,*999)
+              CALL InterfaceMatrices_ElementFinalise(INTERFACE_MATRICES,err,error,*999)
 #ifdef TAUPROF
-              CALL TAU_STATIC_PHASE_STOP("INTERFACE_MATRICES_ELEMENT_FINALISE()")
+              CALL TAU_STATIC_PHASE_STOP("InterfaceMatrices_ElementFinalise()")
 #endif
               !Output timing information if required
               IF(INTERFACE_EQUATIONS%outputType>=INTERFACE_EQUATIONS_TIMING_OUTPUT) THEN
@@ -2244,7 +2228,7 @@ CONTAINS
               ENDIF
               !Output equations matrices and RHS vector if required
               IF(INTERFACE_EQUATIONS%outputType>=INTERFACE_EQUATIONS_MATRIX_OUTPUT) THEN
-                CALL INTERFACE_MATRICES_OUTPUT(GENERAL_OUTPUT_TYPE,INTERFACE_MATRICES,err,error,*999)
+                CALL InterfaceMatrices_Output(GENERAL_OUTPUT_TYPE,INTERFACE_MATRICES,err,error,*999)
               ENDIF
             ELSE
               CALL FlagError("Interface matrices is not associated.",err,error,*999)
@@ -2283,7 +2267,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
     TYPE(ElementMatrixType), POINTER :: elementMatrix !<A pointer to the interface element matrix
     INTEGER(INTG) :: interfaceMatrixIdx
     TYPE(VARYING_STRING) :: localError
@@ -2295,7 +2279,7 @@ CONTAINS
     ENTERS("InterfaceCondition_FiniteElementCalculate",err,error,*999)
     
     IF(ASSOCIATED(interfaceCondition)) THEN
-      interfaceEquations=>interfaceCondition%INTERFACE_EQUATIONS
+      interfaceEquations=>interfaceCondition%interfaceEquations
       IF(ASSOCIATED(interfaceEquations)) THEN
         SELECT CASE(interfaceCondition%OPERATOR)
         CASE(INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR)
@@ -2316,18 +2300,18 @@ CONTAINS
         END SELECT
     
         IF(interfaceEquations%outputType>=INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT) THEN
-          interfaceMatrices=>interfaceEquations%INTERFACE_MATRICES
+          interfaceMatrices=>interfaceEquations%interfaceMatrices
           IF(ASSOCIATED(interfaceMatrices)) THEN
             CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Finite element interface matrices:",err,error,*999)          
             CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Element number = ",interfaceElementNumber,err,error,*999)
             CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Number of element matrices = ",interfaceMatrices% &
-              & NUMBER_OF_INTERFACE_MATRICES,err,error,*999)
-            DO interfaceMatrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
+              & numberOfInterfaceMatrices,err,error,*999)
+            DO interfaceMatrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
               CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"Element matrix : ",interfaceMatrixIdx,err,error,*999)
               CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Update matrix = ",interfaceMatrices%MATRICES(interfaceMatrixIdx)%PTR% &
-                & UPDATE_MATRIX,err,error,*999)
-              IF(interfaceMatrices%MATRICES(interfaceMatrixIdx)%PTR%UPDATE_MATRIX) THEN
-                elementMatrix=>interfaceMatrices%MATRICES(interfaceMatrixIdx)%PTR%ELEMENT_MATRIX
+                & updateMatrix,err,error,*999)
+              IF(interfaceMatrices%MATRICES(interfaceMatrixIdx)%PTR%updateMatrix) THEN
+                elementMatrix=>interfaceMatrices%MATRICES(interfaceMatrixIdx)%PTR%elementMatrix
                 CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Number of rows = ",elementMatrix%numberOfRows,err,error,*999)
                 CALL WRITE_STRING_VALUE(GENERAL_OUTPUT_TYPE,"  Number of columns = ",elementMatrix%numberOfColumns, &
                   & ERR,error,*999)

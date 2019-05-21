@@ -63,6 +63,8 @@ MODULE BOUNDARY_CONDITIONS_ROUTINES
   USE EquationsSetAccessRoutines
   USE EquationsSetConstants
   USE INTERFACE_CONDITIONS_CONSTANTS
+  USE InterfaceEquationsAccessRoutines
+  USE InterfaceMappingAccessRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
@@ -441,9 +443,9 @@ CONTAINS
                       !Store Dirichlet dof indices
                       SOLVER_EQUATIONS=>BOUNDARY_CONDITIONS%SOLVER_EQUATIONS
                       IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                        IF(ASSOCIATED(SOLVER_EQUATIONS%SOLVER_MAPPING)) THEN
-                          DO equations_set_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                            EQUATIONS_SET=>SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+                        IF(ASSOCIATED(SOLVER_EQUATIONS%solverMapping)) THEN
+                          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
+                            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(equations_set_idx)%PTR
                             IF(ASSOCIATED(EQUATIONS_SET)) THEN
                               NULLIFY(equations)
                               CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
@@ -636,15 +638,15 @@ CONTAINS
                           ENDDO !equations_set_idx
                           !\todo Update interface sparsity structure calculate first then update code below.
 !                          !Loop over interface conditions. Note that only linear interface matrices implemented so far.
-!                          DO interface_condition_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%numberOfInterfaceConditions
-!                            INTERFACE_CONDITION=>SOLVER_EQUATIONS%SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
+!                          DO interface_condition_idx=1,SOLVER_EQUATIONS%solverMapping%numberOfInterfaceConditions
+!                            INTERFACE_CONDITION=>SOLVER_EQUATIONS%solverMapping%interfaceConditions(interface_condition_idx)%PTR
 !                            IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-!                              INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+!                              INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
 !                              IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-!                                INTERFACE_MATRICES=>INTERFACE_EQUATIONS%INTERFACE_MATRICES
+!                                INTERFACE_MATRICES=>INTERFACE_EQUATIONS%interfaceMatrices
 !                                IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
 !                                  !Iterate through equations matrices
-!                                  DO interface_matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
+!                                  DO interface_matrix_idx=1,INTERFACE_MATRICES%numberOfInterfaceMatrices
 !                                    INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(interface_matrix_idx)%PTR
 !                                    IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
 !                                      CALL DistributedMatrix_StorageTypeGet(INTERFACE_MATRIX%MATRIX,STORAGE_TYPE,ERR,ERROR,*999)
@@ -827,7 +829,7 @@ CONTAINS
         IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
           CALL FlagError("Boundary conditions is already associated.",ERR,ERROR,*999)
         ELSE
-          IF(ASSOCIATED(SOLVER_EQUATIONS%SOLVER_MAPPING)) THEN
+          IF(ASSOCIATED(SOLVER_EQUATIONS%solverMapping)) THEN
             !Initialise the boundary conditions
             CALL BOUNDARY_CONDITIONS_INITIALISE(SOLVER_EQUATIONS,ERR,ERROR,*999)
           ELSE
@@ -906,7 +908,7 @@ CONTAINS
         ENDDO !variable_idx
         NULLIFY(BOUNDARY_CONDITIONS%SOLVER_EQUATIONS%SOLVER%SOLVER_EQUATIONS)
         !BOUNDARY_CONDITIONS%SOLVER_EQUATIONS%SOLVER_equationsFinished = .FALSE.
-        !BOUNDARY_CONDITIONS%SOLVER_EQUATIONS%SOLVER_MAPPING%SOLVER_MAPPING_FINISHED = .FALSE.
+        !BOUNDARY_CONDITIONS%SOLVER_EQUATIONS%solverMapping%solverMappingFinished = .FALSE.
         DEALLOCATE(BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_VARIABLES)
       ENDIF
       DEALLOCATE(BOUNDARY_CONDITIONS)
@@ -941,8 +943,8 @@ CONTAINS
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: INTERFACE_RHS_MAPPING
+    TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
+    TYPE(InterfaceMappingRHSType), POINTER :: INTERFACE_RHS_MAPPING
     TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
 
     ENTERS("BOUNDARY_CONDITIONS_INITIALISE",ERR,ERROR,*998)
@@ -951,15 +953,15 @@ CONTAINS
       IF(ASSOCIATED(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS)) THEN
         CALL FlagError("Boundary conditions is already associated for these solver equations.",ERR,ERROR,*998)
       ELSE
-        IF(ASSOCIATED(SOLVER_EQUATIONS%SOLVER_MAPPING)) THEN
+        IF(ASSOCIATED(SOLVER_EQUATIONS%solverMapping)) THEN
           ALLOCATE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS,STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate boundary conditions.",ERR,ERROR,*999)
           SOLVER_EQUATIONS%BOUNDARY_CONDITIONS%BOUNDARY_CONDITIONS_FINISHED=.FALSE.
           SOLVER_EQUATIONS%BOUNDARY_CONDITIONS%NUMBER_OF_BOUNDARY_CONDITIONS_VARIABLES=0
           SOLVER_EQUATIONS%BOUNDARY_CONDITIONS%SOLVER_EQUATIONS=>SOLVER_EQUATIONS
           SOLVER_EQUATIONS%BOUNDARY_CONDITIONS%neumannMatrixSparsity=BOUNDARY_CONDITION_SPARSE_MATRICES
-          DO equations_set_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-            EQUATIONS_SET=>SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
+            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(equations_set_idx)%PTR
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               EQUATIONS=>EQUATIONS_SET%EQUATIONS
               IF(ASSOCIATED(EQUATIONS)) THEN
@@ -1068,58 +1070,44 @@ CONTAINS
               CALL FlagError("Equations set is not associated.",ERR,ERROR,*998)
             ENDIF
           ENDDO !equations_set_idx
-          DO interface_condition_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%numberOfInterfaceConditions
-            INTERFACE_CONDITION=>SOLVER_EQUATIONS%SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
+          DO interface_condition_idx=1,SOLVER_EQUATIONS%solverMapping%numberOfInterfaceConditions
+            INTERFACE_CONDITION=>SOLVER_EQUATIONS%solverMapping%interfaceConditions(interface_condition_idx)%PTR
             IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-              INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
-              IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-                IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-                  INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
+              INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
+              CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+              INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
+              CALL InterfaceMapping_AssertIsFinished(INTERFACE_MAPPING,ERR,ERROR,*999)
+              INTERFACE_CONDITION%BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
+              !Only linear interface equations implemented at the moment
+              SELECT CASE(INTERFACE_EQUATIONS%timeDependence)
+              CASE(INTERFACE_CONDITION_STATIC,INTERFACE_CONDITION_QUASISTATIC)
+                SELECT CASE(INTERFACE_EQUATIONS%linearity)
+                CASE(INTERFACE_CONDITION_LINEAR)
+                  INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
                   IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-                    IF(INTERFACE_MAPPING%INTERFACE_MAPPING_FINISHED) THEN
-                      INTERFACE_CONDITION%BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
-                      !Only linear interface equations implemented at the moment
-                      SELECT CASE(INTERFACE_EQUATIONS%timeDependence)
-                      CASE(INTERFACE_CONDITION_STATIC,INTERFACE_CONDITION_QUASISTATIC)
-                        SELECT CASE(INTERFACE_EQUATIONS%linearity)
-                        CASE(INTERFACE_CONDITION_LINEAR)
-                          INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
-                          IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-                            variable_type=INTERFACE_MAPPING%LAGRANGE_VARIABLE_TYPE
-                            IF(INTERFACE_MAPPING%NUMBER_OF_INTERFACE_MATRICES>0) THEN
-                              CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                                & INTERFACE_MAPPING%LAGRANGE_VARIABLE,ERR,ERROR,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Interface mapping mapping is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                          INTERFACE_RHS_MAPPING=>INTERFACE_MAPPING%RHS_MAPPING
-                          IF(ASSOCIATED(INTERFACE_RHS_MAPPING)) THEN
-                            CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
-                              & INTERFACE_RHS_MAPPING%RHS_VARIABLE,ERR,ERROR,*999)
-                          ENDIF
-                        CASE DEFAULT
-                          LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
-                                & ERR,ERROR))//" is invalid."
-                          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                        END SELECT
-                      CASE DEFAULT
-                        LOCAL_ERROR="The equations time dependence type of "// &
-                          & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",ERR,ERROR))//" is invalid."
-                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                      END SELECT
-                    ELSE
-                      CALL FlagError("Interface mapping has not been finished.",ERR,ERROR,*998)
+                    variable_type=INTERFACE_MAPPING%lagrangeVariableType
+                    IF(INTERFACE_MAPPING%numberOfInterfaceMatrices>0) THEN
+                      CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                        & INTERFACE_MAPPING%lagrangeVariable,ERR,ERROR,*999)
                     ENDIF
                   ELSE
-                    CALL FlagError("Interface mapping is not associated.",ERR,ERROR,*998)
+                    CALL FlagError("Interface mapping mapping is not associated.",ERR,ERROR,*999)
                   ENDIF
-                ELSE
-                  CALL FlagError("Interface equations has not been finished.",ERR,ERROR,*998)
-                ENDIF
-              ELSE
-                CALL FlagError("Interface equations is not associated.",ERR,ERROR,*998)
-              ENDIF
+                  INTERFACE_RHS_MAPPING=>INTERFACE_MAPPING%rhsMapping
+                  IF(ASSOCIATED(INTERFACE_RHS_MAPPING)) THEN
+                    CALL BOUNDARY_CONDITIONS_VARIABLE_INITIALISE(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS, &
+                      & INTERFACE_RHS_MAPPING%rhsVariable,ERR,ERROR,*999)
+                  ENDIF
+                CASE DEFAULT
+                  LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
+                    & ERR,ERROR))//" is invalid."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                END SELECT
+              CASE DEFAULT
+                LOCAL_ERROR="The equations time dependence type of "// &
+                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",ERR,ERROR))//" is invalid."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+              END SELECT
             ELSE
               CALL FlagError("Interface condition not associated.",ERR,ERROR,*998)
             ENDIF
@@ -1947,7 +1935,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(solverEquations)) THEN
       CALL FlagError("Boundary conditions solver equations are not associated.",err,error,*999)
     END IF
-    solverMapping=>solverEquations%SOLVER_MAPPING
+    solverMapping=>solverEquations%solverMapping
     IF(.NOT.ASSOCIATED(solverMapping)) THEN
       CALL FlagError("Solver equations solver mapping is not associated.",err,error,*999)
     END IF
@@ -3887,8 +3875,8 @@ CONTAINS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           MAX_NUMBER_LINEAR_MATRICES=0
           MAX_NUMBER_DYNAMIC_MATRICES=0
-          DO equations_set_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-            EQUATIONS_SET=>SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(equations_set_idx)%PTR
+          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
+            EQUATIONS_SET=>SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(equations_set_idx)%PTR
             IF(ASSOCIATED(EQUATIONS_SET)) THEN
               NULLIFY(equations)
               CALL EquationsSet_EquationsGet(EQUATIONS_SET,equations,err,error,*999)
@@ -3912,13 +3900,13 @@ CONTAINS
               CALL FlagError("Equations set is not associated.",ERR,ERROR,*999)
             ENDIF
           ENDDO
-          ALLOCATE(BOUNDARY_CONDITIONS_DIRICHLET%LINEAR_SPARSITY_INDICES(SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS, &
+          ALLOCATE(BOUNDARY_CONDITIONS_DIRICHLET%LINEAR_SPARSITY_INDICES(SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS, &
                 & MAX_NUMBER_LINEAR_MATRICES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate Dirichlet linear sparsity indices array",ERR,ERROR,*999)
-          ALLOCATE(BOUNDARY_CONDITIONS_DIRICHLET%DYNAMIC_SPARSITY_INDICES(SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS,&
+          ALLOCATE(BOUNDARY_CONDITIONS_DIRICHLET%DYNAMIC_SPARSITY_INDICES(SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS,&
                 & MAX_NUMBER_DYNAMIC_MATRICES),STAT=ERR)
           IF(ERR/=0) CALL FlagError("Could not allocate Dirichlet dynamic sparsity indices array",ERR,ERROR,*999)
-          DO equations_set_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+          DO equations_set_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
             DO matrix_idx=1,MAX_NUMBER_LINEAR_MATRICES
               NULLIFY(BOUNDARY_CONDITIONS_DIRICHLET%LINEAR_SPARSITY_INDICES(equations_set_idx,matrix_idx)%PTR)
             ENDDO

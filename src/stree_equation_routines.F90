@@ -804,8 +804,8 @@ CONTAINS
             solverEquations=>solver%SOLVER_EQUATIONS
             navierstokesSolverEquations=>navierstokesSolver%SOLVER_EQUATIONS
             IF(ASSOCIATED(solverEquations)) THEN
-              solverMapping=>solverEquations%SOLVER_MAPPING
-              navierstokesSolverMapping=>navierstokesSolverEquations%SOLVER_MAPPING
+              solverMapping=>solverEquations%solverMapping
+              navierstokesSolverMapping=>navierstokesSolverEquations%solverMapping
               IF(ASSOCIATED(solverMapping)) THEN
                 equationsSet=>solverMapping%EQUATIONS_SETS(1)%ptr
                 navierstokesEquationsSet=>navierstokesSolverMapping%EQUATIONS_SETS(1)%ptr

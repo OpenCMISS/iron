@@ -1182,7 +1182,7 @@ CONTAINS
              & PROBLEM_COUPLED1D0D_ADV_NAVIER_STOKES_SUBTYPE)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+              SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
@@ -1346,7 +1346,7 @@ CONTAINS
     IF(ASSOCIATED(solver)) THEN
       solverEquations=>solver%SOLVER_EQUATIONS
       IF(ASSOCIATED(solverEquations)) THEN
-        solverMapping=>solverEquations%SOLVER_MAPPING
+        solverMapping=>solverEquations%solverMapping
         IF(ASSOCIATED(solverMapping)) THEN
           equationsSet=>solverMapping%EQUATIONS_SETS(1)%ptr
           IF(ASSOCIATED(equationsSet)) THEN

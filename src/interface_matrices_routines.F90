@@ -42,16 +42,22 @@
 !>
 
 !>This module contains all interface matrices routines.
-MODULE INTERFACE_MATRICES_ROUTINES
+MODULE InterfaceMatricesRoutines
 
   USE BaseRoutines
+  USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
   USE EquationsMatricesRoutines
   USE FIELD_ROUTINES
   USE FieldAccessRoutines
   USE INPUT_OUTPUT
+  USE InterfaceAccessRoutines
   USE INTERFACE_CONDITIONS_CONSTANTS
+  USE InterfaceConditionAccessRoutines
+  USE InterfaceEquationsAccessRoutines
+  USE InterfaceMappingAccessRoutines
+  USE InterfaceMatricesAccessRoutines
   USE INTERFACE_MATRICES_CONSTANTS
   USE ISO_VARYING_STRING
   USE Kinds
@@ -67,20 +73,20 @@ MODULE INTERFACE_MATRICES_ROUTINES
 
   !Module parameters
 
-  !> \addtogroup INTERFACE_MATRICES_ROUTINES_InterfaceMatrixStructureTypes INTERFACE_MATRICES_ROUTINES::InterfaceMatrixStructureTypes
+  !> \addtogroup InterfaceMatricesRoutines_InterfaceMatrixStructureTypes InterfaceMatricesRoutines::InterfaceMatrixStructureTypes
   !> \brief Interface matrices structure (sparsity) types
-  !> \see INTERFACE_MATRICES_ROUTINES
+  !> \see InterfaceMatricesRoutines
   !>@{
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_NO_STRUCTURE=1 !<No matrix structure - all elements can contain a value. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatrixStructureTypes,INTERFACE_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_FEM_STRUCTURE=2 !<Finite element matrix structure. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatrixStructureTypes,INTERFACE_MATRICES_ROUTINES 
+  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_NO_STRUCTURE=1 !<No matrix structure - all elements can contain a value. \see InterfaceMatricesRoutines_InterfaceMatrixStructureTypes,InterfaceMatricesRoutines
+  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_FEM_STRUCTURE=2 !<Finite element matrix structure. \see InterfaceMatricesRoutines_InterfaceMatrixStructureTypes,InterfaceMatricesRoutines 
   !>@}
 
-  !> \addtogroup INTERFACE_MATRICES_ROUTINES_InterfaceMatricesSparsityTypes INTERFACE_MATRICES_ROUTINES::InterfaceMatricesSparsityTypes
+  !> \addtogroup InterfaceMatricesRoutines_InterfaceMatricesSparsityTypes InterfaceMatricesRoutines::InterfaceMatricesSparsityTypes
   !> \brief Interface matrices sparsity types
-  !> \see INTERFACE_MATRICES_ROUTINES
+  !> \see InterfaceMatricesRoutines
   !>@{
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRICES_SPARSE_MATRICES=1 !<Use sparse interface matrices \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesSparsityTypes,INTERFACE_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRICES_FULL_MATRICES=2 !<Use fully populated interface matrices \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesSparsityTypes,INTERFACE_MATRICES_ROUTINES
+  INTEGER(INTG), PARAMETER :: INTERFACE_MATRICES_SPARSE_MATRICES=1 !<Use sparse interface matrices \see InterfaceMatricesRoutines_InterfaceMatricesSparsityTypes,InterfaceMatricesRoutines
+  INTEGER(INTG), PARAMETER :: INTERFACE_MATRICES_FULL_MATRICES=2 !<Use fully populated interface matrices \see InterfaceMatricesRoutines_InterfaceMatricesSparsityTypes,InterfaceMatricesRoutines
   !>@}
 
   !Module types
@@ -93,25 +99,23 @@ MODULE INTERFACE_MATRICES_ROUTINES
 
   PUBLIC INTERFACE_MATRICES_SPARSE_MATRICES,INTERFACE_MATRICES_FULL_MATRICES
 
-  PUBLIC INTERFACE_MATRICES_CREATE_FINISH,INTERFACE_MATRICES_CREATE_START
+  PUBLIC InterfaceMatrices_CreateFinish,InterfaceMatrices_CreateStart
 
-  PUBLIC INTERFACE_MATRICES_DESTROY
+  PUBLIC InterfaceMatrices_Destroy
 
-  PUBLIC INTERFACE_MATRICES_ELEMENT_ADD
+  PUBLIC InterfaceMatrices_ElementAdd
 
   PUBLIC InterfaceMatrices_ElementCalculate
 
-  PUBLIC INTERFACE_MATRICES_ELEMENT_FINALISE,InterfaceMatrices_ElementInitialise
+  PUBLIC InterfaceMatrices_ElementFinalise,InterfaceMatrices_ElementInitialise
 
-  PUBLIC InterfaceMatrices_MatrixGet
+  PUBLIC InterfaceMatrices_Output
 
-  PUBLIC INTERFACE_MATRICES_OUTPUT
+  PUBLIC InterfaceMatrices_StorageTypeSet
 
-  PUBLIC INTERFACE_MATRICES_STORAGE_TYPE_SET
+  PUBLIC InterfaceMatrices_StructureTypeSet
 
-  PUBLIC INTERFACE_MATRICES_STRUCTURE_TYPE_SET
-
-  PUBLIC INTERFACE_MATRICES_VALUES_INITIALISE
+  PUBLIC InterfaceMatrices_ValueInitialise
 
 CONTAINS
 
@@ -120,171 +124,158 @@ CONTAINS
   !
 
   !>Finalise a interface matrix and deallocate all memory
-  SUBROUTINE INTERFACE_MATRIX_FINALISE(INTERFACE_MATRIX,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrix_Finalise(interfaceMatrix,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX !<A pointer to the interface matrix to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     
-    ENTERS("INTERFACE_MATRIX_FINALISE",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrix_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-      IF(ASSOCIATED(INTERFACE_MATRIX%MATRIX)) CALL DistributedMatrix_Destroy(INTERFACE_MATRIX%MATRIX,ERR,ERROR,*999)
-      IF(ASSOCIATED(INTERFACE_MATRIX%MATRIX_TRANSPOSE)) CALL DistributedMatrix_Destroy(INTERFACE_MATRIX%MATRIX_TRANSPOSE, &
-        & ERR,ERROR,*999)
-      CALL EquationsMatrices_ElementMatrixFinalise(INTERFACE_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
-      DEALLOCATE(INTERFACE_MATRIX)
+    IF(ASSOCIATED(interfaceMatrix)) THEN
+      IF(ASSOCIATED(interfaceMatrix%matrix)) CALL DistributedMatrix_Destroy(interfaceMatrix%matrix,err,error,*999)
+      IF(ASSOCIATED(interfaceMatrix%matrixTranspose)) CALL DistributedMatrix_Destroy(interfaceMatrix%matrixTranspose, &
+        & err,error,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(interfaceMatrix%elementMatrix,err,error,*999)
+      DEALLOCATE(interfaceMatrix)
     ENDIF
     
-    EXITS("INTERFACE_MATRIX_FINALISE")
+    EXITS("InterfaceMatrix_Finalise")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRIX_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrix_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRIX_FINALISE
+    
+  END SUBROUTINE InterfaceMatrix_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise an interface matrix.
-  SUBROUTINE INTERFACE_MATRIX_INITIALISE(INTERFACE_MATRICES,MATRIX_NUMBER,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrix_Initialise(interfaceMatrices,matrixNumber,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface matrices to initialise the interface matrix for
-    INTEGER(INTG) :: MATRIX_NUMBER !<The matrix number in the interface matrices to initialise.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to initialise the interface matrix for
+    INTEGER(INTG) :: matrixNumber !<The matrix number in the interface matrices to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(VARYING_STRING) :: dummyError,localError
 
-    ENTERS("INTERFACE_MATRIX_INITIALISE",ERR,ERROR,*998)
+    ENTERS("InterfaceMatrix_Initialise",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      IF(MATRIX_NUMBER>0.AND.MATRIX_NUMBER<=INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
-        INTERFACE_MAPPING=>INTERFACE_MATRICES%INTERFACE_MAPPING
-        IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-          IF(ASSOCIATED(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%ptr)) THEN
-            LOCAL_ERROR="Interface matrix for matrix number "//TRIM(NUMBER_TO_VSTRING(MATRIX_NUMBER,"*",ERR,ERROR))// &
-              & " is already associated."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
-          ELSE
-            ALLOCATE(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%ptr,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate interface matrix.",ERR,ERROR,*999)
-            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%ptr
-            INTERFACE_MATRIX%MATRIX_NUMBER=MATRIX_NUMBER
-            INTERFACE_MATRIX%INTERFACE_MATRICES=>INTERFACE_MATRICES
-            INTERFACE_MATRIX%STORAGE_TYPE=MATRIX_BLOCK_STORAGE_TYPE
-            INTERFACE_MATRIX%STRUCTURE_TYPE=INTERFACE_MATRIX_NO_STRUCTURE
-            INTERFACE_MATRIX%UPDATE_MATRIX=.TRUE.
-            INTERFACE_MATRIX%FIRST_ASSEMBLY=.TRUE.
-            INTERFACE_MATRIX%HAS_TRANSPOSE=INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(MATRIX_NUMBER)%HAS_TRANSPOSE
-            INTERFACE_MATRIX%NUMBER_OF_ROWS=INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(MATRIX_NUMBER)%NUMBER_OF_ROWS
-            INTERFACE_MATRIX%TOTAL_NUMBER_OF_ROWS=INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(MATRIX_NUMBER)% &
-              & TOTAL_NUMBER_OF_ROWS
-            INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(MATRIX_NUMBER)%INTERFACE_MATRIX=>INTERFACE_MATRIX
-            NULLIFY(INTERFACE_MATRIX%MATRIX)
-            NULLIFY(INTERFACE_MATRIX%MATRIX_TRANSPOSE)
-            NULLIFY(INTERFACE_MATRIX%TEMP_VECTOR)
-            NULLIFY(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR)
-            CALL EquationsMatrices_ElementMatrixInitialise(INTERFACE_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Interface mapping is not associated.",ERR,ERROR,*998)
-        ENDIF
-      ELSE
-        LOCAL_ERROR="The specified interface matrix number of "//TRIM(NUMBER_TO_VSTRING(MATRIX_NUMBER,"*",ERR,ERROR))// &
-          & " is invalid. The matrix number must be > 0 and <= "// &
-          & TRIM(NUMBER_TO_VSTRING(INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES,"*",ERR,ERROR))//"."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*998)
+    IF(matrixNumber<=0.OR.matrixNumber>interfaceMatrices%numberOfInterfaceMatrices) THEN
+      localError="The specified interface matrix number of "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is invalid. The matrix number must be >= 1 and <= "// &
+        & TRIM(NumberToVString(interfaceMatrices%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*998)
     ENDIF
-    
-    EXITS("INTERFACE_MATRIX_INITIALISE")
+    IF(ASSOCIATED(interfaceMatrices%matrices(matrixNumber)%ptr)) THEN
+      localError="Interface matrix for matrix number "//TRIM(NumberToVString(matrixNumber,"*",err,error))// &
+        & " is already associated."
+      CALL FlagError(localError,err,error,*998)
+    ENDIF
+
+    NULLIFY(interfaceMapping)
+    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)    
+    ALLOCATE(interfaceMatrices%matrices(matrixNumber)%ptr,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface matrix.",err,error,*999)
+    interfaceMatrix=>interfaceMatrices%matrices(matrixNumber)%ptr
+    interfaceMatrix%matrixNumber=matrixNumber
+    interfaceMatrix%interfaceMatrices=>interfaceMatrices
+    interfaceMatrix%storageType=MATRIX_BLOCK_STORAGE_TYPE
+    interfaceMatrix%structureType=INTERFACE_MATRIX_NO_STRUCTURE
+    interfaceMatrix%updateMatrix=.TRUE.
+    interfaceMatrix%firstAssembly=.TRUE.
+    interfaceMatrix%hasTranspose=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%hasTranspose
+    interfaceMatrix%numberOfRows=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%numberOfRows
+    interfaceMatrix%totalNumberOfRows=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%totalNumberOfRows
+    interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%interfaceMatrix=>interfaceMatrix
+    NULLIFY(interfaceMatrix%matrix)
+    NULLIFY(interfaceMatrix%matrixTranspose)
+    NULLIFY(interfaceMatrix%tempVector)
+    NULLIFY(interfaceMatrix%tempTransposeVector)
+    CALL EquationsMatrices_ElementMatrixInitialise(interfaceMatrix%elementMatrix,err,error,*999)
+   
+    EXITS("InterfaceMatrix_Initialise")
     RETURN
-999 CALL INTERFACE_MATRIX_FINALISE(INTERFACE_MATRICES%MATRICES(MATRIX_NUMBER)%ptr,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("INTERFACE_MATRIX_INITIALISE",ERR,ERROR)
+999 CALL InterfaceMatrix_Finalise(interfaceMatrices%matrices(matrixNumber)%ptr,dummyErr,dummyError,*998)
+998 ERRORSEXITS("InterfaceMatrix_Initialise",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_MATRIX_INITIALISE
+  END SUBROUTINE InterfaceMatrix_Initialise
 
   !
   !================================================================================================================================
   !
 
   !>Adds the element matrices into the interface matrices.
-  SUBROUTINE INTERFACE_MATRICES_ELEMENT_ADD(INTERFACE_MATRICES,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_ElementAdd(interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceRHSType), POINTER :: rhsVector
+    TYPE(VARYING_STRING) :: localError
     
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_START("INTERFACE_MATRICES_ELEMENT_ADD()")
+    CALL TAU_STATIC_PHASE_START("InterfaceMatrices_ElementAdd()")
 #endif
 
-    ENTERS("INTERFACE_MATRICES_ELEMENT_ADD",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_ElementAdd",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      !Add the element matrices
-      DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
-        IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-          IF(INTERFACE_MATRIX%UPDATE_MATRIX) THEN
-            !Add the element matrix into the distributed interface equations matrix
-            CALL DistributedMatrix_ValuesAdd(INTERFACE_MATRIX%MATRIX,INTERFACE_MATRIX%ELEMENT_MATRIX%rowDOFS(1: &
-              & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfRows),INTERFACE_MATRIX%ELEMENT_MATRIX%columnDOFS(1: &
-              & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfColumns),INTERFACE_MATRIX%ELEMENT_MATRIX%matrix(1: &
-              & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfRows,1:INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfColumns), &
-              & ERR,ERROR,*999)
-            !If the interface matrix has a transpose add it
-            IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-              CALL DistributedMatrix_ValuesAdd(INTERFACE_MATRIX%MATRIX_TRANSPOSE,INTERFACE_MATRIX%ELEMENT_MATRIX%columnDOFS(1: &
-                & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfColumns),INTERFACE_MATRIX%ELEMENT_MATRIX%rowDOFS(1: &
-                & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfRows),TRANSPOSE(INTERFACE_MATRIX%ELEMENT_MATRIX%matrix(1: &
-                & INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfRows,1:INTERFACE_MATRIX%ELEMENT_MATRIX%numberOfColumns)), &
-                & ERR,ERROR,*999)
-            ENDIF
-          ENDIF
-        ELSE
-          LOCAL_ERROR="Interface matrix for interface matrix number "//TRIM(NUMBER_TO_VSTRING(matrix_idx,"*",ERR,ERROR))// &
-            & " is not associated."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDDO !matrix_idx
-      RHS_VECTOR=>INTERFACE_MATRICES%RHS_VECTOR
-      IF(ASSOCIATED(RHS_VECTOR)) THEN
-        IF(RHS_VECTOR%UPDATE_VECTOR) THEN
-          !Add the rhs element vector
-          CALL DistributedVector_ValuesAdd(RHS_VECTOR%RHS_VECTOR,RHS_VECTOR%ELEMENT_VECTOR%rowDOFS(1: &
-            & RHS_VECTOR%ELEMENT_VECTOR%numberOfRows),RHS_VECTOR%ELEMENT_VECTOR%vector(1:RHS_VECTOR% &
-            & ELEMENT_VECTOR%numberOfRows),ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not allocated.",err,error,*999)
+    
+    !Add the element matrices
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      IF(interfaceMatrix%updateMatrix) THEN
+        !Add the element matrix into the distributed interface equations matrix
+        CALL DistributedMatrix_ValuesAdd(interfaceMatrix%matrix,interfaceMatrix%elementMatrix%rowDOFS(1: &
+          & interfaceMatrix%elementMatrix%numberOfRows),interfaceMatrix%elementMatrix%columnDOFS(1: &
+          & interfaceMatrix%elementMatrix%numberOfColumns),interfaceMatrix%elementMatrix%matrix(1: &
+          & interfaceMatrix%elementMatrix%numberOfRows,1:interfaceMatrix%elementMatrix%numberOfColumns), &
+          & err,error,*999)
+        !If the interface matrix has a transpose add it
+        IF(interfaceMatrix%hasTranspose) THEN
+          CALL DistributedMatrix_ValuesAdd(interfaceMatrix%matrixTranspose,interfaceMatrix%elementMatrix%columnDOFS(1: &
+            & interfaceMatrix%elementMatrix%numberOfColumns),interfaceMatrix%elementMatrix%rowDOFS(1: &
+            & interfaceMatrix%elementMatrix%numberOfRows),TRANSPOSE(interfaceMatrix%elementMatrix%matrix(1: &
+            & interfaceMatrix%elementMatrix%numberOfRows,1:interfaceMatrix%elementMatrix%numberOfColumns)), &
+            & err,error,*999)
         ENDIF
       ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not allocated.",ERR,ERROR,*999)
+    ENDDO !matrixIdx
+    NULLIFY(rhsVector)
+    CALL InterfaceMatrices_RHSVectorGet(interfaceMatrices,rhsVector,err,error,*999)
+    IF(rhsVector%updateVector) THEN
+      !Add the rhs element vector
+      CALL DistributedVector_ValuesAdd(rhsVector%rhsVector,rhsVector%elementVector%rowDOFS(1: &
+        & rhsVector%elementVector%numberOfRows),rhsVector%elementVector%vector(1:rhsVector% &
+        & elementVector%numberOfRows),err,error,*999)
     ENDIF
+      
 #ifdef TAUPROF
-    CALL TAU_STATIC_PHASE_STOP("INTERFACE_MATRICES_ELEMENT_ADD()")
+    CALL TAU_STATIC_PHASE_STOP("InterfaceMatrices_ElementAdd()")
 #endif
     
-    EXITS("INTERFACE_MATRICES_ELEMENT_ADD")
+    EXITS("InterfaceMatrices_ElementAdd")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_ELEMENT_ADD",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_ElementAdd",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_ELEMENT_ADD
+    
+  END SUBROUTINE InterfaceMatrices_ElementAdd
 
   !
   !================================================================================================================================
@@ -294,7 +285,7 @@ CONTAINS
   SUBROUTINE InterfaceMatrices_ElementCalculate(interfaceMatrices,interfaceElementNumber,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
     INTEGER(INTG), INTENT(IN) :: interfaceElementNumber !<The element number to calculate the mappings for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -304,10 +295,10 @@ CONTAINS
     TYPE(InterfaceType), POINTER :: interface
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping
-    TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: rhsMapping
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: rhsVector
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceRHSType), POINTER :: rhsVector
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity
     TYPE(VARYING_STRING) :: localError
@@ -318,117 +309,79 @@ CONTAINS
 
     ENTERS("InterfaceMatrices_ElementCalculate",err,error,*999)
 
-    IF(ASSOCIATED(interfaceMatrices)) THEN
-      interfaceMapping=>interfaceMatrices%INTERFACE_MAPPING
-      IF(ASSOCIATED(interfaceMapping)) THEN
-        interfaceEquations=>interfaceMapping%INTERFACE_EQUATIONS
-        IF(ASSOCIATED(interfaceEquations)) THEN
-          interfaceCondition=>interfaceEquations%INTERFACE_CONDITION
-          IF(ASSOCIATED(interfaceCondition)) THEN
-            interface=>interfaceCondition%INTERFACE
-            IF(ASSOCIATED(interface)) THEN
-              SELECT CASE(interfaceCondition%integrationType)
-              CASE(INTERFACE_CONDITION_GAUSS_INTEGRATION)
-                meshConnectivity=>interface%meshConnectivity
-                IF(ASSOCIATED(meshConnectivity)) THEN
-                  IF(ALLOCATED(meshConnectivity%elementConnectivity)) THEN
-                    !Calculate the row and columns for the interface equations matrices
-                    DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
-                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
-                      IF(ASSOCIATED(interfaceMatrix)) THEN
-                        rowsFieldVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%VARIABLE
-                        colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE !\todo: TEMPORARY: Needs generalising
-                        rowsMeshIdx=interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%MESH_INDEX
-                        IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
-                          ! If the rows and column variables are both the Lagrange variable (this is the diagonal matrix)
-                          rowsElementNumber=InterfaceElementNumber
-                        ELSE
-                          rowsElementNumber=meshConnectivity%elementConnectivity(InterfaceElementNumber,rowsMeshIdx)% &
-                            & coupledElementNumber
-                        ENDIF
-                        CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%ELEMENT_MATRIX, &
-                          & interfaceMatrix%UPDATE_MATRIX,[rowsElementNumber],[interfaceElementNumber],rowsFieldVariable, &
-                          & colsFieldVariable,err,error,*999)
-                      ELSE
-                        localError="Interface matrix number "//TRIM(NUMBER_TO_VSTRING(matrixIdx,"*",err,error))// &
-                          & " is not associated."
-                        CALL FlagError(localError,err,error,*999)
-                      ENDIF
-                    ENDDO !matrixIdx
-                  ELSE
-                    CALL FlagError("Interface element connectivity is not associated.",err,error,*999)
-                  ENDIF
-                ELSE
-                  CALL FlagError("Interface mesh connectivity is not associated.",err,error,*999)              
-                ENDIF
-              CASE(INTERFACE_CONDITION_DATA_POINTS_INTEGRATION)
-                pointsConnectivity=>interface%pointsConnectivity
-                IF(ASSOCIATED(pointsConnectivity)) THEN
-                  IF(ALLOCATED(pointsConnectivity%coupledElements)) THEN
-                    DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
-                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
-                      IF(ASSOCIATED(interfaceMatrix)) THEN 
-                        IF(interfaceCondition%METHOD==INTERFACE_CONDITION_PENALTY_METHOD .AND. &
-                            matrixIdx==interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES) THEN
-                          rowsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE
-                          colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE
-                          CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%ELEMENT_MATRIX, &
-                            & interfaceMatrix%UPDATE_MATRIX,[InterfaceElementNumber],[InterfaceElementNumber], &
-                            & rowsFieldVariable,colsFieldVariable,err,error,*999)
-                        ELSE
-                          rowsFieldVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%VARIABLE
-                          colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE !\todo: TEMPORARY: Needs generalising
-                          rowsMeshIdx=interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%MESH_INDEX
-                          CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%ELEMENT_MATRIX, &
-                            & interfaceMatrix%UPDATE_MATRIX,pointsConnectivity%coupledElements(InterfaceElementNumber, &
-                            & rowsMeshIdx)%elementNumbers,[InterfaceElementNumber],rowsFieldVariable,colsFieldVariable, &
-                            & err,error,*999)
-                        ENDIF
-                      ELSE
-                        localError="Interface matrix number "//TRIM(NUMBER_TO_VSTRING(matrixIdx,"*",err,error))// &
-                          & " is not associated."
-                        CALL FlagError(localError,err,error,*999)
-                      ENDIF
-                    ENDDO !matrixIdx
-                  ELSE
-                    CALL FlagError("Interface points connectivity coupled elements is not allocated.",err,error,*999)             
-                  ENDIF
-                ELSE
-                  CALL FlagError("Interface points connectivity is not associated.",err,error,*999)              
-                ENDIF
-              CASE DEFAULT
-                localError="The interface condition integration type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(interfaceCondition%integrationType,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(localError,ERR,ERROR,*999)
-              END SELECT
-              !RHS element matrix dofs are the same for both mesh and points connectivity, right now
-              rhsVector=>interfaceMatrices%RHS_VECTOR
-              IF(ASSOCIATED(rhsVector)) THEN
-                rhsMapping=>interfaceMapping%RHS_MAPPING
-                IF(ASSOCIATED(rhsMapping)) THEN
-                  !Calculate the rows  for the equations RHS
-                  rowsFieldVariable=>rhsMapping%RHS_VARIABLE
-                  CALL EquationsMatrices_ElementVectorCalculate(rhsVector%ELEMENT_VECTOR,rhsVector%UPDATE_VECTOR, &
-                    & interfaceElementNumber,rowsFieldVariable,err,error,*999)
-                ELSE
-                  CALL FlagError("Interface mapping rhs mapping is not associated.",err,error,*999)
-                ENDIF
-              ENDIF
-            ELSE
-              CALL FlagError("Interface condition interface is not associated.",err,error,*999)            
-            ENDIF
-          ELSE
-            CALL FlagError("Interface equations interface condition is not associated.",err,error,*999)
-          ENDIF
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not allocated",err,error,*999)
+
+    NULLIFY(interfaceMapping)
+    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)
+    NULLIFY(interfaceEquations)
+    CALL InterfaceMatrices_InterfaceEquationsGet(interfaceMatrices,interfaceEquations,err,error,*999)
+    NULLIFY(interfaceCondition)
+    CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
+    NULLIFY(INTERFACE)
+    CALL InterfaceCondition_InterfaceGet(interfaceCondition,INTERFACE,err,error,*999)
+    
+    SELECT CASE(interfaceCondition%integrationType)
+    CASE(INTERFACE_CONDITION_GAUSS_INTEGRATION)
+      NULLIFY(meshConnectivity)
+      CALL Interface_MeshConnectivityGet(INTERFACE,meshConnectivity,err,error,*999)
+      IF(.NOT.ALLOCATED(meshConnectivity%elementConnectivity)) &
+        & CALL FlagError("Interface element connectivity is not associated.",err,error,*999)
+      !Calculate the row and columns for the interface equations matrices
+      DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+        NULLIFY(interfaceMatrix)
+        CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+        rowsFieldVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variable
+        colsFieldVariable=>interfaceMapping%lagrangeVariable !\todo: TEMPORARY: Needs generalising
+        rowsMeshIdx=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex
+        IF(ASSOCIATED(rowsFieldVariable,colsFieldVariable)) THEN
+          !If the rows and column variables are both the Lagrange variable (this is the diagonal matrix)
+          rowsElementNumber=InterfaceElementNumber
         ELSE
-          CALL FlagError("Interface mapping interface equations is not associated.",err,error,*999)
+          rowsElementNumber=meshConnectivity%elementConnectivity(InterfaceElementNumber,rowsMeshIdx)%coupledElementNumber
         ENDIF
-      ELSE
-        CALL FlagError("Interface mapping is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not allocated",err,error,*999)
-    ENDIF
+        CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%elementMatrix, &
+          & interfaceMatrix%updateMatrix,[rowsElementNumber],[interfaceElementNumber],rowsFieldVariable, &
+          & colsFieldVariable,err,error,*999)
+      ENDDO !matrixIdx
+    CASE(INTERFACE_CONDITION_DATA_POINTS_INTEGRATION)
+      NULLIFY(pointsConnectivity)
+      CALL Interface_PointsConnectivityGet(INTERFACE,pointsConnectivity,err,error,*999)
+      IF(.NOT.ALLOCATED(pointsConnectivity%coupledElements)) &
+        & CALL FlagError("Interface points connectivity coupled elements is not allocated.",err,error,*999)
+      DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+        NULLIFY(interfaceMatrix)
+        CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+        IF(interfaceCondition%method==INTERFACE_CONDITION_PENALTY_METHOD.AND. &
+          matrixIdx==interfaceMatrices%numberOfInterfaceMatrices) THEN
+          rowsFieldVariable=>interfaceMapping%lagrangeVariable
+          colsFieldVariable=>interfaceMapping%lagrangeVariable
+          CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%elementMatrix, &
+            & interfaceMatrix%updateMatrix,[InterfaceElementNumber],[InterfaceElementNumber], &
+            & rowsFieldVariable,colsFieldVariable,err,error,*999)
+        ELSE
+          rowsFieldVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variable
+          colsFieldVariable=>interfaceMapping%lagrangeVariable !\todo: TEMPORARY: Needs generalising
+          rowsMeshIdx=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex
+          CALL EquationsMatrices_ElementMatrixCalculate(interfaceMatrix%elementMatrix, &
+            & interfaceMatrix%updateMatrix,pointsConnectivity%coupledElements(InterfaceElementNumber, &
+            & rowsMeshIdx)%elementNumbers,[InterfaceElementNumber],rowsFieldVariable,colsFieldVariable, &
+            & err,error,*999)
+        ENDIF
+      ENDDO !matrixIdx
+    CASE DEFAULT
+      localError="The interface condition integration type of "// &
+        & TRIM(NumberToVString(interfaceCondition%integrationType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    !RHS element matrix dofs are the same for both mesh and points connectivity, right now
+    NULLIFY(rhsVector)
+    CALL InterfaceMatrices_RHSVectorGet(interfaceMatrices,rhsVector,err,error,*999)
+    NULLIFY(rhsMapping)
+    CALL InterfaceMapping_RHSMappingGet(interfaceMapping,rhsMapping,err,error,*999)
+    !Calculate the rows for the equations RHS
+    rowsFieldVariable=>rhsMapping%rhsVariable
+    CALL EquationsMatrices_ElementVectorCalculate(rhsVector%elementVector,rhsVector%updateVector, &
+      & interfaceElementNumber,rowsFieldVariable,err,error,*999)
     
 #ifdef TAUPROF
     CALL TAU_STATIC_PHASE_STOP("InterfaceMatrices_ElementCalculate()")
@@ -438,6 +391,7 @@ CONTAINS
     RETURN
 999 ERRORSEXITS("InterfaceMatrices_ElementCalculate",err,error)
     RETURN 1
+    
   END SUBROUTINE InterfaceMatrices_ElementCalculate
 
   !
@@ -445,48 +399,39 @@ CONTAINS
   !
 
   !>Finalise the element calculation information for interface matrices and deallocate all memory
-  SUBROUTINE INTERFACE_MATRICES_ELEMENT_FINALISE(INTERFACE_MATRICES,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_ElementFinalise(interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<The interface matrices for which to finalise the elements
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<The interface matrices for which to finalise the elements
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceRHSType), POINTER :: rhsVector
     
-    ENTERS("INTERFACE_MATRICES_ELEMENT_FINALISE",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_ElementFinalise",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
-        IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-          CALL EquationsMatrices_ElementMatrixFinalise(INTERFACE_MATRIX%ELEMENT_MATRIX,ERR,ERROR,*999)
-        ELSE
-          LOCAL_ERROR="Interface matrix number "//TRIM(NUMBER_TO_VSTRING(matrix_idx,"*",ERR,ERROR))// &
-            & " is not associated."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      RHS_VECTOR=>INTERFACE_MATRICES%RHS_VECTOR
-      IF(ASSOCIATED(RHS_VECTOR)) THEN
-        !Finalise the interface element vector
-        RHS_VECTOR%ELEMENT_VECTOR%maxNumberOfRows=0
-        IF(ALLOCATED(RHS_VECTOR%ELEMENT_VECTOR%rowDOFS)) DEALLOCATE(RHS_VECTOR%ELEMENT_VECTOR%rowDOFS)
-        IF(ALLOCATED(RHS_VECTOR%ELEMENT_VECTOR%vector)) DEALLOCATE(RHS_VECTOR%ELEMENT_VECTOR%vector)
-      ENDIF
-
-      ENDDO !matrix_idx
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*999)
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      CALL EquationsMatrices_ElementMatrixFinalise(interfaceMatrix%elementMatrix,err,error,*999)
+    ENDDO !matrixIdx
+    rhsVector=>interfaceMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Finalise the interface element vector
+      rhsVector%elementVector%maxNumberOfRows=0
+      IF(ALLOCATED(rhsVector%elementVector%rowDOFS)) DEALLOCATE(rhsVector%elementVector%rowDOFS)
+      IF(ALLOCATED(rhsVector%elementVector%vector)) DEALLOCATE(rhsVector%elementVector%vector)
     ENDIF
     
-    EXITS("INTERFACE_MATRICES_ELEMENT_FINALISE")
+    EXITS("InterfaceMatrices_ElementFinalise")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_ELEMENT_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_ElementFinalise",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_ELEMENT_FINALISE
+    
+  END SUBROUTINE InterfaceMatrices_ElementFinalise
 
   !
   !================================================================================================================================
@@ -496,1147 +441,909 @@ CONTAINS
   SUBROUTINE InterfaceMatrices_ElementInitialise(interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices !The interface matrices to initialise the element information for
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !The interface matrices to initialise the element information for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: matrixIdx,rowsMeshIdx
     INTEGER(INTG) :: rowsNumberOfElements,colsNumberOfElements !Number of elements in the row and col variables whose dofs are present in interface element matrix
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
     TYPE(InterfaceType), POINTER :: interface
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: rhsVector
-    TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: rhsMapping
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceRHSType), POINTER :: rhsVector
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping
     TYPE(FieldVariableType), POINTER :: colsFieldVariable,rowsFieldVariable
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("InterfaceMatrices_ElementInitialise",err,error,*999)
 
-    IF(ASSOCIATED(interfaceMatrices)) THEN
-      interfaceMapping=>interfaceMatrices%INTERFACE_MAPPING
-      IF(ASSOCIATED(interfaceMapping)) THEN
-        interfaceEquations=>interfaceMapping%INTERFACE_EQUATIONS
-        IF(ASSOCIATED(interfaceEquations)) THEN
-          interfaceCondition=>interfaceEquations%INTERFACE_CONDITION
-          IF(ASSOCIATED(interfaceCondition)) THEN
-            SELECT CASE(interfaceCondition%integrationType)
-              CASE(INTERFACE_CONDITION_GAUSS_INTEGRATION)
-              DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES
-                interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
-                IF(ASSOCIATED(interfaceMatrix)) THEN
-                  rowsNumberOfElements=1
-                  colsNumberOfElements=1
-                  rowsFieldVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%VARIABLE
-                  colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE !TEMPORARY: Needs generalising
-                  CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%ELEMENT_MATRIX,rowsFieldVariable, &
-                    & colsFieldVariable,rowsNumberOfElements,colsNumberOfElements,err,error,*999)
-                ELSE
-                  localError="Interface matrix number "//TRIM(NUMBER_TO_VSTRING(matrixIdx,"*",err,error))// &
-                    & " is not associated."
-                  CALL FlagError(localError,err,error,*999)
-                ENDIF
-              ENDDO !matrixIdx
-            CASE(INTERFACE_CONDITION_DATA_POINTS_INTEGRATION) 
-              interface=>interfaceCondition%INTERFACE
-              IF(ASSOCIATED(interface))THEN
-                pointsConnectivity=>interface%pointsConnectivity
-                IF(ASSOCIATED(pointsConnectivity)) THEN
-                  IF(ALLOCATED(pointsConnectivity%coupledElements)) THEN
-                    DO matrixIdx=1,interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES !\todo: Need to separate the case for penalty matrix
-                      interfaceMatrix=>interfaceMatrices%MATRICES(matrixIdx)%ptr
-                      IF(ASSOCIATED(interfaceMatrix)) THEN
-                        colsNumberOfElements=1
-                        rowsFieldVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%VARIABLE
-                        colsFieldVariable=>interfaceMapping%LAGRANGE_VARIABLE !TEMPORARY: Needs generalising
-                        rowsMeshIdx=interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrixIdx)%MESH_INDEX
-                        CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%ELEMENT_MATRIX,rowsFieldVariable, &
-                          & colsFieldVariable,pointsConnectivity%maxNumberOfCoupledElements(rowsMeshIdx), &
-                          & colsNumberOfElements,err,error,*999)
-                      ELSE
-                        localError="Interface matrix number "//TRIM(NUMBER_TO_VSTRING(matrixIdx,"*",err,error))// &
-                          & " is not associated."
-                        CALL FlagError(localError,err,error,*999)
-                      ENDIF
-                    ENDDO !matrixIdx
-                  ELSE
-                    CALL FlagError("Interface points connectivity coupled elements is not allocated.",err,error,*999)             
-                  ENDIF
-                ELSE
-                  CALL FlagError("Interface points connectivity is not associated.",err,error,*999)              
-                ENDIF
-              ELSE
-                CALL FlagError("Interface is not associated.",err,error,*999)
-              ENDIF
-            CASE DEFAULT
-              localError="The interface condition integration type of "// &
-                & TRIM(NUMBER_TO_VSTRING(interfaceCondition%integrationType,"*",ERR,ERROR))//" is invalid."
-              CALL FlagError(localError,ERR,ERROR,*999)
-            END SELECT
-          ELSE
-            CALL FlagError("Interface condition is not associated.",err,error,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Interface equations is not associated.",err,error,*999)
-        ENDIF
-        rhsVector=>interfaceMatrices%RHS_VECTOR
-        IF(ASSOCIATED(rhsVector)) THEN
-          !Initialise the RHS element vector
-          rhsMapping=>interfaceMapping%RHS_MAPPING
-          IF(ASSOCIATED(rhsMapping)) THEN
-            rowsFieldVariable=>rhsMapping%RHS_VARIABLE
-            CALL EquationsMatrices_ElementVectorSetup(rhsVector%ELEMENT_VECTOR,rowsFieldVariable,err,error,*999)
-          ELSE
-            CALL FlagError("RHS mapping is not associated.",err,error,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Interface matrices mapping is not associated.",err,error,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+
+    NULLIFY(interfaceMapping)
+    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)
+    NULLIFY(interfaceEquations)
+    CALL InterfaceMatrices_InterfaceEquationsGet(interfaceMatrices,interfaceEquations,err,error,*999)
+    NULLIFY(interfaceCondition)
+    CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
+    
+    SELECT CASE(interfaceCondition%integrationType)
+    CASE(INTERFACE_CONDITION_GAUSS_INTEGRATION)
+      DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+        NULLIFY(interfaceMatrix)
+        CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+        rowsNumberOfElements=1
+        colsNumberOfElements=1
+        rowsFieldVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%VARIABLE
+        colsFieldVariable=>interfaceMapping%lagrangeVariable !TEMPORARY: Needs generalising
+        CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%elementMatrix,rowsFieldVariable, &
+          & colsFieldVariable,rowsNumberOfElements,colsNumberOfElements,err,error,*999)
+      ENDDO !matrixIdx
+    CASE(INTERFACE_CONDITION_DATA_POINTS_INTEGRATION)
+      NULLIFY(INTERFACE)
+      CALL InterfaceCondition_InterfaceGet(interfaceCondition,INTERFACE,err,error,*999)
+      NULLIFY(pointsConnectivity)
+      CALL Interface_PointsConnectivityGet(INTERFACE,pointsConnectivity,err,error,*999)
+      IF(.NOT.ALLOCATED(pointsConnectivity%coupledElements)) &
+        & CALL FlagError("Interface points connectivity coupled elements is not allocated.",err,error,*999) 
+      DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices !\todo: Need to separate the case for penalty matrix
+        NULLIFY(interfaceMatrix)
+        CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+        colsNumberOfElements=1
+        rowsFieldVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%variable
+        colsFieldVariable=>interfaceMapping%lagrangeVariable !TEMPORARY: Needs generalising
+        rowsMeshIdx=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%meshIndex
+        CALL EquationsMatrices_ElementMatrixSetup(interfaceMatrix%elementMatrix,rowsFieldVariable, &
+          & colsFieldVariable,pointsConnectivity%maxNumberOfCoupledElements(rowsMeshIdx), &
+          & colsNumberOfElements,err,error,*999)
+      ENDDO !matrixIdx
+    CASE DEFAULT
+      localError="The interface condition integration type of "// &
+        & TRIM(NumberToVString(interfaceCondition%integrationType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    rhsVector=>interfaceMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Initialise the RHS element vector
+      NULLIFY(rhsMapping)
+      CALL InterfaceMapping_RHSMappingGet(interfaceMapping,rhsMapping,err,error,*999)
+      rowsFieldVariable=>rhsMapping%rhsVariable
+      CALL EquationsMatrices_ElementVectorSetup(rhsVector%elementVector,rowsFieldVariable,err,error,*999)      
     ENDIF
     
     EXITS("InterfaceMatrices_ElementInitialise")
     RETURN
 999 ERRORSEXITS("InterfaceMatrices_ElementInitialise",err,error)
     RETURN 1
+    
   END SUBROUTINE InterfaceMatrices_ElementInitialise
 
   !
   !================================================================================================================================
   !
 
-  !>Gets an interface matrix from interface matrices.
-  SUBROUTINE InterfaceMatrices_MatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*)
+  !>Caclulates the matrix structure (sparsity) for an interface matrix.
+  SUBROUTINE InterfaceMatrix_StructureCalculate(interfaceMatrix,numberOfNonZeros,rowIndices,columnIndices, &
+    & transposeRowIndices,transposeColumnIndices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices !<A pointer to the interface matrices to get the matrix for
-    INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix to get
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix !<On exit, a pointer to the specified interface matrix. Must not be associated on entry.
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix to calculate the strucute for
+    INTEGER(INTG), INTENT(OUT) :: numberOfNonZeros !<On return, the number of non-zeros in the matrix
+    INTEGER(INTG), POINTER :: rowIndices(:) !<On return, a pointer to row location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
+    INTEGER(INTG), POINTER :: columnIndices(:) !<On return, a pointer to the column location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
+    INTEGER(INTG), POINTER :: transposeRowIndices(:) !<On return, if the interface matrix has a transpose a pointer to transpose row location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
+    INTEGER(INTG), POINTER :: transposeColumnIndices(:) !<On return, if the interface matrix has a transpose a pointer to the transpose column location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
- 
-    ENTERS("InterfacesMatrices_MatrixGet",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
-    IF(ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is already associated.",err,error,*999)
-    IF(interfaceMatrixIdx<1.OR.interfaceMatrixIdx>interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES) THEN
-      localError="The specified interface matrix index of "//TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))// &
-        & " is invalid. The index should be >= 1 and <= "// &
-        & TRIM(NumberToVString(interfaceMatrices%NUMBER_OF_INTERFACE_MATRICES,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(.NOT.ALLOCATED(interfaceMatrices%matrices)) CALL FlagError("Interface matrices matrices is not allocated.",err,error,*999)
-    
-    interfaceMatrix=>interfaceMatrices%matrices(interfaceMatrixIdx)%ptr
-    IF(.NOT.ASSOCIATED(interfaceMatrix)) THEN
-      localError="The interface matrix is not associated for interface matrix index number "// &
-        & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-       
-    EXITS("InterfaceMatrices_MatrixGet")
-    RETURN
-999 ERRORSEXITS("InterfaceMatrices_MatrixGet",err,error)
-    RETURN 1
-    
-  END SUBROUTINE InterfaceMatrices_MatrixGet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Caclulates the matrix structure (sparsity) for an interface matrix.
-  SUBROUTINE INTERFACE_MATRIX_STRUCTURE_CALCULATE(INTERFACE_MATRIX,NUMBER_OF_NON_ZEROS,ROW_INDICES,COLUMN_INDICES, &
-    & TRANSPOSE_ROW_INDICES,TRANSPOSE_COLUMN_INDICES,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX !<A pointer to the interface matrix to calculate the strucute for
-    INTEGER(INTG), INTENT(OUT) :: NUMBER_OF_NON_ZEROS !<On return, the number of non-zeros in the matrix
-    INTEGER(INTG), POINTER :: ROW_INDICES(:) !<On return, a pointer to row location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
-    INTEGER(INTG), POINTER :: COLUMN_INDICES(:) !<On return, a pointer to the column location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
-    INTEGER(INTG), POINTER :: TRANSPOSE_ROW_INDICES(:) !<On return, if the interface matrix has a transpose a pointer to transpose row location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
-    INTEGER(INTG), POINTER :: TRANSPOSE_COLUMN_INDICES(:) !<On return, if the interface matrix has a transpose a pointer to the transpose column location indices in compressed row format. The pointer must be NULL on entry and the calling routine is responsible for deallocation.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-   INTEGER(INTG) :: column_version,column_derivative,column_idx,column_component_idx,column_local_derivative_idx, &
-     & column_local_node_idx, column_node,DUMMY_ERR,domain_element,global_column,global_row,interface_element_idx, &
-     & INTERFACE_MESH_INDEX,local_column,local_row,MATRIX_NUMBER,NUMBER_OF_COLUMNS,NUMBER_OF_ROWS,row_component_idx, &
-     & row_version,row_derivative,row_local_derivative_idx,row_idx,row_local_node_idx,row_node,TRANSPOSE_NUMBER_OF_NON_ZEROS
-    INTEGER(INTG), ALLOCATABLE :: COLUMNS(:),TRANSPOSE_COLUMNS(:)
-    REAL(DP) :: SPARSITY
-    TYPE(BasisType), POINTER :: COLUMN_BASIS,ROW_BASIS
-    TYPE(DomainMappingType), POINTER :: COLUMN_DOFS_DOMAIN_MAPPING,ROW_DOFS_DOMAIN_MAPPING
-    TYPE(DomainElementsType), POINTER :: COLUMN_DOMAIN_ELEMENTS,ROW_DOMAIN_ELEMENTS
+    INTEGER(INTG) :: columnVersion,columnDerivative,columnIdx,columnComponentIdx,columnLocalDerivativeIdx, &
+     & columnInterpolationType,columnLocalNodeIdx,columnNode,dummyErr,domainElement,globalColumn,globalRow,interfaceElementIdx, &
+     & interfaceMeshIdx,localColumn,localRow,matrixNumber,numberOfColumns,numberOfRows,rowComponentIdx,rowInterpolationType, &
+     & rowVersion,rowDerivative,rowLocalDerivativeIdx,rowIdx,rowLocalNodeIdx,rowNode,transposeNumberOfNonZeros
+    INTEGER(INTG), ALLOCATABLE :: columns(:),transposeColumns(:)
+    REAL(DP) :: sparsity
+    TYPE(BasisType), POINTER :: columnBasis,rowBasis
+    TYPE(DomainType), POINTER :: columnDomain,rowDomain
+    TYPE(DomainElementsType), POINTER :: columnDomainElements,rowDomainElements
+    TYPE(DomainMappingType), POINTER :: columnDOFSDomainMapping,rowDOFSDomainMapping
+    TYPE(DomainTopologyType), POINTER :: columnDomainTopology,rowDomainTopology
     TYPE(InterfaceType), POINTER :: INTERFACE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
-    TYPE(InterfaceMeshConnectivityType), POINTER :: MESH_CONNECTIVITY
-    TYPE(FieldDOFToParamMapType), POINTER :: COLUMN_DOFS_PARAM_MAPPING,ROW_DOFS_PARAM_MAPPING
-    TYPE(FieldVariableType), POINTER :: COLUMN_VARIABLE,ROW_VARIABLE
-    TYPE(ListPtrType), ALLOCATABLE :: COLUMN_INDICES_LISTS(:)
-    TYPE(ListPtrType), ALLOCATABLE :: TRANSPOSE_COLUMN_INDICES_LISTS(:)
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
+    TYPE(FieldVariableType), POINTER :: columnVariable,rowVariable
+    TYPE(ListPtrType), ALLOCATABLE :: columnIndicesLists(:)
+    TYPE(ListPtrType), ALLOCATABLE :: transposeColumnIndicesLists(:)
+    TYPE(VARYING_STRING) :: dummyError,localError
 
-    ENTERS("INTERFACE_MATRIX_STRUCTURE_CALCULATE",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrix_StructureCalculate",err,error,*999)
 
-    NUMBER_OF_NON_ZEROS=0
-    IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-      IF(.NOT.ASSOCIATED(ROW_INDICES)) THEN
-        IF(.NOT.ASSOCIATED(COLUMN_INDICES)) THEN
-          IF(.NOT.ASSOCIATED(TRANSPOSE_ROW_INDICES)) THEN
-            IF(.NOT.ASSOCIATED(TRANSPOSE_COLUMN_INDICES)) THEN
-              MATRIX_NUMBER=INTERFACE_MATRIX%MATRIX_NUMBER
-              SELECT CASE(INTERFACE_MATRIX%STRUCTURE_TYPE)
-              CASE(INTERFACE_MATRIX_NO_STRUCTURE)
-                CALL FlagError("There is no structure to calculate for a matrix with no structure.",ERR,ERROR,*998)
-              CASE(INTERFACE_MATRIX_FEM_STRUCTURE)
-                SELECT CASE(INTERFACE_MATRIX%STORAGE_TYPE)
-                CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                  INTERFACE_MATRICES=>INTERFACE_MATRIX%INTERFACE_MATRICES
-                  IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-                    INTERFACE_EQUATIONS=>INTERFACE_MATRICES%INTERFACE_EQUATIONS
-                    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-                      INTERFACE_MAPPING=>INTERFACE_MATRICES%INTERFACE_MAPPING
-                      IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-                        INTERFACE_CONDITION=>INTERFACE_EQUATIONS%INTERFACE_CONDITION
-                        IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-                          INTERFACE=>INTERFACE_CONDITION%INTERFACE
-                          IF(ASSOCIATED(INTERFACE)) THEN
-                            MESH_CONNECTIVITY=>INTERFACE%meshConnectivity
-                            IF(ASSOCIATED(MESH_CONNECTIVITY)) THEN
-                              ROW_VARIABLE=>INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(MATRIX_NUMBER)%VARIABLE
-                              INTERFACE_MESH_INDEX=INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(MATRIX_NUMBER)%MESH_INDEX
-                              IF(ASSOCIATED(ROW_VARIABLE)) THEN
-                                COLUMN_VARIABLE=>INTERFACE_MAPPING%LAGRANGE_VARIABLE
-                                IF(ASSOCIATED(COLUMN_VARIABLE)) THEN
-                                  ROW_DOFS_DOMAIN_MAPPING=>ROW_VARIABLE%domainMapping
-                                  IF(ASSOCIATED(ROW_DOFS_DOMAIN_MAPPING)) THEN
-                                    COLUMN_DOFS_DOMAIN_MAPPING=>COLUMN_VARIABLE%domainMapping
-                                    IF(ASSOCIATED(COLUMN_DOFS_DOMAIN_MAPPING)) THEN
-                                      ROW_DOFS_PARAM_MAPPING=>ROW_VARIABLE%dofToParamMap
-                                      IF(ASSOCIATED(ROW_DOFS_PARAM_MAPPING)) THEN
-                                        COLUMN_DOFS_PARAM_MAPPING=>COLUMN_VARIABLE%dofToParamMap
-                                        IF(ASSOCIATED(COLUMN_DOFS_PARAM_MAPPING)) THEN
-                                          !Allocate lists
-                                          ALLOCATE(COLUMN_INDICES_LISTS(ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal),STAT=ERR)
-                                          IF(ERR/=0) CALL FlagError("Could not allocate column indices lists.",ERR,ERROR,*999)
-                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                            !Set up list
-                                            NULLIFY(COLUMN_INDICES_LISTS(local_row)%ptr)
-                                            CALL List_CreateStart(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
-                                            CALL List_DataTypeSet(COLUMN_INDICES_LISTS(local_row)%ptr,LIST_INTG_TYPE, &
-                                              & ERR,ERROR,*999)
-                                            CALL List_InitialSizeSet(COLUMN_INDICES_LISTS(local_row)%ptr,50,ERR,ERROR,*999)
-                                            CALL List_CreateFinish(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
-                                          ENDDO !local_row
-                                          !Allocate row indices
-                                          ALLOCATE(ROW_INDICES(ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal+1),STAT=ERR)
-                                          IF(ERR/=0) CALL FlagError("Could not allocate row indices.",ERR,ERROR,*999)
-                                          IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                            !Allocate transpose lists
-                                            ALLOCATE(TRANSPOSE_COLUMN_INDICES_LISTS(COLUMN_DOFS_DOMAIN_MAPPING% &
-                                              & totalNumberOfLocal),STAT=ERR)
-                                            IF(ERR/=0) CALL FlagError("Could not allocate transpose column indices lists.", &
-                                              & ERR,ERROR,*999)
-                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                              !Set up list
-                                              NULLIFY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr)
-                                              CALL List_CreateStart(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                & ERR,ERROR,*999)
-                                              CALL List_DataTypeSet(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                & LIST_INTG_TYPE,ERR,ERROR,*999)
-                                              CALL List_InitialSizeSet(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr,50, &
-                                                & ERR,ERROR,*999)
-                                              CALL List_CreateFinish(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                & ERR,ERROR,*999)
-                                            ENDDO !local_column
-                                            !Allocate transpose row indices
-                                            ALLOCATE(TRANSPOSE_ROW_INDICES(COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal+1), &
-                                              & STAT=ERR)
-                                            IF(ERR/=0) CALL FlagError("Could not allocate transpose row indices.",ERR,ERROR,*999)
-                                          ENDIF
-                                          !Loop over the number of components in the Lagrange multipler variable
-                                          DO column_component_idx=1,COLUMN_VARIABLE%numberOfComponents
-                                            IF(COLUMN_VARIABLE%COMPONENTS(column_component_idx)%interpolationType== &
-                                              & FIELD_NODE_BASED_INTERPOLATION) THEN
-                                              !Loop over the elements in the interface mesh
-                                              COLUMN_DOMAIN_ELEMENTS=>COLUMN_VARIABLE%COMPONENTS(column_component_idx)%DOMAIN% &
-                                                & TOPOLOGY%ELEMENTS
-                                              DO interface_element_idx=1,COLUMN_DOMAIN_ELEMENTS%totalNumberOfElements
-                                                COLUMN_BASIS=>COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)%BASIS
-                                                !Loop over the column DOFs in the element
-                                                DO column_local_node_idx=1,COLUMN_BASIS%numberOfNodes
-                                                  column_node=COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)% &
-                                                    & elementNodes(column_local_node_idx)
-                                                  DO column_local_derivative_idx=1,COLUMN_BASIS% &
-                                                    & numberOfDerivatives(column_local_node_idx)
-                                                    column_derivative=COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)% &
-                                                      & elementDerivatives(column_local_derivative_idx,column_local_node_idx)
-                                                    column_version=COLUMN_DOMAIN_ELEMENTS%ELEMENTS(interface_element_idx)% &
-                                                      & elementVersions(column_local_derivative_idx,column_local_node_idx)
-                                                    CALL FieldVariable_LocalNodeDOFGet(COLUMN_VARIABLE,column_version, &
-                                                      & column_derivative,column_node,column_component_idx,local_column, &
-                                                      & err,error,*999)
-                                                    global_column=COLUMN_DOFS_DOMAIN_MAPPING%localToGlobalMap(local_column)
-                                                    !Loop over the components in the dependent variable
-                                                    DO row_component_idx=1,ROW_VARIABLE%numberOfComponents
-                                                      SELECT CASE(ROW_VARIABLE%COMPONENTS(row_component_idx)%interpolationType)
-                                                      CASE(FIELD_CONSTANT_INTERPOLATION)
-                                                        CALL FieldVariable_ConstantDOFGet(ROW_VARIABLE,row_component_idx, &
-                                                          & local_row,err,error,*999)
-                                                        CALL List_ItemAdd(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
-                                                          & ERR,ERROR,*999)
-                                                        IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                          global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
-                                                          CALL List_ItemAdd(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                            & global_row,ERR,ERROR,*999)
-                                                        ENDIF
-                                                      CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-                                                        domain_element=MESH_CONNECTIVITY% &
-                                                          & elementConnectivity(interface_element_idx,INTERFACE_MESH_INDEX)% &
-                                                          & coupledElementNumber
-                                                        CALL FieldVariable_LocalElementDOFGet(ROW_VARIABLE,domain_element, &
-                                                          & row_component_idx,local_row,err,error,*999)
-                                                        CALL List_ItemAdd(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
-                                                          & ERR,ERROR,*999)
-                                                        IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                          global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
-                                                          CALL List_ItemAdd(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                            & global_row,ERR,ERROR,*999)
-                                                        ENDIF
-                                                      CASE(FIELD_NODE_BASED_INTERPOLATION)
-                                                        ROW_DOMAIN_ELEMENTS=>ROW_VARIABLE%COMPONENTS(row_component_idx)%DOMAIN% &
-                                                          & TOPOLOGY%ELEMENTS
-                                                        domain_element=MESH_CONNECTIVITY%elementConnectivity( &
-                                                          & interface_element_idx,INTERFACE_MESH_INDEX)%coupledElementNumber
-                                                        ROW_BASIS=>ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)%BASIS
-                                                        !Loop over the row DOFs in the domain mesh element
-                                                        DO row_local_node_idx=1,ROW_BASIS%numberOfNodes
-                                                          row_node=ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)% &
-                                                            & elementNodes(row_local_node_idx)
-                                                          DO row_local_derivative_idx=1,ROW_BASIS% &
-                                                            & numberOfDerivatives(row_local_node_idx)
-                                                            row_derivative=ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)% &
-                                                              & elementDerivatives(row_local_derivative_idx,row_local_node_idx)
-                                                            row_version=ROW_DOMAIN_ELEMENTS%ELEMENTS(domain_element)% &
-                                                              & elementVersions(row_local_derivative_idx,row_local_node_idx)
-                                                            CALL FieldVariable_LocalNodeDOFGet(ROW_VARIABLE,row_version, &
-                                                              & row_derivative,row_node,row_component_idx,local_row, &
-                                                              & err,error,*999)
-                                                            CALL List_ItemAdd(COLUMN_INDICES_LISTS(local_row)%ptr,global_column, &
-                                                              & ERR,ERROR,*999)
-                                                            IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                                              global_row=ROW_VARIABLE%domainMapping%localToGlobalMap(local_row)
-                                                              CALL List_ItemAdd(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                                & global_row,ERR,ERROR,*999)
-                                                            ENDIF
-                                                          ENDDO !row_local_derivative_idx
-                                                        ENDDO !row_local_node_idx
-                                                      CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-                                                        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                                                      CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-                                                        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-                                                      CASE DEFAULT
-                                                        LOCAL_ERROR="The row variable interpolation type of "// &
-                                                          & TRIM(NUMBER_TO_VSTRING(ROW_VARIABLE%COMPONENTS(row_component_idx)% &
-                                                          interpolationType,"*",ERR,ERROR))//" is invalid."
-                                                        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                                                      END SELECT
-                                                    ENDDO !row_component_idx
-                                                  ENDDO !column_local_derivative_idx
-                                                ENDDO !column_local_node_idx
-                                              ENDDO !interface_element_idx
-                                            ELSE
-                                              CALL FlagError("Only node based fields implemented.",ERR,ERROR,*999)
-                                            ENDIF
-                                          ENDDO !column_component_idx
-                                          ROW_INDICES(1)=1
-                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                            CALL List_RemoveDuplicates(COLUMN_INDICES_LISTS(local_row)%ptr,ERR,ERROR,*999)
-                                            CALL List_NumberOfItemsGet(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
-                                              & ERR,ERROR,*999)
-                                            NUMBER_OF_NON_ZEROS=NUMBER_OF_NON_ZEROS+NUMBER_OF_COLUMNS
-                                            ROW_INDICES(local_row+1)=NUMBER_OF_NON_ZEROS+1
-                                          ENDDO !local_row
-                                          IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                            TRANSPOSE_NUMBER_OF_NON_ZEROS=0
-                                            TRANSPOSE_ROW_INDICES(1)=1
-                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                              CALL List_RemoveDuplicates(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                & ERR,ERROR,*999)
-                                              CALL List_NumberOfItemsGet(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                & NUMBER_OF_COLUMNS,ERR,ERROR,*999)
-                                              TRANSPOSE_NUMBER_OF_NON_ZEROS=TRANSPOSE_NUMBER_OF_NON_ZEROS+NUMBER_OF_COLUMNS
-                                              TRANSPOSE_ROW_INDICES(local_column+1)=TRANSPOSE_NUMBER_OF_NON_ZEROS+1
-                                            ENDDO !local_column
-                                            !Sanity check - the number of non-zeros should be the same
-                                            IF(TRANSPOSE_NUMBER_OF_NON_ZEROS/=NUMBER_OF_NON_ZEROS) THEN
-                                              LOCAL_ERROR="Invalid number of non-zeros. The number of non-zeros in the "// &
-                                                & "transposed matrix ("//TRIM(NUMBER_TO_VSTRING(TRANSPOSE_NUMBER_OF_NON_ZEROS, &
-                                                & "*",ERR,ERROR))//") does not match the number of non-zeros in the interface "// &
-                                                & "matrix ("//TRIM(NUMBER_TO_VSTRING(TRANSPOSE_NUMBER_OF_NON_ZEROS,"*",ERR, &
-                                                & ERROR))//")."
-                                              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                                            ENDIF
-                                          ENDIF
-                                          !Allocate and setup the column locations
-                                          ALLOCATE(COLUMN_INDICES(NUMBER_OF_NON_ZEROS),STAT=ERR)
-                                          IF(ERR/=0) CALL FlagError("Could not allocate column indices.",ERR,ERROR,*999)
-                                          DO local_row=1,ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                            CALL List_DetachAndDestroy(COLUMN_INDICES_LISTS(local_row)%ptr,NUMBER_OF_COLUMNS, &
-                                              & COLUMNS,ERR,ERROR,*999)
-                                            DO column_idx=1,NUMBER_OF_COLUMNS
-                                              COLUMN_INDICES(ROW_INDICES(local_row)+column_idx-1)=COLUMNS(column_idx)
-                                            ENDDO !column_idx
-                                            DEALLOCATE(COLUMNS)
-                                          ENDDO !local_row
-                                          IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                                            !Allocate and setup the column locations
-                                            ALLOCATE(TRANSPOSE_COLUMN_INDICES(NUMBER_OF_NON_ZEROS),STAT=ERR)
-                                            IF(ERR/=0) &
-                                              & CALL FlagError("Could not allocate transpose column indices.",ERR,ERROR,*999)
-                                            DO local_column=1,COLUMN_DOFS_DOMAIN_MAPPING%totalNumberOfLocal
-                                              CALL List_DetachAndDestroy(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr, &
-                                                & NUMBER_OF_ROWS,TRANSPOSE_COLUMNS,ERR,ERROR,*999)
-                                              DO row_idx=1,NUMBER_OF_ROWS
-                                                TRANSPOSE_COLUMN_INDICES(TRANSPOSE_ROW_INDICES(local_column)+row_idx-1)= &
-                                                  & TRANSPOSE_COLUMNS(row_idx)
-                                              ENDDO !row_idx
-                                              DEALLOCATE(TRANSPOSE_COLUMNS)
-                                            ENDDO !local_column
-                                          ENDIF
-                                          IF(DIAGNOSTICS1) THEN
-                                            CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interface matrix structure:",ERR,ERROR,*999)
-                                            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Interface matrix number : ", &
-                                              & MATRIX_NUMBER,ERR,ERROR,*999)
-                                            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ", &
-                                              & ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal,ERR,ERROR,*999)
-                                            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ", &
-                                              & COLUMN_DOFS_DOMAIN_MAPPING%numberOfGlobal,ERR,ERROR,*999)
-                                            CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ", &
-                                              & NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
-                                            IF(ROW_DOFS_DOMAIN_MAPPING%totalNumberOfLocal* &
-                                              & COLUMN_DOFS_DOMAIN_MAPPING%numberOfGlobal/=0) THEN
-                                              SPARSITY=REAL(NUMBER_OF_NON_ZEROS,DP)/REAL(ROW_DOFS_DOMAIN_MAPPING% &
-                                                & totalNumberOfLocal*COLUMN_DOFS_DOMAIN_MAPPING%numberOfGlobal,DP)*100.0_DP
-                                              CALL WRITE_STRING_FMT_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (%) = ",SPARSITY, &
-                                                & "F6.2",ERR,ERROR,*999)
-                                            ENDIF
-                                            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,ROW_DOFS_DOMAIN_MAPPING% &
-                                              & totalNumberOfLocal+1,5,5,ROW_INDICES, &
-                                              & '("  Row indices              :",5(X,I13))','(28X,5(X,I13))',ERR,ERROR,*999)
-                                            CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_NON_ZEROS,8,8, &
-                                              & COLUMN_INDICES,'("  Column indices           :",5(X,I13))','(28X,5(X,I13))', &
-                                              & ERR,ERROR,*999)
-                                            IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN 
-                                              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,COLUMN_DOFS_DOMAIN_MAPPING% &
-                                                & totalNumberOfLocal+1,5,5,TRANSPOSE_ROW_INDICES, &
-                                                & '("  Transpose row indices    :",5(X,I13))','(28X,5(X,I13))',ERR,ERROR,*999)
-                                              CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_NON_ZEROS,8,8, &
-                                                & TRANSPOSE_COLUMN_INDICES,'("  Transpose column indices :",5(X,I13))', &
-                                                & '(28X,5(X,I13))',ERR,ERROR,*999)
-                                            ENDIF
-                                          ENDIF
-                                        ELSE
-                                          CALL FlagError("Column dofs parameter mapping is not associated.",ERR,ERROR,*999)
-                                        ENDIF
-                                      ELSE
-                                        CALL FlagError("Row dofs parameter mapping is not associated.",ERR,ERROR,*999)
-                                      ENDIF
-                                    ELSE
-                                      CALL FlagError("Column dofs domain mapping is not associated.",ERR,ERROR,*999)
-                                    ENDIF
-                                  ELSE
-                                    CALL FlagError("Row dofs domain mapping is not associated.",ERR,ERROR,*999)
-                                  ENDIF
-                                ELSE
-                                  CALL FlagError("Column field variable is not associated.",ERR,ERROR,*999)
-                                ENDIF
-                              ELSE
-                                CALL FlagError("Row field variable is not associated.",ERR,ERROR,*999)
-                              ENDIF
-                            ELSE
-                              CALL FlagError("Interface mesh connectivity is not associated.",ERR,ERROR,*999)
-                            ENDIF
-                          ELSE
-                            CALL FlagError("Interface condition interface is not associated.",ERR,ERROR,*999)
-                          ENDIF
-                        ELSE
-                          CALL FlagError("Interface condition is not associated.",ERR,ERROR,*999)
-                        ENDIF
-                      ELSE
-                        CALL FlagError("Interface mapping is not associated.",ERR,ERROR,*999)
-                      ENDIF
-                    ELSE
-                      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                CASE DEFAULT
-                  LOCAL_ERROR="The matrix storage type of "// &
-                    & TRIM(NUMBER_TO_VSTRING(INTERFACE_MATRIX%STORAGE_TYPE,"*",ERR,ERROR))//" is invalid."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                END SELECT
-              CASE DEFAULT
-                LOCAL_ERROR="The matrix structure type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(INTERFACE_MATRIX%STRUCTURE_TYPE,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*998)
-              END SELECT
-            ELSE
-              CALL FlagError("Transpose column indices is already associated.",ERR,ERROR,*998)
-            ENDIF
-          ELSE
-            CALL FlagError("Transpose row indieces is already associated.",ERR,ERROR,*998)
-          ENDIF
-        ELSE
-          CALL FlagError("Column indices is already associated.",ERR,ERROR,*998)
+    numberOfNonZeros=0
+    IF(ASSOCIATED(rowIndices)) CALL FlagError("Row indices is already associated.",err,error,*998)
+    IF(ASSOCIATED(columnIndices)) CALL FlagError("Column indices is already associated.",err,error,*998)
+    IF(ASSOCIATED(transposeRowIndices)) CALL FlagError("Transpose row indices is already associated.",err,error,*998)
+    IF(ASSOCIATED(transposeColumnIndices)) CALL FlagError("Transpose column indices is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMatrix)) CALL FlagError("Interface matrix is not associated.",err,error,*998)
+    
+    matrixNumber=interfaceMatrix%matrixNumber
+    SELECT CASE(interfaceMatrix%structureType)
+    CASE(INTERFACE_MATRIX_NO_STRUCTURE)
+      CALL FlagError("There is no structure to calculate for a matrix with no structure.",err,error,*998)
+    CASE(INTERFACE_MATRIX_FEM_STRUCTURE)
+      SELECT CASE(interfaceMatrix%storageType)
+      CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        NULLIFY(interfaceMatrices)
+        CALL InterfaceMatrix_InterfaceMatricesGet(interfaceMatrix,interfaceMatrices,err,error,*999)
+        NULLIFY(interfaceMapping)
+        CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)
+        NULLIFY(interfaceEquations)
+        CALL InterfaceMatrices_InterfaceEquationsGet(interfaceMatrices,interfaceEquations,err,error,*999)
+        NULLIFY(interfaceCondition)
+        CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
+        NULLIFY(INTERFACE)
+        CALL InterfaceCondition_InterfaceGet(interfaceCondition,INTERFACE,err,error,*999)
+        NULLIFY(meshConnectivity)
+        CALL Interface_MeshConnectivityGet(INTERFACE,meshConnectivity,err,error,*999)
+        NULLIFY(rowVariable)
+        CALL InterfaceMapping_MatrixVariableGet(interfaceMapping,matrixNumber,rowVariable,err,error,*999)
+        NULLIFY(columnVariable)
+        CALL InterfaceMapping_LagrangeVariableGet(interfaceMapping,columnVariable,err,error,*999)
+        interfaceMeshIdx=interfaceMapping%interfaceMatrixRowsToVarMaps(matrixNumber)%meshIndex
+        NULLIFY(rowDOFSDomainMapping)
+        CALL FieldVariable_DomainMappingGet(rowVariable,rowDOFSDomainMapping,err,error,*999)
+        NULLIFY(columnDOFSDomainMapping)
+        CALL FieldVariable_DomainMappingGet(columnVariable,columnDOFSDomainMapping,err,error,*999)
+        
+        !Allocate lists
+        ALLOCATE(columnIndicesLists(rowDOFSDomainMapping%totalNumberOfLocal),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate column indices lists.",err,error,*999)
+        DO localRow=1,rowDOFSDomainMapping%totalNumberOfLocal
+          !Set up list
+          NULLIFY(columnIndicesLists(localRow)%ptr)
+          CALL List_CreateStart(columnIndicesLists(localRow)%ptr,err,error,*999)
+          CALL List_DataTypeSet(columnIndicesLists(localRow)%ptr,LIST_INTG_TYPE,err,error,*999)
+          CALL List_InitialSizeSet(columnIndicesLists(localRow)%ptr,50,err,error,*999)
+          CALL List_CreateFinish(columnIndicesLists(localRow)%ptr,err,error,*999)
+        ENDDO !localRow
+        !Allocate row indices
+        ALLOCATE(rowIndices(rowDOFSDomainMapping%totalNumberOfLocal+1),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate row indices.",err,error,*999)
+        IF(interfaceMatrix%hasTranspose) THEN
+          !Allocate transpose lists
+          ALLOCATE(transposeColumnIndicesLists(columnDOFSDomainMapping%totalNumberOfLocal),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate transpose column indices lists.",err,error,*999)
+          DO localColumn=1,columnDOFSDomainMapping%totalNumberOfLocal
+            !Set up list
+            NULLIFY(transposeColumnIndicesLists(localColumn)%ptr)
+            CALL List_CreateStart(transposeColumnIndicesLists(localColumn)%ptr,err,error,*999)
+            CALL List_DataTypeSet(transposeColumnIndicesLists(localColumn)%ptr,LIST_INTG_TYPE,err,error,*999)
+            CALL List_InitialSizeSet(transposeColumnIndicesLists(localColumn)%ptr,50,err,error,*999)
+            CALL List_CreateFinish(transposeColumnIndicesLists(localColumn)%ptr,err,error,*999)
+          ENDDO !localColumn
+          !Allocate transpose row indices
+          ALLOCATE(transposeRowIndices(columnDOFSDomainMapping%totalNumberOfLocal+1),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate transpose row indices.",err,error,*999)
         ENDIF
-      ELSE
-        CALL FlagError("Row indieces is already associated.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface matrix is not associated.",ERR,ERROR,*998)
-    ENDIF
-     
-    EXITS("INTERFACE_MATRIX_STRUCTURE_CALCULATE")
+        !Loop over the number of components in the Lagrange multipler variable
+        DO columnComponentIdx=1,columnVariable%numberOfComponents
+          CALL FieldVariable_ComponentInterpolationGet(columnVariable,columnComponentIdx,columnInterpolationType,err,error,*999)
+          IF(columnInterpolationType/=FIELD_NODE_BASED_INTERPOLATION) &
+            & CALL FlagError("Only node based fields implemented.",err,error,*999)
+          !Loop over the elements in the interface mesh
+          NULLIFY(columnDomain)
+          CALL FieldVariable_DomainGet(columnVariable,columnComponentIdx,columnDomain,err,error,*999)
+          NULLIFY(columnDomainTopology)
+          CALL Domain_DomainTopologyGet(columnDomain,columnDomainTopology,err,error,*999)
+          NULLIFY(columnDomainElements)
+          CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
+          DO interfaceElementIdx=1,columnDomainElements%totalNumberOfElements
+            NULLIFY(columnBasis)
+            CALL DomainElements_BasisGet(columnDomainElements,interfaceElementIdx,columnBasis,err,error,*999)
+            !Loop over the column DOFs in the element
+            DO columnLocalNodeIdx=1,columnBasis%numberOfNodes
+              columnNode=columnDomainElements%elements(interfaceElementIdx)%elementNodes(columnLocalNodeIdx)
+              DO columnLocalDerivativeIdx=1,columnBasis%numberOfDerivatives(columnLocalNodeIdx)
+                columnDerivative=columnDomainElements%elements(interfaceElementIdx)% &
+                  & elementDerivatives(columnLocalDerivativeIdx,columnLocalNodeIdx)
+                columnVersion=columnDomainElements%elements(interfaceElementIdx)% &
+                  & elementVersions(columnLocalDerivativeIdx,columnLocalNodeIdx)
+                CALL FieldVariable_LocalNodeDOFGet(columnVariable,columnVersion,columnDerivative,columnNode, &
+                  & columnComponentIdx,localColumn,err,error,*999)
+                globalColumn=columnDOFSDomainMapping%localToGlobalMap(localColumn)
+                !Loop over the components in the dependent variable
+                DO rowComponentIdx=1,rowVariable%numberOfComponents
+                  CALL FieldVariable_ComponentInterpolationGet(rowVariable,rowComponentIdx,rowInterpolationType,err,error,*999)
+                  SELECT CASE(rowInterpolationType)
+                  CASE(FIELD_CONSTANT_INTERPOLATION)
+                    CALL FieldVariable_ConstantDOFGet(rowVariable,rowComponentIdx,localRow,err,error,*999)
+                    CALL List_ItemAdd(columnIndicesLists(localRow)%ptr,globalColumn,err,error,*999)
+                    IF(interfaceMatrix%hasTranspose) THEN
+                      globalRow=rowVariable%domainMapping%localToGlobalMap(localRow)
+                      CALL List_ItemAdd(transposeColumnIndicesLists(localColumn)%ptr,globalRow,err,error,*999)
+                    ENDIF
+                  CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+                    domainElement=meshConnectivity%elementConnectivity(interfaceElementIdx,interfaceMeshIdx)%coupledElementNumber
+                    CALL FieldVariable_LocalElementDOFGet(rowVariable,domainElement,rowComponentIdx,localRow,err,error,*999)
+                    CALL List_ItemAdd(columnIndicesLists(localRow)%ptr,globalColumn,err,error,*999)
+                    IF(interfaceMatrix%hasTranspose) THEN
+                      globalRow=rowVariable%domainMapping%localToGlobalMap(localRow)
+                      CALL List_ItemAdd(transposeColumnIndicesLists(localColumn)%ptr,globalRow,err,error,*999)
+                    ENDIF
+                  CASE(FIELD_NODE_BASED_INTERPOLATION)
+                    NULLIFY(rowDomain)
+                    CALL FieldVariable_DomainGet(rowVariable,rowComponentIdx,rowDomain,err,error,*999)
+                    NULLIFY(rowDomainTopology)
+                    CALL Domain_DomainTopologyGet(rowDomain,rowDomainTopology,err,error,*999)
+                    NULLIFY(rowDomainElements)
+                    CALL DomainTopology_DomainElementsGet(rowDomainTopology,rowDomainElements,err,error,*999)
+                    domainElement=meshConnectivity%elementConnectivity(interfaceElementIdx,interfaceMeshIdx)%coupledElementNumber
+                    NULLIFY(rowBasis)
+                    CALL DomainElements_BasisGet(rowDomainElements,domainElement,rowBasis,err,error,*999)
+                    !Loop over the row DOFs in the domain mesh element
+                    DO rowLocalNodeIdx=1,rowBasis%numberOfNodes
+                      rowNode=rowDomainElements%elements(domainElement)%elementNodes(rowLocalNodeIdx)
+                      DO rowLocalDerivativeIdx=1,rowBasis%numberOfDerivatives(rowLocalNodeIdx)
+                        rowDerivative=rowDomainElements%elements(domainElement)% &
+                          & elementDerivatives(rowLocalDerivativeIdx,rowLocalNodeIdx)
+                        rowVersion=rowDomainElements%elements(domainElement)% &
+                          & elementVersions(rowLocalDerivativeIdx,rowLocalNodeIdx)
+                        CALL FieldVariable_LocalNodeDOFGet(rowVariable,rowVersion,rowDerivative,rowNode,rowComponentIdx, &
+                          & localRow,err,error,*999)
+                        CALL List_ItemAdd(columnIndicesLists(localRow)%ptr,globalColumn,err,error,*999)
+                        IF(interfaceMatrix%hasTranspose) THEN
+                          globalRow=rowVariable%domainMapping%localToGlobalMap(localRow)
+                          CALL List_ItemAdd(transposeColumnIndicesLists(localColumn)%ptr,globalRow,err,error,*999)
+                        ENDIF
+                      ENDDO !rowLocalDerivativeIdx
+                    ENDDO !rowLocalNodeIdx
+                  CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE DEFAULT
+                    localError="The row variable interpolation type of "// &
+                      & TRIM(NumberToVString(rowInterpolationType,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                ENDDO !rowComponentIdx
+              ENDDO !columnLocalDerivativeIdx
+            ENDDO !columnLocalNodeIdx
+          ENDDO !interfaceElementIdx
+        ENDDO !columnComponentIdx
+        rowIndices(1)=1
+        DO localRow=1,rowDOFSDomainMapping%totalNumberOfLocal
+          CALL List_RemoveDuplicates(columnIndicesLists(localRow)%ptr,err,error,*999)
+          CALL List_NumberOfItemsGet(columnIndicesLists(localRow)%ptr,numberOfColumns,err,error,*999)
+          numberOfNonZeros=numberOfNonZeros+numberOfColumns
+          rowIndices(localRow+1)=numberOfNonZeros+1
+        ENDDO !localRow
+        IF(interfaceMatrix%hasTranspose) THEN
+          transposeNumberOfNonZeros=0
+          transposeRowIndices(1)=1
+          DO localColumn=1,columnDOFSDomainMapping%totalNumberOfLocal
+            CALL List_RemoveDuplicates(transposeColumnIndicesLists(localColumn)%ptr,err,error,*999)
+            CALL List_NumberOfItemsGet(transposeColumnIndicesLists(localColumn)%ptr,numberOfColumns,err,error,*999)
+            transposeNumberOfNonZeros=transposeNumberOfNonZeros+numberOfColumns
+            transposeRowIndices(localColumn+1)=transposeNumberOfNonZeros+1
+          ENDDO !localColumn
+          !Sanity check - the number of non-zeros should be the same
+          IF(transposeNumberOfNonZeros/=numberOfNonZeros) THEN
+            localError="Invalid number of non-zeros. The number of non-zeros in the "// &
+              & "transposed matrix ("//TRIM(NumberToVString(transposeNumberOfNonZeros, &
+              & "*",err,error))//") does not match the number of non-zeros in the interface "// &
+              & "matrix ("//TRIM(NumberToVString(numberOfNonZeros,"*",err,error))//")."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDIF
+        !Allocate and setup the column locations
+        ALLOCATE(columnIndices(numberOfNonZeros),STAT=err)
+        IF(err/=0) CALL FlagError("Could not allocate column indices.",err,error,*999)
+        DO localRow=1,rowDOFSDomainMapping%totalNumberOfLocal
+          CALL List_DetachAndDestroy(columnIndicesLists(localRow)%ptr,numberOfColumns,columns,err,error,*999)
+          DO columnIdx=1,numberOfColumns
+            columnIndices(rowIndices(localRow)+columnIdx-1)=columns(columnIdx)
+          ENDDO !columnIdx
+          DEALLOCATE(columns)
+        ENDDO !localRow
+        IF(interfaceMatrix%hasTranspose) THEN
+          !Allocate and setup the column locations
+          ALLOCATE(transposeColumnIndices(numberOfNonZeros),STAT=err)
+          IF(err/=0) CALL FlagError("Could not allocate transpose column indices.",err,error,*999)
+          DO localColumn=1,columnDOFSDomainMapping%totalNumberOfLocal
+            CALL List_DetachAndDestroy(transposeColumnIndicesLists(localColumn)%ptr,numberOfRows,transposeColumns,err,error,*999)
+            DO rowIdx=1,numberOfRows
+              transposeColumnIndices(transposeRowIndices(localColumn)+rowIdx-1)=transposeColumns(rowIdx)
+            ENDDO !rowIdx
+            DEALLOCATE(transposeColumns)
+          ENDDO !localColumn
+        ENDIF
+        
+        IF(diagnostics1) THEN
+          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Interface matrix structure:",err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Interface matrix number : ",matrixNumber,err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of rows = ",rowDOFSDomainMapping%totalNumberOfLocal, &
+            & err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of columns = ",columnDOFSDomainMapping%numberOfGlobal, &
+            & err,error,*999)
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of non zeros = ",numberOfNonZeros,err,error,*999)
+          IF(rowDOFSDomainMapping%totalNumberOfLocal*columnDOFSDomainMapping%numberOfGlobal/=0) THEN
+            sparsity=REAL(numberOfNonZeros,DP)/REAL(rowDOFSDomainMapping%totalNumberOfLocal* &
+              & columnDOFSDomainMapping%numberOfGlobal,DP)*100.0_DP
+            CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sparsity (%) = ",sparsity,"F6.2",err,error,*999)
+          ENDIF
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,rowDOFSDomainMapping%totalNumberOfLocal+1,5,5,rowIndices, &
+            & '("  Row indices              :",5(X,I13))','(28X,5(X,I13))',err,error,*999)
+          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,columnIndices, &
+            & '("  Column indices           :",5(X,I13))','(28X,5(X,I13))',err,error,*999)
+          IF(interfaceMatrix%hasTranspose) THEN 
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,columnDOFSDomainMapping%totalNumberOfLocal+1,5,5, &
+              & transposeRowIndices,'("  Transpose row indices    :",5(X,I13))','(28X,5(X,I13))',err,error,*999)
+            CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNonZeros,8,8,transposeColumnIndices, &
+              & '("  Transpose column indices :",5(X,I13))','(28X,5(X,I13))',err,error,*999)
+          ENDIF
+        ENDIF
+        
+      CASE DEFAULT
+        localError="The matrix storage type of "//TRIM(NumberToVString(interfaceMatrix%storageType,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      localError="The matrix structure type of "//TRIM(NumberToVString(interfaceMatrix%structureType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*998)
+    END SELECT
+    
+    EXITS("InterfaceMatrix_StructureCalculate")
     RETURN
-999 IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
-    IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
-    IF(ASSOCIATED(TRANSPOSE_ROW_INDICES)) DEALLOCATE(TRANSPOSE_ROW_INDICES)
-    IF(ASSOCIATED(TRANSPOSE_COLUMN_INDICES)) DEALLOCATE(TRANSPOSE_COLUMN_INDICES)
-    IF(ALLOCATED(COLUMNS)) DEALLOCATE(COLUMNS)
-    IF(ALLOCATED(TRANSPOSE_COLUMNS)) DEALLOCATE(TRANSPOSE_COLUMNS)
-    IF(ALLOCATED(COLUMN_INDICES_LISTS)) THEN
-      DO local_row=1,SIZE(COLUMN_INDICES_LISTS,1)
-        IF(ASSOCIATED(COLUMN_INDICES_LISTS(local_row)%ptr)) &
-          & CALL LIST_DESTROY(COLUMN_INDICES_LISTS(local_row)%ptr,DUMMY_ERR,DUMMY_ERROR,*998)
-      ENDDO !local_row
-      DEALLOCATE(COLUMN_INDICES_LISTS)
+999 IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
+    IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
+    IF(ASSOCIATED(transposeRowIndices)) DEALLOCATE(transposeRowIndices)
+    IF(ASSOCIATED(transposeColumnIndices)) DEALLOCATE(transposeColumnIndices)
+    IF(ALLOCATED(columns)) DEALLOCATE(columns)
+    IF(ALLOCATED(transposeColumns)) DEALLOCATE(transposeColumns)
+    IF(ALLOCATED(columnIndicesLists)) THEN
+      DO localRow=1,SIZE(columnIndicesLists,1)
+        IF(ASSOCIATED(columnIndicesLists(localRow)%ptr)) &
+          & CALL List_Destroy(columnIndicesLists(localRow)%ptr,dummyErr,dummyError,*998)
+      ENDDO !localRow
+      DEALLOCATE(columnIndicesLists)
     ENDIF
-    IF(ALLOCATED(TRANSPOSE_COLUMN_INDICES_LISTS)) THEN
-      DO local_column=1,SIZE(TRANSPOSE_COLUMN_INDICES_LISTS,1)
-        IF(ASSOCIATED(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr)) &
-          & CALL LIST_DESTROY(TRANSPOSE_COLUMN_INDICES_LISTS(local_column)%ptr,DUMMY_ERR,DUMMY_ERROR,*998)
-      ENDDO !local_row
-      DEALLOCATE(TRANSPOSE_COLUMN_INDICES_LISTS)
+    IF(ALLOCATED(transposeColumnIndicesLists)) THEN
+      DO localColumn=1,SIZE(transposeColumnIndicesLists,1)
+        IF(ASSOCIATED(transposeColumnIndicesLists(localColumn)%ptr)) &
+          & CALL List_Destroy(transposeColumnIndicesLists(localColumn)%ptr,dummyErr,dummyError,*998)
+      ENDDO !localRow
+      DEALLOCATE(transposeColumnIndicesLists)
     ENDIF
-998 ERRORSEXITS("INTERFACE_MATRIX_STRUCTURE_CALCULATE",ERR,ERROR)
+998 ERRORSEXITS("InterfaceMatrix_StructureCalculate",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_MATRIX_STRUCTURE_CALCULATE
+  END SUBROUTINE InterfaceMatrix_StructureCalculate
 
   !
   !================================================================================================================================
   !
 
   !>Finishes the creation of the interface matrices for the interface equations
-  SUBROUTINE INTERFACE_MATRICES_CREATE_FINISH(INTERFACE_MATRICES,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_CreateFinish(interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<The pointer to the interface matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string  
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<The pointer to the interface matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string  
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,matrix_idx,NUMBER_OF_NON_ZEROS
-    INTEGER(INTG), POINTER :: ROW_INDICES(:),COLUMN_INDICES(:),TRANSPOSE_ROW_INDICES(:),TRANSPOSE_COLUMN_INDICES(:)
-    TYPE(DomainMappingType), POINTER :: ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: RHS_VECTOR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
+    INTEGER(INTG) :: dummyErr,matrixIdx,numberOfNonZeros
+    INTEGER(INTG), POINTER :: rowIndices(:),columnIndices(:),transposeRowIndices(:),transposeColumnIndices(:)
+    TYPE(DomainMappingType), POINTER :: rowDomainMapping,columnDomainMapping
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceRHSType), POINTER :: rhsVector
+    TYPE(VARYING_STRING) :: dummyError,localError
 
-    NULLIFY(ROW_INDICES)
-    NULLIFY(COLUMN_INDICES)
-    NULLIFY(TRANSPOSE_ROW_INDICES)
-    NULLIFY(TRANSPOSE_COLUMN_INDICES)
+    NULLIFY(rowIndices)
+    NULLIFY(columnIndices)
+    NULLIFY(transposeRowIndices)
+    NULLIFY(transposeColumnIndices)
 
-    NULLIFY(ROW_DOMAIN_MAP)
-    NULLIFY(COLUMN_DOMAIN_MAP)
+    NULLIFY(rowDomainMapping)
+    NULLIFY(columnDomainMapping)
 
-    ENTERS("INTERFACE_MATRICES_CREATE_FINISH",ERR,ERROR,*998)
+    ENTERS("InterfaceMatrices_CreateFinish",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      IF(INTERFACE_MATRICES%INTERFACE_MATRICES_FINISHED) THEN
-        CALL FlagError("Interface matrices have already been finished.",ERR,ERROR,*998)
-      ELSE
-        INTERFACE_MAPPING=>INTERFACE_MATRICES%INTERFACE_MAPPING
-        IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-          COLUMN_DOMAIN_MAP=>INTERFACE_MAPPING%COLUMN_DOFS_MAPPING
-          IF(ASSOCIATED(COLUMN_DOMAIN_MAP)) THEN
-            !Now create the individual interface matrices
-            DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-              INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
-              IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-                ROW_DOMAIN_MAP=>INTERFACE_MAPPING%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(matrix_idx)%ROW_DOFS_MAPPING
-                IF(ASSOCIATED(ROW_DOMAIN_MAP)) THEN
-                  !Create the distributed equations matrix
-                  CALL DistributedMatrix_CreateStart(ROW_DOMAIN_MAP,COLUMN_DOMAIN_MAP,INTERFACE_MATRICES% &
-                    & MATRICES(matrix_idx)%ptr%MATRIX,ERR,ERROR,*999)
-                  CALL DistributedMatrix_DataTypeSet(INTERFACE_MATRIX%MATRIX,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-                  CALL DistributedMatrix_StorageTypeSet(INTERFACE_MATRIX%MATRIX,INTERFACE_MATRIX%STORAGE_TYPE,ERR,ERROR,*999)
-                  IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                    CALL DistributedMatrix_TransposeTypeSet(INTERFACE_MATRIX%MATRIX,DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED, &
-                      & err,error,*999)
-                    CALL DistributedMatrix_CreateStart(COLUMN_DOMAIN_MAP,ROW_DOMAIN_MAP,INTERFACE_MATRICES% &
-                      & MATRICES(matrix_idx)%ptr%MATRIX_TRANSPOSE,ERR,ERROR,*999)
-                    CALL DistributedMatrix_DataTypeSet(INTERFACE_MATRIX%MATRIX_TRANSPOSE,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE, &
-                      & ERR,ERROR,*999)
-                    CALL DistributedMatrix_StorageTypeSet(INTERFACE_MATRIX%MATRIX_TRANSPOSE,INTERFACE_MATRIX%STORAGE_TYPE, &
-                      & ERR,ERROR,*999)
-                  ENDIF
-                  !Calculate and set the matrix structure/sparsity pattern
-                  IF(INTERFACE_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
-                    & INTERFACE_MATRIX%STORAGE_TYPE/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
-                    CALL INTERFACE_MATRIX_STRUCTURE_CALCULATE(INTERFACE_MATRIX,NUMBER_OF_NON_ZEROS,ROW_INDICES,COLUMN_INDICES, &
-                      & TRANSPOSE_ROW_INDICES,TRANSPOSE_COLUMN_INDICES,ERR,ERROR,*999)
-                    CALL DistributedMatrix_NumberOfNonZerosSet(INTERFACE_MATRIX%MATRIX,NUMBER_OF_NON_ZEROS,ERR,ERROR,*999)
-                    CALL DistributedMatrix_StorageLocationsSet(INTERFACE_MATRIX%MATRIX,ROW_INDICES,COLUMN_INDICES, &
-                      & ERR,ERROR,*999)
-                    IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                      CALL DistributedMatrix_NumberOfNonZerosSet(INTERFACE_MATRIX%MATRIX_TRANSPOSE,NUMBER_OF_NON_ZEROS, &
-                        & ERR,ERROR,*999)
-                      CALL DistributedMatrix_StorageLocationsSet(INTERFACE_MATRIX%MATRIX_TRANSPOSE,TRANSPOSE_ROW_INDICES, &
-                        & TRANSPOSE_COLUMN_INDICES,ERR,ERROR,*999)
-                     ENDIF
-                    IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
-                    IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
-                    IF(ASSOCIATED(TRANSPOSE_ROW_INDICES)) DEALLOCATE(TRANSPOSE_ROW_INDICES)
-                    IF(ASSOCIATED(TRANSPOSE_COLUMN_INDICES)) DEALLOCATE(TRANSPOSE_COLUMN_INDICES)
-                  ENDIF
-                  CALL DistributedMatrix_CreateFinish(INTERFACE_MATRIX%MATRIX,ERR,ERROR,*999)
-                  IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-                    CALL DistributedMatrix_CreateFinish(INTERFACE_MATRIX%MATRIX_TRANSPOSE,ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  LOCAL_ERROR="Row domain map for interface matrix number "// &
-                    & TRIM(NUMBER_TO_VSTRING(matrix_idx,"*",ERR,ERROR))//" is not associated."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                LOCAL_ERROR="Interface matrix for matrix number "//TRIM(NUMBER_TO_VSTRING(matrix_idx,"*",ERR,ERROR))// &
-                  & " is not associated."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ENDDO !matrix_idx
-            RHS_VECTOR=>INTERFACE_MATRICES%RHS_VECTOR
-            IF(ASSOCIATED(RHS_VECTOR)) THEN
-              !Set up the interface RHS vector
-              CALL DistributedVector_CreateStart(COLUMN_DOMAIN_MAP,INTERFACE_MATRICES%RHS_VECTOR%RHS_VECTOR,ERR,ERROR,*999)
-              CALL DistributedVector_DataTypeSet(RHS_VECTOR%RHS_VECTOR,MATRIX_VECTOR_DP_TYPE,ERR,ERROR,*999)
-              CALL DistributedVector_CreateFinish(RHS_VECTOR%RHS_VECTOR,ERR,ERROR,*999)
-            ENDIF
-            !Finish up
-            INTERFACE_MATRICES%INTERFACE_MATRICES_FINISHED=.TRUE.
-          ELSE
-            CALL FlagError("Column domain map is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Interface mapping is not associated.",ERR,ERROR,*998)
-        ENDIF
+    CALL InterfaceMatrices_AssertNotFinished(interfaceMatrices,err,error,*999)
+
+    NULLIFY(interfaceMapping)
+    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)
+    columnDomainMapping=>interfaceMapping%columnDOFSMapping
+    IF(.NOT.ASSOCIATED(columnDomainMapping)) CALL FlagError("Column domain map is not associated.",err,error,*999)
+    !Now create the individual interface matrices
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      rowDomainMapping=>interfaceMapping%interfaceMatrixRowsToVarMaps(matrixIdx)%rowDOFsMapping
+      IF(.NOT.ASSOCIATED(rowDomainMapping)) THEN
+        localError="Row domain map for interface matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))// &
+          & " is not associated."
+        CALL FlagError(localError,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*998)
+
+      !Create the distributed equations matrix
+      CALL DistributedMatrix_CreateStart(rowDomainMapping,columnDomainMapping,interfaceMatrices%matrices(matrixIdx)%ptr%matrix, &
+        & err,error,*999)
+      CALL DistributedMatrix_DataTypeSet(interfaceMatrix%matrix,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedMatrix_StorageTypeSet(interfaceMatrix%matrix,interfaceMatrix%storageType,err,error,*999)
+      IF(interfaceMatrix%hasTranspose) THEN
+        CALL DistributedMatrix_TransposeTypeSet(interfaceMatrix%matrix,DISTRIBUTED_MATRIX_FULL_TRANSPOSE_REQUIRED,err,error,*999)
+        CALL DistributedMatrix_CreateStart(columnDomainMapping,rowDomainMapping,interfaceMatrices%matrices(matrixIdx)%ptr% &
+          & matrixTranspose,err,error,*999)
+        CALL DistributedMatrix_DataTypeSet(interfaceMatrix%matrixTranspose,DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
+        CALL DistributedMatrix_StorageTypeSet(interfaceMatrix%matrixTranspose,interfaceMatrix%storageType,err,error,*999)
+      ENDIF
+      !Calculate and set the matrix structure/sparsity pattern
+      IF(interfaceMatrix%storageType/=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE.AND. &
+        & interfaceMatrix%storageType/=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
+        CALL InterfaceMatrix_StructureCalculate(interfaceMatrix,numberOfNonZeros,rowIndices,columnIndices, &
+          & transposeRowIndices,transposeColumnIndices,err,error,*999)
+        CALL DistributedMatrix_NumberOfNonZerosSet(interfaceMatrix%matrix,numberOfNonZeros,err,error,*999)
+        CALL DistributedMatrix_StorageLocationsSet(interfaceMatrix%matrix,rowIndices,columnIndices,err,error,*999)
+        IF(interfaceMatrix%hasTranspose) THEN
+          CALL DistributedMatrix_NumberOfNonZerosSet(interfaceMatrix%matrixTranspose,numberOfNonZeros,err,error,*999)
+          CALL DistributedMatrix_StorageLocationsSet(interfaceMatrix%matrixTranspose,transposeRowIndices, &
+            & transposeColumnIndices,err,error,*999)
+        ENDIF
+        IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
+        IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
+        IF(ASSOCIATED(transposeRowIndices)) DEALLOCATE(transposeRowIndices)
+        IF(ASSOCIATED(transposeColumnIndices)) DEALLOCATE(transposeColumnIndices)
+      ENDIF
+      CALL DistributedMatrix_CreateFinish(interfaceMatrix%matrix,err,error,*999)
+      IF(interfaceMatrix%hasTranspose) CALL DistributedMatrix_CreateFinish(interfaceMatrix%matrixTranspose,err,error,*999)
+    ENDDO !matrixIdx
+    rhsVector=>interfaceMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      !Set up the interface RHS vector
+      CALL DistributedVector_CreateStart(columnDomainMapping,interfaceMatrices%rhsVector%rhsVector,err,error,*999)
+      CALL DistributedVector_DataTypeSet(rhsVector%rhsVector,MATRIX_VECTOR_DP_TYPE,err,error,*999)
+      CALL DistributedVector_CreateFinish(rhsVector%rhsVector,err,error,*999)
     ENDIF
+    !Finish up
+    interfaceMatrices%interfaceMatricesFinished=.TRUE.
        
-    EXITS("INTERFACE_MATRICES_CREATE_FINISH")
+    EXITS("InterfaceMatrices_CreateFinish")
     RETURN
-999 IF(ASSOCIATED(ROW_INDICES)) DEALLOCATE(ROW_INDICES)
-    IF(ASSOCIATED(COLUMN_INDICES)) DEALLOCATE(COLUMN_INDICES)
-    IF(ASSOCIATED(TRANSPOSE_ROW_INDICES)) DEALLOCATE(TRANSPOSE_ROW_INDICES)
-    IF(ASSOCIATED(TRANSPOSE_COLUMN_INDICES)) DEALLOCATE(TRANSPOSE_COLUMN_INDICES)
-    CALL INTERFACE_MATRICES_FINALISE(INTERFACE_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("INTERFACE_MATRICES_CREATE_FINISH",ERR,ERROR)
+999 IF(ASSOCIATED(rowIndices)) DEALLOCATE(rowIndices)
+    IF(ASSOCIATED(columnIndices)) DEALLOCATE(columnIndices)
+    IF(ASSOCIATED(transposeRowIndices)) DEALLOCATE(transposeRowIndices)
+    IF(ASSOCIATED(transposeColumnIndices)) DEALLOCATE(transposeColumnIndices)
+    CALL InterfaceMatrices_Finalise(interfaceMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("InterfaceMatrices_CreateFinish",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_CREATE_FINISH
+    
+  END SUBROUTINE InterfaceMatrices_CreateFinish
 
   !
   !================================================================================================================================
   !
 
   !>Starts the creation of the interface matrices and rhs for the interface equations
-  SUBROUTINE INTERFACE_MATRICES_CREATE_START(INTERFACE_EQUATIONS,INTERFACE_MATRICES,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_CreateStart(interfaceEquations,interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<The pointer to the interface equations to create the interface equations matrices for
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<On return, a pointer to the interface matrices being created. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string  
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<The pointer to the interface equations to create the interface equations matrices for
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<On return, a pointer to the interface matrices being created. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string  
     !Local Variables
 
-    ENTERS("INTERFACE_MATRICES_CREATE_START",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_CreateStart",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN      
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-          CALL FlagError("Interface matrices is already associated.",ERR,ERROR,*999)
-        ELSE
-          NULLIFY(INTERFACE_MATRICES)
-          !Initialise the interface matrices
-          CALL INTERFACE_MATRICES_INITIALISE(INTERFACE_EQUATIONS,ERR,ERROR,*999)
-          !Return the pointer
-          INTERFACE_MATRICES=>INTERFACE_EQUATIONS%INTERFACE_MATRICES
-        ENDIF
-      ELSE
-        CALL FlagError("Interface equations has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
+    IF(ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is already associated.",err,error,*999)
     
-    EXITS("INTERFACE_MATRICES_CREATE_START")
+    NULLIFY(interfaceMatrices)
+    !Initialise the interface matrices
+    CALL InterfaceMatrices_Initialise(interfaceEquations,err,error,*999)
+    !Return the pointer
+    interfaceMatrices=>interfaceEquations%interfaceMatrices
+   
+    EXITS("InterfaceMatrices_CreateStart")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_CREATE_START",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_CreateStart",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_MATRICES_CREATE_START
+  END SUBROUTINE InterfaceMatrices_CreateStart
 
   !
   !================================================================================================================================
   !
 
   !>Destroy the interface matrices
-  SUBROUTINE INTERFACE_MATRICES_DESTROY(INTERFACE_MATRICES,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_Destroy(interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer the interface matrices to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer the interface matrices to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("INTERFACE_MATRICES_DESTROY",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      CALL INTERFACE_MATRICES_FINALISE(INTERFACE_MATRICES,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+    
+    CALL InterfaceMatrices_Finalise(interfaceMatrices,err,error,*999)
         
-    EXITS("INTERFACE_MATRICES_DESTROY")
+    EXITS("InterfaceMatrices_Destroy")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_DESTROY",ERR,ERROR)    
+999 ERRORSEXITS("InterfaceMatrices_Destroy",err,error)    
     RETURN 1
    
-  END SUBROUTINE INTERFACE_MATRICES_DESTROY
+  END SUBROUTINE InterfaceMatrices_Destroy
 
   !
   !================================================================================================================================
   !
 
   !>Finalise the interface matrices and deallocate all memory.
-  SUBROUTINE INTERFACE_MATRICES_FINALISE(INTERFACE_MATRICES,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_Finalise(interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
+    INTEGER(INTG) :: matrixIdx
    
-    ENTERS("INTERFACE_MATRICES_FINALISE",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      IF(ALLOCATED(INTERFACE_MATRICES%MATRICES)) THEN
-        DO matrix_idx=1,SIZE(INTERFACE_MATRICES%MATRICES,1)
-          CALL INTERFACE_MATRIX_FINALISE(INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr,ERR,ERROR,*999)
-        ENDDO !matrix_idx
-        DEALLOCATE(INTERFACE_MATRICES%MATRICES)
+    IF(ASSOCIATED(interfaceMatrices)) THEN
+      IF(ALLOCATED(interfaceMatrices%matrices)) THEN
+        DO matrixIdx=1,SIZE(interfaceMatrices%matrices,1)
+          CALL InterfaceMatrix_Finalise(interfaceMatrices%matrices(matrixIdx)%ptr,err,error,*999)
+        ENDDO !matrixIdx
+        DEALLOCATE(interfaceMatrices%matrices)
       ENDIF
-      CALL INTERFACE_MATRICES_RHS_FINALISE(INTERFACE_MATRICES%RHS_VECTOR,ERR,ERROR,*999)
-      DEALLOCATE(INTERFACE_MATRICES)
+      CALL InterfaceMatrices_RHSFinalise(interfaceMatrices%rhsVector,err,error,*999)
+      DEALLOCATE(interfaceMatrices)
     ENDIF
        
-    EXITS("INTERFACE_MATRICES_FINALISE")
+    EXITS("InterfaceMatrices_Finalise")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_FINALISE
+  END SUBROUTINE InterfaceMatrices_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialise the interface matrices for the interface equations.
-  SUBROUTINE INTERFACE_MATRICES_INITIALISE(INTERFACE_EQUATIONS,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_Initialise(interfaceEquations,err,error,*)
     
      !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to initialise the interface matrices for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations to initialise the interface matrices for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,matrix_idx
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr,matrixIdx
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(VARYING_STRING) :: dummyError
     
-    ENTERS("INTERFACE_MATRICES_INITIALISE",ERR,ERROR,*998)
+    ENTERS("InterfaceMatrices_Initialise",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERFACE_MATRICES)) THEN
-        CALL FlagError("Interface matrices is already associated for this interface equations.",ERR,ERROR,*998)
-      ELSE
-        INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
-        IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-          IF(INTERFACE_MAPPING%INTERFACE_MAPPING_FINISHED) THEN
-            ALLOCATE(INTERFACE_EQUATIONS%INTERFACE_MATRICES,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate interface equations interface matrices.",ERR,ERROR,*999)
-            INTERFACE_EQUATIONS%INTERFACE_MATRICES%INTERFACE_EQUATIONS=>INTERFACE_EQUATIONS
-            INTERFACE_EQUATIONS%INTERFACE_MATRICES%INTERFACE_MATRICES_FINISHED=.FALSE.
-            INTERFACE_EQUATIONS%INTERFACE_MATRICES%INTERFACE_MAPPING=>INTERFACE_MAPPING
-            NULLIFY(INTERFACE_EQUATIONS%INTERFACE_MATRICES%SOLVER_MAPPING)
-            INTERFACE_EQUATIONS%INTERFACE_MATRICES%NUMBER_OF_COLUMNS=INTERFACE_MAPPING%NUMBER_OF_COLUMNS
-            INTERFACE_EQUATIONS%INTERFACE_MATRICES%TOTAL_NUMBER_OF_COLUMNS=INTERFACE_MAPPING%TOTAL_NUMBER_OF_COLUMNS
-            INTERFACE_EQUATIONS%INTERFACE_MATRICES%NUMBER_OF_GLOBAL_COLUMNS=INTERFACE_MAPPING%NUMBER_OF_GLOBAL_COLUMNS
-            NULLIFY(INTERFACE_EQUATIONS%INTERFACE_MATRICES%RHS_VECTOR)
-            !Allocate and initialise the matrices
-            INTERFACE_EQUATIONS%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES=INTERFACE_MAPPING%NUMBER_OF_INTERFACE_MATRICES
-            ALLOCATE(INTERFACE_EQUATIONS%INTERFACE_MATRICES%MATRICES(INTERFACE_EQUATIONS%INTERFACE_MATRICES% &
-              & NUMBER_OF_INTERFACE_MATRICES),STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate interface matrices matrices.",ERR,ERROR,*999)
-            DO matrix_idx=1,INTERFACE_EQUATIONS%INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-              NULLIFY(INTERFACE_EQUATIONS%INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr)
-              CALL INTERFACE_MATRIX_INITIALISE(INTERFACE_EQUATIONS%INTERFACE_MATRICES,matrix_idx,ERR,ERROR,*999)
-            ENDDO !matrix_idx
-            CALL INTERFACE_MATRICES_RHS_INITIALISE(INTERFACE_EQUATIONS%INTERFACE_MATRICES,ERR,ERROR,*999)
-          ELSE
-            CALL FlagError("Interface mapping has not been finished.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Interface equations interface mapping is not associated.",ERR,ERROR,*998)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*998)
+    IF(ASSOCIATED(interfaceEquations%interfaceMatrices)) &
+      & CALL FlagError("Interface matrices is already associated for this interface equations.",err,error,*998)
+
+    NULLIFY(interfaceMapping)
+    CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
+    CALL InterfaceMapping_AssertIsFinished(interfaceMapping,err,error,*999)
+    
+    ALLOCATE(interfaceEquations%interfaceMatrices,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface equations interface matrices.",err,error,*999)
+    interfaceEquations%interfaceMatrices%interfaceEquations=>interfaceEquations
+    interfaceEquations%interfaceMatrices%interfaceMatricesFinished=.FALSE.
+    interfaceEquations%interfaceMatrices%interfaceMapping=>interfaceMapping
+    NULLIFY(interfaceEquations%interfaceMatrices%solverMapping)
+    interfaceEquations%interfaceMatrices%numberOfColumns=interfaceMapping%numberOfColumns
+    interfaceEquations%interfaceMatrices%totalNumberOfColumns=interfaceMapping%totalNumberOfColumns
+    interfaceEquations%interfaceMatrices%numberOfGlobalColumns=interfaceMapping%numberOfGlobalColumns
+    NULLIFY(interfaceEquations%interfaceMatrices%rhsVector)
+    !Allocate and initialise the matrices
+    interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
+    ALLOCATE(interfaceEquations%interfaceMatrices%matrices(interfaceEquations%interfaceMatrices% &
+      & numberOfInterfaceMatrices),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface matrices matrices.",err,error,*999)
+    DO matrixIdx=1,interfaceEquations%interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceEquations%interfaceMatrices%matrices(matrixIdx)%ptr)
+      CALL InterfaceMatrix_Initialise(interfaceEquations%interfaceMatrices,matrixIdx,err,error,*999)
+    ENDDO !matrixIdx
+    CALL InterfaceMatrices_RHSInitialise(interfaceEquations%interfaceMatrices,err,error,*999)
        
-    EXITS("INTERFACE_MATRICES_INITIALISE")
+    EXITS("InterfaceMatrices_Initialise")
     RETURN
-999 CALL INTERFACE_MATRICES_FINALISE(INTERFACE_EQUATIONS%INTERFACE_MATRICES,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("INTERFACE_MATRICES_INITIALISE",ERR,ERROR)
+999 CALL InterfaceMatrices_Finalise(interfaceEquations%interfaceMatrices,dummyErr,dummyError,*998)
+998 ERRORSEXITS("InterfaceMatrices_Initialise",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_INITIALISE
+    
+  END SUBROUTINE InterfaceMatrices_Initialise
 
   !
   !================================================================================================================================
   !
 
   !>Outputs the interface matrices
-  SUBROUTINE INTERFACE_MATRICES_OUTPUT(ID,INTERFACE_MATRICES,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_Output(id,interfaceMatrices,err,error,*)
 
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: ID !<The ID of the ouptut stream
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface matrices
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the ouptut stream
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: RHS_VECTOR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceRHSType), POINTER :: rhsVector
     
-    ENTERS("INTERFACE_MATRICES_OUTPUT",ERR,ERROR,*999)
-    
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      IF(INTERFACE_MATRICES%INTERFACE_MATRICES_FINISHED) THEN
-        CALL WriteString(ID,"",ERR,ERROR,*999)
-        CALL WriteString(ID,"Interface matrices:",ERR,ERROR,*999)
-        CALL WriteStringValue(ID,"Number of interface matrices = ",INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES, &
-          & ERR,ERROR,*999)
-        DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-          INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
-          IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-            CALL WriteStringValue(ID,"Interface matrix : ",matrix_idx,ERR,ERROR,*999)
-            CALL WriteString(ID,"Standard matrix:",ERR,ERROR,*999)
-            CALL DistributedMatrix_Output(ID,INTERFACE_MATRIX%MATRIX,ERR,ERROR,*999)
-            IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-              CALL WriteString(ID,"Transposed matrix:",ERR,ERROR,*999)
-              CALL DistributedMatrix_Output(ID,INTERFACE_MATRIX%MATRIX_TRANSPOSE,ERR,ERROR,*999)
-            ENDIF
-         ELSE
-            CALL FlagError("Interface matrix is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDDO !matrix_idx
-        RHS_VECTOR=>INTERFACE_MATRICES%RHS_VECTOR
-        IF(ASSOCIATED(RHS_VECTOR)) THEN
-          CALL WriteString(ID,"Interface RHS vector:",ERR,ERROR,*999)
-          CALL DistributedVector_Output(ID,RHS_VECTOR%RHS_VECTOR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Interface matrices have not been finished.",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_Output",err,error,*999)
+
+    CALL InterfaceMatrices_AssertIsFinished(interfaceMatrices,err,error,*999)
+
+    CALL WriteString(id,"",err,error,*999)
+    CALL WriteString(id,"Interface matrices:",err,error,*999)
+    CALL WriteStringValue(id,"Number of interface matrices = ",interfaceMatrices%numberOfInterfaceMatrices, &
+      & err,error,*999)
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      CALL WriteStringValue(id,"Interface matrix : ",matrixIdx,err,error,*999)
+      CALL WriteString(id,"Standard matrix:",err,error,*999)
+      CALL DistributedMatrix_Output(id,interfaceMatrix%matrix,err,error,*999)
+      IF(interfaceMatrix%hasTranspose) THEN
+        CALL WriteString(id,"Transposed matrix:",err,error,*999)
+        CALL DistributedMatrix_Output(id,interfaceMatrix%matrixTranspose,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*999)
+    ENDDO !matrixIdx
+    rhsVector=>interfaceMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      CALL WriteString(id,"Interface RHS vector:",err,error,*999)
+      CALL DistributedVector_Output(id,rhsVector%rhsVector,err,error,*999)
     ENDIF
-    
-    EXITS("INTERFACE_MATRICES_OUTPUT")
+   
+    EXITS("InterfaceMatrices_Output")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_OUTPUT",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_Output",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_MATRICES_OUTPUT
+  END SUBROUTINE InterfaceMatrices_Output
   
   !
   !================================================================================================================================
   !
 
   !>Finalises the interface matrices RHS vector and deallocates all memory
-  SUBROUTINE INTERFACE_MATRICES_RHS_FINALISE(RHS_VECTOR,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_RHSFinalise(rhsVector,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: RHS_VECTOR !<A pointer to the equation matrices RHS vector to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceRHSType), POINTER :: rhsVector !<A pointer to the equation matrices RHS vector to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
      
-    ENTERS("INTERFACE_MATRICES_RHS_FINALISE",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_RHSFinalise",err,error,*999)
 
-    IF(ASSOCIATED(RHS_VECTOR)) THEN
-      IF(ASSOCIATED(RHS_VECTOR%RHS_VECTOR)) CALL DistributedVector_Destroy(RHS_VECTOR%RHS_VECTOR,ERR,ERROR,*999)
-      CALL EquationsMatrices_ElementVectorFinalise(RHS_VECTOR%ELEMENT_VECTOR,ERR,ERROR,*999)
-      DEALLOCATE(RHS_VECTOR)
+    IF(ASSOCIATED(rhsVector)) THEN
+      IF(ASSOCIATED(rhsVector%rhsVector)) CALL DistributedVector_Destroy(rhsVector%rhsVector,err,error,*999)
+      CALL EquationsMatrices_ElementVectorFinalise(rhsVector%elementVector,err,error,*999)
+      DEALLOCATE(rhsVector)
     ENDIF      
      
-    EXITS("INTERFACE_MATRICES_RHS_FINALISE")
+    EXITS("InterfaceMatrices_RHSFinalise")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_RHS_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_RHSFinalise",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_RHS_FINALISE
+    
+  END SUBROUTINE InterfaceMatrices_RHSFinalise
   
   !
   !================================================================================================================================
   !
 
   !>Initialises the interface matrices RHS vector
-  SUBROUTINE INTERFACE_MATRICES_RHS_INITIALISE(INTERFACE_MATRICES,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_RHSInitialise(interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the equation matrices to initialise the rhs vector for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the equation matrices to initialise the rhs vector for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping
+    TYPE(VARYING_STRING) :: dummyError
     
-    ENTERS("INTERFACE_MATRICES_RHS_INITIALISE",ERR,ERROR,*998)
+    ENTERS("InterfaceMatrices_RHSInitialise",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      INTERFACE_MAPPING=>INTERFACE_MATRICES%INTERFACE_MAPPING
-      IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-        RHS_MAPPING=>INTERFACE_MAPPING%RHS_MAPPING
-        IF(ASSOCIATED(RHS_MAPPING)) THEN
-          IF(ASSOCIATED(INTERFACE_MATRICES%RHS_VECTOR)) THEN
-            CALL FlagError("Interface matrices RHS vector is already associated.",ERR,ERROR,*998)
-          ELSE
-            ALLOCATE(INTERFACE_MATRICES%RHS_VECTOR,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate interface matrices RHS vector.",ERR,ERROR,*999)
-            INTERFACE_MATRICES%RHS_VECTOR%UPDATE_VECTOR=.TRUE.
-            INTERFACE_MATRICES%RHS_VECTOR%FIRST_ASSEMBLY=.TRUE.
-            NULLIFY(INTERFACE_MATRICES%RHS_VECTOR%RHS_VECTOR)
-            CALL EquationsMatrices_ElementVectorInitialise(INTERFACE_MATRICES%RHS_VECTOR%ELEMENT_VECTOR,ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Interface matrices equation mapping is not associated.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*998)
+
+    NULLIFY(interfaceMapping)
+    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)
+    NULLIFY(rhsMapping)
+    CALL InterfaceMapping_RHSMappingGet(interfaceMapping,rhsMapping,err,error,*999)
+    IF(ASSOCIATED(interfaceMatrices%rhsVector)) &
+      & CALL FlagError("Interface matrices RHS vector is already associated.",err,error,*998)
+    ALLOCATE(interfaceMatrices%rhsVector,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface matrices RHS vector.",err,error,*999)
+    interfaceMatrices%rhsVector%updateVector=.TRUE.
+    interfaceMatrices%rhsVector%firstAssembly=.TRUE.
+    NULLIFY(interfaceMatrices%rhsVector%rhsVector)
+    CALL EquationsMatrices_ElementVectorInitialise(interfaceMatrices%rhsVector%elementVector,err,error,*999)
     
-    EXITS("INTERFACE_MATRICES_RHS_INITIALISE")
+    EXITS("InterfaceMatrices_RHSInitialise")
     RETURN
-999 CALL INTERFACE_MATRICES_RHS_FINALISE(INTERFACE_MATRICES%RHS_VECTOR,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("INTERFACE_MATRICES_RHS_INITIALISE",ERR,ERROR)
+999 CALL InterfaceMatrices_RHSFinalise(interfaceMatrices%rhsVector,dummyErr,dummyError,*998)
+998 ERRORSEXITS("InterfaceMatrices_RHSInitialise",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_RHS_INITIALISE
+    
+  END SUBROUTINE InterfaceMatrices_RHSInitialise
   
   !
   !================================================================================================================================
   !
 
   !>Sets the storage type (sparsity) of the interface matrices
-  SUBROUTINE INTERFACE_MATRICES_STORAGE_TYPE_SET(INTERFACE_MATRICES,STORAGE_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_StorageTypeSet(interfaceMatrices,storageType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface matrices
-    INTEGER(INTG), INTENT(IN) :: STORAGE_TYPE(:) !<STORAGE_TYPE(matrix_idx). The storage type for the matrix_idx'th inteface matrices. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesSparsityTypes,INTERFACE_MATRICES_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    INTEGER(INTG), INTENT(IN) :: storageType(:) !<storageType(matrixIdx). The storage type for the matrixIdx'th inteface matrices. \see InterfaceMatricesRoutines_InterfaceMatricesSparsityTypes,InterfaceMatricesRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(VARYING_STRING) :: localError
     
-    ENTERS("INTERFACE_MATRICES_STORAGE_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_StorageTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      IF(INTERFACE_MATRICES%INTERFACE_MATRICES_FINISHED) THEN
-        CALL FlagError("Interface matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(SIZE(STORAGE_TYPE,1)==INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
-          DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
-            IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-              SELECT CASE(STORAGE_TYPE(matrix_idx))
-              CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-                INTERFACE_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
-              CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
-                INTERFACE_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
-              CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
-                INTERFACE_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
-              CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
-                INTERFACE_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
-              CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-                INTERFACE_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
-              CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
-                INTERFACE_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
-              CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
-                INTERFACE_MATRIX%STORAGE_TYPE=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
-              CASE DEFAULT
-                LOCAL_ERROR="The specified storage type of "//TRIM(NUMBER_TO_VSTRING(STORAGE_TYPE(matrix_idx),"*",ERR,ERROR))// &
-                  & " for interface matrix number "//TRIM(NUMBER_TO_VSTRING(matrix_idx,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-            ELSE
-              CALL FlagError("Interface matrix is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDDO !matrix_idx
-        ELSE
-          LOCAL_ERROR="The size of the storage type array ("//TRIM(NUMBER_TO_VSTRING(SIZE(STORAGE_TYPE,1),"*",ERR,ERROR))// &
-            & ") is not equal to the number of interface matrices ("// &
-            & TRIM(NUMBER_TO_VSTRING(INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES,"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*999)
+    CALL InterfaceMatrices_AssertNotFinished(interfaceMatrices,err,error,*999)
+
+    IF(SIZE(storageType,1)/=interfaceMatrices%numberOfInterfaceMatrices) THEN
+      localError="The size of the storage type array of "//TRIM(NumberToVString(SIZE(storageType,1),"*",err,error))// &
+        & " is not equal to the number of interface matrices of"// &
+        & TRIM(NumberToVString(interfaceMatrices%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("INTERFACE_MATRICES_STORAGE_TYPE_SET")
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      SELECT CASE(storageType(matrixIdx))
+      CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
+        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
+        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE        
+      CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
+        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
+        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
+        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
+        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE
+      CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
+        interfaceMatrix%storageType=DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE
+      CASE DEFAULT
+        localError="The specified storage type of "//TRIM(NumberToVString(storageType(matrixIdx),"*",err,error))// &
+          & " for interface matrix number "//TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
+     
+    EXITS("InterfaceMatrices_StorageTypeSet")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_STORAGE_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_StorageTypeSet",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_MATRICES_STORAGE_TYPE_SET
+  END SUBROUTINE InterfaceMatrices_StorageTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Sets the structure (sparsity) of the interface matrices.
-  SUBROUTINE INTERFACE_MATRICES_STRUCTURE_TYPE_SET(INTERFACE_MATRICES,STRUCTURE_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_StructureTypeSet(interfaceMatrices,structureType,err,error,*)
     
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface matrices
-    INTEGER(INTG), INTENT(IN) :: STRUCTURE_TYPE(:) !<STRUCTURE_TYPE(matrix_idx). The structure type for the  matrix_idx'th interface matrix \see INTERFACE_MATRICES_ROUTINES_InterfaceMatrixStructureTypes,INTERFACE_MATRICES_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices
+    INTEGER(INTG), INTENT(IN) :: structureType(:) !<structureType(matrixIdx). The structure type for the  matrixIdx'th interface matrix \see InterfaceMatricesRoutines_InterfaceMatrixStructureTypes,InterfaceMatricesRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("INTERFACE_MATRICES_STRUCTURE_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_StructureTypeSet",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      IF(INTERFACE_MATRICES%INTERFACE_MATRICES_FINISHED) THEN
-        CALL FlagError("Interface matrices have been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(SIZE(STRUCTURE_TYPE,1)==INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES) THEN
-          DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-            INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
-            IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-              SELECT CASE(STRUCTURE_TYPE(matrix_idx))
-              CASE(INTERFACE_MATRIX_NO_STRUCTURE)
-                INTERFACE_MATRIX%STRUCTURE_TYPE=INTERFACE_MATRIX_NO_STRUCTURE
-              CASE(INTERFACE_MATRIX_FEM_STRUCTURE)
-                INTERFACE_MATRIX%STRUCTURE_TYPE=INTERFACE_MATRIX_FEM_STRUCTURE
-              CASE DEFAULT
-                LOCAL_ERROR="The specified strucutre type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(STRUCTURE_TYPE(matrix_idx),"*",ERR,ERROR))//" for interface matrix number "// &
-                  & TRIM(NUMBER_TO_VSTRING(matrix_idx,"*",ERR,ERROR))//" is invalid."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              END SELECT
-            ELSE
-              CALL FlagError("Interface matrix is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ENDDO !matrix_idx
-        ELSE
-          LOCAL_ERROR="The size of the structure type array ("//TRIM(NUMBER_TO_VSTRING(SIZE(STRUCTURE_TYPE,1),"*",ERR,ERROR))// &
-            & ") is not equal to the number of interface matrices ("// &
-            & TRIM(NUMBER_TO_VSTRING(INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES,"*",ERR,ERROR))//")."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*999)
+    CALL InterfaceMatrices_AssertNotFinished(interfaceMatrices,err,error,*999)
+    IF(SIZE(structureType,1)/=interfaceMatrices%numberOfInterfaceMatrices) THEN
+      localError="The size of the structure type array of "//TRIM(NumberToVString(SIZE(structureType,1),"*",err,error))// &
+        & " is not equal to the number of interface matrices of "// &
+        & TRIM(NumberToVString(interfaceMatrices%numberOfInterfaceMatrices,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("INTERFACE_MATRICES_STRUCTURE_TYPE_SET")
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      SELECT CASE(structureType(matrixIdx))
+      CASE(INTERFACE_MATRIX_NO_STRUCTURE)
+        interfaceMatrix%structureType=INTERFACE_MATRIX_NO_STRUCTURE
+      CASE(INTERFACE_MATRIX_FEM_STRUCTURE)
+        interfaceMatrix%structureType=INTERFACE_MATRIX_FEM_STRUCTURE
+      CASE DEFAULT
+        localError="The specified strucutre type of "// &
+          & TRIM(NumberToVString(structureType(matrixIdx),"*",err,error))//" for interface matrix number "// &
+          & TRIM(NumberToVString(matrixIdx,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ENDDO !matrixIdx
+    
+    EXITS("InterfaceMatrices_StructureTypeSet")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_STRUCTURE_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_StructureTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_STRUCTURE_TYPE_SET
+    
+  END SUBROUTINE InterfaceMatrices_StructureTypeSet
   
   !
   !================================================================================================================================
   !
 
   !>Initialise the values of the interface matrices to the given value e.g., 0.0_DP
-  SUBROUTINE INTERFACE_MATRICES_VALUES_INITIALISE(INTERFACE_MATRICES,VALUE,ERR,ERROR,*)
+  SUBROUTINE InterfaceMatrices_ValueInitialise(interfaceMatrices,value,err,error,*)
     
     !Argument variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface matrices to initialise the values for
-    REAL(DP), INTENT(IN) :: VALUE !<The value to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices to initialise the values for
+    REAL(DP), INTENT(IN) :: value !<The value to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrix_idx
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: RHS_VECTOR
+    INTEGER(INTG) :: matrixIdx
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceRHSType), POINTER :: rhsVector
     
-    ENTERS("INTERFACE_MATRICES_VALUES_INITIALISE",ERR,ERROR,*999)
+    ENTERS("InterfaceMatrices_ValueInitialise",err,error,*999)
     
-    IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-      DO matrix_idx=1,INTERFACE_MATRICES%NUMBER_OF_INTERFACE_MATRICES
-        INTERFACE_MATRIX=>INTERFACE_MATRICES%MATRICES(matrix_idx)%ptr
-        IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-          IF(INTERFACE_MATRIX%UPDATE_MATRIX) THEN
-            CALL DistributedMatrix_AllValuesSet(INTERFACE_MATRIX%MATRIX,VALUE,ERR,ERROR,*999)
-            IF(INTERFACE_MATRIX%HAS_TRANSPOSE) THEN
-              CALL DistributedMatrix_AllValuesSet(INTERFACE_MATRIX%MATRIX_TRANSPOSE,VALUE,ERR,ERROR,*999)
-            ENDIF
-          ENDIF
-        ELSE
-          CALL FlagError("Interface matrix is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ENDDO !matrix_idx
-      RHS_VECTOR=>INTERFACE_MATRICES%RHS_VECTOR
-      IF(ASSOCIATED(RHS_VECTOR)) THEN
-        IF(RHS_VECTOR%UPDATE_VECTOR) THEN
-          CALL DistributedVector_AllValuesSet(RHS_VECTOR%RHS_VECTOR,VALUE,ERR,ERROR,*999)
-        ENDIF
+    IF(.NOT.ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is not associated.",err,error,*999)
+    
+    DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
+      NULLIFY(interfaceMatrix)
+      CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,matrixIdx,interfaceMatrix,err,error,*999)
+      IF(interfaceMatrix%updateMatrix) THEN
+        CALL DistributedMatrix_AllValuesSet(interfaceMatrix%matrix,VALUE,err,error,*999)
+        IF(interfaceMatrix%hasTranspose) CALL DistributedMatrix_AllValuesSet(interfaceMatrix%matrixTranspose,VALUE,err,error,*999)
       ENDIF
-    ELSE
-      CALL FlagError("Interface matrices is not associated.",ERR,ERROR,*999)
+    ENDDO !matrixIdx
+    rhsVector=>interfaceMatrices%rhsVector
+    IF(ASSOCIATED(rhsVector)) THEN
+      IF(rhsVector%updateVector) CALL DistributedVector_AllValuesSet(rhsVector%rhsVector,VALUE,err,error,*999)
     ENDIF
 
-    EXITS("INTERFACE_MATRICES_VALUES_INITIALISE")
+    EXITS("InterfaceMatrices_ValueInitialise")
     RETURN
-999 ERRORSEXITS("INTERFACE_MATRICES_VALUES_INITIALISE",ERR,ERROR)
+999 ERRORSEXITS("InterfaceMatrices_ValueInitialise",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_MATRICES_VALUES_INITIALISE
+    
+  END SUBROUTINE InterfaceMatrices_ValueInitialise
 
   !
   !================================================================================================================================
   !
 
-END MODULE INTERFACE_MATRICES_ROUTINES
+END MODULE InterfaceMatricesRoutines

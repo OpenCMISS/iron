@@ -2571,108 +2571,108 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   ! Interface types
   
   !>Contains information about an interface matrix.
-  TYPE INTERFACE_MATRIX_TYPE
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface matrices for the interface matrix.
-    INTEGER(INTG) :: MATRIX_NUMBER !<The number of the interface matrix
-    INTEGER(INTG) :: STORAGE_TYPE !<The storage (sparsity) type for this matrix
-    INTEGER(INTG) :: STRUCTURE_TYPE !<The structure (sparsity) type for this matrix
-    INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of rows in this interface matrix
-    INTEGER(INTG) :: TOTAL_NUMBER_OF_ROWS !<The number of rows in this interface matrix
-    INTEGER(INTG) :: INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE !<Determines where the interface matrix is mapped to
-    INTEGER(INTG) :: INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE !<Determines where the transpose of the interface matrix is mapped to
-    LOGICAL :: UPDATE_MATRIX !<Is .TRUE. if this interface matrix is to be updated
-    LOGICAL :: FIRST_ASSEMBLY !<Is .TRUE. if this interface matrix has not been assembled
-    LOGICAL :: HAS_TRANSPOSE !<Is .TRUE. if this interface matrix has has transpose
-    TYPE(DistributedMatrixType), POINTER :: MATRIX !<A pointer to the distributed interface matrix data
-    TYPE(DistributedMatrixType), POINTER :: MATRIX_TRANSPOSE !<A pointer to the distributed interface matrix transpose data
-    TYPE(DistributedVectorType), POINTER :: TEMP_VECTOR !<Temporary vector used for assembly. 
-    TYPE(DistributedVectorType), POINTER :: TEMP_TRANSPOSE_VECTOR !<Temporary vector used for assembly. 
-    TYPE(ElementMatrixType) :: ELEMENT_MATRIX !<The element matrix for this interface matrix
-  END TYPE INTERFACE_MATRIX_TYPE
+  TYPE InterfaceMatrixType
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface matrices for the interface matrix.
+    INTEGER(INTG) :: matrixNumber !<The number of the interface matrix
+    INTEGER(INTG) :: storageType !<The storage (sparsity) type for this matrix
+    INTEGER(INTG) :: structureType !<The structure (sparsity) type for this matrix
+    INTEGER(INTG) :: numberOfRows !<The number of rows in this interface matrix
+    INTEGER(INTG) :: totalNumberOfRows !<The number of rows in this interface matrix
+    INTEGER(INTG) :: interfaceMatrixTimeDependenceType !<Determines where the interface matrix is mapped to
+    INTEGER(INTG) :: interfaceMatrixTransposeTimeDependenceType !<Determines where the transpose of the interface matrix is mapped to
+    LOGICAL :: updateMatrix !<Is .TRUE. if this interface matrix is to be updated
+    LOGICAL :: firstAssembly !<Is .TRUE. if this interface matrix has not been assembled
+    LOGICAL :: hasTranspose !<Is .TRUE. if this interface matrix has has transpose
+    TYPE(DistributedMatrixType), POINTER :: matrix !<A pointer to the distributed interface matrix data
+    TYPE(DistributedMatrixType), POINTER :: matrixTranspose !<A pointer to the distributed interface matrix transpose data
+    TYPE(DistributedVectorType), POINTER :: tempVector !<Temporary vector used for assembly. 
+    TYPE(DistributedVectorType), POINTER :: tempTransposeVector !<Temporary vector used for assembly. 
+    TYPE(ElementMatrixType) :: elementMatrix !<The element matrix for this interface matrix
+  END TYPE InterfaceMatrixType
 
-  !>A buffer type to allow for an array of pointers to a INTERFACE_MATRIX_TYPE \see Types::INTERFACE_MATRIX_TYPE.
-  TYPE INTERFACE_MATRIX_PTR_TYPE
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: ptr !<A pointer to the interface matrix.
-  END TYPE INTERFACE_MATRIX_PTR_TYPE
+  !>A buffer type to allow for an array of pointers to a InterfaceMatrixType \see Types::InterfaceMatrixType.
+  TYPE InterfaceMatrixPtrType
+    TYPE(InterfaceMatrixType), POINTER :: ptr !<A pointer to the interface matrix.
+  END TYPE InterfaceMatrixPtrType
 
   !>Contains information of the RHS vector for interface matrices
-  TYPE INTERFACE_RHS_TYPE
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer back to the interface matrices.
-    LOGICAL :: UPDATE_VECTOR !<Is .TRUE. if the interface rhs vector is to be updated
-    LOGICAL :: FIRST_ASSEMBLY !<Is .TRUE. if this rhs vector has not been assembled
-    TYPE(DistributedVectorType), POINTER :: RHS_VECTOR !<A pointer to the distributed global rhs vector data 
-    TYPE(ElementVectorType) :: ELEMENT_VECTOR !<The element rhs information
-  END TYPE INTERFACE_RHS_TYPE
+  TYPE InterfaceRHSType
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer back to the interface matrices.
+    LOGICAL :: updateVector !<Is .TRUE. if the interface rhs vector is to be updated
+    LOGICAL :: firstAssembly !<Is .TRUE. if this rhs vector has not been assembled
+    TYPE(DistributedVectorType), POINTER :: rhsVector !<A pointer to the distributed global rhs vector data 
+    TYPE(ElementVectorType) :: elementVector !<The element rhs information
+  END TYPE InterfaceRHSType
   
   !>Contains information on the interface matrices 
-  TYPE INTERFACE_MATRICES_TYPE
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer back to the interface equations
-    LOGICAL :: INTERFACE_MATRICES_FINISHED !<Is .TRUE. if the interface  matrices have finished being created, .FALSE. if not.
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING !<A pointer to the interface equations mapping for the interface equations matrices.
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping for the interface equations matrices
-    INTEGER(INTG) :: NUMBER_OF_COLUMNS !<The number of local columns in the interface matrices
-    INTEGER(INTG) :: TOTAL_NUMBER_OF_COLUMNS !<The total number of local columns in the interface matrices
-    INTEGER(INTG) :: NUMBER_OF_GLOBAL_COLUMNS !<The number of global columns in the interface matrices
-    INTEGER(INTG) :: NUMBER_OF_INTERFACE_MATRICES !<The number of interfaces matrices defined for the interface condition.
-    TYPE(INTERFACE_MATRIX_PTR_TYPE), ALLOCATABLE :: MATRICES(:) !<MATRICES(matrix_idx)%PTR contains the information on the matrix_idx'th  interface matrix.
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: RHS_VECTOR !<A pointer to the RHS vector information for the interface matrices.
-  END TYPE INTERFACE_MATRICES_TYPE
+  TYPE InterfaceMatricesType
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer back to the interface equations
+    LOGICAL :: interfaceMatricesFinished !<Is .TRUE. if the interface  matrices have finished being created, .FALSE. if not.
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface equations mapping for the interface equations matrices.
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping for the interface equations matrices
+    INTEGER(INTG) :: numberOfColumns !<The number of local columns in the interface matrices
+    INTEGER(INTG) :: totalNumberOfColumns !<The total number of local columns in the interface matrices
+    INTEGER(INTG) :: numberOfGlobalColumns !<The number of global columns in the interface matrices
+    INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interfaces matrices defined for the interface condition.
+    TYPE(InterfaceMatrixPtrType), ALLOCATABLE :: matrices(:) !<MATRICES(matrix_idx)%PTR contains the information on the matrix_idx'th  interface matrix.
+    TYPE(InterfaceRHSType), POINTER :: rhsVector !<A pointer to the RHS vector information for the interface matrices.
+  END TYPE InterfaceMatricesType
 
   !>Contains information on interface variable mapping for an interface matrix.
-  TYPE INTERFACE_MATRIX_TO_VAR_MAP_TYPE
-    INTEGER(INTG) :: MATRIX_NUMBER !<The interface matrix number
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX !<A pointer to the interface matrix
-    TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET !<A pointer to the equations set containing the dependent variable that is mapped to this interface matrix.
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface condition containing the Lagrange variable that is mapped to this interface matrix.
+  TYPE InterfaceMatrixToVarMapType
+    INTEGER(INTG) :: matrixNumber !<The interface matrix number
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix
+    TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set containing the dependent variable that is mapped to this interface matrix.
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface condition containing the Lagrange variable that is mapped to this interface matrix.
     INTEGER(INTG) :: variableType !<The dependent variable type mapped to this interface matrix
-    TYPE(FieldVariableType), POINTER :: VARIABLE !<A pointer to the field variable that is mapped to this interface matrix
-    INTEGER(INTG) :: MESH_INDEX !<The mesh index for the matrix in the interface.
-    REAL(DP) :: MATRIX_COEFFICIENT !<The multiplicative coefficent for the matrix.    
-    LOGICAL :: HAS_TRANSPOSE !<.TRUE. if the interface matrix has a tranpose, .FALSE. if not.  
-    INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of rows  in this interface matrix.
-    INTEGER(INTG) :: TOTAL_NUMBER_OF_ROWS !<The total number of rows in this interface matrix.
-    INTEGER(INTG) :: NUMBER_OF_GLOBAL_ROWS !<The global number of rows in this interface matrix.
-    TYPE(DomainMappingType), POINTER :: ROW_DOFS_MAPPING !<A pointer to the domain mapping for the row dofs.
-    INTEGER(INTG), ALLOCATABLE :: VARIABLE_DOF_TO_ROW_MAP(:) !<VARIABLE_DOF_TO_ROW_MAP(dof_idx). The mapping from the dof_idx'th variable dof to the rows on the interface matrix
-  END TYPE INTERFACE_MATRIX_TO_VAR_MAP_TYPE
+    TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable that is mapped to this interface matrix
+    INTEGER(INTG) :: meshIndex !<The mesh index for the matrix in the interface.
+    REAL(DP) :: matrixCoefficient !<The multiplicative coefficent for the matrix.    
+    LOGICAL :: hasTranspose !<.TRUE. if the interface matrix has a tranpose, .FALSE. if not.  
+    INTEGER(INTG) :: numberOfRows !<The number of rows  in this interface matrix.
+    INTEGER(INTG) :: totalNumberOfRows !<The total number of rows in this interface matrix.
+    INTEGER(INTG) :: numberOfGlobalRows !<The global number of rows in this interface matrix.
+    TYPE(DomainMappingType), POINTER :: rowDOFsMapping !<A pointer to the domain mapping for the row dofs.
+    INTEGER(INTG), ALLOCATABLE :: variableDOFToRowMap(:) !<variableDOFToRowMap(dof_idx). The mapping from the dof_idx'th variable dof to the rows on the interface matrix
+  END TYPE InterfaceMatrixToVarMapType
 
-  TYPE INTERFACE_MAPPING_RHS_TYPE
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING !<A pointer back to the interface mapping
-    INTEGER(INTG) :: RHS_VARIABLE_TYPE !<The variable type number mapped to the RHS vector
-    TYPE(FieldVariableType), POINTER :: RHS_VARIABLE !<A pointer to the variable that is mapped to the RHS vector
-    TYPE(DomainMappingType), POINTER :: RHS_VARIABLE_MAPPING !<A pointer to the RHS variable domain mapping
-    REAL(DP) :: RHS_COEFFICIENT !<The multiplicative coefficient applied to the RHS vector
-    INTEGER(INTG), ALLOCATABLE :: RHS_DOF_TO_INTERFACE_ROW_MAP(:) !<RHS_DOF_TO_INTERFACE_ROW_MAP(rhs_dof_idx). The mapping from the rhs_dof_idx'th RHS dof in the rhs variable to the interface row.   
-    INTEGER(INTG), ALLOCATABLE :: INTERFACE_ROW_TO_RHS_DOF_MAP(:) !<INTERFACE_ROW_TO_RHS_DOF_MAP(row_idx). The mapping from the row_idx'th row of the interface to the RHS dof.   
-  END TYPE INTERFACE_MAPPING_RHS_TYPE
+  TYPE InterfaceMappingRHSType
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer back to the interface mapping
+    INTEGER(INTG) :: rhsVariableType !<The variable type number mapped to the RHS vector
+    TYPE(FieldVariableType), POINTER :: rhsVariable !<A pointer to the variable that is mapped to the RHS vector
+    TYPE(DomainMappingType), POINTER :: rhsVariableMapping !<A pointer to the RHS variable domain mapping
+    REAL(DP) :: rhsCoefficient !<The multiplicative coefficient applied to the RHS vector
+    INTEGER(INTG), ALLOCATABLE :: rhsDOFToInterfaceRowMap(:) !<rhsDOFToInterfaceRowMap(rhs_dof_idx). The mapping from the rhs_dof_idx'th RHS dof in the rhs variable to the interface row.   
+    INTEGER(INTG), ALLOCATABLE :: interfaceRowToRHSDOFMap(:) !<interfaceRowToRHSDOFMap(row_idx). The mapping from the row_idx'th row of the interface to the RHS dof.   
+  END TYPE InterfaceMappingRHSType
   
-  TYPE INTERFACE_MAPPING_CREATE_VALUES_CACHE_TYPE
-    INTEGER(INTG) :: NUMBER_OF_INTERFACE_MATRICES !<Cache of the number of interface matrices
-    INTEGER(INTG) :: LAGRANGE_VARIABLE_TYPE !<The variable type of the Lagrange field.
-    REAL(DP), ALLOCATABLE :: MATRIX_COEFFICIENTS(:) !<MATRIX_COEFFICIENTS(matrix_idx). The matrix cooefficient for the matrix_idx'th interface matrix.
-    LOGICAL, ALLOCATABLE :: HAS_TRANSPOSE(:) !<HAS_TRANSPOSE(matrix_idx). .TRUE. if the matrix_idx'th interface matrix has an tranpose, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: MATRIX_ROW_FIELD_VARIABLE_INDICES(:) !<MATRIX_ROW_FIELD_VARIABLE_INDICES(variable_idx). The field variable index that are mapped to the the interface matrix rows.
-    INTEGER(INTG), ALLOCATABLE :: MATRIX_COL_FIELD_VARIABLE_INDICES(:) !<MATRIX_COL_FIELD_VARIABLE_INDICES(variable_idx). The field variable index that are mapped to the the interface matrix columns.
-    INTEGER(INTG) :: RHS_LAGRANGE_VARIABLE_TYPE !<The Lagrange variable type mapped to the rhs vector
-    REAL(DP) :: RHS_COEFFICIENT !<The coefficient multiplying the RHS vector.
-  END TYPE INTERFACE_MAPPING_CREATE_VALUES_CACHE_TYPE
+  TYPE InterfaceMappingCreateValuesCacheType
+    INTEGER(INTG) :: numberOfInterfaceMatrices !<Cache of the number of interface matrices
+    INTEGER(INTG) :: lagrangeVariableType !<The variable type of the Lagrange field.
+    REAL(DP), ALLOCATABLE :: matrixCoefficients(:) !<matrixCoefficients(matrix_idx). The matrix cooefficient for the matrix_idx'th interface matrix.
+    LOGICAL, ALLOCATABLE :: hasTranspose(:) !<hasTranspose(matrix_idx). .TRUE. if the matrix_idx'th interface matrix has an tranpose, .FALSE. if not.
+    INTEGER(INTG), ALLOCATABLE :: matrixRowFieldVariableIndices(:) !<matrixRowFieldVariableIndices(variable_idx). The field variable index that are mapped to the the interface matrix rows.
+    INTEGER(INTG), ALLOCATABLE :: matrixColFieldVariableIndices(:) !<matrixColFieldVariableIndices(variable_idx). The field variable index that are mapped to the the interface matrix columns.
+    INTEGER(INTG) :: rhsLagrangeVariableType !<The Lagrange variable type mapped to the rhs vector
+    REAL(DP) :: rhsCoefficient !<The coefficient multiplying the RHS vector.
+  END TYPE InterfaceMappingCreateValuesCacheType
   
   !>Contains information on an interface mapping. TODO: Generalise to non-Lagrange multipler mappings
-  TYPE INTERFACE_MAPPING_TYPE  
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS  !<A pointer to the interface equations for this interface mapping
-    LOGICAL :: INTERFACE_MAPPING_FINISHED !<Is .TRUE. if the interface mapping has finished being created, .FALSE. if not.
-    INTEGER(INTG) :: LAGRANGE_VARIABLE_TYPE !<The variable type of the mapped Lagrange field variable.
-    TYPE(FieldVariableType), POINTER :: LAGRANGE_VARIABLE !<A pointer to the variable that is mapped to the Lagrange multiplier field variable.
-    INTEGER(INTG) :: NUMBER_OF_COLUMNS !<The number of columns in the interface mapping
-    INTEGER(INTG) :: TOTAL_NUMBER_OF_COLUMNS !<The total number of columns in the interface mapping
-    INTEGER(INTG) :: NUMBER_OF_GLOBAL_COLUMNS !<The global number of columns in the interface mapping
-    TYPE(DomainMappingType), POINTER :: COLUMN_DOFS_MAPPING !<A pointer to the domain mapping for the columns
-    INTEGER(INTG), ALLOCATABLE :: LAGRANGE_DOF_TO_COLUMN_MAP(:) !<LAGRANGE_DOF_TO_COLUMN_MAP(dof_idx). The mapping from the dof_idx'th Lagrange dof to the interface matrices column
-    INTEGER(INTG) :: NUMBER_OF_INTERFACE_MATRICES !<The number of interface matrices that the mapping is set up for.
-    TYPE(INTERFACE_MATRIX_TO_VAR_MAP_TYPE), ALLOCATABLE :: INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(:) !<INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx). Information for the interface matrix rows to dependent variable maps for the interface_matrix_idx'th interface matrix.
-    TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: RHS_MAPPING !<A pointer to the interface mapping for the RHS vector.
-    TYPE(INTERFACE_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE
-  END TYPE INTERFACE_MAPPING_TYPE
+  TYPE InterfaceMappingType  
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations  !<A pointer to the interface equations for this interface mapping
+    LOGICAL :: interfaceMappingFinished !<Is .TRUE. if the interface mapping has finished being created, .FALSE. if not.
+    INTEGER(INTG) :: lagrangeVariableType !<The variable type of the mapped Lagrange field variable.
+    TYPE(FieldVariableType), POINTER :: lagrangeVariable !<A pointer to the variable that is mapped to the Lagrange multiplier field variable.
+    INTEGER(INTG) :: numberOfColumns !<The number of columns in the interface mapping
+    INTEGER(INTG) :: totalNumberOfColumns !<The total number of columns in the interface mapping
+    INTEGER(INTG) :: numberOfGlobalColumns !<The global number of columns in the interface mapping
+    TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<A pointer to the domain mapping for the columns
+    INTEGER(INTG), ALLOCATABLE :: lagrangeDOFToColumnMap(:) !<lagrangeDOFToColumnMap(dof_idx). The mapping from the dof_idx'th Lagrange dof to the interface matrices column
+    INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interface matrices that the mapping is set up for.
+    TYPE(InterfaceMatrixToVarMapType), ALLOCATABLE :: interfaceMatrixRowsToVarMaps(:) !<interfaceMatrixRowsToVarMaps(interface_matrix_idx). Information for the interface matrix rows to dependent variable maps for the interface_matrix_idx'th interface matrix.
+    TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the interface mapping for the RHS vector.
+    TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
+  END TYPE InterfaceMappingType
 
   !>Contains information about the interpolation for a parameter set in interface equations
   TYPE INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE
@@ -2705,14 +2705,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information about the interface equations for an interface condition. 
   TYPE INTERFACE_EQUATIONS_TYPE
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
-    LOGICAL :: INTERFACE_EQUATIONS_FINISHED !<Is .TRUE. if the interface equations have finished being created, .FALSE. if not.
+    LOGICAL :: interfaceEquationsFinished !<Is .TRUE. if the interface equations have finished being created, .FALSE. if not.
     INTEGER(INTG) :: outputType !<The output type for the interface equations \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
     INTEGER(INTG) :: sparsityType !<The sparsity type for the interface equation matrices of the interface equations \see INTERFACE_EQUATIONS_ROUTINES_SparsityTypes,INTERFACE_EQUATIONS_ROUTINES
-    INTEGER(INTG) :: LINEARITY !<The interface equations linearity type \see INTERFACE_CONDITIONS_CONSTANTS_LinearityTypes,INTERFACE_CONDITIONS_CONSTANTS
+    INTEGER(INTG) :: linearity !<The interface equations linearity type \see INTERFACE_CONDITIONS_CONSTANTS_LinearityTypes,INTERFACE_CONDITIONS_CONSTANTS
     INTEGER(INTG) :: timeDependence !<The interface equations time dependence type \see INTERFACE_CONDITIONS_CONSTANTS_TimeDependenceTypes,INTERFACE_CONDITIONS_CONSTANTS
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_TYPE), POINTER :: INTERPOLATION !<A pointer to the interpolation information used in the interface equations.
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING !<A pointer to the interface equations mapping for the interface.
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES !<A pointer to the interface equations matrices and vectors used for the interface equations.
+    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_TYPE), POINTER :: interpolation !<A pointer to the interpolation information used in the interface equations.
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface equations mapping for the interface.
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface equations matrices and vectors used for the interface equations.
   END TYPE INTERFACE_EQUATIONS_TYPE
   
   !>Contains information on the geometry for an interface condition
@@ -2756,14 +2756,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(VARYING_STRING) :: label !<A user defined label for the interface condition.
     TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer back to the interface.
     INTEGER(INTG) :: outputType !<The output type for the interface \see INTERFACE_CONDITIONS_CONSTANTS_OutputTypes,INTERFACE_CONDITIONS_CONSTANTS
-    INTEGER(INTG) :: METHOD !<An integer which denotes the interface condition method. \see INTERFACE_CONDITIONS_Methods,INTERFACE_CONDITIONS
-    INTEGER(INTG) :: OPERATOR !<An integer which denotes the type of interface operator. \see INTERFACE_CONDITIONS_Operator,INTERFACE_CONDITIONS
+    INTEGER(INTG) :: method !<An integer which denotes the interface condition method. \see INTERFACE_CONDITIONS_Methods,INTERFACE_CONDITIONS
+    INTEGER(INTG) :: operator !<An integer which denotes the type of interface operator. \see INTERFACE_CONDITIONS_Operator,INTERFACE_CONDITIONS
     INTEGER(INTG) :: integrationType !<An integer which denotes the integration type. \see INTERFACE_CONDITIONS_IntegrationType,INTERFACE_CONDITIONS
-    TYPE(INTERFACE_GEOMETRY_TYPE) :: GEOMETRY !<The geometry information for the interface condition.
-    TYPE(INTERFACE_PENALTY_TYPE), POINTER :: PENALTY !<A pointer to the interface condition penalty information if there are any for this interface condition.
-    TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: LAGRANGE !<A pointer to the interface condition Lagrange multipler information if there are any for this interface condition.
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: DEPENDENT !<A pointer to the interface condition dependent field information if there is any for this interface condition.
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations if there are any for this interface condition.
+    TYPE(INTERFACE_GEOMETRY_TYPE) :: geometry !<The geometry information for the interface condition.
+    TYPE(INTERFACE_PENALTY_TYPE), POINTER :: penalty !<A pointer to the interface condition penalty information if there are any for this interface condition.
+    TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: lagrange !<A pointer to the interface condition Lagrange multipler information if there are any for this interface condition.
+    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: dependent !<A pointer to the interface condition dependent field information if there is any for this interface condition.
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations if there are any for this interface condition.
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary condition information for this interface condition.
   END TYPE INTERFACE_CONDITION_TYPE
 
@@ -2871,19 +2871,19 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(InterfacePtrType), ALLOCATABLE :: interfaces(:) !<interfaces(interfaceIdx). A pointer to the interfaceIdx'th interface.
   END TYPE InterfacesType
 
-  PUBLIC INTERFACE_MATRIX_TYPE,INTERFACE_MATRIX_PTR_TYPE
+  PUBLIC InterfaceMatrixType,InterfaceMatrixPtrType
 
-  PUBLIC INTERFACE_MATRIX_TO_VAR_MAP_TYPE
+  PUBLIC InterfaceMatrixToVarMapType
 
-  PUBLIC INTERFACE_MATRICES_TYPE
+  PUBLIC InterfaceMatricesType
 
-  PUBLIC INTERFACE_RHS_TYPE
+  PUBLIC InterfaceRHSType
 
-  PUBLIC INTERFACE_MAPPING_RHS_TYPE
+  PUBLIC InterfaceMappingRHSType
 
-  PUBLIC INTERFACE_MAPPING_CREATE_VALUES_CACHE_TYPE
+  PUBLIC InterfaceMappingCreateValuesCacheType
 
-  PUBLIC INTERFACE_MAPPING_TYPE
+  PUBLIC InterfaceMappingType
 
   PUBLIC INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE
 
@@ -3087,14 +3087,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information on the solver matrix
   TYPE SOLVER_MATRIX_TYPE
-    INTEGER(INTG) :: MATRIX_NUMBER !<The number of the solver matrix
+    INTEGER(INTG) :: matrixNumber !<The number of the solver matrix
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES !<A pointer to the solver matrices for this solver matrix
-    LOGICAL :: UPDATE_MATRIX !<Is .TRUE. if the solver matrix is to be updated
-    INTEGER(INTG) :: STORAGE_TYPE !<The storage type for the solver matrix.
+    LOGICAL :: updateMatrix !<Is .TRUE. if the solver matrix is to be updated
+    INTEGER(INTG) :: storageType !<The storage type for the solver matrix.
     INTEGER(INTG) :: symmetryType !<The solver matrix symmetry type.
-    INTEGER(INTG) :: NUMBER_OF_COLUMNS !<The number of columns in the distributed solver matrix
+    INTEGER(INTG) :: numberOfColumns !<The number of columns in the distributed solver matrix
     TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR !<A pointer to the distributed solver vector associated with the matrix
-    TYPE(DistributedMatrixType), POINTER :: MATRIX !<A pointer to the distributed solver matrix data
+    TYPE(DistributedMatrixType), POINTER :: matrix !<A pointer to the distributed solver matrix data
   END TYPE SOLVER_MATRIX_TYPE
 
   !>A buffer type to allow for an array of pointers to a SOLVER_MATRIX_TYPE \see TYPES:SOLUTION_MATRIX_TYPE
@@ -3106,9 +3106,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE SOLVER_MATRICES_TYPE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer to the solver
     LOGICAL :: SOLVER_MATRICES_FINISHED !<Is .TRUE. if the solver matrices have finished being created, .FALSE. if not.
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping for these solver matrices
-    INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of (local) rows in the distributed solution matrix for this computation node
-    INTEGER(INTG) :: NUMBER_OF_GLOBAL_ROWS !<The number of global rows in the distributed solution matrix
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping for these solver matrices
+    INTEGER(INTG) :: numberOfRows !<The number of (local) rows in the distributed solution matrix for this computation node
+    INTEGER(INTG) :: numberOfGlobalRows !<The number of global rows in the distributed solution matrix
     INTEGER(INTG) :: solverLibraryType !<The library type of the solver for the solver matrices \see SOLVER_ROUTINES_SolverLibraries
     INTEGER(INTG) :: matrixLibraryType !<The library type for the solver matrices \see DistributedMatrixVector_LibraryTypes
     !Linear matrices
@@ -3122,7 +3122,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(DistributedVectorType), POINTER :: gradient !<A pointer to the distributed gradient vector for optimisation problems
     !Right hand side vector
     LOGICAL :: UPDATE_RHS_VECTOR !<Is .TRUE. if the RHS vector is to be updated
-    TYPE(DistributedVectorType), POINTER :: RHS_VECTOR !<A pointer to the distributed RHS vector for the solver matrices
+    TYPE(DistributedVectorType), POINTER :: rhsVector !<A pointer to the distributed RHS vector for the solver matrices
   END TYPE SOLVER_MATRICES_TYPE
 
   PUBLIC SOLVER_MATRIX_TYPE,SOLVER_MATRIX_PTR_TYPE
@@ -3147,7 +3147,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
     INTEGER(INTG) :: symmetryType !<The type of symmetry to use in the solver matrices \see SOLVER_ROUTINES_SymmetryTypes,SOLVER_ROUTINES
 
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES !<A pointer to the solver matrices for the problem
 
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary condition information for the solver equations.
@@ -3558,7 +3558,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE INTERFACE_TO_SOLVER_MAPS_TYPE
     INTEGER(INTG) :: INTERFACE_MATRIX_NUMBER !<The interface matrix number being mapped.
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The solver matrix number being mapped.
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX !<A pointer to the interface matrix being mapped.
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix being mapped.
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix being mapped.
     TYPE(MatrixRowColCouplingType), ALLOCATABLE :: interfaceRowToSolverColsMap(:) !<interfaceRowToSolverColsMap(rowIdx). The mapping from the rowIdx'th row of this interface matrix to the solver matrix columns.
   END TYPE INTERFACE_TO_SOLVER_MAPS_TYPE
@@ -3618,7 +3618,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the mappings from an equations set to the solver matrices
   TYPE EQUATIONS_SET_TO_SOLVER_MAP_TYPE
     INTEGER(INTG) :: EQUATIONS_SET_INDEX !<The index of the equations set for these mappings
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mappings
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mappings
     TYPE(EquationsType), POINTER :: EQUATIONS !<A pointer to the equations in this equations set
     INTEGER(INTG) :: numberOfInterfaceConditions !<The number of interface conditions affecting this equations set.
     TYPE(EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE_TYPE), ALLOCATABLE :: EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE(:) !<EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE(interface_condition_idx). Information on the interface_condition_idx'th interface condition affecting this equations set
@@ -3631,14 +3631,14 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the interface to solver matrix mappings when indexing by solver matrix number
   TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The number of the solver matrix for these mappings
-    INTEGER(INTG) :: LAGRANGE_VARIABLE_TYPE !<LThe variable type for the Lagrange variable that is mapped to the solver matrix.
-    TYPE(FieldVariableType), POINTER :: LAGRANGE_VARIABLE !<A pointer to the Lagrange variable that is mapped to the solver matrix.
-    TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE) :: LAGRANGE_VARIABLE_TO_SOLVER_COL_MAP !<The mappings from the Lagrange variable dofs to the solver dofs.
+    INTEGER(INTG) :: lagrangeVariableType !<LThe variable type for the Lagrange variable that is mapped to the solver matrix.
+    TYPE(FieldVariableType), POINTER :: lagrangeVariable !<A pointer to the Lagrange variable that is mapped to the solver matrix.
+    TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE) :: lagrangeVariableToSolverColMap !<The mappings from the Lagrange variable dofs to the solver dofs.
     INTEGER(INTG) :: NUMBER_OF_DEPENDENT_VARIABLES !<The number of dependent variables mapped to this solver matrix
     INTEGER(INTG), ALLOCATABLE :: DEPENDENT_VARIABLE_TYPES(:) !<DEPENDENT_VARIABLE_TYPES(variable_idx). The variable type for the variable_idx'th dependent variable that is mapped to the solver matrix.
     TYPE(FieldVariablePtrType), ALLOCATABLE :: DEPENDENT_VARIABLES(:) !<DEPENDENT_VARIABLES(variable_idx). DEPENDENT_VARIABLES(variable_idx)%PTR points to the variable_idx'th dependent variable that is mapped to the solver matrix.
     TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE), ALLOCATABLE :: DEPENDENT_VARIABLE_TO_SOLVER_COL_MAPS(:) !<DEPENDENT_VARIABLE_TO_SOLVER_COL_MAPS(interface_matrix_idx). The mappings from the dependent variable dofs to the solver dofs for the interface_matrix_idx'th interface matrix dependent variable in the interface condition that is mapped to the solver matrix.
-    INTEGER(INTG) :: NUMBER_OF_INTERFACE_MATRICES !<The number of interface matrices mapped to this solver matrix
+    INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interface matrices mapped to this solver matrix
     TYPE(INTERFACE_TO_SOLVER_MAPS_PTR_TYPE), ALLOCATABLE :: INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(:) !<INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interface_matrix_idx). The maps from the interface)matrix_idx'th interface matrix to solver matrix
     TYPE(MatrixRowColCouplingType), ALLOCATABLE :: interfaceColToSolverColsMap(:) !<interfaceColToSolverColsMap(columnIdx). The mapping from the columnIdx'th column of this interface matrix to the solver matrix columns.
   END TYPE INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE
@@ -3660,8 +3660,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the mappings from an interface condition to the solver matrices
   TYPE INTERFACE_CONDITION_TO_SOLVER_MAP_TYPE
     INTEGER(INTG) :: INTERFACE_CONDITION_INDEX !<The index of the interface condition for these mappings
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mappings
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations in this interface condition
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mappings
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations in this interface condition
     INTEGER(INTG) :: NUMBER_OF_EQUATIONS_SETS !<The number of equations sets that the interface condition affects
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(equations_set_idx). The equations set information of the equations_set_idx'th equations set that the interface condition affects.
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx). The mappings from the interface matrices in this interface condition to the solver_matrix_idx'th solver_matrix
@@ -3710,7 +3710,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information about the mapping from a solver matrix column to interface equations matrices and variables
   TYPE SOLVER_COL_TO_INTERFACE_EQUATIONS_MAP_TYPE
-    INTEGER(INTG) :: NUMBER_OF_INTERFACE_MATRICES !<The number of interface matrices the solver column is mapped to in this interface condition
+    INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interface matrices the solver column is mapped to in this interface condition
     INTEGER(INTG), ALLOCATABLE :: INTERFACE_MATRIX_NUMBERS(:) !<INTERFACE_MATRIX_NUMBERS(i). The i'th interface matrix number in the interface equations that the solver column is mapped to
     INTEGER(INTG), ALLOCATABLE :: INTERFACE_COL_NUMBERS(:) !<INTERFACE_COL_NUMBERS(i). The i'th interface interface column number in the interface condition the solver column is mapped to.
     REAL(DP), ALLOCATABLE :: COUPLING_COEFFICIENTS(:) !<COUPLING_COEFFICIENTS(i). The i'th coupling coefficient for solver column mapping
@@ -3718,16 +3718,16 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information about the mappings from a solver matrix to the equations in an equations set
   TYPE SOLVER_COL_TO_INTERFACE_MAP_TYPE
-    TYPE(EquationsType), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations in the interface conditionthat these columns map to.
+    TYPE(EquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations in the interface conditionthat these columns map to.
     TYPE(SOLVER_COL_TO_INTERFACE_EQUATIONS_MAP_TYPE), ALLOCATABLE :: SOLVER_COL_TO_INTERFACE_EQUATIONS_MAPS(:) !<SOLVER_COL_TO_INTERFACE_EQUATIONS_MAPS(col_idx). The mappings from the col_idx'th column of the solver matrix to the interface equations in the interface condition.
   END TYPE SOLVER_COL_TO_INTERFACE_MAP_TYPE
   
   !>Contains information on the mappings from a solver matrix to equations sets
   TYPE SOLVER_COL_TO_EQUATIONS_MAPS_TYPE
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The number of this solver matrix
-    TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer to the solver mapping for this solver matrix mapping
+    TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping for this solver matrix mapping
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_MATRIX !<A pointer to the solver matrix being mappind
-    INTEGER(INTG) :: NUMBER_OF_COLUMNS !<The number of columns in this distributed solver matrix
+    INTEGER(INTG) :: numberOfColumns !<The number of columns in this distributed solver matrix
     TYPE(SOLVER_COL_TO_EQUATIONS_SET_MAP_TYPE), ALLOCATABLE :: SOLVER_COL_TO_EQUATIONS_SET_MAPS(:) !<SOLVER_TO_EQUATIONS_SET_MAP(equations_set_idx). The solver columns to equations matrix maps for the equations_set_idx'th equations set.
     TYPE(SOLVER_COL_TO_INTERFACE_MAP_TYPE), ALLOCATABLE :: SOLVER_COL_TO_INTERFACE_MAPS(:) !<SOLVER_COL_TO_INTERFACE_MAPS(interface_condition_idx). The solver columns to interface matrix maps for the interface_condition_idx'th interface condition.
     INTEGER(INTG) :: numberOfDofs !<The number of local dofs (excluding ghost values) in the solver vector associated with this solver matrix
@@ -3735,7 +3735,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: numberOfGlobalDofs !<The number of global dofs in the solver vector associated with this solver matrix.
 !!TODO: should this be index by solver dof rather than column???
     TYPE(SOLVER_DOF_TO_VARIABLE_MAP_TYPE), ALLOCATABLE :: SOLVER_DOF_TO_VARIABLE_MAPS(:) !<SOLVER_DOF_TO_EQUATIONS_MAPS(dof_idx). The mappings from the dof_idx'th solver dof to the field variables in the equations set.
-    TYPE(DomainMappingType), POINTER :: COLUMN_DOFS_MAPPING !<The domain mapping for solver matrix column dofs
+    TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<The domain mapping for solver matrix column dofs
   END TYPE SOLVER_COL_TO_EQUATIONS_MAPS_TYPE
 
   !>Contains information on the mappings from a solver row to the equations.
@@ -3754,7 +3754,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER, ALLOCATABLE :: DYNAMIC_VARIABLE_TYPE(:) !<DYNAMIC_VARIABLE_TYPE(equations_set_idx). The variable type that is mapped to the dynamic matrices for the equations_set_idx'th equations set.
     INTEGER(INTG), ALLOCATABLE :: MATRIX_VARIABLE_TYPES(:,:,:) !<MATRIX_VARIABLE_TYPES(0:..,equations_set_idx,matrix_idx). The list of matrix variable types in the equations_set_idx'th equations set for the matrix_idx'th solver matrix. MATRIX_VARIABLE_TYPES(0,equations_set_idx,matrix_idx) is the number of variable types in the equations_set_idx'th equations set mapped to the matrix_idx'th solver matrix and MATRIX_VARIABLE_TYPES(1..,equations_set_idx,matrix_idx) is the list of the variable types in the equations set.
     INTEGER(INTG), ALLOCATABLE :: RESIDUAL_VARIABLE_TYPES(:,:) !<RESIDUAL_VARIABLE_TYPES(0:..,equations_set_idx). The list of residual variable types in the equations_set_idx'th equations set. RESIDUAL_VARIABLE_TYPES(0,equations_set_idx) is the number of variable types in the equations_set_idx'th equations set and RESIDUAL_VARIABLE_TYPES(1..,equations_set_idx) is the list of the variable types in the equations set.
-    INTEGER(INTG), ALLOCATABLE :: RHS_VARIABLE_TYPE(:) !<RHS_VARIABLE_TYPE(equations_set_idx). The variable type that is mapped to the solution RHS for the equations_set_idx'th equations set
+    INTEGER(INTG), ALLOCATABLE :: rhsVariableType(:) !<rhsVariableType(equations_set_idx). The variable type that is mapped to the solution RHS for the equations_set_idx'th equations set
     INTEGER, ALLOCATABLE :: SOURCE_VARIABLE_TYPE(:) !<SOURCE_VARIABLE_TYPE(equations_set_idx). The source variable type that is mapped to the RHS for the equations_set_idx'th equations set.
     TYPE(ListPtrType), POINTER :: INTERFACE_VARIABLE_LIST(:) !<INTERFACE_VARIABLES_LIST(solver_matrix_idx). The list of interface condition variables in the solver mapping for the solver_matrix idx'th solver matrix.
     TYPE(ListPtrType), POINTER :: INTERFACE_INDICES(:) !<INTERFACE_INDICES(equations_set_idx). The list of interface condition indices in the equations_set_idx'th equations set.
@@ -3784,10 +3784,10 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the solver mapping between the global equation sets and the solver matrices.
   TYPE SOLVER_MAPPING_TYPE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer to the solver equations for this mapping.
-    LOGICAL :: SOLVER_MAPPING_FINISHED !<Is .TRUE. if the solution mapping has finished being created, .FALSE. if not.
+    LOGICAL :: solverMappingFinished !<Is .TRUE. if the solution mapping has finished being created, .FALSE. if not.
     INTEGER(INTG) :: NUMBER_OF_SOLVER_MATRICES !<The number of solution matrices in this mapping.
-    INTEGER(INTG) :: NUMBER_OF_ROWS !<The number of (local) rows in the solver matrices
-    INTEGER(INTG) :: NUMBER_OF_GLOBAL_ROWS !<The number of global rows in the solver matrices
+    INTEGER(INTG) :: numberOfRows !<The number of (local) rows in the solver matrices
+    INTEGER(INTG) :: numberOfGlobalRows !<The number of global rows in the solver matrices
     INTEGER(INTG) :: NUMBER_OF_EQUATIONS_SETS !<The number of equations sets in the solution mapping.
     TYPE(EQUATIONS_SET_PTR_TYPE), ALLOCATABLE :: EQUATIONS_SETS(:) !<The list of equations sets that are in this solution mapping
     TYPE(EQUATIONS_SET_TO_SOLVER_MAP_TYPE), ALLOCATABLE :: EQUATIONS_SET_TO_SOLVER_MAP(:) !<EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx). The mapping from the equations_set_idx'th equations set to the solver matrices.
@@ -3799,8 +3799,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_COL_TO_EQUATIONS_MAPS_TYPE), ALLOCATABLE :: SOLVER_COL_TO_EQUATIONS_COLS_MAP(:) !<SOLVER_TO_EQUATIONS_SET_MAP(solver_matrix_idx). The mapping from the solver_matrix_idx'th solver matrix to the equations set. 
     TYPE(SOLVER_ROW_TO_EQUATIONS_MAPS_TYPE), ALLOCATABLE :: SOLVER_ROW_TO_EQUATIONS_ROWS_MAP(:) !<SOLVER_ROW_TO_EQUATIONS_SET_MAPS(local_row_idx). The mappings from the local_row_idx'th solver row to the equations set rows.
     !LOGICAL :: HAVE_JACOBIAN !<Is .TRUE. if the Jacobian exists for nonlinear problems.
-    TYPE(DomainMappingType), POINTER :: ROW_DOFS_MAPPING !<The domain mapping for the solver rows.
-    TYPE(SOlVER_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: CREATE_VALUES_CACHE !<The create values cache for the solver mapping
+    TYPE(DomainMappingType), POINTER :: rowDOFsMapping !<The domain mapping for the solver rows.
+    TYPE(SOlVER_MAPPING_CREATE_VALUES_CACHE_TYPE), POINTER :: createValuesCache !<The create values cache for the solver mapping
   END TYPE SOLVER_MAPPING_TYPE
 
   PUBLIC EQUATIONS_TO_SOLVER_MAPS_TYPE,EQUATIONS_TO_SOLVER_MAPS_PTR_TYPE

@@ -64,6 +64,10 @@ MODULE InterfaceEquationsAccessRoutines
 
   !Interfaces  
 
+  PUBLIC InterfaceEquations_AssertIsFinished,InterfaceEquations_AssertNotFinished
+
+  PUBLIC InterfaceEquations_InterfaceConditionGet
+
   PUBLIC InterfaceEquations_InterfaceMappingGet
 
   PUBLIC InterfaceEquations_InterfaceMatricesGet
@@ -74,12 +78,97 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Assert that an interface equations has been finished
+  SUBROUTINE InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*)
+
+    !Argument Variables
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER, INTENT(IN) :: interfaceEquations !<The interface equations to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceEquations_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+
+    IF(.NOT.interfaceEquations%interfaceEquationsFinished) &
+      & CALL FlagError("Interface equations has not been finished.",err,error,*999)
+    
+    EXITS("InterfaceEquations_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceEquations_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceEquations_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an interface equations has not been finished
+  SUBROUTINE InterfaceEquations_AssertNotFinished(interfaceEquations,err,error,*)
+
+    !Argument Variables
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER, INTENT(IN) :: interfaceEquations !<The interface equations to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceEquations_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+
+    IF(interfaceEquations%interfaceEquationsFinished) &
+      & CALL FlagError("Interface equations has already been finished.",err,error,*999)
+    
+    EXITS("InterfaceEquations_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceEquations_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceEquations_AssertNotFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the interface condition for an interface equations.
+  SUBROUTINE InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*)
+
+    !Argument variables
+    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations to get the interface matrices for
+    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<On exit, a pointer to the interface condition for the specified interface equations. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceEquations_InterfaceConditionGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+
+    interfaceCondition=>interfaceEquations%INTERFACE_CONDITION
+    IF(.NOT.ASSOCIATED(interfaceCondition)) &
+      & CALL FlagError("Interface equations interface condition is not associated.",err,error,*999)
+       
+    EXITS("InterfaceEquations_InterfaceConditionGet")
+    RETURN
+999 NULLIFY(interfaceCondition)
+998 ERRORSEXITS("InterfaceEquations_InterfaceConditionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceEquations_InterfaceConditionGet
+  
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the interface mapping for an interface equations.
   SUBROUTINE InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*)
 
     !Argument variables
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations to get the interface matrices for
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping !<On exit, a pointer to the interface mapping for the specified interface equations. Must not be associated on entry.
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<On exit, a pointer to the interface mapping for the specified interface equations. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -89,7 +178,7 @@ CONTAINS
     IF(ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
 
-    interfaceMapping=>interfaceEquations%INTERFACE_MAPPING
+    interfaceMapping=>interfaceEquations%interfaceMapping
     IF(.NOT.ASSOCIATED(interfaceMapping)) &
       & CALL FlagError("Interface equations interface mapping is not associated.",err,error,*999)
        
@@ -110,7 +199,7 @@ CONTAINS
 
     !Argument variables
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations to get the interface matrices for
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices !<On exit, a pointer to the interface matrices for the specified interface equations. Must not be associated on entry.
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<On exit, a pointer to the interface matrices for the specified interface equations. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -120,7 +209,7 @@ CONTAINS
     IF(ASSOCIATED(interfaceMatrices)) CALL FlagError("Interface matrices is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
 
-    interfaceMatrices=>interfaceEquations%INTERFACE_MATRICES
+    interfaceMatrices=>interfaceEquations%interfaceMatrices
     IF(.NOT.ASSOCIATED(interfaceMatrices)) &
       & CALL FlagError("Interface equations interface matrices is not associated.",err,error,*999)
        

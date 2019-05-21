@@ -5056,7 +5056,7 @@ CONTAINS
       & rhsVariable
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(SOLVER_TYPE), POINTER :: linearSolver,nonlinearSolver,solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
@@ -5888,7 +5888,7 @@ CONTAINS
         ENDIF
         SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-          SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+          SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
           IF(ASSOCIATED(SOLVER_MAPPING)) THEN
             SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
             IF(ASSOCIATED(SOLVER_MATRICES)) THEN
@@ -7180,7 +7180,7 @@ CONTAINS
           IF(ASSOCIATED(SOLVER%LINKING_SOLVER)) THEN
             CALL FlagError("Can not add an equations set for a solver that has been linked.",err,error,*999)
           ELSE
-            SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+            SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
             IF(ASSOCIATED(SOLVER_MAPPING)) THEN
               IF(ASSOCIATED(EQUATIONS_SET)) THEN
                 EQUATIONS=>EQUATIONS_SET%EQUATIONS
@@ -7311,7 +7311,7 @@ CONTAINS
     ENTERS("SOLVER_EQUATIONS_FINALISE",err,error,*999)
 
     IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-      IF(ASSOCIATED(SOLVER_EQUATIONS%SOLVER_MAPPING)) CALL SOLVER_MAPPING_DESTROY(SOLVER_EQUATIONS%SOLVER_MAPPING,err,error,*999)
+      IF(ASSOCIATED(SOLVER_EQUATIONS%solverMapping)) CALL SOLVER_MAPPING_DESTROY(SOLVER_EQUATIONS%solverMapping,err,error,*999)
       IF(ASSOCIATED(SOLVER_EQUATIONS%SOLVER_MATRICES)) CALL SOLVER_MATRICES_DESTROY(SOLVER_EQUATIONS%SOLVER_MATRICES,err,error,*999)
       IF(ASSOCIATED(SOLVER_EQUATIONS%BOUNDARY_CONDITIONS)) CALL BOUNDARY_CONDITIONS_DESTROY( &
           & SOLVER_EQUATIONS%BOUNDARY_CONDITIONS,err,error,*999)
@@ -7351,7 +7351,7 @@ CONTAINS
         SOLVER%SOLVER_EQUATIONS%SOLVER_EQUATIONS_FINISHED=.FALSE.
         SOLVER%SOLVER_EQUATIONS%sparsityType=SOLVER_SPARSE_MATRICES
         SOLVER%SOLVER_EQUATIONS%symmetryType=SOLVER_UNSYMMETRIC_MATRICES
-        NULLIFY(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING)
+        NULLIFY(SOLVER%SOLVER_EQUATIONS%solverMapping)
         NULLIFY(SOLVER%SOLVER_EQUATIONS%SOLVER_MATRICES)
         NULLIFY(SOLVER%SOLVER_EQUATIONS%BOUNDARY_CONDITIONS)
       ENDIF
@@ -7396,10 +7396,10 @@ CONTAINS
           IF(ASSOCIATED(SOLVER%LINKING_SOLVER)) THEN
             CALL FlagError("Can not add an equations set for a solver that has been linked.",err,error,*999)
           ELSE
-            SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+            SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
             IF(ASSOCIATED(SOLVER_MAPPING)) THEN          
               IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-                INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+                INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
                 IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
                   CALL SOLVER_MAPPING_INTERFACE_CONDITION_ADD(SOLVER_MAPPING,INTERFACE_CONDITION,INTERFACE_CONDITION_INDEX, &
                     & err,error,*999)
@@ -7510,7 +7510,7 @@ CONTAINS
               CALL FlagError("Can not finish solver equations creation for a solver that has been linked.",err,error,*999)
             ELSE
               !Finish of the solver mapping
-              CALL SOLVER_MAPPING_CREATE_FINISH(SOLVER_EQUATIONS%SOLVER_MAPPING,err,error,*999)
+              CALL SOLVER_MAPPING_CREATE_FINISH(SOLVER_EQUATIONS%solverMapping,err,error,*999)
               !Now finish off with the solver specific actions
               SELECT CASE(SOLVER%SOLVE_TYPE)
               CASE(SOLVER_LINEAR_TYPE)
@@ -8014,8 +8014,8 @@ CONTAINS
       solverMatrices=>solverEquations%solver_matrices
       IF(ASSOCIATED(solverMatrices)) THEN
         IF(.NOT.ASSOCIATED(rhsVector)) THEN
-          IF(ASSOCIATED(solverMatrices%rhs_vector)) THEN
-            rhsVector=>solverMatrices%rhs_vector
+          IF(ASSOCIATED(solverMatrices%rhsVector)) THEN
+            rhsVector=>solverMatrices%rhsVector
           ELSE
             CALL FlagError("The solver matrices right hand side vector is not associated.",err,error,*999)
           END IF
@@ -9978,7 +9978,7 @@ CONTAINS
     REAL(DP) :: SOLVER_VALUE,VALUE
     REAL(DP), POINTER :: RHS_DATA(:)
     TYPE(DistributedVectorType), POINTER :: rhsVector,SOLVER_VECTOR
-    TYPE(DomainMappingType), POINTER :: ROW_DOFS_MAPPING
+    TYPE(DomainMappingType), POINTER :: rowDOFsMapping
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -10001,19 +10001,19 @@ CONTAINS
               IF(SOLVER_MATRICES%NUMBER_OF_MATRICES==1) THEN
                 SOLVER_MATRIX=>SOLVER_MATRICES%matrices(1)%ptr
                 IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-                  rhsVector=>SOLVER_MATRICES%RHS_VECTOR
+                  rhsVector=>SOLVER_MATRICES%rhsVector
                   IF(ASSOCIATED(rhsVector)) THEN
                     SOLVER_VECTOR=>SOLVER_MATRICES%matrices(1)%ptr%SOLVER_VECTOR
                     IF(ASSOCIATED(SOLVER_VECTOR)) THEN
                       CALL DistributedMatrix_StorageTypeGet(SOLVER_MATRIX%MATRIX,STORAGE_TYPE,err,error,*999)
                       IF(STORAGE_TYPE==DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
-                        SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                        SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                          ROW_DOFS_MAPPING=>SOLVER_MAPPING%ROW_DOFS_MAPPING
-                          IF(ASSOCIATED(ROW_DOFS_MAPPING)) THEN
+                          rowDOFsMapping=>SOLVER_MAPPING%rowDOFsMapping
+                          IF(ASSOCIATED(rowDOFsMapping)) THEN
                             CALL DistributedVector_DataGet(rhsVector,RHS_DATA,err,error,*999)
-                            DO local_row=1,SOLVER_MAPPING%NUMBER_OF_ROWS
-                              global_row=ROW_DOFS_MAPPING%localToGlobalMap(local_row)
+                            DO local_row=1,SOLVER_MAPPING%numberOfRows
+                              global_row=rowDOFsMapping%localToGlobalMap(local_row)
                               CALL DistributedMatrix_ValuesGet(SOLVER_MATRIX%MATRIX,local_row,global_row,VALUE,ERR,ERROR,*999)
                               IF(ABS(VALUE)>ZERO_TOLERANCE) THEN
                                 SOLVER_VALUE=RHS_DATA(local_row)/VALUE
@@ -10043,7 +10043,7 @@ CONTAINS
                               IF(ASSOCIATED(SOLVER_VECTOR%PETSC)) THEN
                                 IF(ASSOCIATED(SOLVER_MATRIX%MATRIX)) THEN
                                   IF(ASSOCIATED(SOLVER_MATRIX%MATRIX%PETSC)) THEN
-                                    IF(SOLVER_MATRIX%UPDATE_MATRIX) THEN
+                                    IF(SOLVER_MATRIX%updateMatrix) THEN
                                       CALL Petsc_KSPSetOperators(LINEAR_DIRECT_SOLVER%KSP,SOLVER_MATRIX%MATRIX%PETSC%MATRIX, &
                                         & SOLVER_MATRIX%MATRIX%PETSC%MATRIX,err,error,*999)
                                     ELSE
@@ -10070,7 +10070,7 @@ CONTAINS
                               IF(ASSOCIATED(SOLVER_VECTOR%PETSC)) THEN
                                 IF(ASSOCIATED(SOLVER_MATRIX%MATRIX)) THEN
                                   IF(ASSOCIATED(SOLVER_MATRIX%MATRIX%PETSC)) THEN
-                                    IF(SOLVER_MATRIX%UPDATE_MATRIX) THEN
+                                    IF(SOLVER_MATRIX%updateMatrix) THEN
                                       CALL Petsc_KSPSetOperators(LINEAR_DIRECT_SOLVER%KSP,SOLVER_MATRIX%MATRIX%PETSC%MATRIX, &
                                         & SOLVER_MATRIX%MATRIX%PETSC%MATRIX,err,error,*999)
                                     ELSE
@@ -10105,7 +10105,7 @@ CONTAINS
                               IF(ASSOCIATED(SOLVER_VECTOR%PETSC)) THEN
                                 IF(ASSOCIATED(SOLVER_MATRIX%MATRIX)) THEN
                                   IF(ASSOCIATED(SOLVER_MATRIX%MATRIX%PETSC)) THEN
-                                    IF(SOLVER_MATRIX%UPDATE_MATRIX) THEN
+                                    IF(SOLVER_MATRIX%updateMatrix) THEN
                                       CALL Petsc_KSPSetOperators(LINEAR_DIRECT_SOLVER%KSP,SOLVER_MATRIX%MATRIX%PETSC%MATRIX, &
                                         & SOLVER_MATRIX%MATRIX%PETSC%MATRIX,err,error,*999)
                                     ELSE
@@ -10132,7 +10132,7 @@ CONTAINS
                               IF(ASSOCIATED(SOLVER_VECTOR%PETSC)) THEN
                                 IF(ASSOCIATED(SOLVER_MATRIX%MATRIX)) THEN
                                   IF(ASSOCIATED(SOLVER_MATRIX%MATRIX%PETSC)) THEN
-                                    IF(SOLVER_MATRIX%UPDATE_MATRIX) THEN
+                                    IF(SOLVER_MATRIX%updateMatrix) THEN
                                       CALL Petsc_KSPSetOperators(LINEAR_DIRECT_SOLVER%KSP,SOLVER_MATRIX%MATRIX%PETSC%MATRIX, &
                                         & SOLVER_MATRIX%MATRIX%PETSC%MATRIX,err,error,*999)
                                     ELSE
@@ -11342,7 +11342,7 @@ CONTAINS
     REAL(DP) :: RESIDUAL_NORM,SOLVER_VALUE,VALUE
     REAL(DP), POINTER :: RHS_DATA(:)
     TYPE(DistributedVectorType), POINTER :: rhsVector,SOLVER_VECTOR
-    TYPE(DomainMappingType), POINTER :: ROW_DOFS_MAPPING
+    TYPE(DomainMappingType), POINTER :: rowDOFsMapping
     TYPE(LINEAR_SOLVER_TYPE), POINTER :: LINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -11365,19 +11365,19 @@ CONTAINS
               IF(SOLVER_MATRICES%NUMBER_OF_MATRICES==1) THEN
                 SOLVER_MATRIX=>SOLVER_MATRICES%matrices(1)%ptr
                 IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-                  rhsVector=>SOLVER_MATRICES%RHS_VECTOR
+                  rhsVector=>SOLVER_MATRICES%rhsVector
                   IF(ASSOCIATED(rhsVector)) THEN
                     SOLVER_VECTOR=>SOLVER_MATRICES%matrices(1)%ptr%SOLVER_VECTOR
                     IF(ASSOCIATED(SOLVER_VECTOR)) THEN
                       CALL DistributedMatrix_StorageTypeGet(SOLVER_MATRIX%MATRIX,STORAGE_TYPE,err,error,*999)
                       IF(STORAGE_TYPE==DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE) THEN
-                        SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                        SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
-                          ROW_DOFS_MAPPING=>SOLVER_MAPPING%ROW_DOFS_MAPPING
-                          IF(ASSOCIATED(ROW_DOFS_MAPPING)) THEN
+                          rowDOFsMapping=>SOLVER_MAPPING%rowDOFsMapping
+                          IF(ASSOCIATED(rowDOFsMapping)) THEN
                             CALL DistributedVector_DataGet(rhsVector,RHS_DATA,err,error,*999)
-                            DO local_row=1,SOLVER_MAPPING%NUMBER_OF_ROWS
-                              global_row=ROW_DOFS_MAPPING%localToGlobalMap(local_row)
+                            DO local_row=1,SOLVER_MAPPING%numberOfRows
+                              global_row=rowDOFsMapping%localToGlobalMap(local_row)
                               CALL DistributedMatrix_ValuesGet(SOLVER_MATRIX%MATRIX,local_row,global_row,VALUE,ERR,ERROR,*999)
                               IF(ABS(VALUE)>ZERO_TOLERANCE) THEN
                                 SOLVER_VALUE=RHS_DATA(local_row)/VALUE
@@ -11973,11 +11973,11 @@ CONTAINS
     TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: interfaceDependent
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
     TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: interfaceLagrange
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping
-    TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: interfaceRHSMapping
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: interfaceRHSVector
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
+    TYPE(InterfaceMappingRHSType), POINTER :: interfaceRHSMapping
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
+    TYPE(InterfaceRHSType), POINTER :: interfaceRHSVector
     TYPE(INTERFACE_TO_SOLVER_MAPS_TYPE), POINTER :: interfaceToSolverMap
     TYPE(JACOBIAN_TO_SOLVER_MAP_TYPE), POINTER :: jacobianToSolverMap
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -12076,7 +12076,7 @@ CONTAINS
 
         NULLIFY(solverMatrix)
         CALL SolverMatrices_SolverMatrixGet(solverMatrices,solverMatrixIdx,solverMatrix,err,error,*999)
-        IF(solverMatrix%UPDATE_MATRIX) THEN      
+        IF(solverMatrix%updateMatrix) THEN      
           solverDistributedMatrix=>solverMatrix%MATRIX
           IF(.NOT.ASSOCIATED(solverDistributedMatrix)) &
             & CALL FlagError("Solver matrix distributed matrix is not associated.",err,error,*999)
@@ -12179,14 +12179,14 @@ CONTAINS
           DO interfaceConditionIdx=1,solverMapping%numberOfInterfaceConditions
             !Loop over the interface matrices
             DO interfaceMatrixIdx=1,solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
-              & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solverMatrixIdx)%NUMBER_OF_INTERFACE_MATRICES
+              & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solverMatrixIdx)%numberOfInterfaceMatrices
               interfaceToSolverMap=>solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
                 & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solverMatrixIdx)% &
                 & INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interfaceMatrixIdx)%ptr
               IF(ASSOCIATED(interfaceToSolverMap)) THEN
-                interfaceMatrix=>interfaceToSolverMap%INTERFACE_MATRIX
+                interfaceMatrix=>interfaceToSolverMap%interfaceMatrix
                 IF(ASSOCIATED(interfaceMatrix)) THEN
-                  SELECT CASE(interfaceMatrix%INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE)
+                  SELECT CASE(interfaceMatrix%interfaceMatrixTimeDependenceType)
                   CASE(INTERFACE_MATRIX_STATIC)
                     matrixCoefficients(1)=stiffnessMatrixCoefficient
                   CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
@@ -12196,8 +12196,8 @@ CONTAINS
                   CASE DEFAULT
                     CALL FlagError("Not implemented.",Err,Error,*999)
                   END SELECT
-                  IF(interfaceMatrix%HAS_TRANSPOSE) THEN
-                    SELECT CASE(interfaceMatrix%INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE)
+                  IF(interfaceMatrix%hasTranspose) THEN
+                    SELECT CASE(interfaceMatrix%interfaceMatrixTransposeTimeDependenceType)
                     CASE(INTERFACE_MATRIX_STATIC)
                       matrixCoefficients(2)=stiffnessMatrixCoefficient
                     CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
@@ -12226,9 +12226,9 @@ CONTAINS
             & CALL DistributedMatrix_UpdateFinish(previousSolverDistributedMatrix,err,error,*999)
           previousSolverDistributedMatrix=>solverDistributedMatrix
           IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-            IF(dynamicSolver%SOLVER_INITIALISED) solverMatrix%UPDATE_MATRIX=.FALSE.
+            IF(dynamicSolver%SOLVER_INITIALISED) solverMatrix%updateMatrix=.FALSE.
           ELSE IF(solver%SOLVE_TYPE==SOLVER_NONLINEAR_TYPE) THEN 
-            IF(dynamicSolver%SOLVER_INITIALISED) solverMatrix%UPDATE_MATRIX=.TRUE.
+            IF(dynamicSolver%SOLVER_INITIALISED) solverMatrix%updateMatrix=.TRUE.
           ELSE
             CALL FlagError("Dynamic solver solve type is not associated.",err,error,*999)
           END IF
@@ -12341,14 +12341,14 @@ CONTAINS
               CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
               interfaceMatrixLoop: DO interfaceMatrixIdx=1,solverMapping% &
                 & INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)% &
-                & NUMBER_OF_INTERFACE_MATRICES
+                & numberOfInterfaceMatrices
                 interfaceToSolverMap=>solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
                   & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)% &
                   & INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interfaceMatrixIdx)%ptr
                 IF(ASSOCIATED(interfaceToSolverMap)) THEN
-                  interfaceMatrix=>interfaceToSolverMap%INTERFACE_MATRIX
-                  IF(interfaceMatrix%HAS_TRANSPOSE) THEN
-                    dependentVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)%VARIABLE
+                  interfaceMatrix=>interfaceToSolverMap%interfaceMatrix
+                  IF(interfaceMatrix%hasTranspose) THEN
+                    dependentVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)%VARIABLE
                     IF(.NOT.ASSOCIATED(dependentVariable)) THEN
                       localError="The interface dependent variable is not associated for interface matrix number "// &
                         & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))
@@ -12639,21 +12639,21 @@ CONTAINS
                         NULLIFY(interfaceMatrices)
                         CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
                         DO interfaceMatrixIdx=1,solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
-                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)%NUMBER_OF_INTERFACE_MATRICES
+                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)%numberOfInterfaceMatrices
                           interfaceToSolverMap=>solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
                             & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(1)% &
                             & INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interfaceMatrixIdx)%ptr
                           IF(ASSOCIATED(interfaceToSolverMap)) THEN
-                            interfaceMatrix=>interfaceToSolverMap%INTERFACE_MATRIX
-                            IF(interfaceMatrix%HAS_TRANSPOSE) THEN
-                              dependentVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)%variable
+                            interfaceMatrix=>interfaceToSolverMap%interfaceMatrix
+                            IF(interfaceMatrix%hasTranspose) THEN
+                              dependentVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)%variable
                               IF(.NOT.ASSOCIATED(dependentVariable)) THEN
                                 localError="The interface dependent variable is not associated for interface matrix number "// &
                                   & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))
                                 CALL FlagError(localError,err,error,*999)
                               ENDIF
                               IF(ASSOCIATED(dependentVariable,dynamicVariable)) THEN
-                                SELECT CASE(interfaceMatrix%INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE)
+                                SELECT CASE(interfaceMatrix%interfaceMatrixTransposeTimeDependenceType)
                                 CASE(INTERFACE_MATRIX_STATIC)
                                   dofValue=stiffnessMatrixCoefficient*alphaValue
                                 CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
@@ -12663,8 +12663,8 @@ CONTAINS
                                 CASE DEFAULT
                                   CALL FlagError("Not implemented.",err,error,*999)
                                 END SELECT
-                                interfaceColumnNumber=interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)% &
-                                  & VARIABLE_DOF_TO_ROW_MAP(variableDof)
+                                interfaceColumnNumber=interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)% &
+                                  & variableDOFToRowMap(variableDof)
                                 CALL DistributedMatrix_MatrixColumnAdd(interfaceMatrix%matrix,.TRUE.,interfaceColumnNumber, &
                                   & solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
                                   & interfaceColToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector, &
@@ -12787,13 +12787,13 @@ CONTAINS
             IF(ASSOCIATED(interfaceLagrange)) THEN
               lagrangeField=>interfaceLagrange%LAGRANGE_FIELD
               IF(ASSOCIATED(lagrangeField)) THEN
-                interfaceRHSMapping=>interfaceMapping%RHS_MAPPING
+                interfaceRHSMapping=>interfaceMapping%rhsMapping
                 IF(ASSOCIATED(interfaceRHSMapping)) THEN
-                  interfaceRHSVector=>interfaceMatrices%RHS_VECTOR
+                  interfaceRHSVector=>interfaceMatrices%rhsVector
                   IF(ASSOCIATED(interfaceRHSVector)) THEN
                     !Worry about BCs on the Lagrange variables later.
                     CALL DistributedVector_VectorCoupleAdd(solverRHSVector,solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP( &
-                      & interfaceConditionIdx)%interfaceColToSolverRowsMap,1.0_DP,interfaceRHSVector%RHS_VECTOR,err,error,*999)
+                      & interfaceConditionIdx)%interfaceColToSolverRowsMap,1.0_DP,interfaceRHSVector%rhsVector,err,error,*999)
                   ELSE
                     CALL FlagError("Interface matrices RHS vector is not associated.",err,error,*999)
                   ENDIF
@@ -13018,19 +13018,19 @@ CONTAINS
             IF(ASSOCIATED(lagrangeField)) THEN
               SELECT CASE(interfaceCondition%method)
               CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
-                numberOfInterfaceMatrices=interfaceMapping%NUMBER_OF_INTERFACE_MATRICES
+                numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices
               CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-                numberOfInterfaceMatrices=interfaceMapping%NUMBER_OF_INTERFACE_MATRICES-1
+                numberOfInterfaceMatrices=interfaceMapping%numberOfInterfaceMatrices-1
               END SELECT
               !Calculate the contributions from any interface matrices
               DO interfaceMatrixIdx=1,numberOfInterfaceMatrices
                 !Calculate the interface matrix-Lagrange vector product residual contribution
                 interfaceMatrix=>interfaceMatrices%matrices(interfaceMatrixIdx)%ptr
                 IF(ASSOCIATED(interfaceMatrix)) THEN
-                  interfaceVariableType=interfaceMapping%LAGRANGE_VARIABLE_TYPE
-                  interfaceVariable=>interfaceMapping%LAGRANGE_VARIABLE
+                  interfaceVariableType=interfaceMapping%lagrangeVariableType
+                  interfaceVariable=>interfaceMapping%lagrangeVariable
                   IF(ASSOCIATED(interfaceVariable)) THEN
-                    interfaceTempVector=>interfaceMatrix%TEMP_VECTOR
+                    interfaceTempVector=>interfaceMatrix%tempVector
                     !Initialise the linear temporary vector to zero
                     CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
                     NULLIFY(lagrangeVector)
@@ -13038,7 +13038,7 @@ CONTAINS
                     !  & FIELD_VALUES_SET_TYPE,lagrangeVector,err,error,*999)                      
                     CALL Field_ParameterSetVectorGet(lagrangeField,interfaceVariableType, &
                       & FIELD_INCREMENTAL_VALUES_SET_TYPE,lagrangeVector,err,error,*999)                      
-                    SELECT CASE(interfaceMatrix%INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE)
+                    SELECT CASE(interfaceMatrix%interfaceMatrixTimeDependenceType)
                     CASE(INTERFACE_MATRIX_STATIC)
                       matrixCoefficients(1)=stiffnessMatrixCoefficient
                     CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
@@ -13048,8 +13048,8 @@ CONTAINS
                     CASE DEFAULT
                       CALL FlagError("Not implemented.",Err,Error,*999)
                     END SELECT
-                    IF(interfaceMatrix%HAS_TRANSPOSE) THEN
-                      SELECT CASE(interfaceMatrix%INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE)
+                    IF(interfaceMatrix%hasTranspose) THEN
+                      SELECT CASE(interfaceMatrix%interfaceMatrixTransposeTimeDependenceType)
                       CASE(INTERFACE_MATRIX_STATIC)
                         matrixCoefficients(2)=stiffnessMatrixCoefficient
                       CASE(INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC)
@@ -13076,10 +13076,10 @@ CONTAINS
                     CALL FlagError("Interface variable is not associated.",err,error,*999)
                   ENDIF
                   !Calculate the transposed interface matrix-dependent variable product residual contribution
-                  dependentVariableType=interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)%variableType
-                  dependentVariable=>interfaceMapping%INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interfaceMatrixIdx)%VARIABLE
+                  dependentVariableType=interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)%variableType
+                  dependentVariable=>interfaceMapping%interfaceMatrixRowsToVarMaps(interfaceMatrixIdx)%VARIABLE
                   IF(ASSOCIATED(dependentVariable)) THEN
-                    interfaceTempVector=>interfaceMatrix%TEMP_TRANSPOSE_VECTOR
+                    interfaceTempVector=>interfaceMatrix%tempTransposeVector
                     !Initialise the linear temporary vector to zero
                     CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
                     NULLIFY(dependentVector)
@@ -13095,7 +13095,7 @@ CONTAINS
                     !    & FIELD_VALUES_SET_TYPE,dependentVector,err,error,*999)
                     !ENDIF
                     CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE, &
-                      & matrixCoefficients(2),interfaceMatrix%MATRIX_TRANSPOSE,.FALSE.,dependentVector, &
+                      & matrixCoefficients(2),interfaceMatrix%matrixTranspose,.FALSE.,dependentVector, &
                       & interfaceTempVector,err,error,*999)
 
                     !Add interface matrix residual contribution to the solver residual.
@@ -13113,14 +13113,14 @@ CONTAINS
               ENDDO !interfaceMatrixIdx
               SELECT CASE(interfaceCondition%METHOD)
               CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-                interfaceMatrixIdx=interfaceMapping%NUMBER_OF_INTERFACE_MATRICES
+                interfaceMatrixIdx=interfaceMapping%numberOfInterfaceMatrices
                 !Calculate the Lagrange-Lagrange vector product residual contribution from the penalty term
                 interfaceMatrix=>interfaceMatrices%matrices(interfaceMatrixIdx)%ptr
                 IF(ASSOCIATED(interfaceMatrix)) THEN
-                  interfaceVariableType=interfaceMapping%LAGRANGE_VARIABLE_TYPE
-                  interfaceVariable=>interfaceMapping%LAGRANGE_VARIABLE
+                  interfaceVariableType=interfaceMapping%lagrangeVariableType
+                  interfaceVariable=>interfaceMapping%lagrangeVariable
                   IF(ASSOCIATED(interfaceVariable)) THEN
-                    interfaceTempVector=>interfaceMatrix%TEMP_VECTOR
+                    interfaceTempVector=>interfaceMatrix%tempVector
                     !Initialise the linear temporary vector to zero
                     CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
                     NULLIFY(lagrangeVector)
@@ -13273,11 +13273,11 @@ CONTAINS
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
     TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: INTERFACE_LAGRANGE
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MAPPING_RHS_TYPE), POINTER :: INTERFACE_RHS_MAPPING
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
-    TYPE(INTERFACE_RHS_TYPE), POINTER :: INTERFACE_RHS_VECTOR
+    TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
+    TYPE(InterfaceMappingRHSType), POINTER :: INTERFACE_RHS_MAPPING
+    TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
+    TYPE(InterfaceMatrixType), POINTER :: INTERFACE_MATRIX
+    TYPE(InterfaceRHSType), POINTER :: INTERFACE_RHS_VECTOR
     TYPE(INTERFACE_TO_SOLVER_MAPS_TYPE), POINTER :: INTERFACE_TO_SOLVER_MAP
     TYPE(JACOBIAN_TO_SOLVER_MAP_TYPE), POINTER :: JACOBIAN_TO_SOLVER_MAP
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -13292,7 +13292,7 @@ CONTAINS
     IF(ASSOCIATED(SOLVER)) THEN
       SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
       IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-        SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+        SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
         IF(ASSOCIATED(SOLVER_MAPPING)) THEN
           SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
           IF(ASSOCIATED(SOLVER_MATRICES)) THEN
@@ -13311,7 +13311,7 @@ CONTAINS
               DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
                 SOLVER_MATRIX=>SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr
                 IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-                  IF(SOLVER_MATRIX%UPDATE_MATRIX) THEN
+                  IF(SOLVER_MATRIX%updateMatrix) THEN
                     SOLVER_DISTRIBUTED_MATRIX=>SOLVER_MATRIX%MATRIX
                     IF(ASSOCIATED(SOLVER_DISTRIBUTED_MATRIX)) THEN
                       !Initialise matrix to zero
@@ -13365,12 +13365,12 @@ CONTAINS
                       DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
                         !Loop over the interface matrices
                         DO interface_matrix_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_INTERFACE_MATRICES
+                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfInterfaceMatrices
                           INTERFACE_TO_SOLVER_MAP=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                             & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS( &
                             & interface_matrix_idx)%ptr
                           IF(ASSOCIATED(INTERFACE_TO_SOLVER_MAP)) THEN
-                            INTERFACE_MATRIX=>INTERFACE_TO_SOLVER_MAP%INTERFACE_MATRIX
+                            INTERFACE_MATRIX=>INTERFACE_TO_SOLVER_MAP%interfaceMatrix
                             IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
                               CALL SolverMatrix_InterfaceMatrixAdd(SOLVER_MATRIX,interface_condition_idx,[1.0_DP,1.0_DP], &
                                 & INTERFACE_MATRIX,err,error,*999)
@@ -13550,27 +13550,27 @@ CONTAINS
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                       LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
-                        INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+                        INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
                         IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-                          INTERFACE_MATRICES=>INTERFACE_EQUATIONS%INTERFACE_MATRICES
+                          INTERFACE_MATRICES=>INTERFACE_EQUATIONS%interfaceMatrices
                           IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-                            INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
+                            INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
                             IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
                               SELECT CASE(INTERFACE_CONDITION%METHOD)
                               CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
-                                numberOfInterfaceMatrices=INTERFACE_MAPPING%NUMBER_OF_INTERFACE_MATRICES
+                                numberOfInterfaceMatrices=INTERFACE_MAPPING%numberOfInterfaceMatrices
                               CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-                                numberOfInterfaceMatrices=INTERFACE_MAPPING%NUMBER_OF_INTERFACE_MATRICES-1
+                                numberOfInterfaceMatrices=INTERFACE_MAPPING%numberOfInterfaceMatrices-1
                               ENDSELECT
                               !Calculate the contributions from any interface matrices
                               DO interface_matrix_idx=1,numberOfInterfaceMatrices
                                 !Calculate the interface matrix-Lagrange vector product residual contribution
                                 INTERFACE_MATRIX=>INTERFACE_MATRICES%matrices(interface_matrix_idx)%ptr
                                 IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-                                  INTERFACE_VARIABLE_TYPE=INTERFACE_MAPPING%LAGRANGE_VARIABLE_TYPE
-                                  INTERFACE_VARIABLE=>INTERFACE_MAPPING%LAGRANGE_VARIABLE
+                                  INTERFACE_VARIABLE_TYPE=INTERFACE_MAPPING%lagrangeVariableType
+                                  INTERFACE_VARIABLE=>INTERFACE_MAPPING%lagrangeVariable
                                   IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
-                                    interfaceTempVector=>INTERFACE_MATRIX%TEMP_VECTOR
+                                    interfaceTempVector=>INTERFACE_MATRIX%tempVector
                                     !Initialise the linear temporary vector to zero
                                     CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
                                     NULLIFY(lagrangeVector)
@@ -13588,11 +13588,11 @@ CONTAINS
                                   ENDIF
                                   !Calculate the transposed interface matrix-dependent variable product residual contribution
                                   dependent_variable_type=INTERFACE_MAPPING% &
-                                    & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%variableType
+                                    & interfaceMatrixRowsToVarMaps(interface_matrix_idx)%variableType
                                   DEPENDENT_VARIABLE=>INTERFACE_MAPPING% &
-                                    & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
+                                    & interfaceMatrixRowsToVarMaps(interface_matrix_idx)%VARIABLE
                                   IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                                    interfaceTempVector=>INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR
+                                    interfaceTempVector=>INTERFACE_MATRIX%tempTransposeVector
                                     !Initialise the linear temporary vector to zero
                                     CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
                                     NULLIFY(DEPENDENT_VECTOR)
@@ -13600,7 +13600,7 @@ CONTAINS
                                     CALL Field_ParameterSetVectorGet(DEPENDENT_FIELD,dependent_variable_type, &
                                       & FIELD_VALUES_SET_TYPE,DEPENDENT_VECTOR,err,error,*999)
                                     CALL DistributedMatrix_MatrixByVectorAdd(DISTRIBUTED_MATRIX_VECTOR_NO_GHOSTS_TYPE,1.0_DP, &
-                                      & INTERFACE_MATRIX%MATRIX_TRANSPOSE,.FALSE.,DEPENDENT_VECTOR,interfaceTempVector, &
+                                      & INTERFACE_MATRIX%matrixTranspose,.FALSE.,DEPENDENT_VECTOR,interfaceTempVector, &
                                       & err,error,*999)
                                     !Add interface matrix residual contribution to the solver residual.
                                     CALL DistributedVector_VectorCoupleAdd(solverResidualVector,SOLVER_MAPPING% &
@@ -13617,14 +13617,14 @@ CONTAINS
                               ENDDO !interface_matrix_idx
                               SELECT CASE(INTERFACE_CONDITION%METHOD)
                               CASE(INTERFACE_CONDITION_PENALTY_METHOD)
-                                interface_matrix_idx=INTERFACE_MAPPING%NUMBER_OF_INTERFACE_MATRICES
+                                interface_matrix_idx=INTERFACE_MAPPING%numberOfInterfaceMatrices
                                 !Calculate the Lagrange-Lagrange vector product residual contribution from the penalty term
                                 INTERFACE_MATRIX=>INTERFACE_MATRICES%matrices(interface_matrix_idx)%ptr
                                 IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-                                  INTERFACE_VARIABLE_TYPE=INTERFACE_MAPPING%LAGRANGE_VARIABLE_TYPE
-                                  INTERFACE_VARIABLE=>INTERFACE_MAPPING%LAGRANGE_VARIABLE
+                                  INTERFACE_VARIABLE_TYPE=INTERFACE_MAPPING%lagrangeVariableType
+                                  INTERFACE_VARIABLE=>INTERFACE_MAPPING%lagrangeVariable
                                   IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
-                                    interfaceTempVector=>INTERFACE_MATRIX%TEMP_VECTOR
+                                    interfaceTempVector=>INTERFACE_MATRIX%tempVector
                                     !Initialise the linear temporary vector to zero
                                     CALL DistributedVector_AllValuesSet(interfaceTempVector,0.0_DP,err,error,*999)
                                     NULLIFY(lagrangeVector)
@@ -13693,7 +13693,7 @@ CONTAINS
                 CALL CPUTimer(SYSTEM_CPU,SYSTEM_TIME1,err,error,*999)
               ENDIF
               IF(SOLVER_MATRICES%UPDATE_RHS_VECTOR) THEN
-                solverRHSVector=>SOLVER_MATRICES%RHS_VECTOR
+                solverRHSVector=>SOLVER_MATRICES%rhsVector
                 IF(ASSOCIATED(solverRHSVector)) THEN
                   !Initialise the RHS to zero
                   CALL DistributedVector_AllValuesSet(solverRHSVector,0.0_DP,err,error,*999)
@@ -13941,24 +13941,24 @@ CONTAINS
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                       SELECT CASE(INTERFACE_CONDITION%METHOD)
                       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
-                        INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+                        INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
                         IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-                          INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
+                          INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
                           IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
                             INTERFACE_LAGRANGE=>INTERFACE_CONDITION%LAGRANGE
                             IF(ASSOCIATED(INTERFACE_LAGRANGE)) THEN
                               LAGRANGE_FIELD=>INTERFACE_LAGRANGE%LAGRANGE_FIELD
                               IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
-                                INTERFACE_RHS_MAPPING=>INTERFACE_MAPPING%RHS_MAPPING
+                                INTERFACE_RHS_MAPPING=>INTERFACE_MAPPING%rhsMapping
                                 IF(ASSOCIATED(INTERFACE_RHS_MAPPING)) THEN
-                                  INTERFACE_MATRICES=>INTERFACE_EQUATIONS%INTERFACE_MATRICES
+                                  INTERFACE_MATRICES=>INTERFACE_EQUATIONS%interfaceMatrices
                                   IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-                                    INTERFACE_RHS_VECTOR=>INTERFACE_MATRICES%RHS_VECTOR
+                                    INTERFACE_RHS_VECTOR=>INTERFACE_MATRICES%rhsVector
                                     IF(ASSOCIATED(INTERFACE_RHS_VECTOR)) THEN
                                       !Worry about BCs on the Lagrange variables later.
                                       CALL DistributedVector_VectorCoupleAdd(solverRHSVector,SOLVER_MAPPING% &
                                         & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                                        & interfaceColToSolverRowsMap,1.0_DP,INTERFACE_RHS_VECTOR%RHS_VECTOR, &
+                                        & interfaceColToSolverRowsMap,1.0_DP,INTERFACE_RHS_VECTOR%rhsVector, &
                                         & err,error,*999)
                                     ELSE
                                       CALL FlagError("Interface matrices RHS vector is not associated.",err,error,*999)
@@ -14723,7 +14723,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,lagrangeVariable
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
     TYPE(QUASI_NEWTON_SOLVER_TYPE), POINTER :: QUASI_NEWTON_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: LINEAR_SOLVER,SOLVER
@@ -14733,9 +14733,9 @@ CONTAINS
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_JACOBIAN
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
+    TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
+    TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
+    TYPE(InterfaceMatrixType), POINTER :: INTERFACE_MATRIX
     TYPE(WorkGroupType), POINTER :: workGroup
     TYPE(VARYING_STRING) :: localError
   
@@ -14757,7 +14757,7 @@ CONTAINS
               CASE(SOLVER_CMISS_LIBRARY)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(SOLVER_PETSC_LIBRARY)
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Loop over the equations set in the solver equations
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -14829,34 +14829,34 @@ CONTAINS
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                       LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
-                        INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+                        INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
                         IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-                          INTERFACE_MATRICES=>INTERFACE_EQUATIONS%INTERFACE_MATRICES
+                          INTERFACE_MATRICES=>INTERFACE_EQUATIONS%interfaceMatrices
                           IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-                            INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
+                            INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
                             IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-                              LAGRANGE_VARIABLE=>INTERFACE_MAPPING%LAGRANGE_VARIABLE
-                              IF(ASSOCIATED(LAGRANGE_VARIABLE)) THEN
+                              lagrangeVariable=>INTERFACE_MAPPING%lagrangeVariable
+                              IF(ASSOCIATED(lagrangeVariable)) THEN
                                 !Create temporary vector for matrix-vector products
-                                DO interface_matrix_idx=1,INTERFACE_MAPPING%NUMBER_OF_INTERFACE_MATRICES
+                                DO interface_matrix_idx=1,INTERFACE_MAPPING%numberOfInterfaceMatrices
                                   INTERFACE_MATRIX=>INTERFACE_MATRICES%matrices(interface_matrix_idx)%ptr
                                   IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-                                    IF(.NOT.ASSOCIATED(INTERFACE_MATRIX%TEMP_VECTOR)) THEN
+                                    IF(.NOT.ASSOCIATED(INTERFACE_MATRIX%tempVector)) THEN
                                       INTERFACE_VARIABLE=>INTERFACE_MAPPING% &
-                                        & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
+                                        & interfaceMatrixRowsToVarMaps(interface_matrix_idx)%VARIABLE
                                       IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                         !Set up the temporary interface distributed vector to be used with interface matrices
                                         CALL DistributedVector_CreateStart(INTERFACE_VARIABLE%domainMapping, &
-                                          & INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
-                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_VECTOR, &
+                                          & INTERFACE_MATRIX%tempVector,ERR,ERROR,*999)
+                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%tempVector, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
-                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_VECTOR,err,error,*999)
+                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%tempVector,err,error,*999)
                                         !Set up the temporary interface distributed vector to be used with transposed interface matrices
-                                        CALL DistributedVector_CreateStart(LAGRANGE_VARIABLE%domainMapping, &
-                                          & INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR,ERR,ERROR,*999)
-                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
+                                        CALL DistributedVector_CreateStart(lagrangeVariable%domainMapping, &
+                                          & INTERFACE_MATRIX%tempTransposeVector,ERR,ERROR,*999)
+                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%tempTransposeVector, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
-                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
+                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%tempTransposeVector, &
                                           & err,error,*999)
                                       ELSE
                                         CALL FlagError("Interface mapping variable is not associated.",err,error,*999)
@@ -15020,13 +15020,13 @@ CONTAINS
                               CALL FlagError("Cannot have no Jacobian calculation for a PETSc nonlinear linesearch solver.", &
                                 & err,error,*999)
                             CASE(SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED)
-                              SOLVER_JACOBIAN%UPDATE_MATRIX=.TRUE. !CMISS will fill in the Jacobian values
+                              SOLVER_JACOBIAN%updateMatrix=.TRUE. !CMISS will fill in the Jacobian values
                               !Pass the linesearch solver object rather than the temporary solver
                               CALL Petsc_SnesSetJacobian(LINESEARCH_SOLVER%snes,JACOBIAN_MATRIX%PETSC%MATRIX, &
                                 & JACOBIAN_MATRIX%PETSC%MATRIX,Problem_SolverJacobianEvaluatePetsc, &
                                 & LINESEARCH_SOLVER%QUASI_NEWTON_SOLVER%NONLINEAR_SOLVER%SOLVER,err,error,*999)
                             CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
-                              SOLVER_JACOBIAN%UPDATE_MATRIX=.FALSE. !Petsc will fill in the Jacobian values
+                              SOLVER_JACOBIAN%updateMatrix=.FALSE. !Petsc will fill in the Jacobian values
                               CALL DistributedMatrix_Form(JACOBIAN_MATRIX,err,error,*999)
                               SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                               CASE(SOLVER_SPARSE_MATRICES)
@@ -15336,7 +15336,7 @@ CONTAINS
               SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
               IF(ASSOCIATED(SOLVER_MATRICES)) THEN
                 IF(SOLVER_MATRICES%NUMBER_OF_MATRICES==1) THEN
-                  rhsVector=>SOLVER_MATRICES%RHS_VECTOR
+                  rhsVector=>SOLVER_MATRICES%rhsVector
                   IF(ASSOCIATED(rhsVector)) THEN
                     SOLVER_VECTOR=>SOLVER_MATRICES%matrices(1)%ptr%SOLVER_VECTOR
                     IF(ASSOCIATED(SOLVER_VECTOR)) THEN
@@ -15994,7 +15994,7 @@ CONTAINS
               CASE(SOLVER_CMISS_LIBRARY)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(SOLVER_PETSC_LIBRARY)
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Loop over the equations set in the solver equations
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -17504,7 +17504,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldVariableType), POINTER :: LINEAR_VARIABLE,INTERFACE_VARIABLE,lagrangeVariable
     TYPE(NEWTON_SOLVER_TYPE), POINTER :: NEWTON_SOLVER
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: NONLINEAR_SOLVER
     TYPE(SOLVER_TYPE), POINTER :: LINEAR_SOLVER,SOLVER
@@ -17514,9 +17514,9 @@ CONTAINS
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_JACOBIAN
     TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: INTERFACE_MAPPING
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: INTERFACE_MATRICES
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: INTERFACE_MATRIX
+    TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
+    TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
+    TYPE(InterfaceMatrixType), POINTER :: INTERFACE_MATRIX
     TYPE(WorkGroupType), POINTER :: workGroup
     TYPE(VARYING_STRING) :: localError
   
@@ -17538,7 +17538,7 @@ CONTAINS
               CASE(SOLVER_CMISS_LIBRARY)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(SOLVER_PETSC_LIBRARY)
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Loop over the equations set in the solver equations
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -17610,34 +17610,34 @@ CONTAINS
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                       LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
-                        INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+                        INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
                         IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-                          INTERFACE_MATRICES=>INTERFACE_EQUATIONS%INTERFACE_MATRICES
+                          INTERFACE_MATRICES=>INTERFACE_EQUATIONS%interfaceMatrices
                           IF(ASSOCIATED(INTERFACE_MATRICES)) THEN
-                            INTERFACE_MAPPING=>INTERFACE_EQUATIONS%INTERFACE_MAPPING
+                            INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
                             IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
-                              LAGRANGE_VARIABLE=>INTERFACE_MAPPING%LAGRANGE_VARIABLE
-                              IF(ASSOCIATED(LAGRANGE_VARIABLE)) THEN
+                              lagrangeVariable=>INTERFACE_MAPPING%lagrangeVariable
+                              IF(ASSOCIATED(lagrangeVariable)) THEN
                                 !Create temporary vector for matrix-vector products
-                                DO interface_matrix_idx=1,INTERFACE_MAPPING%NUMBER_OF_INTERFACE_MATRICES
+                                DO interface_matrix_idx=1,INTERFACE_MAPPING%numberOfInterfaceMatrices
                                   INTERFACE_MATRIX=>INTERFACE_MATRICES%matrices(interface_matrix_idx)%ptr
                                   IF(ASSOCIATED(INTERFACE_MATRIX)) THEN
-                                    IF(.NOT.ASSOCIATED(INTERFACE_MATRIX%TEMP_VECTOR)) THEN
+                                    IF(.NOT.ASSOCIATED(INTERFACE_MATRIX%tempVector)) THEN
                                       INTERFACE_VARIABLE=>INTERFACE_MAPPING% &
-                                        & INTERFACE_MATRIX_ROWS_TO_VAR_MAPS(interface_matrix_idx)%VARIABLE
+                                        & interfaceMatrixRowsToVarMaps(interface_matrix_idx)%VARIABLE
                                       IF(ASSOCIATED(INTERFACE_VARIABLE)) THEN
                                         !Set up the temporary interface distributed vector to be used with interface matrices
                                         CALL DistributedVector_CreateStart(INTERFACE_VARIABLE%domainMapping, &
-                                          & INTERFACE_MATRIX%TEMP_VECTOR,ERR,ERROR,*999)
-                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_VECTOR, &
+                                          & INTERFACE_MATRIX%tempVector,ERR,ERROR,*999)
+                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%tempVector, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
-                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_VECTOR,err,error,*999)
+                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%tempVector,err,error,*999)
                                         !Set up the temporary interface distributed vector to be used with transposed interface matrices
-                                        CALL DistributedVector_CreateStart(LAGRANGE_VARIABLE%domainMapping, &
-                                          & INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR,ERR,ERROR,*999)
-                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
+                                        CALL DistributedVector_CreateStart(lagrangeVariable%domainMapping, &
+                                          & INTERFACE_MATRIX%tempTransposeVector,ERR,ERROR,*999)
+                                        CALL DistributedVector_DataTypeSet(INTERFACE_MATRIX%tempTransposeVector, &
                                           & DISTRIBUTED_MATRIX_VECTOR_DP_TYPE,err,error,*999)
-                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%TEMP_TRANSPOSE_VECTOR, &
+                                        CALL DistributedVector_CreateFinish(INTERFACE_MATRIX%tempTransposeVector, &
                                           & err,error,*999)
                                       ELSE
                                         CALL FlagError("Interface mapping variable is not associated.",err,error,*999)
@@ -17760,13 +17760,13 @@ CONTAINS
                               CALL FlagError("Cannot have no Jacobian calculation for a PETSc nonlinear linesearch solver.", &
                                 & err,error,*999)
                             CASE(SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED)
-                              SOLVER_JACOBIAN%UPDATE_MATRIX=.TRUE. !CMISS will fill in the Jacobian values
+                              SOLVER_JACOBIAN%updateMatrix=.TRUE. !CMISS will fill in the Jacobian values
                               !Pass the linesearch solver object rather than the temporary solver
                               CALL Petsc_SnesSetJacobian(LINESEARCH_SOLVER%snes,JACOBIAN_MATRIX%PETSC%MATRIX, &
                                 & JACOBIAN_MATRIX%PETSC%MATRIX,Problem_SolverJacobianEvaluatePetsc, &
                                 & LINESEARCH_SOLVER%NEWTON_SOLVER%NONLINEAR_SOLVER%SOLVER,err,error,*999)
                             CASE(SOLVER_NEWTON_JACOBIAN_FD_CALCULATED)
-                              SOLVER_JACOBIAN%UPDATE_MATRIX=.FALSE. !Petsc will fill in the Jacobian values
+                              SOLVER_JACOBIAN%updateMatrix=.FALSE. !Petsc will fill in the Jacobian values
                               CALL DistributedMatrix_Form(JACOBIAN_MATRIX,err,error,*999)
                               SELECT CASE(SOLVER_EQUATIONS%sparsityType)
                               CASE(SOLVER_SPARSE_MATRICES)
@@ -18093,7 +18093,7 @@ CONTAINS
               SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
               IF(ASSOCIATED(SOLVER_MATRICES)) THEN
                 IF(SOLVER_MATRICES%NUMBER_OF_MATRICES==1) THEN
-                  rhsVector=>SOLVER_MATRICES%RHS_VECTOR
+                  rhsVector=>SOLVER_MATRICES%rhsVector
                   IF(ASSOCIATED(rhsVector)) THEN
                     SOLVER_VECTOR=>SOLVER_MATRICES%matrices(1)%ptr%SOLVER_VECTOR
                     IF(ASSOCIATED(SOLVER_VECTOR)) THEN
@@ -18758,7 +18758,7 @@ CONTAINS
               CASE(SOLVER_CMISS_LIBRARY)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(SOLVER_PETSC_LIBRARY)
-                SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Loop over the equations set in the solver equations
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -20543,7 +20543,7 @@ CONTAINS
     TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
     TYPE(DomainMappingType), POINTER :: DOMAIN_MAPPING
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,lagrangeVariable
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -20559,14 +20559,14 @@ CONTAINS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
           IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-            SOLVER_MAPPING=>SOLVER_MATRICES%SOLVER_MAPPING
+            SOLVER_MAPPING=>SOLVER_MATRICES%solverMapping
             IF(ASSOCIATED(SOLVER_MAPPING)) THEN
               DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
                 SOLVER_MATRIX=>SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr
                 IF(ASSOCIATED(SOLVER_MATRIX)) THEN
                   SOLVER_VECTOR=>SOLVER_MATRIX%SOLVER_VECTOR
                   IF(ASSOCIATED(SOLVER_VECTOR)) THEN
-                    DOMAIN_MAPPING=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%COLUMN_DOFS_MAPPING
+                    DOMAIN_MAPPING=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)%columnDOFSMapping
                     IF(ASSOCIATED(DOMAIN_MAPPING)) THEN
                       DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                         DO variable_idx=1,SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(equations_set_idx)% &
@@ -20603,24 +20603,24 @@ CONTAINS
                         ENDDO !variable_idx
                       ENDDO !equations_set_idx
                       DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
-                        LAGRANGE_VARIABLE=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE
+                        lagrangeVariable=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
+                          & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%lagrangeVariable
                         IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                          variable_type=LAGRANGE_VARIABLE%variableType
-                          LAGRANGE_FIELD=>LAGRANGE_VARIABLE%FIELD
+                          variable_type=lagrangeVariable%variableType
+                          LAGRANGE_FIELD=>lagrangeVariable%FIELD
                           NULLIFY(VARIABLE_DATA)
                           CALL FIELD_PARAMETER_SET_DATA_GET(LAGRANGE_FIELD,variable_type,FIELD_VALUES_SET_TYPE,VARIABLE_DATA, &
                             & ERR,ERROR,*999)
-                          DO variable_dof_idx=1,LAGRANGE_VARIABLE%numberOfDofs
+                          DO variable_dof_idx=1,lagrangeVariable%numberOfDofs
                             column_number=SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                              & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE_TO_SOLVER_COL_MAP% &
+                              & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%lagrangeVariableToSolverColMap% &
                               & COLUMN_NUMBERS(variable_dof_idx)
                             IF(column_number/=0) THEN
                               coupling_coefficient=SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                                & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE_TO_SOLVER_COL_MAP% &
+                                & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%lagrangeVariableToSolverColMap% &
                                 & COUPLING_COEFFICIENTS(variable_dof_idx)
                               additive_constant=SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-                                & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%LAGRANGE_VARIABLE_TO_SOLVER_COL_MAP% &
+                                & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%lagrangeVariableToSolverColMap% &
                                 & ADDITIVE_CONSTANTS(variable_dof_idx)
                               VALUE=VARIABLE_DATA(variable_dof_idx)*coupling_coefficient+additive_constant
                               localNumber=DOMAIN_MAPPING%globalToLocalMap(column_number)%localNumber(1)
@@ -21273,7 +21273,7 @@ CONTAINS
           IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
             SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
             IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-              SOLVER_MAPPING=>SOLVER_MATRICES%SOLVER_MAPPING
+              SOLVER_MAPPING=>SOLVER_MATRICES%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
                   !Loop over the variables involved in the solver matrix.
@@ -21407,7 +21407,7 @@ CONTAINS
     TYPE(SOLVER_TYPE), POINTER :: linkingSolver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(INTERFACE_MAPPING_TYPE), POINTER :: interfaceMapping
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: solverMatrices
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -21537,7 +21537,7 @@ CONTAINS
               NULLIFY(dependentField)
               CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,dependentField,err,error,*999)
               variableType=dependentVariable%variableType
-              dynamicVariableType=interfaceMapping%LAGRANGE_VARIABLE_TYPE
+              dynamicVariableType=interfaceMapping%lagrangeVariableType
               !Get the dependent field variable dof the solver dof is mapped to
               variableDOF=solverMapping%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solverMatrixIdx)% &
                 & SOLVER_DOF_TO_VARIABLE_MAPS(solverDOFIdx)%VARIABLE_DOF(equationsDOFIdx)
@@ -21628,7 +21628,7 @@ CONTAINS
           NULLIFY(dependentField)
           CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,dependentField,err,error,*999)
           variableType=solverMapping%INTERFACE_CONDITION_TO_SOLVER_MAP(interfaceConditionIdx)% &
-            & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solverMatrixIdx)%LAGRANGE_VARIABLE_TYPE
+            & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solverMatrixIdx)%lagrangeVariableType
           CALL Field_ParameterSetUpdateStart(dependentField,variableType,FIELD_VALUES_SET_TYPE,Err,Error,*999)
           CALL Field_ParameterSetUpdateFinish(dependentField,variableType,FIELD_VALUES_SET_TYPE,Err,Error,*999)
         ENDDO
@@ -21664,7 +21664,7 @@ CONTAINS
     TYPE(DistributedVectorType), POINTER :: SOLVER_VECTOR
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
-    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,LAGRANGE_VARIABLE
+    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,lagrangeVariable
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
@@ -21681,7 +21681,7 @@ CONTAINS
         IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
           SOLVER_MATRICES=>SOLVER_EQUATIONS%SOLVER_MATRICES
           IF(ASSOCIATED(SOLVER_MATRICES)) THEN
-            SOLVER_MAPPING=>SOLVER_MATRICES%SOLVER_MAPPING
+            SOLVER_MAPPING=>SOLVER_MATRICES%solverMapping
             IF(ASSOCIATED(SOLVER_MAPPING)) THEN
               DO solver_matrix_idx=1,SOLVER_MATRICES%NUMBER_OF_MATRICES
                 SOLVER_MATRIX=>SOLVER_MATRICES%matrices(solver_matrix_idx)%ptr
@@ -21724,11 +21724,11 @@ CONTAINS
                           ENDIF
                         CASE(SOLVER_MAPPING_EQUATIONS_INTERFACE_CONDITION)
                           !Interface condition dof.
-                          LAGRANGE_VARIABLE=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
+                          lagrangeVariable=>SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &
                            & SOLVER_DOF_TO_VARIABLE_MAPS(solver_dof_idx)%VARIABLE(equations_idx)%ptr
-                          IF(ASSOCIATED(LAGRANGE_VARIABLE)) THEN
-                            VARIABLE_TYPE=LAGRANGE_VARIABLE%variableType
-                            LAGRANGE_FIELD=>LAGRANGE_VARIABLE%FIELD
+                          IF(ASSOCIATED(lagrangeVariable)) THEN
+                            VARIABLE_TYPE=lagrangeVariable%variableType
+                            LAGRANGE_FIELD=>lagrangeVariable%FIELD
                             IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                               !Get the dependent field variable dof the solver dof is mapped to
                               variable_dof=SOLVER_MAPPING%SOLVER_COL_TO_EQUATIONS_COLS_MAP(solver_matrix_idx)% &

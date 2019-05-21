@@ -44,21 +44,21 @@
 !> This module defines all constants shared across interface matrices routines.
 MODULE INTERFACE_MATRICES_CONSTANTS
 
-  USE KINDS
+  USE Kinds
 
   IMPLICIT NONE
 
   !Module parameters
 
-  !> \addtogroup INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes INTERFACE_MATRICES_ROUTINES::InterfaceMatricesTimeDependenceTypes
+  !> \addtogroup InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes InterfaceMatricesRoutines::InterfaceMatricesTimeDependenceTypes
   !> \brief Interface matrices time dependency types
-  !> \see INTERFACE_MATRICES_ROUTINES
+  !> \see InterfaceMatricesRoutines
   !>@{
   INTEGER(INTG), PARAMETER :: NUMBER_OF_INTERFACE_MATRIX_TYPES=4
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_STATIC=1 !<Interface matrix is of static type \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_QUASI_STATIC=2 !<Interface matrix is of quasi-static type \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC=3 !<Interface matrix is of first order dynamic type \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC=4 !<Interface matrix is of second order dynamic type \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes,INTERFACE_MATRICES_ROUTINES
+  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_STATIC=1 !<Interface matrix is of static type \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes,InterfaceMatricesRoutines
+  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_QUASI_STATIC=2 !<Interface matrix is of quasi-static type \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes,InterfaceMatricesRoutines
+  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_FIRST_ORDER_DYNAMIC=3 !<Interface matrix is of first order dynamic type \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes,InterfaceMatricesRoutines
+  INTEGER(INTG), PARAMETER :: INTERFACE_MATRIX_SECOND_ORDER_DYNAMIC=4 !<Interface matrix is of second order dynamic type \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes,InterfaceMatricesRoutines
   !>@}
 
 END MODULE INTERFACE_MATRICES_CONSTANTS

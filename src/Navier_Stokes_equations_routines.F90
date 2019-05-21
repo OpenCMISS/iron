@@ -2663,7 +2663,7 @@ CONTAINS
             CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE,PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_equations%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   ! TODO: Set up for multiple equations sets
                   EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
@@ -2694,7 +2694,7 @@ CONTAINS
               CASE(SOLVER_DYNAMIC_TYPE)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                     DO equationsSetIdx = 1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equationsSetIdx)%PTR
@@ -2756,7 +2756,7 @@ CONTAINS
                 iteration = CONTROL_LOOP%whileLoop%iterationNumber
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                     DO equationsSetIdx = 1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equationsSetIdx)%PTR
@@ -2808,7 +2808,7 @@ CONTAINS
               CASE(SOLVER_LINEAR_TYPE)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                     DO equationsSetIdx = 1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equationsSetIdx)%PTR
@@ -2854,7 +2854,7 @@ CONTAINS
               CASE(SOLVER_NONLINEAR_TYPE)
                 CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,currentTime,timeIncrement,err,error,*999)
                 iteration = CONTROL_LOOP%whileLoop%iterationNumber
-                EQUATIONS_SET=>SOLVER%SOLVER_equations%SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
+                EQUATIONS_SET=>SOLVER%SOLVER_equations%solverMapping%EQUATIONS_SETS(1)%ptr
                 dependentField=>EQUATIONS_SET%DEPENDENT%DEPENDENT_FIELD
                 ! Characteristic solver effectively solves for the mass/momentum conserving fluxes at the
                 ! *NEXT* timestep by extrapolating current field values and then solving a system of nonlinear
@@ -2895,14 +2895,14 @@ CONTAINS
                   ! update solver matrix
                   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                   IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                    SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                    SOLVER_MAPPING=>SOLVER_equations%solverMapping
                     IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                       SOLVER_MATRICES=>SOLVER_equations%SOLVER_MATRICES
                       IF(ASSOCIATED(SOLVER_MATRICES)) THEN
                         DO solver_matrix_idx=1,SOLVER_MAPPING%NUMBER_OF_SOLVER_MATRICES
                           SOLVER_MATRIX=>SOLVER_MATRICES%MATRICES(solver_matrix_idx)%ptr
                           IF(ASSOCIATED(SOLVER_MATRIX)) THEN
-                            SOLVER_MATRIX%UPDATE_MATRIX=.TRUE.
+                            SOLVER_MATRIX%updateMatrix=.TRUE.
                           ELSE
                             CALL FlagError("Solver Matrix is not associated.",err,error,*999)
                           END IF
@@ -6668,7 +6668,7 @@ CONTAINS
               SELECT CASE(SOLVER%SOLVE_TYPE)
               CASE(SOLVER_NONLINEAR_TYPE)
                 ! Characteristic solver- copy branch Q,A values to new parameter set
-                dependentField=>SOLVER%SOLVER_equations%SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
+                dependentField=>SOLVER%SOLVER_equations%solverMapping%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
                 CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
                 NULLIFY(upwindParameterSet)
                 CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet,err,error,*999)
@@ -6693,7 +6693,7 @@ CONTAINS
                 SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
-                  dependentField=>SOLVER%SOLVER_equations%SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
+                  dependentField=>SOLVER%SOLVER_equations%solverMapping%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
                   CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
                   NULLIFY(upwindParameterSet)
                   CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet, &
@@ -6734,7 +6734,7 @@ CONTAINS
                 SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
-                  dependentField=>SOLVER%SOLVER_equations%SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
+                  dependentField=>SOLVER%SOLVER_equations%solverMapping%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
                   CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
                   NULLIFY(upwindParameterSet)
                   CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet, &
@@ -6774,7 +6774,7 @@ CONTAINS
               SELECT CASE(SOLVER%globalNumber)
               CASE(1)
                 ! Characteristic solver- copy branch Q,A values to new parameter set
-                dependentField=>SOLVER%SOLVER_equations%SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
+                dependentField=>SOLVER%SOLVER_equations%solverMapping%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
                 CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
                 NULLIFY(upwindParameterSet)
                 CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet, &
@@ -6804,7 +6804,7 @@ CONTAINS
                 SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
-                  dependentField=>SOLVER%SOLVER_equations%SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
+                  dependentField=>SOLVER%SOLVER_equations%solverMapping%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
                   CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
                   NULLIFY(upwindParameterSet)
                   CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet, &
@@ -6841,7 +6841,7 @@ CONTAINS
                 SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
-                  dependentField=>SOLVER%SOLVER_equations%SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
+                  dependentField=>SOLVER%SOLVER_equations%solverMapping%EQUATIONS_SETS(1)%ptr%DEPENDENT%DEPENDENT_FIELD
                   CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
                   NULLIFY(upwindParameterSet)
                   CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet, &
@@ -6879,19 +6879,19 @@ CONTAINS
                   & timestep,outputIteration,err,error,*999)
                 IF(ASSOCIATED(SOLVER%SOLVER_EQUATIONS)) THEN
                   convergedFlag = .FALSE.
-                  CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
+                  CALL NavierStokes_CalculateBoundaryFlux3D0D(SOLVER%SOLVER_EQUATIONS%solverMapping% &
                     & EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS%equationsSet,err,error,*999)
                 ENDIF
                 CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(SOLVER,err,error,*999)
               ENDIF
             CASE(PROBLEM_CONSTITUTIVE_RBS_NAVIER_STOKES_SUBTYPE)
               IF(SOLVER%globalNumber==2) THEN
-                DO equationsSetNumber=1,SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
+                DO equationsSetNumber=1,SOLVER%SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
                   ! If this is a coupled constitutive (non-Newtonian) viscosity problem, update shear rate values
                   !  to be passed to the CellML solver at beginning of next timestep
-                  IF(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(equationsSetNumber)%PTR% &
+                  IF(SOLVER%SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(equationsSetNumber)%PTR% &
                     &  equations%equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_MU_NAVIER_STOKES_SUBTYPE) THEN
-                    CALL NavierStokes_ShearRateCalculate(SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING% &
+                    CALL NavierStokes_ShearRateCalculate(SOLVER%SOLVER_EQUATIONS%solverMapping% &
                       & EQUATIONS_SETS(equationsSetNumber)%PTR%EQUATIONS%equationsSet,err,error,*999)
                   END IF
                 END DO
@@ -6901,7 +6901,7 @@ CONTAINS
                 SELECT CASE(SOLVER%globalNumber)
                 CASE(1)
                   ! Characteristic solver- copy branch Q,A values to new parameter set
-                  dependentField=>SOLVER%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR%DEPENDENT%DEPENDENT_FIELD
+                  dependentField=>SOLVER%SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(1)%PTR%DEPENDENT%DEPENDENT_FIELD
                   CALL Field_VariableGet(dependentField,FIELD_U_VARIABLE_TYPE,fieldVariable,ERR,ERROR,*999)
                   NULLIFY(upwindParameterSet)
                   CALL FieldVariable_ParameterSetCheck(fieldVariable,FIELD_UPWIND_VALUES_SET_TYPE,upwindParameterSet, &
@@ -7108,7 +7108,7 @@ CONTAINS
               IF(SOLVER%globalNumber==2) THEN
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
                     EQUATIONS_SET=>equations%equationsSet
@@ -7507,7 +7507,7 @@ CONTAINS
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 !If analytic flow waveform, calculate and update
-                SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_equations%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
@@ -7738,7 +7738,7 @@ CONTAINS
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                     DO equationsSetIdx = 1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(equationsSetIdx)%PTR
@@ -7884,7 +7884,7 @@ CONTAINS
                           SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                           IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                             !If analytic flow waveform, calculate and update
-                            SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                            SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                             IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                               EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                               IF(ASSOCIATED(EQUATIONS)) THEN
@@ -8064,7 +8064,7 @@ CONTAINS
               !Pre solve for the linear solver
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_equations%solverMapping
                 EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                 IF(ASSOCIATED(EQUATIONS)) THEN
                   EQUATIONS_SET=>equations%equationsSet
@@ -8146,7 +8146,7 @@ CONTAINS
                   & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
                     EQUATIONS_SET=>equations%equationsSet
@@ -8235,7 +8235,7 @@ CONTAINS
                   & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
                     EQUATIONS_SET=>equations%equationsSet
@@ -8317,7 +8317,7 @@ CONTAINS
                   & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
                     EQUATIONS_SET=>equations%equationsSet
@@ -8426,7 +8426,7 @@ CONTAINS
                     & CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Mesh movement change boundary conditions... ",err,error,*999)
                   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                   IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                    SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                    SOLVER_MAPPING=>SOLVER_equations%solverMapping
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
                       EQUATIONS_SET=>equations%equationsSet
@@ -8461,7 +8461,7 @@ CONTAINS
                             !Find the FiniteElasticity equations set as there is a NavierStokes equations set too
                             SOLID_SOLVER_EQUATIONS=>Solver2%SOLVER_EQUATIONS
                             IF(ASSOCIATED(SOLID_SOLVER_EQUATIONS)) THEN
-                              SOLID_SOLVER_MAPPING=>SOLID_SOLVER_equations%SOLVER_MAPPING
+                              SOLID_SOLVER_MAPPING=>SOLID_SOLVER_equations%solverMapping
                               IF(ASSOCIATED(SOLID_SOLVER_MAPPING)) THEN
                                 EquationsSetIndex=1
                                 SolidEquationsSetFound=.FALSE.
@@ -8517,7 +8517,7 @@ CONTAINS
                             !Find the NavierStokes equations set as there is a FiniteElasticity equations set too
                             FLUID_SOLVER_EQUATIONS=>Solver2%SOLVER_EQUATIONS
                             IF(ASSOCIATED(FLUID_SOLVER_EQUATIONS)) THEN
-                              FLUID_SOLVER_MAPPING=>FLUID_SOLVER_equations%SOLVER_MAPPING
+                              FLUID_SOLVER_MAPPING=>FLUID_SOLVER_equations%solverMapping
                               IF(ASSOCIATED(FLUID_SOLVER_MAPPING)) THEN
                                 EquationsSetIndex=1
                                 FluidEquationsSetFound=.FALSE.
@@ -8581,13 +8581,13 @@ CONTAINS
                                           IF(BOUNDARY_CONDITION_CHECK_VARIABLE==BOUNDARY_CONDITION_MOVED_WALL) THEN
                                             !NOTE: assuming same mesh and mesh nodes for fluid domain and moving mesh domain
                                             FluidNodeNumber=node_idx
-                                            DO search_idx=1,SIZE(Solver2%SOLVER_equations%SOLVER_MAPPING% &
+                                            DO search_idx=1,SIZE(Solver2%SOLVER_equations%solverMapping% &
                                               & interfaceConditions(1)%ptr%INTERFACE% &
                                               & meshConnectivity%coupledNodes(2,:))
-                                              IF(Solver2%SOLVER_equations%SOLVER_MAPPING% &
+                                              IF(Solver2%SOLVER_equations%solverMapping% &
                                                 & interfaceConditions(1)%ptr%INTERFACE% &
                                                 & meshConnectivity%coupledNodes(2,search_idx)==node_idx) THEN
-                                                SolidNodeNumber=Solver2%SOLVER_equations%SOLVER_MAPPING% &
+                                                SolidNodeNumber=Solver2%SOLVER_equations%solverMapping% &
                                                   & interfaceConditions(1)%ptr%INTERFACE% &
                                                   & meshConnectivity%coupledNodes(1,search_idx)!might wanna put a break here
                                                 SolidNodeFound=.TRUE.
@@ -8644,7 +8644,7 @@ CONTAINS
                   !   CALL WRITE_STRING(GENERAL_OUTPUT_TYPE,"Velocity field change boundary conditions... ",err,error,*999)
                   !   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                   !   IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  !     SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                  !     SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   !     !Find the NavierStokes equations set as there is a finite elasticity equations set too
                   !     EquationsSetIndex=1
                   !     ALENavierStokesEquationsSetFound=.FALSE.
@@ -9256,7 +9256,7 @@ CONTAINS
                 !Get the independent field for the ALE Navier-Stokes problem
                 SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                  SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                  SOLVER_MAPPING=>SOLVER_equations%solverMapping
                   IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                     EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
                     NULLIFY(MESH_STIFF_VALUES)
@@ -9335,7 +9335,7 @@ CONTAINS
                   !Get the independent field for the ALE Navier-Stokes problem
                   SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                   IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                    SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                    SOLVER_MAPPING=>SOLVER_equations%solverMapping
                     IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                       EQUATIONS_SET=>SOLVER_MAPPING%EQUATIONS_SETS(1)%ptr
                       NULLIFY(MESH_STIFF_VALUES)
@@ -9474,7 +9474,7 @@ CONTAINS
           CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE,PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+              SOLVER_MAPPING=>SOLVER_equations%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 !Make sure the equations sets are up to date
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -9504,7 +9504,7 @@ CONTAINS
               CALL CONTROL_LOOP_CURRENT_TIMES_GET(CONTROL_LOOP,CURRENT_TIME,TIME_INCREMENT,err,error,*999)
               SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
               IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+                SOLVER_MAPPING=>SOLVER_equations%solverMapping
                 IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                   !Make sure the equations sets are up to date
                   DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -9557,7 +9557,7 @@ CONTAINS
             CALL CONTROL_LOOP_TIMES_GET(CONTROL_LOOP,START_TIME,STOP_TIME,CURRENT_TIME,TIME_INCREMENT, &
                & CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,ERR,ERROR,*999)
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+              SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 !Make sure the equations sets are up to date
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -9637,7 +9637,7 @@ CONTAINS
               & CURRENT_LOOP_ITERATION,OUTPUT_ITERATION_NUMBER,err,error,*999)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-              SOLVER_MAPPING=>SOLVER_equations%SOLVER_MAPPING
+              SOLVER_MAPPING=>SOLVER_equations%solverMapping
               IF(ASSOCIATED(SOLVER_MAPPING)) THEN
                 !Make sure the equations sets are up to date
                 DO equations_set_idx=1,SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
@@ -13334,7 +13334,7 @@ CONTAINS
         IF(ASSOCIATED(controlLoop%PROBLEM)) THEN
           solverEquations=>solver1D%SOLVER_EQUATIONS
           IF(ASSOCIATED(solverEquations)) THEN
-            solverMapping=>solverEquations%SOLVER_MAPPING
+            solverMapping=>solverEquations%solverMapping
             IF(ASSOCIATED(solverMapping)) THEN
               equationsSet=>solverMapping%EQUATIONS_SETS(1)%ptr
               IF(ASSOCIATED(equationsSet)) THEN
@@ -13610,7 +13610,7 @@ CONTAINS
       IF(ASSOCIATED(solver1D)) THEN
         boundaryConditions=>solver1D%SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
         IF(ASSOCIATED(boundaryConditions)) THEN
-          equationsSet1D => solver1D%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
+          equationsSet1D => solver1D%SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(1)%PTR
           IF(ASSOCIATED(equationsSet1D)) THEN
             dependentField1D=>equationsSet1D%DEPENDENT%DEPENDENT_FIELD
             IF(ASSOCIATED(dependentField1D)) THEN
@@ -13637,7 +13637,7 @@ CONTAINS
       solver3dNavierStokesNumber = 1
       ! TODO: make this more general!
       equationsSet3D=>controlLoop%subLoops(2)%PTR%SOLVERS%SOLVERS(solver3dNavierStokesNumber)%PTR% &
-        & SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
+        & SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(1)%PTR
       IF(ASSOCIATED(equationsSet3D)) THEN
         dependentField3D=>equationsSet3D%DEPENDENT%DEPENDENT_FIELD
         IF(.NOT. ASSOCIATED(dependentField3D)) THEN
@@ -13929,7 +13929,7 @@ CONTAINS
         IF(ASSOCIATED(controlLoop%PROBLEM)) THEN
           solverEquations=>solver1DNavierStokes%SOLVER_EQUATIONS
           IF(ASSOCIATED(solverEquations)) THEN
-            solverMapping=>solverEquations%SOLVER_MAPPING
+            solverMapping=>solverEquations%solverMapping
             IF(ASSOCIATED(solverMapping)) THEN
               equationsSet=>solverMapping%EQUATIONS_SETS(1)%ptr
               IF(ASSOCIATED(equationsSet)) THEN
@@ -14425,7 +14425,7 @@ CONTAINS
           navierStokesSolver=>controlLoop%SOLVERS%SOLVERS(2)%PTR
           IF(ASSOCIATED(navierStokesSolver)) THEN
             NULLIFY(coupledEquationsSet)
-            equationsSet=>navierStokesSolver%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
+            equationsSet=>navierStokesSolver%SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(1)%PTR
             IF(ASSOCIATED(equationsSet)) THEN
               dependentField=>equationsSet%DEPENDENT%DEPENDENT_FIELD
               IF(dependentField%DECOMPOSITION%calculateFaces) THEN
@@ -14502,7 +14502,7 @@ CONTAINS
             solver=>controlLoop%SOLVERS%SOLVERS(solverIdx)%PTR
             SELECT CASE(solver%SOLVE_TYPE)
             CASE(SOLVER_DYNAMIC_TYPE)
-              solverMapping=>solver%SOLVER_EQUATIONS%SOLVER_MAPPING
+              solverMapping=>solver%SOLVER_EQUATIONS%solverMapping
               IF(ASSOCIATED(solverMapping)) THEN
                 DO equationsSetIdx = 1,solverMapping%NUMBER_OF_EQUATIONS_SETS
                   equationsSet=>solverMapping%EQUATIONS_SETS(equationsSetIdx)%PTR
@@ -14531,7 +14531,7 @@ CONTAINS
                         END IF
                         IF(iterativeWhileLoop3%numberOfSubLoops==0) THEN
                           DO solverIdx2=1,iterativeWhileLoop3%SOLVERS%NUMBER_OF_SOLVERS
-                            solverMapping2=>iterativeWhileLoop3%SOLVERS%SOLVERS(solverIdx2)%PTR%SOLVER_EQUATIONS%SOLVER_MAPPING
+                            solverMapping2=>iterativeWhileLoop3%SOLVERS%SOLVERS(solverIdx2)%PTR%SOLVER_EQUATIONS%solverMapping
                             IF(ASSOCIATED(solverMapping2)) THEN
                               DO equationsSetIdx2 = 1,solverMapping2%NUMBER_OF_EQUATIONS_SETS
                                 equationsSet2=>solverMapping2%EQUATIONS_SETS(equationsSetIdx)%PTR
@@ -14605,7 +14605,7 @@ CONTAINS
                           DO solverIdx=1,subloop3%SOLVERS%NUMBER_OF_SOLVERS
                             solver=>subloop3%SOLVERS%SOLVERS(solverIdx)%PTR
                             IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-                              solverMapping=>solver%SOLVER_EQUATIONS%SOLVER_MAPPING
+                              solverMapping=>solver%SOLVER_EQUATIONS%solverMapping
                               IF(ASSOCIATED(solverMapping)) THEN
                                 CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(solver,err,error,*999)
                               ELSE
@@ -14623,7 +14623,7 @@ CONTAINS
                       DO solverIdx=1,subloop2%SOLVERS%NUMBER_OF_SOLVERS
                         solver=>subloop2%SOLVERS%SOLVERS(solverIdx)%PTR
                         IF(solver%SOLVE_TYPE==SOLVER_DYNAMIC_TYPE) THEN
-                          solverMapping=>solver%SOLVER_EQUATIONS%SOLVER_MAPPING
+                          solverMapping=>solver%SOLVER_EQUATIONS%solverMapping
                           IF(ASSOCIATED(solverMapping)) THEN
                             CALL NAVIER_STOKES_POST_SOLVE_OUTPUT_DATA(solver,err,error,*999)
                           ELSE
@@ -14663,8 +14663,8 @@ CONTAINS
               navierStokesSolver3D=>controlLoop%parentLoop%subLoops(2)%PTR%SOLVERS%SOLVERS(1)%PTR
               iteration3D1D = controlLoop%parentLoop%whileLoop%iterationNumber
               IF (ASSOCIATED(navierStokesSolver3D)) THEN
-                equationsSet=>navierStokesSolver1D%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
-                coupledEquationsSet=>navierStokesSolver3D%SOLVER_EQUATIONS%SOLVER_MAPPING%EQUATIONS_SETS(1)%PTR
+                equationsSet=>navierStokesSolver1D%SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(1)%PTR
+                coupledEquationsSet=>navierStokesSolver3D%SOLVER_EQUATIONS%solverMapping%EQUATIONS_SETS(1)%PTR
                 CALL NavierStokes_CalculateBoundaryFlux(equationsSet,coupledEquationsSet,iteration3D1D, &
                   & convergedFlag,absolute3D0DTolerance,relative3D0DTolerance,ERR,ERROR,*999)
               ELSE

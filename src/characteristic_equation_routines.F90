@@ -1356,7 +1356,7 @@ CONTAINS
     IF(ASSOCIATED(SOLVER)) THEN
       solverEquations=>solver%SOLVER_EQUATIONS
       IF(ASSOCIATED(solverEquations)) THEN
-        solverMapping=>solverEquations%SOLVER_MAPPING
+        solverMapping=>solverEquations%solverMapping
         IF(ASSOCIATED(solverMapping)) THEN
           equationsSet=>solverMapping%EQUATIONS_SETS(1)%PTR
           IF(ASSOCIATED(equationsSet)) THEN

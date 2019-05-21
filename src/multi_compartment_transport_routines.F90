@@ -416,7 +416,7 @@ CONTAINS
             CASE(PROBLEM_STANDARD_MULTI_COMPARTMENT_TRANSPORT_SUBTYPE)
             SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
             IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-             SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+             SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
              EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
              IF(ASSOCIATED(EQUATIONS)) THEN
               EQUATIONS_SET=>equations%equationsSet
@@ -537,8 +537,8 @@ CONTAINS
                 IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
                 !loop over all the equation sets and set the appropriate field variable type BCs and
                 !the source field associated with each equation set
-                DO eqnset_idx=1,SOLVER_EQUATIONS%SOLVER_MAPPING%NUMBER_OF_EQUATIONS_SETS
-                  SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                DO eqnset_idx=1,SOLVER_EQUATIONS%solverMapping%NUMBER_OF_EQUATIONS_SETS
+                  SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                   EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(eqnset_idx)%EQUATIONS
                   IF(ASSOCIATED(EQUATIONS)) THEN
                     EQUATIONS_SET=>equations%equationsSet
@@ -858,7 +858,7 @@ CONTAINS
                   
                    SOLVER_EQUATIONS=>SOLVER%SOLVER_EQUATIONS
                    IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
-                    SOLVER_MAPPING=>SOLVER_EQUATIONS%SOLVER_MAPPING
+                    SOLVER_MAPPING=>SOLVER_EQUATIONS%solverMapping
                     EQUATIONS=>SOLVER_MAPPING%EQUATIONS_SET_TO_SOLVER_MAP(1)%EQUATIONS
                     IF(ASSOCIATED(EQUATIONS)) THEN
                      EQUATIONS_SET=>equations%equationsSet

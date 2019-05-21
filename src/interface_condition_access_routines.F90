@@ -222,7 +222,7 @@ CONTAINS
       & CALL FlagError("Interface condition has not been finished.",err,error,*999)
     IF(ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is already associated.",err,error,*999)
 
-    interfaceEquations=>interfaceCondition%INTERFACE_EQUATIONS
+    interfaceEquations=>interfaceCondition%interfaceEquations
     IF(.NOT.ASSOCIATED(interfaceEquations)) &
       & CALL FlagError("Interface condition equations is not associated.",err,error,*999)
        
@@ -304,7 +304,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of an interface condition into a character string. \see OpenCMISS::cmfe_InterfaceCondition_LabelGet
+  !>Returns the label of an interface condition into a character string. \see OpenCMISS::Iron::cmfe__InterfaceCondition_LabelGet
   SUBROUTINE InterfaceCondition_LabelGetC(interfaceCondition,label,err,error,*)
 
     !Argument variables
@@ -338,7 +338,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a interface condition into a varying string. \see OpenCMISS::cmfe_InterfaceCondition_LabelGet
+  !>Returns the label of a interface condition into a varying string. \see OpenCMISS::Iron::cmfe__InterfaceCondition_LabelGet
   SUBROUTINE InterfaceCondition_LabelGetVS(interfaceCondition,label,err,error,*)
 
     !Argument variables
@@ -365,7 +365,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of an interface condition from a character string. \see OpenCMISS::cmfe_InterfaceCondition_LabelSet
+  !>Sets the label of an interface condition from a character string. \see OpenCMISS::Iron::cmfe__InterfaceCondition_LabelSet
   SUBROUTINE InterfaceCondition_LabelSetC(interfaceCondition,label,err,error,*)
 
     !Argument variables
@@ -393,7 +393,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of an interface condition from a varying string. \see OpenCMISS::cmfe_InterfaceCondition_LabelSet
+  !>Sets the label of an interface condition from a varying string. \see OpenCMISS::Iron::cmfe__InterfaceCondition_LabelSet
   SUBROUTINE InterfaceCondition_LabelSetVS(interfaceCondition,label,err,error,*)
 
     !Argument variables

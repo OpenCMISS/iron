@@ -50,7 +50,8 @@ MODULE INTERFACE_EQUATIONS_ROUTINES
   USE INTERFACE_CONDITIONS_CONSTANTS
   USE InterfaceEquationsAccessRoutines
   USE INTERFACE_MAPPING_ROUTINES
-  USE INTERFACE_MATRICES_ROUTINES
+  USE InterfaceMatricesRoutines
+  USE InterfaceMatricesAccessRoutines
   USE INTERFACE_MATRICES_CONSTANTS
   USE ISO_VARYING_STRING
   USE KINDS
@@ -147,72 +148,66 @@ CONTAINS
 
     ENTERS("INTERFACE_EQUATIONS_CREATE_FINISH",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        CALL FlagError("Interface equations have already been finished.",ERR,ERROR,*999)
-      ELSE
-        !Create the interpolation sets
-        INTERFACE_CONDITION=>INTERFACE_EQUATIONS%INTERFACE_CONDITION
-        IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-          SELECT CASE(INTERFACE_CONDITION%METHOD)
-          CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
-            IF(ASSOCIATED(INTERFACE_CONDITION%LAGRANGE)) THEN
-              INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
-              IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
-                IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
-                  GEOMETRIC_FIELD=>INTERFACE_CONDITION%GEOMETRY%geometricField
-                  LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
-                  NULLIFY(PENALTY_FIELD)
-                  IF(ASSOCIATED(INTERFACE_CONDITION%PENALTY)) THEN
-                    PENALTY_FIELD=>INTERFACE_CONDITION%PENALTY%PENALTY_FIELD
-                  ENDIF
-                  !\todo Truncating subroutine name from INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_SETUP until bug in gfortran 4.6 is fixed http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46971
-                  CALL INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_(INTERFACE_EQUATIONS%INTERPOLATION% &
-                    & INTERFACE_INTERPOLATION,GEOMETRIC_FIELD,LAGRANGE_FIELD,PENALTY_FIELD,ERR,ERROR,*999)
-                  DO variable_idx=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
-                    DEPENDENT_VARIABLE=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
-                    IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                      DEPENDENT_FIELD=>DEPENDENT_VARIABLE%FIELD
-                      IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                        GEOMETRIC_FIELD=>DEPENDENT_FIELD%geometricField
-                        CALL InterfaceEquations_DomainVariableInterpolationSetup(INTERFACE_EQUATIONS%INTERPOLATION% &
-                          & VARIABLE_INTERPOLATION(variable_idx),GEOMETRIC_FIELD,DEPENDENT_FIELD,ERR,ERROR,*999)
-                      ELSE
-                        CALL FlagError("Dependent variable field is not associated.",ERR,ERROR,*999)
-                      ENDIF
-                    ELSE
-                      LOCAL_ERROR="Dependent variable is not associated for variable index "// &
-                        & TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))//"."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ENDDO !variable_idx
-                ELSE
-                  CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                CALL FlagError("Interface condition dependent is not associated.",ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+
+    !Create the interpolation sets
+    INTERFACE_CONDITION=>INTERFACE_EQUATIONS%INTERFACE_CONDITION
+    IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
+      SELECT CASE(INTERFACE_CONDITION%METHOD)
+      CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
+        IF(ASSOCIATED(INTERFACE_CONDITION%LAGRANGE)) THEN
+          INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
+          IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
+            IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
+              GEOMETRIC_FIELD=>INTERFACE_CONDITION%GEOMETRY%geometricField
+              LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+              NULLIFY(PENALTY_FIELD)
+              IF(ASSOCIATED(INTERFACE_CONDITION%PENALTY)) THEN
+                PENALTY_FIELD=>INTERFACE_CONDITION%PENALTY%PENALTY_FIELD
               ENDIF
+              !\todo Truncating subroutine name from INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_SETUP until bug in gfortran 4.6 is fixed http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46971
+              CALL INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_(INTERFACE_EQUATIONS%INTERPOLATION% &
+                & INTERFACE_INTERPOLATION,GEOMETRIC_FIELD,LAGRANGE_FIELD,PENALTY_FIELD,ERR,ERROR,*999)
+              DO variable_idx=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
+                DEPENDENT_VARIABLE=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
+                IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
+                  DEPENDENT_FIELD=>DEPENDENT_VARIABLE%FIELD
+                  IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
+                    GEOMETRIC_FIELD=>DEPENDENT_FIELD%geometricField
+                    CALL InterfaceEquations_DomainVariableInterpolationSetup(INTERFACE_EQUATIONS%INTERPOLATION% &
+                      & VARIABLE_INTERPOLATION(variable_idx),GEOMETRIC_FIELD,DEPENDENT_FIELD,ERR,ERROR,*999)
+                  ELSE
+                    CALL FlagError("Dependent variable field is not associated.",ERR,ERROR,*999)
+                  ENDIF
+                ELSE
+                  LOCAL_ERROR="Dependent variable is not associated for variable index "// &
+                    & TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))//"."
+                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+                ENDIF
+              ENDDO !variable_idx
             ELSE
-              CALL FlagError("Interface condition Lagrange is not associated.",ERR,ERROR,*999)
+              CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
             ENDIF
-          CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
-            CALL FlagError("Not implemented.",ERR,ERROR,*999)
-          CASE DEFAULT
-            LOCAL_ERROR="The interface condition method of "// &
-              & TRIM(NUMBER_TO_VSTRING(INTERFACE_CONDITION%METHOD,"*",ERR,ERROR))// &
-              & " is invalid."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          END SELECT
-          !Set the finished flag
-          INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED=.TRUE.
+          ELSE
+            CALL FlagError("Interface condition dependent is not associated.",ERR,ERROR,*999)
+          ENDIF
         ELSE
-          CALL FlagError("Interface equations interface condition is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Interface condition Lagrange is not associated.",ERR,ERROR,*999)
         ENDIF
-      ENDIF
+      CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
+      CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
+        CALL FlagError("Not implemented.",ERR,ERROR,*999)
+      CASE DEFAULT
+        LOCAL_ERROR="The interface condition method of "// &
+          & TRIM(NUMBER_TO_VSTRING(INTERFACE_CONDITION%METHOD,"*",ERR,ERROR))// &
+          & " is invalid."
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+      END SELECT
+      !Set the finished flag
+      INTERFACE_EQUATIONS%interfaceEquationsFinished=.TRUE.
     ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Interface equations interface condition is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("INTERFACE_EQUATIONS_CREATE_FINISH")
@@ -239,7 +234,7 @@ CONTAINS
     ENTERS("INTERFACE_EQUATIONS_CREATE_START",ERR,ERROR,*999)
 
     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-      IF(ASSOCIATED(INTERFACE_CONDITION%INTERFACE_EQUATIONS)) THEN
+      IF(ASSOCIATED(INTERFACE_CONDITION%interfaceEquations)) THEN
         CALL FlagError("Interface equations are already associated for the interface condition.",ERR,ERROR,*999)
       ELSE
         IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
@@ -248,7 +243,7 @@ CONTAINS
           !Initialise the equations
           CALL INTERFACE_EQUATIONS_INITIALISE(INTERFACE_CONDITION,ERR,ERROR,*999)
           !Return the pointer
-          INTERFACE_EQUATIONS=>INTERFACE_CONDITION%INTERFACE_EQUATIONS
+          INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
         ENDIF
       ENDIF
     ELSE
@@ -544,44 +539,38 @@ CONTAINS
  
     ENTERS("InterfaceEquations_InterfaceInterpSetsNumberSet",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        CALL FlagError("Interface equations have already been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
-          IF(NUMBER_OF_GEOMETRIC_SETS>0) THEN
-            IF(NUMBER_OF_DEPENDENT_SETS>0) THEN
-              IF(NUMBER_OF_PENALTY_SETS>=0) THEN
-                INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS= &
-                  & NUMBER_OF_GEOMETRIC_SETS
-                INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS= &
-                  & NUMBER_OF_DEPENDENT_SETS
-                INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_PENALTY_INTERPOLATION_SETS= &
-                  & NUMBER_OF_PENALTY_SETS
-              ELSE
-                LOCAL_ERROR="The specified number of penalty sets of "// &
-                  & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_PENALTY_SETS,"*",ERR,ERROR))// &
-                  & " is invalid. The number of penalty sets must be > 0."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The specified number of dependent sets of "// &
-                & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DEPENDENT_SETS,"*",ERR,ERROR))// &
-                & " is invalid. The number of dependent sets must be > 0."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
+    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    
+    IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
+      IF(NUMBER_OF_GEOMETRIC_SETS>0) THEN
+        IF(NUMBER_OF_DEPENDENT_SETS>0) THEN
+          IF(NUMBER_OF_PENALTY_SETS>=0) THEN
+            INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS= &
+              & NUMBER_OF_GEOMETRIC_SETS
+            INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS= &
+              & NUMBER_OF_DEPENDENT_SETS
+            INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_PENALTY_INTERPOLATION_SETS= &
+              & NUMBER_OF_PENALTY_SETS
           ELSE
-            LOCAL_ERROR="The specified number of geometric sets of "// &
-              & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_SETS,"*",ERR,ERROR))// &
-              & " is invalid. The number of geometric sets must be > 0."
+            LOCAL_ERROR="The specified number of penalty sets of "// &
+              & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_PENALTY_SETS,"*",ERR,ERROR))// &
+              & " is invalid. The number of penalty sets must be > 0."
             CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
+          LOCAL_ERROR="The specified number of dependent sets of "// &
+            & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DEPENDENT_SETS,"*",ERR,ERROR))// &
+            & " is invalid. The number of dependent sets must be > 0."
+          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
         ENDIF
+      ELSE
+        LOCAL_ERROR="The specified number of geometric sets of "// &
+          & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_SETS,"*",ERR,ERROR))// &
+          & " is invalid. The number of geometric sets must be > 0."
+        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
     ENDIF
        
     EXITS("InterfaceEquations_InterfaceInterpSetsNumberSet")
@@ -609,10 +598,10 @@ CONTAINS
 
     IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
       CALL INTERFACE_EQUATIONS_INTERPOLATION_FINALISE(INTERFACE_EQUATIONS%INTERPOLATION,ERR,ERROR,*999)
-      IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERFACE_MAPPING)) &
-        & CALL INTERFACE_MAPPING_DESTROY(INTERFACE_EQUATIONS%INTERFACE_MAPPING,ERR,ERROR,*999)
-      IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERFACE_MATRICES)) &
-        & CALL INTERFACE_MATRICES_DESTROY(INTERFACE_EQUATIONS%INTERFACE_MATRICES,ERR,ERROR,*999)
+      IF(ASSOCIATED(INTERFACE_EQUATIONS%interfaceMapping)) &
+        & CALL INTERFACE_MAPPING_DESTROY(INTERFACE_EQUATIONS%interfaceMapping,ERR,ERROR,*999)
+      IF(ASSOCIATED(INTERFACE_EQUATIONS%interfaceMatrices)) &
+        & CALL InterfaceMatrices_Destroy(INTERFACE_EQUATIONS%interfaceMatrices,ERR,ERROR,*999)
       DEALLOCATE(INTERFACE_EQUATIONS)
     ENDIF
        
@@ -640,21 +629,21 @@ CONTAINS
     ENTERS("INTERFACE_EQUATIONS_INITIALISE",ERR,ERROR,*998)
 
     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-      IF(ASSOCIATED(INTERFACE_CONDITION%INTERFACE_EQUATIONS)) THEN
+      IF(ASSOCIATED(INTERFACE_CONDITION%interfaceEquations)) THEN
         CALL FlagError("Interface equations is already associated for this interface condition.",ERR,ERROR,*998)
       ELSE
-        ALLOCATE(INTERFACE_CONDITION%INTERFACE_EQUATIONS,STAT=ERR)
+        ALLOCATE(INTERFACE_CONDITION%interfaceEquations,STAT=ERR)
         IF(ERR/=0) CALL FlagError("Could not allocate interface equations.",ERR,ERROR,*999)
-        INTERFACE_CONDITION%INTERFACE_EQUATIONS%INTERFACE_CONDITION=>INTERFACE_CONDITION
-        INTERFACE_CONDITION%INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_LINEAR
-        INTERFACE_CONDITION%INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_STATIC
-        INTERFACE_CONDITION%INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_NO_OUTPUT
-        INTERFACE_CONDITION%INTERFACE_EQUATIONS%sparsityType=INTERFACE_EQUATIONS_SPARSE_MATRICES
-        NULLIFY(INTERFACE_CONDITION%INTERFACE_EQUATIONS%INTERPOLATION)
-        NULLIFY(INTERFACE_CONDITION%INTERFACE_EQUATIONS%INTERFACE_MAPPING)
-        NULLIFY(INTERFACE_CONDITION%INTERFACE_EQUATIONS%INTERFACE_MATRICES)
-        INTERFACE_CONDITION%INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED=.FALSE.
-        CALL InterfaceEquations_InterpolationInitialise(INTERFACE_CONDITION%INTERFACE_EQUATIONS,ERR,ERROR,*999)
+        INTERFACE_CONDITION%interfaceEquations%INTERFACE_CONDITION=>INTERFACE_CONDITION
+        INTERFACE_CONDITION%interfaceEquations%linearity=INTERFACE_CONDITION_LINEAR
+        INTERFACE_CONDITION%interfaceEquations%timeDependence=INTERFACE_CONDITION_STATIC
+        INTERFACE_CONDITION%interfaceEquations%outputType=INTERFACE_EQUATIONS_NO_OUTPUT
+        INTERFACE_CONDITION%interfaceEquations%sparsityType=INTERFACE_EQUATIONS_SPARSE_MATRICES
+        NULLIFY(INTERFACE_CONDITION%interfaceEquations%INTERPOLATION)
+        NULLIFY(INTERFACE_CONDITION%interfaceEquations%interfaceMapping)
+        NULLIFY(INTERFACE_CONDITION%interfaceEquations%interfaceMatrices)
+        INTERFACE_CONDITION%interfaceEquations%interfaceEquationsFinished=.FALSE.
+        CALL InterfaceEquations_InterpolationInitialise(INTERFACE_CONDITION%interfaceEquations,ERR,ERROR,*999)
       ENDIF
     ELSE
       CALL FlagError("Interface condition is not associated.",ERR,ERROR,*998)
@@ -662,7 +651,7 @@ CONTAINS
        
     EXITS("INTERFACE_EQUATIONS_INITIALISE")
     RETURN
-999 CALL INTERFACE_EQUATIONS_FINALISE(INTERFACE_CONDITION%INTERFACE_EQUATIONS,DUMMY_ERR,DUMMY_ERROR,*998)
+999 CALL INTERFACE_EQUATIONS_FINALISE(INTERFACE_CONDITION%interfaceEquations,DUMMY_ERR,DUMMY_ERROR,*998)
 998 ERRORSEXITS("INTERFACE_EQUATIONS_INITIALISE",ERR,ERROR)
     RETURN 1
     
@@ -833,15 +822,9 @@ CONTAINS
  
     ENTERS("INTERFACE_EQUATIONS_OUTPUT_TYPE_GET",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        OUTPUT_TYPE=INTERFACE_EQUATIONS%outputType
-      ELSE
-        CALL FlagError("Interface equations has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    
+    OUTPUT_TYPE=INTERFACE_EQUATIONS%outputType
        
     EXITS("INTERFACE_EQUATIONS_OUTPUT_TYPE_GET")
     RETURN
@@ -861,7 +844,7 @@ CONTAINS
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to get the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to get the time dependence for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<The interface matrix time dependence type to get. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<The interface matrix time dependence type to get. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string    
     !Local variables
@@ -893,12 +876,12 @@ CONTAINS
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
-    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string    
     !Local variables
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("InterfaceEquations_MatrixTimeDependenceTypeGet",err,error,*999)
@@ -907,7 +890,7 @@ CONTAINS
     NULLIFY(interfaceMatrices)
     CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
     NULLIFY(interfaceMatrix)
-    CALL InterfaceMatrices_MatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+    CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
     IF(hasTranspose) THEN
       IF(.NOT.SIZE(timeDependenceTypes,1)==2) THEN
         localError="The size of the time dependence types array of "// &
@@ -924,10 +907,10 @@ CONTAINS
       ENDIF
     ENDIF
 
-    timeDependenceTypes(1)=interfaceMatrix%INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE
+    timeDependenceTypes(1)=interfaceMatrix%interfaceMatrixTimeDependenceType
     IF(hasTranspose) THEN
-      IF(interfaceMatrix%HAS_TRANSPOSE) THEN
-        timeDependenceTypes(2)=interfaceMatrix%INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE
+      IF(interfaceMatrix%hasTranspose) THEN
+        timeDependenceTypes(2)=interfaceMatrix%interfaceMatrixTransposeTimeDependenceType
       ELSE
         localError="Can not set the tranpose time dependence time for interface matrix index "// &
           & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//" as that matrix does not have a transpose."
@@ -955,7 +938,7 @@ CONTAINS
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
-    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string    
     !Local variables
@@ -985,13 +968,13 @@ CONTAINS
     TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
-    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see INTERFACE_MATRICES_ROUTINES_InterfaceMatricesTimeDependenceTypes
+    INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string    
     !Local variables
     INTEGER(INTG) :: transposeIdx
-    TYPE(INTERFACE_MATRICES_TYPE), POINTER :: interfaceMatrices
-    TYPE(INTERFACE_MATRIX_TYPE), POINTER :: interfaceMatrix
+    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
+    TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("InterfaceEquations_MatrixTimeDependenceTypeSet",err,error,*999)
@@ -1000,7 +983,7 @@ CONTAINS
     NULLIFY(interfaceMatrices)
     CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
     NULLIFY(interfaceMatrix)
-    CALL InterfaceMatrices_MatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
+    CALL InterfaceMatrices_InterfaceMatrixGet(interfaceMatrices,interfaceMatrixIdx,interfaceMatrix,err,error,*999)
     IF(hasTranspose) THEN
       IF(.NOT.SIZE(timeDependenceTypes,1)==2) THEN
         localError="The size of the time dependence types array of "// &
@@ -1029,10 +1012,10 @@ CONTAINS
       END SELECT
     ENDDO !transposeIdx
 
-    interfaceMatrix%INTERFACE_MATRIX_TIME_DEPENDENCE_TYPE=timeDependenceTypes(1)
+    interfaceMatrix%interfaceMatrixTimeDependenceType=timeDependenceTypes(1)
     IF(hasTranspose) THEN
-      IF(interfaceMatrix%HAS_TRANSPOSE) THEN
-        interfaceMatrix%INTERFACE_MATRIX_TRANSPOSE_TIME_DEPENDENCE_TYPE=timeDependenceTypes(2)
+      IF(interfaceMatrix%hasTranspose) THEN
+        interfaceMatrix%interfaceMatrixTransposeTimeDependenceType=timeDependenceTypes(2)
       ELSE
         localError="Can not set the tranpose time dependence time for interface matrix index "// &
           & TRIM(NumberToVString(interfaceMatrixIdx,"*",err,error))//" as that matrix does not have a transpose."
@@ -1065,27 +1048,21 @@ CONTAINS
  
     ENTERS("INTERFACE_EQUATIONS_OUTPUT_TYPE_SET",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        CALL FlagError("Interface equations has already been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(OUTPUT_TYPE)
-        CASE(INTERFACE_EQUATIONS_NO_OUTPUT)
-          INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_NO_OUTPUT
-        CASE(INTERFACE_EQUATIONS_TIMING_OUTPUT)
-          INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_TIMING_OUTPUT
-        CASE(INTERFACE_EQUATIONS_MATRIX_OUTPUT)
-          INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_MATRIX_OUTPUT
-        CASE(INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT)
-          INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT
-        CASE DEFAULT
-          LOCAL_ERROR="The specified output type of "//TRIM(NUMBER_TO_VSTRING(OUTPUT_TYPE,"*",ERR,ERROR))//" is invalid"
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    
+    SELECT CASE(OUTPUT_TYPE)
+    CASE(INTERFACE_EQUATIONS_NO_OUTPUT)
+      INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_NO_OUTPUT
+    CASE(INTERFACE_EQUATIONS_TIMING_OUTPUT)
+      INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_TIMING_OUTPUT
+    CASE(INTERFACE_EQUATIONS_MATRIX_OUTPUT)
+      INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_MATRIX_OUTPUT
+    CASE(INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT)
+      INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT
+    CASE DEFAULT
+      LOCAL_ERROR="The specified output type of "//TRIM(NUMBER_TO_VSTRING(OUTPUT_TYPE,"*",ERR,ERROR))//" is invalid"
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    END SELECT
        
     EXITS("INTERFACE_EQUATIONS_OUTPUT_TYPE_SET")
     RETURN
@@ -1110,15 +1087,9 @@ CONTAINS
  
     ENTERS("INTERFACE_EQUATIONS_SPARSITY_TYPE_GET",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        SPARSITY_TYPE=INTERFACE_EQUATIONS%sparsityType
-      ELSE
-        CALL FlagError("Interface equations has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    
+    SPARSITY_TYPE=INTERFACE_EQUATIONS%sparsityType
        
     EXITS("INTERFACE_EQUATIONS_SPARSITY_TYPE_GET")
     RETURN
@@ -1143,25 +1114,19 @@ CONTAINS
  
     ENTERS("INTERFACE_EQUATIONS_SPARSITY_TYPE_SET",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        CALL FlagError("Interface equations has already been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(SPARSITY_TYPE)
-        CASE(INTERFACE_EQUATIONS_SPARSE_MATRICES)
-          INTERFACE_EQUATIONS%sparsityType=INTERFACE_EQUATIONS_SPARSE_MATRICES
-        CASE(INTERFACE_EQUATIONS_FULL_MATRICES)
-          INTERFACE_EQUATIONS%sparsityType=INTERFACE_EQUATIONS_FULL_MATRICES
-        CASE DEFAULT
-          LOCAL_ERROR="The specified sparsity type of "//TRIM(NUMBER_TO_VSTRING(SPARSITY_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
-       
+    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+
+    SELECT CASE(SPARSITY_TYPE)
+    CASE(INTERFACE_EQUATIONS_SPARSE_MATRICES)
+      INTERFACE_EQUATIONS%sparsityType=INTERFACE_EQUATIONS_SPARSE_MATRICES
+    CASE(INTERFACE_EQUATIONS_FULL_MATRICES)
+      INTERFACE_EQUATIONS%sparsityType=INTERFACE_EQUATIONS_FULL_MATRICES
+    CASE DEFAULT
+      LOCAL_ERROR="The specified sparsity type of "//TRIM(NUMBER_TO_VSTRING(SPARSITY_TYPE,"*",ERR,ERROR))// &
+        & " is invalid."
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    END SELECT
+        
     EXITS("INTERFACE_EQUATIONS_SPARSITY_TYPE_SET")
     RETURN
 999 ERRORSEXITS("INTERFACE_EQUATIONS_SPARSITY_TYPE_SET",ERR,ERROR)
@@ -1184,15 +1149,9 @@ CONTAINS
  
     ENTERS("INTERFACE_EQUATIONS_LINEARITY_TYPE_GET",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        LINEARITY_TYPE=INTERFACE_EQUATIONS%linearity
-      ELSE
-        CALL FlagError("Interface equations has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    
+    LINEARITY_TYPE=INTERFACE_EQUATIONS%linearity
        
     EXITS("INTERFACE_EQUATIONS_LINEARITY_TYPE_GET")
     RETURN
@@ -1217,26 +1176,20 @@ CONTAINS
  
     ENTERS("INTERFACE_EQUATIONS_LINEARITY_TYPE_SET",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        CALL FlagError("Interface equations has already been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(LINEARITY_TYPE)
-        CASE(INTERFACE_CONDITION_LINEAR)
-          INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_LINEAR
-        CASE(INTERFACE_CONDITION_NONLINEAR)
-          INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_NONLINEAR
-        CASE(INTERFACE_CONDITION_NONLINEAR_BCS)
-          INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_NONLINEAR_BCS
-        CASE DEFAULT
-          LOCAL_ERROR="The specified linearity type of "//TRIM(NUMBER_TO_VSTRING(LINEARITY_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    
+    SELECT CASE(LINEARITY_TYPE)
+    CASE(INTERFACE_CONDITION_LINEAR)
+      INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_LINEAR
+    CASE(INTERFACE_CONDITION_NONLINEAR)
+      INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_NONLINEAR
+    CASE(INTERFACE_CONDITION_NONLINEAR_BCS)
+      INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_NONLINEAR_BCS
+    CASE DEFAULT
+      LOCAL_ERROR="The specified linearity type of "//TRIM(NUMBER_TO_VSTRING(LINEARITY_TYPE,"*",ERR,ERROR))// &
+        & " is invalid."
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    END SELECT
        
     EXITS("INTERFACE_EQUATIONS_LINEARITY_TYPE_SET")
     RETURN
@@ -1260,15 +1213,9 @@ CONTAINS
  
     ENTERS("InterfaceEquations_TimeDependenceTypeGet",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        TIME_DEPENDENCE_TYPE=INTERFACE_EQUATIONS%timeDependence
-      ELSE
-        CALL FlagError("Interface equations has not been finished.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+
+    TIME_DEPENDENCE_TYPE=INTERFACE_EQUATIONS%timeDependence
        
     EXITS("InterfaceEquations_TimeDependenceTypeGet")
     RETURN
@@ -1294,28 +1241,22 @@ CONTAINS
  
     ENTERS("InterfaceEquations_TimeDependenceTypeSet",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        CALL FlagError("Interface equations has already been finished.",ERR,ERROR,*999)
-      ELSE
-        SELECT CASE(TIME_DEPENDENCE_TYPE)
-        CASE(INTERFACE_CONDITION_STATIC)
-          INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_STATIC
-        CASE(INTERFACE_CONDITION_QUASISTATIC)
-          INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_QUASISTATIC
-        CASE(INTERFACE_CONDITION_FIRST_ORDER_DYNAMIC)
-          INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_FIRST_ORDER_DYNAMIC
-        CASE(INTERFACE_CONDITION_SECOND_ORDER_DYNAMIC)
-          INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_SECOND_ORDER_DYNAMIC
-        CASE DEFAULT
-          LOCAL_ERROR="The specified time dependence type of "//TRIM(NUMBER_TO_VSTRING(TIME_DEPENDENCE_TYPE,"*",ERR,ERROR))// &
-            & " is invalid."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        END SELECT
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    
+    SELECT CASE(TIME_DEPENDENCE_TYPE)
+    CASE(INTERFACE_CONDITION_STATIC)
+      INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_STATIC
+    CASE(INTERFACE_CONDITION_QUASISTATIC)
+      INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_QUASISTATIC
+    CASE(INTERFACE_CONDITION_FIRST_ORDER_DYNAMIC)
+      INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_FIRST_ORDER_DYNAMIC
+    CASE(INTERFACE_CONDITION_SECOND_ORDER_DYNAMIC)
+      INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_SECOND_ORDER_DYNAMIC
+    CASE DEFAULT
+      LOCAL_ERROR="The specified time dependence type of "//TRIM(NUMBER_TO_VSTRING(TIME_DEPENDENCE_TYPE,"*",ERR,ERROR))// &
+        & " is invalid."
+      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+    END SELECT
        
     EXITS("InterfaceEquations_TimeDependenceTypeSet")
     RETURN
@@ -1346,60 +1287,54 @@ CONTAINS
  
     ENTERS("InterfaceEquations_VariableInterpSetsNumberSet",ERR,ERROR,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      IF(INTERFACE_EQUATIONS%INTERFACE_EQUATIONS_FINISHED) THEN
-        CALL FlagError("Interface equations have already been finished.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
-          IF(ALLOCATED(INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION)) THEN
-            INTERFACE_CONDITION=>INTERFACE_EQUATIONS%INTERFACE_CONDITION
-            IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-              INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
-              IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
-                IF(VARIABLE_INDEX>0.AND.VARIABLE_INDEX<=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES) THEN
-                  IF(NUMBER_OF_GEOMETRIC_SETS>0) THEN
-                    IF(NUMBER_OF_DEPENDENT_SETS>0) THEN
-                      INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
-                        & NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS=NUMBER_OF_GEOMETRIC_SETS
-                      INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
-                        & NUMBER_OF_DEPENDENT_INTERPOLATION_SETS=NUMBER_OF_DEPENDENT_SETS
-                      INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
-                        & NUMBER_OF_PENALTY_INTERPOLATION_SETS=NUMBER_OF_PENALTY_SETS
-                    ELSE
-                      LOCAL_ERROR="The specified number of dependent sets of "// &
-                        & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DEPENDENT_SETS,"*",ERR,ERROR))// &
-                        & " is invalid. The number of dependent sets must be > 0."
-                      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                    ENDIF
-                  ELSE
-                    LOCAL_ERROR="The specified number of geometric sets of "// &
-                      & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_SETS,"*",ERR,ERROR))// &
-                      & " is invalid. The number of geometric sets must be > 0."
-                    CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                  ENDIF
+    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    
+    IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
+      IF(ALLOCATED(INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION)) THEN
+        INTERFACE_CONDITION=>INTERFACE_EQUATIONS%INTERFACE_CONDITION
+        IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
+          INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
+          IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
+            IF(VARIABLE_INDEX>0.AND.VARIABLE_INDEX<=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES) THEN
+              IF(NUMBER_OF_GEOMETRIC_SETS>0) THEN
+                IF(NUMBER_OF_DEPENDENT_SETS>0) THEN
+                  INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
+                    & NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS=NUMBER_OF_GEOMETRIC_SETS
+                  INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
+                    & NUMBER_OF_DEPENDENT_INTERPOLATION_SETS=NUMBER_OF_DEPENDENT_SETS
+                  INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
+                    & NUMBER_OF_PENALTY_INTERPOLATION_SETS=NUMBER_OF_PENALTY_SETS
                 ELSE
-                  LOCAL_ERROR="The specified variable index of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_INDEX,"*",ERR,ERROR))// &
-                    & " is invalid. The index needs to be > 0 and <= "// &
-                    & TRIM(NUMBER_TO_VSTRING(INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES,"*",ERR,ERROR))//"."
+                  LOCAL_ERROR="The specified number of dependent sets of "// &
+                    & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DEPENDENT_SETS,"*",ERR,ERROR))// &
+                    & " is invalid. The number of dependent sets must be > 0."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 ENDIF
               ELSE
-                CALL FlagError("Interface condition dependent is not associated.",ERR,ERROR,*999)
+                LOCAL_ERROR="The specified number of geometric sets of "// &
+                  & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_SETS,"*",ERR,ERROR))// &
+                  & " is invalid. The number of geometric sets must be > 0."
+                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               ENDIF
             ELSE
-              CALL FlagError("Interface equations interface condition is not associated.",ERR,ERROR,*999)
+              LOCAL_ERROR="The specified variable index of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_INDEX,"*",ERR,ERROR))// &
+                & " is invalid. The index needs to be > 0 and <= "// &
+                & TRIM(NUMBER_TO_VSTRING(INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES,"*",ERR,ERROR))//"."
+              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
             ENDIF
           ELSE
-            CALL FlagError("Interface equations interpolation variable interpolation is not allocated.",ERR,ERROR,*999)
+            CALL FlagError("Interface condition dependent is not associated.",ERR,ERROR,*999)
           ENDIF
         ELSE
-          CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
+          CALL FlagError("Interface equations interface condition is not associated.",ERR,ERROR,*999)
         ENDIF
+      ELSE
+        CALL FlagError("Interface equations interpolation variable interpolation is not allocated.",ERR,ERROR,*999)
       ENDIF
     ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
+      CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
     ENDIF
-       
+    
     EXITS("InterfaceEquations_VariableInterpSetsNumberSet")
     RETURN
 999 ERRORS("InterfaceEquations_VariableInterpSetsNumberSet",ERR,ERROR)

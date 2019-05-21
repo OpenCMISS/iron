@@ -2034,7 +2034,7 @@ CONTAINS
               coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
               rowCouplingCoefficient=rowCoupling(rowNumber)%couplingCoefficients(coupledRowIdx)
               vectorValue=matrixValue*alpha*rowCouplingCoefficient
-              CALL DistributedVector_ValuesAdd(distributedVector,rowNumber,vectorValue,err,error,*999)
+              CALL DistributedVector_ValuesAdd(distributedVector,coupledRowNumber,vectorValue,err,error,*999)
             ENDDO !coupledRowIdx
           ENDIF
         ENDDO !rowNumber
@@ -2046,7 +2046,7 @@ CONTAINS
             coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
             rowCouplingCoefficient=rowCoupling(rowNumber)%couplingCoefficients(coupledRowIdx)
             vectorValue=matrixValue*alpha*rowCouplingCoefficient
-            CALL DistributedVector_ValuesAdd(distributedVector,rowNumber,vectorValue,err,error,*999)
+            CALL DistributedVector_ValuesAdd(distributedVector,coupledRowNumber,vectorValue,err,error,*999)
           ENDDO !coupledRowIdx
         ENDIF
       CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -2066,7 +2066,7 @@ CONTAINS
                 coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
                 rowCouplingCoefficient=rowCoupling(rowNumber)%couplingCoefficients(coupledRowIdx)
                 vectorValue=matrixValue*alpha*rowCouplingCoefficient
-                CALL DistributedVector_ValuesAdd(distributedVector,rowNumber,vectorValue,err,error,*999)
+                CALL DistributedVector_ValuesAdd(distributedVector,coupledRowNumber,vectorValue,err,error,*999)
               ENDDO !coupledRowIdx
             ENDIF
           ENDDO !rowIdx
@@ -2088,7 +2088,7 @@ CONTAINS
                   coupledRowNumber=rowCoupling(rowNumber)%rowCols(coupledRowIdx)
                   rowCouplingCoefficient=rowCoupling(rowNumber)%couplingCoefficients(coupledRowIdx)
                   vectorValue=matrixValue*alpha*rowCouplingCoefficient
-                  CALL DistributedVector_ValuesAdd(distributedVector,rowNumber,vectorValue,err,error,*999)
+                  CALL DistributedVector_ValuesAdd(distributedVector,coupledRowNumber,vectorValue,err,error,*999)
                 ENDDO !coupledRowIdx
               ENDIF
             ENDDO !rowIdx

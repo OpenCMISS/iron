@@ -64,11 +64,65 @@ MODULE SolverMappingAccessRoutines
 
   !Interfaces
 
+  PUBLIC SolverMapping_AssertIsFinished,SolverMapping_AssertNotFinished
+
   PUBLIC SolverMapping_EquationsSetGet
 
   PUBLIC SolverMapping_InterfaceConditionGet
   
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an solver mapping has been finished
+  SUBROUTINE SolverMapping_AssertIsFinished(solverMapping,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_MAPPING_TYPE), POINTER, INTENT(IN) :: solverMapping !<The solver mapping to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMapping_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+
+    IF(.NOT.solverMapping%solverMappingFinished) CALL FlagError("Solver mapping has not been finished.",err,error,*999)
+    
+    EXITS("SolverMapping_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("SolverMapping_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an solver mapping has not been finished
+  SUBROUTINE SolverMapping_AssertNotFinished(solverMapping,err,error,*)
+
+    !Argument Variables
+    TYPE(SOLVER_MAPPING_TYPE), POINTER, INTENT(IN) :: solverMapping !<The solver mapping to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("SolverMapping_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(solverMapping)) CALL FlagError("Solver mapping is not associated.",err,error,*999)
+
+    IF(solverMapping%solverMappingFinished) CALL FlagError("Solver mapping has already been finished.",err,error,*999)
+    
+    EXITS("SolverMapping_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("SolverMapping_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SolverMapping_AssertNotFinished
 
   !
   !================================================================================================================================
