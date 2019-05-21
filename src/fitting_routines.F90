@@ -147,8 +147,8 @@ CONTAINS
 
     REAL(DP), POINTER :: independentVectorParameters(:),independentWeightParameters(:)
     REAL(DP) :: projectionXi(3)
-    REAL(DP) :: porosity0, porosity, permOverVisParam0, permOverVisParam,tauParam,kappaParam
-    REAL(DP) :: tension,curvature
+    REAL(DP) :: porosity0, porosity, permOverVisParam0, permOverVisParam
+    REAL(DP) :: tau1,tau2,tau3,kappa11,kappa22,kappa33,kappa12,kappa13,kappa23,tension,curvature
     REAL(DP) :: materialFact
     REAL(DP) :: dXdY(3,3), dXdXi(3,3), dYdXi(3,3), dXidY(3,3), dXidX(3,3)
     REAL(DP) :: Jxy, Jyxi
@@ -339,8 +339,19 @@ CONTAINS
                   !Get Sobolev smoothing parameters from interpolated material field
                   CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                     & equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                  tauParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
-                  kappaParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
+                  tau1=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
+                  kappa11=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
+                  IF(numberOfXi>1) THEN
+                    tau2=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(3,NO_PART_DERIV)
+                    kappa22=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(4,NO_PART_DERIV)
+                    kappa12=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(5,NO_PART_DERIV)
+                    IF(numberOfXi>2) THEN
+                      tau3=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(6,NO_PART_DERIV)
+                      kappa33=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(7,NO_PART_DERIV)
+                      kappa13=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(8,NO_PART_DERIV)
+                      kappa23=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(9,NO_PART_DERIV)
+                    ENDIF
+                  ENDIF
                   jacobianGaussWeight=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian* &
                     & quadratureScheme%GAUSS_WEIGHTS(gaussPointIdx)
 
@@ -366,50 +377,35 @@ CONTAINS
                           dependentParameterColumnIdx=dependentParameterColumnIdx+1
 
                           !Calculate Sobolev surface tension and curvature smoothing terms
-                          tension = tauParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
-                            & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1, &
-                            & gaussPointIdx))
-                          curvature = kappaParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
-                            & gaussPointIdx)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S1, &
-                            & gaussPointIdx))
+                          tension = tau1*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
+                            & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
+                            & PART_DERIV_S1,gaussPointIdx)
+                          curvature = kappa11*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx, &
+                            & PART_DERIV_S1_S1,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                            & dependentElementParameterColumnIdx,PART_DERIV_S1_S1,gaussPointIdx)
                           IF(numberOfXi > 1) THEN
-                            tension = tension + tauParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
-                              & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2, &
-                              & gaussPointIdx))
-                            curvature = curvature + kappaParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
-                              & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S2, &
-                              & gaussPointIdx) + &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
-                              & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S2, &
-                              & gaussPointIdx))
+                            tension = tension + tau2*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx, &
+                              & PART_DERIV_S2,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                              & dependentElementParameterColumnIdx,PART_DERIV_S2,gaussPointIdx)
+                            curvature = curvature + kappa22*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx, &
+                              & PART_DERIV_S2_S2,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                              & dependentElementParameterColumnIdx,PART_DERIV_S2_S2,gaussPointIdx) + &
+                              & kappa12*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
+                              & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
+                              & PART_DERIV_S1_S2,gaussPointIdx)
                             IF(numberOfXi > 2) THEN
-                              tension = tension + tauParam*2.0_DP* ( &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3, &
-                                & gaussPointIdx))
-                              curvature = curvature + kappaParam*2.0_DP* ( &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3_S3, &
-                                & gaussPointIdx)+ &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S3, &
-                                & gaussPointIdx)+ &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S3, &
-                                & gaussPointIdx))
+                              tension = tension + tau3*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx, &
+                                & PART_DERIV_S3,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                                & dependentElementParameterColumnIdx,PART_DERIV_S3,gaussPointIdx)
+                              curvature = curvature + kappa33*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,&
+                                & PART_DERIV_S3_S3,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                                & dependentElementParameterColumnIdx,PART_DERIV_S3_S3,gaussPointIdx)+ &
+                                & kappa13*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
+                                & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
+                                & PART_DERIV_S1_S3,gaussPointIdx)+ &
+                                & kappa23*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
+                                & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
+                                & PART_DERIV_S2_S3,gaussPointIdx)
                             ENDIF ! 3D
                           ENDIF ! 2 or 3D
                           sum = (tension + curvature) * jacobianGaussWeight
@@ -558,89 +554,92 @@ CONTAINS
             CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
               !Do nothing
             CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
-            !===========================================
-            ! S o b o l e v   S m o o t h i n g
-            !===========================================
-            !Loop over gauss points
-            DO ng=1,quadratureScheme%NUMBER_OF_GAUSS
-              CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-                & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-                & dependentInterpPoint(dependentVariableType)%ptr,err,error,*999)
-              CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
-                & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
-                & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              tauParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
-              kappaParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
-              !Loop over field components
-              jacobianGaussWeight=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian* &
-                & quadratureScheme%GAUSS_WEIGHTS(ng)
+              !===========================================
+              ! S o b o l e v   S m o o t h i n g
+              !===========================================
+              !Loop over gauss points
+              DO ng=1,quadratureScheme%NUMBER_OF_GAUSS
+                CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                  & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                  & dependentInterpPoint(dependentVariableType)%ptr,err,error,*999)
+                CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,ng,equations%interpolation% &
+                  & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+                  & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                tau1=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
+                kappa11=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
+                IF(numberOfXi>1) THEN
+                  tau2=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(3,NO_PART_DERIV)
+                  kappa22=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(4,NO_PART_DERIV)
+                  kappa12=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(5,NO_PART_DERIV)
+                  IF(numberOfXi>2) THEN
+                    tau3=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(6,NO_PART_DERIV)
+                    kappa33=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(7,NO_PART_DERIV)
+                    kappa13=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(8,NO_PART_DERIV)
+                    kappa23=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(9,NO_PART_DERIV)
+                  ENDIF
+                ENDIF
+                !Loop over field components
+                jacobianGaussWeight=equations%interpolation%geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr%jacobian* &
+                  & quadratureScheme%GAUSS_WEIGHTS(ng)
+                
+                mhs=0
+                DO mh=1,dependentVariable%NUMBER_OF_COMPONENTS
+                  !Loop over element rows
+                  meshComponent1=dependentVariable%components(mh)%MESH_COMPONENT_NUMBER
+                  dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr% &
+                    & topology%elements%elements(elementNumber)%basis
+                  quadratureSchemeRow=>dependentBasisRow%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+                  DO ms=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
+                    mhs=mhs+1
+                    nhs=0
+                    IF(equationsMatrix%updateMatrix) THEN
+                      !Loop over element columns
+                      DO nh=1,dependentVariable%NUMBER_OF_COMPONENTS
+                        meshComponent2=dependentVariable%components(nh)%MESH_COMPONENT_NUMBER
+                        dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
+                          & topology%elements%elements(elementNumber)%basis
+                        quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
+                          & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
+                        DO ns=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
+                          nhs=nhs+1
+                          sum = 0.0_DP
+                          
+                          !Calculate Sobolev surface tension and curvature smoothing terms
+                          tension = tau1*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1,ng)* &
+                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1,ng)
+                          curvature = kappa11*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S1,ng)* &
+                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,ng)
+                          IF(numberOfXi > 1) THEN
+                            tension = tension + tau2*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2,ng)* &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2,ng)
+                            curvature = curvature + kappa22*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S2,ng)* &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S2,ng) + &
+                              & kappa12*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S2,ng)* &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,ng)
+                            IF(numberOfXi > 2) THEN
+                              tension = tension + tau3*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3,ng)
+                              curvature = curvature + kappa33*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3_S3,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3_S3,ng)+ &
+                                & kappa13*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S3,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,ng)+ &
+                                & kappa23*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S3,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,ng)
+                            ENDIF ! 3D
+                          ENDIF ! 2 or 3D
 
-              mhs=0
-              DO mh=1,dependentVariable%NUMBER_OF_COMPONENTS
-                !Loop over element rows
-                meshComponent1=dependentVariable%components(mh)%MESH_COMPONENT_NUMBER
-                dependentBasisRow=>dependentField%decomposition%domain(meshComponent1)%ptr% &
-                  & topology%elements%elements(elementNumber)%basis
-                quadratureSchemeRow=>dependentBasisRow%quadrature%QUADRATURE_SCHEME_MAP(BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                DO ms=1,dependentBasisRow%NUMBER_OF_ELEMENT_PARAMETERS
-                  mhs=mhs+1
-                  nhs=0
-                  IF(equationsMatrix%updateMatrix) THEN
-                    !Loop over element columns
-                    DO nh=1,dependentVariable%NUMBER_OF_COMPONENTS
-                      meshComponent2=dependentVariable%components(nh)%MESH_COMPONENT_NUMBER
-                      dependentBasisColumn=>dependentField%decomposition%domain(meshComponent2)%ptr% &
-                        & topology%elements%elements(elementNumber)%basis
-                      quadratureSchemeColumn=>dependentBasisColumn%quadrature%QUADRATURE_SCHEME_MAP( &
-                        & BASIS_DEFAULT_QUADRATURE_SCHEME)%ptr
-                      DO ns=1,dependentBasisColumn%NUMBER_OF_ELEMENT_PARAMETERS
-                        nhs=nhs+1
-                        sum = 0.0_DP
-
-                        !Calculate sobolev surface tension and curvature smoothing terms
-                        tension = tauParam*2.0_DP* ( &
-                          & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1,ng)* &
-                          & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1,ng))
-                        curvature = kappaParam*2.0_DP* ( &
-                          & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S1,ng)* &
-                          & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,ng))
-
-                        IF(dependentVariable%NUMBER_OF_COMPONENTS > 1) THEN
-                          tension = tension + tauParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2,ng)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2,ng))
-                          curvature = curvature + kappaParam*2.0_DP* ( &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S2,ng)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S2,ng) + &
-                            & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S2,ng)* &
-                            & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,ng))
-
-                          IF(dependentVariable%NUMBER_OF_COMPONENTS > 2) THEN
-                            tension = tension + tauParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3,ng))
-                            curvature = curvature + kappaParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3_S3,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,ng))
-                          ENDIF ! 3D
-                        ENDIF ! 2 or 3D
-
-                        ! Add in smoothing terms to the element matrix
-                        equationsMatrix%elementMatrix%matrix(mhs,nhs) = &
-                          & equationsMatrix%elementMatrix%matrix(mhs,nhs) + (tension + curvature) * jacobianGaussWeight
-
-                      ENDDO !ns
-                    ENDDO !nh
-                  ENDIF ! update matrix
-                ENDDO !ms
-              ENDDO !mh
-            ENDDO !ng
+                          ! Add in smoothing terms to the element matrix
+                          equationsMatrix%elementMatrix%matrix(mhs,nhs) = &
+                            & equationsMatrix%elementMatrix%matrix(mhs,nhs) + (tension + curvature) * jacobianGaussWeight
+                          
+                        ENDDO !ns
+                      ENDDO !nh
+                    ENDIF ! update matrix
+                  ENDDO !ms
+                ENDDO !mh
+              ENDDO !ng
             CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
@@ -843,6 +842,7 @@ CONTAINS
             dependentVariableType=fieldVariable%VARIABLE_TYPE
             dependentBasis=>dependentField%decomposition%domain(dependentField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
               & topology%elements%elements(elementNumber)%basis
+            numberOfXi=dependentBasis%NUMBER_OF_XI
             geometricBasis=>geometricField%decomposition%domain(geometricField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
               & topology%elements%elements(elementNumber)%basis
             sourceBasis=>sourceField%decomposition%domain(sourceField%decomposition%MESH_COMPONENT_NUMBER)%ptr% &
@@ -866,9 +866,20 @@ CONTAINS
                 & materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
                 & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              tauParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
-              kappaParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
-              ! WRITE(*,*)'tauParam ',tauParam
+              tau1=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
+              kappa11=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
+              IF(numberOfXi>1) THEN
+                tau2=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(3,NO_PART_DERIV)
+                kappa22=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(4,NO_PART_DERIV)
+                kappa12=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(5,NO_PART_DERIV)
+                IF(numberOfXi>2) THEN
+                  tau3=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(6,NO_PART_DERIV)
+                  kappa33=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(7,NO_PART_DERIV)
+                  kappa13=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(8,NO_PART_DERIV)
+                  kappa23=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(9,NO_PART_DERIV)
+                ENDIF
+              ENDIF
+             ! WRITE(*,*)'tauParam ',tauParam
               uValue=0.0_DP
               IF(sourceVector%updateVector) THEN
                 CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber, &
@@ -934,29 +945,29 @@ CONTAINS
                           CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
                             !Do nothing
                           CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
-                            sum = sum +    ( &
-                              & tauParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3,ng)) +&
-                              & kappaParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S1,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S2,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S2,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3_S3,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S2,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,ng))) !&
-                            ! no weighting either?
-                            !                             & * rwg
+                            tension = tau1*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1,ng)* &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1,ng)
+                            curvature = kappa11*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S1,ng)* &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,ng)
+                            IF(numberOfXi > 1) THEN
+                              tension = tension + tau2*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2,ng)
+                              curvature = curvature + kappa22*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S2,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S2,ng) + &
+                                & kappa12*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S2,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,ng)
+                              IF(numberOfXi > 2) THEN
+                                tension = tension + tau3*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3,ng)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3,ng)
+                                curvature = curvature + kappa33*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3_S3,ng)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3_S3,ng)+ &
+                                  & kappa13*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S3,ng)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,ng)+ &
+                                  & kappa23*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S3,ng)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,ng)
+                              ENDIF ! 3D
+                            ENDIF ! 2 or 3D
+                            sum = sum + (tension + curvature)*rwg
 
                           CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
                             CALL FlagError("Not implemented.",err,error,*999)
@@ -979,32 +990,29 @@ CONTAINS
                           CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
                             !Do nothing
                           CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
-                            !REDUCED SOBOLEV SMOOTHING
-                            !This stiffness matrix contribution is with "integration" means ng=ng in fact!
-                            sum = sum +    ( &
-                              & tauParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3,ng)) +&
-                              & kappaParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S1,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S2,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S2,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3_S3,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S2,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,ng)+ &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S3,ng)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,ng))) !&
-                            ! no weighting either?
-                            !                             & * rwg
-
+                           tension = tau1*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1,ng)* &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1,ng)
+                            curvature = kappa11*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S1,ng)* &
+                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S1,ng)
+                            IF(numberOfXi > 1) THEN
+                              tension = tension + tau2*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2,ng)
+                              curvature = curvature + kappa22*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S2,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S2,ng) + &
+                                & kappa12*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S2,ng)* &
+                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S2,ng)
+                              IF(numberOfXi > 2) THEN
+                                tension = tension + tau3*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3,ng)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3,ng)
+                                curvature = curvature + kappa33*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S3_S3,ng)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S3_S3,ng)+ &
+                                  & kappa13*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S1_S3,ng)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S1_S3,ng)+ &
+                                  & kappa23*quadratureSchemeRow%GAUSS_BASIS_FNS(ms,PART_DERIV_S2_S3,ng)* &
+                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(ns,PART_DERIV_S2_S3,ng)
+                              ENDIF ! 3D
+                            ENDIF ! 2 or 3D
+                            sum = sum + (tension + curvature)*rwg
 
                           CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
                             CALL FlagError("Not implemented.",err,error,*999)
@@ -1148,8 +1156,19 @@ CONTAINS
                 !Get Sobolev smoothing data from interpolated fields
                 CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                   & equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-                tauParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
-                kappaParam=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
+                tau1=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(1,NO_PART_DERIV)
+                kappa11=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(2,NO_PART_DERIV)
+                IF(numberOfXi>1) THEN
+                  tau2=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(3,NO_PART_DERIV)
+                  kappa22=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(4,NO_PART_DERIV)
+                  kappa12=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(5,NO_PART_DERIV)
+                  IF(numberOfXi>2) THEN
+                    tau3=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(6,NO_PART_DERIV)
+                    kappa33=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(7,NO_PART_DERIV)
+                    kappa13=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(8,NO_PART_DERIV)
+                    kappa23=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(9,NO_PART_DERIV)
+                  ENDIF
+                ENDIF
               CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
@@ -1194,53 +1213,40 @@ CONTAINS
                             !Do nothing
                           CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
                             !Calculate Sobolev surface tension and curvature smoothing terms
-                            tension = tauParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
-                              & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1, &
-                              & gaussPointIdx))
-                            curvature = kappaParam*2.0_DP* ( &
-                              & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
-                              & gaussPointIdx)* &
-                              & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S1, &
-                              & gaussPointIdx))
+                            tension = tau1*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
+                              & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
+                              & PART_DERIV_S1,gaussPointIdx)
+                            curvature = kappa11*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx, &
+                              & PART_DERIV_S1_S1,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                              & dependentElementParameterColumnIdx,PART_DERIV_S1_S1,gaussPointIdx)
                             IF(numberOfXi > 1) THEN
-                              tension = tension + tauParam*2.0_DP* ( &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2, &
-                                & gaussPointIdx))
-                              curvature = curvature + kappaParam*2.0_DP* ( &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
-                                & gaussPointIdx)* &
+                              tension = tension + tau2*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx, &
+                                & PART_DERIV_S2,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                                & dependentElementParameterColumnIdx,PART_DERIV_S2,gaussPointIdx)
+                              curvature = curvature + kappa22*quadratureSchemeRow%GAUSS_BASIS_FNS( &
+                                & dependentElementParameterRowIdx,PART_DERIV_S2_S2,gaussPointIdx)* &
                                 & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S2, &
                                 & gaussPointIdx) + &
-                                & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
-                                & gaussPointIdx)* &
-                                & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S2, &
-                                & gaussPointIdx))
+                                & kappa12*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
+                                & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
+                                & PART_DERIV_S1_S2,gaussPointIdx)
                               IF(numberOfXi > 2) THEN
-                                tension = tension + tauParam*2.0_DP* ( &
-                                  & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
-                                  & gaussPointIdx)* &
-                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3, &
-                                  & gaussPointIdx))
-                                curvature = curvature + kappaParam*2.0_DP* ( &
-                                  & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
-                                  & gaussPointIdx)* &
-                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S3_S3, &
-                                  & gaussPointIdx)+ &
-                                  & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
-                                  & gaussPointIdx)* &
-                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S1_S3, &
-                                  & gaussPointIdx)+ &
-                                  & quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
-                                  & gaussPointIdx)* &
-                                  & quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx,PART_DERIV_S2_S3, &
-                                  & gaussPointIdx))
+                                tension = tension + tau3*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx, &
+                                  & PART_DERIV_S3,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                                  & dependentElementParameterColumnIdx,PART_DERIV_S3,gaussPointIdx)
+                                curvature = curvature + kappa33*quadratureSchemeRow%GAUSS_BASIS_FNS( &
+                                  & dependentElementParameterRowIdx, &
+                                  & PART_DERIV_S3_S3,gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS( &
+                                  & dependentElementParameterColumnIdx,PART_DERIV_S3_S3,gaussPointIdx)+ &
+                                  & kappa13*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
+                                  & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
+                                  & PART_DERIV_S1_S3,gaussPointIdx)+ &
+                                  & kappa23*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
+                                  & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
+                                  & PART_DERIV_S2_S3,gaussPointIdx)
                               ENDIF ! 3D
                             ENDIF ! 2 or 3D
-                            sum = sum + (tension + curvature) * jacobianGaussWeight
+                            sum = (tension + curvature) * jacobianGaussWeight
                           CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
                             CALL FlagError("Not implemented.",err,error,*999)
                           CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
@@ -2192,7 +2198,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,geometricMeshComponent,geometricScalingType,numberOfComponents,numberOfComponents2, &
-      & numberOfDependentComponents,numberOfIndependentComponents
+      & numberOfDependentComponents,numberOfIndependentComponents,numberOfMaterialComponents
     TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -2472,24 +2478,36 @@ CONTAINS
                       & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                     CALL Field_DataTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                       & FIELD_DP_TYPE,err,error,*999)
-                    !Sobolev smoothing material parameters- tau and kappa
+                    !Sobolev smoothing material parameters
+                    SELECT CASE(geometricDecomposition%numberOfDimensions)
+                    CASE(1)
+                      numberOfMaterialComponents=2
+                    CASE(2)
+                      numberOfMaterialComponents=5
+                    CASE(3)
+                      numberOfMaterialComponents=9
+                    CASE DEFAULT
+                      localError="The geometric decomposition number of dimensions of "// &
+                        & TRIM(NumberToVString(geometricDecomposition%numberOfDimensions,"*",err,error))//" is invalid."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                    CALL Field_ComponentMeshComponentGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                      & geometricMeshComponent,err,error,*999)
                     CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & 2,err,error,*999)
-                    CALL Field_ComponentMeshComponentGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & 1,geometricMeshComponent,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & 1,geometricMeshComponent,err,error,*999)
-                    CALL Field_ComponentMeshComponentSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & 2,geometricMeshComponent,err,error,*999)
-                    CALL Field_ComponentInterpolationSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                    CALL Field_ComponentInterpolationSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & 2,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                      & numberOfMaterialComponents,err,error,*999)
+                    DO componentIdx=1,numberOfMaterialComponents
+                      CALL Field_ComponentMeshComponentSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & componentIdx,geometricMeshComponent,err,error,*999)
+                      CALL Field_ComponentInterpolationSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)                      
+                    ENDDO !componentIdx
                     !Default the field scaling to that of the geometric field
                     CALL Field_ScalingTypeGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricScalingType,err,error,*999)
                     CALL Field_ScalingTypeSet(equationsMaterials%MATERIALS_FIELD,geometricScalingType,err,error,*999)
                   ELSE
                     !Check the user specified field
+                    CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition, &
+                      & err,error,*999)
                     CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
                     CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
                     CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
@@ -2497,7 +2515,18 @@ CONTAINS
                     CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
                       & err,error,*999)
                     CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                    CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999)
+                    SELECT CASE(geometricDecomposition%numberOfDimensions)
+                    CASE(1)
+                      CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999)
+                    CASE(2)
+                      CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,5,err,error,*999)
+                    CASE(3)
+                      CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,9,err,error,*999)
+                    CASE DEFAULT
+                      localError="The geometric decomposition number of dimensions of "// &
+                        & TRIM(NumberToVString(geometricDecomposition%numberOfDimensions,"*",err,error))//" is invalid."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
                   ENDIF
                 ELSE
                   CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -2509,10 +2538,24 @@ CONTAINS
                     !Finish creating the materials field
                     CALL Field_CreateFinish(equationsMaterials%MATERIALS_FIELD,err,error,*999)
                     !Set the default values for the materials field
-                    CALL Field_ComponentValuesInitialise(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,1,0.0_DP,err,error,*999)
-                    CALL Field_ComponentValuesInitialise(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                      & FIELD_VALUES_SET_TYPE,2,0.0_DP,err,error,*999)
+                    CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition, &
+                      & err,error,*999)
+                    SELECT CASE(geometricDecomposition%numberOfDimensions)
+                    CASE(1)
+                      numberOfMaterialComponents=2
+                    CASE(2)
+                      numberOfMaterialComponents=5
+                    CASE(3)
+                      numberOfMaterialComponents=9
+                    CASE DEFAULT
+                      localError="The geometric decomposition number of dimensions of "// &
+                        & TRIM(NumberToVString(geometricDecomposition%numberOfDimensions,"*",err,error))//" is invalid."
+                      CALL FlagError(localError,err,error,*999)
+                    END SELECT
+                    DO componentIdx=1,numberOfMaterialComponents
+                      CALL Field_ComponentValuesInitialise(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                        & FIELD_VALUES_SET_TYPE,componentIdx,0.0_DP,err,error,*999)
+                    ENDDO !componentIdx
                   ENDIF
                 ELSE
                   CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -2787,7 +2830,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,geometricMeshComponent,geometricScalingType,numberOfComponents,numberOfComponents2, &
-      & numberOfDependentComponents,numberOfIndependentComponents
+      & numberOfDependentComponents,numberOfIndependentComponents,numberOfMaterialComponents
     TYPE(DECOMPOSITION_TYPE), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -3055,24 +3098,36 @@ CONTAINS
                     & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                   CALL Field_DataTypeSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                     & FIELD_DP_TYPE,err,error,*999)
-                  !Sobolev smoothing material parameters- tau and kappa
+                  !Sobolev smoothing material parameters
+                  SELECT CASE(geometricDecomposition%numberOfDimensions)
+                  CASE(1)
+                    numberOfMaterialComponents=2
+                  CASE(2)
+                    numberOfMaterialComponents=5
+                  CASE(3)
+                    numberOfMaterialComponents=9
+                  CASE DEFAULT
+                    localError="The geometric decomposition number of dimensions of "// &
+                      & TRIM(NumberToVString(geometricDecomposition%numberOfDimensions,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                  CALL Field_ComponentMeshComponentGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                    & geometricMeshComponent,err,error,*999)
                   CALL Field_NumberOfComponentsSetAndLock(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & 2,err,error,*999)
-                  CALL Field_ComponentMeshComponentGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & 1,geometricMeshComponent,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & 1,geometricMeshComponent,err,error,*999)
-                  CALL Field_ComponentMeshComponentSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & 2,geometricMeshComponent,err,error,*999)
-                  CALL Field_ComponentInterpolationSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                  CALL Field_ComponentInterpolationSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & 2,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                    & numberOfMaterialComponents,err,error,*999)
+                  DO componentIdx=1,numberOfMaterialComponents
+                    CALL Field_ComponentMeshComponentSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & componentIdx,geometricMeshComponent,err,error,*999)
+                    CALL Field_ComponentInterpolationSet(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)                      
+                  ENDDO !componentIdx
                   !Default the field scaling to that of the geometric field
                   CALL Field_ScalingTypeGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricScalingType,err,error,*999)
                   CALL Field_ScalingTypeSet(equationsMaterials%MATERIALS_FIELD,geometricScalingType,err,error,*999)
                 ELSE
                   !Check the user specified field
+                  CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition, &
+                    & err,error,*999)
                   CALL Field_TypeCheck(equationsSetSetup%field,FIELD_MATERIAL_TYPE,err,error,*999)
                   CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
                   CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
@@ -3080,7 +3135,18 @@ CONTAINS
                   CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
                     & err,error,*999)
                   CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999)
+                  SELECT CASE(geometricDecomposition%numberOfDimensions)
+                  CASE(1)
+                    CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999)
+                  CASE(2)
+                    CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,5,err,error,*999)
+                  CASE(3)
+                    CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,9,err,error,*999)
+                  CASE DEFAULT
+                    localError="The geometric decomposition number of dimensions of "// &
+                      & TRIM(NumberToVString(geometricDecomposition%numberOfDimensions,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
                 ENDIF
               ELSE
                 CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -3092,10 +3158,24 @@ CONTAINS
                   !Finish creating the materials field
                   CALL Field_CreateFinish(equationsMaterials%MATERIALS_FIELD,err,error,*999)
                   !Set the default values for the materials field
-                  CALL Field_ComponentValuesInitialise(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,1,0.0_DP,err,error,*999)
-                  CALL Field_ComponentValuesInitialise(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                    & FIELD_VALUES_SET_TYPE,2,0.0_DP,err,error,*999)
+                  CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,geometricDecomposition, &
+                    & err,error,*999)
+                  SELECT CASE(geometricDecomposition%numberOfDimensions)
+                  CASE(1)
+                    numberOfMaterialComponents=2
+                  CASE(2)
+                    numberOfMaterialComponents=5
+                  CASE(3)
+                    numberOfMaterialComponents=9
+                  CASE DEFAULT
+                    localError="The geometric decomposition number of dimensions of "// &
+                      & TRIM(NumberToVString(geometricDecomposition%numberOfDimensions,"*",err,error))//" is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                  DO componentIdx=1,numberOfMaterialComponents
+                    CALL Field_ComponentValuesInitialise(equationsMaterials%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                      & FIELD_VALUES_SET_TYPE,componentIdx,0.0_DP,err,error,*999)
+                  ENDDO !componentIdx
                 ENDIF
               ELSE
                 CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -3395,7 +3475,7 @@ CONTAINS
     INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,geometricScalingType,GEOMETRIC_COMPONENT_NUMBER
     INTEGER(INTG) :: numberOfDimensions,I !,MATERIAL_FIELD_NUMBER_OF_VARIABLES
     INTEGER(INTG) :: INDEPENDENT_FIELD_NUMBER_OF_COMPONENTS,INDEPENDENT_FIELD_NUMBER_OF_VARIABLES
-    INTEGER(INTG) :: dependentFieldNumberOfVariables
+    INTEGER(INTG) :: dependentFieldNumberOfVariables,componentIdx,numberOfMaterialComponents
     INTEGER(INTG) :: dimensionIdx
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
@@ -3744,23 +3824,36 @@ CONTAINS
                   & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
+                !Sobolev smoothing material parameters
+                SELECT CASE(GEOMETRIC_DECOMPOSITION%numberOfDimensions)
+                CASE(1)
+                  numberOfMaterialComponents=2
+                CASE(2)
+                  numberOfMaterialComponents=5
+                CASE(3)
+                  numberOfMaterialComponents=9
+                CASE DEFAULT
+                  localError="The geometric decomposition number of dimensions of "// &
+                    & TRIM(NumberToVString(GEOMETRIC_DECOMPOSITION%numberOfDimensions,"*",err,error))//" is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+                CALL Field_ComponentMeshComponentGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                  & GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 2,err,error,*999)
-                CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 2,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 2,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & numberOfMaterialComponents,err,error,*999)
+                DO componentIdx=1,numberOfMaterialComponents
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & componentIdx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
+                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)                      
+                ENDDO !componentIdx
                 !Default the field scaling to that of the geometric field
                 CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricScalingType,err,error,*999)
                 CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,geometricScalingType,err,error,*999)
               ELSE
                 !Check the user specified field
+                CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                  & err,error,*999)
                 CALL Field_TypeCheck(equationsSetSetup%FIELD,FIELD_MATERIAL_TYPE,err,error,*999)
                 CALL Field_DependentTypeCheck(equationsSetSetup%FIELD,FIELD_INDEPENDENT_TYPE,err,error,*999)
                 CALL Field_NumberOfVariablesCheck(equationsSetSetup%FIELD,1,err,error,*999)
@@ -3770,7 +3863,18 @@ CONTAINS
                 CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+                SELECT CASE(GEOMETRIC_DECOMPOSITION%numberOfDimensions)
+                CASE(1)
+                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999)
+                CASE(2)
+                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,5,err,error,*999)
+                CASE(3)
+                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,9,err,error,*999)
+                CASE DEFAULT
+                  localError="The geometric decomposition number of dimensions of "// &
+                    & TRIM(NumberToVString(GEOMETRIC_DECOMPOSITION%numberOfDimensions,"*",err,error))//" is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
               ENDIF
             ELSE
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -3782,10 +3886,24 @@ CONTAINS
                 !Finish creating the materials field
                 CALL Field_CreateFinish(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
                 !Set the default values for the materials field
-                CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,1,0.0_DP,err,error,*999)
-                CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,2,0.0_DP,err,error,*999)
+                CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                  & err,error,*999)
+                SELECT CASE(GEOMETRIC_DECOMPOSITION%numberOfDimensions)
+                CASE(1)
+                  numberOfMaterialComponents=2
+                CASE(2)
+                  numberOfMaterialComponents=5
+                CASE(3)
+                  numberOfMaterialComponents=9
+                CASE DEFAULT
+                  localError="The geometric decomposition number of dimensions of "// &
+                    & TRIM(NumberToVString(GEOMETRIC_DECOMPOSITION%numberOfDimensions,"*",err,error))//" is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+                DO componentIdx=1,numberOfMaterialComponents
+                  CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,componentIdx,0.0_DP,err,error,*999)
+                ENDDO !componentIdx
               ENDIF
             ELSE
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -4283,19 +4401,29 @@ CONTAINS
                   & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                 CALL Field_DataTypeSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_DP_TYPE,err,error,*999)
-                ! Sobolev smoothing material parameters- tau and kappa
+                !Sobolev smoothing material parameters
+                SELECT CASE(GEOMETRIC_DECOMPOSITION%numberOfDimensions)
+                CASE(1)
+                  numberOfMaterialComponents=2
+                CASE(2)
+                  numberOfMaterialComponents=5
+                CASE(3)
+                  numberOfMaterialComponents=9
+                CASE DEFAULT
+                  localError="The geometric decomposition number of dimensions of "// &
+                    & TRIM(NumberToVString(GEOMETRIC_DECOMPOSITION%numberOfDimensions,"*",err,error))//" is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+                CALL Field_ComponentMeshComponentGet(equationsSet%geometry%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE,1, &
+                  & GEOMETRIC_MESH_COMPONENT,err,error,*999)
                 CALL Field_NumberOfComponentsSetAndLock(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 2,err,error,*999)
-                CALL Field_ComponentMeshComponentGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 2,GEOMETRIC_COMPONENT_NUMBER,err,error,*999)
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 1,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & 2,FIELD_CONSTANT_INTERPOLATION,err,error,*999)
+                  & numberOfMaterialComponents,err,error,*999)
+                DO componentIdx=1,numberOfMaterialComponents
+                  CALL Field_ComponentMeshComponentSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & componentIdx,GEOMETRIC_MESH_COMPONENT,err,error,*999)
+                  CALL Field_ComponentInterpolationSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & componentIdx,FIELD_CONSTANT_INTERPOLATION,err,error,*999)                      
+                ENDDO !componentIdx
                 !Default the field scaling to that of the geometric field
                 CALL Field_ScalingTypeGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,geometricScalingType,err,error,*999)
                 CALL Field_ScalingTypeSet(EQUATIONS_MATERIALS%MATERIALS_FIELD,geometricScalingType,err,error,*999)
@@ -4310,7 +4438,18 @@ CONTAINS
                 CALL Field_DataTypeCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
                 CALL Field_NumberOfComponentsGet(equationsSet%GEOMETRY%GEOMETRIC_FIELD,FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions,err,error,*999)
-                CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,1,err,error,*999)
+                SELECT CASE(GEOMETRIC_DECOMPOSITION%numberOfDimensions)
+                CASE(1)
+                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,2,err,error,*999)
+                CASE(2)
+                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,5,err,error,*999)
+                CASE(3)
+                  CALL Field_NumberOfComponentsCheck(equationsSetSetup%FIELD,FIELD_U_VARIABLE_TYPE,9,err,error,*999)
+                CASE DEFAULT
+                  localError="The geometric decomposition number of dimensions of "// &
+                    & TRIM(NumberToVString(GEOMETRIC_DECOMPOSITION%numberOfDimensions,"*",err,error))//" is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
               ENDIF
             ELSE
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
@@ -4322,10 +4461,24 @@ CONTAINS
                 !Finish creating the materials field
                 CALL Field_CreateFinish(EQUATIONS_MATERIALS%MATERIALS_FIELD,err,error,*999)
                 !Set the default values for the materials field
-                CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,1,0.0_DP,err,error,*999)
-                CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
-                  & FIELD_VALUES_SET_TYPE,2,0.0_DP,err,error,*999)
+                CALL Field_MeshDecompositionGet(equationsSet%geometry%GEOMETRIC_FIELD,GEOMETRIC_DECOMPOSITION, &
+                  & err,error,*999)
+                SELECT CASE(GEOMETRIC_DECOMPOSITION%numberOfDimensions)
+                CASE(1)
+                  numberOfMaterialComponents=2
+                CASE(2)
+                  numberOfMaterialComponents=5
+                CASE(3)
+                  numberOfMaterialComponents=9
+                CASE DEFAULT
+                  localError="The geometric decomposition number of dimensions of "// &
+                    & TRIM(NumberToVString(GEOMETRIC_DECOMPOSITION%numberOfDimensions,"*",err,error))//" is invalid."
+                  CALL FlagError(localError,err,error,*999)
+                END SELECT
+                DO componentIdx=1,numberOfMaterialComponents
+                  CALL Field_ComponentValuesInitialise(EQUATIONS_MATERIALS%MATERIALS_FIELD,FIELD_U_VARIABLE_TYPE, &
+                    & FIELD_VALUES_SET_TYPE,componentIdx,0.0_DP,err,error,*999)
+                ENDDO !componentIdx
               ENDIF
             ELSE
               CALL FlagError("Equations set materials is not associated.",err,error,*999)
