@@ -393,7 +393,7 @@ CONTAINS
     !Argument variables
     TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface to get the interface condition for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the interface condition to get.
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<On exit, a pointer to the interface condition for the interface. Must not be associated on entry.
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<On exit, a pointer to the interface condition for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

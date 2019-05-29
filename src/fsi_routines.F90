@@ -740,7 +740,7 @@ CONTAINS
     TYPE(EQUATIONS_SET_TYPE), POINTER :: solidEquationsSet,fluidEquationsSet,equationsSet
     TYPE(FieldType), POINTER :: solidGeometricField,interfaceGeometricField,solidDependentField
     TYPE(FieldVariableType), POINTER :: geometricVariable
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceType), POINTER :: fsInterface
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(ProblemType), POINTER :: problem

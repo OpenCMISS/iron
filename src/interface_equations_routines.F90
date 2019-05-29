@@ -42,21 +42,23 @@
 !>
 
 !>This module handles all interface equations routines.
-MODULE INTERFACE_EQUATIONS_ROUTINES
+MODULE InterfaceEquationsRoutines
 
   USE BaseRoutines
   USE EquationsRoutines
   USE FIELD_ROUTINES
+  USE FieldAccessRoutines
   USE INTERFACE_CONDITIONS_CONSTANTS
+  USE InterfaceConditionAccessRoutines
   USE InterfaceEquationsAccessRoutines
-  USE INTERFACE_MAPPING_ROUTINES
+  USE InterfaceMappingRoutines
   USE InterfaceMatricesRoutines
   USE InterfaceMatricesAccessRoutines
   USE INTERFACE_MATRICES_CONSTANTS
   USE ISO_VARYING_STRING
-  USE KINDS
-  USE STRINGS
-  USE TYPES
+  USE Kinds
+  USE Strings
+  USE Types
 
 #include "macros.h"  
 
@@ -66,23 +68,6 @@ MODULE INTERFACE_EQUATIONS_ROUTINES
 
   !Module parameters
 
-  !> \addtogroup INTERFACE_EQUATIONS_ROUTINES_OutputTypes INTERFACE_EQUATIONS_ROUTINES::OutputTypes
-  !> \brief The interface equations output types
-  !> \see INTERFACE_EQUATIONS_ROUTINES,OPENCMISS_InterfaceEquationsConstants
-  !>@{
-  INTEGER(INTG), PARAMETER :: INTERFACE_EQUATIONS_NO_OUTPUT=0 !<No output. \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_EQUATIONS_TIMING_OUTPUT=1 !<Timing information output. \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_EQUATIONS_MATRIX_OUTPUT=2 !<All below and equation matrices output. \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT=3 !<All below and element matrices output .\see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES 
-  !>@}
-
-  !> \addtogroup INTERFACE_EQUATIONS_ROUTINES_SparsityTypes INTERFACE_EQUATIONS_ROUTINES::SparsityTypes
-  !> \brief Interface equations matrices sparsity types
-  !> \see INTERFACE_EQUATIONS_ROUTINES,OPENCMISS_InterfaceEquationsSparsityTypes
-  !>@{
-  INTEGER(INTG), PARAMETER :: INTERFACE_EQUATIONS_SPARSE_MATRICES=1 !<Use sparse matrices for the interface equations. \see INTERFACE_EQUATIONS_ROUTINES_SparsityTypes,INTERFACE_EQUATIONS_ROUTINES
-  INTEGER(INTG), PARAMETER :: INTERFACE_EQUATIONS_FULL_MATRICES=2 !<Use fully populated matrices for the interface equations. \see INTERFACE_EQUATIONS_ROUTINES_SparsityTypes,INTERFACE_EQUATIONS_ROUTINES
- !>@}
 
   !Module types
 
@@ -102,26 +87,19 @@ MODULE INTERFACE_EQUATIONS_ROUTINES
     MODULE PROCEDURE InterfaceEquations_MatrixTimeDependenceTypeSet1
   END INTERFACE InterfaceEquations_MatrixTimeDependenceTypeSet
 
-  PUBLIC INTERFACE_EQUATIONS_NO_OUTPUT,INTERFACE_EQUATIONS_TIMING_OUTPUT,INTERFACE_EQUATIONS_MATRIX_OUTPUT, &
-    & INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT
+  PUBLIC InterfaceEquations_CreateFinish,InterfaceEquations_CreateStart
 
-  PUBLIC INTERFACE_EQUATIONS_SPARSE_MATRICES,INTERFACE_EQUATIONS_FULL_MATRICES
+  PUBLIC InterfaceEquations_Destroy
 
-  PUBLIC INTERFACE_EQUATIONS_CREATE_FINISH,INTERFACE_EQUATIONS_CREATE_START
-
-  PUBLIC INTERFACE_EQUATIONS_DESTROY
-
-  PUBLIC InterfaceEquations_InterfaceInterpSetsNumberSet
+  PUBLIC InterfaceEquations_InterpolationSetsNumberSet
 
   PUBLIC InterfaceEquations_MatrixTimeDependenceTypeSet,InterfaceEquations_MatrixTimeDependenceTypeGet
   
-  PUBLIC INTERFACE_EQUATIONS_OUTPUT_TYPE_GET,INTERFACE_EQUATIONS_OUTPUT_TYPE_SET
+  PUBLIC InterfaceEquations_OutputTypeGet,InterfaceEquations_OutputTypeSet
   
-  PUBLIC INTERFACE_EQUATIONS_SPARSITY_TYPE_GET,INTERFACE_EQUATIONS_SPARSITY_TYPE_SET
+  PUBLIC InterfaceEquations_SparsityTypeGet,InterfaceEquations_SparsityTypeSet
 
-  PUBLIC InterfaceEquations_VariableInterpSetsNumberSet
-
-  PUBLIC INTERFACE_EQUATIONS_LINEARITY_TYPE_GET,INTERFACE_EQUATIONS_LINEARITY_TYPE_SET
+  PUBLIC InterfaceEquations_LinearityTypeGet,InterfaceEquations_LinearityTypeSet
 
   PUBLIC InterfaceEquations_TimeDependenceTypeGet,InterfaceEquations_TimeDependenceTypeSet
 
@@ -132,197 +110,171 @@ CONTAINS
   !
 
   !>Finish the creation of interface equations.
-  SUBROUTINE INTERFACE_EQUATIONS_CREATE_FINISH(INTERFACE_EQUATIONS,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_CreateFinish(interfaceEquations,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to finish the creation of.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to finish the creation of.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: variable_idx
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD,GEOMETRIC_FIELD,LAGRANGE_FIELD,PENALTY_FIELD
-    TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    INTEGER(INTG) :: variableIdx
+    TYPE(FieldType), POINTER :: dependentField,geometricField,lagrangeField,nullField,penaltyField
+    TYPE(FieldVariableType), POINTER :: dependentVariable
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceDependentType), POINTER :: interfaceDependent
+    TYPE(InterfaceEquationsInterpolationType), POINTER :: interfaceEquationsInterpolation
+    TYPE(VARYING_STRING) :: localError
 
-    ENTERS("INTERFACE_EQUATIONS_CREATE_FINISH",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_CreateFinish",err,error,*999)
 
-    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertNotFinished(interfaceEquations,err,error,*999)
 
     !Create the interpolation sets
-    INTERFACE_CONDITION=>INTERFACE_EQUATIONS%INTERFACE_CONDITION
-    IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-      SELECT CASE(INTERFACE_CONDITION%METHOD)
-      CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
-        IF(ASSOCIATED(INTERFACE_CONDITION%LAGRANGE)) THEN
-          INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
-          IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
-            IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
-              GEOMETRIC_FIELD=>INTERFACE_CONDITION%GEOMETRY%geometricField
-              LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
-              NULLIFY(PENALTY_FIELD)
-              IF(ASSOCIATED(INTERFACE_CONDITION%PENALTY)) THEN
-                PENALTY_FIELD=>INTERFACE_CONDITION%PENALTY%PENALTY_FIELD
-              ENDIF
-              !\todo Truncating subroutine name from INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_SETUP until bug in gfortran 4.6 is fixed http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46971
-              CALL INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_(INTERFACE_EQUATIONS%INTERPOLATION% &
-                & INTERFACE_INTERPOLATION,GEOMETRIC_FIELD,LAGRANGE_FIELD,PENALTY_FIELD,ERR,ERROR,*999)
-              DO variable_idx=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
-                DEPENDENT_VARIABLE=>INTERFACE_DEPENDENT%fieldVariables(variable_idx)%PTR
-                IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
-                  DEPENDENT_FIELD=>DEPENDENT_VARIABLE%FIELD
-                  IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-                    GEOMETRIC_FIELD=>DEPENDENT_FIELD%geometricField
-                    CALL InterfaceEquations_DomainVariableInterpolationSetup(INTERFACE_EQUATIONS%INTERPOLATION% &
-                      & VARIABLE_INTERPOLATION(variable_idx),GEOMETRIC_FIELD,DEPENDENT_FIELD,ERR,ERROR,*999)
-                  ELSE
-                    CALL FlagError("Dependent variable field is not associated.",ERR,ERROR,*999)
-                  ENDIF
-                ELSE
-                  LOCAL_ERROR="Dependent variable is not associated for variable index "// &
-                    & TRIM(NUMBER_TO_VSTRING(variable_idx,"*",ERR,ERROR))//"."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ENDDO !variable_idx
-            ELSE
-              CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Interface condition dependent is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Interface condition Lagrange is not associated.",ERR,ERROR,*999)
-        ENDIF
-      CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
-        CALL FlagError("Not implemented.",ERR,ERROR,*999)
-      CASE DEFAULT
-        LOCAL_ERROR="The interface condition method of "// &
-          & TRIM(NUMBER_TO_VSTRING(INTERFACE_CONDITION%METHOD,"*",ERR,ERROR))// &
-          & " is invalid."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      END SELECT
-      !Set the finished flag
-      INTERFACE_EQUATIONS%interfaceEquationsFinished=.TRUE.
-    ELSE
-      CALL FlagError("Interface equations interface condition is not associated.",ERR,ERROR,*999)
-    ENDIF
+    NULLIFY(nullField)
+    NULLIFY(interfaceCondition)
+    CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*999)
+    SELECT CASE(interfaceCondition%method)
+    CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
+      NULLIFY(interfaceDependent)
+      CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*999)
+      NULLIFY(interfaceEquationsInterpolation)
+      CALL InterfaceEquations_EquationsInterpolationGet(interfaceEquations,interfaceEquationsInterpolation,err,error,*999)
+      NULLIFY(geometricField)
+      CALL InterfaceCondition_GeometricFieldGet(interfaceCondition,geometricField,err,error,*999)
+      NULLIFY(lagrangeField)
+      CALL InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*999)
+      NULLIFY(penaltyField)
+      IF(ASSOCIATED(interfaceCondition%penalty)) &
+        & CALL InterfaceCondition_PenaltyFieldGet(interfaceCondition,penaltyField,err,error,*999)
+      CALL InterfaceEquations_DomainInterpolationSetup(interfaceEquationsInterpolation%interfaceInterpolation, &
+        & geometricField,lagrangeField,penaltyField,err,error,*999)
+      DO variableIdx=1,interfaceDependent%numberOfDependentVariables
+        NULLIFY(dependentVariable)
+        CALL InterfaceDependent_DependentVariableGet(interfaceDependent,variableIdx,dependentVariable,err,error,*999)
+        NULLIFY(dependentField)
+        CALL FieldVariable_FieldGet(dependentVariable,dependentField,err,error,*999)
+        NULLIFY(geometricField)
+        CALL Field_GeometricFieldGet(dependentField,geometricField,err,error,*999)
+        CALL InterfaceEquations_DomainInterpolationSetup(interfaceEquationsInterpolation% &
+          & variableInterpolation(variableIdx),geometricField,dependentField,nullField,err,error,*999)
+      ENDDO !variableIdx
+    CASE(INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(INTERFACE_CONDITION_POINT_TO_POINT_METHOD)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The interface condition method of "//TRIM(NumberToVString(interfaceCondition%method,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    !Set the finished flag
+    interfaceEquations%interfaceEquationsFinished=.TRUE.
        
-    EXITS("INTERFACE_EQUATIONS_CREATE_FINISH")
+    EXITS("InterfaceEquations_CreateFinish")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_CREATE_FINISH",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_CreateFinish",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_EQUATIONS_CREATE_FINISH
+  END SUBROUTINE InterfaceEquations_CreateFinish
 
   !
   !================================================================================================================================
   !
 
   !>Start the creation of interface equations for an interface condition.
-  SUBROUTINE INTERFACE_EQUATIONS_CREATE_START(INTERFACE_CONDITION,INTERFACE_EQUATIONS,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_CreateStart(interfaceCondition,interfaceEquations,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to create interface equations for
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<On exit, a pointer to the created interface equations. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to create interface equations for
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<On exit, a pointer to the created interface equations. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("INTERFACE_EQUATIONS_CREATE_START",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_CreateStart",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-      IF(ASSOCIATED(INTERFACE_CONDITION%interfaceEquations)) THEN
-        CALL FlagError("Interface equations are already associated for the interface condition.",ERR,ERROR,*999)
-      ELSE
-        IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-          CALL FlagError("Interface equations is already associated.",ERR,ERROR,*999)
-        ELSE
-          !Initialise the equations
-          CALL INTERFACE_EQUATIONS_INITIALISE(INTERFACE_CONDITION,ERR,ERROR,*999)
-          !Return the pointer
-          INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
-        ENDIF
-      ENDIF
-    ELSE
-      CALL FlagError("Interface condition is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+    IF(ASSOCIATED(interfaceCondition%interfaceEquations)) &
+      & CALL FlagError("Interface equations are already associated for the interface condition.",err,error,*999)
+    
+    !Initialise the equations
+    CALL InterfaceEquations_Initialise(interfaceCondition,err,error,*999)
+    !Return the pointer
+    interfaceEquations=>interfaceCondition%interfaceEquations
        
-    EXITS("INTERFACE_EQUATIONS_CREATE_START")
+    EXITS("InterfaceEquations_CreateStart")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_CREATE_START",ERR,ERROR)
+999 NULLIFY(interfaceEquations)
+998 ERRORSEXITS("InterfaceEquations_CreateStart",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_EQUATIONS_CREATE_START
+  END SUBROUTINE InterfaceEquations_CreateStart
 
   !
   !================================================================================================================================
   !
 
   !>Destroys interface equations.
-  SUBROUTINE INTERFACE_EQUATIONS_DESTROY(INTERFACE_EQUATIONS,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_Destroy(interfaceEquations,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to destroy
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("INTERFACE_EQUATIONS_DESTROY",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_Destroy",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      CALL INTERFACE_EQUATIONS_FINALISE(INTERFACE_EQUATIONS,ERR,ERROR,*999)
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*999)
-    ENDIF
+    IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*999)
+    
+    CALL InterfaceEquations_Finalise(interfaceEquations,err,error,*999)
        
-    EXITS("INTERFACE_EQUATIONS_DESTROY")
+    EXITS("InterfaceEquations_Destroy")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_DESTROY",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_Destroy",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_EQUATIONS_DESTROY
+  END SUBROUTINE InterfaceEquations_Destroy
 
   !
   !================================================================================================================================
   !
 
   !>Finalises the interface equations domain interpolation and deallocates all memory.
-  SUBROUTINE InterfaceEquations_DomainInterpolationFinalise(DOMAIN_INTERPOLATION,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_DomainInterpolationFinalise(domainInterpolation,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE) :: DOMAIN_INTERPOLATION !<The domain interpolation to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsDomainInterpolationType) :: domainInterpolation !<The domain interpolation to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: interpolation_set_idx
+    INTEGER(INTG) :: interpolationSetIdx
  
-    ENTERS("InterfaceEquations_DomainInterpolationFinalise",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_DomainInterpolationFinalise",err,error,*999)
 
-    NULLIFY(DOMAIN_INTERPOLATION%geometricField)
-    IF(ALLOCATED(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION)) THEN
-      DO interpolation_set_idx=1,SIZE(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION,1)
-        CALL InterfaceEquations_InterpolationSetFinalise(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(interpolation_set_idx), &
-          & ERR,ERROR,*999)
-      ENDDO !interpolation_set_idx
-      DEALLOCATE(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION)
+    NULLIFY(domainInterpolation%geometricField)
+    IF(ALLOCATED(domainInterpolation%geometricInterpolation)) THEN
+      DO interpolationSetIdx=1,SIZE(domainInterpolation%geometricInterpolation,1)
+        CALL InterfaceEquations_InterpolationSetFinalise(domainInterpolation%geometricInterpolation(interpolationSetIdx), &
+          & err,error,*999)
+      ENDDO !interpolationSetIdx
+      DEALLOCATE(domainInterpolation%geometricInterpolation)
     ENDIF
-    DOMAIN_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS=0
-    NULLIFY(DOMAIN_INTERPOLATION%DEPENDENT_FIELD)
-    IF(ALLOCATED(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION)) THEN
-     DO interpolation_set_idx=1,SIZE(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION,1)
-        CALL InterfaceEquations_InterpolationSetFinalise(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION(interpolation_set_idx), &
-          & ERR,ERROR,*999)
-      ENDDO !interpolation_set_idx
-      DEALLOCATE(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION)
+    domainInterpolation%numberOfGeometricInterpolationSets=0
+    NULLIFY(domainInterpolation%dependentField)
+    IF(ALLOCATED(domainInterpolation%dependentInterpolation)) THEN
+     DO interpolationSetIdx=1,SIZE(domainInterpolation%dependentInterpolation,1)
+        CALL InterfaceEquations_InterpolationSetFinalise(domainInterpolation%dependentInterpolation(interpolationSetIdx), &
+          & err,error,*999)
+      ENDDO !interpolationSetIdx
+      DEALLOCATE(domainInterpolation%dependentInterpolation)
     ENDIF
-    DOMAIN_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS=0
+    domainInterpolation%numberOfDependentInterpolationSets=0
        
     EXITS("InterfaceEquations_DomainInterpolationFinalise")
     RETURN
-999 ERRORS("InterfaceEquations_DomainInterpolationFinalise",ERR,ERROR)
+999 ERRORS("InterfaceEquations_DomainInterpolationFinalise",err,error)
     EXITS("InterfaceEquations_DomainInterpolationFinalise")
     RETURN 1
     
@@ -333,26 +285,26 @@ CONTAINS
   !
 
   !>Initialises the interface equations domain interpolation.
-  SUBROUTINE InterfaceEquations_DomainInterpolationInitialise(DOMAIN_INTERPOLATION,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_DomainInterpolationInitialise(domainInterpolation,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE) :: DOMAIN_INTERPOLATION !<The domain interpolation to initialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsDomainInterpolationType) :: domainInterpolation !<The domain interpolation to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceEquations_DomainInterpolationInitialise",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_DomainInterpolationInitialise",err,error,*999)
 
-    NULLIFY(DOMAIN_INTERPOLATION%PENALTY_FIELD)
-    DOMAIN_INTERPOLATION%NUMBER_OF_PENALTY_INTERPOLATION_SETS=1
-    NULLIFY(DOMAIN_INTERPOLATION%geometricField)
-    DOMAIN_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS=1
-    NULLIFY(DOMAIN_INTERPOLATION%DEPENDENT_FIELD)
-    DOMAIN_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS=1
+    NULLIFY(domainInterpolation%penaltyField)
+    domainInterpolation%numberOfPenaltyInterpolationSets=1
+    NULLIFY(domainInterpolation%geometricField)
+    domainInterpolation%numberOfGeometricInterpolationSets=1
+    NULLIFY(domainInterpolation%dependentField)
+    domainInterpolation%numberOfDependentInterpolationSets=1
        
     EXITS("InterfaceEquations_DomainInterpolationInitialise")
     RETURN
-999 ERRORS("InterfaceEquations_DomainInterpolationInitialise",ERR,ERROR)
+999 ERRORS("InterfaceEquations_DomainInterpolationInitialise",err,error)
     EXITS("InterfaceEquations_DomainInterpolationInitialise")
     RETURN 1
     
@@ -362,393 +314,277 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets up the interface equations domain interface interpolation. !\todo Truncating subroutine name from INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_SETUP until bug in gfortran 4.6 is fixed http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46971
-  SUBROUTINE INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_(DOMAIN_INTERPOLATION,GEOMETRIC_FIELD,LAGRANGE_FIELD, &
-    & PENALTY_FIELD,ERR,ERROR,*)
+  !>Sets up the interface equations domain interpolation. 
+  SUBROUTINE InterfaceEquations_DomainInterpolationSetup(domainInterpolation,geometricField,lagrangeField, &
+    & penaltyField,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE) :: DOMAIN_INTERPOLATION !<The domain interpolation to initialise
-    TYPE(FieldType), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field to set up the domain interpolation for
-    TYPE(FieldType), POINTER :: LAGRANGE_FIELD !<A pointer to the Lagrange field to set up the domain interpoaltion for
-    TYPE(FieldType), POINTER :: PENALTY_FIELD !<A pointer to the penalty field to set up the domain interpoaltion for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsDomainInterpolationType) :: domainInterpolation !<The domain interpolation to initialise
+    TYPE(FieldType), POINTER :: geometricField !<A pointer to the geometric field to set up the domain interpolation for
+    TYPE(FieldType), POINTER :: lagrangeField !<A pointer to the Lagrange field to set up the domain interpoaltion for
+    TYPE(FieldType), POINTER :: penaltyField !<A pointer to the penalty field to set up the domain interpoaltion for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,interpolation_set_idx
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr,interpolationSetIdx
+    TYPE(VARYING_STRING) :: dummyError
  
-    ENTERS("INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_",ERR,ERROR,*998)
+    ENTERS("InterfaceEquations_DomainInterpolationSetup",err,error,*998)
 
-    IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-      IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
-        DOMAIN_INTERPOLATION%geometricField=>GEOMETRIC_FIELD
-        ALLOCATE(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(DOMAIN_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS), &
-          & STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate domain interpolation geometric interpolation.",ERR,ERROR,*999)
-        DO interpolation_set_idx=1,DOMAIN_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS
-          CALL InterfaceEquations_InterpolationSetInitialise(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION( &
-            & interpolation_set_idx),ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(DOMAIN_INTERPOLATION%geometricField,DOMAIN_INTERPOLATION% &
-            & GEOMETRIC_INTERPOLATION(interpolation_set_idx)%interpolationParameters,ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATED_POINTS_INITIALISE(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(interpolation_set_idx)% &
-            & interpolationParameters,DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(interpolation_set_idx)%interpolatedPoint, &
-            & ERR,ERROR,*999)
-          IF(DOMAIN_INTERPOLATION%geometricField%TYPE==FIELD_GEOMETRIC_TYPE.OR. &
-            & DOMAIN_INTERPOLATION%geometricField%TYPE==FIELD_FIBRE_TYPE) THEN
-            CALL Field_InterpolatedPointsMetricsInitialise(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION( &
-              & interpolation_set_idx)%interpolatedPoint,DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(interpolation_set_idx)% &
-              & interpolatedPointMetrics,ERR,ERROR,*999)
-          ENDIF
-        ENDDO !interpolation_set_idx
-        DOMAIN_INTERPOLATION%DEPENDENT_FIELD=>LAGRANGE_FIELD
-        ALLOCATE(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION(DOMAIN_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS), &
-          & STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate domain interpolation dependent interpolation.",ERR,ERROR,*999)
-        DO interpolation_set_idx=1,DOMAIN_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS
-          CALL InterfaceEquations_InterpolationSetInitialise(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION( &
-            & interpolation_set_idx),ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(DOMAIN_INTERPOLATION%DEPENDENT_FIELD,DOMAIN_INTERPOLATION% &
-            & DEPENDENT_INTERPOLATION(interpolation_set_idx)%interpolationParameters,ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATED_POINTS_INITIALISE(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION(interpolation_set_idx)% &
-            & interpolationParameters,DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION(interpolation_set_idx)%interpolatedPoint, &
-            & ERR,ERROR,*999)
-        ENDDO !interpolation_set_idx
-        IF(ASSOCIATED(PENALTY_FIELD)) THEN
-          DOMAIN_INTERPOLATION%PENALTY_FIELD=>PENALTY_FIELD
-          ALLOCATE(DOMAIN_INTERPOLATION%PENALTY_INTERPOLATION(DOMAIN_INTERPOLATION%NUMBER_OF_PENALTY_INTERPOLATION_SETS), &
-            & STAT=ERR)
-          IF(ERR/=0) CALL FlagError("Could not allocate domain interpolation dependent interpolation.",ERR,ERROR,*999)
-          DO interpolation_set_idx=1,DOMAIN_INTERPOLATION%NUMBER_OF_PENALTY_INTERPOLATION_SETS
-            CALL InterfaceEquations_InterpolationSetInitialise(DOMAIN_INTERPOLATION%PENALTY_INTERPOLATION( &
-              & interpolation_set_idx),ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(DOMAIN_INTERPOLATION%PENALTY_FIELD,DOMAIN_INTERPOLATION% &
-              & PENALTY_INTERPOLATION(interpolation_set_idx)%interpolationParameters,ERR,ERROR,*999)
-            CALL FIELD_INTERPOLATED_POINTS_INITIALISE(DOMAIN_INTERPOLATION%PENALTY_INTERPOLATION(interpolation_set_idx)% &
-              & interpolationParameters,DOMAIN_INTERPOLATION%PENALTY_INTERPOLATION(interpolation_set_idx)%interpolatedPoint, &
-              & ERR,ERROR,*999)
-          ENDDO !interpolation_set_idx
-        ENDIF
-      ELSE
-        CALL FlagError("Lagrange field is not associated.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Geometric field is not associated.",ERR,ERROR,*998)
+    IF(.NOT.ASSOCIATED(geometricField)) CALL FlagError("Geometric field is not associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(lagrangeField)) CALL FlagError("Lagrange field is not associated.",err,error,*998)
+    
+    domainInterpolation%geometricField=>geometricField
+    ALLOCATE(domainInterpolation%geometricInterpolation(domainInterpolation%numberOfGeometricInterpolationSets),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate domain interpolation geometric interpolation.",err,error,*999)
+    DO interpolationSetIdx=1,domainInterpolation%numberOfGeometricInterpolationSets
+      CALL InterfaceEquations_InterpolationSetInitialise(domainInterpolation%geometricInterpolation(interpolationSetIdx), &
+        & err,error,*999)
+      CALL Field_InterpolationParametersInitialise(domainInterpolation%geometricField,domainInterpolation% &
+        & geometricInterpolation(interpolationSetIdx)%interpolationParameters,err,error,*999)
+      CALL Field_InterpolatedPointsInitialise(domainInterpolation%geometricInterpolation(interpolationSetIdx)% &
+        & interpolationParameters,domainInterpolation%geometricInterpolation(interpolationSetIdx)%interpolatedPoint, &
+        & err,error,*999)
+      IF(geometricField%TYPE==FIELD_GEOMETRIC_TYPE.OR.geometricField%TYPE==FIELD_FIBRE_TYPE) &
+        & CALL Field_InterpolatedPointsMetricsInitialise(domainInterpolation%geometricInterpolation(interpolationSetIdx)% &
+        & interpolatedPoint,domainInterpolation%geometricInterpolation(interpolationSetIdx)%interpolatedPointMetrics, &
+        & err,error,*999)
+    ENDDO !interpolationSetIdx
+    domainInterpolation%dependentField=>lagrangeField
+    ALLOCATE(domainInterpolation%dependentInterpolation(domainInterpolation%numberOfDependentInterpolationSets),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate domain interpolation dependent interpolation.",err,error,*999)
+    DO interpolationSetIdx=1,domainInterpolation%numberOfDependentInterpolationSets
+      CALL InterfaceEquations_InterpolationSetInitialise(domainInterpolation%dependentInterpolation(interpolationSetIdx), &
+        & err,error,*999)
+      CALL Field_InterpolationParametersInitialise(domainInterpolation%dependentField,domainInterpolation% &
+        & dependentInterpolation(interpolationSetIdx)%interpolationParameters,err,error,*999)
+      CALL Field_InterpolatedPointsInitialise(domainInterpolation%dependentInterpolation(interpolationSetIdx)% &
+        & interpolationParameters,domainInterpolation%dependentInterpolation(interpolationSetIdx)%interpolatedPoint, &
+        & err,error,*999)
+    ENDDO !interpolationSetIdx
+    IF(ASSOCIATED(penaltyField)) THEN
+      domainInterpolation%penaltyField=>penaltyField
+      ALLOCATE(domainInterpolation%penaltyInterpolation(domainInterpolation%numberOfPenaltyInterpolationSets),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate domain interpolation dependent interpolation.",err,error,*999)
+      DO interpolationSetIdx=1,domainInterpolation%numberOfPenaltyInterpolationSets
+        CALL InterfaceEquations_InterpolationSetInitialise(domainInterpolation%penaltyInterpolation(interpolationSetIdx), &
+          & err,error,*999)
+        CALL Field_InterpolationParametersInitialise(domainInterpolation%penaltyField,domainInterpolation% &
+          & penaltyInterpolation(interpolationSetIdx)%interpolationParameters,err,error,*999)
+        CALL Field_InterpolatedPointsInitialise(domainInterpolation%penaltyInterpolation(interpolationSetIdx)% &
+          & interpolationParameters,domainInterpolation%penaltyInterpolation(interpolationSetIdx)%interpolatedPoint, &
+          & err,error,*999)
+      ENDDO !interpolationSetIdx
     ENDIF
     
-    EXITS("INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_")
+    EXITS("InterfaceEquations_DomainInterpolationSetup")
     RETURN
-999 CALL InterfaceEquations_DomainInterpolationFinalise(DOMAIN_INTERPOLATION,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORS("INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_",ERR,ERROR)
-    EXITS("INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_")
+999 CALL InterfaceEquations_DomainInterpolationFinalise(domainInterpolation,dummyErr,dummyError,*998)
+998 ERRORS("InterfaceEquations_DomainInterpolationSetup",err,error)
+    EXITS("InterfaceEquations_DomainInterpolationSetup")
     RETURN 1
     
-  END SUBROUTINE INTERFACE_EQUATIONS_DOMAIN_INTERFACE_INTERPOLATION_
+  END SUBROUTINE InterfaceEquations_DomainInterpolationSetup
 
   !
   !================================================================================================================================
   !
 
-  !>Sets up the interface equations domain variable interpolation. \todo Truncating subroutine name until bug in gfortran 4.6 is fixed http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46971
-  SUBROUTINE InterfaceEquations_DomainVariableInterpolationSetup(DOMAIN_INTERPOLATION,GEOMETRIC_FIELD,DEPENDENT_FIELD, &
-    &  ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_InterpolationSetsNumberSet(domainInterpolation,numberOfGeometricSets, &
+     & numberOfDependentSets,numberOfPenaltySets,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE) :: DOMAIN_INTERPOLATION !<The domain interpolation to initialise
-    TYPE(FieldType), POINTER :: GEOMETRIC_FIELD !<A pointer to the geometric field to set up the domain interpolation for
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD !<A pointer to the depdendent field to set up the domain interpoaltion for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsDomainInterpolationType) :: domainInterpolation !<The domain interpolation to set the number of interpolation sets for
+    INTEGER(INTG), INTENT(IN) :: numberOfGeometricSets !<The number of geometric interface interpolation sets to set
+    INTEGER(INTG), INTENT(IN) :: numberOfDependentSets !<The number of dependent interface interpolation sets to set
+    INTEGER(INTG), INTENT(IN) :: numberOfPenaltySets !<The number of penalty interface interpolation sets to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,interpolation_set_idx
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    TYPE(VARYING_STRING) :: localError
  
-    ENTERS("InterfaceEquations_DomainVariableInterpolationSetup",ERR,ERROR,*998)
-
-    IF(ASSOCIATED(GEOMETRIC_FIELD)) THEN
-      IF(ASSOCIATED(DEPENDENT_FIELD)) THEN
-        DOMAIN_INTERPOLATION%geometricField=>GEOMETRIC_FIELD
-        ALLOCATE(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(DOMAIN_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS), &
-          & STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate domain interpolation geometric interpolation.",ERR,ERROR,*999)
-        DO interpolation_set_idx=1,DOMAIN_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS
-          CALL InterfaceEquations_InterpolationSetInitialise(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION( &
-            & interpolation_set_idx),ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(DOMAIN_INTERPOLATION%geometricField,DOMAIN_INTERPOLATION% &
-            & GEOMETRIC_INTERPOLATION(interpolation_set_idx)%interpolationParameters,ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATED_POINTS_INITIALISE(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(interpolation_set_idx)% &
-            & interpolationParameters,DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(interpolation_set_idx)%interpolatedPoint, &
-            & ERR,ERROR,*999)
-          IF(DOMAIN_INTERPOLATION%geometricField%TYPE==FIELD_GEOMETRIC_TYPE.OR. &
-            & DOMAIN_INTERPOLATION%geometricField%TYPE==FIELD_FIBRE_TYPE) THEN
-            CALL Field_InterpolatedPointsMetricsInitialise(DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION( &
-              & interpolation_set_idx)%interpolatedPoint,DOMAIN_INTERPOLATION%GEOMETRIC_INTERPOLATION(interpolation_set_idx)% &
-              & interpolatedPointMetrics,ERR,ERROR,*999)
-          ENDIF
-        ENDDO !interpolation_set_idx
-        DOMAIN_INTERPOLATION%DEPENDENT_FIELD=>DEPENDENT_FIELD
-        ALLOCATE(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION(DOMAIN_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS), &
-          & STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate domain interpolation dependent interpolation.",ERR,ERROR,*999)
-        DO interpolation_set_idx=1,DOMAIN_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS
-          CALL InterfaceEquations_InterpolationSetInitialise(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION( &
-            & interpolation_set_idx),ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(DOMAIN_INTERPOLATION%DEPENDENT_FIELD,DOMAIN_INTERPOLATION% &
-            & DEPENDENT_INTERPOLATION(interpolation_set_idx)%interpolationParameters,ERR,ERROR,*999)
-          CALL FIELD_INTERPOLATED_POINTS_INITIALISE(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION(interpolation_set_idx)% &
-            & interpolationParameters,DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION(interpolation_set_idx)%interpolatedPoint, &
-            & ERR,ERROR,*999)
-          IF(DOMAIN_INTERPOLATION%DEPENDENT_FIELD%TYPE==FIELD_GEOMETRIC_TYPE.OR. &
-            & DOMAIN_INTERPOLATION%DEPENDENT_FIELD%TYPE==FIELD_FIBRE_TYPE) THEN
-            CALL Field_InterpolatedPointsMetricsInitialise(DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION( &
-              & interpolation_set_idx)%interpolatedPoint,DOMAIN_INTERPOLATION%DEPENDENT_INTERPOLATION(interpolation_set_idx)% &
-              & interpolatedPointMetrics,ERR,ERROR,*999)
-          ENDIF
-        ENDDO !interpolation_set_idx
-      ELSE
-        CALL FlagError("Dependent field is not associated.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Geometric field is not associated.",ERR,ERROR,*998)
+    ENTERS("InterfaceEquations_InterpolationSetsNumberSet",err,error,*999)
+    
+    IF(numberOfGeometricSets<=0) THEN
+      localError="The specified number of geometric sets of "//TRIM(NumberToVString(numberOfGeometricSets,"*",err,error))// &
+        & " is invalid. The number of geometric sets must be >= 1."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(numberOfDependentSets<=0) THEN
+      localError="The specified number of dependent sets of "//TRIM(NumberToVString(numberOfDependentSets,"*",err,error))// &
+        & " is invalid. The number of dependent sets must be >= 1."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(numberOfPenaltySets<0) THEN
+      localError="The specified number of penalty sets of "//TRIM(NumberToVString(numberOfPenaltySets,"*",err,error))// &
+        & " is invalid. The number of penalty sets must be >= 0."
+      CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    EXITS("InterfaceEquations_DomainVariableInterpolationSetup")
-    RETURN
-999 CALL InterfaceEquations_DomainInterpolationFinalise(DOMAIN_INTERPOLATION,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORS("InterfaceEquations_DomainVariableInterpolationSetup",ERR,ERROR)
-    EXITS("InterfaceEquations_DomainVariableInterpolationSetup")
-    RETURN 1
-    
-  END SUBROUTINE InterfaceEquations_DomainVariableInterpolationSetup
-
-  !
-  !================================================================================================================================
-  !
-
-  SUBROUTINE InterfaceEquations_InterfaceInterpSetsNumberSet(INTERFACE_EQUATIONS,NUMBER_OF_GEOMETRIC_SETS, &
-     & NUMBER_OF_DEPENDENT_SETS,NUMBER_OF_PENALTY_SETS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<The interface equations to set the interface interpolation sets for
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_GEOMETRIC_SETS !<The number of geometric interface interpolation sets to set
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_DEPENDENT_SETS !<The number of dependent interface interpolation sets to set
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_PENALTY_SETS !<The number of penalty interface interpolation sets to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
-    ENTERS("InterfaceEquations_InterfaceInterpSetsNumberSet",ERR,ERROR,*999)
-
-    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
-    
-    IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
-      IF(NUMBER_OF_GEOMETRIC_SETS>0) THEN
-        IF(NUMBER_OF_DEPENDENT_SETS>0) THEN
-          IF(NUMBER_OF_PENALTY_SETS>=0) THEN
-            INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS= &
-              & NUMBER_OF_GEOMETRIC_SETS
-            INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_DEPENDENT_INTERPOLATION_SETS= &
-              & NUMBER_OF_DEPENDENT_SETS
-            INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%NUMBER_OF_PENALTY_INTERPOLATION_SETS= &
-              & NUMBER_OF_PENALTY_SETS
-          ELSE
-            LOCAL_ERROR="The specified number of penalty sets of "// &
-              & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_PENALTY_SETS,"*",ERR,ERROR))// &
-              & " is invalid. The number of penalty sets must be > 0."
-            CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          LOCAL_ERROR="The specified number of dependent sets of "// &
-            & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DEPENDENT_SETS,"*",ERR,ERROR))// &
-            & " is invalid. The number of dependent sets must be > 0."
-          CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        LOCAL_ERROR="The specified number of geometric sets of "// &
-          & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_SETS,"*",ERR,ERROR))// &
-          & " is invalid. The number of geometric sets must be > 0."
-        CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
-    ENDIF
+    domainInterpolation%numberOfGeometricInterpolationSets=numberOfGeometricSets
+    domainInterpolation%numberOfDependentInterpolationSets=numberOfDependentSets
+    domainInterpolation%numberOfPenaltyInterpolationSets=numberOfPenaltySets
        
-    EXITS("InterfaceEquations_InterfaceInterpSetsNumberSet")
+    EXITS("InterfaceEquations_InterpolationSetsNumberSet")
     RETURN
-999 ERRORS("InterfaceEquations_InterfaceInterpSetsNumberSet",ERR,ERROR)
-    EXITS("InterfaceEquations_InterfaceInterpSetsNumberSet")
+999 ERRORS("InterfaceEquations_InterpolationSetsNumberSet",err,error)
+    EXITS("InterfaceEquations_InterpolationSetsNumberSet")
     RETURN 1
     
-  END SUBROUTINE InterfaceEquations_InterfaceInterpSetsNumberSet
+  END SUBROUTINE InterfaceEquations_InterpolationSetsNumberSet
 
   !
   !================================================================================================================================
   !
 
   !>Finalise the interface equations and deallocate all memory.
-  SUBROUTINE INTERFACE_EQUATIONS_FINALISE(INTERFACE_EQUATIONS,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_Finalise(interfaceEquations,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("INTERFACE_EQUATIONS_FINALISE",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      CALL INTERFACE_EQUATIONS_INTERPOLATION_FINALISE(INTERFACE_EQUATIONS%INTERPOLATION,ERR,ERROR,*999)
-      IF(ASSOCIATED(INTERFACE_EQUATIONS%interfaceMapping)) &
-        & CALL INTERFACE_MAPPING_DESTROY(INTERFACE_EQUATIONS%interfaceMapping,ERR,ERROR,*999)
-      IF(ASSOCIATED(INTERFACE_EQUATIONS%interfaceMatrices)) &
-        & CALL InterfaceMatrices_Destroy(INTERFACE_EQUATIONS%interfaceMatrices,ERR,ERROR,*999)
-      DEALLOCATE(INTERFACE_EQUATIONS)
+    IF(ASSOCIATED(interfaceEquations)) THEN
+      CALL InterfaceEquations_InterpolationFinalise(interfaceEquations%interpolation,err,error,*999)
+      IF(ASSOCIATED(interfaceEquations%interfaceMapping)) &
+        & CALL InterfaceMapping_Destroy(interfaceEquations%interfaceMapping,err,error,*999)
+      IF(ASSOCIATED(interfaceEquations%interfaceMatrices)) &
+        & CALL InterfaceMatrices_Destroy(interfaceEquations%interfaceMatrices,err,error,*999)
+      DEALLOCATE(interfaceEquations)
     ENDIF
        
-    EXITS("INTERFACE_EQUATIONS_FINALISE")
+    EXITS("InterfaceEquations_Finalise")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_Finalise",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_EQUATIONS_FINALISE
+    
+  END SUBROUTINE InterfaceEquations_Finalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the interface equations for an interface condition
-  SUBROUTINE INTERFACE_EQUATIONS_INITIALISE(INTERFACE_CONDITION,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_Initialise(interfaceCondition,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to initialise the interface equations for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to initialise the interface equations for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
  
-    ENTERS("INTERFACE_EQUATIONS_INITIALISE",ERR,ERROR,*998)
+    ENTERS("InterfaceEquations_Initialise",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-      IF(ASSOCIATED(INTERFACE_CONDITION%interfaceEquations)) THEN
-        CALL FlagError("Interface equations is already associated for this interface condition.",ERR,ERROR,*998)
-      ELSE
-        ALLOCATE(INTERFACE_CONDITION%interfaceEquations,STAT=ERR)
-        IF(ERR/=0) CALL FlagError("Could not allocate interface equations.",ERR,ERROR,*999)
-        INTERFACE_CONDITION%interfaceEquations%INTERFACE_CONDITION=>INTERFACE_CONDITION
-        INTERFACE_CONDITION%interfaceEquations%linearity=INTERFACE_CONDITION_LINEAR
-        INTERFACE_CONDITION%interfaceEquations%timeDependence=INTERFACE_CONDITION_STATIC
-        INTERFACE_CONDITION%interfaceEquations%outputType=INTERFACE_EQUATIONS_NO_OUTPUT
-        INTERFACE_CONDITION%interfaceEquations%sparsityType=INTERFACE_EQUATIONS_SPARSE_MATRICES
-        NULLIFY(INTERFACE_CONDITION%interfaceEquations%INTERPOLATION)
-        NULLIFY(INTERFACE_CONDITION%interfaceEquations%interfaceMapping)
-        NULLIFY(INTERFACE_CONDITION%interfaceEquations%interfaceMatrices)
-        INTERFACE_CONDITION%interfaceEquations%interfaceEquationsFinished=.FALSE.
-        CALL InterfaceEquations_InterpolationInitialise(INTERFACE_CONDITION%interfaceEquations,ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface condition is not associated.",ERR,ERROR,*998)
-    ENDIF
-       
-    EXITS("INTERFACE_EQUATIONS_INITIALISE")
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*998)
+    IF(ASSOCIATED(interfaceCondition%interfaceEquations)) &
+      & CALL FlagError("Interface equations is already associated for this interface condition.",err,error,*998)
+    
+    ALLOCATE(interfaceCondition%interfaceEquations,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface equations.",err,error,*999)
+    interfaceCondition%interfaceEquations%interfaceCondition=>interfaceCondition
+    interfaceCondition%interfaceEquations%linearity=INTERFACE_EQUATIONS_LINEAR
+    interfaceCondition%interfaceEquations%timeDependence=INTERFACE_EQUATIONS_STATIC
+    interfaceCondition%interfaceEquations%outputType=INTERFACE_EQUATIONS_NO_OUTPUT
+    interfaceCondition%interfaceEquations%sparsityType=INTERFACE_EQUATIONS_SPARSE_MATRICES
+    NULLIFY(interfaceCondition%interfaceEquations%interpolation)
+    NULLIFY(interfaceCondition%interfaceEquations%interfaceMapping)
+    NULLIFY(interfaceCondition%interfaceEquations%interfaceMatrices)
+    interfaceCondition%interfaceEquations%interfaceEquationsFinished=.FALSE.
+    CALL InterfaceEquations_InterpolationInitialise(interfaceCondition%interfaceEquations,err,error,*999)
+        
+    EXITS("InterfaceEquations_Initialise")
     RETURN
-999 CALL INTERFACE_EQUATIONS_FINALISE(INTERFACE_CONDITION%interfaceEquations,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("INTERFACE_EQUATIONS_INITIALISE",ERR,ERROR)
+999 CALL InterfaceEquations_Finalise(interfaceCondition%interfaceEquations,dummyErr,dummyError,*998)
+998 ERRORSEXITS("InterfaceEquations_Initialise",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_EQUATIONS_INITIALISE
+  END SUBROUTINE InterfaceEquations_Initialise
 
   !
   !================================================================================================================================
   !
 
   !>Finalises the interface equations interpolation and deallocates all memory.
-  SUBROUTINE INTERFACE_EQUATIONS_INTERPOLATION_FINALISE(INTERFACE_EQUATIONS_INTERPOLATION,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_InterpolationFinalise(interfaceEquationsInterpolation,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_TYPE), POINTER :: INTERFACE_EQUATIONS_INTERPOLATION !<A pointer to the interface equations interpolation to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsInterpolationType), POINTER :: interfaceEquationsInterpolation!<A pointer to the interface equations interpolation to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: variable_idx
+    INTEGER(INTG) :: variableIdx
  
-    ENTERS("INTERFACE_EQUATIONS_INTERPOLATION_FINALISE",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_InterpolationFinalise",err,error,*999)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS_INTERPOLATION)) THEN
-      CALL InterfaceEquations_DomainInterpolationFinalise(INTERFACE_EQUATIONS_INTERPOLATION%INTERFACE_INTERPOLATION, &
-        & ERR,ERROR,*999)
-      IF(ALLOCATED(INTERFACE_EQUATIONS_INTERPOLATION%VARIABLE_INTERPOLATION)) THEN
-        DO variable_idx=1,SIZE(INTERFACE_EQUATIONS_INTERPOLATION%VARIABLE_INTERPOLATION,1)
-          CALL InterfaceEquations_DomainInterpolationFinalise(INTERFACE_EQUATIONS_INTERPOLATION% &
-            & VARIABLE_INTERPOLATION(variable_idx),ERR,ERROR,*999)
-        ENDDO !variable_idx
-        DEALLOCATE(INTERFACE_EQUATIONS_INTERPOLATION%VARIABLE_INTERPOLATION)
+    IF(ASSOCIATED(interfaceEquationsInterpolation)) THEN
+      CALL InterfaceEquations_DomainInterpolationFinalise(interfaceEquationsInterpolation%interfaceInterpolation,err,error,*999)
+      IF(ALLOCATED(interfaceEquationsInterpolation%variableInterpolation)) THEN
+        DO variableIdx=1,SIZE(interfaceEquationsInterpolation%variableInterpolation,1)
+          CALL InterfaceEquations_DomainInterpolationFinalise(interfaceEquationsInterpolation% &
+            & variableInterpolation(variableIdx),err,error,*999)
+        ENDDO !variableIdx
+        DEALLOCATE(interfaceEquationsInterpolation%variableInterpolation)
       ENDIF
     ENDIF
        
-    EXITS("INTERFACE_EQUATIONS_INTERPOLATION_FINALISE")
+    EXITS("InterfaceEquations_InterpolationFinalise")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_INTERPOLATION_FINALISE",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_InterpolationFinalise",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_EQUATIONS_INTERPOLATION_FINALISE
+  END SUBROUTINE InterfaceEquations_InterpolationFinalise
 
   !
   !================================================================================================================================
   !
 
   !>Initialises the interface equations interpolation.
-  SUBROUTINE InterfaceEquations_InterpolationInitialise(INTERFACE_EQUATIONS,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_InterpolationInitialise(interfaceEquations,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to initialise the interpolation for
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to initialise the interpolation for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: DUMMY_ERR,variable_idx
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
-    TYPE(VARYING_STRING) :: DUMMY_ERROR
+    INTEGER(INTG) :: dummyErr,variableIdx
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceDependentType), POINTER :: interfaceDependent
+    TYPE(VARYING_STRING) :: dummyError
  
-    ENTERS("InterfaceEquations_InterpolationInitialise",ERR,ERROR,*998)
+    ENTERS("InterfaceEquations_InterpolationInitialise",err,error,*998)
 
-    IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
-      INTERFACE_CONDITION=>INTERFACE_EQUATIONS%INTERFACE_CONDITION
-      IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-        IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
-          CALL FlagError("Interface equations interpolation is already associated.",ERR,ERROR,*998)
-        ELSE
-          INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
-          IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
-            ALLOCATE(INTERFACE_EQUATIONS%INTERPOLATION,STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate interface equations interpolation.",ERR,ERROR,*999)
-            INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_EQUATIONS=>INTERFACE_EQUATIONS
-            CALL InterfaceEquations_DomainInterpolationInitialise(INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION, &
-              & ERR,ERROR,*999)
-            INTERFACE_EQUATIONS%INTERPOLATION%INTERFACE_INTERPOLATION%INTERPOLATION=>INTERFACE_EQUATIONS%INTERPOLATION
-            ALLOCATE(INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES), &
-              & STAT=ERR)
-            IF(ERR/=0) CALL FlagError("Could not allocate interface equations interpolation mesh interpolation.",ERR,ERROR,*999)
-            DO variable_idx=1,INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES
-              CALL InterfaceEquations_DomainInterpolationInitialise(INTERFACE_EQUATIONS%INTERPOLATION% &
-                & VARIABLE_INTERPOLATION(variable_idx),ERR,ERROR,*999)
-                INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(variable_idx)%INTERPOLATION=> &
-                  & INTERFACE_EQUATIONS%INTERPOLATION
-            ENDDO !variable_idx
-          ELSE
-            CALL FlagError("Interface condition dependent is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ENDIF
-      ELSE
-        CALL FlagError("Interface equations interface condition is not associated.",ERR,ERROR,*998)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations is not associated.",ERR,ERROR,*998)
-    ENDIF
+    IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is not associated.",err,error,*998)
+    IF(ASSOCIATED(interfaceEquations%interpolation)) &
+      & CALL FlagError("Interface equations interpolation is already associated.",err,error,*998)
+
+    NULLIFY(interfaceCondition)
+    CALL InterfaceEquations_InterfaceConditionGet(interfaceEquations,interfaceCondition,err,error,*998)
+    NULLIFY(interfaceDependent)
+    CALL InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*998)
+    
+    ALLOCATE(interfaceEquations%interpolation,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface equations interpolation.",err,error,*999)
+    interfaceEquations%interpolation%interfaceEquations=>interfaceEquations
+    CALL InterfaceEquations_DomainInterpolationInitialise(interfaceEquations%interpolation%interfaceInterpolation,err,error,*999)
+    interfaceEquations%interpolation%interfaceInterpolation%interpolation=>interfaceEquations%interpolation
+    ALLOCATE(interfaceEquations%interpolation%variableInterpolation(interfaceDependent%numberOfDependentVariables),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate interface equations interpolation variable interpolation.",err,error,*999)
+    DO variableIdx=1,interfaceDependent%numberOfDependentVariables
+      CALL InterfaceEquations_DomainInterpolationInitialise(interfaceEquations%interpolation% &
+        & variableInterpolation(variableIdx),err,error,*999)
+      interfaceEquations%interpolation%variableInterpolation(variableIdx)%interpolation=>interfaceEquations%interpolation
+    ENDDO !variableIdx
        
     EXITS("InterfaceEquations_InterpolationInitialise")
     RETURN
-999 CALL INTERFACE_EQUATIONS_INTERPOLATION_FINALISE(INTERFACE_EQUATIONS%INTERPOLATION,DUMMY_ERR,DUMMY_ERROR,*998)
-998 ERRORSEXITS("InterfaceEquations_InterpolationInitialise",ERR,ERROR)
+999 CALL InterfaceEquations_InterpolationFinalise(interfaceEquations%interpolation,dummyErr,dummyError,*998)
+998 ERRORSEXITS("InterfaceEquations_InterpolationInitialise",err,error)
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_InterpolationInitialise
@@ -758,23 +594,23 @@ CONTAINS
   !
 
   !>Finalises the interface equations interpolation set and deallocates all memory.
-  SUBROUTINE InterfaceEquations_InterpolationSetFinalise(INTERPOLATION_SET,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_InterpolationSetFinalise(interpolationSet,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE) :: INTERPOLATION_SET !<The interpolation set to finalise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsInterpolationSetType) :: interpolationSet !<The interpolation set to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceEquations_InterpolationSetFinalise",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_InterpolationSetFinalise",err,error,*999)
 
-    CALL FIELD_INTERPOLATION_PARAMETERS_FINALISE(INTERPOLATION_SET%interpolationParameters,ERR,ERROR,*999)
-    CALL FIELD_INTERPOLATED_POINTS_FINALISE(INTERPOLATION_SET%interpolatedPoint,ERR,ERROR,*999)
-    CALL Field_InterpolatedPointsMetricsFinalise(INTERPOLATION_SET%interpolatedPointMetrics,ERR,ERROR,*999)
+    CALL Field_InterpolationParametersFinalise(interpolationSet%interpolationParameters,err,error,*999)
+    CALL Field_InterpolatedPointsFinalise(interpolationSet%interpolatedPoint,err,error,*999)
+    CALL Field_InterpolatedPointsMetricsFinalise(interpolationSet%interpolatedPointMetrics,err,error,*999)
        
     EXITS("InterfaceEquations_InterpolationSetFinalise")
     RETURN
-999 ERRORSEXITS("InterfaceEquations_InterpolationSetFinalise",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_InterpolationSetFinalise",err,error)
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_InterpolationSetFinalise
@@ -784,23 +620,23 @@ CONTAINS
   !
 
   !>Initialises the interface equations interpolation set.
-  SUBROUTINE InterfaceEquations_InterpolationSetInitialise(INTERPOLATION_SET,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_InterpolationSetInitialise(interpolationSet,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE) :: INTERPOLATION_SET !<The interpolation set to intialise
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsInterpolationSetType) :: interpolationSet !<The interpolation set to intialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceEquations_InterpolationSetInitialise",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_InterpolationSetInitialise",err,error,*999)
 
-    NULLIFY(INTERPOLATION_SET%interpolationParameters)
-    NULLIFY(INTERPOLATION_SET%interpolatedPoint)
-    NULLIFY(INTERPOLATION_SET%interpolatedPointMetrics)
+    NULLIFY(interpolationSet%interpolationParameters)
+    NULLIFY(interpolationSet%interpolatedPoint)
+    NULLIFY(interpolationSet%interpolatedPointMetrics)
        
     EXITS("InterfaceEquations_InterpolationSetInitialise")
     RETURN
-999 ERRORS("InterfaceEquations_InterpolationSetInitialise",ERR,ERROR)
+999 ERRORS("InterfaceEquations_InterpolationSetInitialise",err,error)
     EXITS("InterfaceEquations_InterpolationSetInitialise")
     RETURN 1
     
@@ -811,26 +647,27 @@ CONTAINS
   !
 
   !>Gets the output type for interface equations.
-  SUBROUTINE INTERFACE_EQUATIONS_OUTPUT_TYPE_GET(INTERFACE_EQUATIONS,OUTPUT_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_OutputTypeGet(interfaceEquations,outputType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to get the output type for
-    INTEGER(INTG), INTENT(OUT) :: OUTPUT_TYPE !<On exit, the output type of the interface equations \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to get the output type for
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On exit, the output type of the interface equations \see InterfaceEquationsRoutines_OutputTypes,InterfaceEquationsRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("INTERFACE_EQUATIONS_OUTPUT_TYPE_GET",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_OutputTypeGet",err,error,*999)
 
-    CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
     
-    OUTPUT_TYPE=INTERFACE_EQUATIONS%outputType
+    outputType=interfaceEquations%outputType
        
-    EXITS("INTERFACE_EQUATIONS_OUTPUT_TYPE_GET")
+    EXITS("InterfaceEquations_OutputTypeGet")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_OUTPUT_TYPE_GET",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_OutputTypeGet",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_EQUATIONS_OUTPUT_TYPE_GET
+    
+  END SUBROUTINE InterfaceEquations_OutputTypeGet
   
   !
   !================================================================================================================================
@@ -841,7 +678,7 @@ CONTAINS
     & timeDependenceType,err,error,*)
     
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to get the time dependence type for.
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to get the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to get the time dependence for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
     INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<The interface matrix time dependence type to get. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes
@@ -873,7 +710,7 @@ CONTAINS
     & timeDependenceTypes,err,error,*)
     
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
     INTEGER(INTG), INTENT(OUT) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes
@@ -886,7 +723,7 @@ CONTAINS
     
     ENTERS("InterfaceEquations_MatrixTimeDependenceTypeGet",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(InterfaceEquations)) CALL FlagError("Interface equations not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations not associated.",err,error,*999)
     NULLIFY(interfaceMatrices)
     CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
     NULLIFY(interfaceMatrix)
@@ -935,7 +772,7 @@ CONTAINS
     & timeDependenceType,err,error,*)
     
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
     INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes
@@ -965,7 +802,7 @@ CONTAINS
     & timeDependenceTypes,err,error,*)
     
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations containing the interface matrix to set the time dependence type for.
     INTEGER(INTG), INTENT(IN) :: interfaceMatrixIdx !<The index of the interface matrix in the interface equations to set the time dependence for.
     LOGICAL, INTENT(IN) :: hasTranspose !<Is .TRUE. if the interface matrix has a transpose. .FALSE. if not. 
     INTEGER(INTG), INTENT(IN) :: timeDependenceTypes(:) !<timeDependenceTypes(transposeIdx). The interface matrix time dependence type to set. If hasTranspose is .TRUE. then two timeDependenceTypes are required. The first one for the the interface matrix and the second one for the transposed matrix. \see InterfaceMatricesRoutines_InterfaceMatricesTimeDependenceTypes
@@ -979,7 +816,8 @@ CONTAINS
     
     ENTERS("InterfaceEquations_MatrixTimeDependenceTypeSet",err,error,*999)
     
-    IF(.NOT.ASSOCIATED(InterfaceEquations)) CALL FlagError("Interface equations not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations not associated.",err,error,*999)
+    
     NULLIFY(interfaceMatrices)
     CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
     NULLIFY(interfaceMatrix)
@@ -1036,190 +874,194 @@ CONTAINS
   !
 
   !>Sets/changes the output type for the interface equations.
-  SUBROUTINE INTERFACE_EQUATIONS_OUTPUT_TYPE_SET(INTERFACE_EQUATIONS,OUTPUT_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_OutputTypeSet(interfaceEquations,outputType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to set the output type for
-    INTEGER(INTG), INTENT(IN) :: OUTPUT_TYPE !<The output type to set \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to set the output type for
+    INTEGER(INTG), INTENT(IN) :: outputType !<The output type to set \see InterfaceEquationsRoutines_OutputTypes,InterfaceEquationsRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
  
-    ENTERS("INTERFACE_EQUATIONS_OUTPUT_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_OutputTypeSet",err,error,*999)
 
-    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertNotFinished(interfaceEquations,err,error,*999)
     
-    SELECT CASE(OUTPUT_TYPE)
+    SELECT CASE(outputType)
     CASE(INTERFACE_EQUATIONS_NO_OUTPUT)
-      INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_NO_OUTPUT
+      interfaceEquations%outputType=INTERFACE_EQUATIONS_NO_OUTPUT
     CASE(INTERFACE_EQUATIONS_TIMING_OUTPUT)
-      INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_TIMING_OUTPUT
+      interfaceEquations%outputType=INTERFACE_EQUATIONS_TIMING_OUTPUT
     CASE(INTERFACE_EQUATIONS_MATRIX_OUTPUT)
-      INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_MATRIX_OUTPUT
+      interfaceEquations%outputType=INTERFACE_EQUATIONS_MATRIX_OUTPUT
     CASE(INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT)
-      INTERFACE_EQUATIONS%outputType=INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT
+      interfaceEquations%outputType=INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT
     CASE DEFAULT
-      LOCAL_ERROR="The specified output type of "//TRIM(NUMBER_TO_VSTRING(OUTPUT_TYPE,"*",ERR,ERROR))//" is invalid"
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+      localError="The specified output type of "//TRIM(NumberToVString(outputType,"*",err,error))//" is invalid"
+      CALL FlagError(localError,err,error,*999)
     END SELECT
        
-    EXITS("INTERFACE_EQUATIONS_OUTPUT_TYPE_SET")
+    EXITS("InterfaceEquations_OutputTypeSet")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_OUTPUT_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_OutputTypeSet",err,error)
     RETURN 1
     
-  END SUBROUTINE INTERFACE_EQUATIONS_OUTPUT_TYPE_SET
+  END SUBROUTINE InterfaceEquations_OutputTypeSet
 
   !
   !================================================================================================================================
   !
 
   !>Gets the sparsity type for interface equations.
-  SUBROUTINE INTERFACE_EQUATIONS_SPARSITY_TYPE_GET(INTERFACE_EQUATIONS,SPARSITY_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_SparsityTypeGet(interfaceEquations,sparsityType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to get the sparsity type for
-    INTEGER(INTG), INTENT(OUT) :: SPARSITY_TYPE !<On exit, the sparsity type of the interface equations. \see INTERFACE_EQUATIONS_ROUTINES_SparsityTypes,INTERFACE_EQUATIONS_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to get the sparsity type for
+    INTEGER(INTG), INTENT(OUT) :: sparsityType !<On exit, the sparsity type of the interface equations. \see InterfaceEquationsRoutines_SparsityTypes,InterfaceEquationsRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("INTERFACE_EQUATIONS_SPARSITY_TYPE_GET",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_SparsityTypeGet",err,error,*999)
 
-    CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
     
-    SPARSITY_TYPE=INTERFACE_EQUATIONS%sparsityType
+    sparsityType=interfaceEquations%sparsityType
        
-    EXITS("INTERFACE_EQUATIONS_SPARSITY_TYPE_GET")
+    EXITS("InterfaceEquations_SparsityTypeGet")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_SPARSITY_TYPE_GET",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_SparsityTypeGet",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_EQUATIONS_SPARSITY_TYPE_GET
+    
+  END SUBROUTINE InterfaceEquations_SparsityTypeGet
   
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the sparsity type for the interface equations.
-  SUBROUTINE INTERFACE_EQUATIONS_SPARSITY_TYPE_SET(INTERFACE_EQUATIONS,SPARSITY_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_SparsityTypeSet(interfaceEquations,sparsityType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to set the sparsity type for
-    INTEGER(INTG), INTENT(IN) :: SPARSITY_TYPE !<The sparsity type to set \see INTERFACE_EQUATIONS_ROUTINES_SparsityTypes,INTERFACE_EQUATIONS_ROUTINES
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to set the sparsity type for
+    INTEGER(INTG), INTENT(IN) :: sparsityType !<The sparsity type to set \see InterfaceEquationsRoutines_SparsityTypes,InterfaceEquationsRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
  
-    ENTERS("INTERFACE_EQUATIONS_SPARSITY_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_SparsityTypeSet",err,error,*999)
 
-    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertNotFinished(interfaceEquations,err,error,*999)
 
-    SELECT CASE(SPARSITY_TYPE)
+    SELECT CASE(sparsityType)
     CASE(INTERFACE_EQUATIONS_SPARSE_MATRICES)
-      INTERFACE_EQUATIONS%sparsityType=INTERFACE_EQUATIONS_SPARSE_MATRICES
+      interfaceEquations%sparsityType=INTERFACE_EQUATIONS_SPARSE_MATRICES
     CASE(INTERFACE_EQUATIONS_FULL_MATRICES)
-      INTERFACE_EQUATIONS%sparsityType=INTERFACE_EQUATIONS_FULL_MATRICES
+      interfaceEquations%sparsityType=INTERFACE_EQUATIONS_FULL_MATRICES
     CASE DEFAULT
-      LOCAL_ERROR="The specified sparsity type of "//TRIM(NUMBER_TO_VSTRING(SPARSITY_TYPE,"*",ERR,ERROR))// &
+      localError="The specified sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
         & " is invalid."
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+      CALL FlagError(localError,err,error,*999)
     END SELECT
         
-    EXITS("INTERFACE_EQUATIONS_SPARSITY_TYPE_SET")
+    EXITS("InterfaceEquations_SparsityTypeSet")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_SPARSITY_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_SparsityTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_EQUATIONS_SPARSITY_TYPE_SET
+    
+  END SUBROUTINE InterfaceEquations_SparsityTypeSet
   
   !
   !================================================================================================================================
   !
 
   !>Gets the linearity type for interface equations.
-  SUBROUTINE INTERFACE_EQUATIONS_LINEARITY_TYPE_GET(INTERFACE_EQUATIONS,LINEARITY_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_LinearityTypeGet(interfaceEquations,linearityType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to get the linearity for
-    INTEGER(INTG), INTENT(OUT) :: LINEARITY_TYPE !<On exit, the linearity type of the interface equations. \see INTERFACE_CONDITIONS_CONSTANTS_LinearityTypes,INTERFACE_CONDITIONS_CONSTANTS
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to get the linearity for
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On exit, the linearity type of the interface equations. \see InterfaceEquations_LinearityTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("INTERFACE_EQUATIONS_LINEARITY_TYPE_GET",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_LinearityTypeGet",err,error,*999)
 
-    CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
     
-    LINEARITY_TYPE=INTERFACE_EQUATIONS%linearity
+    linearityType=interfaceEquations%linearity
        
-    EXITS("INTERFACE_EQUATIONS_LINEARITY_TYPE_GET")
+    EXITS("InterfaceEquations_LinearityTypeGet")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_LINEARITY_TYPE_GET",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_LinearityTypeGet",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_EQUATIONS_LINEARITY_TYPE_GET
+    
+  END SUBROUTINE InterfaceEquations_LinearityTypeGet
   
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the linearity type for interface equations.
-  SUBROUTINE INTERFACE_EQUATIONS_LINEARITY_TYPE_SET(INTERFACE_EQUATIONS,LINEARITY_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_LinearityTypeSet(interfaceEquations,linearityType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to set the linearity for
-    INTEGER(INTG), INTENT(IN) :: LINEARITY_TYPE !<The linearity type to set \see INTERFACE_CONDITIONS_CONSTANTS_LinearityTypes,INTERFACE_CONDITIONS_CONSTANTS
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to set the linearity for
+    INTEGER(INTG), INTENT(IN) :: linearityType !<The linearity type to set \see InterfaceEquations_LinearityTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
  
-    ENTERS("INTERFACE_EQUATIONS_LINEARITY_TYPE_SET",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_LinearityTypeSet",err,error,*999)
 
-    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertNotFinished(interfaceEquations,err,error,*999)
     
-    SELECT CASE(LINEARITY_TYPE)
-    CASE(INTERFACE_CONDITION_LINEAR)
-      INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_LINEAR
-    CASE(INTERFACE_CONDITION_NONLINEAR)
-      INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_NONLINEAR
-    CASE(INTERFACE_CONDITION_NONLINEAR_BCS)
-      INTERFACE_EQUATIONS%linearity=INTERFACE_CONDITION_NONLINEAR_BCS
+    SELECT CASE(linearityType)
+    CASE(INTERFACE_EQUATIONS_LINEAR)
+      interfaceEquations%linearity=INTERFACE_EQUATIONS_LINEAR
+    CASE(INTERFACE_EQUATIONS_NONLINEAR)
+      interfaceEquations%linearity=INTERFACE_EQUATIONS_NONLINEAR
+    CASE(INTERFACE_EQUATIONS_NONLINEAR_BCS)
+      interfaceEquations%linearity=INTERFACE_EQUATIONS_NONLINEAR_BCS
     CASE DEFAULT
-      LOCAL_ERROR="The specified linearity type of "//TRIM(NUMBER_TO_VSTRING(LINEARITY_TYPE,"*",ERR,ERROR))// &
+      localError="The specified linearity type of "//TRIM(NumberToVString(linearityType,"*",err,error))// &
         & " is invalid."
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+      CALL FlagError(localError,err,error,*999)
     END SELECT
        
-    EXITS("INTERFACE_EQUATIONS_LINEARITY_TYPE_SET")
+    EXITS("InterfaceEquations_LinearityTypeSet")
     RETURN
-999 ERRORSEXITS("INTERFACE_EQUATIONS_LINEARITY_TYPE_SET",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_LinearityTypeSet",err,error)
     RETURN 1
-  END SUBROUTINE INTERFACE_EQUATIONS_LINEARITY_TYPE_SET
+    
+  END SUBROUTINE InterfaceEquations_LinearityTypeSet
   
   !
   !================================================================================================================================
   !
 
   !>Gets the time dependence type for interface equations.
-  SUBROUTINE InterfaceEquations_TimeDependenceTypeGet(INTERFACE_EQUATIONS,TIME_DEPENDENCE_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_TimeDependenceTypeGet(interfaceEquations,timeDependenceType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to get the output type for
-    INTEGER(INTG), INTENT(OUT) :: TIME_DEPENDENCE_TYPE !<On exit, the time dependence type of the interface equations
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to get the output type for
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On exit, the time dependence type of the interface equations \see InterfaceEquations_TimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("InterfaceEquations_TimeDependenceTypeGet",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_TimeDependenceTypeGet",err,error,*999)
 
-    CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertIsFinished(interfaceEquations,err,error,*999)
 
-    TIME_DEPENDENCE_TYPE=INTERFACE_EQUATIONS%timeDependence
+    timeDependenceType=interfaceEquations%timeDependence
        
     EXITS("InterfaceEquations_TimeDependenceTypeGet")
     RETURN
-999 ERRORSEXITS("InterfaceEquations_TimeDependenceTypeGet",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_TimeDependenceTypeGet",err,error)
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_TimeDependenceTypeGet
@@ -1229,38 +1071,38 @@ CONTAINS
   !
 
   !>Sets/changes the time dependence type for interface equations.
-  SUBROUTINE InterfaceEquations_TimeDependenceTypeSet(INTERFACE_EQUATIONS,TIME_DEPENDENCE_TYPE,ERR,ERROR,*)
+  SUBROUTINE InterfaceEquations_TimeDependenceTypeSet(interfaceEquations,timeDependenceType,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the interface equations to set the linearity for
-    INTEGER(INTG), INTENT(IN) :: TIME_DEPENDENCE_TYPE !<The time dependence type to set \see INTERFACE_CONDITIONS_CONSTANTS_TimeDependenceTypes,INTERFACE_CONDITIONS_CONSTANTS
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to set the linearity for
+    INTEGER(INTG), INTENT(IN) :: timeDependenceType !<The time dependence type to set \see InterfaceEquations_TimeDependenceTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
+    TYPE(VARYING_STRING) :: localError
  
-    ENTERS("InterfaceEquations_TimeDependenceTypeSet",ERR,ERROR,*999)
+    ENTERS("InterfaceEquations_TimeDependenceTypeSet",err,error,*999)
 
-    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
+    CALL InterfaceEquations_AssertNotFinished(interfaceEquations,err,error,*999)
     
-    SELECT CASE(TIME_DEPENDENCE_TYPE)
-    CASE(INTERFACE_CONDITION_STATIC)
-      INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_STATIC
-    CASE(INTERFACE_CONDITION_QUASISTATIC)
-      INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_QUASISTATIC
-    CASE(INTERFACE_CONDITION_FIRST_ORDER_DYNAMIC)
-      INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_FIRST_ORDER_DYNAMIC
-    CASE(INTERFACE_CONDITION_SECOND_ORDER_DYNAMIC)
-      INTERFACE_EQUATIONS%timeDependence=INTERFACE_CONDITION_SECOND_ORDER_DYNAMIC
+    SELECT CASE(timeDependenceType)
+    CASE(INTERFACE_EQUATIONS_STATIC)
+      interfaceEquations%timeDependence=INTERFACE_EQUATIONS_STATIC
+    CASE(INTERFACE_EQUATIONS_QUASISTATIC)
+      interfaceEquations%timeDependence=INTERFACE_EQUATIONS_QUASISTATIC
+    CASE(INTERFACE_EQUATIONS_FIRST_ORDER_DYNAMIC)
+      interfaceEquations%timeDependence=INTERFACE_EQUATIONS_FIRST_ORDER_DYNAMIC
+    CASE(INTERFACE_EQUATIONS_SECOND_ORDER_DYNAMIC)
+      interfaceEquations%timeDependence=INTERFACE_EQUATIONS_SECOND_ORDER_DYNAMIC
     CASE DEFAULT
-      LOCAL_ERROR="The specified time dependence type of "//TRIM(NUMBER_TO_VSTRING(TIME_DEPENDENCE_TYPE,"*",ERR,ERROR))// &
+      localError="The specified time dependence type of "//TRIM(NumberToVString(timeDependenceType,"*",err,error))// &
         & " is invalid."
-      CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
+      CALL FlagError(localError,err,error,*999)
     END SELECT
        
     EXITS("InterfaceEquations_TimeDependenceTypeSet")
     RETURN
-999 ERRORSEXITS("InterfaceEquations_TimeDependenceTypeSet",ERR,ERROR)
+999 ERRORSEXITS("InterfaceEquations_TimeDependenceTypeSet",err,error)
     RETURN 1
     
   END SUBROUTINE InterfaceEquations_TimeDependenceTypeSet
@@ -1268,83 +1110,5 @@ CONTAINS
   !
   !================================================================================================================================
   !
-
-  SUBROUTINE InterfaceEquations_VariableInterpSetsNumberSet(INTERFACE_EQUATIONS,VARIABLE_INDEX, &
-    & NUMBER_OF_GEOMETRIC_SETS,NUMBER_OF_DEPENDENT_SETS,NUMBER_OF_PENALTY_SETS,ERR,ERROR,*)
-
-    !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<The interface equations to set the interface interpolation sets for
-    INTEGER(INTG), INTENT(IN) :: VARIABLE_INDEX !<The variable index number to set the number of interpolation sets for.
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_GEOMETRIC_SETS !<The number of geometric interface interpolation sets to set
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_DEPENDENT_SETS !<The number of dependent interface interpolation sets to set
-    INTEGER(INTG), INTENT(IN) :: NUMBER_OF_PENALTY_SETS !<The number of dependent interface interpolation sets to set
-    INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
-    !Local Variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
-    TYPE(VARYING_STRING) :: LOCAL_ERROR
- 
-    ENTERS("InterfaceEquations_VariableInterpSetsNumberSet",ERR,ERROR,*999)
-
-    CALL InterfaceEquations_AssertNotFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
-    
-    IF(ASSOCIATED(INTERFACE_EQUATIONS%INTERPOLATION)) THEN
-      IF(ALLOCATED(INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION)) THEN
-        INTERFACE_CONDITION=>INTERFACE_EQUATIONS%INTERFACE_CONDITION
-        IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-          INTERFACE_DEPENDENT=>INTERFACE_CONDITION%DEPENDENT
-          IF(ASSOCIATED(INTERFACE_DEPENDENT)) THEN
-            IF(VARIABLE_INDEX>0.AND.VARIABLE_INDEX<=INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES) THEN
-              IF(NUMBER_OF_GEOMETRIC_SETS>0) THEN
-                IF(NUMBER_OF_DEPENDENT_SETS>0) THEN
-                  INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
-                    & NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS=NUMBER_OF_GEOMETRIC_SETS
-                  INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
-                    & NUMBER_OF_DEPENDENT_INTERPOLATION_SETS=NUMBER_OF_DEPENDENT_SETS
-                  INTERFACE_EQUATIONS%INTERPOLATION%VARIABLE_INTERPOLATION(VARIABLE_INDEX)% &
-                    & NUMBER_OF_PENALTY_INTERPOLATION_SETS=NUMBER_OF_PENALTY_SETS
-                ELSE
-                  LOCAL_ERROR="The specified number of dependent sets of "// &
-                    & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_DEPENDENT_SETS,"*",ERR,ERROR))// &
-                    & " is invalid. The number of dependent sets must be > 0."
-                  CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-                ENDIF
-              ELSE
-                LOCAL_ERROR="The specified number of geometric sets of "// &
-                  & TRIM(NUMBER_TO_VSTRING(NUMBER_OF_GEOMETRIC_SETS,"*",ERR,ERROR))// &
-                  & " is invalid. The number of geometric sets must be > 0."
-                CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-              ENDIF
-            ELSE
-              LOCAL_ERROR="The specified variable index of "//TRIM(NUMBER_TO_VSTRING(VARIABLE_INDEX,"*",ERR,ERROR))// &
-                & " is invalid. The index needs to be > 0 and <= "// &
-                & TRIM(NUMBER_TO_VSTRING(INTERFACE_DEPENDENT%NUMBER_OF_DEPENDENT_VARIABLES,"*",ERR,ERROR))//"."
-              CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
-            ENDIF
-          ELSE
-            CALL FlagError("Interface condition dependent is not associated.",ERR,ERROR,*999)
-          ENDIF
-        ELSE
-          CALL FlagError("Interface equations interface condition is not associated.",ERR,ERROR,*999)
-        ENDIF
-      ELSE
-        CALL FlagError("Interface equations interpolation variable interpolation is not allocated.",ERR,ERROR,*999)
-      ENDIF
-    ELSE
-      CALL FlagError("Interface equations interpolation is not associated.",ERR,ERROR,*999)
-    ENDIF
-    
-    EXITS("InterfaceEquations_VariableInterpSetsNumberSet")
-    RETURN
-999 ERRORS("InterfaceEquations_VariableInterpSetsNumberSet",ERR,ERROR)
-    EXITS("InterfaceEquations_VariableInterpSetsNumberSet")
-    RETURN 1
-    
-  END SUBROUTINE InterfaceEquations_VariableInterpSetsNumberSet
-
-  !
-  !================================================================================================================================
-  !
   
-END MODULE INTERFACE_EQUATIONS_ROUTINES
+END MODULE InterfaceEquationsRoutines

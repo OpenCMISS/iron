@@ -941,8 +941,8 @@ CONTAINS
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION
+    TYPE(InterfaceEquationsType), POINTER :: INTERFACE_EQUATIONS
     TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
     TYPE(InterfaceMappingRHSType), POINTER :: INTERFACE_RHS_MAPPING
     TYPE(VARYING_STRING) :: DUMMY_ERROR,LOCAL_ERROR
@@ -1077,12 +1077,12 @@ CONTAINS
               CALL InterfaceEquations_AssertIsFinished(INTERFACE_EQUATIONS,ERR,ERROR,*999)
               INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
               CALL InterfaceMapping_AssertIsFinished(INTERFACE_MAPPING,ERR,ERROR,*999)
-              INTERFACE_CONDITION%BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
+              INTERFACE_CONDITION%boundaryConditions=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
               !Only linear interface equations implemented at the moment
               SELECT CASE(INTERFACE_EQUATIONS%timeDependence)
-              CASE(INTERFACE_CONDITION_STATIC,INTERFACE_CONDITION_QUASISTATIC)
+              CASE(INTERFACE_EQUATIONS_STATIC,INTERFACE_EQUATIONS_QUASISTATIC)
                 SELECT CASE(INTERFACE_EQUATIONS%linearity)
-                CASE(INTERFACE_CONDITION_LINEAR)
+                CASE(INTERFACE_EQUATIONS_LINEAR)
                   INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
                   IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
                     variable_type=INTERFACE_MAPPING%lagrangeVariableType
@@ -1099,13 +1099,13 @@ CONTAINS
                       & INTERFACE_RHS_MAPPING%rhsVariable,ERR,ERROR,*999)
                   ENDIF
                 CASE DEFAULT
-                  LOCAL_ERROR="The equations linearity type of "//TRIM(NUMBER_TO_VSTRING(EQUATIONS%linearity,"*", &
-                    & ERR,ERROR))//" is invalid."
+                  LOCAL_ERROR="The interface equations linearity type of "// &
+                    & TRIM(NUMBER_TO_VSTRING(INTERFACE_EQUATIONS%linearity,"*",ERR,ERROR))//" is invalid."
                   CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
                 END SELECT
               CASE DEFAULT
-                LOCAL_ERROR="The equations time dependence type of "// &
-                  & TRIM(NUMBER_TO_VSTRING(EQUATIONS%timeDependence,"*",ERR,ERROR))//" is invalid."
+                LOCAL_ERROR="The interface equations time dependence type of "// &
+                  & TRIM(NUMBER_TO_VSTRING(INTERFACE_EQUATIONS%timeDependence,"*",ERR,ERROR))//" is invalid."
                 CALL FlagError(LOCAL_ERROR,ERR,ERROR,*999)
               END SELECT
             ELSE

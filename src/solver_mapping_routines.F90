@@ -169,9 +169,9 @@ CONTAINS
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD,dependentField
     TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE,lagrangeVariable,VARIABLE,rhsVariable
     TYPE(INTEGER_INTG_PTR_TYPE), POINTER :: DOF_MAP(:)
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION
+    TYPE(InterfaceDependentType), POINTER :: INTERFACE_DEPENDENT
+    TYPE(InterfaceEquationsType), POINTER :: INTERFACE_EQUATIONS
     TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
     TYPE(INTERFACE_TO_SOLVER_MAPS_TYPE), POINTER :: INTERFACE_TO_SOLVER_MAP
     TYPE(JACOBIAN_TO_SOLVER_MAP_TYPE), POINTER :: JACOBIAN_TO_SOLVER_MAP
@@ -582,7 +582,7 @@ CONTAINS
                   IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
                     COL_DOFS_MAPPING=>INTERFACE_MAPPING%columnDOFSMapping
                     IF(ASSOCIATED(COL_DOFS_MAPPING)) THEN
-                      LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+                      LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%lagrangeField
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                         BOUNDARY_CONDITIONS=>SOLVER_EQUATIONS%BOUNDARY_CONDITIONS
                         IF(ASSOCIATED(BOUNDARY_CONDITIONS)) THEN
@@ -1187,7 +1187,7 @@ CONTAINS
               INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%PTR
               IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
                 IF(ASSOCIATED(INTERFACE_CONDITION%LAGRANGE)) THEN
-                  LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+                  LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%lagrangeField
                   IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                     variable_type=INTERFACE_VARIABLES(2,variable_idx)
                     VARIABLE=>LAGRANGE_FIELD%variableTypeMap(variable_type)%PTR
@@ -1590,7 +1590,7 @@ CONTAINS
                 IF(ERR/=0) CALL FlagError("Could not allocate interface to solver matrix maps sm dependent variables "// &
                   & "to solver col maps.",ERR,ERROR,*999)
                 !First add in the Lagrange to solver variables
-                LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+                LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%lagrangeField
                 !\todo Lagrange variable type set to the first variable type for now
                 variable_type=1
                 lagrangeVariable=>LAGRANGE_FIELD%variableTypeMap(variable_type)%PTR
@@ -1708,7 +1708,7 @@ CONTAINS
                 ENDIF
                 !Now add in the Dependent variables
                 SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM( &
-                  & solver_matrix_idx)%NUMBER_OF_DEPENDENT_VARIABLES=INTERFACE_MAPPING%numberOfInterfaceMatrices
+                  & solver_matrix_idx)%numberOfDependentVariables=INTERFACE_MAPPING%numberOfInterfaceMatrices
                 DO interface_matrix_idx=1,INTERFACE_MAPPING%numberOfInterfaceMatrices
                   DEPENDENT_VARIABLE=>INTERFACE_MAPPING%interfaceMatrixRowsToVarMaps(interface_matrix_idx)%VARIABLE
                   IF(ASSOCIATED(DEPENDENT_VARIABLE)) THEN
@@ -1723,7 +1723,7 @@ CONTAINS
                       ENDIF
                     ENDDO !variable_position_idx
                     IF(FOUND) THEN
-                      EQUATIONS_SET=>INTERFACE_DEPENDENT%EQUATIONS_SETS(INTERFACE_MAPPING%interfaceMatrixRowsToVarMaps( &
+                      EQUATIONS_SET=>INTERFACE_DEPENDENT%equationsSets(INTERFACE_MAPPING%interfaceMatrixRowsToVarMaps( &
                         & interface_matrix_idx)%meshIndex)%PTR
                       !Note that EQUATIONS_SET and INTERFACE_EQUATIONS has already been checked for association above and this check is just to see if either an equation set or interface equations are present.
                       IF(ASSOCIATED(EQUATIONS_SET).OR.ASSOCIATED(INTERFACE_EQUATIONS)) THEN
@@ -3777,14 +3777,14 @@ CONTAINS
             CALL WRITE_STRING(DIAGNOSTIC_OUTPUT_TYPE,"          Dependent variables:",ERR,ERROR,*999)
             CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"            Number of dependent variables = ",SOLVER_MAPPING% &
               & INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)% &
-              & NUMBER_OF_DEPENDENT_VARIABLES,ERR,ERROR,*999)
+              & numberOfDependentVariables,ERR,ERROR,*999)
             CALL WRITE_STRING_VECTOR(DIAGNOSTIC_OUTPUT_TYPE,1,1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP( &
-              & interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_DEPENDENT_VARIABLES, &
+              & interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfDependentVariables, &
               & 5,5,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)%INTERFACE_TO_SOLVER_MATRIX_MAPS_SM( &
               & solver_matrix_idx)%DEPENDENT_VARIABLE_TYPES,'("            Dependent variable types :",5(X,I13))', &
               & '(38X,5(X,I13))',ERR,ERROR,*999) 
             DO variable_idx=1,SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
-              & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%NUMBER_OF_DEPENDENT_VARIABLES
+              & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%numberOfDependentVariables
               DEPENDENT_VARIABLE=>SOLVER_MAPPING%INTERFACE_CONDITION_TO_SOLVER_MAP(interface_condition_idx)% &
                 & INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx)%DEPENDENT_VARIABLES(variable_idx)%PTR
               CALL WRITE_STRING_VALUE(DIAGNOSTIC_OUTPUT_TYPE,"            Dependent variable index : ",variable_idx,ERR,ERROR,*999)
@@ -4255,7 +4255,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: interface_condition_idx2,numberOfVariables,variable_idx,VARIABLE_ITEM(2)
     LOGICAL :: VARIABLE_FOUND
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION,VAR_INTERFACE_CONDITION
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION,VAR_INTERFACE_CONDITION
     TYPE(FieldType), POINTER :: LAGRANGE_FIELD,VAR_LAGRANGE_FIELD
     TYPE(VARYING_STRING) :: LOCAL_ERROR
 
@@ -4268,7 +4268,7 @@ CONTAINS
           SELECT CASE(INTERFACE_CONDITION%METHOD)
           CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
             IF(ASSOCIATED(INTERFACE_CONDITION%LAGRANGE)) THEN
-              LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+              LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%lagrangeField
               IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                 IF(variable_type/=0) THEN
                   VARIABLE_FOUND=.FALSE.
@@ -4283,7 +4283,7 @@ CONTAINS
                       SELECT CASE(VAR_INTERFACE_CONDITION%METHOD)
                       CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,INTERFACE_CONDITION_PENALTY_METHOD)
                         IF(ASSOCIATED(INTERFACE_CONDITION%LAGRANGE)) THEN
-                          VAR_LAGRANGE_FIELD=>VAR_INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+                          VAR_LAGRANGE_FIELD=>VAR_INTERFACE_CONDITION%LAGRANGE%lagrangeField
                           IF(ASSOCIATED(VAR_LAGRANGE_FIELD)) THEN
                             IF(ASSOCIATED(LAGRANGE_FIELD,VAR_LAGRANGE_FIELD)) THEN
                               IF(variable_type==VARIABLE_ITEM(2)) VARIABLE_FOUND=.TRUE.
@@ -5299,7 +5299,7 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING !<A pointer the solver mapping to add the interface condition to
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to add
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to add
     INTEGER(INTG), INTENT(OUT) :: INTERFACE_CONDITION_INDEX !<On exit, the index of the interface condition in the solver mapping
     INTEGER(INTG), INTENT(OUT) :: ERR !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: ERROR !<The error string
@@ -5309,8 +5309,8 @@ CONTAINS
     LOGICAL :: EQUATIONS_SET_FOUND,VARIABLE_FOUND
     TYPE(EQUATIONS_SET_TYPE), POINTER :: EQUATIONS_SET
     TYPE(FieldVariableType), POINTER :: DEPENDENT_VARIABLE
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: INTERFACE_DEPENDENT
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
+    TYPE(InterfaceDependentType), POINTER :: INTERFACE_DEPENDENT
+    TYPE(InterfaceEquationsType), POINTER :: INTERFACE_EQUATIONS
     TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
     TYPE(INTERFACE_CONDITION_PTR_TYPE), ALLOCATABLE :: OLD_INTERFACE_CONDITIONS(:)
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS
@@ -5325,7 +5325,7 @@ CONTAINS
     SOLVER_EQUATIONS=>SOLVER_MAPPING%SOLVER_EQUATIONS
     IF(ASSOCIATED(SOLVER_EQUATIONS)) THEN
       IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-        IF(INTERFACE_CONDITION%INTERFACE_CONDITION_FINISHED) THEN
+        IF(INTERFACE_CONDITION%interfaceConditionFinished) THEN
           INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
           IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
             INTERFACE_MAPPING=>INTERFACE_EQUATIONS%interfaceMapping
@@ -5841,7 +5841,7 @@ CONTAINS
     NULLIFY(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%lagrangeVariable)
     CALL SolverMapping_VariableToSolverColMapFinalise(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM% &
       & lagrangeVariableToSolverColMap,ERR,ERROR,*999)
-    INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%NUMBER_OF_DEPENDENT_VARIABLES=0
+    INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%numberOfDependentVariables=0
     IF(ALLOCATED(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%DEPENDENT_VARIABLE_TYPES)) &
       & DEALLOCATE(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%DEPENDENT_VARIABLE_TYPES)
     IF(ALLOCATED(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%DEPENDENT_VARIABLES)) &
@@ -5896,7 +5896,7 @@ CONTAINS
     NULLIFY(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%lagrangeVariable)
     CALL SolverMapping_VariableToSolverColMapInitialise(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM% &
       & lagrangeVariableToSolverColMap,ERR,ERROR,*999)
-    INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%NUMBER_OF_DEPENDENT_VARIABLES=0
+    INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%numberOfDependentVariables=0
     INTERFACE_TO_SOLVER_MATRIX_MAPS_SM%numberOfInterfaceMatrices=0
         
     EXITS("SolverMapping_InterfToSolMatMapsSMInitialise")

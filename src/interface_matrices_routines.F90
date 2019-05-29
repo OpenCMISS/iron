@@ -293,8 +293,8 @@ CONTAINS
     INTEGER(INTG) :: matrixIdx,rowsElementNumber,rowsMeshIdx
     TYPE(FieldVariableType), POINTER :: colsFieldVariable,rowsFieldVariable
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
@@ -448,8 +448,8 @@ CONTAINS
     INTEGER(INTG) :: matrixIdx,rowsMeshIdx
     INTEGER(INTG) :: rowsNumberOfElements,colsNumberOfElements !Number of elements in the row and col variables whose dofs are present in interface element matrix
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceType), POINTER :: interface
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
@@ -550,8 +550,8 @@ CONTAINS
     TYPE(DomainMappingType), POINTER :: columnDOFSDomainMapping,rowDOFSDomainMapping
     TYPE(DomainTopologyType), POINTER :: columnDomainTopology,rowDomainTopology
     TYPE(InterfaceType), POINTER :: INTERFACE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
@@ -934,7 +934,7 @@ CONTAINS
   SUBROUTINE InterfaceMatrices_CreateStart(interfaceEquations,interfaceMatrices,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<The pointer to the interface equations to create the interface equations matrices for
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<The pointer to the interface equations to create the interface equations matrices for
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<On return, a pointer to the interface matrices being created. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string  
@@ -1025,7 +1025,7 @@ CONTAINS
   SUBROUTINE InterfaceMatrices_Initialise(interfaceEquations,err,error,*)
     
      !Argument variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations to initialise the interface matrices for
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations to initialise the interface matrices for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

@@ -63,7 +63,7 @@ MODULE MatrixVectorAccessRoutines
   !> \addtogroup OpenCMISS_MatrixVectorConstants OpenCMISS::Iron::MatrixVector::Constants
   !> \brief Matrix vector constants.
   !>@{
-  !> \addtogroup MatrixVector_DataTypes MatrixVector::DataTypes
+  !> \addtogroup MatrixVector_DataTypes MatrixVector::Constants::DataTypes
   !> \brief Matrix vector data types
   !> \see MatrixVector
   !>@{
@@ -75,7 +75,7 @@ MODULE MatrixVectorAccessRoutines
   INTEGER(INTG), PARAMETER :: MATRIX_VECTOR_DPC_TYPE=DOUBLE_COMPLEX_TYPE !<Double precision complex matrix-vector data type \see MatrixVector_DataTypes,MatrixVector
    !>@}
   
-  !> \addtogroup MatrixVector_StorageTypes MatrixVector::StorageTypes
+  !> \addtogroup MatrixVector_StorageTypes MatrixVector::Constants::StorageTypes
   !> \brief Matrix-vector storage type parameters
   !> \see MatrixVector_MatrixStorageStructures,MatrixVector
   !>@{
@@ -90,7 +90,7 @@ MODULE MatrixVectorAccessRoutines
   INTEGER(INTG), PARAMETER :: MATRIX_MODIFIED_KRM_STORAGE_TYPE=8 !<Matrix modified Knuth-Rheinboldt-Mesztenyi storage type \see MatrixVector_StorageTypes,MatrixVector
   !>@}
   
-  !> \addtogroup MatrixVector_SymmetryTypes MatrixVector::SymmetryTypes
+  !> \addtogroup MatrixVector_SymmetryTypes MatrixVector::Constants::SymmetryTypes
   !> \brief Matrix-vector storage type parameters
   !> \see MatrixVector_MatrixStorageStructures,MatrixVector
   !>@{
@@ -101,7 +101,7 @@ MODULE MatrixVectorAccessRoutines
   !>@}
 
   
-  !> \addtogroup MatrixVector_TransposeTypes MatrixVector::TransposeTypes
+  !> \addtogroup MatrixVector_TransposeTypes MatrixVector::Constants::TransposeTypes
   !> \brief Matrix-vector transpose type parameters
   !> \see MatrixVector_MatrixStorageStructures,MatrixVector
   !>@{
@@ -110,7 +110,6 @@ MODULE MatrixVectorAccessRoutines
   INTEGER(INTG), PARAMETER :: MATRIX_FULL_TRANSPOSE_REQUIRED=2 !<Matrix will require a full transpose  \see MatrixVector_TransposeTypes,MatrixVector
   !>@}
   !>@}
-
   
   !Module types
 

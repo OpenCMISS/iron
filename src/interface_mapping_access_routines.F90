@@ -66,6 +66,8 @@ MODULE InterfaceMappingAccessRoutines
 
   PUBLIC InterfaceMapping_AssertIsFinished,InterfaceMapping_AssertNotFinished
 
+  PUBLIC InterfaceMapping_CreateValuesCacheGet
+
   PUBLIC InterfaceMapping_InterfaceEquationsGet
 
   PUBLIC InterfaceMapping_LagrangeVariableGet
@@ -132,12 +134,43 @@ MODULE InterfaceMappingAccessRoutines
   !================================================================================================================================
   !
 
+  !>Gets the create values cache for an interface mapping.
+  SUBROUTINE InterfaceMapping_CreateValuesCacheGet(interfaceMapping,createValuesCache,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface mapping to get the create values cache for
+    TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache !<On exit, a pointer to the create values cache in the specified interface mapping. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceMapping_CreateValuesCacheGet",err,error,*998)
+
+    IF(ASSOCIATED(createValuesCache)) CALL FlagError("Create values cache is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceMapping)) CALL FlagError("Interface mapping is not associated.",err,error,*999)
+
+    createValuesCache=>interfaceMapping%createValuesCache
+    IF(.NOT.ASSOCIATED(createValuesCache)) &
+      & CALL FlagError("Interface mapping create values cache is not associated.",err,error,*999)
+       
+    EXITS("InterfaceMapping_CreateValuesCacheGet")
+    RETURN
+999 NULLIFY(createValuesCache)
+998 ERRORSEXITS("InterfaceMapping_CreateValuesCacheGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceMapping_CreateValuesCacheGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the interface equations for an interface mapping.
   SUBROUTINE InterfaceMapping_InterfaceEquationsGet(interfaceMapping,interfaceEquations,err,error,*)
 
     !Argument variables
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface mapping to get the interface equations for
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<On exit, a pointer to the interface equations in the specified interface mapping. Must not be associated on entry
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<On exit, a pointer to the interface equations in the specified interface mapping. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

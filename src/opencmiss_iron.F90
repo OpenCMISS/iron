@@ -107,7 +107,7 @@ MODULE OpenCMISS_Iron
  USE INTERFACE_CONDITIONS_CONSTANTS
  USE INTERFACE_CONDITIONS_ROUTINES
  USE InterfaceConditionAccessRoutines
- USE INTERFACE_EQUATIONS_ROUTINES
+ USE InterfaceEquationsRoutines
  USE INTERFACE_MATRICES_CONSTANTS
  USE InterfaceMatricesRoutines
  USE ISO_C_BINDING
@@ -254,13 +254,13 @@ MODULE OpenCMISS_Iron
  !>Contains information about an interface condition.
  TYPE cmfe_InterfaceConditionType
    PRIVATE
-   TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+   TYPE(InterfaceConditionType), POINTER :: interfaceCondition
  END TYPE cmfe_InterfaceConditionType
 
  !>Contains information about an interface condition.
  TYPE cmfe_InterfaceEquationsType
    PRIVATE
-   TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+   TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
  END TYPE cmfe_InterfaceEquationsType
 
   !>Contains information on an interfaces meshes connectivity.
@@ -2482,9 +2482,9 @@ MODULE OpenCMISS_Iron
  !Module parameters
 
  !> \addtogroup OpenCMISS_EquationsConstants OpenCMISS::Iron::Equations::Constants
- !> \brief Equations  constants.
+ !> \brief Equations constants.
  !>@{
- !> \addtogroup OpenCMISS_EquationsOutputTypes OpenCMISS::Iron::Equations::OutputTypes
+ !> \addtogroup OpenCMISS_EquationsOutputTypes OpenCMISS::Iron::Equations::Constants::OutputTypes
  !> \brief Equations output types
  !> \see OpenCMISS::Iron::Equations,OpenCMISS
  !>@{
@@ -2494,21 +2494,21 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT = EQUATIONS_ELEMENT_MATRIX_OUTPUT !<All below and element matrices output. \see OpenCMISS_EquationsOutputTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NODAL_MATRIX_OUTPUT = EQUATIONS_NODAL_MATRIX_OUTPUT !<All below and nodal matrices output. \see OpenCMISS_EquationsOutputTypes,OpenCMISS
  !>@}
- !> \addtogroup OpenCMISS_EquationsSparsityTypes OpenCMISS::Iron::Equations::SparsityTypes
+ !> \addtogroup OpenCMISS_EquationsSparsityTypes OpenCMISS::Iron::Equations::Constants::SparsityTypes
  !> \brief Equations sparsity types
  !> \see OpenCMISS::Iron::Equations,OpenCMISS
  !>@{
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SPARSE_MATRICES = EQUATIONS_SPARSE_MATRICES !<Use sparse matrices for the equations. \see OpenCMISS_EquationsSparsityTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_FULL_MATRICES = EQUATIONS_FULL_MATRICES !<Use fully populated matrices for the equations. \see OpenCMISS_EquationsSparsityTypes,OpenCMISS
  !>@}
- !> \addtogroup OpenCMISS_EquationsLumpingTypes OpenCMISS::Iron::Equations::LumpingTypes
+ !> \addtogroup OpenCMISS_EquationsLumpingTypes OpenCMISS::Iron::Equations::Constants::LumpingTypes
  !> \brief Equations lumping types
  !> \see OpenCMISS::Iron::Equations,OpenCMISS
  !>@{
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_UNLUMPED_MATRICES = EQUATIONS_UNLUMPED_MATRICES !<The equations matrices are not lumped. \see OpenCMISS_EquationsLumpingTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_LUMPED_MATRICES = EQUATIONS_LUMPED_MATRICES !<The equations matrices are "mass" lumped. \see OpenCMISS_EquationsLumpingTypes,OpenCMISS
  !>@}
- !> \addtogroup OpenCMISS_EquationsLinearityTypes OpenCMISS::Iron::Equations::LinearityTypes
+ !> \addtogroup OpenCMISS_EquationsLinearityTypes OpenCMISS::Iron::Equations::Constants::LinearityTypes
  !> \brief The equations linearity types
  !> \see OpenCMISS::Iron::Equations,OpenCMISS
  !>@{
@@ -2516,7 +2516,7 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NONLINEAR = EQUATIONS_NONLINEAR !<The equations are non-linear. \see \see OpenCMISS_EquationsLinearityTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_NONLINEAR_BCS = EQUATIONS_NONLINEAR_BCS !<The equations have non-linear boundary conditions. \see \see OpenCMISS_EquationsLinearityTypes,OpenCMISS
  !>@}
- !> \addtogroup OpenCMISS_EquationsTimeDependenceTypes OpenCMISS::Iron::Equations::TimeDependenceTypes
+ !> \addtogroup OpenCMISS_EquationsTimeDependenceTypes OpenCMISS::Iron::Equations::Constants::TimeDependenceTypes
  !> \brief The equations time dependence types
  !> \see OpenCMISS::Iron::Equations,OpenCMISS
  !>@{
@@ -2526,7 +2526,7 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_SECOND_ORDER_DYNAMIC = EQUATIONS_SECOND_ORDER_DYNAMIC !<The equations are a second order dynamic. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_EQUATIONS_TIME_STEPPING = EQUATIONS_TIME_STEPPING !<The equations are for time stepping. \see OpenCMISS_EquationsTimeDependenceTypes,OpenCMISS
  !>@}
- !> \addtogroup OpenCMISS_EquationsJacobianCalculated OpenCMISS::Iron::Equations::JacobianCalculated
+ !> \addtogroup OpenCMISS_EquationsJacobianCalculated OpenCMISS::Iron::Equations::Constants::JacobianCalculated
  !> \brief Equations Jacobian matrices calculation types
  !> \see OpenCMISS::Iron::Equations,OpenCMISS
  !>@{
@@ -5159,7 +5159,7 @@ MODULE OpenCMISS_Iron
  !> \addtogroup OpenCMISS_InterfaceConditionConstants OpenCMISS::Iron::InterfaceConditions::Constants
  !> \brief Interface conditions constants.
  !>@{
- !> \addtogroup OpenCMISS_InterfaceConditionMethods OpenCMISS::Iron::InterfaceConditions::Methods
+ !> \addtogroup OpenCMISS_InterfaceConditionMethods OpenCMISS::Iron::InterfaceConditions::Constants::Methods
  !> \brief Interface condition methods.
  !> \see OpenCMISS::Iron::InterfaceConditions,OpenCMISS
  !>@{
@@ -5169,7 +5169,7 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_PENALTY_METHOD = INTERFACE_CONDITION_PENALTY_METHOD !<Penalty interface condition method. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_POINT_TO_POINT_METHOD = INTERFACE_CONDITION_POINT_TO_POINT_METHOD !<Point to point interface condition method. \see OpenCMISS_InterfaceConditionMethods,OpenCMISS
  !>@}
- !> \addtogroup OpenCMISS_InterfaceConditionOperators OpenCMISS::Iron::InterfaceConditions::Operators
+ !> \addtogroup OpenCMISS_InterfaceConditionOperators OpenCMISS::Iron::InterfaceConditions::Constants::Operators
  !> \brief Interface condition operator types.
  !> \see OpenCMISS::Iron::InterfaceConditions,OpenCMISS
  !>@{
@@ -5185,14 +5185,14 @@ MODULE OpenCMISS_Iron
  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR = &
    & INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR !<Solid fluid normal operator, i.e., lambda(v_f.n_f-du_s/dt.n_s). \see OpenCMISS_InterfaceConditionOperators,OpenCMISS
  !>@}
- !> \addtogroup OpenCMISS_InterfaceConditionOutputTypes OpenCMISS::Iron::InterfaceConditions::OutputTypes
+ !> \addtogroup OpenCMISS_InterfaceConditionOutputTypes OpenCMISS::Iron::InterfaceConditions::Constants::OutputTypes
  !> \brief Interface conditions output types
  !> \see OpenCMISS::Iron::InterfaceConditions,OpenCMISS
  !>@{
  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_NO_OUTPUT = INTERFACE_CONDITION_NO_OUTPUT!<No output from the interface condition \see OpenCMISS_InterfaceConditionOutputTypes,OpenCMISS
  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_CONDITION_PROGRESS_OUTPUT = INTERFACE_CONDITION_PROGRESS_OUTPUT !<Progress information output for the interface condition \see OpenCMISS_InterfaceConditionOutputTypes,OpenCMISS
  !>@}
- !> \addtogroup OpenCMISS_InterfaceConditionIntegrationTypes OpenCMISS::Iron::InterfaceConditions::IntegrationTypes
+ !> \addtogroup OpenCMISS_InterfaceConditionIntegrationTypes OpenCMISS::Iron::InterfaceConditions::Constants::IntegrationTypes
  !> \brief Interface condition integration types.
  !> \see OpenCMISS::Iron::InterfaceConditions,OpenCMISS
  !>@{
@@ -5336,7 +5336,101 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_InterfaceCondition_OperatorSetNumber
    MODULE PROCEDURE cmfe_InterfaceCondition_OperatorSetObj
  END INTERFACE cmfe_InterfaceCondition_OperatorSet
+ 
+ PUBLIC CMFE_INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,CMFE_INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD, &
+   & CMFE_INTERFACE_CONDITION_PENALTY_METHOD,CMFE_INTERFACE_CONDITION_POINT_TO_POINT_METHOD
 
+ PUBLIC CMFE_INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR,CMFE_INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR, &
+   & CMFE_INTERFACE_CONDITION_FLS_CONTACT_OPERATOR,CMFE_INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR, &
+   & CMFE_INTERFACE_CONDITION_SOLID_FLUID_OPERATOR,CMFE_INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR
+
+ PUBLIC CMFE_INTERFACE_CONDITION_GAUSS_INTEGRATION,CMFE_INTERFACE_CONDITION_DATA_POINTS_INTEGRATION
+
+ PUBLIC CMFE_INTERFACE_CONDITION_NO_OUTPUT,CMFE_INTERFACE_CONDITION_PROGRESS_OUTPUT
+
+ PUBLIC cmfe_InterfaceCondition_CreateFinish,cmfe_InterfaceCondition_CreateStart
+
+ PUBLIC cmfe_InterfaceCondition_DependentVariableAdd
+
+ PUBLIC cmfe_InterfaceCondition_Destroy
+
+ PUBLIC cmfe_InterfaceCondition_EquationsCreateFinish,cmfe_InterfaceCondition_EquationsCreateStart
+
+ PUBLIC cmfe_InterfaceCondition_EquationsDestroy
+
+ PUBLIC cmfe_InterfaceCondition_IntegrationTypeGet,cmfe_InterfaceCondition_IntegrationTypeSet
+
+ PUBLIC cmfe_InterfaceCondition_LagrangeFieldCreateFinish,cmfe_InterfaceCondition_LagrangeFieldCreateStart
+
+ PUBLIC cmfe_InterfaceCondition_LabelGet,cmfe_InterfaceCondition_LabelSet
+
+ PUBLIC cmfe_InterfaceCondition_OutputTypeGet,cmfe_InterfaceCondition_OutputTypeSet
+
+ PUBLIC cmfe_InterfaceCondition_PenaltyFieldCreateFinish,cmfe_InterfaceCondition_PenaltyFieldCreateStart
+
+ PUBLIC cmfe_InterfaceCondition_MethodGet,cmfe_InterfaceCondition_MethodSet
+
+ PUBLIC cmfe_InterfaceCondition_OperatorGet,cmfe_InterfaceCondition_OperatorSet
+
+!==================================================================================================================================
+!
+! InterfaceEquationsRoutines
+!
+!==================================================================================================================================
+
+ !Module parameters
+
+ !> \addtogroup OpenCMISS_InterfaceEquationsConstants OpenCMISS::Iron::InterfaceEquations::Constants
+ !> \brief Interface equations constants.
+ !>@{
+ !> \addtogroup OpenCMISS_InterfaceEquationsLinearityTypes OpenCMISS::Iron::InterfaceEquations::Constants::LinearityTypes
+ !> \brief Interface equations linearity types.
+ !> \see OpenCMISS::Iron::InterfaceEquations,OpenCMISS
+ !>@{
+ INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_LINEAR = INTERFACE_EQUATIONS_LINEAR !<The interface equations are linear. \see OpenCMISS_InterfaceEquationsLinearity,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_NONLINEAR = INTERFACE_EQUATIONS_NONLINEAR !<The interface equations are nonlinear. \see OpenCMISS_InterfaceEquationsLinearity,OpenCMISS
+ INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_NONLINEAR_BCS = INTERFACE_EQUATIONS_NONLINEAR_BCS !<The interface equations have nonlinear boundary conditions. \see OpenCMISS_InterfaceEquationsLinearity,OpenCMISS
+ !>@}
+  !> \addtogroup OpenCMISS_InterfaceEquationsOutputTypes OpenCMISS::Iron::InterfaceEquations::Constants::OutputTypes
+  !> \brief The interface equations output types
+  !> \see OpenCMISS::Iron::InterfaceEquations,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_NO_OUTPUT=INTERFACE_EQUATIONS_NO_OUTPUT !<No output. \see OpenCMISS_InterfaceEquationsOutputTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_TIMING_OUTPUT=INTERFACE_EQUATIONS_TIMING_OUTPUT !<Timing information output. \see 
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_MATRIX_OUTPUT=INTERFACE_EQUATIONS_MATRIX_OUTPUT !<All below and equation matrices output. \see 
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT=INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT !<All below and element matrices output. \see OpenCMISS_InterfaceEquationsOutputTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_InterfaceEquationsSparsityTypes OpenCMISS::Iron::InterfaceEquations::Constants::SparsityTypes
+  !> \brief Interface equations matrices sparsity types
+  !> \see OpenCMISS::Iron::InterfaceEquations,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_SPARSE_MATRICES=INTERFACE_EQUATIONS_SPARSE_MATRICES !<Use sparse matrices for the interface equations. \see OpenCMISS_InterfaceEquationsSparsityTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_FULL_MATRICES=INTERFACE_EQUATIONS_FULL_MATRICES !<Use fully populated matrices for the interface equations. \see OpenCMISS_InterfaceEquationsSparsityTypes,OpenCMISS
+  !>@}
+  !> \addtogroup OpenCMISS_InterfaceEquationsTimeDependenceTypes OpenCMISS::Iron::InterfaceEquations::Constants::TimeDependenceTypes
+  !> \brief The interface equations time dependence type parameters
+  !> \see OpenCMISS::Iron::InterfaceEquations,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_STATIC=INTERFACE_EQUATIONS_STATIC !<The interface conditions are static and have no time dependence. \see OpenCMISS_InterfaceEquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_QUASISTATIC=INTERFACE_EQUATIONS_QUASISTATIC !<The interface conditions are quasi-static. \see OpenCMISS_InterfaceEquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_FIRST_ORDER_DYNAMIC=INTERFACE_EQUATIONS_FIRST_ORDER_DYNAMIC !<The interface conditions are first order dynamic. \see OpenCMISS_InterfaceEquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_SECOND_ORDER_DYNAMIC=INTERFACE_EQUATIONS_SECOND_ORDER_DYNAMIC !<The interface conditions are a second order dynamic. \see OpenCMISS_InterfaceEquationsTimeDependenceTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: CMFE_INTERFACE_EQUATIONS_TIME_STEPPING=INTERFACE_EQUATIONS_TIME_STEPPING !<The interface conditions are for time stepping. \see OpenCMISS_InterfaceEquationsTimeDependenceTypes,OpenCMISS
+  !>@}
+  !>@}  
+
+ !Module types
+
+ !Module variables
+
+ !Interfaces
+
+ !>Returns the linearity type for interface equations.
+ INTERFACE cmfe_InterfaceEquations_LinearityTypeGet
+   MODULE PROCEDURE cmfe_InterfaceEquations_LinearityTypeGetNumber
+   MODULE PROCEDURE cmfe_InterfaceEquations_LinearityTypeGetObj
+ END INTERFACE cmfe_InterfaceEquations_LinearityTypeGet
+ 
  !>Returns the interface matrix time dependence type for interface equations.
  INTERFACE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGet
    MODULE PROCEDURE cmfe_InterfaceEquations_MatrixTimeDependenceTypeGetNumber0
@@ -5377,46 +5471,31 @@ MODULE OpenCMISS_Iron
    MODULE PROCEDURE cmfe_InterfaceEquations_SparsitySetObj
  END INTERFACE cmfe_InterfaceEquations_SparsitySet
 
- PUBLIC CMFE_INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD,CMFE_INTERFACE_CONDITION_AUGMENTED_LAGRANGE_METHOD, &
-   & CMFE_INTERFACE_CONDITION_PENALTY_METHOD,CMFE_INTERFACE_CONDITION_POINT_TO_POINT_METHOD
+  !>Returns the time dependence type for interface equations.
+ INTERFACE cmfe_InterfaceEquations_TimeDependenceTypeGet
+   MODULE PROCEDURE cmfe_InterfaceEquations_TimeDependenceTypeGetNumber
+   MODULE PROCEDURE cmfe_InterfaceEquations_TimeDependenceTypeGetObj
+ END INTERFACE cmfe_InterfaceEquations_TimeDependenceTypeGet
+ 
+ PUBLIC CMFE_INTERFACE_EQUATIONS_LINEAR,CMFE_INTERFACE_EQUATIONS_NONLINEAR,CMFE_INTERFACE_EQUATIONS_NONLINEAR_BCS
 
- PUBLIC CMFE_INTERFACE_CONDITION_FIELD_CONTINUITY_OPERATOR,CMFE_INTERFACE_CONDITION_FIELD_NORMAL_CONTINUITY_OPERATOR, &
-   & CMFE_INTERFACE_CONDITION_FLS_CONTACT_OPERATOR,CMFE_INTERFACE_CONDITION_FLS_CONTACT_REPROJECT_OPERATOR, &
-   & CMFE_INTERFACE_CONDITION_SOLID_FLUID_OPERATOR,CMFE_INTERFACE_CONDITION_SOLID_FLUID_NORMAL_OPERATOR
+ PUBLIC CMFE_INTERFACE_EQUATIONS_NO_OUTPUT,CMFE_INTERFACE_EQUATIONS_TIMING_OUTPUT,CMFE_INTERFACE_EQUATIONS_MATRIX_OUTPUT, &
+   & CMFE_INTERFACE_EQUATIONS_ELEMENT_MATRIX_OUTPUT
 
- PUBLIC CMFE_INTERFACE_CONDITION_GAUSS_INTEGRATION,CMFE_INTERFACE_CONDITION_DATA_POINTS_INTEGRATION
+ PUBLIC CMFE_INTERFACE_EQUATIONS_SPARSE_MATRICES,CMFE_INTERFACE_EQUATIONS_FULL_MATRICES
 
- PUBLIC CMFE_INTERFACE_CONDITION_NO_OUTPUT,CMFE_INTERFACE_CONDITION_PROGRESS_OUTPUT
+ PUBLIC CMFE_INTERFACE_EQUATIONS_STATIC,CMFE_INTERFACE_EQUATIONS_QUASISTATIC,CMFE_INTERFACE_EQUATIONS_FIRST_ORDER_DYNAMIC, &
+   & CMFE_INTERFACE_EQUATIONS_SECOND_ORDER_DYNAMIC,CMFE_INTERFACE_EQUATIONS_TIME_STEPPING
 
- PUBLIC cmfe_InterfaceCondition_CreateFinish,cmfe_InterfaceCondition_CreateStart
-
- PUBLIC cmfe_InterfaceCondition_DependentVariableAdd
-
- PUBLIC cmfe_InterfaceCondition_Destroy
-
- PUBLIC cmfe_InterfaceCondition_EquationsCreateFinish,cmfe_InterfaceCondition_EquationsCreateStart
-
- PUBLIC cmfe_InterfaceCondition_EquationsDestroy
-
- PUBLIC cmfe_InterfaceCondition_IntegrationTypeGet,cmfe_InterfaceCondition_IntegrationTypeSet
-
- PUBLIC cmfe_InterfaceCondition_LagrangeFieldCreateFinish,cmfe_InterfaceCondition_LagrangeFieldCreateStart
-
- PUBLIC cmfe_InterfaceCondition_LabelGet,cmfe_InterfaceCondition_LabelSet
-
- PUBLIC cmfe_InterfaceCondition_OutputTypeGet,cmfe_InterfaceCondition_OutputTypeSet
-
- PUBLIC cmfe_InterfaceCondition_PenaltyFieldCreateFinish,cmfe_InterfaceCondition_PenaltyFieldCreateStart
-
- PUBLIC cmfe_InterfaceCondition_MethodGet,cmfe_InterfaceCondition_MethodSet
-
- PUBLIC cmfe_InterfaceCondition_OperatorGet,cmfe_InterfaceCondition_OperatorSet
+ PUBLIC cmfe_InterfaceEquations_LinearityTypeGet
 
  PUBLIC cmfe_InterfaceEquations_MatrixTimeDependenceTypeGet,cmfe_InterfaceEquations_MatrixTimeDependenceTypeSet
 
  PUBLIC cmfe_InterfaceEquations_OutputTypeGet,cmfe_InterfaceEquations_OutputTypeSet
 
  PUBLIC cmfe_InterfaceEquations_SparsityGet,cmfe_InterfaceEquations_SparsitySet
+
+ PUBLIC cmfe_InterfaceEquations_TimeDependenceTypeGet
 
 !==================================================================================================================================
 !
@@ -9353,7 +9432,7 @@ CONTAINS
     ENTERS("cmfe_InterfaceEquations_Finalise",err,error,*999)
 
     IF(ASSOCIATED(cmfe_InterfaceEquations%interfaceEquations))  &
-      & CALL INTERFACE_EQUATIONS_DESTROY(cmfe_InterfaceEquations%interfaceEquations,err,error,*999)
+      & CALL InterfaceEquations_Destroy(cmfe_InterfaceEquations%interfaceEquations,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_Finalise")
     RETURN
@@ -45434,7 +45513,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -45505,7 +45584,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: geometricField
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -45585,7 +45664,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: equationsSetRegion,interfaceRegion
     TYPE(RegionsType), POINTER :: regions
 
@@ -45665,7 +45744,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -45734,7 +45813,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -45805,8 +45884,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -45880,7 +45959,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -45951,7 +46030,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46025,7 +46104,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46098,7 +46177,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46171,7 +46250,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: lagrangeField
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
  
@@ -46248,7 +46327,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46319,7 +46398,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46390,7 +46469,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46461,7 +46540,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46532,7 +46611,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46603,7 +46682,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46673,7 +46752,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46746,7 +46825,7 @@ CONTAINS
     TYPE(ContextType), POINTER :: context
     TYPE(FieldType), POINTER :: penaltyField
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46823,7 +46902,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46894,7 +46973,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -46965,7 +47044,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -47037,7 +47116,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -47089,6 +47168,81 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_InterfaceCondition_OperatorSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the linearity type for an interface equations identified by a user number.
+  SUBROUTINE cmfe_InterfaceEquations_LinearityTypeGetNumber(contextUserNumber,regionUserNumber,interfaceUserNumber, &
+    & interfaceConditionUserNumber,linearityType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_LinearityTypeGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the linearity type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to get the ouput type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the linearity type for.
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the interface equations linearity type. \see OpenCMISS_InterfaceEquationsLinearityType,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_InterfaceEquations_LinearityTypeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(interface)
+    NULLIFY(interfaceCondition)
+    NULLIFY(interfaceEquations)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceEquations_LinearityTypeGet(interfaceEquations,linearityType,err,error,*999)
+
+    EXITS("cmfe_InterfaceEquations_LinearityTypeGetNumber")
+    RETURN
+999 ERRORS("cmfe_InterfaceEquations_LinearityTypeGetNumber",err,error)
+    EXITS("cmfe_InterfaceEquations_LinearityTypeGetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_LinearityTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the linearity type for an interface equations identified by an object.
+  SUBROUTINE cmfe_InterfaceEquations_LinearityTypeGetObj(interfaceEquations,linearityType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_LinearityTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the linearity type for.
+    INTEGER(INTG), INTENT(OUT) :: linearityType !<On return, the interface equations linearity type. \see OpenCMISS_InterfaceEquationsLinearityType,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceEquations_LinearityTypeGetObj",err,error,*999)
+
+    CALL InterfaceEquations_LinearityTypeGet(interfaceEquations%interfaceEquations,linearityType,err,error,*999)
+
+    EXITS("cmfe_InterfaceEquations_LinearityTypeGetObj")
+    RETURN
+999 ERRORSEXITS("cmfe_InterfaceEquations_LinearityTypeGetObj",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_LinearityTypeGetObj
 
   !
   !================================================================================================================================
@@ -47146,8 +47300,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -47295,8 +47449,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -47402,13 +47556,13 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the output type for.
     INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to get the ouput type for.
     INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the output type for.
-    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the interface equations output type. \see OpenCMISS_EquationsOutputType,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: outputType !<On return, the interface equations output type. \see OpenCMISS_InterfaceEquationsOutputType,OpenCMISS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -47426,7 +47580,7 @@ CONTAINS
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
     CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-    CALL INTERFACE_EQUATIONS_OUTPUT_TYPE_GET(interfaceEquations,outputType,err,error,*999)
+    CALL InterfaceEquations_OutputTypeGet(interfaceEquations,outputType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_OutputTypeGetNumber")
     RETURN
@@ -47452,7 +47606,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceEquations_OutputTypeGetObj",err,error,*999)
 
-    CALL INTERFACE_EQUATIONS_OUTPUT_TYPE_GET(interfaceEquations%interfaceEquations,outputType,err,error,*999)
+    CALL InterfaceEquations_OutputTypeGet(interfaceEquations%interfaceEquations,outputType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_OutputTypeGetObj")
     RETURN
@@ -47481,8 +47635,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -47500,7 +47654,7 @@ CONTAINS
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
     CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-    CALL INTERFACE_EQUATIONS_OUTPUT_TYPE_SET(interfaceEquations,outputType,err,error,*999)
+    CALL InterfaceEquations_OutputTypeSet(interfaceEquations,outputType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_OutputTypeSetNumber")
     RETURN
@@ -47526,7 +47680,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceEquations_OutputTypeSetObj",err,error,*999)
 
-    CALL INTERFACE_EQUATIONS_OUTPUT_TYPE_SET(interfaceEquations%interfaceEquations,outputType,err,error,*999)
+    CALL InterfaceEquations_OutputTypeSet(interfaceEquations%interfaceEquations,outputType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_OutputTypeSetObj")
     RETURN
@@ -47555,8 +47709,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -47574,7 +47728,7 @@ CONTAINS
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
     CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-    CALL INTERFACE_EQUATIONS_SPARSITY_TYPE_GET(interfaceEquations,sparsityType,err,error,*999)
+    CALL InterfaceEquations_SparsityTypeGet(interfaceEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_SparsityGetNumber")
     RETURN
@@ -47600,7 +47754,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceEquations_SparsityGetObj",err,error,*999)
 
-    CALL INTERFACE_EQUATIONS_SPARSITY_TYPE_GET(interfaceEquations%interfaceEquations,sparsityType,err,error,*999)
+    CALL InterfaceEquations_SparsityTypeGet(interfaceEquations%interfaceEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_SparsityGetObj")
     RETURN
@@ -47629,8 +47783,8 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
@@ -47648,7 +47802,7 @@ CONTAINS
     CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
     CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
     CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
-    CALL INTERFACE_EQUATIONS_SPARSITY_TYPE_SET(interfaceEquations,sparsityType,err,error,*999)
+    CALL InterfaceEquations_SparsityTypeSet(interfaceEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_SparsitySetNumber")
     RETURN
@@ -47674,7 +47828,7 @@ CONTAINS
 
     ENTERS("cmfe_InterfaceEquations_SparsitySetObj",err,error,*999)
 
-    CALL INTERFACE_EQUATIONS_SPARSITY_TYPE_SET(interfaceEquations%interfaceEquations,sparsityType,err,error,*999)
+    CALL InterfaceEquations_SparsityTypeSet(interfaceEquations%interfaceEquations,sparsityType,err,error,*999)
 
     EXITS("cmfe_InterfaceEquations_SparsitySetObj")
     RETURN
@@ -47684,11 +47838,87 @@ CONTAINS
 
   END SUBROUTINE cmfe_InterfaceEquations_SparsitySetObj
 
-!!==================================================================================================================================
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the time dependence type for an interface equations identified by a user number.
+  SUBROUTINE cmfe_InterfaceEquations_TimeDependenceTypeGetNumber(contextUserNumber,regionUserNumber,interfaceUserNumber, &
+    & interfaceConditionUserNumber,timeDependenceType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_TimeDependenceTypeGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the interface, interface condition and interface equations to get the time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The user number of the interface, interface condition and interface equations to get the time dependence type for.
+    INTEGER(INTG), INTENT(IN) :: interfaceConditionUserNumber !<The user number of the interface condition and interface equation to get the time dependence type for.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the interface equations time dependence type. \see OpenCMISS_InterfaceEquationsTimeDependenceType,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(InterfaceType), POINTER :: interface
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("cmfe_InterfaceEquations_TimeDependenceTypeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(interface)
+    NULLIFY(interfaceCondition)
+    NULLIFY(interfaceEquations)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_InterfaceGet(region,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_InterfaceConditionGet(interface,interfaceConditionUserNumber,interfaceCondition,err,error,*999)
+    CALL InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*999)
+    CALL InterfaceEquations_TimeDependenceTypeGet(interfaceEquations,timeDependenceType,err,error,*999)
+
+    EXITS("cmfe_InterfaceEquations_TimeDependenceTypeGetNumber")
+    RETURN
+999 ERRORS("cmfe_InterfaceEquations_TimeDependenceTypeGetNumber",err,error)
+    EXITS("cmfe_InterfaceEquations_TimeDependenceTypeGetNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_TimeDependenceTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the time dependence type for an interface equations identified by an object.
+  SUBROUTINE cmfe_InterfaceEquations_TimeDependenceTypeGetObj(interfaceEquations,timeDependenceType,err)
+    !DLLEXPORT(cmfe_InterfaceEquations_TimeDependenceTypeGetObj)
+
+    !Argument variables
+    TYPE(cmfe_InterfaceEquationsType), INTENT(IN) :: interfaceEquations !<The interface equations to get the time dependence type for.
+    INTEGER(INTG), INTENT(OUT) :: timeDependenceType !<On return, the interface equations time dependence type. \see OpenCMISS_InterfaceEquationsTimeDependenceType,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_InterfaceEquations_TimeDependenceTypeGetObj",err,error,*999)
+
+    CALL InterfaceEquations_TimeDependenceTypeGet(interfaceEquations%interfaceEquations,timeDependenceType,err,error,*999)
+
+    EXITS("cmfe_InterfaceEquations_TimeDependenceTypeGetObj")
+    RETURN
+999 ERRORS("cmfe_InterfaceEquations_TimeDependenceTypeGetObj",err,error)
+    EXITS("cmfe_InterfaceEquations_TimeDependenceTypeGetObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_InterfaceEquations_TimeDependenceTypeGetObj
+
+!!=================================================================================================================================
 !!
 !! DecompositionRoutines
 !!
-!!==================================================================================================================================
+!!=================================================================================================================================
 
   !>Finishes the creation of a decomposer identified by a user number.
   SUBROUTINE cmfe_Decomposer_CreateFinishNumber(contextUserNumber,regionUserNumber,decomposerUserNumber,err)
@@ -64721,7 +64951,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: interfaceRegion
@@ -64783,7 +65013,7 @@ CONTAINS
     !Local variables
     TYPE(ContextType), POINTER :: context
     TYPE(InterfaceType), POINTER :: interface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(ProblemType), POINTER :: problem
     TYPE(ProblemsType), POINTER :: problems
     TYPE(RegionType), POINTER :: interfaceRegion

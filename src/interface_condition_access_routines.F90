@@ -96,7 +96,11 @@ MODULE InterfaceConditionAccessRoutines
 
   PUBLIC InterfaceCondition_LabelGet,InterfaceCondition_LabelSet
 
+  PUBLIC InterfaceCondition_InterfaceLagrangeGet
+  
   PUBLIC InterfaceCondition_LagrangeFieldGet
+
+  PUBLIC InterfaceCondition_PenaltyFieldGet
 
   PUBLIC InterfaceCondition_UserNumberFind
 
@@ -105,6 +109,10 @@ MODULE InterfaceConditionAccessRoutines
   PUBLIC InterfaceDependent_DependentVariableGet
   
   PUBLIC InterfaceDependent_EquationsSetGet
+
+  PUBLIC InterfaceLagrange_AssertIsFinished,InterfaceLagrange_AssertNotFinished
+
+  PUBLIC InterfaceLagrange_LagrangeFieldGet
 
 CONTAINS
 
@@ -116,7 +124,7 @@ CONTAINS
   SUBROUTINE InterfaceCondition_AssertIsFinished(interfaceCondition,err,error,*)
 
     !Argument Variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER, INTENT(IN) :: interfaceCondition !<The interface condition to assert the finished status for
+    TYPE(InterfaceConditionType), POINTER, INTENT(IN) :: interfaceCondition !<The interface condition to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -126,7 +134,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
 
-    IF(.NOT.interfaceCondition%INTERFACE_CONDITION_FINISHED) THEN
+    IF(.NOT.interfaceCondition%interfaceConditionFinished) THEN
       localError="Interface condition number "//TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))// &
         & " has not been finished."
       CALL FlagError(localError,err,error,*999)
@@ -147,7 +155,7 @@ CONTAINS
   SUBROUTINE InterfaceCondition_AssertNotFinished(interfaceCondition,err,error,*)
 
     !Argument Variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER, INTENT(IN) :: interfaceCondition !<The interface condition to assert the finished status for
+    TYPE(InterfaceConditionType), POINTER, INTENT(IN) :: interfaceCondition !<The interface condition to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -157,7 +165,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
 
-    IF(interfaceCondition%INTERFACE_CONDITION_FINISHED) THEN
+    IF(interfaceCondition%interfaceConditionFinished) THEN
       localError="Interface condition number "//TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))// &
         & " has already been finished."
       CALL FlagError(localError,err,error,*999)
@@ -178,8 +186,8 @@ CONTAINS
   SUBROUTINE InterfaceCondition_InterfaceDependentGet(interfaceCondition,interfaceDependent,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface conditions to get the interface dependent for
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: interfaceDependent !<On exit, a pointer to the interface dependent in the specified interface condition. Must not be associated on entry
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface conditions to get the interface dependent for
+    TYPE(InterfaceDependentType), POINTER :: interfaceDependent !<On exit, a pointer to the interface dependent in the specified interface condition. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -209,8 +217,8 @@ CONTAINS
   SUBROUTINE InterfaceCondition_InterfaceEquationsGet(interfaceCondition,interfaceEquations,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface conditions to get the interface equations for
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<On exit, a pointer to the interface equations in the specified interface condition. Must not be associated on entry
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface conditions to get the interface equations for
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<On exit, a pointer to the interface equations in the specified interface condition. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -218,7 +226,7 @@ CONTAINS
     ENTERS("InterfaceCondition_InterfaceEquationsGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(.NOT.interfaceCondition%INTERFACE_CONDITION_FINISHED) &
+    IF(.NOT.interfaceCondition%interfaceConditionFinished) &
       & CALL FlagError("Interface condition has not been finished.",err,error,*999)
     IF(ASSOCIATED(interfaceEquations)) CALL FlagError("Interface equations is already associated.",err,error,*999)
 
@@ -241,7 +249,7 @@ CONTAINS
   SUBROUTINE InterfaceCondition_GeometricFieldGet(interfaceCondition,geometricField,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the geometric field for
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the geometric field for
     TYPE(FieldType), POINTER :: geometricField !<On exit, a pointer to the geometric field in the specified interface condition. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -276,7 +284,7 @@ CONTAINS
   SUBROUTINE InterfaceCondition_InterfaceGet(interfaceCondition,interface,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the interface for
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the interface for
     TYPE(InterfaceType), POINTER :: interface !<On exit, a pointer to the interface in the specified interface condition. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -286,7 +294,7 @@ CONTAINS
 
     IF(ASSOCIATED(interface)) CALL FlagError("Interface is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(.NOT.interfaceCondition%INTERFACE_CONDITION_FINISHED) &
+    IF(.NOT.interfaceCondition%interfaceConditionFinished) &
       & CALL FlagError("Interface condition has not been finished.",err,error,*999)
  
     INTERFACE=>interfaceCondition%INTERFACE
@@ -304,11 +312,11 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of an interface condition into a character string. \see OpenCMISS::Iron::cmfe__InterfaceCondition_LabelGet
+  !>Returns the label of an interface condition into a character string. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LabelGet
   SUBROUTINE InterfaceCondition_LabelGetC(interfaceCondition,label,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the label for
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the label for
     CHARACTER(LEN=*), INTENT(OUT) :: label !<On return, the interface condition label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -338,11 +346,11 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a interface condition into a varying string. \see OpenCMISS::Iron::cmfe__InterfaceCondition_LabelGet
+  !>Returns the label of a interface condition into a varying string. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LabelGet
   SUBROUTINE InterfaceCondition_LabelGetVS(interfaceCondition,label,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the label for
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the label for
     TYPE(VARYING_STRING), INTENT(OUT) :: label !<On return, the interface condition label.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -365,11 +373,11 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of an interface condition from a character string. \see OpenCMISS::Iron::cmfe__InterfaceCondition_LabelSet
+  !>Sets the label of an interface condition from a character string. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LabelSet
   SUBROUTINE InterfaceCondition_LabelSetC(interfaceCondition,label,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to set the label for 
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to set the label for 
     CHARACTER(LEN=*), INTENT(IN) :: label !<The label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -378,7 +386,7 @@ CONTAINS
     ENTERS("InterfaceCondition_LabelSetC",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(interfaceCondition%INTERFACE_CONDITION_FINISHED) CALL FlagError("Interface condition has been finished.",err,error,*999)
+    IF(interfaceCondition%interfaceConditionFinished) CALL FlagError("Interface condition has been finished.",err,error,*999)
     
     interfaceCondition%label=label
         
@@ -393,11 +401,11 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of an interface condition from a varying string. \see OpenCMISS::Iron::cmfe__InterfaceCondition_LabelSet
+  !>Sets the label of an interface condition from a varying string. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LabelSet
   SUBROUTINE InterfaceCondition_LabelSetVS(interfaceCondition,label,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to set the label for 
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to set the label for 
     TYPE(VARYING_STRING), INTENT(IN) :: label !<The label to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -406,7 +414,7 @@ CONTAINS
     ENTERS("InterfaceCondition_LabelSetVS",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
-    IF(interfaceCondition%INTERFACE_CONDITION_FINISHED) CALL FlagError("Interface condition has been finished.",err,error,*999)
+    IF(interfaceCondition%interfaceConditionFinished) CALL FlagError("Interface condition has been finished.",err,error,*999)
     
     interfaceCondition%label=label
     
@@ -421,11 +429,42 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the interface lagrange for an interface conditions.
+  SUBROUTINE InterfaceCondition_InterfaceLagrangeGet(interfaceCondition,interfaceLagrange,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface conditions to get the interface lagrange for
+    TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange !<On exit, a pointer to the interface lagrange in the specified interface condition. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceCondition_InterfaceLagrangeGet",err,error,*998)
+
+    IF(ASSOCIATED(interfaceLagrange)) CALL FlagError("Interface lagrange is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+
+    interfaceLagrange=>interfaceCondition%lagrange
+    IF(.NOT.ASSOCIATED(interfaceLagrange)) &
+      & CALL FlagError("Interface condition Lagrange is not associated.",err,error,*999)
+       
+    EXITS("InterfaceCondition_InterfaceLagrangeGet")
+    RETURN
+999 NULLIFY(interfaceLagrange)    
+998 ERRORSEXITS("InterfaceCondition_InterfaceLagrangeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_InterfaceLagrangeGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the Lagrange field for an interface condition.
   SUBROUTINE InterfaceCondition_LagrangeFieldGet(interfaceCondition,lagrangeField,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface condition to get the Lagrange field for
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the Lagrange field for
     TYPE(FieldType), POINTER :: lagrangeField !<On exit, a pointer to the Lagrange field in the specified interface condition. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -442,7 +481,7 @@ CONTAINS
       & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    lagrangeField=>interfaceCondition%lagrange%LAGRANGE_FIELD
+    lagrangeField=>interfaceCondition%lagrange%lagrangeField
     IF(.NOT.ASSOCIATED(lagrangeField)) THEN
       localError="Lagrange field is not associated for interface condition number "// &
       & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
@@ -461,13 +500,53 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the penalty field for an interface condition.
+  SUBROUTINE InterfaceCondition_PenaltyFieldGet(interfaceCondition,penaltyField,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition to get the penalty field for
+    TYPE(FieldType), POINTER :: penaltyField !<On exit, a pointer to the penalty field in the specified interface condition. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+ 
+    ENTERS("InterfaceCondition_PenaltyFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(penaltyField)) CALL FlagError("Penalty field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceCondition%penalty)) THEN
+      localError="Penalty is not associated for interface condition number "// &
+      & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    penaltyField=>interfaceCondition%penalty%penaltyField
+    IF(.NOT.ASSOCIATED(penaltyField)) THEN
+      localError="Penalty field is not associated for interface condition number "// &
+      & TRIM(NumberToVString(interfaceCondition%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+       
+    EXITS("InterfaceCondition_PenaltyFieldGet")
+    RETURN
+999 NULLIFY(penaltyField)
+998 ERRORSEXITS("InterfaceCondition_PenaltyFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceCondition_PenaltyFieldGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Finds and returns a pointer to the interface condition identified by user number in the given interface. If no interface condition with that user number exists the interface condition is left nullified.
   SUBROUTINE InterfaceCondition_UserNumberFind(userNumber,interface,interfaceCondition,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number to find.
     TYPE(InterfaceType), POINTER :: interface !<The interface to find the interface condition in.
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<On return a pointer to the interface condition with the given user number. If no interface condition with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<On return a pointer to the interface condition with the given user number. If no interface condition with that user number exists then the pointer is returned as NULL. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -515,7 +594,7 @@ CONTAINS
   SUBROUTINE InterfaceDependent_EquationsSetGet(interfaceDependent,variableIdx,equationsSet,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: interfaceDependent !<A pointer to the interface dependent to get the equations set for
+    TYPE(InterfaceDependentType), POINTER :: interfaceDependent !<A pointer to the interface dependent to get the equations set for
     INTEGER(INTG), INTENT(IN) :: variableIdx !<The index of the dependent variable to get the equations set for
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<On exit, a pointer to the specified equations set in the interface dependent. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -527,16 +606,16 @@ CONTAINS
 
     IF(ASSOCIATED(equationsSet)) CALL FlagError("Equations set is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is not associated.",err,error,*999)
-    IF(variableIdx<0.OR.variableIdx>interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES) THEN
+    IF(variableIdx<0.OR.variableIdx>interfaceDependent%numberOfDependentVariables) THEN
       localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
         & " is invalid. The variable index must be >= 1 and <= "// &
-        & TRIM(NumberToVString(interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES,"*",err,error))//"."
+        & TRIM(NumberToVString(interfaceDependent%numberOfDependentVariables,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(.NOT.ASSOCIATED(interfaceDependent%EQUATIONS_SETS)) &
+    IF(.NOT.ASSOCIATED(interfaceDependent%equationsSets)) &
       & CALL FlagError("Interface dependent equations sets is not associated.",err,error,*999)
  
-    equationsSet=>interfaceDependent%EQUATIONS_SETS(variableIdx)%ptr      
+    equationsSet=>interfaceDependent%equationsSets(variableIdx)%ptr      
     IF(.NOT.ASSOCIATED(equationsSet)) THEN
       localError="The equations set for variable index "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
         & " is not associated."
@@ -559,7 +638,7 @@ CONTAINS
   SUBROUTINE InterfaceDependent_DependentVariableGet(interfaceDependent,variableIdx,dependentVariable,err,error,*)
 
     !Argument variables
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: interfaceDependent !<A pointer to the interface dependent to get the dependent variable for
+    TYPE(InterfaceDependentType), POINTER :: interfaceDependent !<A pointer to the interface dependent to get the dependent variable for
     INTEGER(INTG), INTENT(IN) :: variableIdx !<The index of the dependent variable to get the field variable for
     TYPE(FieldVariableType), POINTER :: dependentVariable !<On exit, a pointer to the specified dependent variable in the interface dependent. Must not be associated on entry
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -571,10 +650,10 @@ CONTAINS
 
     IF(ASSOCIATED(dependentVariable)) CALL FlagError("Dependent variable is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(interfaceDependent)) CALL FlagError("Interface dependent is not associated.",err,error,*999)
-    IF(variableIdx<0.OR.variableIdx>interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES) THEN
+    IF(variableIdx<0.OR.variableIdx>interfaceDependent%numberOfDependentVariables) THEN
       localError="The specified variable index of "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
         & " is invalid. The variable index must be >= 1 and <= "// &
-        & TRIM(NumberToVString(interfaceDependent%NUMBER_OF_DEPENDENT_VARIABLES,"*",err,error))//"."
+        & TRIM(NumberToVString(interfaceDependent%numberOfDependentVariables,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(.NOT.ASSOCIATED(interfaceDependent%fieldVariables)) &
@@ -594,6 +673,90 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE InterfaceDependent_DependentVariableGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an interface lagrange has been finished
+  SUBROUTINE InterfaceLagrange_AssertIsFinished(interfaceLagrange,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceLagrangeType), POINTER, INTENT(IN) :: interfaceLagrange !<The interface lagrange to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceLagrange_AssertIsFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceLagrange)) CALL FlagError("Interface Lagrange is not associated.",err,error,*999)
+
+    IF(.NOT.interfaceLagrange%lagrangeFinished) &
+      & CALL FlagError("Interface Lagrange has not been finished.",err,error,*999)
+    
+    EXITS("InterfaceLagrange_AssertIsFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceLagrange_AssertIsFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceLagrange_AssertIsFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Assert that an interface lagrange has not been finished
+  SUBROUTINE InterfaceLagrange_AssertNotFinished(interfaceLagrange,err,error,*)
+
+    !Argument Variables
+    TYPE(InterfaceLagrangeType), POINTER, INTENT(IN) :: interfaceLagrange !<The interface lagrange to assert the finished status for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("InterfaceLagrange_AssertNotFinished",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(interfaceLagrange)) CALL FlagError("Interface Lagrange is not associated.",err,error,*999)
+
+    IF(interfaceLagrange%lagrangeFinished)  &
+      & CALL FlagError("Interface Lagrange has already been finished.",err,error,*999)
+    
+    EXITS("InterfaceLagrange_AssertNotFinished")
+    RETURN
+999 ERRORSEXITS("InterfaceLagrange_AssertNotFinished",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceLagrange_AssertNotFinished
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the Lagrange field for an interface Lagrange.
+  SUBROUTINE InterfaceLagrange_LagrangeFieldGet(interfaceLagrange,lagrangeField,err,error,*)
+
+    !Argument variables
+    TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange !<A pointer to the interface Lagrange to get the Lagrange field for
+    TYPE(FieldType), POINTER :: lagrangeField !<On exit, a pointer to the Lagrange field in the specified interface Lagrange. Must not be associated on entry
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("InterfaceLagrange_LagrangeFieldGet",err,error,*998)
+
+    IF(ASSOCIATED(lagrangeField)) CALL FlagError("Lagrange field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(interfaceLagrange)) CALL FlagError("Interface Lagrange is not associated.",err,error,*999)
+
+    lagrangeField=>interfaceLagrange%lagrangeField
+    IF(.NOT.ASSOCIATED(lagrangeField)) CALL FlagError("The interface Lagrange Lagrange field is not associated.",err,error,*999)
+       
+    EXITS("InterfaceLagrange_LagrangeFieldGet")
+    RETURN
+999 NULLIFY(lagrangeField)
+998 ERRORSEXITS("InterfaceLagrange_LagrangeFieldGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE InterfaceLagrange_LagrangeFieldGet
 
   !
   !================================================================================================================================

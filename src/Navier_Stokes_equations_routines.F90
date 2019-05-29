@@ -8796,7 +8796,7 @@ CONTAINS
       & solidDependentField,interfaceGeometricField
     TYPE(FieldVariableType), POINTER :: fluidGeometricVariable,interfaceGeometricVariable
     TYPE(InterfaceType), POINTER :: fsiInterface
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: fsiInterfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: fsiInterfaceCondition
     TYPE(InterfaceMeshConnectivityType), POINTER :: meshConnectivity
     TYPE(ProblemType), POINTER :: problem
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: laplaceSolverEquations,fluidSolverEquations,fsiSolverEquations

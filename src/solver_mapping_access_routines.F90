@@ -178,7 +178,7 @@ CONTAINS
     !Argument variables
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping to get the interface condition for
     INTEGER(INTG), INTENT(IN) :: interfaceConditionIdx !<The interface condition index in the solver mapping to get the interface condition for
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<On exit, a pointer to the specified interface condition. Must not be associated on entry.
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<On exit, a pointer to the specified interface condition. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables

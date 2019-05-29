@@ -875,7 +875,7 @@ CONTAINS
 
     !Argument variables
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface where data reprojection is performed
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition !<A pointer to the interface where data reprojection is performed
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface where data reprojection is performed
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -1582,11 +1582,9 @@ CONTAINS
 
     !Argument variables
     TYPE(InterfaceElementConnectivityType) :: elementConnectivity
-    TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer to the interface to initialise the mesh connectivity for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: interfaceElementIdx,coupledMeshIdx
      
     ENTERS("InterfaceElementConnectivity_Initialise",err,error,*999)
 
@@ -1614,7 +1612,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: coupledMeshIdx,dataPointIdx
     
     ENTERS("InterfacePointConnectivity_Finalise",err,error,*999)
 

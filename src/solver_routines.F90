@@ -5054,8 +5054,8 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
     TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lagrangeVariable,linearVariable,residualVariable, &
       & rhsVariable
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(SOLVER_TYPE), POINTER :: linearSolver,nonlinearSolver,solver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
@@ -7376,12 +7376,12 @@ CONTAINS
 
     !Argument variables
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer the solver equations to add the interface condition to.
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to add
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition to add
     INTEGER(INTG), INTENT(OUT) :: INTERFACE_CONDITION_INDEX !<On exit, the index of the interface condition that has been added
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
+    TYPE(InterfaceEquationsType), POINTER :: INTERFACE_EQUATIONS
     TYPE(SOLVER_TYPE), POINTER :: SOLVER
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
    
@@ -11969,10 +11969,10 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
     TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,linearVariable,rhsVariable,interfaceDependentVariable, &
       & interfaceVariable
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: interfaceDependent
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: interfaceLagrange
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
+    TYPE(InterfaceDependentType), POINTER :: interfaceDependent
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
+    TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMappingRHSType), POINTER :: interfaceRHSMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
@@ -12785,7 +12785,7 @@ CONTAINS
             CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
             interfaceLagrange=>interfaceCondition%LAGRANGE
             IF(ASSOCIATED(interfaceLagrange)) THEN
-              lagrangeField=>interfaceLagrange%LAGRANGE_FIELD
+              lagrangeField=>interfaceLagrange%lagrangeField
               IF(ASSOCIATED(lagrangeField)) THEN
                 interfaceRHSMapping=>interfaceMapping%rhsMapping
                 IF(ASSOCIATED(interfaceRHSMapping)) THEN
@@ -13014,7 +13014,7 @@ CONTAINS
             CALL InterfaceEquations_InterfaceMappingGet(interfaceEquations,interfaceMapping,err,error,*999)
             NULLIFY(interfaceMatrices)
             CALL InterfaceEquations_InterfaceMatricesGet(interfaceEquations,interfaceMatrices,err,error,*999)
-            lagrangeField=>interfaceCondition%LAGRANGE%LAGRANGE_FIELD
+            lagrangeField=>interfaceCondition%LAGRANGE%lagrangeField
             IF(ASSOCIATED(lagrangeField)) THEN
               SELECT CASE(interfaceCondition%method)
               CASE(INTERFACE_CONDITION_LAGRANGE_MULTIPLIERS_METHOD)
@@ -13270,9 +13270,9 @@ CONTAINS
     TYPE(EQUATIONS_TO_SOLVER_MAPS_TYPE), POINTER :: EQUATIONS_TO_SOLVER_MAP
     TYPE(FieldType), POINTER :: DEPENDENT_FIELD,LAGRANGE_FIELD
     TYPE(FieldVariableType), POINTER :: rhsVariable,INTERFACE_VARIABLE,DEPENDENT_VARIABLE,LINEAR_VARIABLE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
-    TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: INTERFACE_LAGRANGE
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION
+    TYPE(InterfaceEquationsType), POINTER :: INTERFACE_EQUATIONS
+    TYPE(InterfaceLagrangeType), POINTER :: INTERFACE_LAGRANGE
     TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
     TYPE(InterfaceMappingRHSType), POINTER :: INTERFACE_RHS_MAPPING
     TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
@@ -13548,7 +13548,7 @@ CONTAINS
                   DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
                     INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-                      LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+                      LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%lagrangeField
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                         INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
                         IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
@@ -13947,7 +13947,7 @@ CONTAINS
                           IF(ASSOCIATED(INTERFACE_MAPPING)) THEN
                             INTERFACE_LAGRANGE=>INTERFACE_CONDITION%LAGRANGE
                             IF(ASSOCIATED(INTERFACE_LAGRANGE)) THEN
-                              LAGRANGE_FIELD=>INTERFACE_LAGRANGE%LAGRANGE_FIELD
+                              LAGRANGE_FIELD=>INTERFACE_LAGRANGE%lagrangeField
                               IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                                 INTERFACE_RHS_MAPPING=>INTERFACE_MAPPING%rhsMapping
                                 IF(ASSOCIATED(INTERFACE_RHS_MAPPING)) THEN
@@ -14731,8 +14731,8 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_JACOBIAN
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION
+    TYPE(InterfaceEquationsType), POINTER :: INTERFACE_EQUATIONS
     TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
     TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
     TYPE(InterfaceMatrixType), POINTER :: INTERFACE_MATRIX
@@ -14827,7 +14827,7 @@ CONTAINS
                   DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
                     INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-                      LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+                      LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%lagrangeField
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                         INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
                         IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
@@ -17512,8 +17512,8 @@ CONTAINS
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: SOLVER_MAPPING
     TYPE(SOLVER_MATRICES_TYPE), POINTER :: SOLVER_MATRICES
     TYPE(SOLVER_MATRIX_TYPE), POINTER :: SOLVER_JACOBIAN
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION
+    TYPE(InterfaceEquationsType), POINTER :: INTERFACE_EQUATIONS
     TYPE(InterfaceMappingType), POINTER :: INTERFACE_MAPPING
     TYPE(InterfaceMatricesType), POINTER :: INTERFACE_MATRICES
     TYPE(InterfaceMatrixType), POINTER :: INTERFACE_MATRIX
@@ -17608,7 +17608,7 @@ CONTAINS
                   DO interface_condition_idx=1,SOLVER_MAPPING%numberOfInterfaceConditions
                     INTERFACE_CONDITION=>SOLVER_MAPPING%interfaceConditions(interface_condition_idx)%ptr
                     IF(ASSOCIATED(INTERFACE_CONDITION)) THEN
-                      LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%LAGRANGE_FIELD
+                      LAGRANGE_FIELD=>INTERFACE_CONDITION%LAGRANGE%lagrangeField
                       IF(ASSOCIATED(LAGRANGE_FIELD)) THEN
                         INTERFACE_EQUATIONS=>INTERFACE_CONDITION%interfaceEquations
                         IF(ASSOCIATED(INTERFACE_EQUATIONS)) THEN
@@ -21400,8 +21400,8 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(SOLVER_TYPE), POINTER :: linkingSolver

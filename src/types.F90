@@ -1585,7 +1585,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     LOGICAL :: geometricFieldLocked !<Is .TRUE. if the geometric field has been locked, .FALSE. if not.
     LOGICAL :: scalingTypeLocked !<Is .TRUE. if the scaling type has been locked, .FALSE. if not.        
     LOGICAL :: TYPE_LOCKED !<Is .TRUE. if the field type has been locked, .FALSE. if not.        
-    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variable_idx). The cache of the variable type for the given variable_idx of the field. \see FIELD_ROUTINES_VariableTypes
+    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variableIdx). The cache of the variable type for the given variableIdx of the field. \see FIELD_ROUTINES_VariableTypes
     LOGICAL :: variableTypesLocked !<Is .TRUE. if the variable types have been locked, .FALSE. if not.
     TYPE(VARYING_STRING), ALLOCATABLE :: variableLabels(:) !<variableLabels(variableTypeIdx). The variable label for the variableTypeIdx'th variable type of the field.
     LOGICAL, ALLOCATABLE :: variableLabelsLocked(:) !<variableLabelsLocked(variableTypeIdx). Is .TRUE. if the variable label for the variableTypeIdx'th variable type has been locked, .FALSE. if not.
@@ -1618,8 +1618,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: DEPENDENT_TYPE !<The dependent type of the field. \see FIELD_ROUTINES_DependentTypes
     TYPE(DecompositionType), POINTER :: decomposition !<A pointer to the decomposition of the mesh for which the field is defined on.
     INTEGER(INTG) :: numberOfVariables !<The number of variable types in the field. Old CMISS name NCT(nr,nx)
-    TYPE(FieldVariablePtrType), ALLOCATABLE :: variableTypeMap(:) !<variableTypeMap(variable_idx). The map from the available field variable types to the field variable types that are defined for the field. variable_idx varies from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_variableTypes. If the particular field variable type has not been defined on the field then the variableTypeMap will be NULL. \see FIELD_ROUTINES_VariableTypes
-    TYPE(FieldVariableType), ALLOCATABLE :: variables(:) !<variables(variable_idx). The array of field variables. 
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: variableTypeMap(:) !<variableTypeMap(variableIdx). The map from the available field variable types to the field variable types that are defined for the field. variableIdx varies from 1 to FIELD_ROUTINES::FIELD_NUMBER_OF_variableTypes. If the particular field variable type has not been defined on the field then the variableTypeMap will be NULL. \see FIELD_ROUTINES_VariableTypes
+    TYPE(FieldVariableType), ALLOCATABLE :: variables(:) !<variables(variableIdx). The array of field variables. 
     TYPE(FieldScalingsType) :: scalings !<The scaling parameters for the field
     TYPE(FieldType), POINTER :: geometricField !<A pointer to the geometric field that this field uses. If the field itself is a geometric field then this will be a pointer back to itself.
     TYPE(FieldGeometricParametersType), POINTER :: geometricFieldParameters !<If the field is a geometric field the pointer to the geometric parameters (lines, areas, volumes etc.). If the field is not a geometric field the pointer is NULL.
@@ -2316,8 +2316,8 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary conditions for this boundary conditions variable
     INTEGER(INTG) :: variableType !<The type of variable for this variable boundary conditions
     TYPE(FieldVariableType), POINTER :: VARIABLE !<A pointer to the field variable for this boundary condition variable
-    INTEGER(INTG), ALLOCATABLE :: DOFTypes(:) !<DOFTypes(dof_idx). The general boundary condition type (eg. fixed or free) of the dof_idx'th dof in the dependent field variable. \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
-    INTEGER(INTG), ALLOCATABLE :: CONDITION_TYPES(:) !<CONDITION_TYPES(dof_idx). The specific boundary condition type (eg. incremented pressure) of the dof_idx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOFTypes array. \see OpenCMISS_BoundaryConditionsDOFTypes,OpenCMISS
+    INTEGER(INTG), ALLOCATABLE :: DOFTypes(:) !<DOFTypes(dofIdx). The general boundary condition type (eg. fixed or free) of the dofIdx'th dof in the dependent field variable. \see OpenCMISS_BoundaryConditionsTypes,OpenCMISS
+    INTEGER(INTG), ALLOCATABLE :: CONDITION_TYPES(:) !<CONDITION_TYPES(dofIdx). The specific boundary condition type (eg. incremented pressure) of the dofIdx'th dof of the dependent field variable, which might be specific to an equation set. The solver routines should not need to use this array, and should only need the DOFTypes array. \see OpenCMISS_BoundaryConditionsDOFTypes,OpenCMISS
     TYPE(BOUNDARY_CONDITIONS_DIRICHLET_TYPE), POINTER :: DIRICHLET_BOUNDARY_CONDITIONS  !<A pointer to the dirichlet boundary condition type for this boundary condition variable
     INTEGER(INTG) :: NUMBER_OF_DIRICHLET_CONDITIONS !<Stores the number of dirichlet conditions associated with this variable
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
@@ -2337,7 +2337,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: SOLVER_EQUATIONS !<A pointer to the solver equations.
     LOGICAL :: BOUNDARY_CONDITIONS_FINISHED !<Is .TRUE. if the boundary conditions for the equations set has finished being created, .FALSE. if not.
     INTEGER(INTG) :: NUMBER_OF_BOUNDARY_CONDITIONS_VARIABLES !<The number of boundary conditions variables
-    TYPE(BOUNDARY_CONDITIONS_VARIABLE_PTR_TYPE), ALLOCATABLE :: BOUNDARY_CONDITIONS_VARIABLES(:) !<BOUNDARY_CONDITIONS_VARIABLES(variable_idx). BOUNDARY_CONDITIONS_VARIABLES(variable_idx)%PTR is the pointer to the variable_idx'th boundary conditions variable. variable_idx ranges from 1 to NUMBER_OF_BOUNDARY_CONDITIONS_VARIABLES
+    TYPE(BOUNDARY_CONDITIONS_VARIABLE_PTR_TYPE), ALLOCATABLE :: BOUNDARY_CONDITIONS_VARIABLES(:) !<BOUNDARY_CONDITIONS_VARIABLES(variableIdx). BOUNDARY_CONDITIONS_VARIABLES(variableIdx)%PTR is the pointer to the variableIdx'th boundary conditions variable. variableIdx ranges from 1 to NUMBER_OF_BOUNDARY_CONDITIONS_VARIABLES
     INTEGER(INTG) :: neumannMatrixSparsity !<The sparsity type of the Neumann integration matrices. \see SOLVER_ROUTINES_SparsityTypes,SOLVER_ROUTINES
   END TYPE BOUNDARY_CONDITIONS_TYPE
 
@@ -2348,7 +2348,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !> Contains information on dofs with associated dirichlet conditions and corresponding non-zero elements in the equations matrices
   TYPE BOUNDARY_CONDITIONS_DIRICHLET_TYPE
-    INTEGER(INTG), ALLOCATABLE :: DIRICHLET_DOF_INDICES(:)  !<DIRICHLET_DOF_INDICES(idx). Stores the dof_idx of the dofs which are subject to a dirichlet boundary condition \see BOUNDARY_CONDITIONS_ROUTINES_BoundaryConditions,BOUNDARY_CONDITIONS_ROUTINES
+    INTEGER(INTG), ALLOCATABLE :: DIRICHLET_DOF_INDICES(:)  !<DIRICHLET_DOF_INDICES(idx). Stores the dofIdx of the dofs which are subject to a dirichlet boundary condition \see BOUNDARY_CONDITIONS_ROUTINES_BoundaryConditions,BOUNDARY_CONDITIONS_ROUTINES
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_PTR_TYPE), ALLOCATABLE :: LINEAR_SPARSITY_INDICES(:,:) !<LINEAR_SPARSITY_INDICES(equ_set_idx,equ_matrix_idx). Stores the indices of the non-zero elements of the equ_set_idx'th equation set and equ_matrix_idx'th linear equation matrix in the columns corresponding to the dofs which are subject to a dirichlet boundary condition
     TYPE(BOUNDARY_CONDITIONS_SPARSITY_INDICES_PTR_TYPE), ALLOCATABLE :: DYNAMIC_SPARSITY_INDICES(:,:) !<DYNAMIC_SPARSITY_INDICES(equ_set_idx,equ_matrix_idx). Stores the indices of the non-zero elements of the equ_set_idx'th equation set and equ_matrix_idx'th dynamic equation matrix in the columns corresponding to the dofs which are subject to a dirichlet boundary condition
   END TYPE BOUNDARY_CONDITIONS_DIRICHLET_TYPE
@@ -2370,7 +2370,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   !>Contains information on dofs associated with pressure incremented conditions
   TYPE BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE
-    INTEGER(INTG), ALLOCATABLE :: PRESSURE_INCREMENTED_DOF_INDICES(:)  !<PRESSURE_INCREMENTED_DOF_INDICES(idx). Stores the dof_idx of the dofs which are subject to a pressure incremented boundary condition \see BOUNDARY_CONDITIONS_ROUTINES_BoundaryConditions,BOUNDARY_CONDITIONS_ROUTINES
+    INTEGER(INTG), ALLOCATABLE :: PRESSURE_INCREMENTED_DOF_INDICES(:)  !<PRESSURE_INCREMENTED_DOF_INDICES(idx). Stores the dofIdx of the dofs which are subject to a pressure incremented boundary condition \see BOUNDARY_CONDITIONS_ROUTINES_BoundaryConditions,BOUNDARY_CONDITIONS_ROUTINES
   END TYPE BOUNDARY_CONDITIONS_PRESSURE_INCREMENTED_TYPE
 
   !>Describes the value of a DOF as a linear combination of other DOFs.
@@ -2606,7 +2606,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   
   !>Contains information on the interface matrices 
   TYPE InterfaceMatricesType
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer back to the interface equations
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer back to the interface equations
     LOGICAL :: interfaceMatricesFinished !<Is .TRUE. if the interface  matrices have finished being created, .FALSE. if not.
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface equations mapping for the interface equations matrices.
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mapping for the interface equations matrices
@@ -2623,7 +2623,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: matrixNumber !<The interface matrix number
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix !<A pointer to the interface matrix
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet !<A pointer to the equations set containing the dependent variable that is mapped to this interface matrix.
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface condition containing the Lagrange variable that is mapped to this interface matrix.
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface condition containing the Lagrange variable that is mapped to this interface matrix.
     INTEGER(INTG) :: variableType !<The dependent variable type mapped to this interface matrix
     TYPE(FieldVariableType), POINTER :: variable !<A pointer to the field variable that is mapped to this interface matrix
     INTEGER(INTG) :: meshIndex !<The mesh index for the matrix in the interface.
@@ -2633,7 +2633,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: totalNumberOfRows !<The total number of rows in this interface matrix.
     INTEGER(INTG) :: numberOfGlobalRows !<The global number of rows in this interface matrix.
     TYPE(DomainMappingType), POINTER :: rowDOFsMapping !<A pointer to the domain mapping for the row dofs.
-    INTEGER(INTG), ALLOCATABLE :: variableDOFToRowMap(:) !<variableDOFToRowMap(dof_idx). The mapping from the dof_idx'th variable dof to the rows on the interface matrix
+    INTEGER(INTG), ALLOCATABLE :: variableDOFToRowMap(:) !<variableDOFToRowMap(dofIdx). The mapping from the dofIdx'th variable dof to the rows on the interface matrix
   END TYPE InterfaceMatrixToVarMapType
 
   TYPE InterfaceMappingRHSType
@@ -2642,7 +2642,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(FieldVariableType), POINTER :: rhsVariable !<A pointer to the variable that is mapped to the RHS vector
     TYPE(DomainMappingType), POINTER :: rhsVariableMapping !<A pointer to the RHS variable domain mapping
     REAL(DP) :: rhsCoefficient !<The multiplicative coefficient applied to the RHS vector
-    INTEGER(INTG), ALLOCATABLE :: rhsDOFToInterfaceRowMap(:) !<rhsDOFToInterfaceRowMap(rhs_dof_idx). The mapping from the rhs_dof_idx'th RHS dof in the rhs variable to the interface row.   
+    INTEGER(INTG), ALLOCATABLE :: rhsDOFToInterfaceRowMap(:) !<rhsDOFToInterfaceRowMap(rhs_dofIdx). The mapping from the rhs_dof_idx'th RHS dof in the rhs variable to the interface row.   
     INTEGER(INTG), ALLOCATABLE :: interfaceRowToRHSDOFMap(:) !<interfaceRowToRHSDOFMap(row_idx). The mapping from the row_idx'th row of the interface to the RHS dof.   
   END TYPE InterfaceMappingRHSType
   
@@ -2651,15 +2651,15 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: lagrangeVariableType !<The variable type of the Lagrange field.
     REAL(DP), ALLOCATABLE :: matrixCoefficients(:) !<matrixCoefficients(matrix_idx). The matrix cooefficient for the matrix_idx'th interface matrix.
     LOGICAL, ALLOCATABLE :: hasTranspose(:) !<hasTranspose(matrix_idx). .TRUE. if the matrix_idx'th interface matrix has an tranpose, .FALSE. if not.
-    INTEGER(INTG), ALLOCATABLE :: matrixRowFieldVariableIndices(:) !<matrixRowFieldVariableIndices(variable_idx). The field variable index that are mapped to the the interface matrix rows.
-    INTEGER(INTG), ALLOCATABLE :: matrixColFieldVariableIndices(:) !<matrixColFieldVariableIndices(variable_idx). The field variable index that are mapped to the the interface matrix columns.
+    INTEGER(INTG), ALLOCATABLE :: matrixRowFieldVariableIndices(:) !<matrixRowFieldVariableIndices(variableIdx). The field variable index that are mapped to the the interface matrix rows.
+    INTEGER(INTG), ALLOCATABLE :: matrixColFieldVariableIndices(:) !<matrixColFieldVariableIndices(variableIdx). The field variable index that are mapped to the the interface matrix columns.
     INTEGER(INTG) :: rhsLagrangeVariableType !<The Lagrange variable type mapped to the rhs vector
     REAL(DP) :: rhsCoefficient !<The coefficient multiplying the RHS vector.
   END TYPE InterfaceMappingCreateValuesCacheType
   
   !>Contains information on an interface mapping. TODO: Generalise to non-Lagrange multipler mappings
   TYPE InterfaceMappingType  
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations  !<A pointer to the interface equations for this interface mapping
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations  !<A pointer to the interface equations for this interface mapping
     LOGICAL :: interfaceMappingFinished !<Is .TRUE. if the interface mapping has finished being created, .FALSE. if not.
     INTEGER(INTG) :: lagrangeVariableType !<The variable type of the mapped Lagrange field variable.
     TYPE(FieldVariableType), POINTER :: lagrangeVariable !<A pointer to the variable that is mapped to the Lagrange multiplier field variable.
@@ -2667,7 +2667,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: totalNumberOfColumns !<The total number of columns in the interface mapping
     INTEGER(INTG) :: numberOfGlobalColumns !<The global number of columns in the interface mapping
     TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<A pointer to the domain mapping for the columns
-    INTEGER(INTG), ALLOCATABLE :: lagrangeDOFToColumnMap(:) !<lagrangeDOFToColumnMap(dof_idx). The mapping from the dof_idx'th Lagrange dof to the interface matrices column
+    INTEGER(INTG), ALLOCATABLE :: lagrangeDOFToColumnMap(:) !<lagrangeDOFToColumnMap(dofIdx). The mapping from the dofIdx'th Lagrange dof to the interface matrices column
     INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interface matrices that the mapping is set up for.
     TYPE(InterfaceMatrixToVarMapType), ALLOCATABLE :: interfaceMatrixRowsToVarMaps(:) !<interfaceMatrixRowsToVarMaps(interface_matrix_idx). Information for the interface matrix rows to dependent variable maps for the interface_matrix_idx'th interface matrix.
     TYPE(InterfaceMappingRHSType), POINTER :: rhsMapping !<A pointer to the interface mapping for the RHS vector.
@@ -2675,83 +2675,83 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   END TYPE InterfaceMappingType
 
   !>Contains information about the interpolation for a parameter set in interface equations
-  TYPE INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE
+  TYPE InterfaceEquationsInterpolationSetType
     TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:) !<interpolationParameters(field_variable_type). A pointer to the field_variable_type'th field interpolation parameters.
     TYPE(FieldInterpolatedPointPtrType), POINTER :: interpolatedPoint(:) !<interpolatedPoint(field_variable_type). A pointer to the field_variable_type'th field interpolated point. 
     TYPE(FieldInterpolatedPointMetricsPtrType), POINTER :: interpolatedPointMetrics(:) !<interpolatedPointMetrics(field_variable_type). A pointer to the field_variable_type'th field interpolated point metrics.
-  END TYPE INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE
+  END TYPE InterfaceEquationsInterpolationSetType
 
   !>Contains information about the interpolation for a domain (interface or coupled mesh) in the interface equations
-  TYPE INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_TYPE), POINTER :: INTERPOLATION !<A pointer to the interpolation information used in the interface equations.
+  TYPE InterfaceEquationsDomainInterpolationType
+    TYPE(InterfaceEquationsInterpolationType), POINTER :: interpolation !<A pointer to the interpolation information used in the interface equations.
     TYPE(FieldType), POINTER :: geometricField !<A pointer to the geometric field for the domain
-    INTEGER(INTG) :: NUMBER_OF_GEOMETRIC_INTERPOLATION_SETS !<The number of geometric interpolation sets in the domain
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE), ALLOCATABLE :: GEOMETRIC_INTERPOLATION(:) !<GEOMETRIC_INTERPOLATION(interpolation_set_idx). The geometric interpolation information for the interpolation_set_idx'th interpolation set.
-    TYPE(FieldType), POINTER :: DEPENDENT_FIELD !<A pointer to the dependent field for the domain
-    INTEGER(INTG) :: NUMBER_OF_DEPENDENT_INTERPOLATION_SETS !<The number of dependent interpolation sets in the domain
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE), ALLOCATABLE :: DEPENDENT_INTERPOLATION(:) !<DEPENDENT_INTERPOLATION(interpolation_set_idx). The dependent interpolation information for the interpolation_set_idx'th interpolation set.
-    TYPE(FieldType), POINTER :: PENALTY_FIELD !<A pointer to the penalty field for the domain
-    INTEGER(INTG) :: NUMBER_OF_PENALTY_INTERPOLATION_SETS !<The number of penalty interpolation sets in the domain
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE), ALLOCATABLE :: PENALTY_INTERPOLATION(:) !<PENALTY_INTERPOLATION(interpolation_set_idx). The penalty interpolation information for the interpolation_set_idx'th interpolation set.
-  END TYPE INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE
+    INTEGER(INTG) :: numberOfGeometricInterpolationSets !<The number of geometric interpolation sets in the domain
+    TYPE(InterfaceEquationsInterpolationSetType), ALLOCATABLE :: geometricInterpolation(:) !<geometricInterpolation(interpolationSetIdx). The geometric interpolation information for the interpolationSetIdx'th interpolation set.
+    TYPE(FieldType), POINTER :: dependentField !<A pointer to the dependent field for the domain
+    INTEGER(INTG) :: numberOfDependentInterpolationSets !<The number of dependent interpolation sets in the domain
+    TYPE(InterfaceEquationsInterpolationSetType), ALLOCATABLE :: dependentInterpolation(:) !<dependentInterpolation(interpolationSetIdx). The dependent interpolation information for the interpolationSetIdx'th interpolation set.
+    TYPE(FieldType), POINTER :: penaltyField !<A pointer to the penalty field for the domain
+    INTEGER(INTG) :: numberOfPenaltyInterpolationSets !<The number of penalty interpolation sets in the domain
+    TYPE(InterfaceEquationsInterpolationSetType), ALLOCATABLE :: penaltyInterpolation(:) !<penaltyInterpolation(interpolationSetIdx). The penalty interpolation information for the interpolationSetIdx'th interpolation set.
+  END TYPE InterfaceEquationsDomainInterpolationType
   
   !>Contains information on the interpolation for the interface equations
-  TYPE INTERFACE_EQUATIONS_INTERPOLATION_TYPE
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: INTERFACE_EQUATIONS !<A pointer to the equations
-    TYPE(INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE) :: INTERFACE_INTERPOLATION !<The interpolation information for interpolating on the interface.
-    TYPE(INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE), ALLOCATABLE :: VARIABLE_INTERPOLATION(:) !<VARIABLE_INTERPOLATION(variable_idx). The interpolation for the variable_idx'th field variable in the interface condition.
-  END TYPE INTERFACE_EQUATIONS_INTERPOLATION_TYPE
+  TYPE InterfaceEquationsInterpolationType
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the equations
+    TYPE(InterfaceEquationsDomainInterpolationType) :: interfaceInterpolation !<The interpolation information for interpolating on the interface.
+    TYPE(InterfaceEquationsDomainInterpolationType), ALLOCATABLE :: variableInterpolation(:) !<variableInterpolation(variableIdx). The interpolation for the variableIdx'th field variable in the interface condition.
+  END TYPE InterfaceEquationsInterpolationType
 
   !>Contains information about the interface equations for an interface condition. 
-  TYPE INTERFACE_EQUATIONS_TYPE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
+  TYPE InterfaceEquationsType
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition
     LOGICAL :: interfaceEquationsFinished !<Is .TRUE. if the interface equations have finished being created, .FALSE. if not.
-    INTEGER(INTG) :: outputType !<The output type for the interface equations \see INTERFACE_EQUATIONS_ROUTINES_OutputTypes,INTERFACE_EQUATIONS_ROUTINES
-    INTEGER(INTG) :: sparsityType !<The sparsity type for the interface equation matrices of the interface equations \see INTERFACE_EQUATIONS_ROUTINES_SparsityTypes,INTERFACE_EQUATIONS_ROUTINES
+    INTEGER(INTG) :: outputType !<The output type for the interface equations \see InterfaceEquationsRoutines_OutputTypes,InterfaceEquationsRoutines
+    INTEGER(INTG) :: sparsityType !<The sparsity type for the interface equation matrices of the interface equations \see InterfaceEquationsRoutines_SparsityTypes,InterfaceEquationsRoutines
     INTEGER(INTG) :: linearity !<The interface equations linearity type \see INTERFACE_CONDITIONS_CONSTANTS_LinearityTypes,INTERFACE_CONDITIONS_CONSTANTS
     INTEGER(INTG) :: timeDependence !<The interface equations time dependence type \see INTERFACE_CONDITIONS_CONSTANTS_TimeDependenceTypes,INTERFACE_CONDITIONS_CONSTANTS
-    TYPE(INTERFACE_EQUATIONS_INTERPOLATION_TYPE), POINTER :: interpolation !<A pointer to the interpolation information used in the interface equations.
+    TYPE(InterfaceEquationsInterpolationType), POINTER :: interpolation !<A pointer to the interpolation information used in the interface equations.
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping !<A pointer to the interface equations mapping for the interface.
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices !<A pointer to the interface equations matrices and vectors used for the interface equations.
-  END TYPE INTERFACE_EQUATIONS_TYPE
+  END TYPE InterfaceEquationsType
   
   !>Contains information on the geometry for an interface condition
-  TYPE INTERFACE_GEOMETRY_TYPE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition.
+  TYPE InterfaceGeometryType
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition.
     TYPE(FieldType), POINTER :: geometricField !<The geometric field for this equations set.
-  END TYPE INTERFACE_GEOMETRY_TYPE
+  END TYPE InterfaceGeometryType
 
   !>Contains information about the penalty field information for an interface condition. 
-  TYPE INTERFACE_PENALTY_TYPE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
-    LOGICAL :: PENALTY_FINISHED !<Is .TRUE. if the interface penalty field has finished being created, .FALSE. if not.
-    LOGICAL :: PENALTY_FIELD_AUTO_CREATED !<Is .TRUE. if the penalty field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: PENALTY_FIELD !<A pointer to the penalty field.
-  END TYPE INTERFACE_PENALTY_TYPE
+  TYPE InterfacePenaltyType
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition
+    LOGICAL :: penaltyFinished !<Is .TRUE. if the interface penalty field has finished being created, .FALSE. if not.
+    LOGICAL :: penaltyFieldAutoCreated !<Is .TRUE. if the penalty field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: penaltyField !<A pointer to the penalty field.
+  END TYPE InterfacePenaltyType
 
   !>Contains information about the Lagrange field information for an interface condition. 
-  TYPE INTERFACE_LAGRANGE_TYPE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
-    LOGICAL :: LAGRANGE_FINISHED !<Is .TRUE. if the interface Lagrange field has finished being created, .FALSE. if not.
-    LOGICAL :: LAGRANGE_FIELD_AUTO_CREATED !<Is .TRUE. if the Lagrange field has been auto created, .FALSE. if not.
-    TYPE(FieldType), POINTER :: LAGRANGE_FIELD !<A pointer to the lagrange field.
+  TYPE InterfaceLagrangeType
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition
+    LOGICAL :: lagrangeFinished !<Is .TRUE. if the interface Lagrange field has finished being created, .FALSE. if not.
+    LOGICAL :: lagrangeFieldAutoCreated !<Is .TRUE. if the Lagrange field has been auto created, .FALSE. if not.
+    TYPE(FieldType), POINTER :: lagrangeField !<A pointer to the lagrange field.
     INTEGER(INTG) :: numberOfComponents !<The number of components in the Lagrange field.
-  END TYPE INTERFACE_LAGRANGE_TYPE
+  END TYPE InterfaceLagrangeType
 
   !>Contains information about the dependent field information for an interface condition. 
-  TYPE INTERFACE_DEPENDENT_TYPE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION !<A pointer to the interface condition
-    INTEGER(INTG) :: NUMBER_OF_DEPENDENT_VARIABLES !<The number of dependent variables in the interface condition
-    TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: EQUATIONS_SETS(:) !<EQUATIONS_SETS(variable_idx). The pointer to the equations set containing the dependent variable for the variable_idx'th added dependent variable.
-    TYPE(FieldVariablePtrType), POINTER :: fieldVariables(:) !<fieldVariables(variable_idx). The pointer to the variable_idx'th dependent variable in the interface condition.
-    INTEGER(INTG), POINTER :: VARIABLE_MESH_INDICES(:) !<VARIABLE_MESH_INDICES(variable_idx). The mesh index of the variable_idx'th dependent variable in the interface condition.
-  END TYPE INTERFACE_DEPENDENT_TYPE
+  TYPE InterfaceDependentType
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition !<A pointer to the interface condition
+    INTEGER(INTG) :: numberOfDependentVariables !<The number of dependent variables in the interface condition
+    TYPE(EQUATIONS_SET_PTR_TYPE), POINTER :: equationsSets(:) !<equationsSets(variableIdx). The pointer to the equations set containing the dependent variable for the variableIdx'th added dependent variable.
+    TYPE(FieldVariablePtrType), POINTER :: fieldVariables(:) !<fieldVariables(variableIdx). The pointer to the variableIdx'th dependent variable in the interface condition.
+    INTEGER(INTG), POINTER :: variableMeshIndices(:) !<variableMeshIndices(variableIdx). The mesh index of the variableIdx'th dependent variable in the interface condition.
+  END TYPE InterfaceDependentType
 
   !>Contains information for the interface condition data.
-  TYPE INTERFACE_CONDITION_TYPE
+  TYPE InterfaceConditionType
     INTEGER(INTG) :: userNumber !<The user identifying number of the interface condition. Must be unique.
     INTEGER(INTG) :: globalNumber !<The global index of the interface condition in the interface conditions.
-    LOGICAL :: INTERFACE_CONDITION_FINISHED !<Is .TRUE. ifand where  the interfaand where and where ce condition has finished being created, .FALSE. if not.
+    LOGICAL :: interfaceConditionFinished !<Is .TRUE. ifand where  the interfaand where and where ce condition has finished being created, .FALSE. if not.
     TYPE(INTERFACE_CONDITIONS_TYPE), POINTER :: interfaceConditions !<A pointer back to the interface conditions.
     TYPE(VARYING_STRING) :: label !<A user defined label for the interface condition.
     TYPE(InterfaceType), POINTER :: INTERFACE !<A pointer back to the interface.
@@ -2759,17 +2759,17 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: method !<An integer which denotes the interface condition method. \see INTERFACE_CONDITIONS_Methods,INTERFACE_CONDITIONS
     INTEGER(INTG) :: operator !<An integer which denotes the type of interface operator. \see INTERFACE_CONDITIONS_Operator,INTERFACE_CONDITIONS
     INTEGER(INTG) :: integrationType !<An integer which denotes the integration type. \see INTERFACE_CONDITIONS_IntegrationType,INTERFACE_CONDITIONS
-    TYPE(INTERFACE_GEOMETRY_TYPE) :: geometry !<The geometry information for the interface condition.
-    TYPE(INTERFACE_PENALTY_TYPE), POINTER :: penalty !<A pointer to the interface condition penalty information if there are any for this interface condition.
-    TYPE(INTERFACE_LAGRANGE_TYPE), POINTER :: lagrange !<A pointer to the interface condition Lagrange multipler information if there are any for this interface condition.
-    TYPE(INTERFACE_DEPENDENT_TYPE), POINTER :: dependent !<A pointer to the interface condition dependent field information if there is any for this interface condition.
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations if there are any for this interface condition.
-    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: BOUNDARY_CONDITIONS !<A pointer to the boundary condition information for this interface condition.
-  END TYPE INTERFACE_CONDITION_TYPE
+    TYPE(InterfaceGeometryType) :: geometry !<The geometry information for the interface condition.
+    TYPE(InterfacePenaltyType), POINTER :: penalty !<A pointer to the interface condition penalty information if there are any for this interface condition.
+    TYPE(InterfaceLagrangeType), POINTER :: lagrange !<A pointer to the interface condition Lagrange multipler information if there are any for this interface condition.
+    TYPE(InterfaceDependentType), POINTER :: dependent !<A pointer to the interface condition dependent field information if there is any for this interface condition.
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations if there are any for this interface condition.
+    TYPE(BOUNDARY_CONDITIONS_TYPE), POINTER :: boundaryConditions !<A pointer to the boundary condition information for this interface condition.
+  END TYPE InterfaceConditionType
 
-  !>A buffer type to allow for an array of pointers to a INTERFACE_CONDITION_TYPE.
+  !>A buffer type to allow for an array of pointers to a InterfaceConditionType.
   TYPE INTERFACE_CONDITION_PTR_TYPE
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: ptr !<The pointer to the interface condition.
+    TYPE(InterfaceConditionType), POINTER :: ptr !<The pointer to the interface condition.
   END TYPE INTERFACE_CONDITION_PTR_TYPE
   
   !>Contains information for interface region specific data that is not of 'region' importance. <<>>
@@ -2885,23 +2885,23 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   PUBLIC InterfaceMappingType
 
-  PUBLIC INTERFACE_EQUATIONS_INTERPOLATION_SET_TYPE
+  PUBLIC InterfaceEquationsInterpolationSetType
 
-  PUBLIC INTERFACE_EQUATIONS_DOMAIN_INTERPOLATION_TYPE
+  PUBLIC InterfaceEquationsDomainInterpolationType
 
-  PUBLIC INTERFACE_EQUATIONS_INTERPOLATION_TYPE
+  PUBLIC InterfaceEquationsInterpolationType
 
-  PUBLIC INTERFACE_EQUATIONS_TYPE
+  PUBLIC InterfaceEquationsType
 
-  PUBLIC INTERFACE_GEOMETRY_TYPE
+  PUBLIC InterfaceGeometryType
 
-  PUBLIC INTERFACE_PENALTY_TYPE
+  PUBLIC InterfacePenaltyType
 
-  PUBLIC INTERFACE_LAGRANGE_TYPE
+  PUBLIC InterfaceLagrangeType
 
-  PUBLIC INTERFACE_DEPENDENT_TYPE
+  PUBLIC InterfaceDependentType
 
-  PUBLIC INTERFACE_CONDITION_TYPE,INTERFACE_CONDITION_PTR_TYPE,INTERFACE_CONDITIONS_TYPE
+  PUBLIC InterfaceConditionType,INTERFACE_CONDITION_PTR_TYPE,INTERFACE_CONDITIONS_TYPE
 
   PUBLIC InterfaceDecompositionConnectivityType
   
@@ -2927,7 +2927,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     TYPE(VARYING_STRING) :: MODEL_ID !<The ID of the model.
     TYPE(C_PTR) :: ptr !< The handle for the actual C++ CellML model definition object
     INTEGER(INTG) :: NUMBER_OF_STATE !<The number of state variables in the CellML model.
-    TYPE(VARYING_STRING), ALLOCATABLE :: STATE_VARIABLE_ID(:) !<STATE_VARIABLE_ID(state_variable_idx). The ID for the state_variable_idx'th state variable.
+    TYPE(VARYING_STRING), ALLOCATABLE :: STATE_VARIABLE_ID(:) !<STATE_VARIABLE_ID(state_variableIdx). The ID for the state_variableIdx'th state variable.
     INTEGER(INTG) :: NUMBER_OF_INTERMEDIATE !<The number of intermediate variables in the CellML model.
     TYPE(VARYING_STRING), ALLOCATABLE :: INTERMEDIATE_VARIABLE_ID(:) !<INTERMEDIATE_VARIABLE_ID(intermediate_variable_idx). The ID for the intermediate_variable_idx'th intermediate variable.
     INTEGER(INTG) :: numberOfParameters !<The number of parameters in the CellML model.
@@ -3588,7 +3588,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
 
   TYPE EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE_TYPE
     INTEGER(INTG) :: INTERFACE_CONDITION_INDEX
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: INTERFACE_CONDITION
+    TYPE(InterfaceConditionType), POINTER :: INTERFACE_CONDITION
     INTEGER(INTG) :: INTERFACE_MATRIX_NUMBER
   END TYPE EQUATIONS_TO_SOLVER_MATRIX_MAPS_INTERFACE_TYPE
   
@@ -3597,9 +3597,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: SOLVER_MATRIX_NUMBER !<The number of the solver matrix for these mappings
 
     INTEGER(INTG) :: numberOfVariables !<The number of variables mapped to this solver matrix
-    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variable_idx). The variable type for the variable_idx'th variable that is mapped to the solver matrix.
-    TYPE(FieldVariablePtrType), ALLOCATABLE :: VARIABLES(:) !<VARIABLES(variable_idx). VARIABLES(variable_idx)%PTR points to the variable_idx'th variable that is mapped to the solver matrix.
-    TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE), ALLOCATABLE :: VARIABLE_TO_SOLVER_COL_MAPS(:) !<VARIABLE_TO_SOLVER_COL_MAPS(variable_idx). The mappings from the variable dofs to the solver dofs for the variable_idx'th variable in the equations set that is mapped to the solver matrix.
+    INTEGER(INTG), ALLOCATABLE :: variableTypes(:) !<variableTypes(variableIdx). The variable type for the variableIdx'th variable that is mapped to the solver matrix.
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: VARIABLES(:) !<VARIABLES(variableIdx). VARIABLES(variableIdx)%PTR points to the variableIdx'th variable that is mapped to the solver matrix.
+    TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE), ALLOCATABLE :: VARIABLE_TO_SOLVER_COL_MAPS(:) !<VARIABLE_TO_SOLVER_COL_MAPS(variableIdx). The mappings from the variable dofs to the solver dofs for the variableIdx'th variable in the equations set that is mapped to the solver matrix.
     INTEGER(INTG) :: NUMBER_OF_DYNAMIC_EQUATIONS_MATRICES !<The number of dynamic equations matrices mapped to this solver matrix
     TYPE(EQUATIONS_TO_SOLVER_MAPS_PTR_TYPE), ALLOCATABLE :: DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS(:) !<DYNAMIC_EQUATIONS_TO_SOLVER_MATRIX_MAPS(equations_matrix_idx). The maps from the equations_idx'th linear equations matrix to solver matrix
     INTEGER(INTG) :: NUMBER_OF_LINEAR_EQUATIONS_MATRICES !<The number of linear equations matrices mapped to this solver matrix
@@ -3634,9 +3634,9 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: lagrangeVariableType !<LThe variable type for the Lagrange variable that is mapped to the solver matrix.
     TYPE(FieldVariableType), POINTER :: lagrangeVariable !<A pointer to the Lagrange variable that is mapped to the solver matrix.
     TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE) :: lagrangeVariableToSolverColMap !<The mappings from the Lagrange variable dofs to the solver dofs.
-    INTEGER(INTG) :: NUMBER_OF_DEPENDENT_VARIABLES !<The number of dependent variables mapped to this solver matrix
-    INTEGER(INTG), ALLOCATABLE :: DEPENDENT_VARIABLE_TYPES(:) !<DEPENDENT_VARIABLE_TYPES(variable_idx). The variable type for the variable_idx'th dependent variable that is mapped to the solver matrix.
-    TYPE(FieldVariablePtrType), ALLOCATABLE :: DEPENDENT_VARIABLES(:) !<DEPENDENT_VARIABLES(variable_idx). DEPENDENT_VARIABLES(variable_idx)%PTR points to the variable_idx'th dependent variable that is mapped to the solver matrix.
+    INTEGER(INTG) :: numberOfDependentVariables !<The number of dependent variables mapped to this solver matrix
+    INTEGER(INTG), ALLOCATABLE :: DEPENDENT_VARIABLE_TYPES(:) !<DEPENDENT_VARIABLE_TYPES(variableIdx). The variable type for the variableIdx'th dependent variable that is mapped to the solver matrix.
+    TYPE(FieldVariablePtrType), ALLOCATABLE :: DEPENDENT_VARIABLES(:) !<DEPENDENT_VARIABLES(variableIdx). DEPENDENT_VARIABLES(variableIdx)%PTR points to the variableIdx'th dependent variable that is mapped to the solver matrix.
     TYPE(VARIABLE_TO_SOLVER_COL_MAP_TYPE), ALLOCATABLE :: DEPENDENT_VARIABLE_TO_SOLVER_COL_MAPS(:) !<DEPENDENT_VARIABLE_TO_SOLVER_COL_MAPS(interface_matrix_idx). The mappings from the dependent variable dofs to the solver dofs for the interface_matrix_idx'th interface matrix dependent variable in the interface condition that is mapped to the solver matrix.
     INTEGER(INTG) :: numberOfInterfaceMatrices !<The number of interface matrices mapped to this solver matrix
     TYPE(INTERFACE_TO_SOLVER_MAPS_PTR_TYPE), ALLOCATABLE :: INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(:) !<INTERFACE_EQUATIONS_TO_SOLVER_MATRIX_MAPS(interface_matrix_idx). The maps from the interface)matrix_idx'th interface matrix to solver matrix
@@ -3661,7 +3661,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   TYPE INTERFACE_CONDITION_TO_SOLVER_MAP_TYPE
     INTEGER(INTG) :: INTERFACE_CONDITION_INDEX !<The index of the interface condition for these mappings
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping !<A pointer to the solver mappings
-    TYPE(INTERFACE_EQUATIONS_TYPE), POINTER :: interfaceEquations !<A pointer to the interface equations in this interface condition
+    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations !<A pointer to the interface equations in this interface condition
     INTEGER(INTG) :: NUMBER_OF_EQUATIONS_SETS !<The number of equations sets that the interface condition affects
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_EQUATIONS(equations_set_idx). The equations set information of the equations_set_idx'th equations set that the interface condition affects.
     TYPE(INTERFACE_TO_SOLVER_MATRIX_MAPS_SM_TYPE), ALLOCATABLE :: INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(:) !<INTERFACE_TO_SOLVER_MATRIX_MAPS_SM(solver_matrix_idx). The mappings from the interface matrices in this interface condition to the solver_matrix_idx'th solver_matrix
@@ -3734,7 +3734,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
     INTEGER(INTG) :: totalNumberOfDofs !<The number of local dofs (including ghost values) in the solver vector associated with this solver matrix
     INTEGER(INTG) :: numberOfGlobalDofs !<The number of global dofs in the solver vector associated with this solver matrix.
 !!TODO: should this be index by solver dof rather than column???
-    TYPE(SOLVER_DOF_TO_VARIABLE_MAP_TYPE), ALLOCATABLE :: SOLVER_DOF_TO_VARIABLE_MAPS(:) !<SOLVER_DOF_TO_EQUATIONS_MAPS(dof_idx). The mappings from the dof_idx'th solver dof to the field variables in the equations set.
+    TYPE(SOLVER_DOF_TO_VARIABLE_MAP_TYPE), ALLOCATABLE :: SOLVER_DOF_TO_VARIABLE_MAPS(:) !<SOLVER_DOF_TO_EQUATIONS_MAPS(dofIdx). The mappings from the dofIdx'th solver dof to the field variables in the equations set.
     TYPE(DomainMappingType), POINTER :: columnDOFSMapping !<The domain mapping for solver matrix column dofs
   END TYPE SOLVER_COL_TO_EQUATIONS_MAPS_TYPE
 
@@ -3771,7 +3771,7 @@ END TYPE GENERATED_MESH_ELLIPSOID_TYPE
   !>Contains information on the variables involved in a solver matrix
   TYPE SOLVER_MAPPING_VARIABLES_TYPE
     INTEGER(INTG) :: numberOfVariables !<The number of variables involved in the solver matrix.
-    TYPE(SOLVER_MAPPING_VARIABLE_TYPE), ALLOCATABLE :: VARIABLES(:) !<VARIABLES(variable_idx). The variable information for the variable_idx'th variable involved in the solver matrix.
+    TYPE(SOLVER_MAPPING_VARIABLE_TYPE), ALLOCATABLE :: VARIABLES(:) !<VARIABLES(variableIdx). The variable information for the variableIdx'th variable involved in the solver matrix.
   END TYPE SOLVER_MAPPING_VARIABLES_TYPE
 
   !>Describes the coupled rows or columns in the solver mapping

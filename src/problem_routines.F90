@@ -2120,7 +2120,7 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(DYNAMIC_SOLVER_TYPE), POINTER :: dynamicSolver
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
@@ -2329,7 +2329,7 @@ CONTAINS
     INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx
     TYPE(EquationsType), POINTER :: equations
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
     
@@ -2416,7 +2416,7 @@ CONTAINS
     INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx
     TYPE(EQUATIONS_SET_TYPE), POINTER :: equationsSet
     TYPE(EquationsType), POINTER :: equations
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SOLVER_TYPE), POINTER :: solver
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
@@ -2912,7 +2912,7 @@ CONTAINS
     TYPE(NONLINEAR_SOLVER_TYPE), POINTER :: nonlinearSolver
     TYPE(SOLVER_EQUATIONS_TYPE), POINTER :: solverEquations
     TYPE(SOLVER_MAPPING_TYPE), POINTER :: solverMapping
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceType), POINTER :: interface
     LOGICAL :: reproject
     TYPE(VARYING_STRING) :: localError
@@ -3033,7 +3033,7 @@ CONTAINS
     INTEGER(INTG) :: interfaceConditionIdx, interfaceElementNumber, dataPointIdx, globalDataPointNumber, coupledElementNumber, &
       & coupledMeshFaceLineNumber, coupledMeshIdx,component
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface 
-    TYPE(INTERFACE_CONDITION_TYPE), POINTER :: interfaceCondition
+    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfacePointsConnectivityType), POINTER :: pointsConnectivity !<A pointer to the interface points connectivity
     TYPE(FieldType), POINTER :: coupledMeshDependentField
     TYPE(FieldInterpolationParametersPtrType), POINTER :: interpolationParameters(:)
@@ -3180,7 +3180,7 @@ CONTAINS
                 WRITE(IUNIT,'(1X,''  z.  Value index= 9, #Derivatives=0'')')
                 WRITE(IUNIT,'(1X,''4) exitTag, field, rectangular cartesian, #Components=1'')')
                 WRITE(IUNIT,'(1X,''  tag.  Value index= 10, #Derivatives=0'')')
-                coupledMeshDependentField=>interfaceCondition%DEPENDENT%EQUATIONS_SETS(coupledMeshIdx)%ptr% &
+                coupledMeshDependentField=>interfaceCondition%DEPENDENT%equationsSets(coupledMeshIdx)%ptr% &
                   & DEPENDENT%DEPENDENT_FIELD
                 NULLIFY(interpolationParameters)
                 CALL FIELD_INTERPOLATION_PARAMETERS_INITIALISE(coupledMeshDependentField,interpolationParameters,err,error, &
@@ -3191,7 +3191,7 @@ CONTAINS
                 interpolatedPoint=>interpolatedPoints(FIELD_U_VARIABLE_TYPE)%ptr
                 dataProjection=>interfaceDatapoints%dataProjections%dataProjections(coupledMeshIdx+1)%ptr
                 DO interfaceElementNumber=1,SIZE(pointsConnectivity%coupledElements,1)
-                  decompositionElementData=>interfaceCondition%LAGRANGE%LAGRANGE_FIELD%DECOMPOSITION%TOPOLOGY%dataPoints% &
+                  decompositionElementData=>interfaceCondition%LAGRANGE%lagrangeField%DECOMPOSITION%TOPOLOGY%dataPoints% &
                     & elementDataPoints(interfaceElementNumber)
                   DO dataPointIdx=1,decompositionElementData%numberOfProjectedData
                     globalDataPointNumber=decompositionElementData%dataIndices(dataPointIdx)%globalNumber
