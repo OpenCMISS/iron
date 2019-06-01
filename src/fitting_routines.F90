@@ -257,12 +257,12 @@ CONTAINS
               dataPointGlobalNumber = dataPoints%elementDataPoint(elementNumber)%dataIndices(dataPointIdx)%globalNumber
               ! Need to use global number to get the correct projection results
               projectionXi(1:numberOfXi) = dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi(1:numberOfXi)
-              CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
-                & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
-                & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
-              CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
-                & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              !CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
+              !  & geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              !CALL Field_InterpolateXi(FIRST_PART_DERIV,projectionXi,equations%interpolation% &
+              !  & dependentInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+              !CALL Field_InterpolatedPointMetricsCalculate(geometricBasis%NUMBER_OF_XI,equations%interpolation% &
+              !  & geometricInterpPointMetrics(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
               !Get data point vector value and weight
               DO componentIdx=1,numberOfDataComponents
                 localDof=dataVariable%components(componentIdx)%PARAM_TO_DOF_MAP% &

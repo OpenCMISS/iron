@@ -380,7 +380,7 @@ MODULE OpenCMISS_Iron
 
   PUBLIC cmfe_FieldType,cmfe_Field_Finalise,cmfe_Field_Initialise
 
-  PUBLIC cmfe_FieldsType,cmfe_Fields_Create,cmfe_Fields_Finalise,cmfe_Fields_Initialise
+  PUBLIC cmfe_FieldsType,cmfe_Fields_AddField,cmfe_Fields_Create,cmfe_Fields_Finalise,cmfe_Fields_Initialise
 
   PUBLIC cmfe_GeneratedMeshType,cmfe_GeneratedMesh_Finalise,cmfe_GeneratedMesh_Initialise
 
@@ -8572,6 +8572,32 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_Field_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Creates a cmfe_FieldsType object for an inteface by an object reference.
+  SUBROUTINE cmfe_Fields_AddField(fields,field,err)
+    !DLLEXPORT(cmfe_Fields_CreateInterface)
+
+    !Argument variables
+    TYPE(cmfe_FieldsType), INTENT(INOUT) :: fields !<The fields attached to the specified interface.
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to add to the fields
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("cmfe_Fields_AddField",err,error,*999)
+
+    CALL Fields_AddField(fields%fields,field%field,err,error,*999)
+
+    EXITS("cmfe_Fields_AddField")
+    RETURN
+999 ERRORSEXITS("cmfe_Fields_AddField",err,error)
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_Fields_AddField
 
   !
   !================================================================================================================================
