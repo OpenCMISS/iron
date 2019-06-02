@@ -2541,6 +2541,7 @@ CONTAINS
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S2))- &         
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2)))
+            functionHessian(2,1)=functionHessian(1,2)
             functionHessian(2,2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2_S2))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2), &
@@ -2790,6 +2791,7 @@ CONTAINS
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1_S3))- &         
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S1), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3)))
+            functionHessian(2,1)=functionHessian(1,2)
             functionHessian(2,2)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2_S2))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2), &
@@ -2798,6 +2800,8 @@ CONTAINS
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2_S3))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S2), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3)))
+            functionHessian(3,1)=functionHessian(1,3)
+            functionHessian(3,2)=functionHessian(2,3)
             functionHessian(3,3)=-2.0_DP*(DOT_PRODUCT(distanceVector(1:numberOfCoordinates), &
               & interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3_S3))- &
               & DOT_PRODUCT(interpolatedPoint%values(1:numberOfCoordinates,PART_DERIV_S3), &
