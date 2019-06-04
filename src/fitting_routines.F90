@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley
+!> Contributor(s): Chris Bradley,Sebastian Krittian
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -119,7 +119,7 @@ CONTAINS
     INTEGER(INTG) :: ng,mh,mhs,ms,nh,nhs,ns,mi,ni
     INTEGER(INTG) :: dependentComponentColumnIdx,dependentComponentRowIdx,dependentElementParameterColumnIdx, &
       & dependentElementParameterRowIdx,dependentParameterColumnIdx,dependentParameterRowIdx,gaussPointIdx, &
-      & meshComponentRow,meshComponentColumn,numberOfDataComponents
+      & geometricDerivative,meshComponentRow,meshComponentColumn,numberOfDataComponents
     REAL(DP) :: rwg,sum,jacobianGaussWeight
     REAL(DP) :: basisFunctionRow,basisFunctionColumn,PGM,PGN,PGMSI(3),PGNSI(3)
     REAL(DP) :: uValue(3)
@@ -145,22 +145,21 @@ CONTAINS
     TYPE(QUADRATURE_SCHEME_TYPE), POINTER :: quadratureScheme,quadratureSchemeColumn,quadratureSchemeRow
     TYPE(VARYING_STRING) :: localError
 
-    REAL(DP), POINTER :: independentVectorParameters(:),independentWeightParameters(:)
-    REAL(DP) :: projectionXi(3)
-    REAL(DP) :: porosity0, porosity, permOverVisParam0, permOverVisParam
-    REAL(DP) :: tau1,tau2,tau3,kappa11,kappa22,kappa33,kappa12,kappa13,kappa23,tension,curvature
-    REAL(DP) :: materialFact
-    REAL(DP) :: dXdY(3,3), dXdXi(3,3), dYdXi(3,3), dXidY(3,3), dXidX(3,3)
-    REAL(DP) :: Jxy, Jyxi
-    REAL(DP) :: dataPointWeight(99),dataPointVector(99)
     INTEGER(INTG) :: derivative_idx, component_idx, xi_idx, numberOfDimensions,smoothingType
     INTEGER(INTG) :: dataPointIdx,dataPointUserNumber,dataPointLocalNumber,dataPointGlobalNumber
     INTEGER(INTG) :: numberOfXi
     INTEGER(INTG) :: componentIdx
     INTEGER(INTG) :: dependentVariableType,variableType,localDof
-
     INTEGER(INTG) numberDofs
     INTEGER(INTG) meshComponent1,meshComponent2
+    REAL(DP) :: projectionXi(3)
+    REAL(DP) :: porosity0, porosity, permOverVisParam0, permOverVisParam
+    REAL(DP) :: tau1,tau2,tau3,kappa11,kappa22,kappa33,kappa12,kappa13,kappa23,tension,curvature,rhsTension,rhsCurvature
+    REAL(DP) :: materialFact
+    REAL(DP) :: dXdY(3,3), dXdXi(3,3), dYdXi(3,3), dXidY(3,3), dXidX(3,3)
+    REAL(DP) :: Jxy, Jyxi
+    REAL(DP) :: dataPointWeight(99),dataPointVector(99)
+    REAL(DP), POINTER :: independentVectorParameters(:),independentWeightParameters(:)
 
     ENTERS("Fitting_FiniteElementCalculate",err,error,*999)
 
@@ -322,15 +321,21 @@ CONTAINS
             SELECT CASE(smoothingType)
             CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
               !Do nothing
-            CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
+            CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
+              & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
               IF(equationsMatrix%updateMatrix) THEN
                 materialsField=>equations%interpolation%materialsField
                 CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,equations%interpolation% &
                   & materialsInterpParameters(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
+                IF(smoothingType==EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING) THEN
+                  geometricDerivative=SECOND_PART_DERIV
+                ELSE
+                  geometricDerivative=FIRST_PART_DERIV
+                ENDIF
                 !Loop over Gauss points
                 DO gaussPointIdx=1,quadratureScheme%NUMBER_OF_GAUSS
                   !Interpolate fields
-                  CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
+                  CALL Field_InterpolateGauss(geometricDerivative,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                     & equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
                   CALL Field_InterpolateGauss(SECOND_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                     & equations%interpolation%dependentInterpPoint(dependentVariableType)%ptr,err,error,*999)
@@ -408,20 +413,67 @@ CONTAINS
                                 & PART_DERIV_S2_S3,gaussPointIdx)
                             ENDIF ! 3D
                           ENDIF ! 2 or 3D
-                          sum = (tension + curvature) * jacobianGaussWeight
+                          sum = 2.0_DP*(tension + curvature) * jacobianGaussWeight
 
                           equationsMatrix%elementMatrix%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)= &
                             equationsMatrix%elementMatrix%matrix(dependentParameterRowIdx,dependentParameterColumnIdx)+sum
 
                         ENDDO !dependentElementParameterColumnIdx
                       ENDDO !dependentComponentColumnIdx
+                      IF(smoothingType==EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING) THEN
+                        IF(rhsVector%updateVector) THEN
+                          !Calculate Sobolev surface tension and curvature smoothing terms
+                          rhsTension=0.0_DP
+                          rhsCurvature=0.0_DP
+                          DO dependentComponentColumnIdx=1,dependentVariable%NUMBER_OF_COMPONENTS                          
+                            rhsTension = rhsTension+ &
+                              & tau1*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
+                              & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                              & values(dependentComponentColumnIdx,PART_DERIV_S1)
+                            rhsCurvature = rhsCurvature + &
+                              & kappa11*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S1, &
+                              & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                              & values(dependentComponentColumnIdx,PART_DERIV_S1_S1)
+                            IF(numberOfXi > 1) THEN
+                              rhsTension = rhsTension + &
+                                & tau2*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2, &
+                                & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                                & values(dependentComponentColumnIdx,PART_DERIV_S2)
+                              rhsCurvature = rhsCurvature + &
+                                & kappa22*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S2, &
+                                & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                                & values(dependentComponentColumnIdx,PART_DERIV_S2_S2) + &
+                                & kappa12*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S2, &
+                                & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                                & values(dependentComponentColumnIdx,PART_DERIV_S1_S2) 
+                              IF(numberOfXi > 2) THEN
+                                rhsTension = rhsTension + &
+                                  & tau3*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3, &
+                                  & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                                  & values(dependentComponentColumnIdx,PART_DERIV_S3) 
+                                rhsCurvature = rhsCurvature + &
+                                  & kappa33*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S3_S3, &
+                                  & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                                  & values(dependentComponentColumnIdx,PART_DERIV_S3_S3) + &
+                                  & kappa13*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1_S3, &
+                                  & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                                  & values(dependentComponentColumnIdx,PART_DERIV_S1_S3) + &
+                                  & kappa23*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S2_S3, &
+                                  & gaussPointIdx)*equations%interpolation%geometricInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr% &
+                                  & values(dependentComponentColumnIdx,PART_DERIV_S2_S3)
+                              ENDIF ! 3D
+                            ENDIF ! 2 or 3D
+                          ENDDO !dependentComponentColumnIdx
+                          sum = 2.0_DP*(rhsTension + rhsCurvature) * jacobianGaussWeight
+                          rhsVector%elementVector%vector(dependentParameterRowIdx)= &
+                            & rhsVector%elementVector%vector(dependentParameterRowIdx)+sum
+                        ENDIF
+                      ENDIF                      
                     ENDDO !dependentElementParameterRowIdx
                   ENDDO !dependentComponentRowIdx
                 ENDDO !gaussPointIdx
               ENDIF
 
-            CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
-              CALL FlagError("Not implemented.",err,error,*999)
             CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
               CALL FlagError("Not implemented.",err,error,*999)
             CASE DEFAULT
@@ -1152,7 +1204,8 @@ CONTAINS
               SELECT CASE(smoothingType)
               CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
                 !Do nothing
-              CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
+              CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
+                & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
                 !Get Sobolev smoothing data from interpolated fields
                 CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                   & equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr,err,error,*999)
@@ -1169,8 +1222,6 @@ CONTAINS
                     kappa23=equations%interpolation%materialsInterpPoint(FIELD_U_VARIABLE_TYPE)%ptr%values(9,NO_PART_DERIV)
                   ENDIF
                 ENDIF
-              CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
-                CALL FlagError("Not implemented.",err,error,*999)
               CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
                 CALL FlagError("Not implemented.",err,error,*999)
               CASE DEFAULT
@@ -1211,7 +1262,8 @@ CONTAINS
                           SELECT CASE(smoothingType)
                           CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING)
                             !Do nothing
-                          CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING)
+                          CASE(EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
+                            & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
                             !Calculate Sobolev surface tension and curvature smoothing terms
                             tension = tau1*quadratureSchemeRow%GAUSS_BASIS_FNS(dependentElementParameterRowIdx,PART_DERIV_S1, &
                               & gaussPointIdx)*quadratureSchemeColumn%GAUSS_BASIS_FNS(dependentElementParameterColumnIdx, &
@@ -1247,8 +1299,6 @@ CONTAINS
                               ENDIF ! 3D
                             ENDIF ! 2 or 3D
                             sum = (tension + curvature) * jacobianGaussWeight
-                          CASE(EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING)
-                            CALL FlagError("Not implemented.",err,error,*999)
                           CASE(EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
                             CALL FlagError("Not implemented.",err,error,*999)
                           CASE DEFAULT
