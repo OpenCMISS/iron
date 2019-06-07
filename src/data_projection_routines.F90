@@ -4780,7 +4780,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dataPointExitTag,dataPointIdx,dataPointUserNumber,elementUserNumber,filenameLength,localElementNumber, &
-      & localLineFaceNumber,myComputationalNodeNumber,normalIdx1,normalIdx2,numberOfComputationalNodes,outputID
+      & localLineFaceNumber,myComputationalNodeNumber,normalIdx1,normalIdx2,numberOfCanceledDataPoints, &
+      & numberOfComputationalNodes,outputID
     REAL(DP) :: distance
     CHARACTER(LEN=MAXSTRLEN) :: analFilename,format1,format2,localString
     TYPE(BASIS_TYPE), POINTER :: basis
@@ -4859,10 +4860,12 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
       CALL WriteString(outputID,localString,err,error,*999)
+      numberOfCanceledDataPoints=0
       DO dataPointIdx=1,dataPoints%numberOfDataPoints
         dataPointUserNumber=dataProjection%dataProjectionResults(dataPointIdx)%userNumber
         dataPointExitTag=dataProjection%dataProjectionResults(dataPointIdx)%exitTag
         IF(dataPointExitTag==DATA_PROJECTION_CANCELLED) THEN
+          numberOfCanceledDataPoints=numberOfCanceledDataPoints+1
           WRITE(localString,'(2X,I8,2X,I8,8X,I2)') dataPointIdx,dataPointUserNumber,dataPointExitTag
           CALL WriteString(outputID,localString,err,error,*999)
         ELSE
@@ -4923,6 +4926,8 @@ CONTAINS
           ENDIF
         ENDIF
       ENDDO !dataPointIdx
+      CALL WriteString(outputID,"",err,error,*999)
+      CALL WriteStringValue(outputID,"Number of canceled data points = ",numberOfCanceledDataPoints,err,error,*999)
       CALL WriteString(outputID,"",err,error,*999)
       CALL WriteString(outputID,"  Errors:",err,error,*999)
       CALL WriteString(outputID,"",err,error,*999)
