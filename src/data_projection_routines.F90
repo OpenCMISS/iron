@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Chris Bradley, Kumar Mithraratne, Xiani (Nancy) Yan, Prasad Babarenda Gamage
+!> Contributor(s): Chris Bradley, Tim Wu, Kumar Mithraratne, Xiani (Nancy) Yan, Prasad Babarenda Gamage
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -4927,19 +4927,23 @@ CONTAINS
         ENDIF
       ENDDO !dataPointIdx
       CALL WriteString(outputID,"",err,error,*999)
-      CALL WriteStringValue(outputID,"Number of canceled data points = ",numberOfCanceledDataPoints,err,error,*999)
+      CALL WriteStringValue(outputID,"  Number of canceled data points = ",numberOfCanceledDataPoints,err,error,*999)
       CALL WriteString(outputID,"",err,error,*999)
       CALL WriteString(outputID,"  Errors:",err,error,*999)
       CALL WriteString(outputID,"",err,error,*999)
       CALL WriteString(outputID,"  Error type            Value  Data user#",err,error,*999)
       WRITE(localString,'("  RMS error    ",2X,E12.5)') dataProjection%rmsError
       CALL WriteString(outputID,localString,err,error,*999)
-      WRITE(localString,'("  Maximum error",2X,E12.5,4X,I8)') dataProjection%maximumError, &
-        & dataProjection%dataProjectionResults(dataProjection%maximumErrorDataPoint)%userNumber
-      CALL WriteString(outputID,localString,err,error,*999)
-      WRITE(localString,'("  Minimum error",2X,E12.5,4X,I8)') dataProjection%minimumError, &
-        & dataProjection%dataProjectionResults(dataProjection%minimumErrorDataPoint)%userNumber
-      CALL WriteString(outputID,localString,err,error,*999)
+      IF(dataProjection%maximumErrorDataPoint/=0) THEN
+        WRITE(localString,'("  Maximum error",2X,E12.5,4X,I8)') dataProjection%maximumError, &
+          & dataProjection%dataProjectionResults(dataProjection%maximumErrorDataPoint)%userNumber
+        CALL WriteString(outputID,localString,err,error,*999)
+      ENDIF
+      IF(dataProjection%minimumErrorDataPoint/=0) THEN
+        WRITE(localString,'("  Minimum error",2X,E12.5,4X,I8)') dataProjection%minimumError, &
+          & dataProjection%dataProjectionResults(dataProjection%minimumErrorDataPoint)%userNumber
+        CALL WriteString(outputID,localString,err,error,*999)
+      ENDIF
       CALL WriteString(outputID,"",err,error,*999)
     ENDIF
     IF(filenameLength>=1) THEN
