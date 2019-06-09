@@ -1384,7 +1384,7 @@ CONTAINS
     elementNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber
     CALL Field_InterpolationParametersElementGet(fieldParameterSetType,elementNumber, &
       & interpolationParameters(fieldVariableType)%ptr,err,error,*999)
-    CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi, &
+    CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi, &
       & interpolatedPoint,err,error,*999)
     DO coordinateIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
       fieldResult(coordinateIdx)=interpolatedPoint%values(coordinateIdx,NO_PART_DERIV)
