@@ -1893,6 +1893,13 @@ MODULE OpenCMISS_Iron
     MODULE PROCEDURE cmfe_DataProjection_DestroyObj
   END INTERFACE cmfe_DataProjection_Destroy
 
+  !>Evaluate A data point in a field based on data projection
+  INTERFACE cmfe_DataProjection_DataPointFieldEvaluate
+    MODULE PROCEDURE cmfe_DataProjection_DataPointFieldEvaluateRegionNumber
+    MODULE PROCEDURE cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber
+    MODULE PROCEDURE cmfe_DataProjection_DataPointFieldEvaluateObj
+  END INTERFACE cmfe_DataProjection_DataPointFieldEvaluate
+
   !>Evaluate the data points position in a field based on data projection
   INTERFACE cmfe_DataProjection_DataPointsPositionEvaluate
     MODULE PROCEDURE cmfe_DataProjection_DataPointsPositionEvaluateRegionNumber
@@ -2205,6 +2212,8 @@ MODULE OpenCMISS_Iron
   PUBLIC cmfe_DataProjection_CreateFinish,cmfe_DataProjection_CreateStart
 
   PUBLIC cmfe_DataProjection_Destroy
+
+  PUBLIC cmfe_DataProjection_DataPointFieldEvaluate
 
   PUBLIC cmfe_DataProjection_DataPointsPositionEvaluate
 
@@ -20174,6 +20183,138 @@ CONTAINS
     RETURN
 
   END SUBROUTINE cmfe_DataProjection_DestroyObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluate the data point in a field based on data projection in a region, identified by user number
+  SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateRegionNumber(regionUserNumber,dataPointsUserNumber, &
+    & dataProjectionUserNumber,fieldUserNumber,fieldVariableType,fieldParameterSetType,dataPointUserNumber,fieldResult,err)
+    !DLLEXPORT(cmfe_DataProjection_DataPointFieldEvaluateRegionNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection and field
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to evaluate the field at
+    REAL(DP), INTENT(OUT) :: fieldResult(:) !<On return, the values of the field evaluated at the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(REGION_TYPE), POINTER :: region
+
+    ENTERS("cmfe_DataProjection_DataPointFieldEvaluateRegionNumber",err,error,*999)
+
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints)
+    NULLIFY(field)
+    NULLIFY(region)
+    CALL Region_Get(regionUserNumber,region,err,error,*999)
+    CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
+    CALL Region_DataPointsGet(region,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL DataProjection_DataPointFieldEvaluate(dataProjection,field,fieldVariableType,fieldParameterSetType, &
+      & dataPointUserNumber,fieldResult,err,error,*999)
+
+    EXITS("cmfe_DataProjection_DataPointFieldEvaluateRegionNumber")
+    RETURN
+999 ERRORS("cmfe_DataProjection_DataPointFieldEvaluateRegionNumber",err,error)
+    EXITS("cmfe_DataProjection_DataPointFieldEvaluateRegionNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateRegionNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluate the data point in a field based on data projection in an interface, identified by user number
+  SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber(parentRegionUserNumber,interfaceUserNumber, &
+    & dataPointsUserNumber,dataProjectionUserNumber,fieldUserNumber,fieldVariableType,fieldParameterSetType, &
+    & dataPointUserNumber,fieldResult,err)
+    !DLLEXPORT(cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: parentRegionUserNumber !<The parent region number of the interface for the data projection
+    INTEGER(INTG), INTENT(IN) :: interfaceUserNumber !<The interface number for the data projection
+    INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the interface.
+    INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The field user number of the field to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to evaluate the field at
+    REAL(DP), INTENT(OUT) :: fieldResult(:) !<On return, the values of the field evaluated at the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DataProjectionType), POINTER :: dataProjection
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(FIELD_TYPE), POINTER :: field
+    TYPE(REGION_TYPE), POINTER :: parentRegion
+    TYPE(INTERFACE_TYPE), POINTER :: interface
+
+    ENTERS("cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber",err,error,*999)
+
+    NULLIFY(dataProjection)
+    NULLIFY(dataPoints)
+    NULLIFY(field)
+    NULLIFY(parentRegion)
+    NULLIFY(interface)
+    CALL Region_Get(parentRegionUserNumber,parentRegion,err,error,*999)
+    CALL Region_InterfaceGet(parentRegion,interfaceUserNumber,interface,err,error,*999)
+    CALL Interface_DataPointsGet(interface,dataPointsUserNumber,dataPoints,err,error,*999)
+    CALL DataPoints_DataProjectionGet(dataPoints,dataProjectionUserNumber,dataProjection,err,error,*999)
+    CALL Interface_FieldGet(interface,fieldUserNumber,field,err,error,*999)
+    CALL DataProjection_DataPointFieldEvaluate(dataProjection,field,fieldVariableType,fieldParameterSetType, &
+      & dataPointUserNumber,fieldResult,err,error,*999)
+
+    EXITS("cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber")
+    RETURN
+999 ERRORS("cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber",err,error)
+    EXITS("cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateInterfaceNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Evaluate the data point in a field based on data projection, identified by object
+  SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateObj(dataProjection,field,fieldVariableType,fieldParameterSetType, &
+    & dataPointUserNumber,fieldResult,err)
+    !DLLEXPORT(cmfe_DataProjection_DataPointFieldEvaluateObj)
+
+    !Argument variables
+    TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection used to evaluate data points position
+    TYPE(cmfe_FieldType), INTENT(IN) :: field !<The field to interpolate
+    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The field parameter set type to be interpolated
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to evaluate the field at
+    REAL(DP), INTENT(OUT) :: fieldResult(:) !<On return, the values of the field evaluated at the data point.
+    !Local variables
+
+    ENTERS("cmfe_DataProjection_DataPointFieldEvaluateObj",err,error,*999)
+
+    CALL DataProjection_DataPointFieldEvaluate(dataProjection%dataProjection,field%field,fieldVariableType, &
+      & fieldParameterSetType,dataPointUserNumber,fieldResult,err,error,*999)
+
+    EXITS("cmfe_DataProjection_DataPointFieldEvaluateObj")
+    RETURN
+999 ERRORS("cmfe_DataProjection_DataPointFieldEvaluateObj",err,error)
+    EXITS("cmfe_DataProjection_DataPointFieldEvaluateObj")
+    CALL cmfe_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE cmfe_DataProjection_DataPointFieldEvaluateObj
 
   !
   !================================================================================================================================

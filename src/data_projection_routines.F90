@@ -142,6 +142,8 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_Destroy
   
+  PUBLIC DataProjection_DataPointFieldEvaluate
+  
   PUBLIC DataProjection_DataPointsProjectionEvaluate
 
   PUBLIC DataProjection_DataPointsPositionEvaluate
@@ -1324,6 +1326,79 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DataProjection_Initialise
+  
+  !
+  !================================================================================================================================
+  !
+  
+  !>Evaluate the data point in a field based on data projection
+  SUBROUTINE DataProjection_DataPointFieldEvaluate(dataProjection,field,fieldVariableType,fieldParameterSetType, &
+    & dataPointUserNumber,fieldResult,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection to give the xi locations and element number for the data points
+    TYPE(FIELD_TYPE), POINTER :: field !<A pointer to the field to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldVariableType !<The field variable type to be interpolated
+    INTEGER(INTG), INTENT(IN) :: fieldParameterSetType !<The parameter set to be interpolated
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data point user number to evaluate
+    REAL(DP), INTENT(OUT) :: fieldResult(:) !<On exit, the field interpolated at the data point.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dataPointGlobalNumber,elementNumber,coordinateIdx
+    TYPE(DataPointsType), POINTER :: dataPoints
+    TYPE(FIELD_INTERPOLATED_POINT_PTR_TYPE), POINTER :: interpolatedPoints(:)
+    TYPE(FIELD_INTERPOLATED_POINT_TYPE), POINTER :: interpolatedPoint
+    TYPE(FIELD_INTERPOLATION_PARAMETERS_PTR_TYPE), POINTER :: interpolationParameters(:)
+    TYPE(FIELD_PARAMETER_SET_TYPE), POINTER :: fieldParameterSet
+    TYPE(FIELD_VARIABLE_TYPE), POINTER :: fieldVariable
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_DataPointFieldEvaluate",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been evaluated.",err,error,*999)
+    IF(.NOT.ALLOCATED(dataProjection%dataProjectionResults)) &
+       CALL FlagError("Data projection projection results is not allocated.",err,error,*999)
+    NULLIFY(dataPoints)
+    CALL DataProjection_DataPointsGet(dataProjection,dataPoints,err,error,*999)
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,fieldVariableType,fieldVariable,err,error,*999)
+    NULLIFY(fieldParameterSet)
+    CALL FieldVariable_ParameterSetGet(fieldVariable,fieldParameterSetType,fieldParameterSet,err,error,*999)
+    IF(SIZE(fieldResult,1)<fieldVariable%NUMBER_OF_COMPONENTS) THEN
+      localError="The size of the supplied field result array is too small for all field components. The size needs to be >= "// &
+        & TRIM(NumberToVString(fieldVariable%NUMBER_OF_COMPONENTS,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
+    
+    NULLIFY(interpolatedPoints)
+    NULLIFY(interpolationParameters)
+    CALL Field_InterpolationParametersInitialise(field,interpolationParameters,err,error,*999)
+    CALL Field_InterpolatedPointsInitialise(interpolationParameters,interpolatedPoints,err,error,*999)
+    interpolatedPoint=>interpolatedPoints(fieldVariableType)%ptr
+    
+    elementNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber
+    CALL Field_InterpolationParametersElementGet(fieldParameterSetType,elementNumber, &
+      & interpolationParameters(fieldVariableType)%ptr,err,error,*999)
+    CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi, &
+      & interpolatedPoint,err,error,*999)
+    DO coordinateIdx=1,fieldVariable%NUMBER_OF_COMPONENTS
+      fieldResult(coordinateIdx)=interpolatedPoint%values(coordinateIdx,NO_PART_DERIV)
+    ENDDO !coordinateIdx     
+    
+    CALL Field_InterpolatedPointsFinalise(interpolatedPoints,err,error,*999)
+    CALL Field_InterpolationParametersFinalise(interpolationParameters,err,error,*999)
+    
+    EXITS("DataProjection_DataPointFieldEvaluate")
+    RETURN
+999 ERRORSEXITS("DataProjection_DataPointFieldEvaluate",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_DataPointFieldEvaluate
   
   !
   !================================================================================================================================
