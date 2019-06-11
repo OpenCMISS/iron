@@ -190,11 +190,13 @@ MODULE DataProjectionRoutines
   
   PUBLIC DataProjection_ResultElementLineNumberGet,DataProjection_ResultElementLineNumberSet
   
+  PUBLIC DataProjection_ResultElementXiGet
+ 
   PUBLIC DataProjection_ResultExitTagGet
 
   PUBLIC DataProjection_ResultProjectionVectorGet
   
-  PUBLIC DataProjection_ResultXiGet,DataProjection_ResultXiSet
+  PUBLIC DataProjection_ResultProjectionXiGet,DataProjection_ResultProjectionXiSet
 
   PUBLIC DataProjection_StartingXiGet,DataProjection_StartingXiSet
 
@@ -5380,6 +5382,45 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the element xi for a data point identified by a given global number.
+  SUBROUTINE DataProjection_ResultElementXiGet(dataProjection,dataPointUserNumber,elementXi,err,error,*)
+
+    !Argument variables
+    TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
+    INTEGER(INTG), INTENT(IN) :: dataPointUserNumber !<The data projection user number to get the element xi for
+    REAL(DP), INTENT(OUT) :: elementXi(:) !<On exit, the element xi of the specified global data point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dataPointGlobalNumber,numberOfElementXi
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DataProjection_ResultElementXiGet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
+    IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
+    IF(.NOT.dataProjection%dataProjectionProjected) CALL FlagError("Data projection has not been projected.",err,error,*999)
+        
+    CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
+    numberOfElementXi=SIZE(dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi,1)
+    IF(SIZE(elementXi,1)<numberOfElementXi) THEN
+      localError="The specified element xi has size of "//TRIM(NumberToVString(SIZE(elementXi,1),"*",err,error))// &
+        & " but it needs to have size of >= "//TRIM(NumberToVString(numberOfElementXi,"*",err,error))//"." 
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    elementXi(1:numberOfElementXi)=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi(1:numberOfElementXi)
+
+    EXITS("DataProjection_ResultElementXiGet")
+    RETURN
+999 ERRORSEXITS("DataProjection_ResultElementXiGet",err,error)    
+    RETURN 1
+
+  END SUBROUTINE DataProjection_ResultElementXiGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the projection exit tag for a data point identified by a given global number.
   SUBROUTINE DataProjection_ResultExitTagGet(dataProjection,dataPointUserNumber,projectionExitTag,err,error,*)
 
@@ -5413,7 +5454,7 @@ CONTAINS
   !
 
   !>Gets the projection xi for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultXiGet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
+  SUBROUTINE DataProjection_ResultProjectionXiGet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
@@ -5425,7 +5466,7 @@ CONTAINS
     INTEGER(INTG) :: dataPointGlobalNumber
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ResultXiGet",err,error,*999)
+    ENTERS("DataProjection_ResultProjectionXiGet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
@@ -5440,19 +5481,19 @@ CONTAINS
     projectionXi(1:dataProjection%numberOfXi)=dataProjection%dataProjectionResults(dataPointGlobalNumber)% &
       & xi(1:dataProjection%numberOfXi)
 
-    EXITS("DataProjection_ResultXiGet")
+    EXITS("DataProjection_ResultProjectionXiGet")
     RETURN
-999 ERRORSEXITS("DataProjection_ResultXiGet",err,error)    
+999 ERRORSEXITS("DataProjection_ResultProjectionXiGet",err,error)    
     RETURN 1
 
-  END SUBROUTINE DataProjection_ResultXiGet
+  END SUBROUTINE DataProjection_ResultProjectionXiGet
 
   !
   !================================================================================================================================
   !
 
   !>Sets the projection xi for a data point identified by a given global number.
-  SUBROUTINE DataProjection_ResultXiSet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
+  SUBROUTINE DataProjection_ResultProjectionXiSet(dataProjection,dataPointUserNumber,projectionXi,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection for which projection result is stored
@@ -5464,7 +5505,7 @@ CONTAINS
     INTEGER(INTG) :: dataPointGlobalNumber
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("DataProjection_ResultXiSet",err,error,*999)
+    ENTERS("DataProjection_ResultProjectionXiSet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
@@ -5481,12 +5522,12 @@ CONTAINS
     dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi(1:dataProjection%numberOfXi)= &
       & projectionXi(1:dataProjection%numberOfXi)
 
-    EXITS("DataProjection_ResultXiSet")
+    EXITS("DataProjection_ResultProjectionXiSet")
     RETURN
-999 ERRORSEXITS("DataProjection_ResultXiSet",err,error)
+999 ERRORSEXITS("DataProjection_ResultProjectionXiSet",err,error)
     RETURN 1
 
-  END SUBROUTINE DataProjection_ResultXiSet
+  END SUBROUTINE DataProjection_ResultProjectionXiSet
 
   !
   !================================================================================================================================
