@@ -3702,7 +3702,7 @@ CONTAINS
     INTEGER(INTG) :: componentIdx,dependentNumberOfComponents,elementIdx,elementNumber,fieldVariableType,gaussIdx, &
       & meshComponentNumber,numberOfComponents,numberOfDimensions,numberOfGauss,numberOfTimes,numberOfXi,partIdx, &
       & startIdx,finishIdx,fieldInterpolation,dataPointNumber,numberOfDataPoints,dataPointIdx,residualVariableType, &
-      & fieldVarType
+      & fieldVarType,elementUserNumber
     REAL(DP) :: dZdNu(3,3),Fg(3,3),Fe(3,3),J,Jg,Je,C(3,3),f(3,3),E(3,3),growthValues(3),xi(3),values(3,3)
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime4(1),userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1)
@@ -3711,6 +3711,7 @@ CONTAINS
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
     TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_ELEMENTS_TYPE), POINTER :: decompositionElements
     TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
     TYPE(DOMAIN_TYPE), POINTER :: domain
     TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
@@ -3811,6 +3812,8 @@ CONTAINS
     CALL Field_DecompositionGet(dependentField,decomposition,err,error,*999)
     NULLIFY(decompositionTopology)
     CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_ElementsGet(decompositionTopology,decompositionElements,err,error,*999)
     NULLIFY(domain)
     CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
     NULLIFY(domainMappings)
@@ -3890,6 +3893,7 @@ CONTAINS
         
         numberOfTimes=numberOfTimes+1
         elementNumber=elementsMappings%DOMAIN_LIST(elementIdx)
+        elementUserNumber=decompositionElements%elements(elementNumber)%USER_NUMBER
         
         IF(diagnostics1) THEN
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Element number = ",elementNumber,err,error,*999)
@@ -4099,31 +4103,31 @@ CONTAINS
             CASE(3)
               ! 3 dimensional problem
               ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_22, U_23, U_33 (upper triangular matrix)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,1,values(1,1),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,2,values(1,2),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,3,values(1,3),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,4,values(2,2),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,5,values(2,3),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,6,values(3,3),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,2,values(1,2),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,3,values(1,3),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,4,values(2,2),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,5,values(2,3),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,6,values(3,3),err,error,*999)
             CASE(2)
               ! 2 dimensional problem
               ! ORDER OF THE COMPONENTS: U_11, U_12, U_22 (upper triangular matrix)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,1,values(1,1),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,2,values(1,2),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,3,values(2,2),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,2,values(1,2),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,3,values(2,2),err,error,*999)
             CASE(1)
               ! 1 dimensional problem
-              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementNumber,1,values(1,1),err,error,*999)
+              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
             CASE DEFAULT
               localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
                 & " is invalid."
@@ -4769,7 +4773,7 @@ CONTAINS
 
     EXITS("FiniteElasticity_TensorInterpolateXi")
     RETURN
-999 ERRORSEXITS("FiniteElasticity_TensorInterpolateXi",err,error)
+999 ERRORSEXITS("Fin7iteElasticity_TensorInterpolateXi",err,error)
     RETURN 1
   END SUBROUTINE FiniteElasticity_TensorInterpolateXi
 
