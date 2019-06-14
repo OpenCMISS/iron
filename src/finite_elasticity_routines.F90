@@ -3700,9 +3700,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,dependentNumberOfComponents,elementIdx,elementNumber,fieldVariableType,gaussIdx, &
-      & meshComponentNumber,numberOfComponents,numberOfDimensions,numberOfGauss,numberOfTimes,numberOfXi,partIdx, &
-      & startIdx,finishIdx,fieldInterpolation,dataPointNumber,numberOfDataPoints,dataPointIdx,residualVariableType, &
-      & fieldVarType,elementUserNumber
+      & meshComponentNumber,numberOfComponents,numberOfFullComponents,numberOfSymmetricComponents,numberOfDimensions, &
+      & numberOfGauss,numberOfTimes,numberOfXi,partIdx,startIdx,finishIdx,fieldInterpolation,dataPointNumber, &
+      & numberOfDataPoints,dataPointIdx,residualVariableType,fieldVarType,elementUserNumber
     REAL(DP) :: dZdNu(3,3),Fg(3,3),Fe(3,3),J,Jg,Je,C(3,3),f(3,3),E(3,3),growthValues(3),xi(3),values(3,3)
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime4(1),userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1)
@@ -3745,11 +3745,14 @@ CONTAINS
     !Check the provided strain field variable has appropriate components and interpolation
     SELECT CASE(numberOfDimensions)
     CASE(3)
-      numberOfComponents=6
+      numberOfSymmetricComponents=6
+      numberOfFullComponents=9
     CASE(2)
-      numberOfComponents=3
+      numberOfSymmetricComponents=3
+      numberOfFullComponents=4
     CASE(1)
-      numberOfComponents=1
+      numberOfSymmetricComponents=1
+      numberOfFullComponents=1
     CASE DEFAULT
       CALL FlagError("The number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
         & " is invalid.",err,error,*999)
@@ -3757,8 +3760,26 @@ CONTAINS
     NULLIFY(field)
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     fieldVarType=fieldVariable%VARIABLE_TYPE
-   
-    CALL Field_NumberOfComponentsCheck(field,fieldVarType,6,err,error,*999)
+
+    SELECT CASE(derivedType)
+    CASE(EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR)
+      numberOfComponents=numberOfFullComponents
+    CASE(EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR)
+      numberOfComponents=numberOfSymmetricComponents
+    CASE(EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR)
+      numberOfComponents=numberOfSymmetricComponents
+    CASE(EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR)
+      numberOfComponents=numberOfSymmetricComponents
+    CASE(EQUATIONS_SET_CAUCHY_STRESS_TENSOR)
+      numberOfComponents=numberOfSymmetricComponents
+    CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)
+      numberOfComponents=numberOfSymmetricComponents
+    CASE DEFAULT
+      CALL FlagError("The derived evalaute type of "//TRIM(NumberToVString(derivedType,"*",err,error))//" is invalid "// &
+        & "for finite elasticity equation sets.",err,error,*999)
+    END SELECT
+      
+    CALL Field_NumberOfComponentsCheck(field,fieldVarType,numberOfComponents,err,error,*999)
     CALL Field_ComponentInterpolationGet(field,fieldVarType,1,fieldInterpolation,err,error,*999)
     !Check the interpolation type
     SELECT CASE(fieldInterpolation)
@@ -3942,42 +3963,86 @@ CONTAINS
             & dependentInterpolatedPointMetrics,fibreInterpolatedPoint,materialsInterpolatedPoint,independentInterpolatedPoint, &
             & growthValues,values,err,error,*999)
           
-          !We only want to store the independent components 
-          SELECT CASE(numberOfDimensions)
-          CASE(3)
-            ! 3 dimensional problem
-            ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_22, U_23, U_33 (upper triangular matrix)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,1,values(1,1),err,error,*999)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,2,values(1,2),err,error,*999)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,3,values(1,3),err,error,*999)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,4,values(2,2),err,error,*999)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,5,values(2,3),err,error,*999)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,6,values(3,3),err,error,*999)
-          CASE(2)
-            ! 2 dimensional problem
-            ! ORDER OF THE COMPONENTS: U_11, U_12, U_22 (upper triangular matrix)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,1,values(1,1),err,error,*999)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,2,values(1,2),err,error,*999)
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,3,values(2,2),err,error,*999)
-          CASE(1)
-            ! 1 dimensional problem
-            CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-              & elementNumber,1,values(1,1),err,error,*999)
-          CASE DEFAULT
-            localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
+          !We only want to store the independent components
+          IF(numberOfComponents==numberOfFullComponents) THEN
+            SELECT CASE(numberOfDimensions)
+            CASE(3)
+              ! 3 dimensional problem
+              ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_21, U_22, U_23, U_13, U_23, U_33 (full matrix)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,1,values(1,1),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,2,values(1,2),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,3,values(1,3),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,4,values(2,1),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,5,values(2,2),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,6,values(2,3),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,7,values(3,1),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,8,values(3,2),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,9,values(3,3),err,error,*999)
+            CASE(2)
+              ! 2 dimensional problem
+              ! ORDER OF THE COMPONENTS: U_11, U_12, U_21, U_22 (full matrix)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,1,values(1,1),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,2,values(1,2),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,3,values(2,1),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,4,values(2,2),err,error,*999)
+            CASE(1)
+              ! 1 dimensional problem
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,1,values(1,1),err,error,*999)
+            CASE DEFAULT
+              localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
                 & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-          
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ELSE
+            SELECT CASE(numberOfDimensions)
+            CASE(3)
+              ! 3 dimensional problem
+              ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_22, U_23, U_33 (upper triangular matrix)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,1,values(1,1),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,2,values(1,2),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,3,values(1,3),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,4,values(2,2),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,5,values(2,3),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,6,values(3,3),err,error,*999)
+            CASE(2)
+              ! 2 dimensional problem
+              ! ORDER OF THE COMPONENTS: U_11, U_12, U_22 (upper triangular matrix)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,1,values(1,1),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,2,values(1,2),err,error,*999)
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,3,values(2,2),err,error,*999)
+            CASE(1)
+              ! 1 dimensional problem
+              CALL Field_ParameterSetUpdateLocalElement(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                & elementNumber,1,values(1,1),err,error,*999)
+            CASE DEFAULT
+              localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
+                & " is invalid."
+              CALL FlagError(localError,err,error,*999)
+            END SELECT
+          ENDIF
         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)            
             
           NULLIFY(quadratureScheme)               
@@ -4032,40 +4097,85 @@ CONTAINS
               & growthValues,values,err,error,*999)
             
             !We only want to store the independent components 
-            SELECT CASE(numberOfDimensions)
-            CASE(3)
-              ! 3 dimensional problem
-              ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_22, U_23, U_33 (upper triangular matrix)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,2,values(1,2),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,3,values(1,3),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,4,values(2,2),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,5,values(2,3),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,6,values(3,3),err,error,*999)
-            CASE(2)
-              ! 2 dimensional problem
-              ! ORDER OF THE COMPONENTS: U_11, U_12, U_22 (upper triangular matrix)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,2,values(1,2),err,error,*999)
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,3,values(2,2),err,error,*999)
-            CASE(1)
-              ! 1 dimensional problem
-              CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
-            CASE DEFAULT
-              localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
+            IF(numberOfComponents==numberOfFullComponents) THEN
+              SELECT CASE(numberOfDimensions)
+              CASE(3)
+                ! 3 dimensional problem
+                ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_21, U_22, U_23, U_13, U_23, U_33 (full matrix)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,2,values(1,2),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,3,values(1,3),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,4,values(2,1),err,error,*999)
+                 CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,5,values(2,2),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,6,values(2,3),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,7,values(3,1),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,8,values(3,2),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,9,values(3,3),err,error,*999)
+              CASE(2)
+                ! 2 dimensional problem
+                ! ORDER OF THE COMPONENTS: U_11, U_12, U_21, U_22 (full matrix)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,2,values(1,2),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,3,values(2,1),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,4,values(2,2),err,error,*999)
+              CASE(1)
+                ! 1 dimensional problem
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
+              CASE DEFAULT
+                localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ELSE
+              SELECT CASE(numberOfDimensions)
+              CASE(3)
+                ! 3 dimensional problem
+                ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_22, U_23, U_33 (upper triangular matrix)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,2,values(1,2),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,3,values(1,3),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,4,values(2,2),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,5,values(2,3),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,6,values(3,3),err,error,*999)
+              CASE(2)
+                ! 2 dimensional problem
+                ! ORDER OF THE COMPONENTS: U_11, U_12, U_22 (upper triangular matrix)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,2,values(1,2),err,error,*999)
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,3,values(2,2),err,error,*999)
+              CASE(1)
+                ! 1 dimensional problem
+                CALL Field_ParameterSetUpdateLocalGaussPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & gaussIdx,elementNumber,1,values(1,1),err,error,*999)
+              CASE DEFAULT
+                localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ENDIF
           ENDDO !gaussIdx/
         CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
           
@@ -4099,40 +4209,85 @@ CONTAINS
               & growthValues,values,err,error,*999)
             
             !We only want to store the independent components 
-            SELECT CASE(numberOfDimensions)
-            CASE(3)
-              ! 3 dimensional problem
-              ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_22, U_23, U_33 (upper triangular matrix)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,2,values(1,2),err,error,*999)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,3,values(1,3),err,error,*999)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,4,values(2,2),err,error,*999)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,5,values(2,3),err,error,*999)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,6,values(3,3),err,error,*999)
-            CASE(2)
-              ! 2 dimensional problem
-              ! ORDER OF THE COMPONENTS: U_11, U_12, U_22 (upper triangular matrix)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,2,values(1,2),err,error,*999)
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,3,values(2,2),err,error,*999)
-            CASE(1)
-              ! 1 dimensional problem
-              CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
-                & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
-            CASE DEFAULT
-              localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
+            IF(numberOfComponents==numberOfFullComponents) THEN
+              SELECT CASE(numberOfDimensions)
+              CASE(3)
+                ! 3 dimensional problem
+                ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_21, U_22, U_23, U_13, U_23, U_33 (full matrix)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,2,values(1,2),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,3,values(1,3),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,4,values(2,1),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,5,values(2,2),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,6,values(2,3),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,7,values(3,1),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,8,values(3,2),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,9,values(3,3),err,error,*999)
+              CASE(2)
+                ! 2 dimensional problem
+                ! ORDER OF THE COMPONENTS: U_11, U_12, U_21, U_22 (full matrix)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,2,values(1,2),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,3,values(2,1),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,4,values(2,2),err,error,*999)
+              CASE(1)
+                ! 1 dimensional problem
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
+              CASE DEFAULT
+                localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ELSE
+              SELECT CASE(numberOfDimensions)
+              CASE(3)
+                ! 3 dimensional problem
+                ! ORDER OF THE COMPONENTS: U_11, U_12, U_13, U_22, U_23, U_33 (upper triangular matrix)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,2,values(1,2),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,3,values(1,3),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,4,values(2,2),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,5,values(2,3),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,6,values(3,3),err,error,*999)
+              CASE(2)
+                ! 2 dimensional problem
+                ! ORDER OF THE COMPONENTS: U_11, U_12, U_22 (upper triangular matrix)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,2,values(1,2),err,error,*999)
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,3,values(2,2),err,error,*999)
+              CASE(1)
+                ! 1 dimensional problem
+                CALL Field_ParameterSetUpdateElementDataPoint(field,fieldVarType,FIELD_VALUES_SET_TYPE, &
+                  & elementUserNumber,dataPointIdx,1,values(1,1),err,error,*999)
+              CASE DEFAULT
+                localError="The number of dimensions of "//TRIM(NumberToVString(numberofDimensions,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+            ENDIF
                       
           ENDDO !dataPointIdx
           
@@ -7326,7 +7481,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: GEOMETRIC_MESH_COMPONENT,GEOMETRIC_SCALING_TYPE,NUMBER_OF_COMPONENTS, &
       & numberOfDimensions,NUMBER_OF_DARCY_COMPONENTS,GEOMETRIC_COMPONENT_NUMBER,NUMBER_OF_COMPONENTS_2,component_idx, &
-      & componentIdx,derivedIdx,varIdx,variableType,NUMBER_OF_FLUID_COMPONENTS,numberOfTensorComponents
+      & componentIdx,derivedIdx,varIdx,variableType,NUMBER_OF_FLUID_COMPONENTS,numberOfSymmetricTensorComponents, &
+      & numberOfFullTensorComponents
     TYPE(COORDINATE_SYSTEM_TYPE), POINTER :: coordinateSystem
     TYPE(DECOMPOSITION_TYPE), POINTER :: GEOMETRIC_DECOMPOSITION
     TYPE(FIELD_TYPE), POINTER :: ANALYTIC_FIELD,DEPENDENT_FIELD,GEOMETRIC_FIELD
@@ -10655,7 +10811,8 @@ CONTAINS
                   VARIABLE_TYPES(varIdx)=EQUATIONS_SET%derived%variableTypes(derivedIdx)
                 END IF
               END DO
-              numberOfTensorComponents=NUMBER_OF_VOIGT(numberOfDimensions)
+              numberOfSymmetricTensorComponents=NUMBER_OF_VOIGT(numberOfDimensions)
+              numberOfFullTensorComponents=numberOfDimensions*numberOfDimensions
               IF(EQUATIONS_SET%derived%derivedFieldAutoCreated) THEN
                 CALL FIELD_NUMBER_OF_VARIABLES_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField, &
                   & EQUATIONS_SET%derived%numberOfVariables,err,error,*999)
@@ -10671,31 +10828,31 @@ CONTAINS
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%derived%derivedField,variableType,"Strain",err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfFullTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR)
                       CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%derived%derivedField,variableType,"Strain",err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfSymmetricTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR)
                       CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%derived%derivedField,variableType,"Strain",err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfSymmetricTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR)
                       CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%derived%derivedField,variableType,"Strain",err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfSymmetricTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_CAUCHY_STRESS_TENSOR)
                       CALL FIELD_DIMENSION_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_VARIABLE_LABEL_SET(EQUATIONS_SET%derived%derivedField,variableType,"Stress",err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_SET_AND_LOCK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfSymmetricTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_FIRST_PK_STRESS_TENSOR)
                       CALL FlagError("Not implemented.",err,error,*999)
                     CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)
@@ -10722,27 +10879,27 @@ CONTAINS
                       CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfFullTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR)
                       CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfSymmetricTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_L_CAUCHY_GREEN_DEFORMATION_TENSOR)
                       CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfSymmetricTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_GREEN_LAGRANGE_STRAIN_TENSOR)
                       CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfSymmetricTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_CAUCHY_STRESS_TENSOR)
                       CALL FIELD_DIMENSION_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
                         & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
                       CALL FIELD_NUMBER_OF_COMPONENTS_CHECK(EQUATIONS_SET%derived%derivedField,variableType, &
-                        & numberOfTensorComponents,err,error,*999)
+                        & numberOfSymmetricTensorComponents,err,error,*999)
                     CASE(EQUATIONS_SET_FIRST_PK_STRESS_TENSOR)
                       CALL FlagError("Not implemented.",err,error,*999)
                     CASE(EQUATIONS_SET_SECOND_PK_STRESS_TENSOR)
