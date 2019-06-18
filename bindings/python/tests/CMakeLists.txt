@@ -1,5 +1,5 @@
 # Set the correct python path to have it find the opencmiss package
-file(TO_NATIVE_PATH "${BINDINGS_BIN_DIR}/$<CONFIG>" NATIVE_PYTHON_BINDINGS_DIR)
+file(TO_NATIVE_PATH "${BINDINGS_BIN_DIR}/" NATIVE_PYTHON_BINDINGS_DIR)
 
 # Add the tests
 set(PYTHONTESTS )
