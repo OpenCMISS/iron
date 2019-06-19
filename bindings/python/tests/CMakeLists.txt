@@ -1,6 +1,6 @@
 # Set the correct python path to have it find the opencmiss package
 set(CONF "$<CONFIG>")
-if (${OPERATING_SYSTEM} MATCHES linux)
+if (UNIX)
    set(CONF "")
 endif()
 file(TO_NATIVE_PATH "${BINDINGS_BIN_DIR}/${CONF}" NATIVE_PYTHON_BINDINGS_DIR)
