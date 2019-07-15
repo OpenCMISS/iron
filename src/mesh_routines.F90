@@ -8567,7 +8567,7 @@ CONTAINS
         !Calculate number of projected data points on an element
         DO dataPointIdx=1,dataPoints%numberOfDataPoints
           dataProjectionResult=>dataProjection%dataProjectionResults(dataPointIdx)
-          elementNumber=dataProjectionResult%elementNumber
+          elementNumber=dataProjectionResult%elementGlobalNumber
           exitTag=dataProjectionResult%exitTag
           IF(exitTag/=DATA_PROJECTION_CANCELLED) THEN
             DO elementIdx=1,elements%NUMBER_OF_ELEMENTS
@@ -8593,7 +8593,7 @@ CONTAINS
         dataPointsTopology%totalNumberOfProjectedData=0
         DO dataPointIdx=1,dataPoints%numberOfDataPoints 
           dataProjectionResult=>dataProjection%dataProjectionResults(dataPointIdx)
-          elementNumber=dataProjectionResult%elementNumber
+          elementNumber=dataProjectionResult%elementGlobalNumber
           exitTag=dataProjectionResult%exitTag
           IF(exitTag/=DATA_PROJECTION_CANCELLED) THEN
             DO elementIdx=1,elements%NUMBER_OF_ELEMENTS

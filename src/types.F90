@@ -288,7 +288,9 @@ MODULE Types
   TYPE DataProjectionResultType
     INTEGER(INTG) :: userNumber !<The user number of the data point to which the projection result corresponds to.   
     REAL(DP) :: distance !<The distances between the data point and the projection. Assigned only if dataPointsProjected is .TRUE.
-    INTEGER(INTG) :: elementNumber !<The element of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
+    INTEGER(INTG) :: elementLocalNumber !<The local element of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
+    
+    INTEGER(INTG) :: elementGlobalNumber !<The global element of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE.
     INTEGER(INTG) :: elementLineFaceNumber !<The element line/face of the mesh the data point projects onto. Assigned only if dataPointsProjected is .TRUE. and DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE or DATA_PROJECTION_BOUNDARY_LINES_PROJECTION_TYPE is chosen    
     INTEGER(INTG) :: exitTag !<The exit tag of the data projection. Assigned only if dataPointsProjected is .TRUE. \See DataProtectionRoutines,DataProjectionRoutines_DataProjectionTypes 
     REAL(DP), ALLOCATABLE :: xi(:) !<The xi coordinate of the projection. Assigned only if dataPointsProjected is .TRUE.

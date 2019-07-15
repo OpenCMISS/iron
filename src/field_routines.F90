@@ -1290,6 +1290,8 @@ MODULE FIELD_ROUTINES
   
   PUBLIC FieldVariable_ParameterSetGet
 
+  PUBLIC Fields_AddField
+
   PUBLIC Fields_Finalise,Fields_Initialise
 
   PUBLIC MESH_EMBEDDING_PUSH_DATA, MESH_EMBEDDING_PULL_GAUSS_POINT_DATA, FIELD_PARAMETER_SET_GET_GAUSS_POINT_COORD
@@ -32062,6 +32064,79 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FieldVariable_ParameterSetsCopyIfExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds a field to a fields list
+  SUBROUTINE Fields_AddField(fields,field,err,error,*)
+
+    !Argument variables
+    TYPE(FIELDS_TYPE), POINTER :: fields !<A pointer to the fields to add a field to
+    TYPE(FIELD_TYPE), POINTER :: field !<The field to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: fieldIdx
+    TYPE(FIELD_PTR_TYPE), POINTER :: newFields(:)
+
+    ENTERS("Fields_AddField",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fields)) THEN
+      ALLOCATE(fields,STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate fields.",err,error,*999)
+      CALL FIELDS_INITIALISE_GENERIC(fields,err,error,*999)      
+    ENDIF
+    NULLIFY(newFields)
+    ALLOCATE(newFields(fields%NUMBER_OF_FIELDS+1),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate new fields.",err,error,*999)
+    IF(fields%NUMBER_OF_FIELDS>0) THEN
+      IF(ASSOCIATED(fields%region)) THEN
+        IF(ASSOCIATED(field%region)) THEN
+          IF(.NOT.ASSOCIATED(fields%region,field%region)) &
+            & CALL FlagError("The specified field does not have the same region as the specified fields.",err,error,*999)
+        ELSE IF(ASSOCIATED(field%INTERFACE)) THEN
+          CALL FlagError("Can not add a field from an interface to fields that are from a region.",err,error,*999)
+        ELSE
+          CALL FlagError("Field does not have an associated region or interface.",err,error,*999)
+        ENDIF
+      ELSE IF(ASSOCIATED(fields%INTERFACE)) THEN
+       IF(ASSOCIATED(field%interface)) THEN
+          IF(.NOT.ASSOCIATED(fields%interface,field%interface)) &
+            & CALL FlagError("The specified field does not have the same interface as the specified fields.",err,error,*999)
+        ELSE IF(ASSOCIATED(field%region)) THEN
+          CALL FlagError("Can not add a field from a region to fields that are from an interface.",err,error,*999)
+        ELSE
+          CALL FlagError("Field does not have an associated region or interface.",err,error,*999)
+        ENDIF
+      ELSE
+        CALL FlagError("Fields does not have a region or interface.",err,error,*999)
+      ENDIF
+    ELSE
+      IF(ASSOCIATED(field%region)) THEN
+        fields%region=>field%region
+      ELSE IF(ASSOCIATED(field%INTERFACE)) THEN
+        fields%interface=>field%interface
+      ELSE
+          CALL FlagError("Field does not have an associated region or interface.",err,error,*999)
+      ENDIF
+    ENDIF
+    DO fieldIdx=1,fields%NUMBER_OF_FIELDS
+      newFields(fieldIdx)%ptr=>fields%fields(fieldIdx)%ptr
+    ENDDO !fieldIdx
+    newFields(fields%NUMBER_OF_FIELDS+1)%ptr=>field
+    IF(ASSOCIATED(fields%fields)) DEALLOCATE(fields%fields)
+    fields%fields=>newFields
+    fields%NUMBER_OF_FIELDS=fields%NUMBER_OF_FIELDS+1
+    
+    EXITS("Fields_AddField")
+    RETURN
+999 ERRORSEXITS("Fields_AddField",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Fields_AddField
 
   !
   !================================================================================================================================
