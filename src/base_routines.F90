@@ -289,11 +289,12 @@ CONTAINS
     CHARACTER(C_CHAR) :: cError(MAXSTRLEN)
     REAL(DP) :: entersCPUTime,entersSystemTime
     LOGICAL :: finished
+    LOGICAL :: needAlternate = .FALSE.
     TYPE(RoutineListItemType), POINTER :: listRoutinePtr
     TYPE(RoutineStackItemType), POINTER :: newRoutinePtr,routinePtr
 
+   !$OMP CRITICAL(ENTERS_1)
     IF(diagOrTiming) THEN
-      !$OMP CRITICAL(ENTERS_1)
       ALLOCATE(newRoutinePtr,STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate new routine stack item.",err,error,*999)
       newRoutinePtr%diagnostics=.FALSE.
@@ -383,12 +384,22 @@ CONTAINS
           ENDIF
         ENDIF
       ENDIF
-      !$OMP END CRITICAL(ENTERS_1)
     ENDIF
 
-    RETURN
-999 RETURN 1
-    
+
+   goto 200
+999 needAlternate=.TRUE.
+
+200 continue
+   !$OMP END CRITICAL(ENTERS_1)
+
+    IF (needAlternate) then
+       RETURN 1
+    else
+       RETURN
+    endif 
+  
+ 
   END SUBROUTINE Enters
 
   !
@@ -430,8 +441,8 @@ CONTAINS
     TYPE(VARYING_STRING) :: error
     TYPE(RoutineStackItemType), POINTER :: previousRoutinePtr,routinePtr
 
+   !$OMP CRITICAL(EXITS_1)
     IF(diagOrTiming) THEN
-      !$OMP CRITICAL(EXITS_1)
       routinePtr=>routineStack%stackPointer
       IF(ASSOCIATED(routinePtr)) THEN
         previousRoutinePtr=>routinePtr%previousRoutine
@@ -526,10 +537,11 @@ CONTAINS
 
         !ELSE ERROR????
       ENDIF
-      !$OMP END CRITICAL(EXITS_1)
     ENDIF
 
-999 RETURN
+999 continue 
+    !$OMP END CRITICAL(EXITS_1)
+    RETURN
     
   END SUBROUTINE Exits
 

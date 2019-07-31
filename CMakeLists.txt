@@ -38,6 +38,24 @@ else()
     set(IS_DEBUG_BUILD FALSE)
 endif()
 
+set(IRON_REVISION "no-rev")
+if (GIT_FOUND)
+    git_get_revision(IRON_REVISION_LONG)
+    string(SUBSTRING ${IRON_REVISION_LONG} 0 6 IRON_REVISION)
+    git_is_dirty(_IS_DIRTY)
+    if (_IS_DIRTY)
+        set(ZINC_REVISION "${IRON_REVISION}*")
+    endif ()
+endif()
+
+set(IRON_RELEASE FALSE)
+if(IRON_RELEASE)
+    set(IRON_DEVELOPER_VERSION "")
+else()
+    set(IRON_DEVELOPER_VERSION ".dev0${IRON_REVISION}")
+endif()
+
+
 # Options for building iron
 if (DEFINED BUILD_SHARED_LIBS AND BUILD_SHARED_LIBS)
     set(IRON_BUILD_SHARED_LIBRARY ON CACHE BOOL "Build a shared iron library." FORCE)
@@ -65,11 +83,19 @@ option(PRINT_CONFIG_SUMMARY "Show a summary of the configuration." TRUE)
 set(PACKAGE_CONFIG_DIR "cmake" CACHE STRING "Directory for package config files (relative to CMAKE_INSTALL_PREFIX)")
 
 # Handle instrumentation choices.
-set(IRON_INSTRUMENTATION "none" CACHE STRING "Specify the instrumentation to use.")
-if (DEFINED FE_INSTRUMENTATION)
-    set(IRON_INSTRUMENTATION "${FE_INSTRUMENTATION}" CACHE STRING "Specify the instrumentation to use.")
+#set(${OC_INSTRUMENTATION} ${${OC_INSTRUMENTATION}} PARENT_SCOPE)
+set(IRON_INSTRUMENTATION ${OPENCMISS_INSTRUMENTATION})
+
+if(NOT DEFINED OPENCMISS_INSTRUMENTATION)
+  set(IRON_INSTRUMENTATION "none" CACHE STRING "Specify the instrumentation to use.")
+  if (DEFINED FE_INSTRUMENTATION)
+      set(IRON_INSTRUMENTATION "${FE_INSTRUMENTATION}" CACHE STRING "Specify the instrumentation to use.")
+  endif ()
+  set(OPENCMISS_INSTRUMENTATION ${IRON_INSTRUMENTATION})
 endif ()
-set(OPENCMISS_INSTRUMENTATION ${IRON_INSTRUMENTATION})
+
+
+message(STATUS "Iron::Instrumentation: ${OPENCMISS_INSTRUMENTATION}")
 
 # Bindings options
 find_program(VIRTUALENV_EXEC virtualenv)
