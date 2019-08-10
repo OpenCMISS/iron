@@ -24356,7 +24356,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region user number of the data projection to get starting xi for.
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
-    REAL(DP), INTENT(OUT) :: startingXi(:) !<On exit, the absolute starting xi of the specified data projection
+    REAL(DP), INTENT(OUT) :: startingXi(:,:) !<On exit, the absolute starting xi of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(REGION_TYPE), POINTER :: region
@@ -24392,7 +24392,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to get starting xi for.
-    REAL(DP), INTENT(OUT) :: startingXi(:) !<On exit, the absolute starting xi of the specified data projection
+    REAL(DP), INTENT(OUT) :: startingXi(:,:) !<On exit, the absolute starting xi of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
@@ -24420,7 +24420,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The region use number of data projection to set starting xi for.
     INTEGER(INTG), INTENT(IN) :: dataPointsUserNumber !<The user number of the data points on the data projection in the region.
     INTEGER(INTG), INTENT(IN) :: dataProjectionUserNumber !<The data projection user number of the data projection to get starting xi for.
-    REAL(DP), INTENT(IN) :: startingXi(:) !<the absolute starting xi to set
+    REAL(DP), INTENT(IN) :: startingXi(:,:) !<the absolute starting xi to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(REGION_TYPE), POINTER :: region
@@ -24455,7 +24455,7 @@ CONTAINS
 
     !Argument variables
     TYPE(cmfe_DataProjectionType), INTENT(INOUT) :: dataProjection !<The data projection to set starting xi for.
-    REAL(DP), INTENT(IN) :: startingXi(:) !<the absolute starting xi to set
+    REAL(DP), INTENT(IN) :: startingXi(:,:) !<the absolute starting xi to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 

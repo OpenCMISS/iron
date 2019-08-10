@@ -270,7 +270,7 @@ CONTAINS
 
   !>Find the closest elements to a data point based on starting xi guess.
   SUBROUTINE DataProjection_ClosestElementsFind(dataProjection,interpolatedPoint,dataPointLocation,numberOfCandidates, &
-    & candidateElements,closestElements,closestDistances,err,error,*)
+    & candidateElements,closestElements,startingXi,closestDistances,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
@@ -279,6 +279,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: numberOfCandidates !<The number of candidate elements.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
     INTEGER(INTG), INTENT(OUT) :: closestElements(:) !<On exit, the list of element numbers with the shortest distances
+    REAL(DP), INTENT(IN) :: startingXi(:)
     REAL(DP), INTENT(OUT) :: closestDistances(:) !<On exit, the list of shortest distances (squared).
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -302,7 +303,7 @@ CONTAINS
       elementNumber=candidateElements(closestElementIdx)
       CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber, &
         & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-      CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
+      CALL Field_InterpolateXi(NO_PART_DERIV,startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE)
       distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
       distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
@@ -325,7 +326,7 @@ CONTAINS
       elementNumber=candidateElements(closestElementIdx)
       CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber, &
         & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-      CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
+      CALL Field_InterpolateXi(NO_PART_DERIV,startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
       distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation
       distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
@@ -360,7 +361,7 @@ CONTAINS
 
   !>Find the closest faces to a data point base on starting xi guess.
   SUBROUTINE DataProjection_ClosestFacesFind(dataProjection,interpolatedPoint,dataPointLocation,numberOfCandidates, &
-    & candidateElements,candidateElementFaces,closestElements,closestElementFaces,closestDistances,err,error,*)
+    & candidateElements,candidateElementFaces,startingXi,closestElements,closestElementFaces,closestDistances,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
@@ -369,6 +370,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: numberOfCandidates !<The number of candidate elements.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
     INTEGER(INTG), INTENT(IN) :: candidateElementFaces(:) !<candidateElementFaces(candidateIdx). The list of candidate faces for the projection.
+    REAL(DP), INTENT(IN) :: startingXi(:)
     INTEGER(INTG), INTENT(OUT) :: closestElements(:) !<On exit, the list of element numbers with the shortest distances
     INTEGER(INTG), INTENT(OUT) :: closestElementFaces(:) !<On exit, the list of face numbers with the shortest distances
     REAL(DP), INTENT(OUT) :: closestDistances(:) !<On exit, the list of shortest distances (squared).
@@ -397,7 +399,7 @@ CONTAINS
         & elementNumber)%ELEMENT_FACES(elementFaceNumber)
       CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
         & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-      CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
+      CALL Field_InterpolateXi(NO_PART_DERIV,startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE)
       distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
       distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
@@ -425,7 +427,7 @@ CONTAINS
         & elementNumber)%ELEMENT_FACES(elementFaceNumber)          
       CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
         & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-      CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
+      CALL Field_InterpolateXi(NO_PART_DERIV,startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
       distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation
       distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
@@ -463,7 +465,7 @@ CONTAINS
 
   !>Find the closest lines to a data point base on starting xi guess.
   SUBROUTINE DataProjection_ClosestLinesFind(dataProjection,interpolatedPoint,dataPointLocation,numberOfCandidates, &
-    & candidateElements,candidateElementLines,closestElements,closestElementLines,closestDistances,err,error,*)
+    & candidateElements,candidateElementLines,startingXi,closestElements,closestElementLines,closestDistances,err,error,*)
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<Data projection problem to evaluate
@@ -472,6 +474,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: numberOfCandidates !<The number of candidate elements.
     INTEGER(INTG), INTENT(IN) :: candidateElements(:) !<candidateElememnts(candidateIdx). The list of candidate elements for the projection.
     INTEGER(INTG), INTENT(IN) :: candidateElementLines(:) !<candidateElementLines(candidateIdx). The list of candidate lines for the projection.
+    REAL(DP), INTENT(IN) :: startingXi(:)
     INTEGER(INTG), INTENT(OUT) :: closestElements(:) !<On exit, the list of element numbers with the shortest distances
     INTEGER(INTG), INTENT(OUT) :: closestElementLines(:) !<On exit, the list of lines numbers with the shortest distances
     REAL(DP), INTENT(OUT) :: closestDistances(:) !<On exit, the list of shortest distances (squared).
@@ -500,7 +503,7 @@ CONTAINS
         & elementNumber)%ELEMENT_LINES(elementLineNumber)
       CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolatedPoint% &
         & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-      CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
+      CALL Field_InterpolateXi(NO_PART_DERIV,startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE)
       distanceVector(1:numberOfCoordinates) = interpolatedPoint%values(:,1)-dataPointLocation
       distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
@@ -528,7 +531,7 @@ CONTAINS
         & elementNumber)%ELEMENT_LINES(elementLineNumber)          
       CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolatedPoint% &
         & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-      CALL Field_InterpolateXi(NO_PART_DERIV,dataProjection%startingXi,interpolatedPoint,err,error,*999, &
+      CALL Field_InterpolateXi(NO_PART_DERIV,startingXi,interpolatedPoint,err,error,*999, &
         & FIELD_GEOMETRIC_COMPONENTS_TYPE) 
       distanceVector(1:numberOfCoordinates)=interpolatedPoint%values(:,1)-dataPointLocation 
       distance2 = DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))
@@ -704,7 +707,7 @@ CONTAINS
           & " is invalid. The number of directions should be >=1 and <= 3."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      ALLOCATE(dataProjection%startingXi(dataProjection%numberOfXi),STAT=err)
+      ALLOCATE(dataProjection%startingXi(dataProjection%datapoints%numberOfDatapoints,dataProjection%numberOfXi),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate data points data projection starting xi.",err,error,*999)
       dataProjection%startingXi=0.5_DP !<initialised to 0.5 in each xi direction
       CALL DataProjection_DataProjectionCandidatesInitialise(dataProjection,err,error,*999)
@@ -1073,7 +1076,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       ENDIF
       dataProjection%dataProjectionResults(dataPointIdx)%xi(1:dataProjection%numberOfXi)= &
-        & dataProjection%startingXi(1:dataProjection%numberOfXi)
+        & dataProjection%startingXi(dataPointIdx,1:dataProjection%numberOfXi)
       dataProjection%dataProjectionResults(dataPointIdx)%elementXi=0.0_DP
       dataProjection%dataProjectionResults(dataPointIdx)%projectionVector(1:dataProjection%numberOfCoordinates)=0.0_DP
     ENDDO !dataPointIdx
@@ -1694,6 +1697,7 @@ CONTAINS
     !find the clostest elements/faces/lines for each point in the current computational node base on starting xi
     !the clostest elements/faces/lines are required to shrink down on the list of possible projection candiates
     numberOfClosestCandidates=MIN(dataProjection%numberOfClosestElements,dataProjection%maxNumberOfCandidates)
+    numberOfClosestCandidates=dataProjection%maxNumberOfCandidates
     !Allocated and store he information for each data point. The information has to be stored in the corresponding
     !rows for them to be contiguous in memory for easy MPI access
     ALLOCATE(closestElements(numberOfDataPoints,numberOfClosestCandidates),STAT=err)
@@ -1720,12 +1724,14 @@ CONTAINS
             & dataPoints%dataPoints(dataPointIdx)%position,dataNumberOfCandidates,dataProjection% &
             & dataProjectionCandidates(dataPointIdx)%candidateElementNumbers, &
             & dataProjection%dataProjectionCandidates(dataPointIdx)%localFaceLineNumbers, &
+            & dataProjection%startingXi(dataPointIdx,:), &
             & closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
             & closestDistances(dataPointIdx,:),err,error,*999)
         ELSE
           CALL DataProjection_ClosestLinesFind(dataProjection,interpolatedPoint, &
             & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
-            & candidateLinesFaces,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
+            & candidateLinesFaces,dataProjection%startingXi(dataPointIdx,:), &
+            & closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
             & closestDistances(dataPointIdx,:),err,error,*999)
         ENDIF
       ENDDO !dataPointIdx
@@ -1739,13 +1745,14 @@ CONTAINS
             & dataPoints%dataPoints(dataPointIdx)%position,dataNumberOfCandidates,dataProjection% &
             & dataProjectionCandidates(dataPointIdx)%candidateElementNumbers, &
             & dataProjection%dataProjectionCandidates(dataPointIdx)%localFaceLineNumbers, &
+            & dataProjection%startingXi(dataPointIdx,:), &
             & closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
             & closestDistances(dataPointIdx,:),err,error,*999)
         ELSE
           CALL DataProjection_ClosestFacesFind(dataProjection,interpolatedPoint, &
             & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
-            & candidateLinesFaces,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
-            & closestDistances(dataPointIdx,:),err,error,*999)
+            & candidateLinesFaces,dataProjection%startingXi(dataPointIdx,:),closestElements(dataPointIdx,:), &
+            & closestLinesFaces(dataPointIdx,:),closestDistances(dataPointIdx,:),err,error,*999)
         ENDIF
       ENDDO !dataPointIdx
     CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
@@ -1756,11 +1763,13 @@ CONTAINS
           CALL DataProjection_ClosestElementsFind(dataProjection,interpolatedPoint, &
             & dataPoints%dataPoints(dataPointIdx)%position,dataNumberOfCandidates, &
             & dataProjection%dataProjectionCandidates(dataPointIdx)%candidateElementNumbers, &
-            & closestElements(dataPointIdx,:),closestDistances(dataPointIdx,:),err,error,*999)
+            & closestElements(dataPointIdx,:),dataProjection%startingXi(dataPointIdx,:),closestDistances(dataPointIdx,:),&
+            & err,error,*999)
         ELSE
           CALL DataProjection_ClosestElementsFind(dataProjection,interpolatedPoint, &
             & dataPoints%dataPoints(dataPointIdx)%position,numberOfCandidates,candidateElements, &
-            & closestElements(dataPointIdx,:),closestDistances(dataPointIdx,:),err,error,*999)
+            & closestElements(dataPointIdx,:),dataProjection%startingXi(dataPointIdx,:),closestDistances(dataPointIdx,:),&
+            & err,error,*999)
         ENDIF
       ENDDO !dataPointIdx
     CASE DEFAULT
@@ -1859,7 +1868,8 @@ CONTAINS
         !Newton project to closest lines, and find miminum projection
         DO dataPointIdx=1,numberOfDataPoints
           numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-          IF(numberOfClosestCandidates>0) THEN 
+          IF(numberOfClosestCandidates>0) THEN
+            projectedXi(:,dataPointIdx) = dataProjection%startingXi(dataPointIdx,:)
             CALL DataProjection_NewtonLinesEvaluate(dataProjection,interpolatedPoint, &
               & dataPoints%dataPoints(dataPointIdx)%position,closestElements( &
               & dataPointIdx,1:numberOfClosestCandidates),closestLinesFaces(dataPointIdx,1: &
@@ -1874,7 +1884,8 @@ CONTAINS
         !Newton project to closest faces, and find miminum projection
         DO dataPointIdx=1,numberOfDataPoints
           numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-          IF(numberOfClosestCandidates>0) THEN 
+          IF(numberOfClosestCandidates>0) THEN
+            projectedXi(:,dataPointIdx) = dataProjection%startingXi(dataPointIdx,:)
             CALL DataProjection_NewtonFacesEvaluate(dataProjection,interpolatedPoint, &
               & dataPoints%dataPoints(dataPointIdx)%position,closestElements( &
               & dataPointIdx,1:numberOfClosestCandidates),closestLinesFaces(dataPointIdx, &
@@ -1891,7 +1902,8 @@ CONTAINS
         CASE(1) !1D element
           DO dataPointIdx=1,numberOfDataPoints
             numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-            IF(numberOfClosestCandidates>0) THEN 
+            IF(numberOfClosestCandidates>0) THEN
+              projectedXi(:,dataPointIdx) = dataProjection%startingXi(dataPointIdx,:)
               CALL DataProjection_NewtonElementsEvaluate_1(dataProjection,interpolatedPoint,dataPoints% &
                 & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
                 & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
@@ -1904,7 +1916,8 @@ CONTAINS
         CASE(2) !2D element
           DO dataPointIdx=1,numberOfDataPoints
             numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-            IF(numberOfClosestCandidates>0) THEN 
+            IF(numberOfClosestCandidates>0) THEN
+              projectedXi(:,dataPointIdx) = dataProjection%startingXi(dataPointIdx,:)
               CALL DataProjection_NewtonElementsEvaluate_2(dataProjection,interpolatedPoint,dataPoints% &
                 & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
                 & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
@@ -1918,7 +1931,8 @@ CONTAINS
         CASE(3) !3D element
           DO dataPointIdx=1,numberOfDataPoints
             numberOfClosestCandidates=globalToLocalNumberOfClosestCandidates(dataPointIdx)
-            IF(numberOfClosestCandidates>0) THEN 
+            IF(numberOfClosestCandidates>0) THEN
+              projectedXi(:,dataPointIdx) = dataProjection%startingXi(dataPointIdx,:)
               CALL DataProjection_NewtonElementsEvaluate_3(dataProjection,interpolatedPoint,dataPoints% &
                 & dataPoints(dataPointIdx)%position,closestElements(dataPointIdx, &
                 & 1:numberOfClosestCandidates),projectionExitTag(dataPointIdx), &
@@ -2033,6 +2047,9 @@ CONTAINS
       CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE) 
         !Newton project to closest faces, and find miminum projection
         DO dataPointIdx=1,numberOfDataPoints
+          !IF (dataPointIdx==132) THEN
+          !  WRITE(*,*) dataPointIdx
+          !ENDIF
           CALL DataProjection_NewtonFacesEvaluate(dataProjection,interpolatedPoint,dataPoints%dataPoints( &
             & dataPointIdx)%position,closestElements(dataPointIdx,:),closestLinesFaces(dataPointIdx,:), &
             & dataProjection%dataProjectionResults(dataPointIdx)%exitTag,dataProjection% &
@@ -2366,7 +2383,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: projectionExitTag !<On exit, the exit tag status for the data point projection
     INTEGER(INTG), INTENT(OUT) :: projectionElementNumber !<On exit, the element number of the data point projection
     REAL(DP), INTENT(OUT) :: projectionDistance !<On exit, the projection distance
-    REAL(DP), INTENT(OUT) :: projectionXi(1) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
+    REAL(DP), INTENT(INOUT) :: projectionXi(1) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
     REAL(DP), INTENT(OUT) :: projectionVector(3) !<projectionVector(componentIdx). On exit, the projection vector for the data point projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string   
@@ -2414,7 +2431,7 @@ CONTAINS
           delta=0.5_DP*maximumDelta 
           CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber,interpolatedPoint% &
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          xi=dataProjection%startingXi
+          xi=projectionXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           distanceVector(1:numberOfCoordinates)=dataPointLocation-interpolatedPoint%values(:,NO_PART_DERIV)
           functionValue=DOT_PRODUCT(distanceVector(1:numberOfCoordinates),distanceVector(1:numberOfCoordinates))       
@@ -2534,7 +2551,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: projectionExitTag !<On exit, the exit tag status for the data point projection
     INTEGER(INTG), INTENT(OUT) :: projectionElementNumber !<On exit, the element number of the data point projection
     REAL(DP), INTENT(OUT) :: projectionDistance !<On exit, the projection distance
-    REAL(DP), INTENT(OUT) :: projectionXi(2) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
+    REAL(DP), INTENT(INOUT) :: projectionXi(2) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
     REAL(DP), INTENT(OUT) :: projectionVector(3) !<projectionVector(componentIdx). On exit, the projection vector for the data point projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2587,7 +2604,7 @@ CONTAINS
           delta=0.5_DP*maximumDelta 
           CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber, &
             & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          xi=dataProjection%startingXi
+          xi=projectionXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
             & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
@@ -2776,7 +2793,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: projectionExitTag !<On exit, the exit tag status for the data point projection
     INTEGER(INTG), INTENT(OUT) :: projectionElementNumber !<On exit, the element number of the data point projection
     REAL(DP), INTENT(OUT) :: projectionDistance !<On exit, the projection distance
-    REAL(DP), INTENT(OUT) :: projectionXi(3) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
+    REAL(DP), INTENT(INOUT) :: projectionXi(3) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
     REAL(DP), INTENT(OUT) :: projectionVector(3) !<projectionVector(componentIdx). On exit, the projection vector for the data point projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2831,7 +2848,7 @@ CONTAINS
           delta=0.5_DP*maximumDelta 
           CALL Field_InterpolationParametersElementGet(dataProjection%projectionSetType,elementNumber, &
             & interpolatedPoint%INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          xi=dataProjection%startingXi
+          xi=projectionXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
             interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
@@ -3153,7 +3170,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: projectionElementNumber !<On exit, the element number of the data point projection
     INTEGER(INTG), INTENT(OUT) :: projectionElementFaceNumber !<On exit, the face number of the data point projection
     REAL(DP), INTENT(OUT) :: projectionDistance !<On exit, the projection distance
-    REAL(DP), INTENT(OUT) :: projectionXi(2) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
+    REAL(DP), INTENT(INOUT) :: projectionXi(2) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
     REAL(DP), INTENT(OUT) :: projectionVector(3) !<projectionVector(componentIdx). On exit, the projection vector for the data point projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string   
@@ -3212,7 +3229,7 @@ CONTAINS
           delta=0.5_DP*maximumDelta 
           CALL Field_InterpolationParametersFaceGet(dataProjection%projectionSetType,faceNumber,interpolatedPoint% &
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          xi=dataProjection%startingXi
+          xi=projectionXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
             & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
@@ -3412,7 +3429,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: projectionElementNumber !<On exit, the element number of the data point projection
     INTEGER(INTG), INTENT(OUT) :: projectionElementLineNumber !<On exit, the line number of the data point projection
     REAL(DP), INTENT(OUT) :: projectionDistance !<On exit, the projection distance
-    REAL(DP), INTENT(OUT) :: projectionXi(1) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
+    REAL(DP), INTENT(INOUT) :: projectionXi(1) !<projectionXi(xiIdx). On exit, the xi location of the data point projection
     REAL(DP), INTENT(OUT) :: projectionVector(3) !<projectionVector(componentIdx). On exit, the projection vector for the data point projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string   
@@ -3465,7 +3482,7 @@ CONTAINS
           delta=0.5_DP*maximumDelta
           CALL Field_InterpolationParametersLineGet(dataProjection%projectionSetType,lineNumber,interpolatedPoint% &
             & INTERPOLATION_PARAMETERS,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
-          xi=dataProjection%startingXi
+          xi=projectionXi
           CALL Field_InterpolateXi(SECOND_PART_DERIV,xi,interpolatedPoint,err,error,*999,FIELD_GEOMETRIC_COMPONENTS_TYPE)
           distanceVector(1:numberOfCoordinates)=dataPointLocation(1:numberOfCoordinates)- &
             & interpolatedPoint%values(1:numberOfCoordinates,NO_PART_DERIV)
@@ -4470,7 +4487,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP), ALLOCATABLE :: startingXi(:)
+    REAL(DP), ALLOCATABLE :: startingXi(:,:)
     
     ENTERS("DataProjection_ProjectionTypeSet",err,error,*999)
 
@@ -4489,18 +4506,22 @@ CONTAINS
       CALL FlagError("Input projection type is undefined.",err,error,*999)
     END SELECT
     IF(dataProjection%numberOfXi/=SIZE(dataProjection%startingXi,1)) THEN
-      ALLOCATE(startingXi(dataProjection%numberOfXi),STAT=err)
+      ALLOCATE(startingXi(dataProjection%datapoints%numberOfDatapoints,dataProjection%numberOfXi),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate starting xi.",err,error,*999)
       IF(dataProjection%numberOfXi>SIZE(dataProjection%startingXi,1)) THEN
-        startingXi(1:SIZE(dataProjection%startingXi,1))=dataProjection%startingXi(1:SIZE(dataProjection%startingXi,1))
-        startingXi(SIZE(dataProjection%startingXi,1):dataProjection%numberOfXi)=0.5_DP
+        startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:SIZE(dataProjection%startingXi,1))= &
+        & dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:SIZE(dataProjection%startingXi,1))
+        startingXi(1:dataProjection%datapoints%numberOfDatapoints,SIZE(dataProjection%startingXi,1):dataProjection%numberOfXi)= &
+          & 0.5_DP
       ELSE
-        startingXi(1:SIZE(dataProjection%startingXi,1))=dataProjection%startingXi(1:dataProjection%numberOfXi)
+        startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:SIZE(dataProjection%startingXi,1))= &
+          & dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:dataProjection%numberOfXi)
       ENDIF
       IF(ALLOCATED(dataProjection%startingXi)) DEALLOCATE(dataProjection%startingXi)
-      ALLOCATE(dataProjection%startingXi(dataProjection%numberOfXi),STAT=err)
+      ALLOCATE(dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,dataProjection%numberOfXi),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate data projection starting xi.",err,error,*999)
-      dataProjection%startingXi(1:dataProjection%numberOfXi)=startingXi(1:dataProjection%numberOfXi)
+      dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:dataProjection%numberOfXi)= &
+        & startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:dataProjection%numberOfXi)
       DEALLOCATE(startingXi)
     ENDIF
     
@@ -4578,7 +4599,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to get the starting xi for
-    REAL(DP), INTENT(OUT) :: startingXi(:) !<On exit, the starting xi of the specified data projection
+    REAL(DP), INTENT(OUT) :: startingXi(:,:) !<On exit, the starting xi of the specified data projection
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4588,13 +4609,14 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(SIZE(startingXi,1)<SIZE(dataProjection%startingXi,1)) THEN
+    IF(SIZE(startingXi,2)<SIZE(dataProjection%startingXi,2)) THEN
       localError="The size of the specified starting xi array of "//TRIM(NumberToVString(SIZE(startingXi,1),"*",err,error))// &
         & " is too small. The size must be >= "//TRIM(NumberToVString(SIZE(dataProjection%startingXi,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     
-    startingXi(1:SIZE(dataProjection%startingXi,1))=dataProjection%startingXi(1:SIZE(dataProjection%startingXi,1))
+    startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:SIZE(dataProjection%startingXi,1))=&
+      & dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:SIZE(dataProjection%startingXi,1))
     
     EXITS("DataProjection_StartingXiGet")
     RETURN
@@ -4612,11 +4634,11 @@ CONTAINS
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to set the starting xi for
-    REAL(DP), INTENT(IN) :: startingXi(:) !<The starting xi to set
+    REAL(DP), INTENT(IN) :: startingXi(:,:) !<The starting xi to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: xiIdx
+    INTEGER(INTG) :: datapoint,xiIdx
     LOGICAL :: validInput
     TYPE(VARYING_STRING) :: localError
     
@@ -4624,25 +4646,33 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(dataProjection%dataProjectionFinished) CALL FlagError("Data projection has been finished.",err,error,*999)
-    IF(SIZE(startingXi,1)/=dataProjection%numberOfXi) THEN
-      localError="The size of the specified xi array of "//TRIM(NumberToVString(SIZE(startingXi,1),"*",err,error))// &
-        & " is invalid. The size should be "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"."
+    IF(SIZE(startingXi,1)/=dataProjection%datapoints%numberOfDatapoints) THEN
+      localError="The number of datapoints in the specified xi array of "//TRIM(NumberToVString(SIZE(startingXi,1),"*", &
+        & err,error))//" is invalid. The number of datapoints should be "// &
+        & TRIM(NumberToVString(dataProjection%datapoints%numberOfDatapoints,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(startingXi,2)/=dataProjection%numberOfXi) THEN
+      localError="The number of xi in the specified xi array of "//TRIM(NumberToVString(SIZE(startingXi,2),"*",err,error))// &
+        & " is invalid. The number of xi should be "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     validInput=.TRUE.
-    DO xiIdx=1,dataProjection%numberOfXi
-      IF((startingXi(xiIdx)<0.0_DP).OR.(startingXi(xiIdx)>1.0_DP)) THEN
-        validInput=.FALSE.
-        EXIT !this do
-      ENDIF
-    ENDDO !xiIdx
+    DO datapoint=1,dataProjection%datapoints%numberOfDatapoints
+      DO xiIdx=1,dataProjection%numberOfXi
+        IF((startingXi(datapoint,xiIdx)<0.0_DP).OR.(startingXi(datapoint,xiIdx)>1.0_DP)) THEN
+          validInput=.FALSE.
+          EXIT !this do
+        ENDIF
+      ENDDO !xiIdx
+    ENDDO !datapoint
     IF(.NOT.validInput) CALL FlagError("Data projection starting xi must be between 0.0 and 1.0.",err,error,*999)
     
-    dataProjection%startingXi(1:SIZE(startingXi))=startingXi(1:SIZE(startingXi))
+    dataProjection%startingXi(1:SIZE(startingXi,1), 1:SIZE(startingXi,2))=startingXi
     
     EXITS("DataProjection_StartingXiSet")
     RETURN
-999 ERRORSEXITS("DataProjection_StartingXiSet",err,error)    
+999 ERRORSEXITS("DataProjection_StartingXiSet",err,error)
     RETURN 1
 
   END SUBROUTINE DataProjection_StartingXiSet

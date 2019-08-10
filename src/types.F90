@@ -326,7 +326,7 @@ MODULE Types
     INTEGER(INTG) :: numberOfClosestElements !<The number of closest elements to perform full projection on. The algorithm first find the distance of the data point to each elements base on starting xi, full projection is only performed on the first few elements sorted by the distance
     REAL(DP) :: absoluteTolerance !<The absolute tolerance of the iteration update
     REAL(DP) :: relativeTolerance !<The relative tolerance of the iteration update
-    REAL(DP), ALLOCATABLE :: startingXi(:) !<The starting value of the element xi
+    REAL(DP), ALLOCATABLE :: startingXi(:,:) !<The starting value of the element xi
     INTEGER(INTG) :: maxNumberOfCandidates !<The maximum number of projection candidate elements.
     TYPE(DataProjectionCandidateType), ALLOCATABLE :: dataProjectionCandidates(:) !<projectionCandidates(dataIdx). The projection candidates for the dataIdx'th data point. The 0'th index contains the default projection candidates which can then be overridden for specific data points.
     TYPE(DataProjectionResultType), ALLOCATABLE :: dataProjectionResults(:) !<dataProjectionResults(dataIdx). The data projection results for the dataIdx'th data point.
