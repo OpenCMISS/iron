@@ -21377,8 +21377,8 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00",err,error,*999)
 
-    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11(dataProjection,[dataPointUserNumber], &
-      & [candidateElementUserNumber],err)
+    CALL DataProjection_ProjectionDataCandidateElementsSet(dataProjection%dataProjection,[dataPointUserNumber], &
+      & [candidateElementUserNumber],err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj00")
     RETURN
@@ -21407,8 +21407,8 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01",err,error,*999)
 
-    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11(dataProjection,[dataPointUserNumber], &
-      & candidateElementUserNumbers,err)
+    CALL DataProjection_ProjectionDataCandidateElementsSet(dataProjection%dataProjection,[dataPointUserNumber], &
+      & candidateElementUserNumbers,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj01")
     RETURN
@@ -21437,8 +21437,8 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10",err,error,*999)
 
-    CALL cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11(dataProjection,dataPointUserNumbers, &
-      & [candidateElementUserNumber],err)
+    CALL DataProjection_ProjectionDataCandidateElementsSet(dataProjection%dataProjection,dataPointUserNumbers, &
+      & [candidateElementUserNumber],err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj10")
     RETURN
@@ -21467,7 +21467,8 @@ CONTAINS
 
     ENTERS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11",err,error,*999)
 
-    CALL DataProjection_ProjectionCandidateElementsSet(dataProjection%dataProjection,candidateElementUserNumbers,err,error,*999)
+    CALL DataProjection_ProjectionDataCandidateElementsSet(dataProjection%dataProjection,dataPointUserNumbers, &
+      & candidateElementUserNumbers,err,error,*999)
 
     EXITS("cmfe_DataProjection_ProjectionDataCandidateElementsSetObj11")
     RETURN

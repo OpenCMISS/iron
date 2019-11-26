@@ -2911,7 +2911,7 @@ CONTAINS
       DO componentIdx=1,columnVariable%NUMBER_OF_COMPONENTS
         ! adjusts the pertubation for the hydrostatic pressure to not use the L2Norm
         IF(componentIdx==4) THEN
-          delta=(1.0_DP)*equationsSet%equations%jacobianFiniteDifferenceStepSize
+          delta=(1.0_DP)*nonlinearMatrices%jacobians(jacobianNumber)%ptr%jacobianFiniteDifferenceStepSize
         ENDIF
         elementsTopology=>columnVariable%COMPONENTS(componentIdx)%DOMAIN%TOPOLOGY%ELEMENTS
         componentInterpolationType=columnVariable%COMPONENTS(componentIdx)%INTERPOLATION_TYPE
@@ -3019,7 +3019,7 @@ CONTAINS
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       CALL ClassicalField_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
     CASE(EQUATIONS_SET_FITTING_CLASS)
-      CALL Fitting_FiniteElementResidualEvaluate(equationsSet,elementNumber,err,error,*999)
+      CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_MODAL_CLASS)

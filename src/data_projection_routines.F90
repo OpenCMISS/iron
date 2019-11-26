@@ -4508,20 +4508,11 @@ CONTAINS
     IF(dataProjection%numberOfXi/=SIZE(dataProjection%startingXi,1)) THEN
       ALLOCATE(startingXi(dataProjection%datapoints%numberOfDatapoints,dataProjection%numberOfXi),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate starting xi.",err,error,*999)
-      IF(dataProjection%numberOfXi>SIZE(dataProjection%startingXi,1)) THEN
-        startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:SIZE(dataProjection%startingXi,1))= &
-        & dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:SIZE(dataProjection%startingXi,1))
-        startingXi(1:dataProjection%datapoints%numberOfDatapoints,SIZE(dataProjection%startingXi,1):dataProjection%numberOfXi)= &
-          & 0.5_DP
-      ELSE
-        startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:SIZE(dataProjection%startingXi,1))= &
-          & dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:dataProjection%numberOfXi)
-      ENDIF
+      startingXi=0.5_DP
       IF(ALLOCATED(dataProjection%startingXi)) DEALLOCATE(dataProjection%startingXi)
       ALLOCATE(dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,dataProjection%numberOfXi),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate data projection starting xi.",err,error,*999)
-      dataProjection%startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:dataProjection%numberOfXi)= &
-        & startingXi(1:dataProjection%datapoints%numberOfDatapoints,1:dataProjection%numberOfXi)
+      dataProjection%startingXi=startingXi
       DEALLOCATE(startingXi)
     ENDIF
     
@@ -5127,7 +5118,7 @@ CONTAINS
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(dataProjection%dataProjectionProjected) CALL FlagError("Data projection has already been projected.",err,error,*999)
+    !IF(dataProjection%dataProjectionProjected) CALL FlagError("Data projection has already been projected.",err,error,*999)
     
     SELECT CASE(dataProjection%projectionType)
     CASE(DATA_PROJECTION_BOUNDARY_FACES_PROJECTION_TYPE)
@@ -5147,6 +5138,7 @@ CONTAINS
       IF(elementExists) THEN
         IF(.NOT.ghostElement) THEN
           dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber=elementLocalNumber
+          dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementGlobalNumber=elementLocalNumber
           dataProjection%dataProjectionResults(dataPointGlobalNumber)%exitTag=DATA_PROJECTION_USER_SPECIFIED
         ENDIF
       ELSE
@@ -5532,14 +5524,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dataPointGlobalNumber
+    INTEGER(INTG) :: dataPointGlobalNumber, elementNumber, localLineFaceNumber
+    TYPE(DECOMPOSITION_TYPE), POINTER :: decomposition
+    TYPE(DECOMPOSITION_TOPOLOGY_TYPE), POINTER :: decompositionTopology
+    TYPE(DOMAIN_TYPE), POINTER :: domain
+    TYPE(DOMAIN_TOPOLOGY_TYPE), POINTER :: domainTopology
+    TYPE(DOMAIN_ELEMENTS_TYPE), POINTER :: domainElements
+    TYPE(BASIS_TYPE), POINTER :: basis
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("DataProjection_ResultProjectionXiSet",err,error,*999)
 
     IF(.NOT.ASSOCIATED(dataProjection)) CALL FlagError("Data projection is not associated.",err,error,*999)
     IF(.NOT.dataProjection%dataProjectionFinished) CALL FlagError("Data projection has not been finished.",err,error,*999)
-    IF(dataProjection%dataProjectionProjected) CALL FlagError("Data projection has already been projected.",err,error,*999)
+    !IF(dataProjection%dataProjectionProjected) CALL FlagError("Data projection has already been projected.",err,error,*999)
     IF(SIZE(projectionXi,1)/=dataProjection%numberOfXi) THEN
       localError="The specified projection xi has size of "//TRIM(NumberToVString(SIZE(projectionXi,1),"*",err,error))// &
         & "but it needs to have size of "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))//"."
@@ -5551,6 +5549,29 @@ CONTAINS
     CALL DataProjection_DataPointGlobalNumberGet(dataProjection,dataPointUserNumber,dataPointGlobalNumber,err,error,*999)
     dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi(1:dataProjection%numberOfXi)= &
       & projectionXi(1:dataProjection%numberOfXi)
+
+    !Compute full elemental xi
+    decomposition=>dataProjection%decomposition
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_TopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(domain)
+    CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+    NULLIFY(domainTopology)
+    CALL Domain_TopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(domainElements)
+    CALL DomainTopology_ElementsGet(domainTopology,domainElements,err,error,*999)
+
+    IF(dataProjection%numberOfXi==dataProjection%numberOfElementXi) THEN
+      dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementXi= &
+        & dataProjection%dataProjectionResults(dataPointGlobalNumber)%xi
+    ELSE
+      elementNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLocalNumber
+      localLineFaceNumber=dataProjection%dataProjectionResults(dataPointGlobalNumber)%elementLineFaceNumber
+      basis=>domainElements%elements(elementNumber)%basis
+      CALL Basis_BoundaryXiToXi(basis,localLineFaceNumber,dataProjection% &
+        & dataProjectionResults(dataPointGlobalNumber)%xi(1:dataProjection%numberOfXi),dataProjection% &
+        & dataProjectionResults(dataPointGlobalNumber)%elementXi,err,error,*999)
+    ENDIF
 
     EXITS("DataProjection_ResultProjectionXiSet")
     RETURN
